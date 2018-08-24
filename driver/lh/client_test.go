@@ -36,6 +36,16 @@ func TestPlateSerializeDeserialize(t *testing.T) {
 
 }
 
+func TestVolumeSerializeDeserialize(t *testing.T) {
+	a := wunit.NewVolume(500.0, "ul")
+
+	encodedV := EncodeVolume(a)
+
+	b := DecodeVolume(encodedV)
+
+	assert.Equal(t, a, b)
+}
+
 func TestTipboxSerializeDeserialize(t *testing.T) {
 	tb := makeTipboxForTest()
 

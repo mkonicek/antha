@@ -101,7 +101,7 @@ func (ins *TransferInstruction) OutputTo(drv LiquidhandlingDriver) error {
 
 	volumes := make([]float64, len(SetOfMultiTransferParams(ins.Transfers).Volume()))
 	for i, vol := range SetOfMultiTransferParams(ins.Transfers).Volume() {
-		volumes[i] = vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
+		volumes[i] = vol.ConvertToString("ul")
 	}
 
 	reply := hlld.Transfer(SetOfMultiTransferParams(ins.Transfers).What(), SetOfMultiTransferParams(ins.Transfers).PltFrom(), SetOfMultiTransferParams(ins.Transfers).WellFrom(), SetOfMultiTransferParams(ins.Transfers).PltTo(), SetOfMultiTransferParams(ins.Transfers).WellTo(), volumes)
@@ -534,7 +534,7 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 	lastWhat := ""
 	for _, t := range ins.Transfers {
 		for _, tp := range t.Transfers {
-			if tp.Volume.LessThanFloat(0.001) {
+			if tp.Volume.IsZero() {
 				continue
 			}
 

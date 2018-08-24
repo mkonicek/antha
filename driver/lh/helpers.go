@@ -1209,15 +1209,19 @@ func DecodeShape(arg *pb.ShapeMessage) wtype.Shape {
 	return ret
 }
 func EncodeConcreteMeasurement(arg wunit.ConcreteMeasurement) *pb.ConcreteMeasurementMessage {
-	ret := pb.ConcreteMeasurementMessage{(float64)(arg.Mvalue), EncodePtrToGenericPrefixedUnit(arg.Munit)}
-	return &ret
+	return &pb.ConcreteMeasurementMessage{
+		Arg_1: (float64)(arg.Mvalue),
+		Arg_2: EncodePtrToUnit(arg.Munit),
+	}
 }
 func DecodeConcreteMeasurement(arg *pb.ConcreteMeasurementMessage) wunit.ConcreteMeasurement {
 	if arg == nil {
 		return wunit.ConcreteMeasurement{}
 	}
-	ret := wunit.ConcreteMeasurement{Mvalue: (float64)(arg.Arg_1), Munit: (*wunit.GenericPrefixedUnit)(DecodePtrToGenericPrefixedUnit(arg.Arg_2))}
-	return ret
+	return wunit.ConcreteMeasurement{
+		Mvalue: (float64)(arg.Arg_1),
+		Munit:  DecodePtrToUnit(arg.Arg_2),
+	}
 }
 func EncodePtrToShape(arg *wtype.Shape) *pb.PtrToShapeMessage {
 	var ret pb.PtrToShapeMessage
@@ -1301,51 +1305,25 @@ func DecodeBlockID(arg *pb.BlockIDMessage) wtype.BlockID {
 	ret := wtype.BlockID{Value: (string)(arg.Arg_1)}
 	return ret
 }
-func EncodePtrToGenericPrefixedUnit(arg *wunit.GenericPrefixedUnit) *pb.PtrToGenericPrefixedUnitMessage {
-	var ret pb.PtrToGenericPrefixedUnitMessage
-	if arg == nil {
-		ret = pb.PtrToGenericPrefixedUnitMessage{
-			nil,
-		}
+func EncodePtrToUnit(arg *wunit.Unit) *pb.PtrToUnitMessage {
+	fmt.Printf("encode: %v\n", arg)
+	if bytes, err := json.Marshal(arg); err != nil {
+		panic(err)
 	} else {
-		ret = pb.PtrToGenericPrefixedUnitMessage{
-			EncodeGenericPrefixedUnit(*arg),
+		fmt.Println(bytes)
+		return &pb.PtrToUnitMessage{
+			&pb.UnitMessage{
+				JSONUnit: bytes,
+			},
 		}
 	}
-	return &ret
 }
-func DecodePtrToGenericPrefixedUnit(arg *pb.PtrToGenericPrefixedUnitMessage) *wunit.GenericPrefixedUnit {
-	if arg == nil {
-		log.Println("Arg for PtrToGenericPrefixedUnit was nil")
-		return nil
+func DecodePtrToUnit(arg *pb.PtrToUnitMessage) *wunit.Unit {
+	var ret wunit.Unit
+	if err := json.Unmarshal(arg.Arg_1.JSONUnit, &ret); err != nil {
+		panic(err)
 	}
-
-	ret := DecodeGenericPrefixedUnit(arg.Arg_1)
 	return &ret
-}
-func EncodeGenericPrefixedUnit(arg wunit.GenericPrefixedUnit) *pb.GenericPrefixedUnitMessage {
-	ret := pb.GenericPrefixedUnitMessage{EncodeGenericUnit(arg.GenericUnit), EncodeSIPrefix(arg.SPrefix)}
-	return &ret
-}
-func DecodeGenericPrefixedUnit(arg *pb.GenericPrefixedUnitMessage) wunit.GenericPrefixedUnit {
-	ret := wunit.GenericPrefixedUnit{GenericUnit: (wunit.GenericUnit)(DecodeGenericUnit(arg.Arg_1)), SPrefix: (wunit.SIPrefix)(DecodeSIPrefix(arg.Arg_2))}
-	return ret
-}
-func EncodeGenericUnit(arg wunit.GenericUnit) *pb.GenericUnitMessage {
-	ret := pb.GenericUnitMessage{(string)(arg.StrName), (string)(arg.StrSymbol), (float64)(arg.FltConversionfactor), (string)(arg.StrBaseUnit)}
-	return &ret
-}
-func DecodeGenericUnit(arg *pb.GenericUnitMessage) wunit.GenericUnit {
-	ret := wunit.GenericUnit{StrName: (string)(arg.Arg_1), StrSymbol: (string)(arg.Arg_2), FltConversionfactor: (float64)(arg.Arg_3), StrBaseUnit: (string)(arg.Arg_4)}
-	return ret
-}
-func EncodeSIPrefix(arg wunit.SIPrefix) *pb.SIPrefixMessage {
-	ret := pb.SIPrefixMessage{(string)(arg.Name), (float64)(arg.Value)}
-	return &ret
-}
-func DecodeSIPrefix(arg *pb.SIPrefixMessage) wunit.SIPrefix {
-	ret := wunit.SIPrefix{Name: (string)(arg.Arg_1), Value: (float64)(arg.Arg_2)}
-	return ret
 }
 
 func EncodeSubComponentMessage(arg wtype.ComponentList) *pb.SubComponentMessage {

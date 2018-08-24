@@ -1,6 +1,7 @@
 package wunit
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
 	"math"
@@ -14,6 +15,49 @@ type Unit struct {
 	prefix     SIPrefix //the SI prefix which is applied to the symbol
 	multiplier float64  //value to multiply by to convert "symbol"s to "base", e.g. 60 for min (SI unit = s)
 	exponent   int      //the exponent for the prefix, 1 unless the prefix is inclided in a power, e.g. exponent=2 for "m^2"
+}
+
+// MarshalJSON marshal the unit as a JSON string
+func (self *Unit) MarshalJSON() ([]byte, error) {
+	fmt.Println("MarshalJSON")
+	return json.Marshal(struct {
+		Name       string
+		Symbol     string
+		Base       string
+		Prefix     SIPrefix
+		Multiplier float64
+		Exponent   int
+	}{
+		Name:       self.name,
+		Symbol:     self.symbol,
+		Base:       self.base,
+		Prefix:     self.prefix,
+		Multiplier: self.multiplier,
+		Exponent:   self.exponent,
+	})
+}
+
+// UnmarshalJSON marshal the unit as a JSON string
+func (self *Unit) UnmarshalJSON(data []byte) error {
+	value := struct {
+		Name       string
+		Symbol     string
+		Base       string
+		Prefix     SIPrefix
+		Multiplier float64
+		Exponent   int
+	}{}
+
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	self.name = value.Name
+	self.symbol = value.Symbol
+	self.base = value.Base
+	self.prefix = value.Prefix
+	self.multiplier = value.Multiplier
+	self.exponent = value.Exponent
+	return nil
 }
 
 // Name the common name for this unit
@@ -56,6 +100,9 @@ func (self *Unit) Prefix() SIPrefix {
 
 // PrefixedSymbol the symbol including any prefix
 func (self *Unit) PrefixedSymbol() string {
+	if self.prefix.Name == " " {
+		return self.symbol
+	}
 	return self.prefix.Name + self.symbol
 }
 

@@ -41,6 +41,11 @@ var systemUnits = unitDefs{
 			Prefixes: allPrefixes,
 		},
 		{
+			Name:     "units per litre",
+			Symbol:   "U/l",
+			Prefixes: allPrefixes,
+		},
+		{
 			Name:   "relative concentration",
 			Symbol: "X",
 		},
@@ -240,6 +245,27 @@ var systemDerivedUnits = derivedUnitDefs{
 			Symbol:           "Mol/nl",
 			Prefixes:         allPrefixes,
 			TargetSymbol:     "GMol/l",
+			NewUnitInTargets: 1.0,
+		},
+		{
+			Name:             "units per mililitre",
+			Symbol:           "U/ml",
+			Prefixes:         allPrefixes,
+			TargetSymbol:     "kU/l",
+			NewUnitInTargets: 1.0,
+		},
+		{
+			Name:             "units per microlitre",
+			Symbol:           "U/ul",
+			Prefixes:         allPrefixes,
+			TargetSymbol:     "MU/l",
+			NewUnitInTargets: 1.0,
+		},
+		{
+			Name:             "units per nanolitre",
+			Symbol:           "U/nl",
+			Prefixes:         allPrefixes,
+			TargetSymbol:     "GU/l",
 			NewUnitInTargets: 1.0,
 		},
 		{

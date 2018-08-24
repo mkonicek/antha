@@ -1198,7 +1198,7 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 		volb.Subtract(vola)
 		vmap2[k] = vola
 
-		if volb.GreaterThanFloat(0.0001) {
+		if !volb.IsZero() {
 			vmap3[k] = volb
 		}
 		// toggle HERE for DEBUG

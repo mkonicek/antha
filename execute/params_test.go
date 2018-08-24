@@ -2,6 +2,7 @@ package execute
 
 import (
 	"context"
+	"encoding/json"
 	"reflect"
 	"testing"
 
@@ -212,7 +213,9 @@ func TestTime(t *testing.T) {
 	golden := Value{
 		"A": wunit.NewTime(60.0, "s"),
 	}
-	if err := unmarshal(ctx, &x, []byte(`{ "A": "60s" }`)); err != nil {
+	if bytes, err := json.Marshal(golden); err != nil {
+		t.Error(err)
+	} else if err := unmarshal(ctx, &x, bytes); err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(x, golden) {
 		t.Errorf("expecting %v but got %v instead", golden, x)

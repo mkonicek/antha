@@ -111,8 +111,17 @@ func (self *UnitRegistry) declareUnit(measurementType string, unit *Unit) error 
 // for the given measurement type
 // e.g. ValidUnitForType("Length", "m") -> true
 // and  ValidUnitForType("Area", "l") -> false
-func (self *UnitRegistry) ValidUnitForType(measurementType string, symbol string) bool {
+func (self *UnitRegistry) ValidUnitForType(measurementType, symbol string) bool {
 	return self.unitByType[measurementType][self.resolveAliasing(symbol)]
+}
+
+// AssertValidForType assert that the symbol refers to a valid unit for the given type
+// the same as ValidUnitForType, except this function returns a useful
+func (self *UnitRegistry) AssertValidUnitForType(measurementType, symbol string) error {
+	if !self.ValidUnitForType(measurementType, symbol) {
+		return errors.Errorf("invalid symbol %q for measurement type %q, valid symbols are %v", symbol, measurementType, self.unitByType[measurementType])
+	}
+	return nil
 }
 
 // ListValidUnitsForType returns a sorted list of all valid unit symbols for a given

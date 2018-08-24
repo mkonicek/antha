@@ -82,6 +82,9 @@ func NewVolume(v float64, unit string) Volume {
 }
 
 func CopyVolume(v Volume) Volume {
+	if isNil(v.ConcreteMeasurement) {
+		return Volume{}
+	}
 	ret := NewVolume(v.RawValue(), v.Unit().PrefixedSymbol())
 	return ret
 }
@@ -226,8 +229,10 @@ func SubtractConcentrations(originalConc Concentration, subtractConcs ...Concent
 }
 
 func (v Volume) Dup() Volume {
-	ret := NewVolume(v.RawValue(), v.Unit().PrefixedSymbol())
-	return ret
+	if isNil(v.ConcreteMeasurement) {
+		return ZeroVolume()
+	}
+	return NewVolume(v.RawValue(), v.Unit().PrefixedSymbol())
 }
 
 func ZeroVolume() Volume {

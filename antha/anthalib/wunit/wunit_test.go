@@ -29,17 +29,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
 
-// simple reverse complement check to test testing methodology initially
-
-type TestUnit struct {
-	value        float64
-	prefix       string
-	unit         string
-	prefixedunit string
-	siresult     float64
-	toSIString   string
-}
-
 type VolumeArithmetic struct {
 	VolumeA    Volume
 	VolumeB    Volume

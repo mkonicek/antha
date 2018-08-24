@@ -123,7 +123,6 @@ func (self densityConversionTests) Run(t *testing.T) {
 
 var (
 	// Some Concentrations
-	uMPer0 = NewConcentration(0, "uM")
 
 	x2   = NewConcentration(2, "X")
 	x100 = NewConcentration(100, "X")
@@ -137,7 +136,6 @@ var (
 	uMPerL10 = NewConcentration(10, "uM")
 
 	// Some volumes
-	l0    = NewVolume(0, "l")
 	ul1   = NewVolume(1, "ul")
 	ul100 = NewVolume(100, "ul")
 )

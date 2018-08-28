@@ -24,148 +24,21 @@ package liquidtype
 
 import (
 	"fmt"
-	"io/ioutil"
-	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
 
-	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/AnthaPath"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/doe"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
-// deprecate this
-type policyFile struct {
-	Filename                string
-	DXORJMP                 string
-	FactorColumns           *[]int
-	LiquidTypeStarterNumber int
-}
-
-func (polfile policyFile) Prepend() (prepend string) {
-	nameparts := strings.Split(polfile.Filename, ".")
-	prepend = nameparts[0]
-	return
-}
-
-func (polfile policyFile) StarterNumber() (starternumber int) {
-	starternumber = polfile.LiquidTypeStarterNumber
-	return
-}
-
-// deprecate this
-func makePolicyFile(filename string, dxorjmp string, factorcolumns *[]int, liquidtypestartnumber int) (policyfile policyFile) {
-	policyfile.Filename = filename
-	policyfile.DXORJMP = dxorjmp
-	policyfile.FactorColumns = factorcolumns
-	policyfile.LiquidTypeStarterNumber = liquidtypestartnumber
-	return
-}
-
-// deprecate this
-// policy files to put in ./antha
-var availablePolicyfiles []policyFile = []policyFile{
-	makePolicyFile("170516CCFDesign_noTouchoff_noBlowout.xlsx", "DX", nil, 100),
-	makePolicyFile("2700516AssemblyCCF.xlsx", "DX", nil, 1000),
-	makePolicyFile("newdesign2factorsonly.xlsx", "JMP", &[]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}, 2000),
-	makePolicyFile("190516OnePolicy.xlsx", "JMP", &[]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}, 3000),
-	makePolicyFile("AssemblycategoricScreen.xlsx", "JMP", &[]int{1, 2, 3, 4, 5}, 4000),
-	makePolicyFile("090816dispenseerrordiagnosis.xlsx", "JMP", &[]int{2}, 5000),
-	makePolicyFile("090816combineddesign.xlsx", "JMP", &[]int{1}, 6000),
-}
-
 // BASEPolicy is the policy to use as a starting point to produce custom LHPolicies
 const BASEPolicy = "default" //"dna"
 
 // BasePolicyHeader is the expected factor name to specify the BasePolicy from a run in a design file.
 const BasePolicyHeader = "BasePolicy"
-
-// deprecate this
-func policyFilefromName(filename string) (pol policyFile, found bool) {
-	for _, policy := range availablePolicyfiles {
-		if policy.Filename == filename {
-			pol = policy
-			found = true
-			return
-		}
-	}
-	return
-}
-
-// deprecate this
-func PolicyMakerfromFilename(filename string) (policies []wtype.LHPolicy, names []string, runs []doe.Run, err error) {
-
-	doeliquidhandlingFile, found := policyFilefromName(filename)
-	if !found {
-		err = fmt.Errorf("policyfilename " + filename + " not found")
-		return
-	}
-	filenameparts := strings.Split(doeliquidhandlingFile.Filename, ".")
-
-	policies, names, runs, err = PolicyMakerfromDesign(BASEPolicy, doeliquidhandlingFile.DXORJMP, doeliquidhandlingFile.Filename, filenameparts[0])
-	return
-}
-
-// deprecate this
-func PolicyMakerfromDesign(basepolicy string, DXORJMP string, dxdesignfilename string, prepend string) (policies []wtype.LHPolicy, names []string, runs []doe.Run, err error) {
-
-	policyitemmap := wtype.MakePolicyItems()
-	intfactors := make([]string, 0)
-
-	for key, val := range policyitemmap {
-
-		if val.Type.Name() == "int" {
-			intfactors = append(intfactors, key)
-
-		}
-
-	}
-	if DXORJMP == "DX" {
-		contents, err := ioutil.ReadFile(filepath.Join(anthapath.Path(), dxdesignfilename))
-
-		if err != nil {
-			return policies, names, runs, err
-		}
-
-		runs, err = doe.RunsFromDXDesignContents(contents, intfactors)
-
-		if err != nil {
-			return policies, names, runs, err
-		}
-
-	} else if DXORJMP == "JMP" {
-
-		factorcolumns := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}
-		responsecolumns := []int{14, 15, 16, 17}
-
-		contents, err := ioutil.ReadFile(filepath.Join(anthapath.Path(), dxdesignfilename))
-
-		if err != nil {
-			return policies, names, runs, err
-		}
-
-		runs, err = doe.RunsFromJMPDesignContents(contents, factorcolumns, responsecolumns, intfactors)
-		if err != nil {
-			return policies, names, runs, err
-		}
-	} else {
-		return policies, names, runs, fmt.Errorf("only JMP or DX allowed as valid inputs for DXORJMP variable")
-	}
-	policies, names, err = PolicyMakerfromRuns(basepolicy, runs, prepend, false)
-	return policies, names, runs, err
-}
-
-func PolicyMaker(basepolicy string, factors []doe.DOEPair, nameprepend string, concatfactorlevelsinname bool) (policies []wtype.LHPolicy, names []string, err error) {
-
-	runs := doe.AllCombinations(factors)
-
-	policies, names, err = PolicyMakerfromRuns(basepolicy, runs, nameprepend, concatfactorlevelsinname)
-
-	return
-}
 
 // PolicyMakerFromBytes creates a policy map from a design file in the format of a JMP design file.
 // Any valid parameter name and corresponding parameter type from aparam.go are valid entries.

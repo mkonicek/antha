@@ -55,16 +55,12 @@ func autoColWidth(sheet *xlsx.Sheet) {
 }
 
 func autoFormatHeader(sheet *xlsx.Sheet) {
-
 	if len(sheet.Rows) < 1 {
 		return
 	}
-
 	row := sheet.Rows[0]
-
 	for _, cell := range row.Cells {
 		style := cell.GetStyle()
 		style.Border.Bottom = thick
 	}
-	return
 }

@@ -19,7 +19,6 @@ type Unit struct {
 
 // MarshalJSON marshal the unit as a JSON string
 func (self *Unit) MarshalJSON() ([]byte, error) {
-	fmt.Println("MarshalJSON")
 	return json.Marshal(struct {
 		Name       string
 		Symbol     string

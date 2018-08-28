@@ -1199,7 +1199,7 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 		vmap2[k] = vola
 
 		//IsZero checks that volb is more than a small delta away from zero
-		if volb.GreaterThan(wunit.ZeroVolume()) && !volb.IsZero() {
+		if volb.IsPositive() {
 			vmap3[k] = volb
 		}
 		// toggle HERE for DEBUG

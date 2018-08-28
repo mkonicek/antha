@@ -182,34 +182,6 @@ func (ins *TransferInstruction) GetParameter(name InstructionParameter) interfac
 	}
 }
 
-func (vs VolumeSet) MaxMultiTransferVolume(minLeave wunit.Volume) wunit.Volume {
-	// the minimum volume in the set... ensuring that we what we leave is
-	// either 0 or minLeave or greater
-
-	ret := vs[0].Dup()
-
-	for _, v := range vs {
-		if v.LessThan(ret) && !v.IsZero() {
-			ret = v.Dup()
-		}
-	}
-
-	vs2 := vs.Dup().Sub(ret)
-
-	if !vs2.NonZeros().Min().IsZero() && vs2.NonZeros().Min().LessThan(minLeave) {
-		//slightly inefficient but we refuse to leave less than minleave
-		ret.Subtract(minLeave)
-	}
-
-	// fail if ret is now < 0 or < the min possible
-
-	if ret.LessThan(wunit.ZeroVolume()) || ret.LessThan(minLeave) {
-		ret = wunit.ZeroVolume()
-	}
-
-	return ret
-}
-
 /*
 func (ins *TransferInstruction) getPoliciesForTransfer(which int, ruleSet wtype.LHPolicyRuleSet) []wtype.LHPolicy {
 }
@@ -534,7 +506,7 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 	lastWhat := ""
 	for _, t := range ins.Transfers {
 		for _, tp := range t.Transfers {
-			if tp.Volume.IsZero() {
+			if !tp.Volume.IsPositive() {
 				continue
 			}
 

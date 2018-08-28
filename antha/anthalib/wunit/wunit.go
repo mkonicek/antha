@@ -255,6 +255,10 @@ func (cm *ConcreteMeasurement) IsZero() bool {
 	return false
 }
 
+func (cm *ConcreteMeasurement) IsPositive() bool {
+	return cm.Mvalue > 0.0 && !cm.IsZero()
+}
+
 // less sensitive comparison operators
 
 func (cm *ConcreteMeasurement) LessThanRounded(m Measurement, p int) bool {

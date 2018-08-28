@@ -44,7 +44,7 @@ var formatCmd = &cobra.Command{
 }
 
 type walker struct {
-	Write bool
+	WriteToFile bool
 }
 
 const chmodSupported = runtime.GOOS != "windows"
@@ -57,64 +57,40 @@ func (w *walker) Walk(path string, fi os.FileInfo, err error) error {
 }
 
 func (w *walker) walk(path string, fi os.FileInfo, err error) error {
-	if err != nil {
+	if err != nil || fi.IsDir() || !strings.HasSuffix(path, ".an") {
 		return err
-	}
-
-	if fi.IsDir() {
-		return nil
-	}
-
-	if !strings.HasSuffix(path, ".an") {
-		return nil
-	}
-
-	src, err := ioutil.ReadFile(path)
-	if err != nil {
+	} else if src, err := ioutil.ReadFile(path); err != nil {
 		return err
-	}
-
-	out, err := format.Source(src)
-	if err != nil {
+	} else if out, err := format.Source(src); err != nil {
 		return err
-	}
-
-	if !w.Write {
+	} else if !w.WriteToFile {
 		os.Stdout.Write(out) // nolint
-
 		return nil
-	}
-
-	if bytes.Equal(src, out) {
+	} else if bytes.Equal(src, out) {
 		return nil
-	}
-
-	bak, err := ioutil.TempFile(filepath.Dir(path), filepath.Base(path))
-	if err != nil {
+	} else if bak, err := ioutil.TempFile(filepath.Dir(path), filepath.Base(path)); err != nil {
 		return err
-	}
-	defer bak.Close() // nolint: errcheck
+	} else {
+		defer func() {
+			if err != nil {
+				os.Remove(bak.Name()) // nolint
+			}
+		}()
+		defer bak.Close() // nolint: errcheck
 
-	defer func() {
-		if err != nil {
-			os.Remove(bak.Name()) // nolint
+		if chmodSupported {
+			// maintain the same mode as the read file
+			if err = bak.Chmod(fi.Mode()); err != nil {
+				return err
+			}
 		}
-	}()
 
-	if chmodSupported {
-		if err = bak.Chmod(fi.Mode()); err != nil {
+		if _, err = io.Copy(bak, bytes.NewReader(out)); err != nil {
 			return err
+		} else {
+			return os.Rename(bak.Name(), path)
 		}
 	}
-
-	_, err = io.Copy(bak, bytes.NewReader(out))
-	if err != nil {
-		return err
-	}
-
-	err = os.Rename(bak.Name(), path)
-
-	return err
 }
 
 func runFormat(cmd *cobra.Command, args []string) error {
@@ -123,7 +99,7 @@ func runFormat(cmd *cobra.Command, args []string) error {
 	}
 
 	w := walker{
-		Write: viper.GetBool("write"),
+		WriteToFile: viper.GetBool("write"),
 	}
 
 	for _, arg := range args {

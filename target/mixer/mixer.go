@@ -51,7 +51,7 @@ func (a *Mixer) CanCompile(req ast.Request) bool {
 }
 
 // MoveCost implements a Device
-func (a *Mixer) MoveCost(from target.Device) int {
+func (a *Mixer) MoveCost(from target.Device) int64 {
 	if from == a {
 		return 0
 	}
@@ -243,7 +243,7 @@ func (a *Mixer) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, e
 		return nil, err
 	}
 
-	return target.SequentialOrder(mix), nil
+	return []target.Inst{mix}, nil
 }
 
 func (a *Mixer) saveFile(name string) ([]byte, error) {

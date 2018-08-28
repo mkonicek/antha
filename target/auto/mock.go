@@ -3,7 +3,7 @@ package auto
 import (
 	"fmt"
 	"github.com/antha-lang/antha/target"
-	"github.com/antha-lang/antha/target/platereader"
+	"github.com/antha-lang/antha/target/woplatereader"
 	"github.com/ghodss/yaml"
 	"io/ioutil"
 )
@@ -45,8 +45,8 @@ func (a *MockDevice) ToDevice() (target.Device, error) {
 
 	// Very basic for now
 	switch a.DeviceClass {
-	case "antha.platereader.v1":
-		return &platereader.PlateReader{}, nil
+	case "antha.woplatereader.v1":
+		return woplatereader.NewWOPlateReader(), nil
 	}
 
 	return nil, fmt.Errorf("unknown mock device class: '%s'", a.DeviceClass)

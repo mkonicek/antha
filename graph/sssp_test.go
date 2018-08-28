@@ -14,7 +14,7 @@ func TestShortestPaths(t *testing.T) {
 		"f": {"g"},
 	})
 	type edge struct{ A, B string }
-	weights := map[edge]int{
+	weights := map[edge]int64{
 		{A: "a", B: "b"}: 1,
 		{A: "a", B: "c"}: 10,
 		{A: "b", B: "d"}: 20,
@@ -25,7 +25,7 @@ func TestShortestPaths(t *testing.T) {
 		{A: "f", B: "g"}: 1,
 	}
 
-	edist := map[string]int{
+	edist := map[string]int64{
 		"a": 0,
 		"b": 1,
 		"c": 10,
@@ -38,7 +38,7 @@ func TestShortestPaths(t *testing.T) {
 	dist := ShortestPath(ShortestPathOpt{
 		Graph:   g,
 		Sources: []Node{"a"},
-		Weight: func(x, y Node) int {
+		Weight: func(x, y Node) int64 {
 			k := edge{A: x.(string), B: y.(string)}
 			return weights[k]
 		},

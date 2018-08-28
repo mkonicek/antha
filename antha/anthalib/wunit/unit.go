@@ -14,7 +14,7 @@ type Unit struct {
 	base       string   //the SI unit for this dimension, or derived one if there isn't one
 	prefix     SIPrefix //the SI prefix which is applied to the symbol
 	multiplier float64  //value to multiply by to convert "symbol"s to "base", e.g. 60 for min (SI unit = s)
-	exponent   int      //the exponent for the prefix, 1 unless the prefix is inclided in a power, e.g. exponent=2 for "m^2"
+	exponent   int      //the exponent for the prefix. 1 unless the prefix is grouped with a unit that is raised to a power, e.g. for "m^2" exponent=2 such that 1 m^2 = 10^6 mm^2
 }
 
 // MarshalJSON marshal the unit as a JSON string

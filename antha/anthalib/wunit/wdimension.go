@@ -140,19 +140,14 @@ func DivideVolume(v Volume, factor float64) (newvolume Volume) {
 // An error is returned if the volume is infinity or not a number.
 func DivideVolumes(vol1, vol2 Volume) (float64, error) {
 	if vol1.Unit().BaseSIUnit() != vol2.Unit().BaseSIUnit() {
-		return -1, errors.Errorf("cannot divide volumes: units of %s and %s unequal.", vol1.ToString(), vol2.ToString())
-	}
-	factor := vol1.SIValue() / vol2.SIValue()
-
-	if math.IsInf(factor, 0) {
-		return 0, errors.Errorf("infinity value found dividing volumes %s and %s", vol1.ToString(), vol2.ToString())
+		return 0, errors.Errorf("cannot divide volumes with incompatible units %v and %v", vol1.Unit(), vol2.Unit())
 	}
 
-	if math.IsNaN(factor) {
-		return 0, errors.Errorf("NaN value found dividing volumes %s and %s", vol1.ToString(), vol2.ToString())
+	if vol2.IsZero() {
+		return 0, errors.Errorf("while dividing volume %s by %s: cannot divide by zero", vol1, vol2)
 	}
 
-	return factor, nil
+	return vol1.SIValue() / vol2.SIValue(), nil
 }
 
 func (c Concentration) Dup() Concentration {
@@ -189,7 +184,7 @@ func DivideConcentrations(conc1, conc2 Concentration) (float64, error) {
 	if conc2.IsZero() {
 		return 0, errors.Errorf("while dividing concentrations %s and %s: cannot divide by zero", conc1, conc2)
 	}
-	return conc1.RawValue() / conc2.ConvertTo(conc1.Unit()), nil
+	return conc1.SIValue() / conc2.SIValue(), nil
 }
 
 // AddConcentrations adds a variable number of concentrations from an original concentration.

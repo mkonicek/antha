@@ -249,7 +249,7 @@ func (cm *ConcreteMeasurement) IsNil() bool {
 }
 
 func (cm *ConcreteMeasurement) IsZero() bool {
-	if isNil(cm) || cm.Mvalue < 0.00000000001 {
+	if isNil(cm) || math.Abs(cm.Mvalue) < 0.00000000001 {
 		return true
 	}
 	return false

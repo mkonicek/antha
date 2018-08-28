@@ -1198,7 +1198,8 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 		volb.Subtract(vola)
 		vmap2[k] = vola
 
-		if !volb.IsZero() {
+		//IsZero checks that volb is more than a small delta away from zero
+		if volb.GreaterThan(wunit.ZeroVolume()) && !volb.IsZero() {
 			vmap3[k] = volb
 		}
 		// toggle HERE for DEBUG

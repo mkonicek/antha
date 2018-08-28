@@ -503,7 +503,7 @@ var systemAliases = unitAliass{
 	},
 	"Length": {
 		{
-			BaseSymbol: "\"",
+			BaseSymbol: `"`,
 			BaseTarget: "in",
 		},
 	},

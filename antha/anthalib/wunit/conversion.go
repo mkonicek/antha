@@ -61,7 +61,7 @@ func VolumeForTargetMass(targetMass Mass, stockConc Concentration) (Volume, erro
 	} else if !targetMass.Unit().CompatibleWith(grams) {
 		return Volume{}, errors.Errorf("invalid target mass units %v: must be based on %v", targetMass.Unit(), grams)
 	} else {
-		return Volume{NewMeasurement(targetMass.ConvertTo(grams)/stockConc.ConvertTo(gramsPerULitre), "ul")}, nil
+		return NewVolume(targetMass.ConvertTo(grams)/stockConc.ConvertTo(gramsPerULitre), "ul"), nil
 	}
 }
 

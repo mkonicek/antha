@@ -2,24 +2,24 @@ package wunit
 
 import "math"
 
-type unitDef struct {
-	Name             string
-	Symbol           string
-	SISymbol         string //the canonincal form for the unit which can include a prefix, defaults to Symbol
-	Prefixes         []string
-	ExponentMinusOne int //such that default exponent is one
+type baseUnit struct {
+	Name     string
+	Symbol   string
+	SISymbol string //the canonincal form for the unit which can include a prefix, defaults to Symbol
+	Prefixes []string
+	Exponent int
 }
 
-type unitDefs map[string][]unitDef
+type baseUnits map[string][]baseUnit
 
-func (self unitDefs) AddTo(reg *UnitRegistry) error {
+func (self baseUnits) AddTo(reg *UnitRegistry) error {
 	for mType, defs := range self {
 		for _, unit := range defs {
 			SISymbol := unit.SISymbol
 			if SISymbol == "" {
 				SISymbol = unit.Symbol
 			}
-			if err := reg.DeclareUnit(mType, unit.Name, unit.Symbol, SISymbol, unit.Prefixes, unit.ExponentMinusOne+1); err != nil {
+			if err := reg.DeclareUnit(mType, unit.Name, unit.Symbol, SISymbol, unit.Prefixes, unit.Exponent); err != nil {
 				return err
 			}
 		}
@@ -27,23 +27,26 @@ func (self unitDefs) AddTo(reg *UnitRegistry) error {
 	return nil
 }
 
-var systemUnits = unitDefs{
+var systemUnits = baseUnits{
 	"Concentration": {
 		{
 			Name:     "grams per litre",
 			Symbol:   "g/l",
 			SISymbol: "kg/l",
 			Prefixes: allPrefixes,
+			Exponent: 1,
 		},
 		{
 			Name:     "moles per litre",
 			Symbol:   "Mol/l",
 			Prefixes: allPrefixes,
+			Exponent: 1,
 		},
 		{
 			Name:     "units per litre",
 			Symbol:   "U/l",
 			Prefixes: allPrefixes,
+			Exponent: 1,
 		},
 		{
 			Name:   "relative concentration",
@@ -59,6 +62,7 @@ var systemUnits = unitDefs{
 			Name:     "litre",
 			Symbol:   "l",
 			Prefixes: allPrefixes,
+			Exponent: 1,
 		},
 	},
 	"Mass": {
@@ -67,6 +71,7 @@ var systemUnits = unitDefs{
 			Symbol:   "g",
 			SISymbol: "kg",
 			Prefixes: allPrefixes,
+			Exponent: 1,
 		},
 	},
 	"Density": {
@@ -75,6 +80,7 @@ var systemUnits = unitDefs{
 			Symbol:   "g/m^3",
 			SISymbol: "kg/m^3",
 			Prefixes: allPrefixes,
+			Exponent: 1,
 		},
 	},
 	"Length": {
@@ -82,14 +88,15 @@ var systemUnits = unitDefs{
 			Name:     "metre",
 			Symbol:   "m",
 			Prefixes: allPrefixes,
+			Exponent: 1,
 		},
 	},
 	"Area": {
 		{
-			Name:             "metre squared",
-			Symbol:           "m^2",
-			Prefixes:         allPrefixes,
-			ExponentMinusOne: 1,
+			Name:     "metre squared",
+			Symbol:   "m^2",
+			Prefixes: allPrefixes,
+			Exponent: 2,
 		},
 	},
 	"Temperature": {
@@ -103,6 +110,7 @@ var systemUnits = unitDefs{
 			Name:     "seconds",
 			Symbol:   "s",
 			Prefixes: []string{"y", "z", "a", "f", "p", "n", "u", "m"},
+			Exponent: 1,
 		},
 	},
 	"Moles": {
@@ -110,6 +118,7 @@ var systemUnits = unitDefs{
 			Name:     "moles",
 			Symbol:   "Mol",
 			Prefixes: allPrefixes,
+			Exponent: 1,
 		},
 	},
 	"Angle": {
@@ -129,6 +138,7 @@ var systemUnits = unitDefs{
 			Name:     "joules",
 			Symbol:   "J",
 			Prefixes: allPrefixes,
+			Exponent: 1,
 		},
 	},
 	"Force": {
@@ -136,6 +146,7 @@ var systemUnits = unitDefs{
 			Name:     "newtons",
 			Symbol:   "N",
 			Prefixes: allPrefixes,
+			Exponent: 1,
 		},
 	},
 	"Pressure": {
@@ -143,6 +154,7 @@ var systemUnits = unitDefs{
 			Name:     "pascals",
 			Symbol:   "Pa",
 			Prefixes: allPrefixes,
+			Exponent: 1,
 		},
 	},
 	"SpecificHeatCapacity": {
@@ -150,6 +162,7 @@ var systemUnits = unitDefs{
 			Name:     "joules per kilogram per degrees celsius",
 			Symbol:   "J/kg*C",
 			Prefixes: allPrefixes,
+			Exponent: 1,
 		},
 	},
 	"Velocity": {
@@ -157,6 +170,7 @@ var systemUnits = unitDefs{
 			Name:     "meters per second",
 			Symbol:   "m/s",
 			Prefixes: allPrefixes,
+			Exponent: 1,
 		},
 	},
 	"FlowRate": {
@@ -164,6 +178,7 @@ var systemUnits = unitDefs{
 			Name:     "litres per second",
 			Symbol:   "l/s",
 			Prefixes: allPrefixes,
+			Exponent: 1,
 		},
 	},
 	"Rate": {
@@ -177,25 +192,26 @@ var systemUnits = unitDefs{
 			Name:     "volts",
 			Symbol:   "V",
 			Prefixes: allPrefixes,
+			Exponent: 1,
 		},
 	},
 }
 
-type derivedUnitDef struct {
+type derivedUnit struct {
 	Name             string
 	Symbol           string
 	Prefixes         []string
-	ExponentMinusOne int //such that default exponent is one
+	Exponent         int
 	TargetSymbol     string
 	NewUnitInTargets float64
 }
 
-type derivedUnitDefs map[string][]derivedUnitDef
+type derivedUnits map[string][]derivedUnit
 
-func (self derivedUnitDefs) AddTo(reg *UnitRegistry) error {
+func (self derivedUnits) AddTo(reg *UnitRegistry) error {
 	for mType, defs := range self {
 		for _, du := range defs {
-			if err := reg.DeclareDerivedUnit(mType, du.Name, du.Symbol, du.Prefixes, du.ExponentMinusOne+1, du.TargetSymbol, du.NewUnitInTargets); err != nil {
+			if err := reg.DeclareDerivedUnit(mType, du.Name, du.Symbol, du.Prefixes, du.Exponent, du.TargetSymbol, du.NewUnitInTargets); err != nil {
 				return err
 			}
 		}
@@ -203,12 +219,13 @@ func (self derivedUnitDefs) AddTo(reg *UnitRegistry) error {
 	return nil
 }
 
-var systemDerivedUnits = derivedUnitDefs{
+var systemDerivedUnits = derivedUnits{
 	"Concentration": {
 		{
 			Name:             "grams per mililitre",
 			Symbol:           "g/ml",
 			Prefixes:         allPrefixes,
+			Exponent:         1,
 			TargetSymbol:     "kg/l",
 			NewUnitInTargets: 1.0,
 		},
@@ -216,6 +233,7 @@ var systemDerivedUnits = derivedUnitDefs{
 			Name:             "grams per microlitre",
 			Symbol:           "g/ul",
 			Prefixes:         allPrefixes,
+			Exponent:         1,
 			TargetSymbol:     "Mg/l",
 			NewUnitInTargets: 1.0,
 		},
@@ -223,6 +241,7 @@ var systemDerivedUnits = derivedUnitDefs{
 			Name:             "grams per nanolitre",
 			Symbol:           "g/nl",
 			Prefixes:         allPrefixes,
+			Exponent:         1,
 			TargetSymbol:     "Gg/l",
 			NewUnitInTargets: 1.0,
 		},
@@ -230,6 +249,7 @@ var systemDerivedUnits = derivedUnitDefs{
 			Name:             "moles per mililitre",
 			Symbol:           "Mol/ml",
 			Prefixes:         allPrefixes,
+			Exponent:         1,
 			TargetSymbol:     "kMol/l",
 			NewUnitInTargets: 1.0,
 		},
@@ -237,6 +257,7 @@ var systemDerivedUnits = derivedUnitDefs{
 			Name:             "moles per microlitre",
 			Symbol:           "Mol/ul",
 			Prefixes:         allPrefixes,
+			Exponent:         1,
 			TargetSymbol:     "MMol/l",
 			NewUnitInTargets: 1.0,
 		},
@@ -244,6 +265,7 @@ var systemDerivedUnits = derivedUnitDefs{
 			Name:             "moles per nanolitre",
 			Symbol:           "Mol/nl",
 			Prefixes:         allPrefixes,
+			Exponent:         1,
 			TargetSymbol:     "GMol/l",
 			NewUnitInTargets: 1.0,
 		},
@@ -251,6 +273,7 @@ var systemDerivedUnits = derivedUnitDefs{
 			Name:             "units per mililitre",
 			Symbol:           "U/ml",
 			Prefixes:         allPrefixes,
+			Exponent:         1,
 			TargetSymbol:     "kU/l",
 			NewUnitInTargets: 1.0,
 		},
@@ -258,6 +281,7 @@ var systemDerivedUnits = derivedUnitDefs{
 			Name:             "units per microlitre",
 			Symbol:           "U/ul",
 			Prefixes:         allPrefixes,
+			Exponent:         1,
 			TargetSymbol:     "MU/l",
 			NewUnitInTargets: 1.0,
 		},
@@ -265,6 +289,7 @@ var systemDerivedUnits = derivedUnitDefs{
 			Name:             "units per nanolitre",
 			Symbol:           "U/nl",
 			Prefixes:         allPrefixes,
+			Exponent:         1,
 			TargetSymbol:     "GU/l",
 			NewUnitInTargets: 1.0,
 		},
@@ -280,7 +305,7 @@ var systemDerivedUnits = derivedUnitDefs{
 			Name:             "meters cubed",
 			Symbol:           "m^3",
 			Prefixes:         allPrefixes,
-			ExponentMinusOne: 2,
+			Exponent:         3,
 			TargetSymbol:     "l",
 			NewUnitInTargets: 1000.0,
 		},
@@ -340,6 +365,7 @@ var systemDerivedUnits = derivedUnitDefs{
 			Name:             "bar",
 			Symbol:           "bar",
 			Prefixes:         allPrefixes,
+			Exponent:         1,
 			TargetSymbol:     "kPa",
 			NewUnitInTargets: 100.0,
 		},
@@ -349,6 +375,7 @@ var systemDerivedUnits = derivedUnitDefs{
 			Name:             "litres per minute",
 			Symbol:           "l/min",
 			Prefixes:         allPrefixes,
+			Exponent:         1,
 			TargetSymbol:     "l/s",
 			NewUnitInTargets: 1 / 60.0,
 		},
@@ -356,6 +383,7 @@ var systemDerivedUnits = derivedUnitDefs{
 			Name:             "litres per hour",
 			Symbol:           "l/h",
 			Prefixes:         allPrefixes,
+			Exponent:         1,
 			TargetSymbol:     "l/s",
 			NewUnitInTargets: 1 / 3600.0,
 		},
@@ -376,15 +404,15 @@ var systemDerivedUnits = derivedUnitDefs{
 	},
 }
 
-type aliasDef struct {
+type unitAlias struct {
 	BaseSymbol string
 	BaseTarget string
 	Prefixes   []string
 }
 
-type aliasDefs map[string][]aliasDef
+type unitAliass map[string][]unitAlias
 
-func (self aliasDefs) AddTo(reg *UnitRegistry) error {
+func (self unitAliass) AddTo(reg *UnitRegistry) error {
 	for mType, defs := range self {
 		for _, a := range defs {
 			if err := reg.DeclareAlias(mType, a.BaseSymbol, a.BaseTarget, a.Prefixes); err != nil {
@@ -395,7 +423,7 @@ func (self aliasDefs) AddTo(reg *UnitRegistry) error {
 	return nil
 }
 
-var systemAliases = aliasDefs{
+var systemAliases = unitAliass{
 	"Concentration": {
 		{
 			BaseSymbol: "g/L",

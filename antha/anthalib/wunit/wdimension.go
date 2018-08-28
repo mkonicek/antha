@@ -192,7 +192,8 @@ func DivideConcentrations(conc1, conc2 Concentration) (float64, error) {
 func AddConcentrations(concs ...Concentration) (Concentration, error) {
 
 	if len(concs) == 0 {
-		return NewConcentration(0.0, "g/ul"), nil
+		//since there were no concentrations, we don't know what units to return, so return SI standard ones
+		return NewConcentration(0.0, "kg/l"), nil
 	}
 
 	ret := NewConcentration(0.0, concs[0].Unit().PrefixedSymbol())

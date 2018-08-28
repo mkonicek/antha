@@ -359,6 +359,10 @@ type zOffsetTest struct {
 	expectedDispenseZOffset string
 }
 
+func (self zOffsetTest) String() string {
+	return fmt.Sprintf("%dx %v with policy=%q", self.numberOfTransfers, self.volume, self.liquidType)
+}
+
 var offsetTests []zOffsetTest = []zOffsetTest{
 	{
 		liquidType:              "multiwater",
@@ -513,21 +517,15 @@ func TestMultiZOffset2(t *testing.T) {
 		}
 		for i, aspirationStep := range aspirateInstructions {
 			if !reflect.DeepEqual(aspirationStep.OffsetZ, test.expectedAspirateZOffset) {
-				t.Error("for test: ", text.PrettyPrint(aspirationStep), "\n",
-					"aspiration step: ", i, "\n",
-					"expected Z offset for aspirate:", test.expectedAspirateZOffset, "\n",
-					"got: ", aspirationStep.OffsetZ, "\n",
-				)
+				t.Errorf("for test: %v\naspiration step: %d\nexpected Z offset for aspirate: %q\ngot: %q",
+					test, i, test.expectedAspirateZOffset, aspirationStep.OffsetZ)
 			}
 		}
 
 		for i, dispenseStep := range dispenseInstructions {
 			if !reflect.DeepEqual(dispenseStep.OffsetZ, test.expectedDispenseZOffset) {
-				t.Error(" for test: ", text.PrettyPrint(dispenseStep), "\n",
-					"dispense step: ", i, "\n",
-					"expected Z offset for dispense: ", test.expectedDispenseZOffset, "\n",
-					"got: ", dispenseStep.OffsetZ, "\n",
-				)
+				t.Errorf("for test: %v\ndispense step: %d\nexpected Z offset for dispense: %q\ngot: %q",
+					test, i, test.expectedDispenseZOffset, dispenseStep.OffsetZ)
 			}
 		}
 

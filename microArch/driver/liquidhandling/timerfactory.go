@@ -40,21 +40,22 @@ func makeNullTimer() LHTimer {
 
 func makeGilsonPipetmaxTimer() LHTimer {
 	t := NewTimer()
-	t.Times[LDT], _ = time.ParseDuration("8s") // LDT
-	t.Times[UDT], _ = time.ParseDuration("6s") // UDT
+	t.Times[INI], _ = time.ParseDuration("5s") // INI
+	t.Times[LDT], _ = time.ParseDuration("7s") // LDT
+	t.Times[UDT], _ = time.ParseDuration("7s") // UDT
 	t.Times[SUK], _ = time.ParseDuration("4s") // SUK
 	t.Times[BLW], _ = time.ParseDuration("4s") // BLW
 
 	// lower level instructions
 
-	t.Times[ASP], _ = time.ParseDuration("4s")   // ASP
-	t.Times[DSP], _ = time.ParseDuration("4s")   // DSP
-	t.Times[BLO], _ = time.ParseDuration("4s")   // BLO
-	t.Times[PTZ], _ = time.ParseDuration("0.5s") // PTZ
-	t.Times[MOV], _ = time.ParseDuration("2s")   // MOV
-	t.Times[LOD], _ = time.ParseDuration("6s")   // LOAD
-	t.Times[ULD], _ = time.ParseDuration("8s")   // UNLOAD
-	t.Times[MIX], _ = time.ParseDuration("6s")   // MIX
+	t.Times[ASP], _ = time.ParseDuration("0.8s") // ASP
+	t.Times[DSP], _ = time.ParseDuration("0.8s") // DSP
+	t.Times[BLO], _ = time.ParseDuration("0.7s") // BLO
+	t.Times[PTZ], _ = time.ParseDuration("0s")   // PTZ
+	t.Times[MOV], _ = time.ParseDuration("2.3s") // MOV	-- using mean figures for horizontal (0.94) and 2x vertical (1.36)
+	t.Times[LOD], _ = time.ParseDuration("5.6s") // LOAD
+	t.Times[ULD], _ = time.ParseDuration("5.4s") // UNLOAD
+	t.Times[MIX], _ = time.ParseDuration("1.5s") // MIX
 
 	return t
 }

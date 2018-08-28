@@ -172,11 +172,11 @@ func TestHarderGraphEliminate(t *testing.T) {
 	}
 
 	root := "v0"
-	depth := 7
+	depth := int64(7)
 	dist := ShortestPath(ShortestPathOpt{
 		Graph:   tr,
 		Sources: []Node{root},
-		Weight: func(x, y Node) int {
+		Weight: func(x, y Node) int64 {
 			return 1
 		},
 	})

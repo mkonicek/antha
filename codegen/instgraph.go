@@ -43,7 +43,7 @@ func (a *instGraph) Out(n graph.Node, i int) graph.Node {
 }
 
 // addInsts adds instructions to the graph
-func (a *instGraph) addInsts(insts []target.Inst) {
+func (a *instGraph) addInsts(insts target.Insts) {
 	// Add dependencies
 	for _, in := range insts {
 		a.dependsOn[in] = append(a.dependsOn[in], in.DependsOn()...)
@@ -68,15 +68,15 @@ func (a *instGraph) addInsts(insts []target.Inst) {
 	}
 }
 
-func (a *instGraph) addInitializers(insts []target.Inst) {
+func (a *instGraph) addInitializers(insts target.Insts) {
 	if len(insts) == 0 {
 		return
 	}
 
-	insts = target.SequentialOrder(insts...)
+	insts.SequentialOrder()
 	last := insts[len(insts)-1]
 	for _, inst := range a.entry {
-		appendToDepends(inst, last)
+		inst.AppendDependsOn(last)
 		// Unlike other cases, inst has already been added to graph, so update
 		// data explicitly
 		a.dependsOn[inst] = append(a.dependsOn[inst], last)
@@ -84,21 +84,21 @@ func (a *instGraph) addInitializers(insts []target.Inst) {
 	a.addInsts(insts)
 }
 
-func (a *instGraph) addFinalizers(insts []target.Inst) {
+func (a *instGraph) addFinalizers(insts target.Insts) {
 	if len(insts) == 0 {
 		return
 	}
 
-	insts = target.SequentialOrder(insts...)
+	insts.SequentialOrder()
 	first := insts[0]
 	for _, inst := range a.exit {
-		appendToDepends(first, inst)
+		first.AppendDependsOn(inst)
 	}
 	a.addInsts(insts)
 }
 
 // addRootedInsts adds instructions that correspond to a particular graph Node
-func (a *instGraph) addRootedInsts(root graph.Node, insts []target.Inst) {
+func (a *instGraph) addRootedInsts(root graph.Node, insts target.Insts) {
 	exit := &target.Wait{}
 	entry := &target.Wait{}
 
@@ -109,12 +109,10 @@ func (a *instGraph) addRootedInsts(root graph.Node, insts []target.Inst) {
 		first := insts[0]
 		last := insts[len(insts)-1]
 
-		appendToDepends(first, entry)
-		appendToDepends(exit, last)
+		first.AppendDependsOn(entry)
+		exit.AppendDependsOn(last)
 	}
 
-	var newInsts []target.Inst
-	newInsts = append(newInsts, entry, exit)
-	newInsts = append(newInsts, insts...)
+	newInsts := append(target.Insts{entry, exit}, insts...)
 	a.addInsts(newInsts)
 }

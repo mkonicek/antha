@@ -34,7 +34,7 @@ func (a *QPCRDevice) CanCompile(req ast.Request) bool {
 }
 
 // MoveCost implements a Device
-func (a *QPCRDevice) MoveCost(from target.Device) int {
+func (a *QPCRDevice) MoveCost(from target.Device) int64 {
 	return 0
 }
 
@@ -138,20 +138,21 @@ func callsForInstructions(qpcrInsts []*ast.QPCRInstruction) ([]qpcrCall, error) 
 }
 
 // interpolatePrompts inserts a prompt before each qPCR run.
-func interpolatePrompts(calls []qpcrCall, device target.Device) []target.Inst {
+func interpolatePrompts(calls []qpcrCall, device target.Device) target.Insts {
 
 	// Interpolate a prompt before each qPCR call.
-	var insts []target.Inst
+	var insts target.Insts
 	for _, call := range calls {
-
-		insts = append(insts, &target.Prompt{
-			Message: "Ensure that the experiment file " + call.ExperimentFile + " is configured, then put the plate (" + call.Barcode + ") into qPCR device. Check that the driver software is running. Once ready, accept to start the qPCR analysis.",
-		})
-		insts = append(insts, &target.Run{
-			Dev:   device,
-			Label: "Perform qPCR Analysis",
-			Calls: call.Calls,
-		})
+		insts = append(insts,
+			&target.Prompt{
+				Message: "Ensure that the experiment file " + call.ExperimentFile + " is configured, then put the plate (" + call.Barcode + ") into qPCR device. Check that the driver software is running. Once ready, accept to start the qPCR analysis.",
+			},
+			&target.Run{
+				Dev:   device,
+				Label: "Perform qPCR Analysis",
+				Calls: call.Calls,
+			},
+		)
 	}
 
 	return insts
@@ -174,5 +175,6 @@ func (a *QPCRDevice) Compile(ctx context.Context, nodes []ast.Node) ([]target.In
 
 	// Interpolate a prompt before each qPCR call.
 	promptedInstructions := interpolatePrompts(calls, a)
-	return target.SequentialOrder(promptedInstructions...), nil
+	promptedInstructions.SequentialOrder()
+	return promptedInstructions, nil
 }

@@ -40,7 +40,7 @@ func (self *NewMeasurementTest) Run(t *testing.T, constructor MeasurementConstru
 				t.Errorf("wrong base unit: expected \"%s\", got \"%s\"", e, g)
 			}
 
-			if e, g := self.ExpectedPrefix, m.Unit().Prefix().Name; e != g {
+			if e, g := self.ExpectedPrefix, m.Unit().Prefix().Symbol; e != g {
 				t.Errorf("wrong base prefix: expected \"%s\", got \"%s\"", e, g)
 			}
 
@@ -88,7 +88,7 @@ func TestNewLength(t *testing.T) {
 			Unit:             "m",
 			ExpectedSIValue:  1,
 			ExpectedBaseUnit: "m",
-			ExpectedPrefix:   " ",
+			ExpectedPrefix:   "",
 		},
 		{
 			Value:       1.0,
@@ -107,7 +107,7 @@ func TestNewArea(t *testing.T) {
 			Unit:             "m^2",
 			ExpectedSIValue:  1,
 			ExpectedBaseUnit: "m^2",
-			ExpectedPrefix:   " ",
+			ExpectedPrefix:   "",
 		},
 		{
 			Value:            1.0,
@@ -166,28 +166,28 @@ func TestNewTemperature(t *testing.T) {
 			Unit:             "C",
 			ExpectedSIValue:  1.0,
 			ExpectedBaseUnit: "℃",
-			ExpectedPrefix:   " ",
+			ExpectedPrefix:   "",
 		},
 		{
 			Value:            1.0,
 			Unit:             "˚C",
 			ExpectedSIValue:  1.0,
 			ExpectedBaseUnit: "℃",
-			ExpectedPrefix:   " ",
+			ExpectedPrefix:   "",
 		},
 		{
 			Value:            1.0,
 			Unit:             "℃",
 			ExpectedSIValue:  1.0,
 			ExpectedBaseUnit: "℃",
-			ExpectedPrefix:   " ",
+			ExpectedPrefix:   "",
 		},
 		{
 			Value:            1.0,
 			Unit:             "°C",
 			ExpectedSIValue:  1.0,
 			ExpectedBaseUnit: "℃",
-			ExpectedPrefix:   " ",
+			ExpectedPrefix:   "",
 		},
 		{
 			Value:       1.0,
@@ -206,7 +206,7 @@ func TestNewTime(t *testing.T) {
 			Unit:             "s",
 			ExpectedSIValue:  1.0,
 			ExpectedBaseUnit: "s",
-			ExpectedPrefix:   " ",
+			ExpectedPrefix:   "",
 		},
 		{
 			Value:            1.0,
@@ -220,21 +220,21 @@ func TestNewTime(t *testing.T) {
 			Unit:             "min",
 			ExpectedSIValue:  60.0,
 			ExpectedBaseUnit: "s",
-			ExpectedPrefix:   " ",
+			ExpectedPrefix:   "",
 		},
 		{
 			Value:            1.0,
 			Unit:             "h",
 			ExpectedSIValue:  60.0 * 60.0,
 			ExpectedBaseUnit: "s",
-			ExpectedPrefix:   " ",
+			ExpectedPrefix:   "",
 		},
 		{
 			Value:            1.0,
 			Unit:             "days",
 			ExpectedSIValue:  60.0 * 60.0 * 24.0,
 			ExpectedBaseUnit: "s",
-			ExpectedPrefix:   " ",
+			ExpectedPrefix:   "",
 		},
 		{
 			Value:       1.0,
@@ -334,14 +334,14 @@ func TestNewAngle(t *testing.T) {
 			Unit:             "radians",
 			ExpectedSIValue:  1.0,
 			ExpectedBaseUnit: "rad",
-			ExpectedPrefix:   " ",
+			ExpectedPrefix:   "",
 		},
 		{
 			Value:            180.0,
 			Unit:             "degrees",
 			ExpectedSIValue:  math.Pi,
 			ExpectedBaseUnit: "rad",
-			ExpectedPrefix:   " ",
+			ExpectedPrefix:   "",
 			ConvertToString: map[string]float64{
 				"deg": 180.0,
 			},
@@ -363,7 +363,7 @@ func TestNewAnglularVelocity(t *testing.T) {
 			Unit:             "rpm",
 			ExpectedSIValue:  math.Pi / 30.0,
 			ExpectedBaseUnit: "rad/s",
-			ExpectedPrefix:   " ",
+			ExpectedPrefix:   "",
 			ConvertToString: map[string]float64{
 				"rpm": 1.0,
 			},
@@ -385,7 +385,7 @@ func TestNewEnergy(t *testing.T) {
 			Unit:             "J",
 			ExpectedSIValue:  1.0,
 			ExpectedBaseUnit: "J",
-			ExpectedPrefix:   " ",
+			ExpectedPrefix:   "",
 		},
 		{
 			Value:       1.0,
@@ -404,7 +404,7 @@ func TestNewForce(t *testing.T) {
 			Unit:             "N",
 			ExpectedSIValue:  1.0,
 			ExpectedBaseUnit: "N",
-			ExpectedPrefix:   " ",
+			ExpectedPrefix:   "",
 		},
 		{
 			Value:       1.0,
@@ -423,7 +423,7 @@ func TestNewPressure(t *testing.T) {
 			Unit:             "Pa",
 			ExpectedSIValue:  1.0,
 			ExpectedBaseUnit: "Pa",
-			ExpectedPrefix:   " ",
+			ExpectedPrefix:   "",
 			ConvertToString: map[string]float64{
 				"ubar": 10.0,
 			},
@@ -433,7 +433,7 @@ func TestNewPressure(t *testing.T) {
 			Unit:             "bar",
 			ExpectedSIValue:  100000.0,
 			ExpectedBaseUnit: "Pa",
-			ExpectedPrefix:   " ",
+			ExpectedPrefix:   "",
 		},
 		{
 			Value:       2.7,
@@ -485,7 +485,7 @@ func TestNewSpecificHeatCapacity(t *testing.T) {
 			Unit:             "J/kg*C",
 			ExpectedSIValue:  1.0,
 			ExpectedBaseUnit: "J/kg*C",
-			ExpectedPrefix:   " ",
+			ExpectedPrefix:   "",
 		},
 		{
 			Value:       1.0,
@@ -542,7 +542,7 @@ func TestNewVelocity(t *testing.T) {
 			Unit:             "m/s",
 			ExpectedSIValue:  1.0,
 			ExpectedBaseUnit: "m/s",
-			ExpectedPrefix:   " ",
+			ExpectedPrefix:   "",
 		},
 		{
 			Value:       1.0,
@@ -561,21 +561,21 @@ func TestNewRate(t *testing.T) {
 			Unit:             "/s",
 			ExpectedSIValue:  1.0,
 			ExpectedBaseUnit: "/s",
-			ExpectedPrefix:   " ",
+			ExpectedPrefix:   "",
 		},
 		{
 			Value:            60.0,
 			Unit:             "/min",
 			ExpectedSIValue:  1.0,
 			ExpectedBaseUnit: "/s",
-			ExpectedPrefix:   " ",
+			ExpectedPrefix:   "",
 		},
 		{
 			Value:            3600.0,
 			Unit:             "/h",
 			ExpectedSIValue:  1.0,
 			ExpectedBaseUnit: "/s",
-			ExpectedPrefix:   " ",
+			ExpectedPrefix:   "",
 		},
 		{
 			Value:       1.0,
@@ -598,7 +598,7 @@ func TestNewVoltage(t *testing.T) {
 			Unit:             "V",
 			ExpectedSIValue:  1.0,
 			ExpectedBaseUnit: "V",
-			ExpectedPrefix:   " ",
+			ExpectedPrefix:   "",
 		},
 		{
 			Value:       1.0,

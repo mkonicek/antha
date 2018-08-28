@@ -6,7 +6,7 @@ type baseUnit struct {
 	Name     string
 	Symbol   string
 	SISymbol string //the canonincal form for the unit which can include a prefix, defaults to Symbol
-	Prefixes []string
+	Prefices []SIPrefix
 	Exponent int
 }
 
@@ -19,7 +19,7 @@ func (self baseUnits) AddTo(reg *UnitRegistry) error {
 			if SISymbol == "" {
 				SISymbol = unit.Symbol
 			}
-			if err := reg.DeclareUnit(mType, unit.Name, unit.Symbol, SISymbol, unit.Prefixes, unit.Exponent); err != nil {
+			if err := reg.DeclareUnit(mType, unit.Name, unit.Symbol, SISymbol, unit.Prefices, unit.Exponent); err != nil {
 				return err
 			}
 		}
@@ -27,180 +27,182 @@ func (self baseUnits) AddTo(reg *UnitRegistry) error {
 	return nil
 }
 
-var systemUnits = baseUnits{
-	"Concentration": {
-		{
-			Name:     "grams per litre",
-			Symbol:   "g/l",
-			SISymbol: "kg/l",
-			Prefixes: allPrefixes,
-			Exponent: 1,
+func getSystemUnits() baseUnits {
+	return baseUnits{
+		"Concentration": {
+			{
+				Name:     "grams per litre",
+				Symbol:   "g/l",
+				SISymbol: "kg/l",
+				Prefices: SIPrefices,
+				Exponent: 1,
+			},
+			{
+				Name:     "moles per litre",
+				Symbol:   "Mol/l",
+				Prefices: SIPrefices,
+				Exponent: 1,
+			},
+			{
+				Name:     "units per litre",
+				Symbol:   "U/l",
+				Prefices: SIPrefices,
+				Exponent: 1,
+			},
+			{
+				Name:   "relative concentration",
+				Symbol: "X",
+			},
+			{
+				Name:   "volume ratio",
+				Symbol: "v/v",
+			},
 		},
-		{
-			Name:     "moles per litre",
-			Symbol:   "Mol/l",
-			Prefixes: allPrefixes,
-			Exponent: 1,
+		"Volume": {
+			{
+				Name:     "litre",
+				Symbol:   "l",
+				Prefices: SIPrefices,
+				Exponent: 1,
+			},
 		},
-		{
-			Name:     "units per litre",
-			Symbol:   "U/l",
-			Prefixes: allPrefixes,
-			Exponent: 1,
+		"Mass": {
+			{
+				Name:     "gram",
+				Symbol:   "g",
+				SISymbol: "kg",
+				Prefices: SIPrefices,
+				Exponent: 1,
+			},
 		},
-		{
-			Name:   "relative concentration",
-			Symbol: "X",
+		"Density": {
+			{
+				Name:     "grams per meter cubed",
+				Symbol:   "g/m^3",
+				SISymbol: "kg/m^3",
+				Prefices: SIPrefices,
+				Exponent: 1,
+			},
 		},
-		{
-			Name:   "volume ratio",
-			Symbol: "v/v",
+		"Length": {
+			{
+				Name:     "metre",
+				Symbol:   "m",
+				Prefices: SIPrefices,
+				Exponent: 1,
+			},
 		},
-	},
-	"Volume": {
-		{
-			Name:     "litre",
-			Symbol:   "l",
-			Prefixes: allPrefixes,
-			Exponent: 1,
+		"Area": {
+			{
+				Name:     "metre squared",
+				Symbol:   "m^2",
+				Prefices: SIPrefices,
+				Exponent: 2,
+			},
 		},
-	},
-	"Mass": {
-		{
-			Name:     "gram",
-			Symbol:   "g",
-			SISymbol: "kg",
-			Prefixes: allPrefixes,
-			Exponent: 1,
+		"Temperature": {
+			{
+				Name:   "celsius",
+				Symbol: "℃",
+			},
 		},
-	},
-	"Density": {
-		{
-			Name:     "grams per meter cubed",
-			Symbol:   "g/m^3",
-			SISymbol: "kg/m^3",
-			Prefixes: allPrefixes,
-			Exponent: 1,
+		"Time": {
+			{
+				Name:     "seconds",
+				Symbol:   "s",
+				Prefices: []SIPrefix{Yocto, Zepto, Atto, Femto, Pico, Nano, Micro, Milli, None},
+				Exponent: 1,
+			},
 		},
-	},
-	"Length": {
-		{
-			Name:     "metre",
-			Symbol:   "m",
-			Prefixes: allPrefixes,
-			Exponent: 1,
+		"Moles": {
+			{
+				Name:     "moles",
+				Symbol:   "Mol",
+				Prefices: SIPrefices,
+				Exponent: 1,
+			},
 		},
-	},
-	"Area": {
-		{
-			Name:     "metre squared",
-			Symbol:   "m^2",
-			Prefixes: allPrefixes,
-			Exponent: 2,
+		"Angle": {
+			{
+				Name:   "radians",
+				Symbol: "rad",
+			},
 		},
-	},
-	"Temperature": {
-		{
-			Name:   "celsius",
-			Symbol: "℃",
+		"AngularVelocity": {
+			{
+				Name:   "radians per second",
+				Symbol: "rad/s",
+			},
 		},
-	},
-	"Time": {
-		{
-			Name:     "seconds",
-			Symbol:   "s",
-			Prefixes: []string{"y", "z", "a", "f", "p", "n", "u", "m"},
-			Exponent: 1,
+		"Energy": {
+			{
+				Name:     "joules",
+				Symbol:   "J",
+				Prefices: SIPrefices,
+				Exponent: 1,
+			},
 		},
-	},
-	"Moles": {
-		{
-			Name:     "moles",
-			Symbol:   "Mol",
-			Prefixes: allPrefixes,
-			Exponent: 1,
+		"Force": {
+			{
+				Name:     "newtons",
+				Symbol:   "N",
+				Prefices: SIPrefices,
+				Exponent: 1,
+			},
 		},
-	},
-	"Angle": {
-		{
-			Name:   "radians",
-			Symbol: "rad",
+		"Pressure": {
+			{
+				Name:     "pascals",
+				Symbol:   "Pa",
+				Prefices: SIPrefices,
+				Exponent: 1,
+			},
 		},
-	},
-	"AngularVelocity": {
-		{
-			Name:   "radians per second",
-			Symbol: "rad/s",
+		"SpecificHeatCapacity": {
+			{
+				Name:     "joules per kilogram per degrees celsius",
+				Symbol:   "J/kg*C",
+				Prefices: SIPrefices,
+				Exponent: 1,
+			},
 		},
-	},
-	"Energy": {
-		{
-			Name:     "joules",
-			Symbol:   "J",
-			Prefixes: allPrefixes,
-			Exponent: 1,
+		"Velocity": {
+			{
+				Name:     "meters per second",
+				Symbol:   "m/s",
+				Prefices: SIPrefices,
+				Exponent: 1,
+			},
 		},
-	},
-	"Force": {
-		{
-			Name:     "newtons",
-			Symbol:   "N",
-			Prefixes: allPrefixes,
-			Exponent: 1,
+		"FlowRate": {
+			{
+				Name:     "litres per second",
+				Symbol:   "l/s",
+				Prefices: SIPrefices,
+				Exponent: 1,
+			},
 		},
-	},
-	"Pressure": {
-		{
-			Name:     "pascals",
-			Symbol:   "Pa",
-			Prefixes: allPrefixes,
-			Exponent: 1,
+		"Rate": {
+			{
+				Name:   "per second",
+				Symbol: "/s",
+			},
 		},
-	},
-	"SpecificHeatCapacity": {
-		{
-			Name:     "joules per kilogram per degrees celsius",
-			Symbol:   "J/kg*C",
-			Prefixes: allPrefixes,
-			Exponent: 1,
+		"Voltage": {
+			{
+				Name:     "volts",
+				Symbol:   "V",
+				Prefices: SIPrefices,
+				Exponent: 1,
+			},
 		},
-	},
-	"Velocity": {
-		{
-			Name:     "meters per second",
-			Symbol:   "m/s",
-			Prefixes: allPrefixes,
-			Exponent: 1,
-		},
-	},
-	"FlowRate": {
-		{
-			Name:     "litres per second",
-			Symbol:   "l/s",
-			Prefixes: allPrefixes,
-			Exponent: 1,
-		},
-	},
-	"Rate": {
-		{
-			Name:   "per second",
-			Symbol: "/s",
-		},
-	},
-	"Voltage": {
-		{
-			Name:     "volts",
-			Symbol:   "V",
-			Prefixes: allPrefixes,
-			Exponent: 1,
-		},
-	},
+	}
 }
 
 type derivedUnit struct {
 	Name         string
 	Symbol       string
-	Prefixes     []string
+	Prefices     []SIPrefix
 	Exponent     int
 	TargetSymbol string
 	TargetScale  float64 //i.e. how many target units are in 1 derived unit
@@ -211,7 +213,7 @@ type derivedUnits map[string][]derivedUnit
 func (self derivedUnits) AddTo(reg *UnitRegistry) error {
 	for mType, defs := range self {
 		for _, du := range defs {
-			if err := reg.DeclareDerivedUnit(mType, du.Name, du.Symbol, du.Prefixes, du.Exponent, du.TargetSymbol, du.TargetScale); err != nil {
+			if err := reg.DeclareDerivedUnit(mType, du.Name, du.Symbol, du.Prefices, du.Exponent, du.TargetSymbol, du.TargetScale); err != nil {
 				return err
 			}
 		}
@@ -219,203 +221,205 @@ func (self derivedUnits) AddTo(reg *UnitRegistry) error {
 	return nil
 }
 
-var systemDerivedUnits = derivedUnits{
-	"Concentration": {
-		{
-			Name:         "grams per mililitre",
-			Symbol:       "g/ml",
-			Prefixes:     allPrefixes,
-			Exponent:     1,
-			TargetSymbol: "kg/l",
-			TargetScale:  1.0,
+func getSystemDerivedUnits() derivedUnits {
+	return derivedUnits{
+		"Concentration": {
+			{
+				Name:         "grams per mililitre",
+				Symbol:       "g/ml",
+				Prefices:     SIPrefices,
+				Exponent:     1,
+				TargetSymbol: "kg/l",
+				TargetScale:  1.0,
+			},
+			{
+				Name:         "grams per microlitre",
+				Symbol:       "g/ul",
+				Prefices:     SIPrefices,
+				Exponent:     1,
+				TargetSymbol: "Mg/l",
+				TargetScale:  1.0,
+			},
+			{
+				Name:         "grams per nanolitre",
+				Symbol:       "g/nl",
+				Prefices:     SIPrefices,
+				Exponent:     1,
+				TargetSymbol: "Gg/l",
+				TargetScale:  1.0,
+			},
+			{
+				Name:         "moles per mililitre",
+				Symbol:       "Mol/ml",
+				Prefices:     SIPrefices,
+				Exponent:     1,
+				TargetSymbol: "kMol/l",
+				TargetScale:  1.0,
+			},
+			{
+				Name:         "moles per microlitre",
+				Symbol:       "Mol/ul",
+				Prefices:     SIPrefices,
+				Exponent:     1,
+				TargetSymbol: "MMol/l",
+				TargetScale:  1.0,
+			},
+			{
+				Name:         "moles per nanolitre",
+				Symbol:       "Mol/nl",
+				Prefices:     SIPrefices,
+				Exponent:     1,
+				TargetSymbol: "GMol/l",
+				TargetScale:  1.0,
+			},
+			{
+				Name:         "units per mililitre",
+				Symbol:       "U/ml",
+				Prefices:     SIPrefices,
+				Exponent:     1,
+				TargetSymbol: "kU/l",
+				TargetScale:  1.0,
+			},
+			{
+				Name:         "units per microlitre",
+				Symbol:       "U/ul",
+				Prefices:     SIPrefices,
+				Exponent:     1,
+				TargetSymbol: "MU/l",
+				TargetScale:  1.0,
+			},
+			{
+				Name:         "units per nanolitre",
+				Symbol:       "U/nl",
+				Prefices:     SIPrefices,
+				Exponent:     1,
+				TargetSymbol: "GU/l",
+				TargetScale:  1.0,
+			},
+			{
+				Name:         "percentage weight of solution",
+				Symbol:       "% w/v",
+				TargetSymbol: "g/l",
+				TargetScale:  10.0,
+			},
 		},
-		{
-			Name:         "grams per microlitre",
-			Symbol:       "g/ul",
-			Prefixes:     allPrefixes,
-			Exponent:     1,
-			TargetSymbol: "Mg/l",
-			TargetScale:  1.0,
+		"Volume": {
+			{
+				Name:         "meters cubed",
+				Symbol:       "m^3",
+				Prefices:     SIPrefices,
+				Exponent:     3,
+				TargetSymbol: "l",
+				TargetScale:  1000.0,
+			},
 		},
-		{
-			Name:         "grams per nanolitre",
-			Symbol:       "g/nl",
-			Prefixes:     allPrefixes,
-			Exponent:     1,
-			TargetSymbol: "Gg/l",
-			TargetScale:  1.0,
+		"Length": {
+			{
+				Name:         "inches",
+				Symbol:       "in",
+				TargetSymbol: "mm",
+				TargetScale:  25.4,
+			},
 		},
-		{
-			Name:         "moles per mililitre",
-			Symbol:       "Mol/ml",
-			Prefixes:     allPrefixes,
-			Exponent:     1,
-			TargetSymbol: "kMol/l",
-			TargetScale:  1.0,
+		"Time": {
+			{
+				Name:         "minutes",
+				Symbol:       "min",
+				TargetSymbol: "s",
+				TargetScale:  60.0,
+			},
+			{
+				Name:         "hours",
+				Symbol:       "h",
+				TargetSymbol: "s",
+				TargetScale:  3600.0,
+			},
+			{
+				Name:         "days",
+				Symbol:       "days",
+				TargetSymbol: "s",
+				TargetScale:  86400.0,
+			},
 		},
-		{
-			Name:         "moles per microlitre",
-			Symbol:       "Mol/ul",
-			Prefixes:     allPrefixes,
-			Exponent:     1,
-			TargetSymbol: "MMol/l",
-			TargetScale:  1.0,
+		"Angle": {
+			{
+				Name:         "degrees",
+				Symbol:       "°",
+				TargetSymbol: "rad",
+				TargetScale:  (2.0 * math.Pi) / 360.0,
+			},
 		},
-		{
-			Name:         "moles per nanolitre",
-			Symbol:       "Mol/nl",
-			Prefixes:     allPrefixes,
-			Exponent:     1,
-			TargetSymbol: "GMol/l",
-			TargetScale:  1.0,
+		"AngularVelocity": {
+			{
+				Name:         "radians per minute",
+				Symbol:       "rad/min",
+				TargetSymbol: "rad/s",
+				TargetScale:  1.0 / 60.0,
+			},
+			{
+				Name:         "revolutions per minute",
+				Symbol:       "rpm",
+				TargetSymbol: "rad/s",
+				TargetScale:  2.0 * math.Pi / 60.0,
+			},
 		},
-		{
-			Name:         "units per mililitre",
-			Symbol:       "U/ml",
-			Prefixes:     allPrefixes,
-			Exponent:     1,
-			TargetSymbol: "kU/l",
-			TargetScale:  1.0,
+		"Pressure": {
+			{
+				Name:         "bar",
+				Symbol:       "bar",
+				Prefices:     SIPrefices,
+				Exponent:     1,
+				TargetSymbol: "kPa",
+				TargetScale:  100.0,
+			},
 		},
-		{
-			Name:         "units per microlitre",
-			Symbol:       "U/ul",
-			Prefixes:     allPrefixes,
-			Exponent:     1,
-			TargetSymbol: "MU/l",
-			TargetScale:  1.0,
+		"FlowRate": {
+			{
+				Name:         "litres per minute",
+				Symbol:       "l/min",
+				Prefices:     SIPrefices,
+				Exponent:     1,
+				TargetSymbol: "l/s",
+				TargetScale:  1 / 60.0,
+			},
+			{
+				Name:         "litres per hour",
+				Symbol:       "l/h",
+				Prefices:     SIPrefices,
+				Exponent:     1,
+				TargetSymbol: "l/s",
+				TargetScale:  1 / 3600.0,
+			},
 		},
-		{
-			Name:         "units per nanolitre",
-			Symbol:       "U/nl",
-			Prefixes:     allPrefixes,
-			Exponent:     1,
-			TargetSymbol: "GU/l",
-			TargetScale:  1.0,
+		"Rate": {
+			{
+				Name:         "per minute",
+				Symbol:       "/min",
+				TargetSymbol: "/s",
+				TargetScale:  1 / 60.0,
+			},
+			{
+				Name:         "per hour",
+				Symbol:       "/h",
+				TargetSymbol: "/s",
+				TargetScale:  1 / 3600.0,
+			},
 		},
-		{
-			Name:         "percentage weight of solution",
-			Symbol:       "% w/v",
-			TargetSymbol: "g/l",
-			TargetScale:  10.0,
-		},
-	},
-	"Volume": {
-		{
-			Name:         "meters cubed",
-			Symbol:       "m^3",
-			Prefixes:     allPrefixes,
-			Exponent:     3,
-			TargetSymbol: "l",
-			TargetScale:  1000.0,
-		},
-	},
-	"Length": {
-		{
-			Name:         "inches",
-			Symbol:       "in",
-			TargetSymbol: "mm",
-			TargetScale:  25.4,
-		},
-	},
-	"Time": {
-		{
-			Name:         "minutes",
-			Symbol:       "min",
-			TargetSymbol: "s",
-			TargetScale:  60.0,
-		},
-		{
-			Name:         "hours",
-			Symbol:       "h",
-			TargetSymbol: "s",
-			TargetScale:  3600.0,
-		},
-		{
-			Name:         "days",
-			Symbol:       "days",
-			TargetSymbol: "s",
-			TargetScale:  86400.0,
-		},
-	},
-	"Angle": {
-		{
-			Name:         "degrees",
-			Symbol:       "°",
-			TargetSymbol: "rad",
-			TargetScale:  (2.0 * math.Pi) / 360.0,
-		},
-	},
-	"AngularVelocity": {
-		{
-			Name:         "radians per minute",
-			Symbol:       "rad/min",
-			TargetSymbol: "rad/s",
-			TargetScale:  1.0 / 60.0,
-		},
-		{
-			Name:         "revolutions per minute",
-			Symbol:       "rpm",
-			TargetSymbol: "rad/s",
-			TargetScale:  2.0 * math.Pi / 60.0,
-		},
-	},
-	"Pressure": {
-		{
-			Name:         "bar",
-			Symbol:       "bar",
-			Prefixes:     allPrefixes,
-			Exponent:     1,
-			TargetSymbol: "kPa",
-			TargetScale:  100.0,
-		},
-	},
-	"FlowRate": {
-		{
-			Name:         "litres per minute",
-			Symbol:       "l/min",
-			Prefixes:     allPrefixes,
-			Exponent:     1,
-			TargetSymbol: "l/s",
-			TargetScale:  1 / 60.0,
-		},
-		{
-			Name:         "litres per hour",
-			Symbol:       "l/h",
-			Prefixes:     allPrefixes,
-			Exponent:     1,
-			TargetSymbol: "l/s",
-			TargetScale:  1 / 3600.0,
-		},
-	},
-	"Rate": {
-		{
-			Name:         "per minute",
-			Symbol:       "/min",
-			TargetSymbol: "/s",
-			TargetScale:  1 / 60.0,
-		},
-		{
-			Name:         "per hour",
-			Symbol:       "/h",
-			TargetSymbol: "/s",
-			TargetScale:  1 / 3600.0,
-		},
-	},
+	}
 }
 
 type unitAlias struct {
 	BaseSymbol string
 	BaseTarget string
-	Prefixes   []string
+	Prefices   []SIPrefix
 }
 
-type unitAliass map[string][]unitAlias
+type unitAliases map[string][]unitAlias
 
-func (self unitAliass) AddTo(reg *UnitRegistry) error {
+func (self unitAliases) AddTo(reg *UnitRegistry) error {
 	for mType, defs := range self {
 		for _, a := range defs {
-			if err := reg.DeclareAlias(mType, a.BaseSymbol, a.BaseTarget, a.Prefixes); err != nil {
+			if err := reg.DeclareAlias(mType, a.BaseSymbol, a.BaseTarget, a.Prefices); err != nil {
 				return err
 			}
 		}
@@ -423,126 +427,157 @@ func (self unitAliass) AddTo(reg *UnitRegistry) error {
 	return nil
 }
 
-var systemAliases = unitAliass{
-	"Concentration": {
-		{
-			BaseSymbol: "g/L",
-			BaseTarget: "g/l",
-			Prefixes:   allPrefixes,
+func getSystemAliases() unitAliases {
+	return unitAliases{
+		"Concentration": {
+			{
+				BaseSymbol: "g/L",
+				BaseTarget: "g/l",
+				Prefices:   SIPrefices,
+			},
+			{
+				BaseSymbol: "M",
+				BaseTarget: "Mol/l",
+				Prefices:   SIPrefices,
+			},
+			{
+				BaseSymbol: "Molar",
+				BaseTarget: "Mol/l",
+				Prefices:   SIPrefices,
+			},
+			{
+				BaseSymbol: "M/l",
+				BaseTarget: "Mol/l",
+				Prefices:   SIPrefices,
+			},
+			{
+				BaseSymbol: "M/ml",
+				BaseTarget: "Mol/ml",
+				Prefices:   SIPrefices,
+			},
+			{
+				BaseSymbol: "M/ul",
+				BaseTarget: "Mol/ul",
+				Prefices:   SIPrefices,
+			},
+			{
+				BaseSymbol: "Mol/L",
+				BaseTarget: "Mol/l",
+				Prefices:   SIPrefices,
+			},
+			{
+				BaseSymbol: "Mol/mL",
+				BaseTarget: "Mol/ml",
+				Prefices:   SIPrefices,
+			},
+			{
+				BaseSymbol: "Mol/uL",
+				BaseTarget: "Mol/ul",
+				Prefices:   SIPrefices,
+			},
+			{
+				BaseSymbol: "M/L",
+				BaseTarget: "Mol/l",
+				Prefices:   SIPrefices,
+			},
+			{
+				BaseSymbol: "M/mL",
+				BaseTarget: "Mol/ml",
+				Prefices:   SIPrefices,
+			},
+			{
+				BaseSymbol: "M/uL",
+				BaseTarget: "Mol/ul",
+				Prefices:   SIPrefices,
+			},
+			{
+				BaseSymbol: "x",
+				BaseTarget: "X",
+			},
+			{
+				BaseSymbol: "w/v",
+				BaseTarget: "% w/v",
+			},
 		},
-		{
-			BaseSymbol: "M",
-			BaseTarget: "Mol/l",
-			Prefixes:   allPrefixes,
+		"Volume": {
+			{
+				BaseSymbol: "L",
+				BaseTarget: "l",
+				Prefices:   SIPrefices,
+			},
 		},
-		{
-			BaseSymbol: "Molar",
-			BaseTarget: "Mol/l",
-			Prefixes:   allPrefixes,
+		"Length": {
+			{
+				BaseSymbol: `"`,
+				BaseTarget: "in",
+			},
 		},
-		{
-			BaseSymbol: "M/l",
-			BaseTarget: "Mol/l",
-			Prefixes:   allPrefixes,
+		"Temperature": {
+			{
+				BaseSymbol: "C",
+				BaseTarget: "℃",
+			},
+			{
+				BaseSymbol: "˚C",
+				BaseTarget: "℃",
+			},
+			{
+				BaseSymbol: "°C",
+				BaseTarget: "℃",
+			},
 		},
-		{
-			BaseSymbol: "M/ml",
-			BaseTarget: "Mol/ml",
-			Prefixes:   allPrefixes,
+		"Time": {
+			{
+				BaseSymbol: "minutes",
+				BaseTarget: "min",
+			},
 		},
-		{
-			BaseSymbol: "M/ul",
-			BaseTarget: "Mol/ul",
-			Prefixes:   allPrefixes,
+		"Angle": {
+			{
+				BaseSymbol: "radians",
+				BaseTarget: "rad",
+			},
+			{
+				BaseSymbol: "deg",
+				BaseTarget: "°",
+			},
+			{
+				BaseSymbol: "degrees",
+				BaseTarget: "°",
+			},
+			{
+				BaseSymbol: "˚",
+				BaseTarget: "°",
+			},
 		},
-		{
-			BaseSymbol: "Mol/L",
-			BaseTarget: "Mol/l",
-			Prefixes:   allPrefixes,
-		},
-		{
-			BaseSymbol: "Mol/mL",
-			BaseTarget: "Mol/ml",
-			Prefixes:   allPrefixes,
-		},
-		{
-			BaseSymbol: "Mol/uL",
-			BaseTarget: "Mol/ul",
-			Prefixes:   allPrefixes,
-		},
-		{
-			BaseSymbol: "M/L",
-			BaseTarget: "Mol/l",
-			Prefixes:   allPrefixes,
-		},
-		{
-			BaseSymbol: "M/mL",
-			BaseTarget: "Mol/ml",
-			Prefixes:   allPrefixes,
-		},
-		{
-			BaseSymbol: "M/uL",
-			BaseTarget: "Mol/ul",
-			Prefixes:   allPrefixes,
-		},
-		{
-			BaseSymbol: "x",
-			BaseTarget: "X",
-		},
-		{
-			BaseSymbol: "w/v",
-			BaseTarget: "% w/v",
-		},
-	},
-	"Volume": {
-		{
-			BaseSymbol: "L",
-			BaseTarget: "l",
-			Prefixes:   allPrefixes,
-		},
-	},
-	"Length": {
-		{
-			BaseSymbol: `"`,
-			BaseTarget: "in",
-		},
-	},
-	"Temperature": {
-		{
-			BaseSymbol: "C",
-			BaseTarget: "℃",
-		},
-		{
-			BaseSymbol: "˚C",
-			BaseTarget: "℃",
-		},
-		{
-			BaseSymbol: "°C",
-			BaseTarget: "℃",
-		},
-	},
-	"Time": {
-		{
-			BaseSymbol: "minutes",
-			BaseTarget: "min",
-		},
-	},
-	"Angle": {
-		{
-			BaseSymbol: "radians",
-			BaseTarget: "rad",
-		},
-		{
-			BaseSymbol: "deg",
-			BaseTarget: "°",
-		},
-		{
-			BaseSymbol: "degrees",
-			BaseTarget: "°",
-		},
-		{
-			BaseSymbol: "˚",
-			BaseTarget: "°",
-		},
-	},
+	}
+}
+
+// makeGlobalUnitRegistry return a new registry pre-populated with system units
+func makeGlobalUnitRegistry() *UnitRegistry {
+	reg := NewUnitRegistry()
+
+	if err := getSystemUnits().AddTo(reg); err != nil {
+		panic(err)
+	}
+
+	if err := getSystemDerivedUnits().AddTo(reg); err != nil {
+		panic(err)
+	}
+
+	if err := getSystemAliases().AddTo(reg); err != nil {
+		panic(err)
+	}
+
+	return reg
+}
+
+var globalRegistry *UnitRegistry
+
+// GetGlobalUnitRegistry gets the shared unit registry which contains system types
+func GetGlobalUnitRegistry() *UnitRegistry {
+	if globalRegistry == nil {
+		globalRegistry = makeGlobalUnitRegistry()
+	}
+	return globalRegistry
 }

@@ -7,12 +7,12 @@ import (
 func TestUnitRegistry(t *testing.T) {
 	reg := NewUnitRegistry()
 
-	if err := reg.DeclareUnit("distance", "meters", "m", "m", SIPrefixSymbols(), 1.0); err != nil {
+	if err := reg.DeclareUnit("distance", "meters", "m", "m", SIPrefices, 1); err != nil {
 		t.Fatal(err)
 	}
 
 	//can't redeclare a unit
-	if err := reg.DeclareUnit("distance", "meters", "m", "m", SIPrefixSymbols(), 1.0); err == nil {
+	if err := reg.DeclareUnit("distance", "meters", "m", "m", SIPrefices, 1); err == nil {
 		t.Fatal("redeclaration of meter got no error")
 	}
 

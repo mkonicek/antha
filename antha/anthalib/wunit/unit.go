@@ -61,7 +61,7 @@ func (self *Unit) UnmarshalJSON(data []byte) error {
 
 // Name the common name for this unit
 func (self *Unit) Name() string {
-	return self.prefix.LongName() + self.name
+	return self.prefix.Name + self.name
 }
 
 // Symbol the symbol used to denote this unit
@@ -81,10 +81,10 @@ func (self *Unit) BaseSIUnit() string {
 
 // ToString return the symbol and the prefix
 func (self *Unit) ToString() string {
-	if self.prefix.Name == " " {
+	if self.prefix.Symbol == " " {
 		return self.symbol
 	}
-	return self.prefix.Name + self.symbol
+	return self.prefix.Symbol + self.symbol
 }
 
 // String a string representation of the name and symbol
@@ -99,10 +99,10 @@ func (self *Unit) Prefix() SIPrefix {
 
 // PrefixedSymbol the symbol including any prefix
 func (self *Unit) PrefixedSymbol() string {
-	if self.prefix.Name == " " {
+	if self.prefix.Symbol == " " {
 		return self.symbol
 	}
-	return self.prefix.Name + self.symbol
+	return self.prefix.Symbol + self.symbol
 }
 
 // RawSymbol symbol without prefex, equivalent to Symbol()

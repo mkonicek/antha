@@ -23,23 +23,21 @@ func NewUnitRegistry() *UnitRegistry {
 }
 
 // DeclareUnit add a unit to the registry, as well as corresponding entries for valid prefixes
-// will cause a panic if any of validPrefixes are not SIPrefixes
-func (self *UnitRegistry) DeclareUnit(measurementType, name, baseSymbol, SISymbol string, validPrefixes []string, exponent int) error {
+// If validPrefices is zero length, only the base symbol will be added
+func (self *UnitRegistry) DeclareUnit(measurementType, name, baseSymbol, SISymbol string, validPrefixes []SIPrefix, exponent int) error {
+	if len(validPrefixes) == 0 {
+		validPrefixes = []SIPrefix{None} //if no prefices specified, only add default
+	}
 	unit := &Unit{
 		name:       name,
 		symbol:     baseSymbol,
 		base:       SISymbol,
-		prefix:     SIPrefixBySymbol(""),
 		multiplier: 1.0,
 		exponent:   exponent,
 	}
 
-	if err := self.declareUnit(measurementType, unit); err != nil {
-		return err
-	}
-
 	for _, prefix := range validPrefixes {
-		unit.prefix = SIPrefixBySymbol(prefix)
+		unit.prefix = prefix
 		if err := self.declareUnit(measurementType, unit); err != nil {
 			return err
 		}
@@ -50,17 +48,17 @@ func (self *UnitRegistry) DeclareUnit(measurementType, name, baseSymbol, SISymbo
 
 // DeclareAlias declare an alias for a target symbol such that units with the alias are converted to the target.
 // This is expected to be used when there are multiple convensions for writing a unit, for example
-//   reg.DeclareAlias("volume", "L", "l", SIPrefixSymbols())
+//   reg.DeclareAlias("volume", "L", "l", SIPrefices)
 // will lead to all units with "L" (e.g. "uL", "mL") being converted to "l" (e.g. "ul", "ml", etc).
+// If validPrefices is zero length, only the base symbol will be added
 // Note there is no value scaling, for that see DeclareDerivedUnit
-func (self *UnitRegistry) DeclareAlias(measurementType, baseSymbol, baseTarget string, validPrefixes []string) error {
-
-	if err := self.declareAlias(measurementType, baseSymbol, baseTarget); err != nil {
-		return err
+func (self *UnitRegistry) DeclareAlias(measurementType, baseSymbol, baseTarget string, validPrefixes []SIPrefix) error {
+	if len(validPrefixes) == 0 {
+		validPrefixes = []SIPrefix{None} //if no prefices specified, only add default
 	}
 
-	for _, prefixSymbol := range validPrefixes {
-		if err := self.declareAlias(measurementType, prefixSymbol+baseSymbol, prefixSymbol+baseTarget); err != nil {
+	for _, prefix := range validPrefixes {
+		if err := self.declareAlias(measurementType, prefix.Symbol+baseSymbol, prefix.Symbol+baseTarget); err != nil {
 			return err
 		}
 	}
@@ -142,9 +140,13 @@ func (self *UnitRegistry) ListValidUnitsForType(measurementType string) []string
 // DeclareDerivedUnit such that references to "symbol" are converted to "target" using
 // the conversion factor symbolInTargets, for each valid prefix.
 // The target should already exist in the Registry.
+// If validPrefixes is nil or zero length, only the base unit will be added
 // e.g. DeclareDerivedUnit("pint", nil, "l", 0.568) will cause the unit "1 pint" to be
 // understood as "0.568 l"
-func (self *UnitRegistry) DeclareDerivedUnit(measurementType string, name, symbol string, validPrefixes []string, exponent int, target string, symbolInTargets float64) error {
+func (self *UnitRegistry) DeclareDerivedUnit(measurementType string, name, symbol string, validPrefixes []SIPrefix, exponent int, target string, symbolInTargets float64) error {
+	if len(validPrefixes) == 0 {
+		validPrefixes = []SIPrefix{None} //if no prefices specified, only add default
+	}
 
 	unit, err := self.GetUnit(target)
 	if err != nil {
@@ -158,15 +160,10 @@ func (self *UnitRegistry) DeclareDerivedUnit(measurementType string, name, symbo
 	unit.symbol = symbol
 	unit.name = name
 	unit.multiplier = unit.BaseSIConversionFactor() * symbolInTargets
-	unit.prefix = SIPrefixBySymbol("")
 	unit.exponent = exponent
 
-	if err := self.declareUnit(measurementType, unit); err != nil {
-		return err
-	}
-
 	for _, prefix := range validPrefixes {
-		unit.prefix = SIPrefixBySymbol(prefix)
+		unit.prefix = prefix
 		if err := self.declareUnit(measurementType, unit); err != nil {
 			return err
 		}
@@ -197,33 +194,4 @@ func (self *UnitRegistry) NewMeasurement(value float64, unitSymbol string) (*Con
 			Munit:  unit,
 		}, nil
 	}
-}
-
-// makeGlobalUnitRegistry return a new registry pre-populated with system units
-func makeGlobalUnitRegistry() *UnitRegistry {
-	reg := NewUnitRegistry()
-
-	if err := systemUnits.AddTo(reg); err != nil {
-		panic(err)
-	}
-
-	if err := systemDerivedUnits.AddTo(reg); err != nil {
-		panic(err)
-	}
-
-	if err := systemAliases.AddTo(reg); err != nil {
-		panic(err)
-	}
-
-	return reg
-}
-
-var globalRegistry *UnitRegistry
-
-// GetGlobalUnitRegistry gets the shared unit registry which contains system types
-func GetGlobalUnitRegistry() *UnitRegistry {
-	if globalRegistry == nil {
-		globalRegistry = makeGlobalUnitRegistry()
-	}
-	return globalRegistry
 }

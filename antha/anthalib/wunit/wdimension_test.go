@@ -36,7 +36,7 @@ func (self *NewMeasurementTest) Run(t *testing.T, constructor MeasurementConstru
 				t.Errorf("wrong SIValue: expected %e, got %e", self.ExpectedSIValue, m.SIValue())
 			}
 
-			if e, g := self.ExpectedBaseUnit, m.Unit().BaseSIUnit(); e != g {
+			if e, g := self.ExpectedBaseUnit, m.Unit().BaseSISymbol(); e != g {
 				t.Errorf("wrong base unit: expected \"%s\", got \"%s\"", e, g)
 			}
 

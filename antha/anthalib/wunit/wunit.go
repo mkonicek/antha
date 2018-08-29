@@ -29,38 +29,30 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
 
-// structure defining a base unit
-type BaseUnit interface {
-	// unit name
-	Name() string
-	// unit symbol
-	Symbol() string
-	// multiply by this to get SI value
-	// nb this should be a function since we actually need
-	// an affine transformation
-	BaseSIConversionFactor() float64 // this can be calculated in many cases
-	// if we convert to the SI units what is the appropriate unit symbol
-	BaseSIUnit() string // if we use the above, what unit do we get?
-	// print this
-	ToString() string
-}
-
-// a unit with an SI prefix
+// PrefixedUnit a unit with an SI prefix
 type PrefixedUnit interface {
-	BaseUnit
-	// the prefix of the unit
+	// Name get the full name of the unit
+	Name() string
+	// String return a string including the long name of the unit, its prefix, and symbol, e.g. "miligrams[mg]"
+	String() string
+	// Prefix get the SI prefix associated with the unit, or None if none, e.g. Mili
 	Prefix() SIPrefix
-	// the symbol including prefix
+	// PrefixedSymbol get the symbol including any prefix, e.g. "mg"
 	PrefixedSymbol() string
-	// the symbol excluding prefix
+	// RawSymbol the unit symbol excluding any prefix, e.g. "g"
 	RawSymbol() string
-	// appropriate unit if we ask for SI values
+	// BaseSISymbol returns the symbol of the appropriate unit if we ask for SI values, e.g. "kg"
 	BaseSISymbol() string
-	// returns conversion factor from *this* unit to the other
+
+	// ConvertTo returns conversion factor from *this* unit to the other
 	ConvertTo(pu PrefixedUnit) float64
 	// CompatibleWith returns true iff the PrefixedUnit can be converted to rhs
 	// if false then calling ConvertTo will cause a panic()
 	CompatibleWith(PrefixedUnit) bool
+	// BaseSIConversionFactor facto by which to multiply to get the value in
+	// units specified by BaseSISymbol()
+	// (nb. this should be a function since we actually need an affine transformation e.g. to support farenheight)
+	BaseSIConversionFactor() float64
 }
 
 // fundamental representation of a value in the system
@@ -105,7 +97,7 @@ type ConcreteMeasurement struct {
 
 /*
 func AddMeasurements(a Measurement, b Measurement) (c Measurement) {
-	if a.Unit().BaseSIUnit() == b.Unit().BaseSIUnit() {
+	if a.Unit().BaseSISymbol() == b.Unit().BaseSISymbol() {
 
 		apointer := *a
 
@@ -132,7 +124,7 @@ func (cm *ConcreteMeasurement) SIValue() float64 {
 	if isNil(cm) {
 		return 0.0
 	}
-	return cm.ConvertToString(cm.Unit().BaseSIUnit())
+	return cm.ConvertToString(cm.Unit().BaseSISymbol())
 }
 
 // value without conversion

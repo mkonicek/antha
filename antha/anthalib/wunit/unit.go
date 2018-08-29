@@ -59,14 +59,9 @@ func (self *Unit) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// Name the common name for this unit
+// Name get the full name of the unit
 func (self *Unit) Name() string {
 	return self.prefix.Name + self.name
-}
-
-// Symbol the symbol used to denote this unit
-func (self *Unit) Symbol() string {
-	return self.symbol
 }
 
 // BaseSIConversionFactor factor to multiply by in order to convert to SI value including effect of prefix
@@ -74,22 +69,9 @@ func (self *Unit) BaseSIConversionFactor() float64 {
 	return math.Pow(self.prefix.Value, float64(self.exponent)) * self.multiplier
 }
 
-// BaseSIUnit Base SI or derived unit for this property, equivalent to BaseSISymbol
-func (self *Unit) BaseSIUnit() string {
-	return self.base
-}
-
-// ToString return the symbol and the prefix
-func (self *Unit) ToString() string {
-	if self.prefix.Symbol == " " {
-		return self.symbol
-	}
-	return self.prefix.Symbol + self.symbol
-}
-
-// String a string representation of the name and symbol
+// String a string representation of the unit name and symbol
 func (self *Unit) String() string {
-	return fmt.Sprintf("%s[%s]", self.Name(), self.ToString())
+	return fmt.Sprintf("%s[%s]", self.Name(), self.PrefixedSymbol())
 }
 
 // Prefix get the SI prefix of this unit, or " " if none
@@ -110,7 +92,7 @@ func (self *Unit) RawSymbol() string {
 	return self.symbol
 }
 
-// BaseSISymbol Base SI or derived unit for this property, equivalent to BaseSIUnit
+// BaseSISymbol Base SI or derived unit for this property, equivalent to BaseSISymbol
 func (self *Unit) BaseSISymbol() string {
 	return self.base
 }
@@ -119,7 +101,7 @@ func (self *Unit) BaseSISymbol() string {
 // This function will call panic() if pu is not compatible with this unit, see CompatibleWith
 func (self *Unit) ConvertTo(pu PrefixedUnit) float64 {
 	if !self.CompatibleWith(pu) {
-		panic(errors.Errorf("cannot convert units: base units for %s and %s do not match: %s != %s", self.ToString(), pu.ToString(), self.base, pu.BaseSIUnit()))
+		panic(errors.Errorf("cannot convert units: base units for %s and %s do not match: %s != %s", self.PrefixedSymbol(), pu.PrefixedSymbol(), self.base, pu.BaseSISymbol()))
 	}
 
 	return self.BaseSIConversionFactor() / pu.BaseSIConversionFactor()
@@ -129,7 +111,7 @@ func (self *Unit) ConvertTo(pu PrefixedUnit) float64 {
 // If this function returns false then calling ConvertTo with the same units will
 // case a panic
 func (self *Unit) CompatibleWith(pu PrefixedUnit) bool {
-	return self.base == pu.BaseSIUnit()
+	return self.base == pu.BaseSISymbol()
 }
 
 // Copy return a pointer to a new Unit identical to this one

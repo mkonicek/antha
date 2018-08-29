@@ -260,7 +260,7 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 			vol := wunit.MultiplyVolume(totalvol, cnc/stockconcs[name])
 			cmpvol.Add(vol)
 			component.Vol = vol.RawValue()
-			component.Vunit = totalvol.Unit().ToString()
+			component.Vunit = totalvol.Unit().PrefixedSymbol()
 			component.StockConcentration = stockconcs[name]
 			arrFinalComponents = append(arrFinalComponents, component)
 		}

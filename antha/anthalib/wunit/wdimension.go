@@ -139,7 +139,7 @@ func DivideVolume(v Volume, factor float64) (newvolume Volume) {
 // DivideVolumes divides the SI Value of vol1 by vol2 to return a factor.
 // An error is returned if the volume is infinity or not a number.
 func DivideVolumes(vol1, vol2 Volume) (float64, error) {
-	if vol1.Unit().BaseSIUnit() != vol2.Unit().BaseSIUnit() {
+	if vol1.Unit().BaseSISymbol() != vol2.Unit().BaseSISymbol() {
 		return 0, errors.Errorf("cannot divide volumes with incompatible units %v and %v", vol1.Unit(), vol2.Unit())
 	}
 

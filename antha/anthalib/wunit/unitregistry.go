@@ -93,15 +93,15 @@ func (self *UnitRegistry) GetUnit(symbol string) (*Unit, error) {
 }
 
 func (self *UnitRegistry) declareUnit(measurementType string, unit *Unit) error {
-	if _, ok := self.unitBySymbol[unit.ToString()]; ok {
-		return errors.Errorf("cannot declare unit %q: unit already declared", unit.ToString())
+	if _, ok := self.unitBySymbol[unit.PrefixedSymbol()]; ok {
+		return errors.Errorf("cannot declare unit %q: unit already declared", unit.PrefixedSymbol())
 	}
 	if _, ok := self.unitByType[measurementType]; !ok {
 		self.unitByType[measurementType] = make(map[string]bool)
 	}
 
-	self.unitByType[measurementType][unit.ToString()] = true
-	self.unitBySymbol[unit.ToString()] = unit.Copy()
+	self.unitByType[measurementType][unit.PrefixedSymbol()] = true
+	self.unitBySymbol[unit.PrefixedSymbol()] = unit.Copy()
 	return nil
 }
 

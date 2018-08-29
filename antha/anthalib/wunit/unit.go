@@ -1,6 +1,8 @@
 package wunit
 
 import (
+	"bytes"
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
@@ -48,6 +50,52 @@ func (self *Unit) UnmarshalJSON(data []byte) error {
 	}{}
 
 	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	self.name = value.Name
+	self.symbol = value.Symbol
+	self.base = value.Base
+	self.prefix = value.Prefix
+	self.multiplier = value.Multiplier
+	self.exponent = value.Exponent
+	return nil
+}
+
+// GobEncode encode the unit as gob
+func (self *Unit) GobEncode() ([]byte, error) {
+	var out bytes.Buffer
+	if err := gob.NewEncoder(&out).Encode(struct {
+		Name       string
+		Symbol     string
+		Base       string
+		Prefix     SIPrefix
+		Multiplier float64
+		Exponent   int
+	}{
+		Name:       self.name,
+		Symbol:     self.symbol,
+		Base:       self.base,
+		Prefix:     self.prefix,
+		Multiplier: self.multiplier,
+		Exponent:   self.exponent,
+	}); err != nil {
+		return nil, err
+	}
+	return out.Bytes(), nil
+}
+
+// GobDecode deserialise gob
+func (self *Unit) GobDecode(b []byte) error {
+	value := struct {
+		Name       string
+		Symbol     string
+		Base       string
+		Prefix     SIPrefix
+		Multiplier float64
+		Exponent   int
+	}{}
+
+	if err := gob.NewDecoder(bytes.NewBuffer(b)).Decode(&value); err != nil {
 		return err
 	}
 	self.name = value.Name

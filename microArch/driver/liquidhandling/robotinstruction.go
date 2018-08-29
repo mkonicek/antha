@@ -173,25 +173,6 @@ const (
 	WHICH                                = "WHICH" // WHICH returns the Component IDs, i.e. representing the specific instance of an LHComponent not currently implemented.
 )
 
-// we want set semantics, so it's much nicer in Go to use a map for
-// this with the empty value, than it is to use a slice.
-type InstructionParameters map[InstructionParameter]struct{}
-
-// convenience construct
-func NewInstructionParameters(params ...InstructionParameter) InstructionParameters {
-	empty := struct{}{}
-	result := make(InstructionParameters, len(params))
-	for _, param := range params {
-		result[param] = empty
-	}
-	return result
-}
-
-var RobotParameters = NewInstructionParameters(
-	HEAD, CHANNEL, LIQUIDCLASS, POSTO, WELLFROM, WELLTO, REFERENCE, VOLUME, VOLUNT,
-	FROMPLATETYPE, WELLFROMVOLUME, POSFROM, WELLTOVOLUME, TOPLATETYPE, MULTI, WHAT,
-	LLF, PLT, OFFSETX, OFFSETY, OFFSETZ, TIME, SPEED, MESSAGE, COMPONENT)
-
 func InsToString(ins RobotInstruction) string {
 	if b, err := json.Marshal(ins); err != nil {
 		return err.Error()

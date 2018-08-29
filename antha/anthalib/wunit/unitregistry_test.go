@@ -73,7 +73,9 @@ func TestUnitRegistry(t *testing.T) {
 		t.Error(err)
 	} else if e, g := "meters[m]", meters.String(); e != g {
 		t.Fatalf("reg.GetUnit(\"m\") returned %q, not %q", g, e)
-	} else if e, g := 20000.0, measurement.ConvertTo(meters); e != g {
+	} else if measurementInMeters, err := measurement.ConvertTo(meters); err != nil {
+		t.Error(err)
+	} else if e, g := 20000.0, measurementInMeters.RawValue(); e != g {
 		t.Errorf("converting 20 km to %v: got %f", meters, g)
 	}
 
@@ -86,8 +88,10 @@ func TestUnitRegistry(t *testing.T) {
 		t.Error(err)
 	} else {
 		a.Add(b)
-		if a.ConvertTo(cm) != 1050.0 {
-			t.Errorf("added 50 cm to 10 m and expected 1050 cm, but got %v", a)
+		if aInCm, err := a.ConvertTo(cm); err != nil {
+			t.Error(err)
+		} else if aInCm.RawValue() != 1050.0 {
+			t.Errorf("added 50 cm to 10 m and expected 1050 cm, but got %v", aInCm)
 		}
 	}
 
@@ -100,8 +104,10 @@ func TestUnitRegistry(t *testing.T) {
 		t.Error(err)
 	} else {
 		a.Subtract(b)
-		if a.ConvertTo(cm) != 950.0 {
-			t.Errorf("subtracted 50 cm from 10 m and expected 950 cm, but got %v", a)
+		if aInCm, err := a.ConvertTo(cm); err != nil {
+			t.Error(err)
+		} else if aInCm.RawValue() != 950.0 {
+			t.Errorf("subtracted 50 cm from 10 m and expected 950 cm, but got %v", aInCm)
 		}
 	}
 

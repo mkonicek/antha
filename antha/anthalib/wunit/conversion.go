@@ -24,18 +24,47 @@
 package wunit
 
 import (
-	"fmt"
 	"github.com/pkg/errors"
 )
 
-// MasstoVolume divides a mass (in kg) by a density (in kg/m^3) and returns the volume (in L).
-func MasstoVolume(m Mass, d Density) Volume {
-	return NewVolume(m.ConvertToString("g")/d.ConvertToString("kg/m^3"), "l")
+// MassToVolume divides a mass (in kg) by a density (in kg/m^3) and returns the volume (in L).
+func MassToVolume(m Mass, d Density) (Volume, error) {
+	if mass, err := m.ConvertToByString("g"); err != nil {
+		return Volume{}, err
+	} else if density, err := d.ConvertToByString("kg/m^3"); err != nil {
+		return Volume{}, err
+	} else {
+		return NewVolume(mass.RawValue()/density.RawValue(), "l"), nil
+	}
 }
 
-// VolumetoMass multiplies a volume (in L) by a density (in kg/m^3) and returns the mass (in kg).
+// VolumeToMass multiplies a volume (in L) by a density (in kg/m^3) and returns the mass (in kg).
+func VolumeToMass(v Volume, d Density) (Mass, error) {
+	if volume, err := v.ConvertToByString("m^3"); err != nil {
+		return Mass{}, err
+	} else if density, err := d.ConvertToByString("kg/m^3"); err != nil {
+		return Mass{}, err
+	} else {
+		return NewMass(volume.RawValue()*density.RawValue(), "kg"), nil
+	}
+}
+
+// MasstoVolume deprecated, please use MassToVolume instead
+func MasstoVolume(m Mass, d Density) Volume {
+	if ret, err := MassToVolume(m, d); err != nil {
+		panic(err)
+	} else {
+		return ret
+	}
+}
+
+// VolumetoMass deprecated, pelase use VolumeToMass
 func VolumetoMass(v Volume, d Density) Mass {
-	return NewMass(v.ConvertToString("m^3")*d.ConvertToString("kg/m^3"), "kg")
+	if ret, err := VolumeToMass(v, d); err != nil {
+		panic(err)
+	} else {
+		return ret
+	}
 }
 
 // VolumeForTargetMass returns the volume required to convert a starting stock concentration to a solution containing a target mass.
@@ -43,25 +72,16 @@ func VolumetoMass(v Volume, d Density) Mass {
 // If the stock concentration is zero a volume of 0ul will be returned with an error.
 // if the target mass is zero a volume of 0ul will be returned with no error.
 func VolumeForTargetMass(targetMass Mass, stockConc Concentration) (Volume, error) {
-
 	if stockConc.IsZero() {
 		return Volume{}, errors.New("stock concentration cannot be zero")
-	}
-
-	if targetMass.IsZero() {
+	} else if targetMass.IsZero() {
 		return NewVolume(0.0, "ul"), nil
-	}
-
-	if gramsPerULitre, err := GetGlobalUnitRegistry().GetUnit("g/ul"); err != nil {
+	} else if concInGramsPerULitre, err := stockConc.ConvertToByString("g/ul"); err != nil {
 		return Volume{}, err
-	} else if !stockConc.Unit().CompatibleWith(gramsPerULitre) {
-		return Volume{}, errors.Errorf("invalid stock concentration units %v: must be based on %v", stockConc.Unit(), gramsPerULitre)
-	} else if grams, err := GetGlobalUnitRegistry().GetUnit("g"); err != nil {
+	} else if massInGrams, err := targetMass.ConvertToByString("g"); err != nil {
 		return Volume{}, err
-	} else if !targetMass.Unit().CompatibleWith(grams) {
-		return Volume{}, errors.Errorf("invalid target mass units %v: must be based on %v", targetMass.Unit(), grams)
 	} else {
-		return NewVolume(targetMass.ConvertTo(grams)/stockConc.ConvertTo(gramsPerULitre), "ul"), nil
+		return NewVolume(massInGrams.RawValue()/concInGramsPerULitre.RawValue(), "ul"), nil
 	}
 }
 
@@ -69,29 +89,25 @@ func VolumeForTargetMass(targetMass Mass, stockConc Concentration) (Volume, erro
 // returns an error if the concentration units are incompatible (M/l and g/L) or if the target concentration is higher than the stock concentration
 // unless the total volume is zero
 func VolumeForTargetConcentration(targetConc Concentration, stockConc Concentration, totalVol Volume) (Volume, error) {
-	if !targetConc.Unit().CompatibleWith(stockConc.Unit()) {
-		return Volume{}, errors.Errorf("incompatible units %v and %v", targetConc.Unit(), stockConc.Unit())
-	} else if totalVol.IsZero() {
+	if totalVol.IsZero() {
 		return NewVolume(0.0, "ul"), nil
+	} else if stockConcInTargetUnits, err := stockConc.ConvertTo(targetConc.Unit()); err != nil {
+		return Volume{}, err
 	} else if stockConc.LessThan(targetConc) {
 		return Volume{}, errors.Errorf("cannot dilute stock at %v to higher concentration %v", stockConc, targetConc)
 	} else {
-		return NewVolume(totalVol.RawValue()*targetConc.RawValue()/stockConc.ConvertTo(targetConc.Unit()), totalVol.Unit().PrefixedSymbol()), nil
+		return NewVolume(totalVol.RawValue()*targetConc.RawValue()/stockConcInTargetUnits.RawValue(), totalVol.Unit().PrefixedSymbol()), nil
 	}
 }
 
 // MassForTargetConcentration multiplies a concentration (in g/l) by a volume (in l) to return the mass (in g).
 // if a concentration is not in a form convertable to g/l an error is returned.
 func MassForTargetConcentration(targetConc Concentration, totalVol Volume) (Mass, error) {
-	if litres, err := GetGlobalUnitRegistry().GetUnit("l"); err != nil {
+	if volumeInLitres, err := totalVol.ConvertToByString("l"); err != nil {
 		return Mass{nil}, err
-	} else if gramsPerLitre, err := GetGlobalUnitRegistry().GetUnit("g/l"); err != nil {
+	} else if concInGramsPerLitre, err := targetConc.ConvertToByString("g/l"); err != nil {
 		return Mass{nil}, err
-	} else if !targetConc.Unit().CompatibleWith(gramsPerLitre) {
-		return Mass{nil}, fmt.Errorf("cannot convert %v to %v: incomptible units", targetConc.Unit(), gramsPerLitre)
-	} else if !totalVol.Unit().CompatibleWith(litres) {
-		return Mass{nil}, fmt.Errorf("cannot convert %v to %v: incomptible units", totalVol.Unit(), litres)
 	} else {
-		return NewMass(targetConc.ConvertTo(gramsPerLitre)*totalVol.ConvertTo(litres), "g"), nil
+		return NewMass(concInGramsPerLitre.RawValue()*volumeInLitres.RawValue(), "g"), nil
 	}
 }

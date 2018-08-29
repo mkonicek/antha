@@ -32,15 +32,6 @@ var (
 	noValues error = fmt.Errorf("empty slice specified as argument to sort function")
 )
 
-type incompatibleUnits struct {
-	unitA string
-	unitB string
-}
-
-func (err incompatibleUnits) Error() string {
-	return fmt.Sprintf("incompatible units of %s and %s. Please convert to same base unit if possible.", err.unitA, err.unitB)
-}
-
 // SortConcentrations sorts a set of Concentration values.
 // An error will be returned if no values are specified or the base units of any of the concentrations are incompatible,
 // e.g. units of X and g/l would not be compatible.
@@ -87,10 +78,8 @@ func MaxConcentration(concs []Concentration) (max Concentration, err error) {
 }
 
 func sameUnit(unitA, unitB PrefixedUnit) error {
-	if unitA.CompatibleWith(unitB) {
-		return nil
-	}
-	return incompatibleUnits{unitA: unitA.BaseSISymbol(), unitB: unitB.BaseSISymbol()}
+	_, err := unitA.ConvertTo(unitB)
+	return err
 }
 
 type concentrationSet []Concentration

@@ -614,30 +614,94 @@ func TestNewVoltage(t *testing.T) {
 	})
 }
 
-func TestConcentration_MolPerL(t *testing.T) {
-	conc := NewConcentration(1.0, "g/l")
+type MolecularWeightConversionTest struct {
+	Initial         Concentration
+	MolecularWeight float64
+	Expected        Concentration
+	Error           bool
+}
 
-	concInMols := conc.MolPerL(2.0)
-
-	if concInMols.Munit.BaseSISymbol() != "Mol/l" {
-		t.Errorf("concentration was converted to %s not Mol/l", concInMols.Munit.BaseSISymbol())
+func (test *MolecularWeightConversionTest) checkCorrect(t *testing.T, got Concentration, err error) {
+	if (err != nil) != test.Error {
+		t.Errorf("expected error %t, got error %v", test.Error, err)
+		return
 	}
 
-	if concInMols.SIValue() != 0.5 {
-		t.Errorf("expected concentration of 0.5 Mol/l, got %v", concInMols)
+	if !test.Error {
+		if got.Unit().String() != test.Expected.Unit().String() {
+			t.Errorf("concentration was converted to %s not %s", got.Unit(), test.Expected.Unit())
+		}
+
+		if got.SIValue() != test.Expected.SIValue() {
+			t.Errorf("expected concentration of %v, got %v", test.Expected, got)
+		}
 	}
 }
 
-func TestConcentration_GramPerL(t *testing.T) {
-	conc := NewConcentration(1.0, "M/l")
+func (test *MolecularWeightConversionTest) TestMolesPerLitre(t *testing.T) {
+	t.Run(fmt.Sprintf("[%v].MolesPerLitre(%f)", test.Initial, test.MolecularWeight), func(t *testing.T) {
+		got, err := test.Initial.MolesPerLitre(2.0)
+		test.checkCorrect(t, got, err)
+	})
+}
 
-	concInGrams := conc.GramPerL(2.0)
+func (test *MolecularWeightConversionTest) TestGramsPerLitre(t *testing.T) {
+	t.Run(fmt.Sprintf("[%v].GramsPerLitre(%f)", test.Initial, test.MolecularWeight), func(t *testing.T) {
+		got, err := test.Initial.GramsPerLitre(2.0)
+		test.checkCorrect(t, got, err)
+	})
+}
 
-	if concInGrams.Munit.BaseSISymbol() != "kg/l" {
-		t.Errorf("concentration was converted to %s not kg/l", concInGrams.Munit.BaseSISymbol())
+type MolecularWeightConversionTests []MolecularWeightConversionTest
+
+func (tests MolecularWeightConversionTests) TestGramsPerLitre(t *testing.T) {
+	for _, test := range tests {
+		test.TestGramsPerLitre(t)
 	}
+}
 
-	if concInGrams.ConvertToString("g/l") != 2.0 {
-		t.Errorf("expected concentration of 2 g/l, got %v", concInGrams)
+func (tests MolecularWeightConversionTests) TestMolesPerLitre(t *testing.T) {
+	for _, test := range tests {
+		test.TestMolesPerLitre(t)
 	}
+}
+
+func TestConcentration_MolesPerLitre(t *testing.T) {
+	MolecularWeightConversionTests{
+		{
+			Initial:         NewConcentration(1.0, "g/l"),
+			MolecularWeight: 2.0,
+			Expected:        NewConcentration(0.5, "Mol/l"),
+		},
+		{
+			Initial:         NewConcentration(1.0, "Mol/l"),
+			MolecularWeight: 2.0,
+			Expected:        NewConcentration(1.0, "Mol/l"),
+		},
+		{
+			Initial:         NewConcentration(1.0, "X"),
+			MolecularWeight: 2.0,
+			Error:           true,
+		},
+	}.TestMolesPerLitre(t)
+}
+
+func TestConcentration_GramsPerLitre(t *testing.T) {
+	MolecularWeightConversionTests{
+		{
+			Initial:         NewConcentration(1.0, "M/l"),
+			MolecularWeight: 2.0,
+			Expected:        NewConcentration(2.0, "g/l"),
+		},
+		{
+			Initial:         NewConcentration(1.0, "g/l"),
+			MolecularWeight: 2.0,
+			Expected:        NewConcentration(1.0, "g/l"),
+		},
+		{
+			Initial:         NewConcentration(1.0, "X"),
+			MolecularWeight: 2.0,
+			Error:           true,
+		},
+	}.TestGramsPerLitre(t)
 }

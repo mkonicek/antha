@@ -24,6 +24,7 @@ package wunit
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"math"
 
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
@@ -45,10 +46,7 @@ type PrefixedUnit interface {
 	BaseSISymbol() string
 
 	// ConvertTo returns conversion factor from *this* unit to the other
-	ConvertTo(pu PrefixedUnit) float64
-	// CompatibleWith returns true iff the PrefixedUnit can be converted to rhs
-	// if false then calling ConvertTo will cause a panic()
-	CompatibleWith(PrefixedUnit) bool
+	ConvertTo(pu PrefixedUnit) (float64, error)
 	// BaseSIConversionFactor facto by which to multiply to get the value in
 	// units specified by BaseSISymbol()
 	// (nb. this should be a function since we actually need an affine transformation e.g. to support farenheight)
@@ -66,13 +64,19 @@ type Measurement interface {
 	// set the value, this must be thread-safe
 	// returns old value
 	SetValue(v float64) float64
-	// convert units
-	ConvertTo(p PrefixedUnit) float64
-	// wrapper for above
+	// ConvertTo get a new PrefixedUnit with the new units, returns error if units are not compatible
+	ConvertTo(p PrefixedUnit) (Measurement, error)
+	// ConvertToByString wrapper for ConvertTo
+	ConvertToByString(symbol string) (Measurement, error)
+	// ConvertToString deprecated, please use ConvertTo or ConvertToByString
 	ConvertToString(s string) float64
-	// add to this measurement
+	// AddTo add to this measurement
+	AddTo(m Measurement) error
+	// SubtractFrom subtract from this measurement
+	SubtractFrom(m Measurement) error
+	// Add deprecated, please use AddTo
 	Add(m Measurement)
-	// subtract from this measurement
+	// Subtract deprecated, please use SubtractFrom
 	Subtract(m Measurement)
 	// multiply measurement by a factor
 	MultiplyBy(factor float64)
@@ -94,20 +98,6 @@ type ConcreteMeasurement struct {
 	// the relevant units
 	Munit *Unit
 }
-
-/*
-func AddMeasurements(a Measurement, b Measurement) (c Measurement) {
-	if a.Unit().BaseSISymbol() == b.Unit().BaseSISymbol() {
-
-		apointer := *a
-
-		c = &apointer
-		&c.Add(&b)
-		/* *(CopyVolume(&A))
-		(&C).Add(&B)
-	}
-	return c
-}*/
 
 func isNil(cm *ConcreteMeasurement) bool {
 	if cm == nil {
@@ -153,27 +143,34 @@ func (cm *ConcreteMeasurement) SetValue(v float64) float64 {
 	return v
 }
 
-// convert to a different unit
-// nb this is NOT destructive
-func (cm *ConcreteMeasurement) ConvertTo(p PrefixedUnit) float64 {
+// ConvertTo return a new measurement in the new units
+func (cm *ConcreteMeasurement) ConvertTo(p PrefixedUnit) (Measurement, error) {
 	if isNil(cm) {
-		return 0.0
+		return &ConcreteMeasurement{}, nil
+	} else if factor, err := cm.Unit().ConvertTo(p); err != nil {
+		return nil, err
+	} else if unit, ok := p.(*Unit); !ok {
+		return nil, errors.Errorf("cannot convert unit type %T to *Unit", unit)
+	} else {
+		return &ConcreteMeasurement{Mvalue: factor * cm.RawValue(), Munit: unit}, nil
 	}
-	return cm.Unit().ConvertTo(p) * cm.RawValue()
 }
 
-// ConvertToString return the measurement to the units specified by symbol.
-// panic()s if symbol is not a known symbol
-func (cm *ConcreteMeasurement) ConvertToString(s string) float64 {
-	if isNil(cm) {
-		return 0.0
-	}
-	reg := GetGlobalUnitRegistry()
-
-	if unit, err := reg.GetUnit(s); err != nil {
-		panic(err)
+// ConvertToByString return a new measurement in the new units
+func (cm *ConcreteMeasurement) ConvertToByString(symbol string) (Measurement, error) {
+	if unit, err := GetGlobalUnitRegistry().GetUnit(symbol); err != nil {
+		return nil, err
 	} else {
 		return cm.ConvertTo(unit)
+	}
+}
+
+// ConvertToString deprecated, please use ConvertToByString
+func (cm *ConcreteMeasurement) ConvertToString(s string) float64 {
+	if unit, err := cm.ConvertToByString(s); err != nil {
+		panic(err)
+	} else {
+		return unit.RawValue()
 	}
 }
 
@@ -186,28 +183,42 @@ func (cm *ConcreteMeasurement) String() string {
 
 // add to this
 
-func (cm *ConcreteMeasurement) Add(m Measurement) {
+// AddTo add the measurement m to the receiver
+func (cm *ConcreteMeasurement) AddTo(m Measurement) error {
 	if isNil(cm) {
-		return
+		return nil
+	} else if rhs, err := m.ConvertTo(cm.Unit()); err != nil {
+		return err
+	} else {
+		cm.SetValue(rhs.RawValue() + cm.RawValue())
 	}
-	// ideally should check these have the same Dimension
-	// need to improve this
-
-	cm.SetValue(m.ConvertTo(cm.Unit()) + cm.RawValue())
-
+	return nil
 }
 
-// subtract
-
-func (cm *ConcreteMeasurement) Subtract(m Measurement) {
+// SubtractFrom subtract m from the receiver
+func (cm *ConcreteMeasurement) SubtractFrom(m Measurement) error {
 	if isNil(cm) {
-		return
+		return nil
+	} else if rhs, err := m.ConvertTo(cm.Unit()); err != nil {
+		return err
+	} else {
+		cm.SetValue(cm.RawValue() - rhs.RawValue())
 	}
-	// ideally should check these have the same Dimension
-	// need to improve this
+	return nil
+}
 
-	cm.SetValue(cm.RawValue() - m.ConvertTo(cm.Unit()))
+// Add deprecated, please use AddTo
+func (cm *ConcreteMeasurement) Add(m Measurement) {
+	if err := cm.AddTo(m); err != nil {
+		panic(err)
+	}
+}
 
+// Subtract deprecated, please use SubtractFrom
+func (cm *ConcreteMeasurement) Subtract(m Measurement) {
+	if err := cm.SubtractFrom(m); err != nil {
+		panic(err)
+	}
 }
 
 // multiply
@@ -215,23 +226,14 @@ func (cm *ConcreteMeasurement) MultiplyBy(factor float64) {
 	if isNil(cm) {
 		return
 	}
-	// ideally should check these have the same Dimension
-	// need to improve this
-
 	cm.SetValue(cm.RawValue() * float64(factor))
-
 }
 
 func (cm *ConcreteMeasurement) DivideBy(factor float64) {
-
 	if isNil(cm) {
 		return
 	}
-	// ideally should check these have the same Dimension
-	// need to improve this
-
 	cm.SetValue(cm.RawValue() / float64(factor))
-
 }
 
 // define a zero
@@ -257,36 +259,32 @@ func (cm *ConcreteMeasurement) LessThanRounded(m Measurement, p int) bool {
 	// nil means less than everything
 	if isNil(cm) {
 		return true
+	} else if rhs, err := m.ConvertTo(cm.Unit()); err != nil {
+		panic(err)
+	} else {
+		return wutil.RoundIgnoreNan(rhs.RawValue(), p) > wutil.RoundIgnoreNan(cm.RawValue(), p)
 	}
-	// returns true if this is less than m
-	v := wutil.RoundIgnoreNan(m.ConvertTo(cm.Unit()), p)
-	v2 := wutil.RoundIgnoreNan(cm.RawValue(), p)
-
-	return v > v2
 }
 
 func (cm *ConcreteMeasurement) GreaterThanRounded(m Measurement, p int) bool {
 	if isNil(cm) {
 		return false
+	} else if rhs, err := m.ConvertTo(cm.Unit()); err != nil {
+		panic(err)
+	} else {
+		return wutil.RoundIgnoreNan(rhs.RawValue(), p) < wutil.RoundIgnoreNan(cm.RawValue(), p)
 	}
-	// returns true if this is greater than m
-	v := wutil.RoundIgnoreNan(m.ConvertTo(cm.Unit()), p)
-	v2 := wutil.RoundIgnoreNan(cm.RawValue(), p)
-	return v < v2
-
 }
 
 func (cm *ConcreteMeasurement) EqualToRounded(m Measurement, p int) bool {
 	// this is not equal to anything
 	if isNil(cm) {
 		return false
+	} else if rhs, err := m.ConvertTo(cm.Unit()); err != nil {
+		panic(err)
+	} else {
+		return wutil.RoundIgnoreNan(rhs.RawValue(), p) == wutil.RoundIgnoreNan(cm.RawValue(), p)
 	}
-
-	// returns true if this is equal to m
-	v := wutil.RoundIgnoreNan(m.ConvertTo(cm.Unit()), p)
-	v2 := wutil.RoundIgnoreNan(cm.RawValue(), p)
-
-	return v == v2
 }
 
 // comparison operators
@@ -295,20 +293,21 @@ func (cm *ConcreteMeasurement) LessThan(m Measurement) bool {
 	// nil means less than everything
 	if isNil(cm) {
 		return true
+	} else if rhs, err := m.ConvertTo(cm.Unit()); err != nil {
+		panic(err)
+	} else {
+		return rhs.RawValue() > cm.RawValue()
 	}
-	// returns true if this is less than m
-	v := m.ConvertTo(cm.Unit())
-
-	return v > cm.RawValue()
 }
 
 func (cm *ConcreteMeasurement) GreaterThan(m Measurement) bool {
 	if isNil(cm) {
 		return false
+	} else if rhs, err := m.ConvertTo(cm.Unit()); err != nil {
+		panic(err)
+	} else {
+		return rhs.RawValue() < cm.RawValue()
 	}
-	// returns true if this is greater than m
-	v := m.ConvertTo(cm.Unit())
-	return v < cm.RawValue()
 }
 
 // XXX This should be made more literal and rounded behaviour explicitly called for by user
@@ -317,24 +316,25 @@ func (cm *ConcreteMeasurement) EqualTo(m Measurement) bool {
 
 	if isNil(cm) {
 		return false
+	} else if rhs, err := m.ConvertTo(cm.Unit()); err != nil {
+		panic(err)
+	} else {
+		dif := math.Abs(rhs.RawValue() - cm.RawValue())
+		epsilon := math.Nextafter(1, 2) - 1
+		return dif < (epsilon * 10000)
 	}
-	// returns true if this is equal to m
-	v := m.ConvertTo(cm.Unit())
-
-	dif := math.Abs(v - cm.RawValue())
-
-	epsilon := math.Nextafter(1, 2) - 1
-	return dif < (epsilon * 10000)
 }
 
-// EqualToTolerance return true if m is within a small tolerace, tol, of the measurement
-// where tol is expressed in the same units are the receiver
+// EqualToTolerance return true if the two measurements are within a small tolerace, tol, of each other
+// where tol is expressed in the same units as the receiver
 func (cm *ConcreteMeasurement) EqualToTolerance(m Measurement, tol float64) bool {
 	if isNil(cm) {
 		return false
+	} else if rhs, err := m.ConvertTo(cm.Unit()); err != nil {
+		panic(err)
+	} else {
+		return math.Abs(rhs.RawValue()-cm.RawValue()) < tol
 	}
-
-	return math.Abs(m.ConvertTo(cm.Unit())-cm.RawValue()) < tol
 }
 
 // ToString will return a summary of the ConcreteMeasurement Value and prefixed unit as a string.

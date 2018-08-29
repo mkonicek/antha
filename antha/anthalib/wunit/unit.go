@@ -99,18 +99,18 @@ func (self *Unit) BaseSISymbol() string {
 
 // ConvertTo get the conversion factor between this unit and pu.
 // This function will call panic() if pu is not compatible with this unit, see CompatibleWith
-func (self *Unit) ConvertTo(pu PrefixedUnit) float64 {
-	if !self.CompatibleWith(pu) {
-		panic(errors.Errorf("cannot convert units: base units for %s and %s do not match: %s != %s", self.PrefixedSymbol(), pu.PrefixedSymbol(), self.base, pu.BaseSISymbol()))
+func (self *Unit) ConvertTo(pu PrefixedUnit) (float64, error) {
+	if !self.compatibleWith(pu) {
+		return 0.0, errors.Errorf("cannot convert units: base units for %s and %s do not match: %s != %s", self.PrefixedSymbol(), pu.PrefixedSymbol(), self.base, pu.BaseSISymbol())
 	}
 
-	return self.BaseSIConversionFactor() / pu.BaseSIConversionFactor()
+	return self.BaseSIConversionFactor() / pu.BaseSIConversionFactor(), nil
 }
 
 // CompatibleWith returns true if the units can be converted to the supplied units.
 // If this function returns false then calling ConvertTo with the same units will
 // case a panic
-func (self *Unit) CompatibleWith(pu PrefixedUnit) bool {
+func (self *Unit) compatibleWith(pu PrefixedUnit) bool {
 	return self.base == pu.BaseSISymbol()
 }
 

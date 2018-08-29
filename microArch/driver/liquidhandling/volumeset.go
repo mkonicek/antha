@@ -1,6 +1,7 @@
 package liquidhandling
 
 import (
+	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
@@ -44,6 +45,7 @@ func (vs VolumeSet) Sub(v wunit.Volume) VolumeSet {
 }
 
 func (vs VolumeSet) SubA(vs2 VolumeSet) {
+	fmt.Printf("(%v).SubA(%v)\n", vs, vs2)
 	// maintain consistency with the above but one or the other must change
 	ret := make(VolumeSet, len(vs))
 
@@ -52,6 +54,7 @@ func (vs VolumeSet) SubA(vs2 VolumeSet) {
 
 		if i < len(vs2) {
 			v := vs2[i]
+			fmt.Printf("[%v].Subtract(%v)\n", ret[i], v)
 			ret[i].Subtract(v)
 		}
 	}

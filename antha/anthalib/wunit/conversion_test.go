@@ -85,8 +85,9 @@ type densityConversionTest struct {
 
 func (test *densityConversionTest) TestMassToVolume(t *testing.T) {
 	t.Run(fmt.Sprintf("(%v, %v)", test.Density, test.Vol), func(t *testing.T) {
-		vol := MasstoVolume(test.Mass, test.Density)
-		if !vol.EqualTo(test.Vol) {
+		if vol, err := MassToVolume(test.Mass, test.Density); (err != nil) != test.Error {
+			t.Errorf("expecting error %t, got error %v", test.Error, err)
+		} else if !vol.EqualTo(test.Vol) {
 			t.Error(
 				"Expected vol:", test.Vol.ToString(), "\n",
 				"Got vol:", vol.ToString(), "\n",
@@ -97,9 +98,9 @@ func (test *densityConversionTest) TestMassToVolume(t *testing.T) {
 
 func (test *densityConversionTest) TestVolumeToMass(t *testing.T) {
 	t.Run(fmt.Sprintf("(%v, %v)", test.Density, test.Mass), func(t *testing.T) {
-
-		mass := VolumetoMass(test.Vol, test.Density)
-		if !mass.EqualTo(test.Mass) {
+		if mass, err := VolumeToMass(test.Vol, test.Density); (err != nil) != test.Error {
+			t.Errorf("expecting error %t, got error %v", test.Error, err)
+		} else if !mass.EqualTo(test.Mass) {
 			t.Error(
 				"for", fmt.Sprintf("%+v", test), "\n",
 				"Expected mass:", test.Mass.ToString(), "\n",

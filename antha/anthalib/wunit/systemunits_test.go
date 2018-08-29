@@ -13,7 +13,9 @@ func TestMetersCubed(t *testing.T) {
 		t.Error(err)
 	} else if ul, err := reg.GetUnit("ul"); err != nil {
 		t.Error(err)
-	} else if g, e := volume.ConvertTo(ul), 1.0; math.Abs(g-e) > 1.0e-6 {
+	} else if volumeInUl, err := volume.ConvertTo(ul); err != nil {
+		t.Error(err)
+	} else if g, e := volumeInUl.RawValue(), 1.0; math.Abs(g-e) > 1.0e-6 {
 		t.Errorf("converting %v to ul: expected %g, got %g", volume, e, g)
 	}
 }
@@ -25,7 +27,9 @@ func TestMililitresPerMinute(t *testing.T) {
 		t.Error(err)
 	} else if ulPerSec, err := reg.GetUnit("ul/s"); err != nil {
 		t.Error(err)
-	} else if g, e := fr.ConvertTo(ulPerSec), 1000.0; math.Abs(g-e) > 1.0e-9 {
+	} else if frInUlPerSec, err := fr.ConvertTo(ulPerSec); err != nil {
+		t.Error(err)
+	} else if g, e := frInUlPerSec.RawValue(), 1000.0; math.Abs(g-e) > 1.0e-9 {
 		t.Errorf("converting %v to %v: got %g expected %g", fr, ulPerSec, g, e)
 	}
 }
@@ -50,13 +54,9 @@ func TestBadUnitConversion(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.Value.ToString(), func(t *testing.T) {
-			defer func() {
-				if res := recover(); res == nil {
-					t.Errorf("failed to panic")
-				}
-			}()
-
-			test.Value.ConvertToString(test.TargetUnit)
+			if _, err := test.Value.ConvertToByString(test.TargetUnit); err == nil {
+				t.Error("failed to return error")
+			}
 		})
 	}
 }

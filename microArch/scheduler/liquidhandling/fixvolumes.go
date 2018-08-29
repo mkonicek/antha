@@ -153,8 +153,11 @@ func findUpdateInstructionVolumes(ch *IChain, wanted map[string]wunit.Volume, pl
 			}
 
 			if wantVol.GreaterThan(ins.Results[0].Volume()) {
-				r := wantVol.RawValue() / ins.Results[0].Volume().ConvertTo(wantVol.Unit())
-				ins.AdjustVolumesBy(r)
+				if r, err := wunit.DivideVolumes(wantVol, ins.Results[0].Volume()); err != nil {
+					return nil, err
+				} else {
+					ins.AdjustVolumesBy(r)
+				}
 
 				//delete(wanted, ins.Results[0].FullyQualifiedName())
 				deleteWantOf(wanted, ins.Results[0].FullyQualifiedName())

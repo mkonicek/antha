@@ -23,6 +23,7 @@
 package wunit
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
 	"math"
 	"time"
@@ -177,14 +178,14 @@ func DivideConcentration(v Concentration, factor float64) (newconc Concentration
 
 // DivideConcentrations divides the SI Value of conc1 by conc2 to return a factor.
 // An error is returned if the concentration unit is not dividable or the number generated is infinity.
-func DivideConcentrations(conc1, conc2 Concentration) (float64, error) {
-	if !conc1.Unit().CompatibleWith(conc2.Unit()) {
-		return 0, errors.Errorf("cannot divide concentrations with incompatible units %v and %v", conc1.Unit(), conc2.Unit())
+func DivideConcentrations(num, den Concentration) (float64, error) {
+	if den.IsZero() {
+		return 0, errors.Errorf("while dividing concentrations %s and %s: cannot divide by zero", num, den)
+	} else if denInNumUnits, err := den.ConvertTo(num.Unit()); err != nil {
+		return 0, err
+	} else {
+		return num.RawValue() / denInNumUnits.RawValue(), nil
 	}
-	if conc2.IsZero() {
-		return 0, errors.Errorf("while dividing concentrations %s and %s: cannot divide by zero", conc1, conc2)
-	}
-	return conc1.SIValue() / conc2.SIValue(), nil
 }
 
 // AddConcentrations adds a variable number of concentrations from an original concentration.
@@ -199,10 +200,9 @@ func AddConcentrations(concs ...Concentration) (Concentration, error) {
 	ret := NewConcentration(0.0, concs[0].Unit().PrefixedSymbol())
 
 	for _, conc := range concs {
-		if !ret.Unit().CompatibleWith(conc.Unit()) {
-			return ret, errors.Errorf("cannot add concentrations with incompatible units %v and %v", ret.Unit(), conc.Unit())
+		if err := ret.AddTo(conc); err != nil {
+			return ret, err
 		}
-		ret.Add(conc)
 	}
 	return ret, nil
 
@@ -215,11 +215,10 @@ func SubtractConcentrations(originalConc Concentration, subtractConcs ...Concent
 	ret := CopyConcentration(originalConc)
 
 	if concToSubtract, err := AddConcentrations(subtractConcs...); err != nil {
-		return ret, err
-	} else if !ret.Unit().CompatibleWith(concToSubtract.Unit()) {
-		return ret, errors.Errorf("cannot subtract concentrations with incompatible units %v and %v", ret.Unit(), concToSubtract.Unit())
+		return Concentration{}, err
+	} else if err := ret.SubtractFrom(concToSubtract); err != nil {
+		return Concentration{}, err
 	} else {
-		ret.Subtract(concToSubtract)
 		return ret, nil
 	}
 }
@@ -375,39 +374,49 @@ type SubstanceQuantity interface {
 	Quantity() Measurement
 }
 
-// GramPerL return a new concentration equal to the current one in grams per litre,
+// GramsPerLitre return a new concentration equal to the current one in grams per litre,
 // using molecularweight given in grams per mole to convert if necessary.
-// Calls panic() if the units of conc are not compatible with grams per litre or
+// Returns an error if the units of conc are not compatible with grams per litre or
 // grams per mole (such as "X" or "v/v")
-func (conc Concentration) GramPerL(molecularweight float64) Concentration {
-	if gramsPerLitre, err := GetGlobalUnitRegistry().GetUnit("g/l"); err != nil {
-		panic(err)
-	} else if molsPerLitre, err := GetGlobalUnitRegistry().GetUnit("Mol/l"); err != nil {
-		panic(err)
-	} else if conc.Unit().CompatibleWith(gramsPerLitre) {
-		return NewConcentration(conc.ConvertTo(gramsPerLitre), "g/l")
-	} else if conc.Unit().CompatibleWith(molsPerLitre) {
-		return NewConcentration((conc.ConvertTo(molsPerLitre) * molecularweight), "g/l")
+func (conc Concentration) GramsPerLitre(molecularweight float64) (Concentration, error) {
+	if concInGramsPerLitre, err := conc.ConvertToByString("g/l"); err == nil {
+		return Concentration{ConcreteMeasurement: concInGramsPerLitre.(*ConcreteMeasurement)}, nil
+	} else if concInMolsPerLitre, err := conc.ConvertToByString("Mol/l"); err != nil {
+		return Concentration{}, errors.WithMessage(err, fmt.Sprintf("while converting %v into grams per litre[g/l]", conc.Munit))
 	} else {
-		panic(errors.Errorf("cannot convert %v into %v", conc.Munit, gramsPerLitre))
+		return NewConcentration(concInMolsPerLitre.RawValue()*molecularweight, "g/l"), nil
 	}
 }
 
-// MolPerL return a new concentration equal to the current one in mols per litre,
-// using molecularweight given in grams per mole to convert if necessary.
-// Calls panic() if the units of conc are not compatible with grams per litre or
-// grams per mole (such as "X" or "v/v")
-func (conc Concentration) MolPerL(molecularweight float64) Concentration {
-	if gramsPerLitre, err := GetGlobalUnitRegistry().GetUnit("g/l"); err != nil {
+// GramPerL deprecated, please use GramsPerLitre
+func (conc Concentration) GramPerL(molecularWeight float64) Concentration {
+	if ret, err := conc.GramsPerLitre(molecularWeight); err != nil {
 		panic(err)
-	} else if molsPerLitre, err := GetGlobalUnitRegistry().GetUnit("Mol/l"); err != nil {
-		panic(err)
-	} else if conc.Unit().CompatibleWith(molsPerLitre) {
-		return NewConcentration(conc.ConvertTo(molsPerLitre), "Mol/l")
-	} else if conc.Unit().CompatibleWith(gramsPerLitre) {
-		return NewConcentration((conc.ConvertTo(gramsPerLitre) / molecularweight), "M/l")
 	} else {
-		panic(errors.Errorf("cannot convert %v into %v", conc.Munit, molsPerLitre))
+		return ret
+	}
+}
+
+// MolesPerLitre return a new concentration equal to the current one in mols per litre,
+// using molecularweight given in grams per mole to convert if necessary.
+// Returns an error if the units of conc are not compatible with grams per litre or
+// grams per mole (such as "X" or "v/v")
+func (conc Concentration) MolesPerLitre(molecularweight float64) (Concentration, error) {
+	if concInMolsPerLitre, err := conc.ConvertToByString("Mol/l"); err == nil {
+		return Concentration{ConcreteMeasurement: concInMolsPerLitre.(*ConcreteMeasurement)}, nil
+	} else if concInGramsPerLitre, err := conc.ConvertToByString("g/l"); err != nil {
+		return Concentration{}, errors.WithMessage(err, fmt.Sprintf("while converting %v into moles per litre[Mol/l]", conc.Munit))
+	} else {
+		return NewConcentration(concInGramsPerLitre.RawValue()/molecularweight, "Mol/l"), nil
+	}
+}
+
+// MolPerL deprecated, please use MolesPerLitre
+func (conc Concentration) MolPerL(molecularWeight float64) Concentration {
+	if ret, err := conc.MolesPerLitre(molecularWeight); err != nil {
+		panic(err)
+	} else {
+		return ret
 	}
 }
 

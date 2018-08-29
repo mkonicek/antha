@@ -329,10 +329,10 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 		if ins.Type() == liquidhandling.TFR {
 			mocks := liquidhandling.MockAspDsp(ins)
 			for _, ii := range mocks {
-				str += liquidhandling.InsToString2(ii) + "\n"
+				str += liquidhandling.InsToString(ii) + "\n"
 			}
 		} else {
-			str = liquidhandling.InsToString2(ins) + "\n"
+			str = liquidhandling.InsToString(ins) + "\n"
 		}
 
 		request.InstructionText += str

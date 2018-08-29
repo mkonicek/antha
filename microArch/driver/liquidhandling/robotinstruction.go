@@ -106,6 +106,10 @@ func (it *InstructionType) Type() *InstructionType {
 	return it
 }
 
+func (it *InstructionType) String() string {
+	return it.Name
+}
+
 func NewInstructionType(machine, human string) *InstructionType {
 	return &InstructionType{
 		Name:      machine,
@@ -174,22 +178,6 @@ const (
 // we want set semantics, so it's much nicer in Go to use a map for
 // this with the empty value, than it is to use a slice.
 type InstructionParameters map[InstructionParameter]struct{}
-
-func (a InstructionParameters) clone() InstructionParameters {
-	b := make(InstructionParameters, len(a))
-	for param, v := range a {
-		b[param] = v
-	}
-	return b
-}
-
-func (a InstructionParameters) merge(b InstructionParameters) InstructionParameters {
-	result := a.clone()
-	for param, v := range b {
-		result[param] = v
-	}
-	return result
-}
 
 // convenience construct
 func NewInstructionParameters(params ...InstructionParameter) InstructionParameters {
@@ -325,134 +313,6 @@ func InsToString(ins RobotInstruction, ansiPrintOptions ...printOption) string {
 	}
 
 	return s
-}
-
-// StepSummary summarises the instruction for
-// an Aspirate or Dispense instruction combined
-// with the related Move instruction.
-type StepSummary struct {
-	Type         string // Asp or DSP
-	LiquidType   string
-	PlateType    string
-	Multi        string
-	OffsetZ      string
-	WellToVolume string
-	Volume       string
-}
-
-func mergeSummaries(a, b StepSummary, aspOrDsp string) (c StepSummary) {
-	return StepSummary{
-		Type:         aspOrDsp,
-		LiquidType:   a.LiquidType + b.LiquidType,
-		PlateType:    a.PlateType + b.PlateType,
-		Multi:        a.Multi + b.Multi,
-		OffsetZ:      a.OffsetZ + b.OffsetZ,
-		WellToVolume: a.WellToVolume + b.WellToVolume,
-		Volume:       a.Volume + b.Volume,
-	}
-}
-
-type stepType string
-
-// Aspirate designates a step is an aspirate step
-const Aspirate stepType = "Aspirate"
-
-// Dispense designates a step is a dispense step
-const Dispense stepType = "Dispense"
-
-// MakeAspOrDspSummary returns a summary of the key parameters involved in a Dispense or Aspirate step.
-// It requires two consecutive instructions to do this, a Move instruction followed by a dispense of aspirate instruction.
-// An error is returned if this is not the case.
-func MakeAspOrDspSummary(moveInstruction, dspOrAspInstruction RobotInstruction) (StepSummary, error) {
-	step1summary, err := summarise(moveInstruction)
-
-	if err != nil {
-		return StepSummary{}, err
-	}
-
-	step2summary, err := summarise(dspOrAspInstruction)
-
-	if err != nil {
-		return StepSummary{}, err
-	}
-
-	if moveInstruction.Type() != MOV {
-		return StepSummary{}, fmt.Errorf("first instruction is not a move instruction: found %s", moveInstruction.Type().Name)
-	}
-
-	if dspOrAspInstruction.Type() == ASP {
-		return mergeSummaries(step1summary, step2summary, string(Aspirate)), nil
-	} else if dspOrAspInstruction.Type() == DSP {
-		return mergeSummaries(step1summary, step2summary, string(Dispense)), nil
-	} else {
-		return StepSummary{}, fmt.Errorf("second instruction is not an aspirate or dispense: found %s", dspOrAspInstruction.Type().Name)
-	}
-
-}
-
-func summarise(ins RobotInstruction) (StepSummary, error) {
-
-	var summaryOfMoveOperation StepSummary
-
-	for name := range RobotParameters {
-		p := ins.GetParameter(name)
-
-		if p == nil {
-			continue
-		}
-
-		ss := ""
-
-		switch p.(type) {
-		case []wunit.Volume:
-			if len(p.([]wunit.Volume)) == 0 {
-				continue
-			}
-			ss = concatvolarray(p.([]wunit.Volume))
-
-		case []string:
-			if len(p.([]string)) == 0 {
-				continue
-			}
-			ss = concatstringarray(p.([]string))
-		case string:
-			ss = p.(string)
-		case []float64:
-			if len(p.([]float64)) == 0 {
-				continue
-			}
-			ss = concatfloatarray(p.([]float64))
-		case float64:
-			ss = fmt.Sprintf("%-6.4f", p.(float64))
-		case []int:
-			if len(p.([]int)) == 0 {
-				continue
-			}
-			ss = concatintarray(p.([]int))
-		case int:
-			ss = fmt.Sprintf("%d", p.(int))
-		case []bool:
-			if len(p.([]bool)) == 0 {
-				continue
-			}
-			ss = concatboolarray(p.([]bool))
-		}
-		if name == WHAT {
-			summaryOfMoveOperation.LiquidType = ss
-		} else if name == MULTI {
-			summaryOfMoveOperation.Multi = ss
-		} else if name == OFFSETZ {
-			summaryOfMoveOperation.OffsetZ = ss
-		} else if name == TOPLATETYPE {
-			summaryOfMoveOperation.PlateType = ss
-		} else if name == WELLTOVOLUME {
-			summaryOfMoveOperation.WellToVolume = ss
-		} else if name == VOLUME {
-			summaryOfMoveOperation.Volume = ss
-		}
-	}
-
-	return summaryOfMoveOperation, nil
 }
 
 func InsToString2(ins RobotInstruction) string {
@@ -713,15 +573,11 @@ func (sori *SetOfRobotInstructions) UnmarshalJSON(b []byte) error {
 			return err
 		}
 
-		if tId.Type == "" {
-			return fmt.Errorf("Malformed instruction - no Type field field")
-		}
-
-		//motherofallswitches ugh
-
 		var ins RobotInstruction
 
 		switch tId.Type {
+		case "":
+			return fmt.Errorf("Malformed instruction - no Type field field")
 		case "RAP":
 			ins = NewRemoveAllPlatesInstruction()
 		case "APT":

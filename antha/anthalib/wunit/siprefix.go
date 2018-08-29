@@ -29,7 +29,7 @@ type SIPrefix struct {
 	Value  float64 // multiplier that the exponent applies to the value
 }
 
-var SIPrefices []SIPrefix
+var SIPrefixes []SIPrefix
 
 func newPrefix(symbol, name string, value float64) SIPrefix {
 	ret := SIPrefix{
@@ -37,7 +37,7 @@ func newPrefix(symbol, name string, value float64) SIPrefix {
 		Name:   name,
 		Value:  value,
 	}
-	SIPrefices = append(SIPrefices, ret)
+	SIPrefixes = append(SIPrefixes, ret)
 	return ret
 }
 
@@ -67,8 +67,8 @@ var (
 
 // SIPrefixSymbols returns a list of all supported SI prefixes
 func SIPrefixSymbols() []string {
-	ret := make([]string, 0, len(SIPrefices))
-	for _, prefix := range SIPrefices {
+	ret := make([]string, 0, len(SIPrefixes))
+	for _, prefix := range SIPrefixes {
 		ret = append(ret, prefix.Symbol)
 	}
 	return ret

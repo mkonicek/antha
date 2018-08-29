@@ -23,10 +23,10 @@ func NewUnitRegistry() *UnitRegistry {
 }
 
 // DeclareUnit add a unit to the registry, as well as corresponding entries for valid prefixes
-// If validPrefices is zero length, only the base symbol will be added
+// If validPrefixes is zero length, only the base symbol will be added
 func (self *UnitRegistry) DeclareUnit(measurementType, name, baseSymbol, SISymbol string, validPrefixes []SIPrefix, exponent int) error {
 	if len(validPrefixes) == 0 {
-		validPrefixes = []SIPrefix{None} //if no prefices specified, only add default
+		validPrefixes = []SIPrefix{None} //if no prefixes specified, only add default
 	}
 	unit := &Unit{
 		name:       name,
@@ -48,13 +48,13 @@ func (self *UnitRegistry) DeclareUnit(measurementType, name, baseSymbol, SISymbo
 
 // DeclareAlias declare an alias for a target symbol such that units with the alias are converted to the target.
 // This is expected to be used when there are multiple convensions for writing a unit, for example
-//   reg.DeclareAlias("volume", "L", "l", SIPrefices)
+//   reg.DeclareAlias("volume", "L", "l", SIPrefixes)
 // will lead to all units with "L" (e.g. "uL", "mL") being converted to "l" (e.g. "ul", "ml", etc).
-// If validPrefices is zero length, only the base symbol will be added
+// If validPrefixes is zero length, only the base symbol will be added
 // Note there is no value scaling, for that see DeclareDerivedUnit
 func (self *UnitRegistry) DeclareAlias(measurementType, baseSymbol, baseTarget string, validPrefixes []SIPrefix) error {
 	if len(validPrefixes) == 0 {
-		validPrefixes = []SIPrefix{None} //if no prefices specified, only add default
+		validPrefixes = []SIPrefix{None} //if no prefixes specified, only add default
 	}
 
 	for _, prefix := range validPrefixes {
@@ -145,7 +145,7 @@ func (self *UnitRegistry) ListValidUnitsForType(measurementType string) []string
 // understood as "0.568 l"
 func (self *UnitRegistry) DeclareDerivedUnit(measurementType string, name, symbol string, validPrefixes []SIPrefix, exponent int, target string, symbolInTargets float64) error {
 	if len(validPrefixes) == 0 {
-		validPrefixes = []SIPrefix{None} //if no prefices specified, only add default
+		validPrefixes = []SIPrefix{None} //if no prefixes specified, only add default
 	}
 
 	unit, err := self.GetUnit(target)

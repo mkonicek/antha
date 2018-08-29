@@ -6,7 +6,7 @@ type baseUnit struct {
 	Name     string
 	Symbol   string
 	SISymbol string //the canonincal form for the unit which can include a prefix, defaults to Symbol
-	Prefices []SIPrefix
+	Prefixes []SIPrefix
 	Exponent int
 }
 
@@ -19,7 +19,7 @@ func (self baseUnits) AddTo(reg *UnitRegistry) error {
 			if SISymbol == "" {
 				SISymbol = unit.Symbol
 			}
-			if err := reg.DeclareUnit(mType, unit.Name, unit.Symbol, SISymbol, unit.Prefices, unit.Exponent); err != nil {
+			if err := reg.DeclareUnit(mType, unit.Name, unit.Symbol, SISymbol, unit.Prefixes, unit.Exponent); err != nil {
 				return err
 			}
 		}
@@ -34,19 +34,19 @@ func getSystemUnits() baseUnits {
 				Name:     "grams per litre",
 				Symbol:   "g/l",
 				SISymbol: "kg/l",
-				Prefices: SIPrefices,
+				Prefixes: SIPrefixes,
 				Exponent: 1,
 			},
 			{
 				Name:     "moles per litre",
 				Symbol:   "Mol/l",
-				Prefices: SIPrefices,
+				Prefixes: SIPrefixes,
 				Exponent: 1,
 			},
 			{
 				Name:     "units per litre",
 				Symbol:   "U/l",
-				Prefices: SIPrefices,
+				Prefixes: SIPrefixes,
 				Exponent: 1,
 			},
 			{
@@ -62,7 +62,7 @@ func getSystemUnits() baseUnits {
 			{
 				Name:     "litre",
 				Symbol:   "l",
-				Prefices: SIPrefices,
+				Prefixes: SIPrefixes,
 				Exponent: 1,
 			},
 		},
@@ -71,7 +71,7 @@ func getSystemUnits() baseUnits {
 				Name:     "gram",
 				Symbol:   "g",
 				SISymbol: "kg",
-				Prefices: SIPrefices,
+				Prefixes: SIPrefixes,
 				Exponent: 1,
 			},
 		},
@@ -80,7 +80,7 @@ func getSystemUnits() baseUnits {
 				Name:     "grams per meter cubed",
 				Symbol:   "g/m^3",
 				SISymbol: "kg/m^3",
-				Prefices: SIPrefices,
+				Prefixes: SIPrefixes,
 				Exponent: 1,
 			},
 		},
@@ -88,7 +88,7 @@ func getSystemUnits() baseUnits {
 			{
 				Name:     "metre",
 				Symbol:   "m",
-				Prefices: SIPrefices,
+				Prefixes: SIPrefixes,
 				Exponent: 1,
 			},
 		},
@@ -96,7 +96,7 @@ func getSystemUnits() baseUnits {
 			{
 				Name:     "metre squared",
 				Symbol:   "m^2",
-				Prefices: SIPrefices,
+				Prefixes: SIPrefixes,
 				Exponent: 2,
 			},
 		},
@@ -110,7 +110,7 @@ func getSystemUnits() baseUnits {
 			{
 				Name:     "seconds",
 				Symbol:   "s",
-				Prefices: []SIPrefix{Yocto, Zepto, Atto, Femto, Pico, Nano, Micro, Milli, None},
+				Prefixes: []SIPrefix{Yocto, Zepto, Atto, Femto, Pico, Nano, Micro, Milli, None},
 				Exponent: 1,
 			},
 		},
@@ -118,7 +118,7 @@ func getSystemUnits() baseUnits {
 			{
 				Name:     "moles",
 				Symbol:   "Mol",
-				Prefices: SIPrefices,
+				Prefixes: SIPrefixes,
 				Exponent: 1,
 			},
 		},
@@ -138,7 +138,7 @@ func getSystemUnits() baseUnits {
 			{
 				Name:     "joules",
 				Symbol:   "J",
-				Prefices: SIPrefices,
+				Prefixes: SIPrefixes,
 				Exponent: 1,
 			},
 		},
@@ -146,7 +146,7 @@ func getSystemUnits() baseUnits {
 			{
 				Name:     "newtons",
 				Symbol:   "N",
-				Prefices: SIPrefices,
+				Prefixes: SIPrefixes,
 				Exponent: 1,
 			},
 		},
@@ -154,7 +154,7 @@ func getSystemUnits() baseUnits {
 			{
 				Name:     "pascals",
 				Symbol:   "Pa",
-				Prefices: SIPrefices,
+				Prefixes: SIPrefixes,
 				Exponent: 1,
 			},
 		},
@@ -162,7 +162,7 @@ func getSystemUnits() baseUnits {
 			{
 				Name:     "joules per kilogram per degrees celsius",
 				Symbol:   "J/kg*C",
-				Prefices: SIPrefices,
+				Prefixes: SIPrefixes,
 				Exponent: 1,
 			},
 		},
@@ -170,7 +170,7 @@ func getSystemUnits() baseUnits {
 			{
 				Name:     "meters per second",
 				Symbol:   "m/s",
-				Prefices: SIPrefices,
+				Prefixes: SIPrefixes,
 				Exponent: 1,
 			},
 		},
@@ -178,7 +178,7 @@ func getSystemUnits() baseUnits {
 			{
 				Name:     "litres per second",
 				Symbol:   "l/s",
-				Prefices: SIPrefices,
+				Prefixes: SIPrefixes,
 				Exponent: 1,
 			},
 		},
@@ -192,7 +192,7 @@ func getSystemUnits() baseUnits {
 			{
 				Name:     "volts",
 				Symbol:   "V",
-				Prefices: SIPrefices,
+				Prefixes: SIPrefixes,
 				Exponent: 1,
 			},
 		},
@@ -202,7 +202,7 @@ func getSystemUnits() baseUnits {
 type derivedUnit struct {
 	Name         string
 	Symbol       string
-	Prefices     []SIPrefix
+	Prefixes     []SIPrefix
 	Exponent     int
 	TargetSymbol string
 	TargetScale  float64 //i.e. how many target units are in 1 derived unit
@@ -213,7 +213,7 @@ type derivedUnits map[string][]derivedUnit
 func (self derivedUnits) AddTo(reg *UnitRegistry) error {
 	for mType, defs := range self {
 		for _, du := range defs {
-			if err := reg.DeclareDerivedUnit(mType, du.Name, du.Symbol, du.Prefices, du.Exponent, du.TargetSymbol, du.TargetScale); err != nil {
+			if err := reg.DeclareDerivedUnit(mType, du.Name, du.Symbol, du.Prefixes, du.Exponent, du.TargetSymbol, du.TargetScale); err != nil {
 				return err
 			}
 		}
@@ -227,7 +227,7 @@ func getSystemDerivedUnits() derivedUnits {
 			{
 				Name:         "grams per mililitre",
 				Symbol:       "g/ml",
-				Prefices:     SIPrefices,
+				Prefixes:     SIPrefixes,
 				Exponent:     1,
 				TargetSymbol: "kg/l",
 				TargetScale:  1.0,
@@ -235,7 +235,7 @@ func getSystemDerivedUnits() derivedUnits {
 			{
 				Name:         "grams per microlitre",
 				Symbol:       "g/ul",
-				Prefices:     SIPrefices,
+				Prefixes:     SIPrefixes,
 				Exponent:     1,
 				TargetSymbol: "Mg/l",
 				TargetScale:  1.0,
@@ -243,7 +243,7 @@ func getSystemDerivedUnits() derivedUnits {
 			{
 				Name:         "grams per nanolitre",
 				Symbol:       "g/nl",
-				Prefices:     SIPrefices,
+				Prefixes:     SIPrefixes,
 				Exponent:     1,
 				TargetSymbol: "Gg/l",
 				TargetScale:  1.0,
@@ -251,7 +251,7 @@ func getSystemDerivedUnits() derivedUnits {
 			{
 				Name:         "moles per mililitre",
 				Symbol:       "Mol/ml",
-				Prefices:     SIPrefices,
+				Prefixes:     SIPrefixes,
 				Exponent:     1,
 				TargetSymbol: "kMol/l",
 				TargetScale:  1.0,
@@ -259,7 +259,7 @@ func getSystemDerivedUnits() derivedUnits {
 			{
 				Name:         "moles per microlitre",
 				Symbol:       "Mol/ul",
-				Prefices:     SIPrefices,
+				Prefixes:     SIPrefixes,
 				Exponent:     1,
 				TargetSymbol: "MMol/l",
 				TargetScale:  1.0,
@@ -267,7 +267,7 @@ func getSystemDerivedUnits() derivedUnits {
 			{
 				Name:         "moles per nanolitre",
 				Symbol:       "Mol/nl",
-				Prefices:     SIPrefices,
+				Prefixes:     SIPrefixes,
 				Exponent:     1,
 				TargetSymbol: "GMol/l",
 				TargetScale:  1.0,
@@ -275,7 +275,7 @@ func getSystemDerivedUnits() derivedUnits {
 			{
 				Name:         "units per mililitre",
 				Symbol:       "U/ml",
-				Prefices:     SIPrefices,
+				Prefixes:     SIPrefixes,
 				Exponent:     1,
 				TargetSymbol: "kU/l",
 				TargetScale:  1.0,
@@ -283,7 +283,7 @@ func getSystemDerivedUnits() derivedUnits {
 			{
 				Name:         "units per microlitre",
 				Symbol:       "U/ul",
-				Prefices:     SIPrefices,
+				Prefixes:     SIPrefixes,
 				Exponent:     1,
 				TargetSymbol: "MU/l",
 				TargetScale:  1.0,
@@ -291,7 +291,7 @@ func getSystemDerivedUnits() derivedUnits {
 			{
 				Name:         "units per nanolitre",
 				Symbol:       "U/nl",
-				Prefices:     SIPrefices,
+				Prefixes:     SIPrefixes,
 				Exponent:     1,
 				TargetSymbol: "GU/l",
 				TargetScale:  1.0,
@@ -307,7 +307,7 @@ func getSystemDerivedUnits() derivedUnits {
 			{
 				Name:         "meters cubed",
 				Symbol:       "m^3",
-				Prefices:     SIPrefices,
+				Prefixes:     SIPrefixes,
 				Exponent:     3,
 				TargetSymbol: "l",
 				TargetScale:  1000.0,
@@ -367,7 +367,7 @@ func getSystemDerivedUnits() derivedUnits {
 			{
 				Name:         "bar",
 				Symbol:       "bar",
-				Prefices:     SIPrefices,
+				Prefixes:     SIPrefixes,
 				Exponent:     1,
 				TargetSymbol: "kPa",
 				TargetScale:  100.0,
@@ -377,7 +377,7 @@ func getSystemDerivedUnits() derivedUnits {
 			{
 				Name:         "litres per minute",
 				Symbol:       "l/min",
-				Prefices:     SIPrefices,
+				Prefixes:     SIPrefixes,
 				Exponent:     1,
 				TargetSymbol: "l/s",
 				TargetScale:  1 / 60.0,
@@ -385,7 +385,7 @@ func getSystemDerivedUnits() derivedUnits {
 			{
 				Name:         "litres per hour",
 				Symbol:       "l/h",
-				Prefices:     SIPrefices,
+				Prefixes:     SIPrefixes,
 				Exponent:     1,
 				TargetSymbol: "l/s",
 				TargetScale:  1 / 3600.0,
@@ -411,7 +411,7 @@ func getSystemDerivedUnits() derivedUnits {
 type unitAlias struct {
 	BaseSymbol string
 	BaseTarget string
-	Prefices   []SIPrefix
+	Prefixes   []SIPrefix
 }
 
 type unitAliases map[string][]unitAlias
@@ -419,7 +419,7 @@ type unitAliases map[string][]unitAlias
 func (self unitAliases) AddTo(reg *UnitRegistry) error {
 	for mType, defs := range self {
 		for _, a := range defs {
-			if err := reg.DeclareAlias(mType, a.BaseSymbol, a.BaseTarget, a.Prefices); err != nil {
+			if err := reg.DeclareAlias(mType, a.BaseSymbol, a.BaseTarget, a.Prefixes); err != nil {
 				return err
 			}
 		}
@@ -433,62 +433,62 @@ func getSystemAliases() unitAliases {
 			{
 				BaseSymbol: "g/L",
 				BaseTarget: "g/l",
-				Prefices:   SIPrefices,
+				Prefixes:   SIPrefixes,
 			},
 			{
 				BaseSymbol: "M",
 				BaseTarget: "Mol/l",
-				Prefices:   SIPrefices,
+				Prefixes:   SIPrefixes,
 			},
 			{
 				BaseSymbol: "Molar",
 				BaseTarget: "Mol/l",
-				Prefices:   SIPrefices,
+				Prefixes:   SIPrefixes,
 			},
 			{
 				BaseSymbol: "M/l",
 				BaseTarget: "Mol/l",
-				Prefices:   SIPrefices,
+				Prefixes:   SIPrefixes,
 			},
 			{
 				BaseSymbol: "M/ml",
 				BaseTarget: "Mol/ml",
-				Prefices:   SIPrefices,
+				Prefixes:   SIPrefixes,
 			},
 			{
 				BaseSymbol: "M/ul",
 				BaseTarget: "Mol/ul",
-				Prefices:   SIPrefices,
+				Prefixes:   SIPrefixes,
 			},
 			{
 				BaseSymbol: "Mol/L",
 				BaseTarget: "Mol/l",
-				Prefices:   SIPrefices,
+				Prefixes:   SIPrefixes,
 			},
 			{
 				BaseSymbol: "Mol/mL",
 				BaseTarget: "Mol/ml",
-				Prefices:   SIPrefices,
+				Prefixes:   SIPrefixes,
 			},
 			{
 				BaseSymbol: "Mol/uL",
 				BaseTarget: "Mol/ul",
-				Prefices:   SIPrefices,
+				Prefixes:   SIPrefixes,
 			},
 			{
 				BaseSymbol: "M/L",
 				BaseTarget: "Mol/l",
-				Prefices:   SIPrefices,
+				Prefixes:   SIPrefixes,
 			},
 			{
 				BaseSymbol: "M/mL",
 				BaseTarget: "Mol/ml",
-				Prefices:   SIPrefices,
+				Prefixes:   SIPrefixes,
 			},
 			{
 				BaseSymbol: "M/uL",
 				BaseTarget: "Mol/ul",
-				Prefices:   SIPrefices,
+				Prefixes:   SIPrefixes,
 			},
 			{
 				BaseSymbol: "x",
@@ -503,7 +503,7 @@ func getSystemAliases() unitAliases {
 			{
 				BaseSymbol: "L",
 				BaseTarget: "l",
-				Prefices:   SIPrefices,
+				Prefixes:   SIPrefixes,
 			},
 		},
 		"Length": {

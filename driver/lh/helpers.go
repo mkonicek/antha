@@ -1306,11 +1306,9 @@ func DecodeBlockID(arg *pb.BlockIDMessage) wtype.BlockID {
 	return ret
 }
 func EncodePtrToUnit(arg *wunit.Unit) *pb.PtrToUnitMessage {
-	fmt.Printf("encode: %v\n", arg)
 	if bytes, err := json.Marshal(arg); err != nil {
 		panic(err)
 	} else {
-		fmt.Println(bytes)
 		return &pb.PtrToUnitMessage{
 			&pb.UnitMessage{
 				JSONUnit: bytes,

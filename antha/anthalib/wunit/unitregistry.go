@@ -4,6 +4,7 @@ import (
 	"github.com/pkg/errors"
 	"sort"
 	"strings"
+	"sync"
 )
 
 // UnitRegistry store all the valid units in the library
@@ -11,6 +12,7 @@ type UnitRegistry struct {
 	unitByType   map[string]map[string]bool
 	unitBySymbol map[string]*Unit
 	aliases      map[string]string
+	mutex        *sync.Mutex
 }
 
 // NewUnitRegistry build a new empty unit registry
@@ -19,12 +21,15 @@ func NewUnitRegistry() *UnitRegistry {
 		unitByType:   make(map[string]map[string]bool),
 		unitBySymbol: make(map[string]*Unit),
 		aliases:      make(map[string]string),
+		mutex:        &sync.Mutex{},
 	}
 }
 
 // DeclareUnit add a unit to the registry, as well as corresponding entries for valid prefixes
 // If validPrefixes is zero length, only the base symbol will be added
 func (self *UnitRegistry) DeclareUnit(measurementType, name, baseSymbol, SISymbol string, validPrefixes []SIPrefix, exponent int) error {
+	self.mutex.Lock()
+	defer self.mutex.Unlock()
 	if len(validPrefixes) == 0 {
 		validPrefixes = []SIPrefix{None} //if no prefixes specified, only add default
 	}
@@ -53,6 +58,8 @@ func (self *UnitRegistry) DeclareUnit(measurementType, name, baseSymbol, SISymbo
 // If validPrefixes is zero length, only the base symbol will be added
 // Note there is no value scaling, for that see DeclareDerivedUnit
 func (self *UnitRegistry) DeclareAlias(measurementType, baseSymbol, baseTarget string, validPrefixes []SIPrefix) error {
+	self.mutex.Lock()
+	defer self.mutex.Unlock()
 	if len(validPrefixes) == 0 {
 		validPrefixes = []SIPrefix{None} //if no prefixes specified, only add default
 	}
@@ -66,10 +73,11 @@ func (self *UnitRegistry) DeclareAlias(measurementType, baseSymbol, baseTarget s
 	return nil
 }
 
+// declareAlias declare an alias, should have the lock when calling
 func (self *UnitRegistry) declareAlias(measurementType, symbol, target string) error {
 	if existingTarget, ok := self.aliases[symbol]; ok {
 		return errors.Errorf("cannot declare alias %s = %s: alias %s = %s already declared", symbol, target, symbol, existingTarget)
-	} else if !self.ValidUnitForType(measurementType, target) {
+	} else if !self.validUnitForType(measurementType, target) {
 		return errors.Errorf("cannot declare alias %s == %s: unit %q is not of type %s", symbol, target, target, measurementType)
 	} else if existing, ok := self.unitBySymbol[symbol]; ok {
 		return errors.Errorf("cannot declare alias %s == %s: would shadow pre-existing unit %v", symbol, target, existing)
@@ -82,7 +90,13 @@ func (self *UnitRegistry) declareAlias(measurementType, symbol, target string) e
 
 // GetUnit return the unit referred to by symbol
 func (self *UnitRegistry) GetUnit(symbol string) (*Unit, error) {
+	self.mutex.Lock()
+	defer self.mutex.Unlock()
+	return self.getUnit(symbol)
+}
 
+// getUnit should be called with the lock
+func (self *UnitRegistry) getUnit(symbol string) (*Unit, error) {
 	symbol = self.resolveAliasing(symbol)
 
 	if unit, ok := self.unitBySymbol[symbol]; !ok {
@@ -92,6 +106,7 @@ func (self *UnitRegistry) GetUnit(symbol string) (*Unit, error) {
 	}
 }
 
+// declareUnit declare a new unit, should have the lock when calling
 func (self *UnitRegistry) declareUnit(measurementType string, unit *Unit) error {
 	if _, ok := self.unitBySymbol[unit.PrefixedSymbol()]; ok {
 		return errors.Errorf("cannot declare unit %q: unit already declared", unit.PrefixedSymbol())
@@ -110,13 +125,22 @@ func (self *UnitRegistry) declareUnit(measurementType string, unit *Unit) error 
 // e.g. ValidUnitForType("Length", "m") -> true
 // and  ValidUnitForType("Area", "l") -> false
 func (self *UnitRegistry) ValidUnitForType(measurementType, symbol string) bool {
+	self.mutex.Lock()
+	defer self.mutex.Unlock()
+	return self.validUnitForType(measurementType, symbol)
+}
+
+// validUnitForType should have the lock when calling
+func (self *UnitRegistry) validUnitForType(measurementType, symbol string) bool {
 	return self.unitByType[measurementType][self.resolveAliasing(symbol)]
 }
 
 // AssertValidForType assert that the symbol refers to a valid unit for the given type
 // the same as ValidUnitForType, except this function returns a useful
 func (self *UnitRegistry) AssertValidUnitForType(measurementType, symbol string) error {
-	if !self.ValidUnitForType(measurementType, symbol) {
+	self.mutex.Lock()
+	defer self.mutex.Unlock()
+	if !self.validUnitForType(measurementType, symbol) {
 		return errors.Errorf("invalid symbol %q for measurement type %q, valid symbols are %v", symbol, measurementType, self.unitByType[measurementType])
 	}
 	return nil
@@ -125,6 +149,8 @@ func (self *UnitRegistry) AssertValidUnitForType(measurementType, symbol string)
 // ListValidUnitsForType returns a sorted list of all valid unit symbols for a given
 // measurement type
 func (self *UnitRegistry) ListValidUnitsForType(measurementType string) []string {
+	self.mutex.Lock()
+	defer self.mutex.Unlock()
 	if symbols, ok := self.unitByType[measurementType]; !ok {
 		return nil
 	} else {
@@ -144,16 +170,18 @@ func (self *UnitRegistry) ListValidUnitsForType(measurementType string) []string
 // e.g. DeclareDerivedUnit("pint", nil, "l", 0.568) will cause the unit "1 pint" to be
 // understood as "0.568 l"
 func (self *UnitRegistry) DeclareDerivedUnit(measurementType string, name, symbol string, validPrefixes []SIPrefix, exponent int, target string, symbolInTargets float64) error {
+	self.mutex.Lock()
+	defer self.mutex.Unlock()
 	if len(validPrefixes) == 0 {
 		validPrefixes = []SIPrefix{None} //if no prefixes specified, only add default
 	}
 
-	unit, err := self.GetUnit(target)
+	unit, err := self.getUnit(target)
 	if err != nil {
 		return err
 	}
 
-	if !self.ValidUnitForType(measurementType, unit.symbol) {
+	if !self.validUnitForType(measurementType, unit.symbol) {
 		return errors.Errorf("cannot declare derived unit %s = %f %s: %s is not of type %q", symbol, symbolInTargets, target, target, measurementType)
 	}
 
@@ -173,7 +201,7 @@ func (self *UnitRegistry) DeclareDerivedUnit(measurementType string, name, symbo
 }
 
 // resolveAliasing convert the given symbol into a known symbol if it is aliased
-// and also do any µ/u style conversions
+// and also do any µ/u style conversions, should have the mutex lock when calling
 func (self *UnitRegistry) resolveAliasing(symbol string) string {
 	symbol = strings.Replace(symbol, "µ", "u", -1)
 	symbol = strings.Trim(symbol, " ")
@@ -186,7 +214,9 @@ func (self *UnitRegistry) resolveAliasing(symbol string) string {
 
 // NewMeasurement return a new typed measurement
 func (self *UnitRegistry) NewMeasurement(value float64, unitSymbol string) (*ConcreteMeasurement, error) {
-	if unit, err := self.GetUnit(unitSymbol); err != nil {
+	self.mutex.Lock()
+	defer self.mutex.Unlock()
+	if unit, err := self.getUnit(unitSymbol); err != nil {
 		return nil, err
 	} else {
 		return &ConcreteMeasurement{

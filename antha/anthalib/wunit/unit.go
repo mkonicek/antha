@@ -81,6 +81,9 @@ func (self *Unit) Prefix() SIPrefix {
 
 // PrefixedSymbol the symbol including any prefix
 func (self *Unit) PrefixedSymbol() string {
+	if self == nil {
+		return ""
+	}
 	if self.prefix.Symbol == " " {
 		return self.symbol
 	}

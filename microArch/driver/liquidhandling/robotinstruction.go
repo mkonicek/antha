@@ -175,7 +175,7 @@ const (
 
 func InsToString(ins RobotInstruction) string {
 	if b, err := json.Marshal(ins); err != nil {
-		return err.Error()
+		panic(err)
 	} else {
 		return string(b)
 	}

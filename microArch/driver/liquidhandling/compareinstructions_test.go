@@ -132,7 +132,7 @@ func TestComparisonoptions(t *testing.T) {
 	inss2 := testInstructions2()
 
 	expected := []int{0, 0, 0, 0, 3, 3}
-	prms := [][]RobotInstructionComparatorFunc{CompareReferences, CompareOffsets, CompareWells, ComparePlateTypes, []RobotInstructionComparatorFunc{CompareVolumes}, ComparePositions}
+	prms := [][]RobotInstructionComparatorFunc{CompareReferences, CompareOffsets, CompareWells, ComparePlateTypes, {CompareVolumes}, ComparePositions}
 	names := []string{"References", "Offsets", "Wells", "PlateTypes", "Volumes", "Positions"}
 
 	for i := 0; i < len(expected); i++ {

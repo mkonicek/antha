@@ -597,25 +597,6 @@ func makeSingleTestRequest() (singleRq *LHRequest, err error) {
 	return singleRq, nil
 }
 
-func getOffset(offsets string) (offset float64, err error) {
-	channels := strings.Split(offsets, ",")
-	var value float64
-	for i, channel := range channels {
-		if i == 0 {
-			value, err = strconv.ParseFloat(channel, 64)
-			if err != nil {
-				return 0.0, err
-			}
-		}
-		if i != 0 {
-			if channels[i] != channels[0] {
-				return value, fmt.Errorf("z offsets (%s) not all same", offsets)
-			}
-		}
-	}
-	return value, nil
-}
-
 type movAspPair struct {
 	mov *liquidhandling.MoveInstruction
 	asp *liquidhandling.AspirateInstruction

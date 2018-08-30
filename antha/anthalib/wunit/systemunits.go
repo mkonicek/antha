@@ -334,12 +334,6 @@ func getSystemDerivedUnits() derivedUnits {
 				TargetSymbol: "s",
 				TargetScale:  3600.0,
 			},
-			{
-				Name:         "days",
-				Symbol:       "days",
-				TargetSymbol: "s",
-				TargetScale:  86400.0,
-			},
 		},
 		"Angle": {
 			{

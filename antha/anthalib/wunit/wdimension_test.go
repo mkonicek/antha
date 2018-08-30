@@ -230,13 +230,6 @@ func TestNewTime(t *testing.T) {
 			ExpectedPrefix:   "",
 		},
 		{
-			Value:            1.0,
-			Unit:             "days",
-			ExpectedSIValue:  60.0 * 60.0 * 24.0,
-			ExpectedBaseUnit: "s",
-			ExpectedPrefix:   "",
-		},
-		{
 			Value:       1.0,
 			Unit:        "aeon",
 			ExpectError: true,

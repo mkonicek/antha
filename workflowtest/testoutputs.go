@@ -49,7 +49,7 @@ func compareInstructions(genIns1, genIns2 []liquidhandling.RobotInstruction, opt
 	return liquidhandling.CompareInstructionSets(
 		genIns1,
 		genIns2,
-		unpackInstructionComparisonOptions(opt.ComparisonOptions),
+		unpackInstructionComparisonOptions(opt.ComparisonOptions)...,
 	)
 }
 

@@ -41,7 +41,7 @@ func newPrefix(symbol, name string, value float64) SIPrefix {
 	return ret
 }
 
-var (
+var ( //all supported SI prefixes, in smallest to largest order as they appear in SIPrefices
 	Yocto = newPrefix("y", "yocto", 1e-24)
 	Zepto = newPrefix("z", "zepto", 1e-21)
 	Atto  = newPrefix("a", "atto", 1e-18)

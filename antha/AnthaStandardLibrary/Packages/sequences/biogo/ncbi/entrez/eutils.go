@@ -408,14 +408,16 @@ func DoCitMatch(query map[string]CitQuery, tool, email string) (map[string]int, 
 	if query != nil {
 		var buf bytes.Buffer
 		for key, cit := range query {
-			fmt.Fprintf(&buf, "%s|%s|%s|%s|%s|%s|\r",
+			if _, err := fmt.Fprintf(&buf, "%s|%s|%s|%s|%s|%s|\r",
 				cit.JournalTitle,
 				cit.Year,
 				cit.Volume,
 				cit.FirstPage,
 				cit.AuthorName,
 				key,
-			)
+			); err != nil {
+				return nil, err
+			}
 		}
 		v["bdata"] = []string{buf.String()}
 	}

@@ -614,13 +614,13 @@ func extractMoveAspirateDispenseInstructions(ins []liquidhandling.TerminalRobotI
 		i.Visit(&liquidhandling.RobotInstructionBaseVisitor{
 			HandleMove: func(ins *liquidhandling.MoveInstruction) { mov[idx] = ins },
 			HandleAspirate: func(ins *liquidhandling.AspirateInstruction) {
-				if m := mov[idx-1]; m != nil {
-					ma = append(ma, movAspPair{mov: m, asp: ins})
+				if idx > 0 && mov[idx-1] != nil {
+					ma = append(ma, movAspPair{mov: mov[idx-1], asp: ins})
 				}
 			},
 			HandleDispense: func(ins *liquidhandling.DispenseInstruction) {
-				if m := mov[idx-1]; m != nil {
-					md = append(md, movDspPair{mov: m, dsp: ins})
+				if idx > 0 && mov[idx-1] != nil {
+					md = append(md, movDspPair{mov: mov[idx-1], dsp: ins})
 				}
 			},
 		})

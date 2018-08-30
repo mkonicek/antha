@@ -110,12 +110,11 @@ func Makeseq(dir string, seq BioSequence) string {
 	if e != nil {
 		panic(e)
 	}
+	defer f.Close() //nolint
 
 	if _, err := fmt.Fprintf(f, ">%s\n%s\n", seq.Name(), seq.Sequence()); err != nil {
 		panic(err)
 	}
-
-	f.Close() //nolint
 
 	return filename
 }

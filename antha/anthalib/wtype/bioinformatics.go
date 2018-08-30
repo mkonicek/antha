@@ -111,7 +111,9 @@ func Makeseq(dir string, seq BioSequence) string {
 		panic(e)
 	}
 
-	fmt.Fprintf(f, ">%s\n%s\n", seq.Name(), seq.Sequence())
+	if _, err := fmt.Fprintf(f, ">%s\n%s\n", seq.Name(), seq.Sequence()); err != nil {
+		panic(err)
+	}
 
 	f.Close() //nolint
 

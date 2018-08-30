@@ -89,6 +89,10 @@ func NewTransferInstruction(what, pltfrom, pltto, wellfrom, wellto, fplatetype, 
 	return tfri
 }
 
+func (ins *TransferInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.Transfer(ins)
+}
+
 func (ins *TransferInstruction) OutputTo(drv LiquidhandlingDriver) error {
 	hlld, ok := drv.(HighLevelLiquidhandlingDriver)
 

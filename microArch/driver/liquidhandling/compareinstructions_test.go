@@ -108,22 +108,46 @@ func TestMerger(t *testing.T) {
 	}
 }
 
+func TestErroneousComparisons(t *testing.T) {
+	nilIns := []RobotInstruction{nil}
+	if err := CompareInstructionSets(nilIns, nilIns); len(err) == 0 {
+		t.Error("Expected error when comparing nil instruction sets")
+	}
+
+	inss1 := testInstructions1()
+	if err := CompareInstructionSets(inss1, nil); len(err) == 0 {
+		t.Error("Expected error when comparing non-nil with nil instruction sets")
+	}
+
+	if err := CompareInstructionSets(nil, inss1); len(err) == 0 {
+		t.Error("Expected error when comparing nil with non-nil instruction sets")
+	}
+}
+
+func TestDifferentTypes(t *testing.T) {
+	as := []RobotInstruction{NewMoveInstruction(), NewMixInstruction(), NewMixInstruction()}
+	bs := []RobotInstruction{NewMixInstruction(), NewMixInstruction(), NewMoveInstruction()}
+	if err := CompareInstructionSets(as, bs); len(err) != 2 {
+		t.Errorf("Expected two errors when comparing %v with %v but got %v instead.", as, bs, err)
+	}
+}
+
 func TestBasicComparison(t *testing.T) {
 	inss1 := testInstructions1()
 	inss2 := testInstructions1()
 
-	ret := CompareInstructionSets(inss1, inss2, ComparisonOpt{InstructionParameters: CompareAllParameters()})
+	ret := CompareInstructionSets(inss1, inss2, CompareAllParameters...)
 
-	if len(ret.Errors) != 0 {
-		t.Errorf("Expected 0 errors, got %d: %v", len(ret.Errors), ret.Errors)
+	if len(ret) != 0 {
+		t.Errorf("Expected 0 errors, got %d: %v", len(ret), ret)
 	}
 
 	inss2 = testInstructions2()
 
-	ret = CompareInstructionSets(inss1, inss2, ComparisonOpt{InstructionParameters: CompareAllParameters()})
+	ret = CompareInstructionSets(inss1, inss2, CompareAllParameters...)
 
-	if len(ret.Errors) != 6 {
-		t.Errorf("Expected 6 errors, got %d: %v", len(ret.Errors), ret.Errors)
+	if len(ret) != 6 {
+		t.Errorf("Expected 6 errors, got %d: %v", len(ret), ret)
 	}
 }
 
@@ -132,13 +156,13 @@ func TestComparisonoptions(t *testing.T) {
 	inss2 := testInstructions2()
 
 	expected := []int{0, 0, 0, 0, 3, 3}
-	prms := []InstructionParametersMap{CompareReferences(), CompareOffsets(), CompareWells(), ComparePlateTypes(), CompareVolumes(), ComparePositions()}
+	prms := [][]RobotInstructionComparatorFunc{CompareReferences, CompareOffsets, CompareWells, ComparePlateTypes, {CompareVolumes}, ComparePositions}
 	names := []string{"References", "Offsets", "Wells", "PlateTypes", "Volumes", "Positions"}
 
 	for i := 0; i < len(expected); i++ {
-		ret := CompareInstructionSets(inss1, inss2, ComparisonOpt{InstructionParameters: prms[i]})
-		if len(ret.Errors) != expected[i] {
-			t.Errorf("Comparison %s expected %d errors got %d (%v)", names[i], expected[i], len(ret.Errors), ret.Errors)
+		ret := CompareInstructionSets(inss1, inss2, prms[i]...)
+		if len(ret) != expected[i] {
+			t.Errorf("Comparison %s expected %d errors got %d (%v)", names[i], expected[i], len(ret), ret)
 		}
 	}
 

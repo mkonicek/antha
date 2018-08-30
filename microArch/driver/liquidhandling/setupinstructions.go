@@ -21,6 +21,10 @@ func NewRemoveAllPlatesInstruction() *RemoveAllPlatesInstruction {
 	return v
 }
 
+func (ins *RemoveAllPlatesInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.RemoveAllPlates(ins)
+}
+
 func (rapi *RemoveAllPlatesInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return []RobotInstruction{}, nil
 }
@@ -60,6 +64,10 @@ func NewAddPlateToInstruction(position, name string, plate interface{}) *AddPlat
 	}
 	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
 	return v
+}
+
+func (ins *AddPlateToInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.AddPlateTo(ins)
 }
 
 func (apti *AddPlateToInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {

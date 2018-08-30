@@ -24,14 +24,9 @@ func NewTimer() *OldLHTimer {
 
 func (t *OldLHTimer) TimeFor(r RobotInstruction) time.Duration {
 	d := t.Times[r.Type()]
-	if r.Type() == MIX {
-		// get cycles
-
-		prm := r.GetParameter(CYCLES)
-
-		cyc, ok := prm.([]int)
-
-		if ok {
+	r.Visit(RobotInstructionBaseVisitor{
+		HandleMix: func(mix *MixInstruction) {
+			cyc := mix.Cycles
 			max := func(ds []int) int {
 				res := 0
 				for _, elem := range ds {
@@ -42,8 +37,8 @@ func (t *OldLHTimer) TimeFor(r RobotInstruction) time.Duration {
 				return res
 			}
 			d = time.Duration(int64(max(cyc)) * int64(d))
-		}
-	}
+		},
+	})
 
 	return d
 }

@@ -83,6 +83,10 @@ func NewSingleChannelBlockInstruction() *SingleChannelBlockInstruction {
 	return v
 }
 
+func (ins *SingleChannelBlockInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.SingleChannelBlock(ins)
+}
+
 func (ins *SingleChannelBlockInstruction) AddTransferParams(mct TransferParams) {
 	ins.What = append(ins.What, mct.What)
 	ins.PltFrom = append(ins.PltFrom, mct.PltFrom)
@@ -318,6 +322,10 @@ func NewMultiChannelBlockInstruction() *MultiChannelBlockInstruction {
 	}
 	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
 	return v
+}
+
+func (ins *MultiChannelBlockInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.MultiChannelBlock(ins)
 }
 
 func (ins *MultiChannelBlockInstruction) AddTransferParams(mct MultiTransferParams) {
@@ -607,6 +615,10 @@ func NewSingleChannelTransferInstruction() *SingleChannelTransferInstruction {
 	return v
 }
 
+func (ins *SingleChannelTransferInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.SingleChannelTransfer(ins)
+}
+
 func (ins *SingleChannelTransferInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
 	case LIQUIDCLASS:
@@ -726,6 +738,10 @@ func NewMultiChannelTransferInstruction() *MultiChannelTransferInstruction {
 	return v
 }
 
+func (ins *MultiChannelTransferInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.MultiChannelTransfer(ins)
+}
+
 func (ins *MultiChannelTransferInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
 	case LIQUIDCLASS:
@@ -809,6 +825,10 @@ func NewStateChangeInstruction(oldstate, newstate *wtype.LHChannelParameter) *St
 	return v
 }
 
+func (ins *StateChangeInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.StateChange(ins)
+}
+
 func (ins *StateChangeInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
 	case OLDSTATE:
@@ -847,6 +867,10 @@ func NewChangeAdaptorInstruction(head int, droppos, getpos, oldad, newad, platfo
 	}
 	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
 	return v
+}
+
+func (ins *ChangeAdaptorInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.ChangeAdaptor(ins)
 }
 
 func (ins *ChangeAdaptorInstruction) GetParameter(name InstructionParameter) interface{} {
@@ -900,6 +924,10 @@ func NewLoadTipsMoveInstruction() *LoadTipsMoveInstruction {
 	}
 	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
 	return v
+}
+
+func (ins *LoadTipsMoveInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.LoadTipsMove(ins)
 }
 
 func (ins *LoadTipsMoveInstruction) GetParameter(name InstructionParameter) interface{} {
@@ -976,6 +1004,10 @@ func NewUnloadTipsMoveInstruction() *UnloadTipsMoveInstruction {
 	}
 	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
 	return v
+}
+
+func (ins *UnloadTipsMoveInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.UnloadTipsMove(ins)
 }
 
 func (ins *UnloadTipsMoveInstruction) GetParameter(name InstructionParameter) interface{} {
@@ -1057,6 +1089,10 @@ func NewAspirateInstruction() *AspirateInstruction {
 	return v
 }
 
+func (ins *AspirateInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.Aspirate(ins)
+}
+
 func (ins *AspirateInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
 	case VOLUME:
@@ -1129,6 +1165,10 @@ func NewDispenseInstruction() *DispenseInstruction {
 	return v
 }
 
+func (ins *DispenseInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.Dispense(ins)
+}
+
 func (ins *DispenseInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
 	case VOLUME:
@@ -1199,6 +1239,10 @@ func NewBlowoutInstruction() *BlowoutInstruction {
 	return v
 }
 
+func (ins *BlowoutInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.Blowout(ins)
+}
+
 func (ins *BlowoutInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
 	case VOLUME:
@@ -1260,6 +1304,10 @@ func NewPTZInstruction() *PTZInstruction {
 	return v
 }
 
+func (ins *PTZInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.PTZ(ins)
+}
+
 func (ins *PTZInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
 	case HEAD:
@@ -1317,6 +1365,10 @@ func NewMoveInstruction() *MoveInstruction {
 	}
 	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
 	return v
+}
+
+func (ins *MoveInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.Move(ins)
 }
 
 func (ins *MoveInstruction) GetParameter(name InstructionParameter) interface{} {
@@ -1414,6 +1466,10 @@ func NewMoveRawInstruction() *MoveRawInstruction {
 	return v
 }
 
+func (ins *MoveRawInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.MoveRaw(ins)
+}
+
 func (ins *MoveRawInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
 	case HEAD:
@@ -1489,6 +1545,10 @@ func NewLoadTipsInstruction() *LoadTipsInstruction {
 	return v
 }
 
+func (ins *LoadTipsInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.LoadTips(ins)
+}
+
 func (ins *LoadTipsInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
 	case HEAD:
@@ -1556,6 +1616,10 @@ func NewUnloadTipsInstruction() *UnloadTipsInstruction {
 	}
 	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
 	return v
+}
+
+func (ins *UnloadTipsInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.UnloadTips(ins)
 }
 
 func (ins *UnloadTipsInstruction) GetParameter(name InstructionParameter) interface{} {
@@ -1628,6 +1692,10 @@ func NewSuckInstruction() *SuckInstruction {
 	}
 	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
 	return v
+}
+
+func (ins *SuckInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.Suck(ins)
 }
 
 func (ins *SuckInstruction) AddTransferParams(tp TransferParams) {
@@ -2049,6 +2117,10 @@ func NewBlowInstruction() *BlowInstruction {
 	}
 	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
 	return v
+}
+
+func (ins *BlowInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.Blow(ins)
 }
 
 func (ins *BlowInstruction) GetParameter(name InstructionParameter) interface{} {
@@ -2558,6 +2630,10 @@ func NewSetPipetteSpeedInstruction() *SetPipetteSpeedInstruction {
 	return v
 }
 
+func (ins *SetPipetteSpeedInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.SetPipetteSpeed(ins)
+}
+
 func (ins *SetPipetteSpeedInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
 	case HEAD:
@@ -2604,6 +2680,10 @@ func NewSetDriveSpeedInstruction() *SetDriveSpeedInstruction {
 	return v
 }
 
+func (ins *SetDriveSpeedInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.SetDriveSpeed(ins)
+}
+
 func (ins *SetDriveSpeedInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
 	case DRIVE:
@@ -2646,6 +2726,10 @@ func NewInitializeInstruction() *InitializeInstruction {
 	return v
 }
 
+func (ins *InitializeInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.Initialize(ins)
+}
+
 func (ins *InitializeInstruction) GetParameter(name InstructionParameter) interface{} {
 	return ins.BaseRobotInstruction.GetParameter(name)
 }
@@ -2675,6 +2759,10 @@ func NewFinalizeInstruction() *FinalizeInstruction {
 	}
 	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
 	return v
+}
+
+func (ins *FinalizeInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.Finalize(ins)
 }
 
 func (ins *FinalizeInstruction) GetParameter(name InstructionParameter) interface{} {
@@ -2707,6 +2795,10 @@ func NewWaitInstruction() *WaitInstruction {
 	}
 	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
 	return v
+}
+
+func (ins *WaitInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.Wait(ins)
 }
 
 func (ins *WaitInstruction) GetParameter(name InstructionParameter) interface{} {
@@ -2766,6 +2858,10 @@ func NewLightsOnInstruction() *LightsOnInstruction {
 	return v
 }
 
+func (ins *LightsOnInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.LightsOn(ins)
+}
+
 func (ins *LightsOnInstruction) GetParameter(name InstructionParameter) interface{} {
 	return ins.BaseRobotInstruction.GetParameter(name)
 }
@@ -2812,6 +2908,10 @@ func NewLightsOffInstruction() *LightsOffInstruction {
 	}
 	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
 	return v
+}
+
+func (ins *LightsOffInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.LightsOff(ins)
 }
 
 func (ins *LightsOffInstruction) GetParameter(name InstructionParameter) interface{} {
@@ -2862,6 +2962,10 @@ func NewOpenInstruction() *OpenInstruction {
 	return v
 }
 
+func (ins *OpenInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.Open(ins)
+}
+
 func (ins *OpenInstruction) GetParameter(name InstructionParameter) interface{} {
 	return ins.BaseRobotInstruction.GetParameter(name)
 }
@@ -2908,6 +3012,10 @@ func NewCloseInstruction() *CloseInstruction {
 	}
 	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
 	return v
+}
+
+func (ins *CloseInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.Close(ins)
 }
 
 func (ins *CloseInstruction) GetParameter(name InstructionParameter) interface{} {
@@ -2958,6 +3066,10 @@ func NewLoadAdaptorInstruction() *LoadAdaptorInstruction {
 	return v
 }
 
+func (ins *LoadAdaptorInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.LoadAdaptor(ins)
+}
+
 func (ins *LoadAdaptorInstruction) GetParameter(name InstructionParameter) interface{} {
 	return ins.BaseRobotInstruction.GetParameter(name)
 }
@@ -3004,6 +3116,10 @@ func NewUnloadAdaptorInstruction() *UnloadAdaptorInstruction {
 	}
 	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
 	return v
+}
+
+func (ins *UnloadAdaptorInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.UnloadAdaptor(ins)
 }
 
 func (ins *UnloadAdaptorInstruction) GetParameter(name InstructionParameter) interface{} {
@@ -3055,6 +3171,10 @@ func NewResetInstruction() *ResetInstruction {
 	}
 	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
 	return v
+}
+
+func (ins *ResetInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.Reset(ins)
 }
 
 func (ins *ResetInstruction) GetParameter(name InstructionParameter) interface{} {
@@ -3216,6 +3336,10 @@ func NewMoveMixInstruction() *MoveMixInstruction {
 	return v
 }
 
+func (ins *MoveMixInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.MoveMix(ins)
+}
+
 func (ins *MoveMixInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
 	case VOLUME:
@@ -3306,6 +3430,10 @@ func NewMixInstruction() *MixInstruction {
 	}
 	mi.BaseRobotInstruction = NewBaseRobotInstruction(mi)
 	return mi
+}
+
+func (ins *MixInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.Mix(ins)
 }
 
 func (ins *MixInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {

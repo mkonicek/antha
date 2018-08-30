@@ -108,6 +108,30 @@ func TestMerger(t *testing.T) {
 	}
 }
 
+func TestErroneousComparisons(t *testing.T) {
+	nilIns := []RobotInstruction{nil}
+	if err := CompareInstructionSets(nilIns, nilIns); len(err) == 0 {
+		t.Error("Expected error when comparing nil instruction sets")
+	}
+
+	inss1 := testInstructions1()
+	if err := CompareInstructionSets(inss1, nil); len(err) == 0 {
+		t.Error("Expected error when comparing non-nil with nil instruction sets")
+	}
+
+	if err := CompareInstructionSets(nil, inss1); len(err) == 0 {
+		t.Error("Expected error when comparing nil with non-nil instruction sets")
+	}
+}
+
+func TestDifferentTypes(t *testing.T) {
+	as := []RobotInstruction{NewMoveInstruction(), NewMixInstruction(), NewMixInstruction()}
+	bs := []RobotInstruction{NewMixInstruction(), NewMixInstruction(), NewMoveInstruction()}
+	if err := CompareInstructionSets(as, bs); len(err) != 2 {
+		t.Errorf("Expected two errors when comparing %v with %v but got %v instead.", as, bs, err)
+	}
+}
+
 func TestBasicComparison(t *testing.T) {
 	inss1 := testInstructions1()
 	inss2 := testInstructions1()

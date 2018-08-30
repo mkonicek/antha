@@ -36,7 +36,7 @@ func (self *UnitRegistry) DeclareUnit(measurementType, name, baseSymbol, SISymbo
 	unit := &Unit{
 		name:       name,
 		symbol:     baseSymbol,
-		base:       SISymbol,
+		siSymbol:   SISymbol,
 		multiplier: 1.0,
 		exponent:   exponent,
 	}

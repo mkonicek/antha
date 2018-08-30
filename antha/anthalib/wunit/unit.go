@@ -13,7 +13,7 @@ import (
 type Unit struct {
 	name       string   //common name for the unit
 	symbol     string   //symbol of the unit
-	base       string   //the SI unit for this dimension, or derived one if there isn't one
+	siSymbol   string   //the symbol of the SI unit for this unit
 	prefix     SIPrefix //the SI prefix which is applied to the symbol
 	multiplier float64  //value to multiply by to convert "symbol"s to "base", e.g. 60 for min (SI unit = s)
 	exponent   int      //the exponent for the prefix. 1 unless the prefix is grouped with a unit that is raised to a power, e.g. for "m^2" exponent=2 such that 1 m^2 = 10^6 mm^2
@@ -31,7 +31,7 @@ func (self *Unit) MarshalJSON() ([]byte, error) {
 	}{
 		Name:       self.name,
 		Symbol:     self.symbol,
-		Base:       self.base,
+		Base:       self.siSymbol,
 		Prefix:     self.prefix,
 		Multiplier: self.multiplier,
 		Exponent:   self.exponent,
@@ -54,7 +54,7 @@ func (self *Unit) UnmarshalJSON(data []byte) error {
 	}
 	self.name = value.Name
 	self.symbol = value.Symbol
-	self.base = value.Base
+	self.siSymbol = value.Base
 	self.prefix = value.Prefix
 	self.multiplier = value.Multiplier
 	self.exponent = value.Exponent
@@ -74,7 +74,7 @@ func (self *Unit) GobEncode() ([]byte, error) {
 	}{
 		Name:       self.name,
 		Symbol:     self.symbol,
-		Base:       self.base,
+		Base:       self.siSymbol,
 		Prefix:     self.prefix,
 		Multiplier: self.multiplier,
 		Exponent:   self.exponent,
@@ -100,7 +100,7 @@ func (self *Unit) GobDecode(b []byte) error {
 	}
 	self.name = value.Name
 	self.symbol = value.Symbol
-	self.base = value.Base
+	self.siSymbol = value.Base
 	self.prefix = value.Prefix
 	self.multiplier = value.Multiplier
 	self.exponent = value.Exponent
@@ -145,14 +145,14 @@ func (self *Unit) RawSymbol() string {
 
 // BaseSISymbol Base SI or derived unit for this property, equivalent to BaseSISymbol
 func (self *Unit) BaseSISymbol() string {
-	return self.base
+	return self.siSymbol
 }
 
 // ConvertTo get the conversion factor between this unit and pu.
 // This function will call panic() if pu is not compatible with this unit, see CompatibleWith
 func (self *Unit) ConvertTo(pu PrefixedUnit) (float64, error) {
 	if !self.compatibleWith(pu) {
-		return 0.0, errors.Errorf("cannot convert units: base units for %s and %s do not match: %s != %s", self.PrefixedSymbol(), pu.PrefixedSymbol(), self.base, pu.BaseSISymbol())
+		return 0.0, errors.Errorf("cannot convert units: base units for %s and %s do not match: %s != %s", self.PrefixedSymbol(), pu.PrefixedSymbol(), self.siSymbol, pu.BaseSISymbol())
 	}
 
 	return self.BaseSIConversionFactor() / pu.BaseSIConversionFactor(), nil
@@ -162,7 +162,7 @@ func (self *Unit) ConvertTo(pu PrefixedUnit) (float64, error) {
 // If this function returns false then calling ConvertTo with the same units will
 // case a panic
 func (self *Unit) compatibleWith(pu PrefixedUnit) bool {
-	return self.base == pu.BaseSISymbol()
+	return self.siSymbol == pu.BaseSISymbol()
 }
 
 // Copy return a pointer to a new Unit identical to this one

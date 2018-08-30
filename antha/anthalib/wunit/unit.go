@@ -112,8 +112,8 @@ func (self *Unit) Name() string {
 	return self.prefix.Name + self.name
 }
 
-// BaseSIConversionFactor factor to multiply by in order to convert to SI value including effect of prefix
-func (self *Unit) BaseSIConversionFactor() float64 {
+// getBaseSIConversionFactor factor to multiply by in order to convert to SI value including effect of prefix
+func (self *Unit) getBaseSIConversionFactor() float64 {
 	return math.Pow(self.prefix.Value, float64(self.exponent)) * self.multiplier
 }
 
@@ -148,14 +148,13 @@ func (self *Unit) BaseSISymbol() string {
 	return self.siSymbol
 }
 
-// ConvertTo get the conversion factor between this unit and pu.
-// This function will call panic() if pu is not compatible with this unit, see CompatibleWith
-func (self *Unit) ConvertTo(pu PrefixedUnit) (float64, error) {
-	if !self.compatibleWith(pu) {
-		return 0.0, errors.Errorf("cannot convert units: base units for %s and %s do not match: %s != %s", self.PrefixedSymbol(), pu.PrefixedSymbol(), self.siSymbol, pu.BaseSISymbol())
+// getConversionFactor get the conversion factor between this unit and rhs.
+func (self *Unit) getConversionFactor(rhs *Unit) (float64, error) {
+	if !self.compatibleWith(rhs) {
+		return 0.0, errors.Errorf("cannot convert units: base units for %s and %s do not match: %s != %s", self.PrefixedSymbol(), rhs.PrefixedSymbol(), self.siSymbol, rhs.BaseSISymbol())
 	}
 
-	return self.BaseSIConversionFactor() / pu.BaseSIConversionFactor(), nil
+	return self.getBaseSIConversionFactor() / rhs.getBaseSIConversionFactor(), nil
 }
 
 // CompatibleWith returns true if the units can be converted to the supplied units.

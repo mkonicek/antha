@@ -44,13 +44,6 @@ type PrefixedUnit interface {
 	RawSymbol() string
 	// BaseSISymbol returns the symbol of the appropriate unit if we ask for SI values, e.g. "kg"
 	BaseSISymbol() string
-
-	// ConvertTo returns conversion factor from *this* unit to the other
-	ConvertTo(pu PrefixedUnit) (float64, error)
-	// BaseSIConversionFactor facto by which to multiply to get the value in
-	// units specified by BaseSISymbol()
-	// (nb. this should be a function since we actually need an affine transformation e.g. to support farenheight)
-	BaseSIConversionFactor() float64
 }
 
 // fundamental representation of a value in the system
@@ -147,7 +140,9 @@ func (cm *ConcreteMeasurement) SetValue(v float64) float64 {
 func (cm *ConcreteMeasurement) ConvertTo(p PrefixedUnit) (Measurement, error) {
 	if isNil(cm) {
 		return &ConcreteMeasurement{}, nil
-	} else if factor, err := cm.Unit().ConvertTo(p); err != nil {
+	} else if rhs, ok := p.(*Unit); !ok { //since we currently don't have any methods in PrefixedUnit for unit conversion
+		return nil, errors.Errorf("unsupported PrefixedUnit type %T", p)
+	} else if factor, err := cm.Munit.getConversionFactor(rhs); err != nil {
 		return nil, err
 	} else if unit, ok := p.(*Unit); !ok {
 		return nil, errors.Errorf("cannot convert unit type %T to *Unit", unit)

@@ -25,6 +25,7 @@ package wunit
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"sort"
 )
 
@@ -77,9 +78,16 @@ func MaxConcentration(concs []Concentration) (max Concentration, err error) {
 	return sorted[len(sorted)-1], nil
 }
 
+// sameUnit returns an error if we cannot convert between unitA and unitB
 func sameUnit(unitA, unitB PrefixedUnit) error {
-	_, err := unitA.ConvertTo(unitB)
-	return err
+	if a, ok := unitA.(*Unit); !ok {
+		return errors.Errorf("unsupported PrefixedUnit type %T", unitA)
+	} else if b, ok := unitB.(*Unit); !ok {
+		return errors.Errorf("unsupported PrefixedUnit type %T", unitB)
+	} else {
+		_, err := a.getConversionFactor(b)
+		return err
+	}
 }
 
 type concentrationSet []Concentration

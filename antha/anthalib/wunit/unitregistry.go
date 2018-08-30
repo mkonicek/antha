@@ -187,7 +187,7 @@ func (self *UnitRegistry) DeclareDerivedUnit(measurementType string, name, symbo
 
 	unit.symbol = symbol
 	unit.name = name
-	unit.multiplier = unit.BaseSIConversionFactor() * symbolInTargets
+	unit.multiplier = unit.getBaseSIConversionFactor() * symbolInTargets
 	unit.exponent = exponent
 
 	for _, prefix := range validPrefixes {

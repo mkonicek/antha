@@ -40,7 +40,7 @@ func (es errorSlice) Error() string {
 	return strings.Join(strs, "\n")
 }
 
-func CompareInstructionSets(setA, setB []RobotInstruction, comparators []RobotInstructionComparatorFunc) errorSlice {
+func CompareInstructionSets(setA, setB []RobotInstruction, comparators ...RobotInstructionComparatorFunc) errorSlice {
 	setAMerged := mergeMovs(setA)
 	setBMerged := mergeMovs(setB)
 	return orderedInstructionComparison(setAMerged, setBMerged, comparators)

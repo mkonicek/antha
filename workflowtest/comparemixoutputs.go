@@ -127,7 +127,7 @@ func compareOutputMaps(outputMapWant, outputMapGot outputMap) ComparisonResult {
 		}
 	}
 
-	for _, key := range filterOutSeen(gotKeys, wantKeys) {
+	for _, key := range filterOutSeen(wantKeys, gotKeys) {
 		errors = append(errors, fmt.Errorf("Extra output components: %s %v", key, outputMapGot[key]))
 	}
 
@@ -227,7 +227,11 @@ func getComponentInfo(wellIn *wtype.LHWell, positionIn, plateNameIn string, opts
 	}
 
 	if opts&CompareVolumes != 0 {
-		volume = wellIn.CurrentVolume().ToString()
+		if volumeInUl, err := wellIn.CurrentVolume().ConvertToByString("ul"); err != nil {
+			panic(err) //this should never happen with volumes as all units are compatible
+		} else {
+			volume = volumeInUl.ToString()
+		}
 	}
 
 	if opts&ComparePlateNames != 0 {

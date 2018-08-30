@@ -157,9 +157,7 @@ func (self *Unit) getConversionFactor(rhs *Unit) (float64, error) {
 	return self.getBaseSIConversionFactor() / rhs.getBaseSIConversionFactor(), nil
 }
 
-// CompatibleWith returns true if the units can be converted to the supplied units.
-// If this function returns false then calling ConvertTo with the same units will
-// case a panic
+// compatibleWith returns true if the units can be converted to the supplied units.
 func (self *Unit) compatibleWith(pu PrefixedUnit) bool {
 	return self.siSymbol == pu.BaseSISymbol()
 }

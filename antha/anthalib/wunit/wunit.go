@@ -57,11 +57,11 @@ type Measurement interface {
 	// set the value, this must be thread-safe
 	// returns old value
 	SetValue(v float64) float64
-	// ConvertTo get a new PrefixedUnit with the new units, returns error if units are not compatible
-	ConvertTo(p PrefixedUnit) (Measurement, error)
-	// ConvertToByString wrapper for ConvertTo
-	ConvertToByString(symbol string) (Measurement, error)
-	// ConvertToString deprecated, please use ConvertTo or ConvertToByString
+	// InUnit get a new Measurement with the new units, returns error if units are not compatible
+	InUnit(p PrefixedUnit) (Measurement, error)
+	// InStringUnit wrapper for InUnit which fetches the unit from the global UnitRegistry
+	InStringUnit(symbol string) (Measurement, error)
+	// ConvertToString deprecated, please use ConvertTo or InStringUnit
 	ConvertToString(s string) float64
 	// AddTo add to this measurement
 	AddTo(m Measurement) error
@@ -137,7 +137,7 @@ func (cm *ConcreteMeasurement) SetValue(v float64) float64 {
 }
 
 // ConvertTo return a new measurement in the new units
-func (cm *ConcreteMeasurement) ConvertTo(p PrefixedUnit) (Measurement, error) {
+func (cm *ConcreteMeasurement) InUnit(p PrefixedUnit) (Measurement, error) {
 	if isNil(cm) {
 		return &ConcreteMeasurement{}, nil
 	} else if rhs, ok := p.(*Unit); !ok { //since we currently don't have any methods in PrefixedUnit for unit conversion
@@ -151,18 +151,18 @@ func (cm *ConcreteMeasurement) ConvertTo(p PrefixedUnit) (Measurement, error) {
 	}
 }
 
-// ConvertToByString return a new measurement in the new units
-func (cm *ConcreteMeasurement) ConvertToByString(symbol string) (Measurement, error) {
+// InStringUnit return a new measurement in the new units
+func (cm *ConcreteMeasurement) InStringUnit(symbol string) (Measurement, error) {
 	if unit, err := GetGlobalUnitRegistry().GetUnit(symbol); err != nil {
 		return nil, err
 	} else {
-		return cm.ConvertTo(unit)
+		return cm.InUnit(unit)
 	}
 }
 
-// ConvertToString deprecated, please use ConvertToByString
+// ConvertToString deprecated, please use InStringUnit
 func (cm *ConcreteMeasurement) ConvertToString(s string) float64 {
-	if unit, err := cm.ConvertToByString(s); err != nil {
+	if unit, err := cm.InStringUnit(s); err != nil {
 		panic(err)
 	} else {
 		return unit.RawValue()
@@ -182,7 +182,7 @@ func (cm *ConcreteMeasurement) String() string {
 func (cm *ConcreteMeasurement) AddTo(m Measurement) error {
 	if isNil(cm) {
 		return nil
-	} else if rhs, err := m.ConvertTo(cm.Unit()); err != nil {
+	} else if rhs, err := m.InUnit(cm.Unit()); err != nil {
 		return err
 	} else {
 		cm.SetValue(rhs.RawValue() + cm.RawValue())
@@ -194,7 +194,7 @@ func (cm *ConcreteMeasurement) AddTo(m Measurement) error {
 func (cm *ConcreteMeasurement) SubtractFrom(m Measurement) error {
 	if isNil(cm) {
 		return nil
-	} else if rhs, err := m.ConvertTo(cm.Unit()); err != nil {
+	} else if rhs, err := m.InUnit(cm.Unit()); err != nil {
 		return err
 	} else {
 		cm.SetValue(cm.RawValue() - rhs.RawValue())
@@ -254,7 +254,7 @@ func (cm *ConcreteMeasurement) LessThanRounded(m Measurement, p int) bool {
 	// nil means less than everything
 	if isNil(cm) {
 		return true
-	} else if rhs, err := m.ConvertTo(cm.Unit()); err != nil {
+	} else if rhs, err := m.InUnit(cm.Unit()); err != nil {
 		panic(err)
 	} else {
 		return wutil.RoundIgnoreNan(rhs.RawValue(), p) > wutil.RoundIgnoreNan(cm.RawValue(), p)
@@ -264,7 +264,7 @@ func (cm *ConcreteMeasurement) LessThanRounded(m Measurement, p int) bool {
 func (cm *ConcreteMeasurement) GreaterThanRounded(m Measurement, p int) bool {
 	if isNil(cm) {
 		return false
-	} else if rhs, err := m.ConvertTo(cm.Unit()); err != nil {
+	} else if rhs, err := m.InUnit(cm.Unit()); err != nil {
 		panic(err)
 	} else {
 		return wutil.RoundIgnoreNan(rhs.RawValue(), p) < wutil.RoundIgnoreNan(cm.RawValue(), p)
@@ -275,7 +275,7 @@ func (cm *ConcreteMeasurement) EqualToRounded(m Measurement, p int) bool {
 	// this is not equal to anything
 	if isNil(cm) {
 		return false
-	} else if rhs, err := m.ConvertTo(cm.Unit()); err != nil {
+	} else if rhs, err := m.InUnit(cm.Unit()); err != nil {
 		panic(err)
 	} else {
 		return wutil.RoundIgnoreNan(rhs.RawValue(), p) == wutil.RoundIgnoreNan(cm.RawValue(), p)
@@ -288,7 +288,7 @@ func (cm *ConcreteMeasurement) LessThan(m Measurement) bool {
 	// nil means less than everything
 	if isNil(cm) {
 		return true
-	} else if rhs, err := m.ConvertTo(cm.Unit()); err != nil {
+	} else if rhs, err := m.InUnit(cm.Unit()); err != nil {
 		panic(err)
 	} else {
 		return rhs.RawValue() > cm.RawValue()
@@ -298,7 +298,7 @@ func (cm *ConcreteMeasurement) LessThan(m Measurement) bool {
 func (cm *ConcreteMeasurement) GreaterThan(m Measurement) bool {
 	if isNil(cm) {
 		return false
-	} else if rhs, err := m.ConvertTo(cm.Unit()); err != nil {
+	} else if rhs, err := m.InUnit(cm.Unit()); err != nil {
 		panic(err)
 	} else {
 		return rhs.RawValue() < cm.RawValue()
@@ -311,7 +311,7 @@ func (cm *ConcreteMeasurement) EqualTo(m Measurement) bool {
 
 	if isNil(cm) {
 		return false
-	} else if rhs, err := m.ConvertTo(cm.Unit()); err != nil {
+	} else if rhs, err := m.InUnit(cm.Unit()); err != nil {
 		panic(err)
 	} else {
 		dif := math.Abs(rhs.RawValue() - cm.RawValue())
@@ -325,7 +325,7 @@ func (cm *ConcreteMeasurement) EqualTo(m Measurement) bool {
 func (cm *ConcreteMeasurement) EqualToTolerance(m Measurement, tol float64) bool {
 	if isNil(cm) {
 		return false
-	} else if rhs, err := m.ConvertTo(cm.Unit()); err != nil {
+	} else if rhs, err := m.InUnit(cm.Unit()); err != nil {
 		panic(err)
 	} else {
 		return math.Abs(rhs.RawValue()-cm.RawValue()) < tol

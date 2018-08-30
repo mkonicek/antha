@@ -227,7 +227,7 @@ func getComponentInfo(wellIn *wtype.LHWell, positionIn, plateNameIn string, opts
 	}
 
 	if opts&CompareVolumes != 0 {
-		if volumeInUl, err := wellIn.CurrentVolume().ConvertToByString("ul"); err != nil {
+		if volumeInUl, err := wellIn.CurrentVolume().InStringUnit("ul"); err != nil {
 			panic(err) //this should never happen with volumes as all units are compatible
 		} else {
 			volume = volumeInUl.ToString()

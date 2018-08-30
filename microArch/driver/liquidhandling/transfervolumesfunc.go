@@ -9,7 +9,7 @@ import (
 
 func TransferVolumes(Vol, Min, Max wunit.Volume) ([]wunit.Volume, error) {
 
-	max, err := Max.ConvertTo(Vol.Unit())
+	max, err := Max.InUnit(Vol.Unit())
 	if err != nil {
 		return nil, err
 	}

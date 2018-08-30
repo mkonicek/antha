@@ -69,9 +69,9 @@ func (sc DefaultChannelScoreFunc) ScoreChannel(vol wunit.Volume, lhcp *wtype.LHC
 	// cannot have 0 error
 	extra := 1.0
 
-	if mx, err := lhcp.Maxvol.ConvertTo(vol.Unit()); err != nil {
+	if mx, err := lhcp.Maxvol.InUnit(vol.Unit()); err != nil {
 		panic(err) // this is unlikely to ever be an issue for volumes since all units are compatible
-	} else if mn, err := lhcp.Minvol.ConvertTo(vol.Unit()); err != nil {
+	} else if mn, err := lhcp.Minvol.InUnit(vol.Unit()); err != nil {
 		panic(err)
 	} else {
 

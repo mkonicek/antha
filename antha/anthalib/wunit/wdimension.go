@@ -181,7 +181,7 @@ func DivideConcentration(v Concentration, factor float64) (newconc Concentration
 func DivideConcentrations(num, den Concentration) (float64, error) {
 	if den.IsZero() {
 		return 0, errors.Errorf("while dividing concentrations %s and %s: cannot divide by zero", num, den)
-	} else if denInNumUnits, err := den.ConvertTo(num.Unit()); err != nil {
+	} else if denInNumUnits, err := den.InUnit(num.Unit()); err != nil {
 		return 0, err
 	} else {
 		return num.RawValue() / denInNumUnits.RawValue(), nil
@@ -379,9 +379,9 @@ type SubstanceQuantity interface {
 // Returns an error if the units of conc are not compatible with grams per litre or
 // grams per mole (such as "X" or "v/v")
 func (conc Concentration) GramsPerLitre(molecularweight float64) (Concentration, error) {
-	if concInGramsPerLitre, err := conc.ConvertToByString("g/l"); err == nil {
+	if concInGramsPerLitre, err := conc.InStringUnit("g/l"); err == nil {
 		return Concentration{ConcreteMeasurement: concInGramsPerLitre.(*ConcreteMeasurement)}, nil
-	} else if concInMolsPerLitre, err := conc.ConvertToByString("Mol/l"); err != nil {
+	} else if concInMolsPerLitre, err := conc.InStringUnit("Mol/l"); err != nil {
 		return Concentration{}, errors.WithMessage(err, fmt.Sprintf("while converting %v into grams per litre[g/l]", conc.Munit))
 	} else {
 		return NewConcentration(concInMolsPerLitre.RawValue()*molecularweight, "g/l"), nil
@@ -402,9 +402,9 @@ func (conc Concentration) GramPerL(molecularWeight float64) Concentration {
 // Returns an error if the units of conc are not compatible with grams per litre or
 // grams per mole (such as "X" or "v/v")
 func (conc Concentration) MolesPerLitre(molecularweight float64) (Concentration, error) {
-	if concInMolsPerLitre, err := conc.ConvertToByString("Mol/l"); err == nil {
+	if concInMolsPerLitre, err := conc.InStringUnit("Mol/l"); err == nil {
 		return Concentration{ConcreteMeasurement: concInMolsPerLitre.(*ConcreteMeasurement)}, nil
-	} else if concInGramsPerLitre, err := conc.ConvertToByString("g/l"); err != nil {
+	} else if concInGramsPerLitre, err := conc.InStringUnit("g/l"); err != nil {
 		return Concentration{}, errors.WithMessage(err, fmt.Sprintf("while converting %v into moles per litre[Mol/l]", conc.Munit))
 	} else {
 		return NewConcentration(concInGramsPerLitre.RawValue()/molecularweight, "Mol/l"), nil

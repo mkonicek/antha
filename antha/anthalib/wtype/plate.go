@@ -1176,9 +1176,11 @@ func (self *Plate) WellCoordsToCoords(wc WellCoords, r WellReference) (Coordinat
 	} else if r == TopReference {
 		z = child.GetPosition().Z + child.GetSize().Z
 	} else if r == LiquidReference {
-		ll := self.Welltype.GetLiquidLevel(child.CurrentVolume().ConvertToString("ul"))
-		z = child.GetPosition().Z + child.Bottomh + ll
-		fmt.Printf("LiquidLevel was %f\n", ll)
+		if volInUl, err := child.CurrentVolume().InStringUnit("ul"); err != nil {
+			panic(err) // this really shouldn't happen as all volume units are compatible with "ul"
+		} else {
+			z = child.GetPosition().Z + child.Bottomh + self.Welltype.GetLiquidLevel(wunit.Volume{ConcreteMeasurement: volInUl.(*wunit.ConcreteMeasurement)})
+		}
 	}
 
 	center := child.GetPosition().Add(child.GetSize().Multiply(0.5))

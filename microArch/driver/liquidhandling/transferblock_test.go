@@ -604,11 +604,12 @@ func testPositive(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPoli
 	multi := 0
 	single := 0
 	for _, ri := range ri2 {
-		if ri.Type() == MCB {
+		switch ri.Type() {
+		case MCB:
 			multi += 1
-		} else if ri.Type() == SCB {
+		case SCB:
 			single += 1
-		} else if ri.Type() == TFR {
+		case TFR:
 			t.Error("ERROR: Transfer generated from Transfer")
 		}
 	}

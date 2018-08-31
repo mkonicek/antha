@@ -29,9 +29,9 @@
 package ast
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/antha-lang/antha/antha/token"
+	"strings"
 )
 
 // A Scope maintains the set of named language entities declared
@@ -71,16 +71,14 @@ func (s *Scope) Insert(obj *Object) (alt *Object) {
 
 // Debugging support
 func (s *Scope) String() string {
-	var buf bytes.Buffer
-	fmt.Fprintf(&buf, "scope %p {", s)
+	ret := []string{fmt.Sprintf("scope %p {", s)}
 	if s != nil && len(s.Objects) > 0 {
-		fmt.Fprintln(&buf)
 		for _, obj := range s.Objects {
-			fmt.Fprintf(&buf, "\t%s %s\n", obj.Kind, obj.Name)
+			ret = append(ret, fmt.Sprintf("\t%s %s", obj.Kind, obj.Name))
 		}
 	}
-	fmt.Fprintf(&buf, "}\n")
-	return buf.String()
+	ret = append(ret, "}")
+	return strings.Join(ret, "\n")
 }
 
 // ----------------------------------------------------------------------------

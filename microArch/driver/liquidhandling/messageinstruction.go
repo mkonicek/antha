@@ -27,6 +27,10 @@ func NewMessageInstruction(lhi *wtype.LHInstruction) *MessageInstruction {
 	return msi
 }
 
+func (ins *MessageInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.Message(ins)
+}
+
 func (msi *MessageInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	// use side effect to keep IDs straight
 

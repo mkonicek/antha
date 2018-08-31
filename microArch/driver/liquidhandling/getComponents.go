@@ -197,8 +197,8 @@ func collateDifference(a, b, c map[string]wunit.Volume) string {
 
 		v := c[k]
 
-		if v.LessThanFloat(0.0) {
-			v.M(-1.0)
+		if v.RawValue() < 0.0 {
+			v.MultiplyBy(-1.0)
 			s += fmt.Sprintf("%s - missing %s; ", k, v.ToString())
 		}
 	}
@@ -355,7 +355,7 @@ func makeMatchSafe(dst wtype.ComponentVector, match wtype.Match, mpv wunit.Volum
 				mpv.Subtract(wunit.NewVolume(checkVol, dst[i].Vunit))
 				match.Vols[i].Subtract(mpv)
 
-				if match.Vols[i].LessThanFloat(0.0) {
+				if match.Vols[i].RawValue() < 0.0 {
 					panic(fmt.Sprintf("Serious volume issue -- try a manual plate layout with some additional volume for %s", dst[i].CName))
 				}
 			}

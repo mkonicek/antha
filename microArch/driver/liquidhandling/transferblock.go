@@ -25,6 +25,10 @@ func NewTransferBlockInstruction(inss []*wtype.LHInstruction) *TransferBlockInst
 	return tb
 }
 
+func (ins *TransferBlockInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.TransferBlock(ins)
+}
+
 // this attempts to find arrays of destinations which can potentially be done simultaneously
 // via multichannel operation. At present this means they must be aligned in rows or columns
 // depending on the robot type and configuration

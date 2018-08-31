@@ -283,7 +283,7 @@ func NewAntha(root *AnthaRoot) *Antha {
 	})
 	p.addImportReq(&importReq{
 		Path:    "github.com/antha-lang/antha/antha/anthalib/wunit",
-		UseExpr: "wunit.Make_units",
+		UseExpr: "wunit.GetGlobalUnitRegistry",
 	})
 	p.addImportReq(&importReq{
 		Path:    "github.com/antha-lang/antha/execute",

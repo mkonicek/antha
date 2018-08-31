@@ -89,6 +89,10 @@ func NewTransferInstruction(what, pltfrom, pltto, wellfrom, wellto, fplatetype, 
 	return tfri
 }
 
+func (ins *TransferInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.Transfer(ins)
+}
+
 func (ins *TransferInstruction) OutputTo(drv LiquidhandlingDriver) error {
 	hlld, ok := drv.(HighLevelLiquidhandlingDriver)
 
@@ -101,7 +105,7 @@ func (ins *TransferInstruction) OutputTo(drv LiquidhandlingDriver) error {
 
 	volumes := make([]float64, len(SetOfMultiTransferParams(ins.Transfers).Volume()))
 	for i, vol := range SetOfMultiTransferParams(ins.Transfers).Volume() {
-		volumes[i] = vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
+		volumes[i] = vol.ConvertToString("ul")
 	}
 
 	reply := hlld.Transfer(SetOfMultiTransferParams(ins.Transfers).What(), SetOfMultiTransferParams(ins.Transfers).PltFrom(), SetOfMultiTransferParams(ins.Transfers).WellFrom(), SetOfMultiTransferParams(ins.Transfers).PltTo(), SetOfMultiTransferParams(ins.Transfers).WellTo(), volumes)
@@ -180,34 +184,6 @@ func (ins *TransferInstruction) GetParameter(name InstructionParameter) interfac
 	default:
 		return ins.BaseRobotInstruction.GetParameter(name)
 	}
-}
-
-func (vs VolumeSet) MaxMultiTransferVolume(minLeave wunit.Volume) wunit.Volume {
-	// the minimum volume in the set... ensuring that we what we leave is
-	// either 0 or minLeave or greater
-
-	ret := vs[0].Dup()
-
-	for _, v := range vs {
-		if v.LessThan(ret) && !v.IsZero() {
-			ret = v.Dup()
-		}
-	}
-
-	vs2 := vs.Dup().Sub(ret)
-
-	if !vs2.NonZeros().Min().IsZero() && vs2.NonZeros().Min().LessThan(minLeave) {
-		//slightly inefficient but we refuse to leave less than minleave
-		ret.Subtract(minLeave)
-	}
-
-	// fail if ret is now < 0 or < the min possible
-
-	if ret.LessThan(wunit.ZeroVolume()) || ret.LessThan(minLeave) {
-		ret = wunit.ZeroVolume()
-	}
-
-	return ret
 }
 
 /*
@@ -534,7 +510,7 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 	lastWhat := ""
 	for _, t := range ins.Transfers {
 		for _, tp := range t.Transfers {
-			if tp.Volume.LessThanFloat(0.001) {
+			if !tp.Volume.IsPositive() {
 				continue
 			}
 

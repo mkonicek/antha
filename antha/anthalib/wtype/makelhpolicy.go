@@ -720,7 +720,7 @@ func MakeHVOffsetPolicy() LHPolicy {
 }
 
 func AdjustPostMixVolume(mixToVol wunit.Volume) LHPolicy {
-	vol := mixToVol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
+	vol := mixToVol.ConvertToString("ul")
 	policy := make(LHPolicy, 1)
 	policy["POST_MIX_VOLUME"] = vol
 	return policy
@@ -740,7 +740,7 @@ func TurnOffPostMixAndPermitTipReUse() LHPolicy {
 }
 
 func AdjustPreMixVolume(mixToVol wunit.Volume) LHPolicy {
-	vol := mixToVol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
+	vol := mixToVol.ConvertToString("ul")
 	policy := make(LHPolicy, 1)
 	policy["PRE_MIX_VOLUME"] = vol
 	return policy

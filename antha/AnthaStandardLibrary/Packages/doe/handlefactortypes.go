@@ -74,7 +74,7 @@ func HandleConcFactor(header string, value interface{}) (anthaConc wunit.Concent
 			unit = defaultUnit
 		}
 
-		err = wunit.ValidMeasurementUnit("Concentration", unit)
+		err = wunit.GetGlobalUnitRegistry().AssertValidUnitForType("Concentration", unit)
 
 		if err != nil {
 			return
@@ -154,7 +154,7 @@ func HandleVolumeFactor(header string, value interface{}) (anthaVolume wunit.Vol
 		fields := strings.Fields(header)
 
 		for _, field := range fields {
-			if _, validUnitFound := wunit.UnitMap["Volume"][strings.Trim(field, "()")]; validUnitFound {
+			if wunit.GetGlobalUnitRegistry().ValidUnitForType("Volume", strings.Trim(field, "()")) {
 				volUnit = strings.Trim(field, "()")
 			}
 		}
@@ -252,7 +252,7 @@ func HandleTemperatureFactor(header string, value interface{}) (anthaTemp wunit.
 			unit = defaultUnit
 		}
 
-		err = wunit.ValidMeasurementUnit("Temperature", unit)
+		err = wunit.GetGlobalUnitRegistry().AssertValidUnitForType("Temperature", unit)
 
 		if err != nil {
 			return
@@ -291,7 +291,7 @@ func HandleTimeFactor(header string, value interface{}) (anthaTime wunit.Time, e
 			unit = defaultUnit
 		}
 
-		err = wunit.ValidMeasurementUnit("Time", unit)
+		err = wunit.GetGlobalUnitRegistry().AssertValidUnitForType("Time", unit)
 
 		if err != nil {
 			return
@@ -329,7 +329,7 @@ func HandleRPMFactor(header string, value interface{}) (anthaRate wunit.Rate, er
 			unit = defaultUnit
 		}
 
-		err = wunit.ValidMeasurementUnit("Rate", unit)
+		err = wunit.GetGlobalUnitRegistry().AssertValidUnitForType("Rate", unit)
 
 		if err != nil {
 			return
@@ -370,7 +370,7 @@ func lookForUnitInHeader(header, measurementType string) (unit string, err error
 			_, trimmed := wunit.SplitValueAndUnit(trimmed)
 
 			// check unit validity
-			err = wunit.ValidMeasurementUnit(measurementType, trimmed)
+			err = wunit.GetGlobalUnitRegistry().AssertValidUnitForType(measurementType, trimmed)
 			if err == nil && priority {
 				prioritisedUnitsFound = append(prioritisedUnitsFound, trimmed)
 			} else if err != nil {

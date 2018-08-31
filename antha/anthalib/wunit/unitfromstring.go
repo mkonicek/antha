@@ -24,20 +24,11 @@ package wunit
 
 import (
 	"fmt"
-	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
-
-func NormaliseUnit(unit string) (normalisedunit string) {
-
-	cm := NewPMeasurement(0, unit)
-
-	normalisedunit = cm.Unit().PrefixedSymbol()
-	return
-}
 
 // SplitValueAndUnit splits a joined value and unit in string format into seperate typed value and unit fields.
 // If the string input is not in the valid format of value followed by unit it will not be parsed correctly.
@@ -69,15 +60,8 @@ func SplitValueAndUnit(str string) (value float64, unit string) {
 // Not currently robust to situations where the component name (without the concentration) is more than one field (e.g. ammonium sulphate) or if the component name is a concatenation of component names (e.g. 1mM Glucose + 10mM Glycerol).
 func ParseConcentration(componentname string) (containsconc bool, conc Concentration, componentNameOnly string) {
 
-	approvedunits := UnitMap["Concentration"]
-
-	var sortedKeys []string
-
-	for k := range approvedunits {
-		sortedKeys = append(sortedKeys, k)
-	}
-
-	sort.Strings(sortedKeys)
+	reg := GetGlobalUnitRegistry()
+	approvedUnits := reg.ListValidUnitsForType("Concentration")
 
 	fields := strings.Fields(componentname)
 
@@ -87,7 +71,7 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 		if unit == componentname {
 			return false, conc, componentname
 		}
-		if err := ValidMeasurementUnit("Concentration", unit); err != nil {
+		if !reg.ValidUnitForType("Concentration", unit) {
 			return false, conc, componentname
 		}
 		return true, NewConcentration(value, unit), componentname
@@ -98,7 +82,7 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 	var unit string
 	var valueString string
 	var notConcFields []string
-	for _, key := range sortedKeys {
+	for _, key := range approvedUnits {
 		for i, field := range fields {
 
 			/// if value and unit are separate fields
@@ -224,15 +208,7 @@ func looksLikeNumberAndUnit(testString string, targetUnit string) bool {
 func ParseVolume(volstring string) (volume Volume, err error) {
 	var volandunit []string
 
-	approvedunits := UnitMap["Volume"]
-
-	var sortedKeys []string
-
-	for k := range approvedunits {
-		sortedKeys = append(sortedKeys, k)
-	}
-
-	sort.Strings(sortedKeys)
+	sortedKeys := GetGlobalUnitRegistry().ListValidUnitsForType("Volume")
 
 	var longestmatchedunit string
 

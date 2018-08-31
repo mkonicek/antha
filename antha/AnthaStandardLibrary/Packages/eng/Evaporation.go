@@ -73,10 +73,7 @@ func X(pw float64, Pa wunit.Pressure) float64 {
 
 func EvaporationVolume(temp wunit.Temperature, liquidtype string, relativehumidity float64, time float64, Airvelocity wunit.Velocity, surfacearea wunit.Area, Pa wunit.Pressure) wunit.Volume {
 	// ensure we are in the right units
-	mysa := wunit.NewArea(surfacearea.Mvalue, surfacearea.Unit().PrefixedSymbol())
-	if surfacearea.Unit().ToString() != "mm^2" {
-		mysa.Mvalue /= 1000000.00
-	}
+	mysa := wunit.NewArea(surfacearea.ConvertToString("mm^2"), "mm^2")
 
 	var PWS float64 = Pws(temp)
 	var pw float64 = Pw(relativehumidity, PWS) // vapour partial pressure in Pascals
@@ -85,7 +82,7 @@ func EvaporationVolume(temp wunit.Temperature, liquidtype string, relativehumidi
 		panic(err.Error())
 	}
 	var Gh = (theta *
-		((surfacearea.RawValue() / 1000000) *
+		((mysa.RawValue() / 1000000) *
 			((Xs(PWS, Pa)) - (X(pw, Pa))))) // Gh is rate of evaporation in kg/h
 
 	evaporatedliquid := (Gh * (time / 3600)) // in kg

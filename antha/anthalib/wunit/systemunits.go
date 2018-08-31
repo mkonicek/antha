@@ -110,7 +110,7 @@ func getSystemUnits() baseUnits {
 			{
 				Name:     "seconds",
 				Symbol:   "s",
-				Prefixes: []SIPrefix{Yocto, Zepto, Atto, Femto, Pico, Nano, Micro, Milli, None},
+				Prefixes: []SIPrefix{Yocto, Zepto, Atto, Femto, Pico, Nano, Micro, Milli},
 				Exponent: 1,
 			},
 		},

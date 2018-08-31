@@ -30,15 +30,18 @@ func NewUnitRegistry() *UnitRegistry {
 func (self *UnitRegistry) DeclareUnit(measurementType, name, baseSymbol, SISymbol string, validPrefixes []SIPrefix, exponent int) error {
 	self.mutex.Lock()
 	defer self.mutex.Unlock()
-	if len(validPrefixes) == 0 {
-		validPrefixes = []SIPrefix{None} //if no prefixes specified, only add default
-	}
 	unit := &Unit{
 		name:       name,
 		symbol:     baseSymbol,
 		siSymbol:   SISymbol,
 		multiplier: 1.0,
 		exponent:   exponent,
+		prefix:     None,
+	}
+
+	//add the prefix-less unit
+	if err := self.declareUnit(measurementType, unit); err != nil {
+		return err
 	}
 
 	for _, prefix := range validPrefixes {
@@ -60,8 +63,10 @@ func (self *UnitRegistry) DeclareUnit(measurementType, name, baseSymbol, SISymbo
 func (self *UnitRegistry) DeclareAlias(measurementType, baseSymbol, baseTarget string, validPrefixes []SIPrefix) error {
 	self.mutex.Lock()
 	defer self.mutex.Unlock()
-	if len(validPrefixes) == 0 {
-		validPrefixes = []SIPrefix{None} //if no prefixes specified, only add default
+
+	//add the prefix-less alias
+	if err := self.declareAlias(measurementType, baseSymbol, baseTarget); err != nil {
+		return err
 	}
 
 	for _, prefix := range validPrefixes {
@@ -172,9 +177,6 @@ func (self *UnitRegistry) ListValidUnitsForType(measurementType string) []string
 func (self *UnitRegistry) DeclareDerivedUnit(measurementType string, name, symbol string, validPrefixes []SIPrefix, exponent int, target string, symbolInTargets float64) error {
 	self.mutex.Lock()
 	defer self.mutex.Unlock()
-	if len(validPrefixes) == 0 {
-		validPrefixes = []SIPrefix{None} //if no prefixes specified, only add default
-	}
 
 	unit, err := self.getUnit(target)
 	if err != nil {
@@ -189,6 +191,12 @@ func (self *UnitRegistry) DeclareDerivedUnit(measurementType string, name, symbo
 	unit.name = name
 	unit.multiplier = unit.getBaseSIConversionFactor() * symbolInTargets
 	unit.exponent = exponent
+	unit.prefix = None
+
+	//declare the prefix-less unit
+	if err := self.declareUnit(measurementType, unit); err != nil {
+		return err
+	}
 
 	for _, prefix := range validPrefixes {
 		unit.prefix = prefix

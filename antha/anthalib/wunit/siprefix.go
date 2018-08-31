@@ -29,6 +29,7 @@ type SIPrefix struct {
 	Value  float64 // multiplier that the exponent applies to the value
 }
 
+// SIPrefixes a list containing all valid SI prefixes
 var SIPrefixes []SIPrefix
 
 func newPrefix(symbol, name string, value float64) SIPrefix {
@@ -52,7 +53,6 @@ var ( //all supported SI prefixes, in smallest to largest order as they appear i
 	Milli = newPrefix("m", "milli", 1e-3)
 	Centi = newPrefix("c", "centi", 1e-2)
 	Deci  = newPrefix("d", "deci", 1e-1)
-	None  = newPrefix("", "", 1.0)
 	Deca  = newPrefix("da", "deca", 1e1)
 	Hecto = newPrefix("h", "hecto", 1e2)
 	Kilo  = newPrefix("k", "kilo", 1e3)
@@ -63,6 +63,7 @@ var ( //all supported SI prefixes, in smallest to largest order as they appear i
 	Exa   = newPrefix("E", "exa", 1e18)
 	Zetta = newPrefix("Z", "zetta", 1e21)
 	Yotta = newPrefix("Y", "yotta", 1e24)
+	None  = SIPrefix{Symbol: "", Name: "", Value: 1.0} // not a valid SIPrefix, hence not in SIPrefixes, but used for non-prefixed units
 )
 
 // SIPrefixSymbols returns a list of all supported SI prefixes

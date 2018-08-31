@@ -114,7 +114,7 @@ func GetInputs(
 		volWanted := wunit.SubtractVolumes(volsRequired[k], volSupplied)
 
 		//IsZero is true if volWanted is very close to zero
-		if !volWanted.IsZero() {
+		if !volWanted.IsPositive() {
 			volsWanting[k] = volWanted
 		}
 		// toggle HERE for DEBUG

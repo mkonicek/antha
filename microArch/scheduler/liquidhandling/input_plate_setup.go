@@ -245,7 +245,7 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 		for _, vv := range v {
 			// this now means input assignments is always set...
 			// previously this was empty
-			if vv.Loc != "" && vv.Volume().GreaterThanFloat(0.0) {
+			if vv.Loc != "" && !vv.Volume().IsZero() {
 				// append it
 				input_assignments[vv.CName] = append(input_assignments[vv.CName], vv.Loc)
 			}

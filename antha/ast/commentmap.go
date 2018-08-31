@@ -330,7 +330,7 @@ loop:
 
 func (cmap CommentMap) String() string {
 	var buf bytes.Buffer
-	fmt.Fprintln(&buf, "CommentMap {")
+	fmt.Fprintln(&buf, "CommentMap {") //nolint
 	for node, comment := range cmap {
 		// print name of identifiers; print node type for other nodes
 		var s string
@@ -339,8 +339,8 @@ func (cmap CommentMap) String() string {
 		} else {
 			s = fmt.Sprintf("%T", node)
 		}
-		fmt.Fprintf(&buf, "\t%v  %20s:  %s\n", node, s, summary(comment))
+		fmt.Fprintf(&buf, "\t%v  %20s:  %s\n", node, s, summary(comment)) //nolint
 	}
-	fmt.Fprintln(&buf, "}")
+	fmt.Fprintln(&buf, "}") //nolint
 	return buf.String()
 }

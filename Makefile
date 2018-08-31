@@ -24,7 +24,7 @@ lint: test
 		--disable-all \
 		--enable=errcheck \
 		--enable=vet \
-		--enable=gas \
+		--enable=gosec \
 		--enable=deadcode \
 		--enable=ineffassign \
 		--enable=megacheck \

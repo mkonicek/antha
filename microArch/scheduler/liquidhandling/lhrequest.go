@@ -342,8 +342,8 @@ func (request *LHRequest) AllPlates() []*wtype.Plate {
 //GetOrderedLHInstructions get the LHInstructions in the order which should have
 //previously been detrmined
 func (self *LHRequest) GetOrderedLHInstructions() ([]*wtype.LHInstruction, error) {
-	//if these aren't the same length then there was probably an issue determining the output order
-	if len(self.OutputOrder) != len(self.LHInstructions) {
+	//len(OutputOrder) can be less than len(self.LHInstructions) due to aggregation
+	if len(self.OutputOrder) >= len(self.LHInstructions) {
 		return nil, errors.Errorf("self OutputOrder has length %d but %d LHInstructions", len(self.OutputOrder), len(self.LHInstructions))
 	}
 

@@ -343,7 +343,7 @@ func (request *LHRequest) AllPlates() []*wtype.Plate {
 //previously been detrmined
 func (self *LHRequest) GetOrderedLHInstructions() ([]*wtype.LHInstruction, error) {
 	//len(OutputOrder) can be less than len(self.LHInstructions) due to aggregation
-	if len(self.OutputOrder) >= len(self.LHInstructions) {
+	if len(self.OutputOrder) > len(self.LHInstructions) {
 		return nil, errors.Errorf("self OutputOrder has length %d but %d LHInstructions", len(self.OutputOrder), len(self.LHInstructions))
 	}
 

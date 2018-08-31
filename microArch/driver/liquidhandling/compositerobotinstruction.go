@@ -1129,7 +1129,7 @@ func (ins *AspirateInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
 	}
 	volumes := make([]float64, len(ins.Volume))
 	for i, vol := range ins.Volume {
-		volumes[i] = vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
+		volumes[i] = vol.ConvertToString("ul")
 	}
 	os := []bool{ins.Overstroke}
 
@@ -1205,7 +1205,7 @@ func (ins *DispenseInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
 	}
 	volumes := make([]float64, len(ins.Volume))
 	for i, vol := range ins.Volume {
-		volumes[i] = vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
+		volumes[i] = vol.ConvertToString("ul")
 	}
 
 	os := []bool{false}
@@ -1275,7 +1275,7 @@ func (ins *BlowoutInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
 	}
 	volumes := make([]float64, len(ins.Volume))
 	for i, vol := range ins.Volume {
-		volumes[i] = vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
+		volumes[i] = vol.ConvertToString("ul")
 	}
 	bo := make([]bool, ins.Multi)
 	for i := 0; i < ins.Multi; i++ {
@@ -2387,7 +2387,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		dspins.Volume = ins.Volume
 
 		extra_vol := SafeGetVolume(pol, "EXTRA_DISP_VOLUME")
-		if extra_vol.GreaterThan(wunit.ZeroVolume()) {
+		if extra_vol.IsPositive() {
 			for i := range dspins.Volume {
 				dspins.Volume[i].Add(extra_vol)
 			}
@@ -3466,7 +3466,7 @@ func (mi *MixInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
 	vols := make([]float64, len(mi.Volume))
 
 	for i := 0; i < len(mi.Volume); i++ {
-		vols[i] = mi.Volume[i].ConvertTo(wunit.ParsePrefixedUnit("ul"))
+		vols[i] = mi.Volume[i].ConvertToString("ul")
 	}
 
 	ret := driver.Mix(mi.Head, vols, mi.PlateType, mi.Cycles, mi.Multi, mi.What, mi.Blowout)

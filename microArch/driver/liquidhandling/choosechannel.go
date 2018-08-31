@@ -68,32 +68,33 @@ func (sc DefaultChannelScoreFunc) ScoreCombinedChannel(vol wunit.Volume, head *w
 func (sc DefaultChannelScoreFunc) ScoreChannel(vol wunit.Volume, lhcp *wtype.LHChannelParameter) float64 {
 	// cannot have 0 error
 	extra := 1.0
-	// we try to estimate the error of using a channel outside its limits
-	// first of all how many movements do we need?
 
-	v := vol.RawValue()
-	mx := lhcp.Maxvol.ConvertTo(vol.Unit())
-	mn := lhcp.Minvol.ConvertTo(vol.Unit())
+	if mx, err := lhcp.Maxvol.InUnit(vol.Unit()); err != nil {
+		panic(err) // this is unlikely to ever be an issue for volumes since all units are compatible
+	} else if mn, err := lhcp.Minvol.InUnit(vol.Unit()); err != nil {
+		panic(err)
+	} else {
 
-	n := int(math.Ceil(vol.RawValue() / lhcp.Maxvol.ConvertTo(vol.Unit())))
+		// we try to estimate the error of using a channel outside its limits
+		// first of all how many movements do we need?
+		n := int(math.Ceil(vol.RawValue() / mx.RawValue()))
 
-	// we assume errors scale linearly
-	// and that the error is generally greatest at the lowest levels
+		// we assume errors scale linearly
+		// and that the error is generally greatest at the lowest levels
 
-	tv := v
-	if n > 1 {
-		tv = mx
+		tv := vol.RawValue()
+		if n > 1 {
+			tv = mx.RawValue()
+		}
+
+		err := (mx.RawValue()-tv)/(mx.RawValue()-mn.RawValue()) + extra
+
+		if n > 1 {
+			err *= float64(n + 1)
+		}
+
+		return 1.0 / err
 	}
-
-	err := (mx-tv)/(mx-mn) + extra
-
-	if n > 1 {
-		err *= float64(n + 1)
-	}
-
-	score := 1.0 / err
-
-	return score
 }
 
 func ChooseChannel(vol wunit.Volume, prms *LHProperties) (*wtype.LHChannelParameter, *wtype.LHTip, error) {

@@ -7,12 +7,16 @@ import (
 // SortTest this is used to test both SortConcentrations and SortVolumes with only
 // a little code duplication
 type SortTest struct {
-	Name  string
-	Input []interface{}
-	Order []int //index of which should be where
-	Max   int   //index of which should be returned as maximum
-	Min   int   //index of which should be returned as minimum
-	Error bool  //true if error is expected, in which case Order, Max, and Min are ignored
+	Name        string
+	Input       []interface{}
+	Order       []int //index of which should be where
+	Max         int   //index of which should be returned as maximum
+	Min         int   //index of which should be returned as minimum
+	ShouldError bool  //true if error is expected, in which case Order, Max, and Min are ignored
+}
+
+func (self *SortTest) unexpectedError(err error) bool {
+	return (err != nil) != self.ShouldError
 }
 
 func (self *SortTest) RunConcentrations(t *testing.T) {
@@ -56,11 +60,11 @@ func (self *SortTest) RunVolumes(t *testing.T) {
 }
 
 func (self *SortTest) Validate(t *testing.T, sorted []interface{}, min, max interface{}, err error) {
-	if hasErr := err != nil; self.Error != hasErr {
-		t.Errorf("expected error: %t, got error: %v", self.Error, err)
+	if self.unexpectedError(err) {
+		t.Errorf("expected error: %t, got error: %v", self.ShouldError, err)
 		return
 	}
-	if !self.Error {
+	if !self.ShouldError {
 		expected := make([]interface{}, 0, len(self.Order))
 		for i := range self.Order {
 			expected = append(expected, self.Input[self.Order[i]])
@@ -156,12 +160,12 @@ func TestSortConcentrations(t *testing.T) {
 				NewConcentration(2, "mg/ml"),
 				NewConcentration(1, "X"),
 			},
-			Error: true,
+			ShouldError: true,
 		},
 		{
-			Name:  "zero length raises error",
-			Input: nil,
-			Error: true,
+			Name:        "zero length raises error",
+			Input:       nil,
+			ShouldError: true,
 		},
 	}.RunConcentrations(t)
 }
@@ -206,9 +210,9 @@ func TestSortVolumes(t *testing.T) {
 			Order: []int{0, 2, 1},
 		},
 		{
-			Name:  "zero length raises error",
-			Input: nil,
-			Error: true,
+			Name:        "zero length raises error",
+			Input:       nil,
+			ShouldError: true,
 		},
 	}.RunVolumes(t)
 }

@@ -178,20 +178,23 @@ func TestParseConcentration(t *testing.T) {
 }
 
 type volTest struct {
-	VolString string
-	Volume    Volume
-	Error     bool
+	VolString   string
+	Volume      Volume
+	ShouldError bool
+}
+
+func (test *volTest) unexpectedError(err error) bool {
+	return (err != nil) != test.ShouldError
 }
 
 func (test *volTest) Run(t *testing.T) {
-
 	t.Run(test.VolString, func(t *testing.T) {
 		vol, err := ParseVolume(test.VolString)
-		if !test.Error && !vol.EqualTo(test.Volume) {
+		if !test.ShouldError && !vol.EqualTo(test.Volume) {
 			t.Errorf("parsed volume incorrect: expected %v, got %v", test.Volume, vol)
 		}
-		if (err != nil) != test.Error {
-			t.Errorf("error mismatched: expected %t, got error %v", test.Error, err)
+		if test.unexpectedError(err) {
+			t.Errorf("error mismatched: expected %t, got error %v", test.ShouldError, err)
 		}
 	})
 }
@@ -215,9 +218,9 @@ func TestParseVolume(t *testing.T) {
 			Volume:    NewVolume(10, "ul"),
 		},
 		{
-			VolString: "10",
-			Volume:    Volume{},
-			Error:     true,
+			VolString:   "10",
+			Volume:      Volume{},
+			ShouldError: true,
 		},
 	}.Run(t)
 }

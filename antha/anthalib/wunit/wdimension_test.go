@@ -16,7 +16,7 @@ type NewMeasurementTest struct {
 	ExpectedSIValue  float64
 	ExpectedBaseUnit string
 	ExpectedPrefix   string
-	ExpectError      bool
+	ShouldPanic      bool
 	ConvertToString  map[string]float64
 }
 
@@ -24,14 +24,14 @@ func (self *NewMeasurementTest) Run(t *testing.T, constructor MeasurementConstru
 
 	t.Run(fmt.Sprintf("%f_%s", self.Value, self.Unit), func(t *testing.T) {
 		defer func() {
-			if r := recover(); (r != nil) != self.ExpectError {
-				t.Errorf("error mismatch: expectError: %t, got error: \"%v\"", self.ExpectError, r)
+			if r := recover(); (r != nil) != self.ShouldPanic {
+				t.Errorf("error mismatch: expectError: %t, got error: \"%v\"", self.ShouldPanic, r)
 			}
 		}()
 
 		m := constructor(self.Value, self.Unit)
 
-		if !self.ExpectError { //don't check these if we were expecting error, the defer statement will add one
+		if !self.ShouldPanic { //don't check these if we were expecting error, the defer statement will add one
 			if math.Abs(m.SIValue()-self.ExpectedSIValue) > 1.0e-9 {
 				t.Errorf("wrong SIValue: expected %e, got %e", self.ExpectedSIValue, m.SIValue())
 			}
@@ -93,7 +93,7 @@ func TestNewLength(t *testing.T) {
 		{
 			Value:       1.0,
 			Unit:        "parsec",
-			ExpectError: true,
+			ShouldPanic: true,
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewLength(v, u)
@@ -119,7 +119,7 @@ func TestNewArea(t *testing.T) {
 		{
 			Value:       1.0,
 			Unit:        "hectare",
-			ExpectError: true,
+			ShouldPanic: true,
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewArea(v, u)
@@ -152,7 +152,7 @@ func TestNewVolume(t *testing.T) {
 		{
 			Value:       1.0,
 			Unit:        "decibel",
-			ExpectError: true,
+			ShouldPanic: true,
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewVolume(v, u)
@@ -192,7 +192,7 @@ func TestNewTemperature(t *testing.T) {
 		{
 			Value:       1.0,
 			Unit:        "F",
-			ExpectError: true,
+			ShouldPanic: true,
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewTemperature(v, u)
@@ -232,7 +232,7 @@ func TestNewTime(t *testing.T) {
 		{
 			Value:       1.0,
 			Unit:        "aeon",
-			ExpectError: true,
+			ShouldPanic: true,
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewTime(v, u)
@@ -261,7 +261,7 @@ func TestNewMass(t *testing.T) {
 		{
 			Value:       1.0,
 			Unit:        "St.Bernard",
-			ExpectError: true,
+			ShouldPanic: true,
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewMass(v, u)
@@ -287,7 +287,7 @@ func TestNewMoles(t *testing.T) {
 		{
 			Value:       1.0,
 			Unit:        "CommonEuropean",
-			ExpectError: true,
+			ShouldPanic: true,
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewMoles(v, u)
@@ -313,7 +313,7 @@ func TestNewAmount(t *testing.T) {
 		{
 			Value:       1.0,
 			Unit:        "shedloads",
-			ExpectError: true,
+			ShouldPanic: true,
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewAmount(v, u)
@@ -342,7 +342,7 @@ func TestNewAngle(t *testing.T) {
 		{
 			Value:       1.0,
 			Unit:        "gradians",
-			ExpectError: true,
+			ShouldPanic: true,
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewAngle(v, u)
@@ -364,7 +364,7 @@ func TestNewAnglularVelocity(t *testing.T) {
 		{
 			Value:       1.0,
 			Unit:        "pulsar",
-			ExpectError: true,
+			ShouldPanic: true,
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewAngularVelocity(v, u)
@@ -383,7 +383,7 @@ func TestNewEnergy(t *testing.T) {
 		{
 			Value:       1.0,
 			Unit:        "eV",
-			ExpectError: true,
+			ShouldPanic: true,
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewEnergy(v, u)
@@ -402,7 +402,7 @@ func TestNewForce(t *testing.T) {
 		{
 			Value:       1.0,
 			Unit:        "DarkSides",
-			ExpectError: true,
+			ShouldPanic: true,
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewForce(v, u)
@@ -431,7 +431,7 @@ func TestNewPressure(t *testing.T) {
 		{
 			Value:       2.7,
 			Unit:        "JobInterviews",
-			ExpectError: true,
+			ShouldPanic: true,
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewPressure(v, u)
@@ -464,7 +464,7 @@ func TestNewConcentration(t *testing.T) {
 		{
 			Value:       1.0,
 			Unit:        "Eagles",
-			ExpectError: true,
+			ShouldPanic: true,
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewConcentration(v, u)
@@ -483,7 +483,7 @@ func TestNewSpecificHeatCapacity(t *testing.T) {
 		{
 			Value:       1.0,
 			Unit:        "J/kg",
-			ExpectError: true,
+			ShouldPanic: true,
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewSpecificHeatCapacity(v, u)
@@ -502,7 +502,7 @@ func TestNewDensity(t *testing.T) {
 		{
 			Value:       1.0,
 			Unit:        "ducks",
-			ExpectError: true,
+			ShouldPanic: true,
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewDensity(v, u)
@@ -521,7 +521,7 @@ func TestNewFlowRate(t *testing.T) {
 		{
 			Value:       1.0,
 			Unit:        "TheNile",
-			ExpectError: true,
+			ShouldPanic: true,
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewFlowRate(v, u)
@@ -540,7 +540,7 @@ func TestNewVelocity(t *testing.T) {
 		{
 			Value:       1.0,
 			Unit:        "BatsOuttaHell",
-			ExpectError: true,
+			ShouldPanic: true,
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewVelocity(v, u)
@@ -573,7 +573,7 @@ func TestNewRate(t *testing.T) {
 		{
 			Value:       1.0,
 			Unit:        "/loc",
-			ExpectError: true,
+			ShouldPanic: true,
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		if r, err := NewRate(v, u); err != nil {
@@ -596,7 +596,7 @@ func TestNewVoltage(t *testing.T) {
 		{
 			Value:       1.0,
 			Unit:        "NylonShirts",
-			ExpectError: true,
+			ShouldPanic: true,
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		if r, err := NewVoltage(v, u); err != nil {

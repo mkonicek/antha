@@ -10,18 +10,22 @@ type concConversionTest struct {
 	TargetConc   Concentration
 	TotalVolume  Volume
 	VolumeNeeded Volume
-	Error        bool
+	ShouldError  bool
+}
+
+func (test *concConversionTest) unexpectedError(err error) bool {
+	return (err != nil) != test.ShouldError
 }
 
 func (test *concConversionTest) Run(t *testing.T) {
 	t.Run(fmt.Sprintf("(%v, %v, %v)", test.TargetConc, test.StockConc, test.TotalVolume), func(t *testing.T) {
 		vol, err := VolumeForTargetConcentration(test.TargetConc, test.StockConc, test.TotalVolume)
 
-		if (err != nil) != test.Error {
-			t.Errorf("expecting error %t, got error %v", test.Error, err)
+		if test.unexpectedError(err) {
+			t.Errorf("expecting error %t, got error %v", test.ShouldError, err)
 		}
 
-		if !test.Error && !vol.EqualTo(test.VolumeNeeded) {
+		if !test.ShouldError && !vol.EqualTo(test.VolumeNeeded) {
 			t.Errorf("expected volume %v, got volume %v", test.VolumeNeeded, vol)
 		}
 	})
@@ -77,16 +81,20 @@ func (self massConversionTests) Run(t *testing.T) {
 }
 
 type densityConversionTest struct {
-	Density Density
-	Vol     Volume
-	Mass    Mass
-	Error   bool
+	Density     Density
+	Vol         Volume
+	Mass        Mass
+	ShouldError bool
+}
+
+func (test *densityConversionTest) unexpectedError(err error) bool {
+	return (err != nil) != test.ShouldError
 }
 
 func (test *densityConversionTest) TestMassToVolume(t *testing.T) {
 	t.Run(fmt.Sprintf("(%v, %v)", test.Density, test.Vol), func(t *testing.T) {
-		if vol, err := MassToVolume(test.Mass, test.Density); (err != nil) != test.Error {
-			t.Errorf("expecting error %t, got error %v", test.Error, err)
+		if vol, err := MassToVolume(test.Mass, test.Density); test.unexpectedError(err) {
+			t.Errorf("expecting error %t, got error %v", test.ShouldError, err)
 		} else if !vol.EqualTo(test.Vol) {
 			t.Error(
 				"Expected vol:", test.Vol.ToString(), "\n",
@@ -98,8 +106,8 @@ func (test *densityConversionTest) TestMassToVolume(t *testing.T) {
 
 func (test *densityConversionTest) TestVolumeToMass(t *testing.T) {
 	t.Run(fmt.Sprintf("(%v, %v)", test.Density, test.Mass), func(t *testing.T) {
-		if mass, err := VolumeToMass(test.Vol, test.Density); (err != nil) != test.Error {
-			t.Errorf("expecting error %t, got error %v", test.Error, err)
+		if mass, err := VolumeToMass(test.Vol, test.Density); test.unexpectedError(err) {
+			t.Errorf("expecting error %t, got error %v", test.ShouldError, err)
 		} else if !mass.EqualTo(test.Mass) {
 			t.Error(
 				"for", fmt.Sprintf("%+v", test), "\n",
@@ -178,7 +186,7 @@ func TestVolumeForTargetConcentration(t *testing.T) {
 			StockConc:   NewConcentration(1.0, "g/l"),
 			TargetConc:  NewConcentration(2.0, "g/l"),
 			TotalVolume: NewVolume(100.0, "ul"),
-			Error:       true,
+			ShouldError: true,
 		},
 		{
 			StockConc:    NewConcentration(1.0, "g/l"),
@@ -190,7 +198,7 @@ func TestVolumeForTargetConcentration(t *testing.T) {
 			StockConc:   NewConcentration(1.0, "g/l"),
 			TargetConc:  NewConcentration(0.5, "X"),
 			TotalVolume: NewVolume(100.0, "ul"),
-			Error:       true,
+			ShouldError: true,
 		},
 	}.Run(t)
 }

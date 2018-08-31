@@ -200,7 +200,7 @@ func AddConcentrations(concs ...Concentration) (Concentration, error) {
 	ret := NewConcentration(0.0, concs[0].Unit().PrefixedSymbol())
 
 	for _, conc := range concs {
-		if err := ret.AddTo(conc); err != nil {
+		if err := ret.IncrBy(conc); err != nil {
 			return ret, err
 		}
 	}
@@ -216,7 +216,7 @@ func SubtractConcentrations(originalConc Concentration, subtractConcs ...Concent
 
 	if concToSubtract, err := AddConcentrations(subtractConcs...); err != nil {
 		return Concentration{}, err
-	} else if err := ret.SubtractFrom(concToSubtract); err != nil {
+	} else if err := ret.DecrBy(concToSubtract); err != nil {
 		return Concentration{}, err
 	} else {
 		return ret, nil

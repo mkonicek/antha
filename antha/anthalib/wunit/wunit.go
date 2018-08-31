@@ -63,13 +63,13 @@ type Measurement interface {
 	InStringUnit(symbol string) (Measurement, error)
 	// ConvertToString deprecated, please use ConvertTo or InStringUnit
 	ConvertToString(s string) float64
-	// AddTo add to this measurement
-	AddTo(m Measurement) error
-	// SubtractFrom subtract from this measurement
-	SubtractFrom(m Measurement) error
-	// Add deprecated, please use AddTo
+	// IncrBy add to this measurement
+	IncrBy(m Measurement) error
+	// DecrBy subtract from this measurement
+	DecrBy(m Measurement) error
+	// Add deprecated, please use IncrBy
 	Add(m Measurement)
-	// Subtract deprecated, please use SubtractFrom
+	// Subtract deprecated, please use DecrBy
 	Subtract(m Measurement)
 	// multiply measurement by a factor
 	MultiplyBy(factor float64)
@@ -178,8 +178,8 @@ func (cm *ConcreteMeasurement) String() string {
 
 // add to this
 
-// AddTo add the measurement m to the receiver
-func (cm *ConcreteMeasurement) AddTo(m Measurement) error {
+// IncrBy add the measurement m to the receiver
+func (cm *ConcreteMeasurement) IncrBy(m Measurement) error {
 	if isNil(cm) {
 		return nil
 	} else if rhs, err := m.InUnit(cm.Unit()); err != nil {
@@ -190,8 +190,8 @@ func (cm *ConcreteMeasurement) AddTo(m Measurement) error {
 	return nil
 }
 
-// SubtractFrom subtract m from the receiver
-func (cm *ConcreteMeasurement) SubtractFrom(m Measurement) error {
+// DecrBy subtract m from the receiver
+func (cm *ConcreteMeasurement) DecrBy(m Measurement) error {
 	if isNil(cm) {
 		return nil
 	} else if rhs, err := m.InUnit(cm.Unit()); err != nil {
@@ -202,16 +202,16 @@ func (cm *ConcreteMeasurement) SubtractFrom(m Measurement) error {
 	return nil
 }
 
-// Add deprecated, please use AddTo
+// Add deprecated, please use IncrBy
 func (cm *ConcreteMeasurement) Add(m Measurement) {
-	if err := cm.AddTo(m); err != nil {
+	if err := cm.IncrBy(m); err != nil {
 		panic(err)
 	}
 }
 
-// Subtract deprecated, please use SubtractFrom
+// Subtract deprecated, please use DecrBy
 func (cm *ConcreteMeasurement) Subtract(m Measurement) {
-	if err := cm.SubtractFrom(m); err != nil {
+	if err := cm.DecrBy(m); err != nil {
 		panic(err)
 	}
 }

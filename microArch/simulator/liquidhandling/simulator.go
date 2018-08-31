@@ -835,43 +835,6 @@ func (self *VirtualLiquidHandler) Aspirate(volume []float64, overstroke []bool, 
 		}
 	}
 
-	//LiquidLevelFollow is enabled if any llf is true
-	var LiquidLevelFollow bool
-	for _, i := range arg.channels {
-		LiquidLevelFollow = LiquidLevelFollow || llf[i]
-	}
-	if LiquidLevelFollow {
-		if arg.adaptor.IsIndependent() {
-			//there's too much potential strange behaviour that we don't yet understand
-			//about independent liquidhandlers to try and model this now
-			self.AddError("physical simulation doesn't support LiquidLevelFollowing with independent heads")
-		}
-		for id, well := range uniqueWells {
-			//only the Welltype has the liquidlevel model set
-			wellType := well.Plate.(*wtype.LHPlate).Welltype
-			volumeFromWell := wunit.NewVolume(uniqueWellVolumes[id], "ul")
-
-			initialHeight := wellType.GetLiquidLevel(well.CurrentVolume())
-			finalHeight := wellType.GetLiquidLevel(wunit.SubtractVolumes(well.CurrentVolume(), volumeFromWell))
-
-			speed := wunit.NewFlowRate(0.0, "ml/min")
-			for _, channelIndex := range uniqueWellVolumeIndexes[id] {
-				speed.Add(arg.adaptor.GetChannel(channelIndex).GetSpeed())
-			}
-
-			fmt.Printf("here: wunit.NewFlowRate(37.0, \"ml/min\").ConvertToString(\"ml/min\") = %f\n", wunit.NewFlowRate(37.0, "ml/min").ConvertToString("ml/min"))
-
-			fmt.Printf("   speed = %v, %f ml/min = %f ul/min = %f ul/s\n", speed, speed.ConvertToString("ml/min"), speed.ConvertToString("ul/min"), speed.ConvertToString("ul/s"))
-			time := uniqueWellVolumes[id] / speed.ConvertToString("ul/s")
-			fmt.Printf("   time(s) = %f / %f = %f\n", uniqueWellVolumes[id], speed.ConvertToString("ul/s"), time)
-
-			zSpeed := (initialHeight - finalHeight) / time
-			fmt.Printf("  zSpeed := (initialHeight - finalHeight) / time = (%f - %f) / %f\n", initialHeight, finalHeight, time)
-			fmt.Printf("LiquidLevel: required zSpeed during aspirate: %f mm/s\n", zSpeed)
-
-		}
-	}
-
 	//move liquid
 	no_well := []int{}
 	for _, i := range arg.channels {
@@ -1505,9 +1468,9 @@ func (self *VirtualLiquidHandler) SetPipetteSpeed(head, channel int, rate float6
 	minRate := make([]wunit.FlowRate, 0, len(channels))
 	maxRate := make([]wunit.FlowRate, 0, len(channels))
 	for ch := range channels {
-		if !adaptor.SetPipetteSpeed(ch, tRate) {
+		p := adaptor.GetParamsForChannel(ch)
+		if tRate.GreaterThan(p.Maxspd) || tRate.LessThan(p.Minspd) {
 			outOfRange = append(outOfRange, ch)
-			p := adaptor.GetParamsForChannel(ch)
 			minRate = append(minRate, p.Minspd)
 			maxRate = append(maxRate, p.Maxspd)
 		}

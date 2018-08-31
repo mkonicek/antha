@@ -2,10 +2,11 @@ package liquidhandling
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/microArch/logger"
 )
 
 //InputSolutions properties to do with the input Liquids required for the mix
@@ -15,6 +16,32 @@ type InputSolutions struct {
 	VolumesSupplied map[string]wunit.Volume    //the volumes of the solutions explicitly supplied to the protocol
 	VolumesRequired map[string]wunit.Volume    //the estimated volumes of solutions required to carry out the protocol
 	VolumesWanting  map[string]wunit.Volume    //the estimated shortfall between the supplied and required volumes which must be auto-allocated
+}
+
+// String return a string representation, useful for debugging
+func (self *InputSolutions) String() string {
+	allNamesMap := make(map[string]bool)
+	for name := range self.VolumesSupplied {
+		allNamesMap[name] = true
+	}
+	for name := range self.VolumesRequired {
+		allNamesMap[name] = true
+	}
+	for name := range self.VolumesWanting {
+		allNamesMap[name] = true
+	}
+	allNames := make([]string, 0, len(allNamesMap))
+	for name := range allNamesMap {
+		allNames = append(allNames, name)
+	}
+	sort.Strings(allNames)
+
+	ret := []string{"InputSolutions: name, supplied, required, wanting"}
+	for _, name := range allNames {
+		ret = append(ret, fmt.Sprintf("    %s, %v, %v, %v", name, self.VolumesSupplied[name], self.VolumesRequired[name], self.VolumesWanting[name]))
+	}
+
+	return strings.Join(ret, "\n")
 }
 
 //GetInputs calculate the volumes required for each input solution by looking
@@ -111,15 +138,8 @@ func GetInputs(
 		volsSupplied[k] = volSupplied
 
 		// volWanted: how much extra we wanted
-		volWanted := wunit.SubtractVolumes(volsRequired[k], volSupplied)
-
-		//IsZero is true if volWanted is very close to zero
-		if !volWanted.IsPositive() {
+		if volWanted := wunit.SubtractVolumes(volsRequired[k], volSupplied); volWanted.IsPositive() {
 			volsWanting[k] = volWanted
-		}
-		// toggle HERE for DEBUG
-		if false {
-			logger.Debug(fmt.Sprintf("COMPONENT %s HAVE : %v WANT: %v DIFF: %v", k, volSupplied.ToString(), volsRequired[k].ToString(), volWanted.ToString()))
 		}
 	}
 

@@ -1,6 +1,7 @@
 package wunit
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -8,7 +9,6 @@ import (
 // a little code duplication
 type SortTest struct {
 	Name        string
-	Input       []interface{}
 	Order       []int //index of which should be where
 	Max         int   //index of which should be returned as maximum
 	Min         int   //index of which should be returned as minimum
@@ -19,200 +19,224 @@ func (self *SortTest) unexpectedError(err error) bool {
 	return (err != nil) != self.ShouldError
 }
 
-func (self *SortTest) RunConcentrations(t *testing.T) {
-	t.Run(self.Name, func(t *testing.T) {
-		//assumption: sort doesn't modify the original, test will fail if it does
-		input := make([]Concentration, 0, len(self.Input))
-		for _, i := range self.Input {
-			input = append(input, i.(Concentration))
-		}
-		sorted, err := SortConcentrations(input)
-		output := make([]interface{}, 0, len(sorted))
-		for _, i := range sorted {
-			output = append(output, i)
-		}
-
-		min, _ := MinConcentration(input) // nolint - error is the same as above
-		max, _ := MaxConcentration(input) // nolint - error is the same as above
-
-		self.Validate(t, output, min, max, err)
-	})
+type ConcentrationSortTest struct {
+	SortTest
+	Input []Concentration
 }
 
-func (self *SortTest) RunVolumes(t *testing.T) {
+func (self *ConcentrationSortTest) Run(t *testing.T) {
 	t.Run(self.Name, func(t *testing.T) {
 		//assumption: sort doesn't modify the original, test will fail if it does
-		input := make([]Volume, 0, len(self.Input))
-		for _, i := range self.Input {
-			input = append(input, i.(Volume))
-		}
-		sorted, err := SortVolumes(input)
-		output := make([]interface{}, 0, len(sorted))
-		for _, i := range sorted {
-			output = append(output, i)
+		sorted, err := SortConcentrations(self.Input)
+		if self.unexpectedError(err) {
+			t.Errorf("expecting error %t: got error %v", self.ShouldError, err)
 		}
 
-		min, _ := MinVolume(input) // nolint - error is the same as above
-		max, _ := MaxVolume(input) // nolint - error is the same as above
+		if !self.ShouldError {
+			expected := make([]Concentration, 0, len(self.Order))
+			for _, index := range self.Order {
+				expected = append(expected, self.Input[index])
+			}
 
-		self.Validate(t, output, min, max, err)
-	})
-}
+			if !reflect.DeepEqual(expected, sorted) {
+				t.Errorf("sorting failed: expected %v: got %v", expected, sorted)
+			}
 
-func (self *SortTest) Validate(t *testing.T, sorted []interface{}, min, max interface{}, err error) {
-	if self.unexpectedError(err) {
-		t.Errorf("expected error: %t, got error: %v", self.ShouldError, err)
-		return
-	}
-	if !self.ShouldError {
-		expected := make([]interface{}, 0, len(self.Order))
-		for i := range self.Order {
-			expected = append(expected, self.Input[self.Order[i]])
-		}
-		if len(expected) != len(sorted) {
-			t.Fatalf("expected(%d) and sorted(%d) not the same length", len(expected), len(sorted))
-		}
-		mismatched := []int{}
-		for i := range self.Order {
-			if sorted[i] != expected[i] {
-				mismatched = append(mismatched, i)
+			min, _ := MinConcentration(self.Input) // nolint - error is the same as above
+			if e := self.Input[self.Order[0]]; e != min {
+				t.Errorf("finding minimum failed: expected %v: got %v", e, min)
+			}
+
+			max, _ := MaxConcentration(self.Input) // nolint - error is the same as above
+			if e := self.Input[self.Order[len(self.Order)-1]]; e != max {
+				t.Errorf("finding maximum failed: expected %v: got %v", e, min)
 			}
 		}
-		if len(mismatched) > 0 {
-			t.Errorf("sorted list doesn't match expected:\n\te: %v\n\tg: %v", expected, sorted)
-		}
-
-		if min != self.Input[self.Order[0]] {
-			t.Errorf("got min: %v, expected: %v", self.Input[self.Min], min)
-		}
-
-		if max != self.Input[self.Order[len(self.Order)-1]] {
-			t.Errorf("got max: %v, expected: %v", self.Input[self.Max], max)
-		}
-	}
+	})
 }
 
-type SortTests []*SortTest
+type ConcentrationSortTests []*ConcentrationSortTest
 
-func (self SortTests) RunConcentrations(t *testing.T) {
+func (self ConcentrationSortTests) Run(t *testing.T) {
 	for _, test := range self {
-		test.RunConcentrations(t)
+		test.Run(t)
 	}
 }
 
-func (self SortTests) RunVolumes(t *testing.T) {
+type VolumeSortTest struct {
+	SortTest
+	Input []Volume
+}
+
+func (self *VolumeSortTest) Run(t *testing.T) {
+	t.Run(self.Name, func(t *testing.T) {
+		//assumption: sort doesn't modify the original, test will fail if it does
+		sorted, err := SortVolumes(self.Input)
+		if self.unexpectedError(err) {
+			t.Errorf("expecting error %t: got error %v", self.ShouldError, err)
+		}
+
+		if !self.ShouldError {
+			expected := make([]Volume, 0, len(self.Order))
+			for _, index := range self.Order {
+				expected = append(expected, self.Input[index])
+			}
+
+			if !reflect.DeepEqual(expected, sorted) {
+				t.Errorf("sorting failed: expected %v: got %v", expected, sorted)
+			}
+
+			min, _ := MinVolume(self.Input) // nolint - error is the same as above
+			if e := self.Input[self.Order[0]]; e != min {
+				t.Errorf("finding minimum failed: expected %v: got %v", e, min)
+			}
+
+			max, _ := MaxVolume(self.Input) // nolint - error is the same as above
+			if e := self.Input[self.Order[len(self.Order)-1]]; e != max {
+				t.Errorf("finding maximum failed: expected %v: got %v", e, min)
+			}
+		}
+	})
+}
+
+type VolumeSortTests []*VolumeSortTest
+
+func (self VolumeSortTests) Run(t *testing.T) {
 	for _, test := range self {
-		test.RunVolumes(t)
+		test.Run(t)
 	}
 }
+
 func TestSortConcentrations(t *testing.T) {
-	SortTests{
+	ConcentrationSortTests{
 		{
-			Name: "simple test",
-			Input: []interface{}{
+			SortTest: SortTest{
+				Name:  "simple test",
+				Order: []int{2, 1, 0},
+			},
+			Input: []Concentration{
 				NewConcentration(3, "g/l"),
 				NewConcentration(2, "g/l"),
 				NewConcentration(1, "g/l"),
 			},
-			Order: []int{2, 1, 0},
 		},
 		{
-			Name: "already sorted",
-			Input: []interface{}{
+			SortTest: SortTest{
+				Name:  "already sorted",
+				Order: []int{0, 1, 2},
+			},
+			Input: []Concentration{
 				NewConcentration(1, "g/l"),
 				NewConcentration(2, "g/l"),
 				NewConcentration(3, "g/l"),
 			},
-			Order: []int{0, 1, 2},
 		},
 		{
-			Name: "values equal",
-			Input: []interface{}{
+			SortTest: SortTest{
+				Name:  "values equal",
+				Order: []int{2, 1, 3, 0}, //swapping 1 and 3 permitted
+			},
+			Input: []Concentration{
 				NewConcentration(3, "g/l"),
 				NewConcentration(2, "g/l"),
 				NewConcentration(1, "g/l"),
 				NewConcentration(2, "g/l"),
 			},
-			Order: []int{2, 1, 3, 0}, //swapping 1 and 3 permitted
 		},
 		{
-			Name: "different units",
-			Input: []interface{}{
+			SortTest: SortTest{
+				Name:  "different units",
+				Order: []int{2, 1, 0},
+			},
+			Input: []Concentration{
 				NewConcentration(3, "ug/ul"),
 				NewConcentration(2, "mg/ml"),
 				NewConcentration(1, "g/l"),
 			},
-			Order: []int{2, 1, 0},
 		},
 		{
-			Name: "different units affecting order",
-			Input: []interface{}{
+			SortTest: SortTest{
+				Name:  "different units affecting order",
+				Order: []int{0, 2, 1},
+			},
+			Input: []Concentration{
 				NewConcentration(3, "ng/ul"),
 				NewConcentration(2, "mg/ml"),
 				NewConcentration(1, "g/l"),
 			},
-			Order: []int{0, 2, 1},
 		},
 		{
-			Name: "invalid units",
-			Input: []interface{}{
+			SortTest: SortTest{
+				Name:        "invalid units",
+				ShouldError: true,
+			},
+			Input: []Concentration{
 				NewConcentration(3, "ng/ul"),
 				NewConcentration(2, "mg/ml"),
 				NewConcentration(1, "X"),
 			},
-			ShouldError: true,
 		},
 		{
-			Name:        "zero length raises error",
-			Input:       nil,
-			ShouldError: true,
+			SortTest: SortTest{
+				Name:        "zero length raises error",
+				ShouldError: true,
+			},
 		},
-	}.RunConcentrations(t)
+	}.Run(t)
 }
 
 func TestSortVolumes(t *testing.T) {
-	SortTests{
+	VolumeSortTests{
 		{
-			Name: "simple test",
-			Input: []interface{}{
+			SortTest: SortTest{
+				Name:  "simple test",
+				Order: []int{2, 1, 0},
+			},
+			Input: []Volume{
 				NewVolume(3, "ul"),
 				NewVolume(2, "ul"),
 				NewVolume(1, "ul"),
 			},
-			Order: []int{2, 1, 0},
 		},
 		{
-			Name: "already sorted",
-			Input: []interface{}{
+			SortTest: SortTest{
+				Name:  "already sorted",
+				Order: []int{0, 1, 2},
+			},
+			Input: []Volume{
 				NewVolume(1, "ul"),
 				NewVolume(2, "ul"),
 				NewVolume(3, "ul"),
 			},
-			Order: []int{0, 1, 2},
 		},
 		{
-			Name: "values equal",
-			Input: []interface{}{
+			SortTest: SortTest{
+				Name:  "values equal",
+				Order: []int{2, 1, 3, 0}, //swapping 1 and 3 permitted
+			},
+			Input: []Volume{
 				NewVolume(3, "ul"),
 				NewVolume(2, "ul"),
 				NewVolume(1, "ul"),
 				NewVolume(2, "ul"),
 			},
-			Order: []int{2, 1, 3, 0}, //swapping 1 and 3 permitted
 		},
 		{
-			Name: "different units",
-			Input: []interface{}{
+			SortTest: SortTest{
+				Name:  "different units",
+				Order: []int{0, 2, 1},
+			},
+			Input: []Volume{
 				NewVolume(3, "nl"),
 				NewVolume(2, "ml"),
 				NewVolume(1, "ul"),
 			},
-			Order: []int{0, 2, 1},
 		},
 		{
-			Name:        "zero length raises error",
-			Input:       nil,
-			ShouldError: true,
+			SortTest: SortTest{
+				Name:        "zero length raises error",
+				ShouldError: true,
+			},
 		},
-	}.RunVolumes(t)
+	}.Run(t)
 }

@@ -151,6 +151,7 @@ func DivideVolumes(vol1, vol2 Volume) (float64, error) {
 	return vol1.SIValue() / vol2.SIValue(), nil
 }
 
+// Dup deprecated, please use CopyConcentration
 func (c Concentration) Dup() Concentration {
 	return CopyConcentration(c)
 }
@@ -223,6 +224,7 @@ func SubtractConcentrations(originalConc Concentration, subtractConcs ...Concent
 	}
 }
 
+// Dup deprecated, please use CopyVolume(Volume)
 func (v Volume) Dup() Volume {
 	if isNil(v.ConcreteMeasurement) {
 		return ZeroVolume()

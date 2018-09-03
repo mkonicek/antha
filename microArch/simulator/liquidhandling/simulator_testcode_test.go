@@ -342,8 +342,8 @@ func setSubtract(a, b []string) []string {
 	for _, va := range a {
 		c := false
 		for _, vb := range b {
-			if va == vb {
-				c = true
+			if c = (va == vb); c {
+				break
 			}
 		}
 		if !c {

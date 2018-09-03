@@ -62,12 +62,11 @@ func TestUnknownLocations(t *testing.T) {
 }
 
 func TestNewVirtualLiquidHandler_ValidProps(t *testing.T) {
-	test := SimulatorTest{"Create Valid VLH", nil, nil, nil, nil, nil}
-	test.run(t)
+	(&SimulatorTest{"Create Valid VLH", nil, nil, nil, nil, nil}).Run(t)
 }
 
 func TestVLH_AddPlateTo(t *testing.T) {
-	tests := []SimulatorTest{
+	SimulatorTests{
 		{
 			Name: "OK",
 			Instructions: []TestRobotInstruction{
@@ -132,15 +131,11 @@ func TestVLH_AddPlateTo(t *testing.T) {
 				"(err) AddPlateTo[1]: Footprint of plate \"plate1\"[300mm x 85.48mm] doesn't fit slot \"output_1\"[127.76mm x 85.48mm]",
 			},
 		},
-	}
-
-	for _, test := range tests {
-		test.run(t)
-	}
+	}.Run(t)
 }
 
 func Test_SetPippetteSpeed(t *testing.T) {
-	tests := []SimulatorTest{
+	SimulatorTests{
 		{
 			Name: "OK",
 			Instructions: []TestRobotInstruction{
@@ -178,11 +173,7 @@ func Test_SetPippetteSpeed(t *testing.T) {
 				"(warn) SetPipetteSpeed[1]: Head 0 is not independent, setting pipette speed for channel 3 sets all other channels as well",
 			},
 		},
-	}
-
-	for _, test := range tests {
-		test.run(t)
-	}
+	}.Run(t)
 }
 
 // ########################################################################################################################
@@ -229,8 +220,7 @@ func testTroughLayout() *SetupFn {
 }
 
 func Test_Move(t *testing.T) {
-
-	tests := []SimulatorTest{
+	SimulatorTests{
 		{
 			Name: "OK_1",
 			Setup: []*SetupFn{
@@ -621,16 +611,11 @@ func Test_Move(t *testing.T) {
 				"(err) Move[0]: head 0 channels 0-7 to TopReference of A1,B2,C1,D2,E1,F2,G1,H2@tipbox1 at position tipbox_1: requires moving channels 1,3,5,7 relative to non-independent head",
 			},
 		},
-	}
-
-	for _, test := range tests {
-		test.run(t)
-	}
+	}.Run(t)
 }
 
 func TestCrashes(t *testing.T) {
-
-	tests := []SimulatorTest{
+	SimulatorTests{
 		{
 			Name:  "crash into tipbox",
 			Props: multihead_lhproperties(),
@@ -709,16 +694,11 @@ func TestCrashes(t *testing.T) {
 				"(err) Move[0]: head 0 channel 0 to 1 mm above BottomReference of A1@plate1 at position input_1: collision detected: head 0 channels 0-7 and plate \"plate1\" of type plate at position input_1",
 			},
 		},
-	}
-
-	for _, test := range tests {
-		test.run(t)
-	}
+	}.Run(t)
 }
 
 func Test_Multihead(t *testing.T) {
-
-	tests := []SimulatorTest{
+	SimulatorTests{
 		{
 			Name:  "constrained heads",
 			Props: multihead_lhproperties(),
@@ -766,16 +746,11 @@ func Test_Multihead(t *testing.T) {
 			},
 			Assertions: []*AssertionFn{},
 		},
-	}
-
-	for _, test := range tests {
-		test.run(t)
-	}
+	}.Run(t)
 }
 
 func TestMotionLimits(t *testing.T) {
-
-	tests := []SimulatorTest{
+	SimulatorTests{
 		{
 			Name:  "outside limits left",
 			Props: multihead_lhproperties(),
@@ -960,11 +935,7 @@ func TestMotionLimits(t *testing.T) {
 				positionAssertion(1, wtype.Coordinates{X: 301.0, Y: -63.0, Z: 51.9}),
 			},
 		},
-	}
-
-	for _, test := range tests {
-		test.run(t)
-	}
+	}.Run(t)
 }
 
 // ########################################################################################################################
@@ -994,7 +965,7 @@ func TestLoadTipsNoOverride(t *testing.T) {
 		Rows:         8,
 	}
 
-	tests := []SimulatorTest{
+	SimulatorTests{
 		{
 			Name: "OK - single tip",
 			Setup: []*SetupFn{
@@ -1580,11 +1551,7 @@ func TestLoadTipsNoOverride(t *testing.T) {
 				"(err) LoadTips[0]: from F12-H12@tipbox1 at position \"tipbox_1\" to head 0 channels 0-2: channels 0-2 are misaligned with tips at F12-H12 by 2,2,2mm respectively",
 			},
 		},
-	}
-
-	for _, test := range tests {
-		test.run(t)
-	}
+	}.Run(t)
 }
 
 func TestLoadTipsOverride(t *testing.T) {
@@ -1620,7 +1587,7 @@ func TestLoadTipsOverride(t *testing.T) {
 		ChunkingBehaviour:          wtype.ReverseSequentialTipLoading,
 	}
 
-	tests := []SimulatorTest{
+	SimulatorTests{
 		{
 			Name:  "OK - single tip LTR override (A1 -> H1)",
 			Props: propsLTR,
@@ -1906,16 +1873,11 @@ func TestLoadTipsOverride(t *testing.T) {
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
-	}
-
-	for _, test := range tests {
-		test.run(t)
-	}
+	}.Run(t)
 }
 
 func Test_UnloadTips(t *testing.T) {
-
-	tests := []SimulatorTest{
+	SimulatorTests{
 		{
 			Name: "OK - single tip",
 			Setup: []*SetupFn{
@@ -2138,16 +2100,11 @@ func Test_UnloadTips(t *testing.T) {
 				"(err) UnloadTips[1]: Cannot unload to address B1 in tipwaste \"tipwaste\" size [1x1]",
 			},
 		},
-	}
-
-	for _, test := range tests {
-		test.run(t)
-	}
+	}.Run(t)
 }
 
 func Test_Aspirate(t *testing.T) {
-
-	tests := []SimulatorTest{
+	SimulatorTests{
 		{
 			Name: "OK - single channel",
 			Setup: []*SetupFn{
@@ -2645,16 +2602,11 @@ func Test_Aspirate(t *testing.T) {
 				"(err) Aspirate[1]: 98.6 ul of water to head 0 channel 0: channel 1 will inadvertantly aspirate water from well B1@plate1 as head is not independent",
 			},
 		},
-	}
-
-	for _, test := range tests {
-		test.run(t)
-	}
+	}.Run(t)
 }
 
 func Test_Dispense(t *testing.T) {
-
-	tests := []SimulatorTest{
+	SimulatorTests{
 		{
 			Name: "OK - single channel",
 			Setup: []*SetupFn{
@@ -3062,16 +3014,11 @@ func Test_Dispense(t *testing.T) {
 				"(err) Dispense[1]: {50,60,50,50,50,50,50,50} ul of water from head 0 channels 0-7 to A1-H1@plate1: channels cannot dispense different volumes in non-independent head",
 			},
 		},
-	}
-
-	for _, test := range tests {
-		test.run(t)
-	}
+	}.Run(t)
 }
 
 func Test_Mix(t *testing.T) {
-
-	tests := []SimulatorTest{
+	SimulatorTests{
 		{
 			Name: "OK - single channel",
 			Setup: []*SetupFn{
@@ -3234,11 +3181,7 @@ func Test_Mix(t *testing.T) {
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
-	}
-
-	for _, test := range tests {
-		test.run(t)
-	}
+	}.Run(t)
 }
 
 func component(name string) *wtype.Liquid {
@@ -3579,7 +3522,7 @@ func Test_Workflow(t *testing.T) {
 	//and finally
 	inst = append(inst, &Finalize{})
 
-	st := SimulatorTest{
+	(&SimulatorTest{
 		Name:         "Run Workflow",
 		Setup:        []*SetupFn{},
 		Instructions: inst,
@@ -3733,8 +3676,6 @@ func Test_Workflow(t *testing.T) {
 			adaptorAssertion(0, []tipDesc{}),
 			tipwasteAssertion("tipwaste", 26),
 		},
-	}
-
-	st.run(t)
+	}).Run(t)
 
 }

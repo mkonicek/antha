@@ -348,29 +348,6 @@ func get_not_in(a, b []string) []string {
 	return ret
 }
 
-func compare_errors(t *testing.T, desc string, expected []string, actual []simulator.SimulationError) {
-	string_errors := make([]string, 0)
-	for _, err := range actual {
-		string_errors = append(string_errors, err.Error())
-	}
-	// maybe sort alphabetically?
-
-	missing := get_not_in(expected, string_errors)
-	extra := get_not_in(string_errors, expected)
-
-	errs := []string{}
-	for _, s := range missing {
-		errs = append(errs, fmt.Sprintf("--\"%v\"", s))
-	}
-	for _, s := range extra {
-		errs = append(errs, fmt.Sprintf("++\"%v\"", s))
-	}
-	if len(missing) > 0 || len(extra) > 0 {
-		t.Errorf("Errors didn't match in test \"%v\":\n%s",
-			desc, strings.Join(errs, "\n"))
-	}
-}
-
 /*
  * ####################################### Default Types
  */
@@ -1151,18 +1128,18 @@ func moveTo(row, col int, p moveToParams) *SetupFn {
  * ######################################## Assertions (about the final state)
  */
 
-type AssertionFn func(string, *testing.T, *VirtualLiquidHandler)
+type AssertionFn func(*testing.T, *VirtualLiquidHandler)
 
 //tipboxAssertion assert that the tipbox has tips missing in the given locations only
 func tipboxAssertion(tipbox_loc string, missing_tips []string) *AssertionFn {
-	var ret AssertionFn = func(name string, t *testing.T, vlh *VirtualLiquidHandler) {
+	var ret AssertionFn = func(t *testing.T, vlh *VirtualLiquidHandler) {
 		mmissing_tips := make(map[string]bool)
 		for _, tl := range missing_tips {
 			mmissing_tips[tl] = true
 		}
 
 		if tipbox, ok := vlh.GetObjectAt(tipbox_loc).(*wtype.LHTipbox); !ok {
-			t.Errorf("TipboxAssertion failed in \"%s\", no Tipbox found at \"%s\"", name, tipbox_loc)
+			t.Errorf("TipboxAssertion failed: no Tipbox found at \"%s\"", tipbox_loc)
 		} else {
 			errors := []string{}
 			for y := 0; y < tipbox.Nrows; y++ {
@@ -1177,7 +1154,7 @@ func tipboxAssertion(tipbox_loc string, missing_tips []string) *AssertionFn {
 				}
 			}
 			if len(errors) > 0 {
-				t.Errorf("TipboxAssertion failed in test \"%s\", tipbox at \"%s\":\n%s", name, tipbox_loc, strings.Join(errors, "\n"))
+				t.Errorf("TipboxAssertion failed: tipbox at \"%s\":\n%s", tipbox_loc, strings.Join(errors, "\n"))
 			}
 		}
 	}
@@ -1192,7 +1169,7 @@ type tipDesc struct {
 
 //adaptorAssertion assert that the adaptor has tips in the given positions
 func adaptorAssertion(head int, tips []tipDesc) *AssertionFn {
-	var ret AssertionFn = func(name string, t *testing.T, vlh *VirtualLiquidHandler) {
+	var ret AssertionFn = func(t *testing.T, vlh *VirtualLiquidHandler) {
 		mtips := make(map[int]bool)
 		for _, td := range tips {
 			mtips[td.channel] = true
@@ -1223,7 +1200,7 @@ func adaptorAssertion(head int, tips []tipDesc) *AssertionFn {
 			}
 		}
 		if len(errors) > 0 {
-			t.Errorf("AdaptorAssertion failed in test \"%s\", Head%v:\n%s", name, head, strings.Join(errors, "\n"))
+			t.Errorf("AdaptorAssertion failed: Head%v:\n%s", head, strings.Join(errors, "\n"))
 		}
 	}
 	return &ret
@@ -1231,7 +1208,7 @@ func adaptorAssertion(head int, tips []tipDesc) *AssertionFn {
 
 //adaptorPositionAssertion assert that the adaptor has tips in the given positions
 func positionAssertion(head int, origin wtype.Coordinates) *AssertionFn {
-	var ret AssertionFn = func(name string, t *testing.T, vlh *VirtualLiquidHandler) {
+	var ret AssertionFn = func(t *testing.T, vlh *VirtualLiquidHandler) {
 		adaptor, err := vlh.GetAdaptorState(head)
 		if err != nil {
 			panic(err)
@@ -1239,7 +1216,7 @@ func positionAssertion(head int, origin wtype.Coordinates) *AssertionFn {
 		or := adaptor.GetChannel(0).GetAbsolutePosition()
 		//use string comparison to avoid precision errors (string printed with %.1f)
 		if g, e := or.String(), origin.String(); g != e {
-			t.Errorf("PositionAssertion failed in \"%s\", head %d should be at %s, was actually at %s", name, head, e, g)
+			t.Errorf("PositionAssertion failed: head %d should be at %s, was actually at %s", head, e, g)
 		}
 	}
 	return &ret
@@ -1247,13 +1224,13 @@ func positionAssertion(head int, origin wtype.Coordinates) *AssertionFn {
 
 //tipwasteAssertion assert the number of tips which should be in the tipwaste
 func tipwasteAssertion(tipwaste_loc string, expected_contents int) *AssertionFn {
-	var ret AssertionFn = func(name string, t *testing.T, vlh *VirtualLiquidHandler) {
+	var ret AssertionFn = func(t *testing.T, vlh *VirtualLiquidHandler) {
 		if tipwaste, ok := vlh.GetObjectAt(tipwaste_loc).(*wtype.LHTipwaste); !ok {
-			t.Errorf("TipWasteAssertion failed in \"%s\", no Tipwaste found at %s", name, tipwaste_loc)
+			t.Errorf("TipWasteAssertion failed: no Tipwaste found at %s", tipwaste_loc)
 		} else {
 			if tipwaste.Contents != expected_contents {
-				t.Errorf("TipwasteAssertion failed in test \"%s\" at location %s: expected %v tips, got %v",
-					name, tipwaste_loc, expected_contents, tipwaste.Contents)
+				t.Errorf("TipwasteAssertion failed at location %s: expected %v tips, got %v",
+					tipwaste_loc, expected_contents, tipwaste.Contents)
 			}
 		}
 	}
@@ -1267,7 +1244,7 @@ type wellDesc struct {
 }
 
 func plateAssertion(plate_loc string, wells []wellDesc) *AssertionFn {
-	var ret AssertionFn = func(name string, t *testing.T, vlh *VirtualLiquidHandler) {
+	var ret AssertionFn = func(t *testing.T, vlh *VirtualLiquidHandler) {
 		m := map[string]bool{}
 		plate := vlh.GetObjectAt(plate_loc).(*wtype.Plate)
 		errs := []string{}
@@ -1292,7 +1269,7 @@ func plateAssertion(plate_loc string, wells []wellDesc) *AssertionFn {
 		}
 
 		if len(errs) > 0 {
-			t.Errorf("plateAssertion failed in test \"%s\", errors were:\n%s", name, strings.Join(errs, "\n"))
+			t.Errorf("plateAssertion failed: errors were:\n%s", strings.Join(errs, "\n"))
 		}
 	}
 	return &ret
@@ -1311,7 +1288,29 @@ type SimulatorTest struct {
 	Assertions     []*AssertionFn
 }
 
-func (self *SimulatorTest) run(t *testing.T) {
+func (self *SimulatorTest) compareErrors(t *testing.T, actual []simulator.SimulationError) {
+	stringErrors := make([]string, 0)
+	for _, err := range actual {
+		stringErrors = append(stringErrors, err.Error())
+	}
+	// maybe sort alphabetically?
+
+	missing := get_not_in(self.ExpectedErrors, stringErrors)
+	extra := get_not_in(stringErrors, self.ExpectedErrors)
+
+	errs := []string{}
+	for _, s := range missing {
+		errs = append(errs, fmt.Sprintf("--\"%v\"", s))
+	}
+	for _, s := range extra {
+		errs = append(errs, fmt.Sprintf("++\"%v\"", s))
+	}
+	if len(missing) > 0 || len(extra) > 0 {
+		t.Errorf("errors didn't match:\n\t%s", strings.Join(errs, "\t\n"))
+	}
+}
+
+func (self *SimulatorTest) Run(t *testing.T) {
 
 	if self.Props == nil {
 		self.Props = default_lhproperties()
@@ -1338,16 +1337,20 @@ func (self *SimulatorTest) run(t *testing.T) {
 	}
 
 	//check errors
-	if self.ExpectedErrors != nil {
-		compare_errors(t, self.Name, self.ExpectedErrors, vlh.GetErrors())
-	} else {
-		compare_errors(t, self.Name, []string{}, vlh.GetErrors())
-	}
+	self.compareErrors(t, vlh.GetErrors())
 
 	//check assertions
 	if self.Assertions != nil {
 		for _, a := range self.Assertions {
-			(*a)(self.Name, t, vlh)
+			(*a)(t, vlh)
 		}
+	}
+}
+
+type SimulatorTests []SimulatorTest
+
+func (tests SimulatorTests) Run(t *testing.T) {
+	for _, test := range tests {
+		t.Run(test.Name, test.Run)
 	}
 }

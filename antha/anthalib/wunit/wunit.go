@@ -61,6 +61,10 @@ type Measurement interface {
 	InUnit(p PrefixedUnit) (Measurement, error)
 	// InStringUnit wrapper for InUnit which fetches the unit from the global UnitRegistry
 	InStringUnit(symbol string) (Measurement, error)
+	// MustInUnit equivalent to InUnit, but panics instead of returning error
+	MustInUnit(p PrefixedUnit) Measurement
+	// MustInStringUnit equivalent to InStringUnit, but panics instead of returning error
+	MustInStringUnit(symbol string) Measurement
 	// ConvertToString deprecated, please use ConvertTo or InStringUnit
 	ConvertToString(s string) float64
 	// IncrBy add to this measurement
@@ -136,7 +140,7 @@ func (cm *ConcreteMeasurement) SetValue(v float64) float64 {
 	return v
 }
 
-// ConvertTo return a new measurement in the new units
+// InUnit return a new measurement in the new units
 func (cm *ConcreteMeasurement) InUnit(p PrefixedUnit) (Measurement, error) {
 	if isNil(cm) {
 		return &ConcreteMeasurement{}, nil
@@ -151,12 +155,30 @@ func (cm *ConcreteMeasurement) InUnit(p PrefixedUnit) (Measurement, error) {
 	}
 }
 
+// MustInUnit return a new measurement in the new units
+func (cm *ConcreteMeasurement) MustInUnit(p PrefixedUnit) Measurement {
+	if ret, err := cm.InUnit(p); err != nil {
+		panic(err)
+	} else {
+		return ret
+	}
+}
+
 // InStringUnit return a new measurement in the new units
 func (cm *ConcreteMeasurement) InStringUnit(symbol string) (Measurement, error) {
 	if unit, err := GetGlobalUnitRegistry().GetUnit(symbol); err != nil {
 		return nil, err
 	} else {
 		return cm.InUnit(unit)
+	}
+}
+
+// MustInStringUnit return a new measurement in the new units
+func (cm *ConcreteMeasurement) MustInStringUnit(symbol string) Measurement {
+	if ret, err := cm.InStringUnit(symbol); err != nil {
+		panic(err)
+	} else {
+		return ret
 	}
 }
 

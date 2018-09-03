@@ -547,6 +547,25 @@ func TestNewVelocity(t *testing.T) {
 	})
 }
 
+func TestNewAcceleration(t *testing.T) {
+	NewMeasurementTests{
+		{
+			Value:            1.0,
+			Unit:             "mm/s^2",
+			ExpectedSIValue:  1.0e-3,
+			ExpectedBaseUnit: "m/s^2",
+			ExpectedPrefix:   "m",
+		},
+		{
+			Value:       1.0,
+			Unit:        "shane williams",
+			ShouldPanic: true,
+		},
+	}.Run(t, func(v float64, u string) Measurement {
+		return NewAcceleration(v, u)
+	})
+}
+
 func TestNewRate(t *testing.T) {
 	NewMeasurementTests{
 		{

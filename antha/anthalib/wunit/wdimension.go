@@ -462,6 +462,16 @@ func NewVelocity(v float64, unit string) Velocity {
 	return Velocity{NewTypedMeasurement("Velocity", v, unit)}
 }
 
+type Acceleration struct {
+	*ConcreteMeasurement
+}
+
+// NewAcceleration create a new acceleration with the given units which will
+// be looked up in the global unit registry
+func NewAcceleration(v float64, unit string) Acceleration {
+	return Acceleration{NewTypedMeasurement("Acceleration", v, unit)}
+}
+
 type Rate struct {
 	*ConcreteMeasurement
 }

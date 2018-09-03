@@ -174,6 +174,14 @@ func getSystemUnits() baseUnits {
 				Exponent: 1,
 			},
 		},
+		"Acceleration": {
+			{
+				Name:     "meters per second squared",
+				Symbol:   "m/s^2",
+				Prefixes: SIPrefixes,
+				Exponent: 1,
+			},
+		},
 		"FlowRate": {
 			{
 				Name:     "litres per second",

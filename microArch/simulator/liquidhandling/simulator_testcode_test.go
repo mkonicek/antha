@@ -126,16 +126,16 @@ func makeLHHeadAssembly(ha HeadAssemblyParams) *wtype.LHHeadAssembly {
 }
 
 type LHPropertiesParams struct {
-	Name                 string
-	Mfg                  string
-	Layouts              []LayoutParams
-	HeadAssemblies       []HeadAssemblyParams
-	Tip_preferences      []string
-	Input_preferences    []string
-	Output_preferences   []string
-	Tipwaste_preferences []string
-	Wash_preferences     []string
-	Waste_preferences    []string
+	Name                string
+	Mfg                 string
+	Layouts             []LayoutParams
+	HeadAssemblies      []HeadAssemblyParams
+	TipPreferences      []string
+	InputPreferences    []string
+	OutputPreferences   []string
+	TipwastePreferences []string
+	WashPreferences     []string
+	WastePreferences    []string
 }
 
 func makeLHProperties(p *LHPropertiesParams) *liquidhandling.LHProperties {
@@ -153,12 +153,12 @@ func makeLHProperties(p *LHPropertiesParams) *liquidhandling.LHProperties {
 	}
 	lhp.Heads = lhp.GetLoadedHeads()
 
-	lhp.Tip_preferences = p.Tip_preferences
-	lhp.Input_preferences = p.Input_preferences
-	lhp.Output_preferences = p.Output_preferences
-	lhp.Tipwaste_preferences = p.Tipwaste_preferences
-	lhp.Wash_preferences = p.Wash_preferences
-	lhp.Waste_preferences = p.Waste_preferences
+	lhp.Tip_preferences = p.TipPreferences
+	lhp.Input_preferences = p.InputPreferences
+	lhp.Output_preferences = p.OutputPreferences
+	lhp.Tipwaste_preferences = p.TipwastePreferences
+	lhp.Wash_preferences = p.WashPreferences
+	lhp.Waste_preferences = p.WastePreferences
 
 	return lhp
 }
@@ -337,7 +337,7 @@ func test_worst(t *testing.T, errors []*simulator.SimulationError, worst simulat
 }*/
 
 //return subset of a not in b
-func get_not_in(a, b []string) []string {
+func setSubtract(a, b []string) []string {
 	ret := []string{}
 	for _, va := range a {
 		c := false
@@ -357,7 +357,7 @@ func get_not_in(a, b []string) []string {
  * ####################################### Default Types
  */
 
-func default_lhplate_props() *LHPlateParams {
+func defaultLHPlateProps() *LHPlateParams {
 	params := LHPlateParams{
 		platetype: "plate",
 		mfr:       "test_plate_mfr",
@@ -393,25 +393,25 @@ func default_lhplate_props() *LHPlateParams {
 	return &params
 }
 
-func default_lhplate(name string) *wtype.Plate {
-	params := default_lhplate_props()
+func defaultLHPlate(name string) *wtype.Plate {
+	params := defaultLHPlateProps()
 	return makeLHPlate(params, name)
 }
 
-func llf_lhplate(name string) *wtype.Plate {
-	params := default_lhplate_props()
+func llfLHPlate(name string) *wtype.Plate {
+	params := defaultLHPlateProps()
 	params.welltype.liquidLevelModel = &wutil.Quadratic{A: 0.402, B: 7.069, C: 0.0}
 	return makeLHPlate(params, name)
 }
 
 //This plate will fill into the next door position on the robot
-func wide_lhplate(name string) *wtype.Plate {
-	params := default_lhplate_props()
+func wideLHPlate(name string) *wtype.Plate {
+	params := defaultLHPlateProps()
 	params.size.X = 300.
 	return makeLHPlate(params, name)
 }
 
-func lhplate_trough_props() *LHPlateParams {
+func troughLHPlateProps() *LHPlateParams {
 	params := LHPlateParams{
 		platetype: "trough",
 		mfr:       "test_trough_mfr",
@@ -447,8 +447,8 @@ func lhplate_trough_props() *LHPlateParams {
 	return &params
 }
 
-func lhplate_trough12(name string) *wtype.Plate {
-	params := lhplate_trough_props()
+func troughLHPlate(name string) *wtype.Plate {
+	params := troughLHPlateProps()
 	plate := makeLHPlate(params, name)
 	targets := []wtype.Coordinates{
 		{X: 0.0, Y: -31.5, Z: 0.0},
@@ -464,7 +464,7 @@ func lhplate_trough12(name string) *wtype.Plate {
 	return plate
 }
 
-func default_lhtipbox(name string) *wtype.LHTipbox {
+func defaultLHTipbox(name string) *wtype.LHTipbox {
 	params := LHTipboxParams{
 		nrows:        8,
 		ncols:        12,
@@ -516,7 +516,7 @@ func default_lhtipbox(name string) *wtype.LHTipbox {
 	return makeLHTipbox(&params, name)
 }
 
-func small_lhtipbox(name string) *wtype.LHTipbox {
+func smallLHTipbox(name string) *wtype.LHTipbox {
 	params := LHTipboxParams{
 		nrows:        8,
 		ncols:        12,
@@ -568,7 +568,7 @@ func small_lhtipbox(name string) *wtype.LHTipbox {
 	return makeLHTipbox(&params, name)
 }
 
-func default_lhtipwaste(name string) *wtype.LHTipwaste {
+func defaultLHTipwaste(name string) *wtype.LHTipwaste {
 	params := LHTipwasteParams{
 		capacity: 700,
 		typ:      "tipwaste",
@@ -600,8 +600,8 @@ func default_lhtipwaste(name string) *wtype.LHTipwaste {
 	return makeLHTipWaste(&params, name)
 }
 
-func default_lhproperties() *liquidhandling.LHProperties {
-	valid_props := LHPropertiesParams{
+func defaultLHProperties() *liquidhandling.LHProperties {
+	validProps := LHPropertiesParams{
 		Name: "Device Name",
 		Mfg:  "Device Manufaturer",
 		Layouts: []LayoutParams{
@@ -655,21 +655,21 @@ func default_lhproperties() *liquidhandling.LHProperties {
 				},
 			},
 		},
-		Tip_preferences:      []string{"tipbox_1", "tipbox_2"},
-		Input_preferences:    []string{"input_1", "input_2"},
-		Output_preferences:   []string{"output_1", "output_2"},
-		Tipwaste_preferences: []string{"tipwaste"},
-		Wash_preferences:     []string{"wash"},
-		Waste_preferences:    []string{"waste"},
+		TipPreferences:      []string{"tipbox_1", "tipbox_2"},
+		InputPreferences:    []string{"input_1", "input_2"},
+		OutputPreferences:   []string{"output_1", "output_2"},
+		TipwastePreferences: []string{"tipwaste"},
+		WashPreferences:     []string{"wash"},
+		WastePreferences:    []string{"waste"},
 	}
 
-	return makeLHProperties(&valid_props)
+	return makeLHProperties(&validProps)
 }
 
-func multihead_lhproperties_props() *LHPropertiesParams {
+func multiheadLHPropertiesProps() *LHPropertiesParams {
 	x_step := 128.0
 	y_step := 86.0
-	valid_props := LHPropertiesParams{
+	validProps := LHPropertiesParams{
 		Name: "Device Name",
 		Mfg:  "Device Manufaturer",
 		Layouts: []LayoutParams{
@@ -771,29 +771,29 @@ func multihead_lhproperties_props() *LHPropertiesParams {
 				},
 			},
 		},
-		Tip_preferences:      []string{"tipbox_1", "tipbox_2", "input_1", "input_2"},
-		Input_preferences:    []string{"input_1", "input_2", "tipbox_1", "tipbox_2", "tipwaste", "waste"},
-		Output_preferences:   []string{"output_1", "output_2"},
-		Tipwaste_preferences: []string{"tipwaste", "input_1"},
-		Wash_preferences:     []string{"wash"},
-		Waste_preferences:    []string{"waste"},
+		TipPreferences:      []string{"tipbox_1", "tipbox_2", "input_1", "input_2"},
+		InputPreferences:    []string{"input_1", "input_2", "tipbox_1", "tipbox_2", "tipwaste", "waste"},
+		OutputPreferences:   []string{"output_1", "output_2"},
+		TipwastePreferences: []string{"tipwaste", "input_1"},
+		WashPreferences:     []string{"wash"},
+		WastePreferences:    []string{"waste"},
 	}
 
-	return &valid_props
+	return &validProps
 }
 
-func multihead_lhproperties() *liquidhandling.LHProperties {
-	return makeLHProperties(multihead_lhproperties_props())
+func multiheadLHProperties() *liquidhandling.LHProperties {
+	return makeLHProperties(multiheadLHPropertiesProps())
 }
 
-func multihead_constrained_lhproperties() *liquidhandling.LHProperties {
-	lhp := multihead_lhproperties_props()
+func multiheadConstrainedLHProperties() *liquidhandling.LHProperties {
+	lhp := multiheadLHPropertiesProps()
 	lhp.HeadAssemblies[0].MotionLimits.Position.Z = 60
 	return makeLHProperties(lhp)
 }
 
-func independent_lhproperties() *liquidhandling.LHProperties {
-	ret := default_lhproperties()
+func IndependentLHProperties() *liquidhandling.LHProperties {
+	ret := defaultLHProperties()
 
 	for _, head := range ret.Heads {
 		head.Params.Independent = true
@@ -805,7 +805,7 @@ func independent_lhproperties() *liquidhandling.LHProperties {
 
 /* -- remove for linting
 func default_vlh() *VirtualLiquidHandler {
-	vlh := NewVirtualLiquidHandler(default_lhproperties(), nil)
+	vlh := NewVirtualLiquidHandler(defaultLHProperties(), nil)
 	return vlh
 }
 */
@@ -1306,8 +1306,8 @@ func (self *SimulatorTest) compareErrors(t *testing.T, actual []simulator.Simula
 	}
 	// maybe sort alphabetically?
 
-	missing := get_not_in(self.ExpectedErrors, stringErrors)
-	extra := get_not_in(stringErrors, self.ExpectedErrors)
+	missing := setSubtract(self.ExpectedErrors, stringErrors)
+	extra := setSubtract(stringErrors, self.ExpectedErrors)
 
 	errs := []string{}
 	for _, s := range missing {
@@ -1324,7 +1324,7 @@ func (self *SimulatorTest) compareErrors(t *testing.T, actual []simulator.Simula
 func (self *SimulatorTest) Run(t *testing.T) {
 
 	if self.Props == nil {
-		self.Props = default_lhproperties()
+		self.Props = defaultLHProperties()
 	}
 	vlh, err := NewVirtualLiquidHandler(self.Props, nil)
 	if err != nil {

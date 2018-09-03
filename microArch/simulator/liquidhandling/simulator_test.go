@@ -36,27 +36,27 @@ func TestUnknownLocations(t *testing.T) {
 		}
 	}
 
-	lhp := default_lhproperties()
+	lhp := defaultLHProperties()
 	lhp.Tip_preferences = append(lhp.Tip_preferences, "undefined_tip_pref")
 	assertPropsInvalid(t, lhp, "Undefined Tip_preference")
 
-	lhp = default_lhproperties()
+	lhp = defaultLHProperties()
 	lhp.Input_preferences = append(lhp.Input_preferences, "undefined_input_pref")
 	assertPropsInvalid(t, lhp, "Undefined Input_preference")
 
-	lhp = default_lhproperties()
+	lhp = defaultLHProperties()
 	lhp.Output_preferences = append(lhp.Output_preferences, "undefined_output_pref")
 	assertPropsInvalid(t, lhp, "Undefined Output_preference")
 
-	lhp = default_lhproperties()
+	lhp = defaultLHProperties()
 	lhp.Tipwaste_preferences = append(lhp.Tipwaste_preferences, "undefined_tipwaste_pref")
 	assertPropsInvalid(t, lhp, "Undefined Tipwaste_preference")
 
-	lhp = default_lhproperties()
+	lhp = defaultLHProperties()
 	lhp.Wash_preferences = append(lhp.Wash_preferences, "undefined_wash_pref")
 	assertPropsInvalid(t, lhp, "Undefined Wash_preference")
 
-	lhp = default_lhproperties()
+	lhp = defaultLHProperties()
 	lhp.Waste_preferences = append(lhp.Waste_preferences, "undefined_waste_pref")
 	assertPropsInvalid(t, lhp, "Undefined Waste_preference")
 }
@@ -71,13 +71,13 @@ func TestVLH_AddPlateTo(t *testing.T) {
 			Name: "OK",
 			Instructions: []TestRobotInstruction{
 				&Initialize{},
-				&AddPlateTo{"tipbox_1", default_lhtipbox("tipbox1"), "tipbox1"},
-				&AddPlateTo{"tipbox_2", default_lhtipbox("tipbox2"), "tipbox2"},
-				&AddPlateTo{"input_1", default_lhplate("input1"), "input1"},
-				&AddPlateTo{"input_2", default_lhplate("input2"), "input2"},
-				&AddPlateTo{"output_1", default_lhplate("output1"), "output1"},
-				&AddPlateTo{"output_2", default_lhplate("output2"), "output2"},
-				&AddPlateTo{"tipwaste", default_lhtipwaste("tipwaste"), "tipwaste"},
+				&AddPlateTo{"tipbox_1", defaultLHTipbox("tipbox1"), "tipbox1"},
+				&AddPlateTo{"tipbox_2", defaultLHTipbox("tipbox2"), "tipbox2"},
+				&AddPlateTo{"input_1", defaultLHPlate("input1"), "input1"},
+				&AddPlateTo{"input_2", defaultLHPlate("input2"), "input2"},
+				&AddPlateTo{"output_1", defaultLHPlate("output1"), "output1"},
+				&AddPlateTo{"output_2", defaultLHPlate("output2"), "output2"},
+				&AddPlateTo{"tipwaste", defaultLHTipwaste("tipwaste"), "tipwaste"},
 			},
 		},
 		{
@@ -92,8 +92,8 @@ func TestVLH_AddPlateTo(t *testing.T) {
 			Name: "location full",
 			Instructions: []TestRobotInstruction{
 				&Initialize{},
-				&AddPlateTo{"tipbox_1", default_lhtipbox("p0"), "p0"},
-				&AddPlateTo{"tipbox_1", default_lhtipbox("p1"), "p1"},
+				&AddPlateTo{"tipbox_1", defaultLHTipbox("p0"), "p0"},
+				&AddPlateTo{"tipbox_1", defaultLHTipbox("p1"), "p1"},
 			},
 			ExpectedErrors: []string{"(err) AddPlateTo[2]: Couldn't add tipbox \"p1\" to location \"tipbox_1\" which already contains tipbox \"p0\""},
 		},
@@ -101,7 +101,7 @@ func TestVLH_AddPlateTo(t *testing.T) {
 			Name: "tipbox on tipwaste location",
 			Instructions: []TestRobotInstruction{
 				&Initialize{},
-				&AddPlateTo{"tipwaste", default_lhtipbox("tipbox"), "tipbox"},
+				&AddPlateTo{"tipwaste", defaultLHTipbox("tipbox"), "tipbox"},
 			},
 			ExpectedErrors: []string{"(err) AddPlateTo[1]: Slot \"tipwaste\" can't accept tipbox \"tipbox\", only tipwaste allowed"},
 		},
@@ -109,7 +109,7 @@ func TestVLH_AddPlateTo(t *testing.T) {
 			Name: "tipwaste on tipbox location",
 			Instructions: []TestRobotInstruction{
 				&Initialize{},
-				&AddPlateTo{"tipbox_1", default_lhtipwaste("tipwaste"), "tipwaste"},
+				&AddPlateTo{"tipbox_1", defaultLHTipwaste("tipwaste"), "tipwaste"},
 			},
 			ExpectedErrors: []string{"(err) AddPlateTo[1]: Slot \"tipbox_1\" can't accept tipwaste \"tipwaste\", only tipbox allowed"},
 		},
@@ -117,7 +117,7 @@ func TestVLH_AddPlateTo(t *testing.T) {
 			Name: "unknown location",
 			Instructions: []TestRobotInstruction{
 				&Initialize{},
-				&AddPlateTo{"ruritania", default_lhtipbox("aTipbox"), "aTipbox"},
+				&AddPlateTo{"ruritania", defaultLHTipbox("aTipbox"), "aTipbox"},
 			},
 			ExpectedErrors: []string{"(err) AddPlateTo[1]: Cannot put tipbox \"aTipbox\" at unknown slot \"ruritania\""},
 		},
@@ -125,7 +125,7 @@ func TestVLH_AddPlateTo(t *testing.T) {
 			Name: "too big",
 			Instructions: []TestRobotInstruction{
 				&Initialize{},
-				&AddPlateTo{"output_1", wide_lhplate("plate1"), "plate1"},
+				&AddPlateTo{"output_1", wideLHPlate("plate1"), "plate1"},
 			},
 			ExpectedErrors: []string{
 				"(err) AddPlateTo[1]: Footprint of plate \"plate1\"[300mm x 85.48mm] doesn't fit slot \"output_1\"[127.76mm x 85.48mm]",
@@ -182,13 +182,13 @@ func Test_SetPippetteSpeed(t *testing.T) {
 func testLayout() *SetupFn {
 	var ret SetupFn = func(vlh *VirtualLiquidHandler) {
 		vlh.Initialize()
-		vlh.AddPlateTo("tipbox_1", default_lhtipbox("tipbox1"), "tipbox1")
-		vlh.AddPlateTo("tipbox_2", default_lhtipbox("tipbox2"), "tipbox2")
-		vlh.AddPlateTo("input_1", default_lhplate("plate1"), "plate1")
-		vlh.AddPlateTo("input_2", default_lhplate("plate2"), "plate2")
-		vlh.AddPlateTo("output_1", default_lhplate("plate3"), "plate3")
-		vlh.AddPlateTo("waste", default_lhplate("wasteplate"), "wasteplate")
-		vlh.AddPlateTo("tipwaste", default_lhtipwaste("tipwaste"), "tipwaste")
+		vlh.AddPlateTo("tipbox_1", defaultLHTipbox("tipbox1"), "tipbox1")
+		vlh.AddPlateTo("tipbox_2", defaultLHTipbox("tipbox2"), "tipbox2")
+		vlh.AddPlateTo("input_1", defaultLHPlate("plate1"), "plate1")
+		vlh.AddPlateTo("input_2", defaultLHPlate("plate2"), "plate2")
+		vlh.AddPlateTo("output_1", defaultLHPlate("plate3"), "plate3")
+		vlh.AddPlateTo("waste", defaultLHPlate("wasteplate"), "wasteplate")
+		vlh.AddPlateTo("tipwaste", defaultLHTipwaste("tipwaste"), "tipwaste")
 	}
 	return &ret
 }
@@ -196,13 +196,13 @@ func testLayout() *SetupFn {
 func testLayoutLLF() *SetupFn {
 	var ret SetupFn = func(vlh *VirtualLiquidHandler) {
 		vlh.Initialize()
-		vlh.AddPlateTo("tipbox_1", default_lhtipbox("tipbox1"), "tipbox1")
-		vlh.AddPlateTo("tipbox_2", default_lhtipbox("tipbox2"), "tipbox2")
-		vlh.AddPlateTo("input_1", llf_lhplate("plate1"), "plate1")
-		vlh.AddPlateTo("input_2", llf_lhplate("plate2"), "plate2")
-		vlh.AddPlateTo("output_1", llf_lhplate("plate3"), "plate3")
-		vlh.AddPlateTo("waste", llf_lhplate("wasteplate"), "wasteplate")
-		vlh.AddPlateTo("tipwaste", default_lhtipwaste("tipwaste"), "tipwaste")
+		vlh.AddPlateTo("tipbox_1", defaultLHTipbox("tipbox1"), "tipbox1")
+		vlh.AddPlateTo("tipbox_2", defaultLHTipbox("tipbox2"), "tipbox2")
+		vlh.AddPlateTo("input_1", llfLHPlate("plate1"), "plate1")
+		vlh.AddPlateTo("input_2", llfLHPlate("plate2"), "plate2")
+		vlh.AddPlateTo("output_1", llfLHPlate("plate3"), "plate3")
+		vlh.AddPlateTo("waste", llfLHPlate("wasteplate"), "wasteplate")
+		vlh.AddPlateTo("tipwaste", defaultLHTipwaste("tipwaste"), "tipwaste")
 	}
 	return &ret
 }
@@ -210,12 +210,12 @@ func testLayoutLLF() *SetupFn {
 func testLayoutTransposed() *SetupFn {
 	var ret SetupFn = func(vlh *VirtualLiquidHandler) {
 		vlh.Initialize()
-		vlh.AddPlateTo("tipbox_1", default_lhtipbox("tipbox1"), "tipbox1")
-		vlh.AddPlateTo("input_2", default_lhtipbox("tipbox2"), "tipbox2")
-		vlh.AddPlateTo("tipwaste", default_lhplate("plate1"), "plate1")
-		vlh.AddPlateTo("tipbox_2", default_lhplate("plate2"), "plate2")
-		vlh.AddPlateTo("output_1", default_lhplate("plate3"), "plate3")
-		vlh.AddPlateTo("input_1", default_lhtipwaste("tipwaste"), "tipwaste")
+		vlh.AddPlateTo("tipbox_1", defaultLHTipbox("tipbox1"), "tipbox1")
+		vlh.AddPlateTo("input_2", defaultLHTipbox("tipbox2"), "tipbox2")
+		vlh.AddPlateTo("tipwaste", defaultLHPlate("plate1"), "plate1")
+		vlh.AddPlateTo("tipbox_2", defaultLHPlate("plate2"), "plate2")
+		vlh.AddPlateTo("output_1", defaultLHPlate("plate3"), "plate3")
+		vlh.AddPlateTo("input_1", defaultLHTipwaste("tipwaste"), "tipwaste")
 	}
 	return &ret
 }
@@ -223,12 +223,12 @@ func testLayoutTransposed() *SetupFn {
 func testTroughLayout() *SetupFn {
 	var ret SetupFn = func(vlh *VirtualLiquidHandler) {
 		vlh.Initialize()
-		vlh.AddPlateTo("tipbox_1", default_lhtipbox("tipbox1"), "tipbox1")
-		vlh.AddPlateTo("tipbox_2", default_lhtipbox("tipbox2"), "tipbox2")
-		vlh.AddPlateTo("input_1", lhplate_trough12("trough1"), "trough1")
-		vlh.AddPlateTo("input_2", default_lhplate("plate2"), "plate2")
-		vlh.AddPlateTo("output_1", default_lhplate("plate3"), "plate3")
-		vlh.AddPlateTo("tipwaste", default_lhtipwaste("tipwaste"), "tipwaste")
+		vlh.AddPlateTo("tipbox_1", defaultLHTipbox("tipbox1"), "tipbox1")
+		vlh.AddPlateTo("tipbox_2", defaultLHTipbox("tipbox2"), "tipbox2")
+		vlh.AddPlateTo("input_1", troughLHPlate("trough1"), "trough1")
+		vlh.AddPlateTo("input_2", defaultLHPlate("plate2"), "plate2")
+		vlh.AddPlateTo("output_1", defaultLHPlate("plate3"), "plate3")
+		vlh.AddPlateTo("tipwaste", defaultLHTipwaste("tipwaste"), "tipwaste")
 	}
 	return &ret
 }
@@ -632,7 +632,7 @@ func TestCrashes(t *testing.T) {
 	SimulatorTests{
 		{
 			Name:  "crash into tipbox",
-			Props: multihead_lhproperties(),
+			Props: multiheadLHProperties(),
 			Setup: []*SetupFn{
 				testLayout(),
 			},
@@ -657,7 +657,7 @@ func TestCrashes(t *testing.T) {
 		},
 		{
 			Name:  "collides with tipbox in front",
-			Props: multihead_lhproperties(),
+			Props: multiheadLHProperties(),
 			Setup: []*SetupFn{
 				testLayoutTransposed(),
 			},
@@ -715,7 +715,7 @@ func Test_Multihead(t *testing.T) {
 	SimulatorTests{
 		{
 			Name:  "constrained heads",
-			Props: multihead_lhproperties(),
+			Props: multiheadLHProperties(),
 			Setup: []*SetupFn{
 				testLayout(),
 			},
@@ -738,7 +738,7 @@ func Test_Multihead(t *testing.T) {
 		},
 		{
 			Name:  "can't move while a tip is loaded on another head in the same assembly",
-			Props: multihead_lhproperties(),
+			Props: multiheadLHProperties(),
 			Setup: []*SetupFn{
 				testLayout(),
 				preloadAdaptorTips(1, "tipbox_1", []int{0}),
@@ -767,7 +767,7 @@ func TestMotionLimits(t *testing.T) {
 	SimulatorTests{
 		{
 			Name:  "outside limits left",
-			Props: multihead_lhproperties(),
+			Props: multiheadLHProperties(),
 			Setup: []*SetupFn{
 				testLayout(),
 			},
@@ -793,7 +793,7 @@ func TestMotionLimits(t *testing.T) {
 		},
 		{
 			Name:  "outside limits right",
-			Props: multihead_lhproperties(),
+			Props: multiheadLHProperties(),
 			Setup: []*SetupFn{
 				testLayout(),
 			},
@@ -819,7 +819,7 @@ func TestMotionLimits(t *testing.T) {
 		},
 		{
 			Name:  "outside limits forward",
-			Props: multihead_lhproperties(),
+			Props: multiheadLHProperties(),
 			Setup: []*SetupFn{
 				testLayout(),
 			},
@@ -845,7 +845,7 @@ func TestMotionLimits(t *testing.T) {
 		},
 		{
 			Name:  "outside limits backwards",
-			Props: multihead_lhproperties(),
+			Props: multiheadLHProperties(),
 			Setup: []*SetupFn{
 				testLayout(),
 			},
@@ -871,7 +871,7 @@ func TestMotionLimits(t *testing.T) {
 		},
 		{
 			Name:  "outside limits too high",
-			Props: multihead_lhproperties(),
+			Props: multiheadLHProperties(),
 			Setup: []*SetupFn{
 				testLayout(),
 			},
@@ -897,7 +897,7 @@ func TestMotionLimits(t *testing.T) {
 		},
 		{
 			Name:  "outside limits too low",
-			Props: multihead_constrained_lhproperties(),
+			Props: multiheadConstrainedLHProperties(),
 			Setup: []*SetupFn{
 				testLayout(),
 				preloadAdaptorTips(0, "tipbox_1", []int{0}),
@@ -924,7 +924,7 @@ func TestMotionLimits(t *testing.T) {
 		},
 		{
 			Name:  "outside limits too low and far back",
-			Props: multihead_constrained_lhproperties(),
+			Props: multiheadConstrainedLHProperties(),
 			Setup: []*SetupFn{
 				testLayout(),
 				preloadAdaptorTips(0, "tipbox_1", []int{7}),
@@ -1130,7 +1130,7 @@ func TestLoadTipsNoOverride(t *testing.T) {
 		},
 		{
 			Name:  "OK - 3 tips (independent)",
-			Props: independent_lhproperties(),
+			Props: IndependentLHProperties(),
 			Setup: []*SetupFn{
 				testLayout(),
 				moveTo(0, 0, mtp),
@@ -1581,7 +1581,7 @@ func TestLoadTipsOverride(t *testing.T) {
 		Rows:         8,
 	}
 
-	propsLTR := default_lhproperties()
+	propsLTR := defaultLHProperties()
 	propsLTR.Heads[0].TipLoading = wtype.TipLoadingBehaviour{
 		OverrideLoadTipsCommand:    true,
 		AutoRefillTipboxes:         true,
@@ -1591,7 +1591,7 @@ func TestLoadTipsOverride(t *testing.T) {
 		ChunkingBehaviour:          wtype.ReverseSequentialTipLoading,
 	}
 
-	propsRTL := default_lhproperties()
+	propsRTL := defaultLHProperties()
 	propsRTL.Heads[0].TipLoading = wtype.TipLoadingBehaviour{
 		OverrideLoadTipsCommand:    true,
 		AutoRefillTipboxes:         true,
@@ -1997,7 +1997,7 @@ func Test_UnloadTips(t *testing.T) {
 		*/
 		{
 			Name:  "OK - independent tips",
-			Props: independent_lhproperties(),
+			Props: IndependentLHProperties(),
 			Setup: []*SetupFn{
 				testLayout(),
 				preloadAdaptorTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
@@ -3423,14 +3423,14 @@ func Test_Workflow(t *testing.T) {
 	}
 
 	//plates
-	input_plate := default_lhplate("input")
-	output_plate := default_lhplate("output")
+	input_plate := defaultLHPlate("input")
+	output_plate := defaultLHPlate("output")
 
 	//tips - using small tipbox so I don't have to worry about using different tips
-	tipbox := small_lhtipbox("tipbox")
+	tipbox := smallLHTipbox("tipbox")
 
 	//tipwaste
-	tipwaste := default_lhtipwaste("tipwaste")
+	tipwaste := defaultLHTipwaste("tipwaste")
 
 	//setup the input plate
 	wc := wtype.MakeWellCoords("A1")

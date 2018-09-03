@@ -580,7 +580,7 @@ func (lhw *LHWell) GetAfVFunc() wutil.Func1Prm {
 //SetLiquidLevelModel sets the function which models the volume of liquid (uL) in
 //the well given it's height (mm)
 func (lhw *LHWell) SetLiquidLevelModel(m wutil.Func1Prm) {
-	if lhw == nil {
+	if lhw == nil || m == nil {
 		return
 	}
 	mb, _ := json.Marshal(m)

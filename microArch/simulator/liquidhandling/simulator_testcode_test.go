@@ -203,9 +203,7 @@ func makeLHWell(p *LHWellParams) *wtype.LHWell {
 		p.bottomh,
 		p.dunit)
 	w.Crds = p.crds
-	if p.liquidLevelModel != nil {
-		w.SetLiquidLevelModel(*p.liquidLevelModel)
-	}
+	w.SetLiquidLevelModel(p.liquidLevelModel)
 	return w
 }
 

@@ -1300,7 +1300,7 @@ type SimulatorTest struct {
 }
 
 func (self *SimulatorTest) compareErrors(t *testing.T, actual []simulator.SimulationError) {
-	stringErrors := make([]string, 0)
+	stringErrors := make([]string, 0, len(actual))
 	for _, err := range actual {
 		stringErrors = append(stringErrors, err.Error())
 	}

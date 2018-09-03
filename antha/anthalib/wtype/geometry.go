@@ -28,6 +28,14 @@ import (
 	"math"
 )
 
+type Dimension int
+
+const (
+	XDim Dimension = iota
+	YDim
+	ZDim
+)
+
 type Coordinates struct {
 	X float64
 	Y float64
@@ -48,13 +56,13 @@ func (self Coordinates) StringXY() string {
 }
 
 //Dim Value for dimension
-func (a Coordinates) Dim(x int) float64 {
+func (a Coordinates) Dim(x Dimension) float64 {
 	switch x {
-	case 0:
+	case XDim:
 		return a.X
-	case 1:
+	case YDim:
 		return a.Y
-	case 2:
+	case ZDim:
 		return a.Z
 	default:
 		return 0.0

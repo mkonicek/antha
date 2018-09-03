@@ -193,6 +193,20 @@ func testLayout() *SetupFn {
 	return &ret
 }
 
+func testLayoutLLF() *SetupFn {
+	var ret SetupFn = func(vlh *VirtualLiquidHandler) {
+		vlh.Initialize()
+		vlh.AddPlateTo("tipbox_1", default_lhtipbox("tipbox1"), "tipbox1")
+		vlh.AddPlateTo("tipbox_2", default_lhtipbox("tipbox2"), "tipbox2")
+		vlh.AddPlateTo("input_1", llf_lhplate("plate1"), "plate1")
+		vlh.AddPlateTo("input_2", llf_lhplate("plate2"), "plate2")
+		vlh.AddPlateTo("output_1", llf_lhplate("plate3"), "plate3")
+		vlh.AddPlateTo("waste", llf_lhplate("wasteplate"), "wasteplate")
+		vlh.AddPlateTo("tipwaste", default_lhtipwaste("tipwaste"), "tipwaste")
+	}
+	return &ret
+}
+
 func testLayoutTransposed() *SetupFn {
 	var ret SetupFn = func(vlh *VirtualLiquidHandler) {
 		vlh.Initialize()
@@ -3178,6 +3192,66 @@ func Test_Mix(t *testing.T) {
 				tipboxAssertion("tipbox_2", []string{}),
 				plateAssertion("input_1", []wellDesc{{"A1", "water", 200.}}),
 				adaptorAssertion(0, []tipDesc{{0, "water", 0.}}),
+				tipwasteAssertion("tipwaste", 0),
+			},
+		},
+	}.Run(t)
+}
+
+func Test_LiquidLevelFollow(t *testing.T) {
+	SimulatorTests{
+		{
+			Name: "OK - single channel",
+			Setup: []*SetupFn{
+				testLayoutLLF(),
+				prefillWells("input_1", []string{"A1"}, "water", 200.),
+				preloadAdaptorTips(0, "tipbox_1", []int{0}),
+			},
+			Instructions: []TestRobotInstruction{
+				&Move{
+					deckposition: []string{"input_1", "", "", "", "", "", "", ""},
+					wellcoords:   []string{"A1", "", "", "", "", "", "", ""},
+					reference:    []int{2, 2, 2, 2, 2, 2, 2, 2}, //2 == liquidlevel
+					offsetX:      []float64{0., 0., 0., 0., 0., 0., 0., 0.},
+					offsetY:      []float64{0., 0., 0., 0., 0., 0., 0., 0.},
+					offsetZ:      []float64{1., 1., 1., 1., 1., 1., 1., 1.},
+					plate_type:   []string{"plate", "", "", "", "", "", "", ""},
+					head:         0,
+				},
+				&Aspirate{
+					volume:     []float64{100., 0., 0., 0., 0., 0., 0., 0.},
+					overstroke: false,
+					head:       0,
+					multi:      1,
+					platetype:  []string{"plate", "", "", "", "", "", "", ""},
+					what:       []string{"water", "", "", "", "", "", "", ""},
+					llf:        []bool{true, true, true, true, true, true, true, true},
+				},
+				&Move{
+					deckposition: []string{"input_1", "", "", "", "", "", "", ""},
+					wellcoords:   []string{"A2", "", "", "", "", "", "", ""},
+					reference:    []int{2, 2, 2, 2, 2, 2, 2, 2}, //2 == liquidlevel
+					offsetX:      []float64{0., 0., 0., 0., 0., 0., 0., 0.},
+					offsetY:      []float64{0., 0., 0., 0., 0., 0., 0., 0.},
+					offsetZ:      []float64{1., 1., 1., 1., 1., 1., 1., 1.},
+					plate_type:   []string{"plate", "", "", "", "", "", "", ""},
+					head:         0,
+				},
+				&Dispense{
+					volume:    []float64{100., 0., 0., 0., 0., 0., 0., 0.},
+					blowout:   []bool{false, false, false, false, false, false, false, false},
+					head:      0,
+					multi:     1,
+					platetype: []string{"plate", "", "", "", "", "", "", ""},
+					what:      []string{"water", "", "", "", "", "", "", ""},
+					llf:       []bool{true, true, true, true, true, true, true, true},
+				},
+			},
+			Assertions: []*AssertionFn{
+				tipboxAssertion("tipbox_1", []string{}),
+				tipboxAssertion("tipbox_2", []string{}),
+				adaptorAssertion(0, []tipDesc{{0, "water", 0}}),
+				plateAssertion("input_1", []wellDesc{{"A1", "water", 100}, {"A2", "water", 100}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},

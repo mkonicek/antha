@@ -175,17 +175,18 @@ func makeShape(p *ShapeParams) *wtype.Shape {
 }
 
 type LHWellParams struct {
-	crds    wtype.WellCoords
-	vunit   string
-	vol     float64
-	rvol    float64
-	shape   ShapeParams
-	bott    wtype.WellBottomType
-	xdim    float64
-	ydim    float64
-	zdim    float64
-	bottomh float64
-	dunit   string
+	crds             wtype.WellCoords
+	vunit            string
+	vol              float64
+	rvol             float64
+	shape            ShapeParams
+	bott             wtype.WellBottomType
+	xdim             float64
+	ydim             float64
+	zdim             float64
+	bottomh          float64
+	dunit            string
+	liquidLevelModel *wutil.Quadratic
 }
 
 func makeLHWell(p *LHWellParams) *wtype.LHWell {
@@ -201,6 +202,9 @@ func makeLHWell(p *LHWellParams) *wtype.LHWell {
 		p.bottomh,
 		p.dunit)
 	w.Crds = p.crds
+	if p.liquidLevelModel != nil {
+		w.SetLiquidLevelModel(*p.liquidLevelModel)
+	}
 	return w
 }
 
@@ -390,6 +394,12 @@ func default_lhplate_props() *LHPlateParams {
 
 func default_lhplate(name string) *wtype.Plate {
 	params := default_lhplate_props()
+	return makeLHPlate(params, name)
+}
+
+func llf_lhplate(name string) *wtype.Plate {
+	params := default_lhplate_props()
+	params.welltype.liquidLevelModel = &wutil.Quadratic{A: 0.402, B: 7.069, C: 0.0}
 	return makeLHPlate(params, name)
 }
 

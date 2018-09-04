@@ -170,7 +170,7 @@ func NewLinearAcceleration(minSpeed, speed, maxSpeed wunit.Velocity, minAccel, a
 		return nil, errors.Errorf("speed (%v) must be within allowable range [%v - %v]", speed, minSpeed, maxSpeed)
 	} else if minAccel.GreaterThan(maxAccel) {
 		return nil, errors.Errorf("minimum acceleration (%v) cannot be greater than maximum acceleration (%v)", minAccel, maxAccel)
-	} else if accel.GreaterThan(maxAccel) || speed.LessThan(minAccel) {
+	} else if accel.GreaterThan(maxAccel) || accel.LessThan(minAccel) {
 		return nil, errors.Errorf("acceleration (%v) must be within allowable range [%v - %v]", accel, minAccel, maxAccel)
 	} else {
 		return &LinearAcceleration{
@@ -187,7 +187,7 @@ func NewLinearAcceleration(minSpeed, speed, maxSpeed wunit.Velocity, minAccel, a
 // SetVelocity set the velocity
 func (self *LinearAcceleration) SetVelocity(v wunit.Velocity) error {
 	if v.LessThan(self.MinSpeed) || v.GreaterThan(self.MaxSpeed) {
-		return errors.Errorf("cannot set velocity: %v is outside allowable rage [%v - %v]", v, self.MinSpeed, self.MaxSpeed)
+		return errors.Errorf("cannot set velocity: %v is outside allowable range [%v - %v]", v, self.MinSpeed, self.MaxSpeed)
 	}
 	self.Speed = wunit.CopyVelocity(v)
 	return nil
@@ -196,7 +196,7 @@ func (self *LinearAcceleration) SetVelocity(v wunit.Velocity) error {
 // SetAcceleration set the acceleration
 func (self *LinearAcceleration) SetAcceleration(v wunit.Acceleration) error {
 	if v.LessThan(self.MinAcceleration) || v.GreaterThan(self.MaxAcceleration) {
-		return errors.Errorf("cannot set acceleration: %v is outside allowable rage [%v - %v]", v, self.MinAcceleration, self.MaxAcceleration)
+		return errors.Errorf("cannot set acceleration: %v is outside allowable range [%v - %v]", v, self.MinAcceleration, self.MaxAcceleration)
 	}
 	self.Acceleration = wunit.CopyAcceleration(v)
 	return nil
@@ -223,9 +223,11 @@ func (self *LinearAcceleration) GetTimeToTravel(distance wunit.Length) wunit.Tim
 	if distanceAtConstantVelocity := (distanceM - 2.0*distanceToMaxVelocity); distanceAtConstantVelocity > 0.0 {
 		timeForMaxVelocity := vMax / aMax
 		timeAtConstantVelocity := distanceAtConstantVelocity / vMax
+		fmt.Printf("timeForMaxVelocity: %f\n", timeForMaxVelocity)
+		fmt.Printf("distanceToMaxVelocity: %f\n", distanceToMaxVelocity)
 		return wunit.NewTime(2.0*timeForMaxVelocity+timeAtConstantVelocity, "s")
 	} else {
 		// from (3) and by symmetry
-		return wunit.NewTime(math.Sqrt(2.0*distanceM/aMax), "s")
+		return wunit.NewTime(2.0*math.Sqrt(distanceM/aMax), "s")
 	}
 }

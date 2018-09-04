@@ -21,6 +21,10 @@ func NewSplitBlockInstruction(inss []*wtype.LHInstruction) *SplitBlockInstructio
 	return sb
 }
 
+func (sb *SplitBlockInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.SplitBlock(sb)
+}
+
 // this instruction does not generate anything
 // it just modifies the components in the robot
 func (sp SplitBlockInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, robot *LHProperties) ([]RobotInstruction, error) {

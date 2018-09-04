@@ -44,7 +44,7 @@ func TestMarshalPlateCSV(t *testing.T) {
 				`
 pcrplate_with_cooler,Input_plate_1,LiquidType,Vol,Vol Unit,Conc,Conc Unit
 A1,water,water,50,ul,0,g/l
-A4,tea,water,50,ul,10,mM/l
+A4,tea,water,50,ul,10,mMol/l
 A5,milk,water,100,ul,10,g/l
 `),
 			Plate: makeTestPlate(ctx, &wtype.Plate{
@@ -68,7 +68,7 @@ A5,milk,water,100,ul,10,g/l
 							Vol:   50.0,
 							Vunit: "ul",
 							Conc:  10,
-							Cunit: "mM/l",
+							Cunit: "mMol/l",
 						},
 					},
 					"A5": {

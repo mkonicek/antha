@@ -97,7 +97,7 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 	// volume constraints
 	for cmp, vol := range component_volumes {
 		component_order[cur-1] = cmp
-		v := vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
+		v := vol.ConvertToString("ul")
 		lp.SetRowBnds(cur, glpk.LO, v, 9999999999999.0)
 		cur += 1
 	}
@@ -131,7 +131,7 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 		for _, plate := range plate_types {
 			// set up objective coefficient, column name and lower bound
 			rv := plate.Welltype.ResidualVolume()
-			coef := rv.ConvertTo(wunit.ParsePrefixedUnit("ul"))*float64(weight_constraint["RESIDUAL_VOLUME_WEIGHT"]) + 1.0
+			coef := rv.ConvertToString("ul")*float64(weight_constraint["RESIDUAL_VOLUME_WEIGHT"]) + 1.0
 			lp.SetObjCoef(cur, coef)
 			lp.SetColName(cur, component+"_"+plate.Type)
 			lp.SetColBnds(cur, glpk.LO, 0.0, 0.0)
@@ -159,7 +159,7 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 					vol := plate_types[j].Welltype.MaxVolume()       //wunit.NewVolume(plate_types[j].Welltype.Vol, plate_types[j].Welltype.Vunit)
 					rvol := plate_types[j].Welltype.ResidualVolume() //wunit.NewVolume(plate_types[j].Welltype.Rvol, plate_types[j].Welltype.Vunit)
 					vol.Subtract(&rvol)
-					vc = vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
+					vc = vol.ConvertToString("ul")
 					//debug
 				}
 				row[col+1] = vc

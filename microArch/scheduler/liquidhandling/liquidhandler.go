@@ -329,10 +329,10 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 		if ins.Type() == liquidhandling.TFR {
 			mocks := liquidhandling.MockAspDsp(ins)
 			for _, ii := range mocks {
-				str += liquidhandling.InsToString2(ii) + "\n"
+				str += liquidhandling.InsToString(ii) + "\n"
 			}
 		} else {
-			str = liquidhandling.InsToString2(ins) + "\n"
+			str = liquidhandling.InsToString(ins) + "\n"
 		}
 
 		request.InstructionText += str
@@ -358,61 +358,30 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 	vols := make(map[string]map[string]wunit.Volume)
 
 	for _, ins := range rq.Instructions {
-		if ins.Type() == liquidhandling.MOV {
-			lastPlate = make([]string, 8)
-			lastPos := ins.GetParameter(liquidhandling.POSTO).([]string)
+		ins.Visit(liquidhandling.RobotInstructionBaseVisitor{
+			HandleMove: func(ins *liquidhandling.MoveInstruction) {
+				lastPlate = make([]string, 8)
 
-			for i, p := range lastPos {
-				lastPlate[i] = this.Properties.PosLookup[p]
-			}
-
-			lastWell = ins.GetParameter(liquidhandling.WELLTO).([]string)
-		} else if ins.Type() == liquidhandling.ASP {
-			for i := range lastPlate {
-				if i >= len(lastWell) {
-					break
-				}
-				lp := lastPlate[i]
-				lw := lastWell[i]
-
-				if lp == "" {
-					continue
+				for i, p := range ins.Pos {
+					lastPlate[i] = this.Properties.PosLookup[p]
 				}
 
-				ppp := this.Properties.PlateLookup[lp].(*wtype.Plate)
+				lastWell = ins.Well
+			},
+			HandleAspirate: func(ins *liquidhandling.AspirateInstruction) {
+				for i := range lastPlate {
+					if i >= len(lastWell) {
+						break
+					}
+					lp := lastPlate[i]
+					lw := lastWell[i]
 
-				lwl := ppp.Wellcoords[lw]
+					if lp == "" {
+						continue
+					}
 
-				if !lwl.IsAutoallocated() {
-					continue
-				}
-
-				_, ok := vols[lp]
-
-				if !ok {
-					vols[lp] = make(map[string]wunit.Volume)
-				}
-
-				v, ok := vols[lp][lw]
-
-				if !ok {
-					v = wunit.NewVolume(0.0, "ul")
-					vols[lp][lw] = v
-				}
-				//v.Add(ins.Volume[i])
-
-				insvols := ins.GetParameter(liquidhandling.VOLUME).([]wunit.Volume)
-				v.Add(insvols[i])
-				v.Add(rq.CarryVolume)
-			}
-		} else if ins.Type() == liquidhandling.TFR {
-			tfr := ins.(*liquidhandling.TransferInstruction)
-			for _, mtf := range tfr.Transfers {
-				for _, tf := range mtf.Transfers {
-					lpos, lw := tf.PltFrom, tf.WellFrom
-
-					lp := this.Properties.PosLookup[lpos]
 					ppp := this.Properties.PlateLookup[lp].(*wtype.Plate)
+
 					lwl := ppp.Wellcoords[lw]
 
 					if !lwl.IsAutoallocated() {
@@ -433,10 +402,43 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 					}
 					//v.Add(ins.Volume[i])
 
-					v.Add(tf.Volume)
+					insvols := ins.Volume
+					v.Add(insvols[i])
+					v.Add(rq.CarryVolume)
 				}
-			}
-		}
+			},
+			HandleTransfer: func(ins *liquidhandling.TransferInstruction) {
+				for _, mtf := range ins.Transfers {
+					for _, tf := range mtf.Transfers {
+						lpos, lw := tf.PltFrom, tf.WellFrom
+
+						lp := this.Properties.PosLookup[lpos]
+						ppp := this.Properties.PlateLookup[lp].(*wtype.Plate)
+						lwl := ppp.Wellcoords[lw]
+
+						if !lwl.IsAutoallocated() {
+							continue
+						}
+
+						_, ok := vols[lp]
+
+						if !ok {
+							vols[lp] = make(map[string]wunit.Volume)
+						}
+
+						v, ok := vols[lp][lw]
+
+						if !ok {
+							v = wunit.NewVolume(0.0, "ul")
+							vols[lp][lw] = v
+						}
+						//v.Add(ins.Volume[i])
+
+						v.Add(tf.Volume)
+					}
+				}
+			},
+		})
 	}
 
 	// apply evaporation
@@ -1198,7 +1200,8 @@ func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
 		volb.Subtract(vola)
 		vmap2[k] = vola
 
-		if volb.GreaterThanFloat(0.0001) {
+		//IsZero checks that volb is more than a small delta away from zero
+		if volb.IsPositive() {
 			vmap3[k] = volb
 		}
 		// toggle HERE for DEBUG

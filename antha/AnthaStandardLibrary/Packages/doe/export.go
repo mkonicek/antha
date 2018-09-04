@@ -27,6 +27,7 @@ import (
 
 	"strconv"
 
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/spreadsheet"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/tealeg/xlsx"
@@ -230,5 +231,6 @@ func XLSXFileFromRuns(runs []Run, outputfilename string, dxorjmp string) (xlsxfi
 	} else {
 		panic(fmt.Sprintf("Unknown design file format %s when exporting design to XLSX file. Please specify File type as JMP or DX (Design Expert)", dxorjmp))
 	}
+	spreadsheet.AutoFormat(xlsxfile)
 	return
 }

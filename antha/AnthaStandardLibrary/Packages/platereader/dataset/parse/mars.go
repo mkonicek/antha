@@ -167,12 +167,12 @@ func parseWellData(xlsxBinary []byte, sheet int, headerrows int) (welldatamap ma
 	// find first well
 	for i := 0; i < sheet1.MaxRow; i++ {
 
-		firstRowCell := sheet1.Cell(i, 0)
-		secondRowCell := sheet1.Cell(i, 1)
+		firstCellOfRow := sheet1.Cell(i, 0)
+		secondCellOfRow := sheet1.Cell(i, 1)
 
-		cellstr := firstRowCell.String()
+		cellstr := firstCellOfRow.String()
 		// at most double letter rows will be supported as first row
-		if _, err := secondRowCell.Int(); len(cellstr) < 3 && err == nil {
+		if _, err := secondCellOfRow.Int(); len(cellstr) < 3 && err == nil {
 			var invalid bool
 			for _, char := range cellstr {
 				if !unicode.IsLetter(char) {

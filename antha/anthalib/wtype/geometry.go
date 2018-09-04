@@ -36,6 +36,20 @@ const (
 	ZDim
 )
 
+var Dimensions = []Dimension{XDim, YDim, ZDim}
+
+func (d Dimension) String() string {
+	switch d {
+	case XDim:
+		return "X"
+	case YDim:
+		return "Y"
+	case ZDim:
+		return "Z"
+	}
+	return "" //unreachable, needed to keep compiler happy
+}
+
 type Coordinates struct {
 	X float64
 	Y float64

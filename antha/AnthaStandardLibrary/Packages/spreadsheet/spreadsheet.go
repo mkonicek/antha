@@ -117,24 +117,24 @@ func SheetToCSV(sheet *xlsx.Sheet) (records [][]string) {
 // An error is returned if the column aor row number specified is beyond the range available in the sheet.
 // Counting starts from zero. i.e. the cell at the first row  and first column would be called by
 // cell, err := GetDataFromRowCol(sheet, 0,0)
-func GetDataFromRowCol(sheet *xlsx.Sheet, col int, row int) (cell *xlsx.Cell, err error) {
-	if col >= len(sheet.Rows) || col < 0 {
-		var cols []int
+func GetDataFromRowCol(sheet *xlsx.Sheet, rowInSheet int, columnInSheet int) (cell *xlsx.Cell, err error) {
+	if rowInSheet >= len(sheet.Rows) || rowInSheet < 0 {
+		var rowIndices []int
 		for key := range sheet.Rows {
-			cols = append(cols, key)
+			rowIndices = append(rowIndices, key)
 		}
-		return nil, fmt.Errorf("column %d not found in xlsx sheet. Found these: %v", col, cols)
+		return nil, fmt.Errorf("row %d not found in xlsx sheet. Found these: %v", rowInSheet, rowIndices)
 	}
 
-	column := sheet.Rows[col]
-	if row >= len(column.Cells) || row < 0 {
-		var rows []int
+	column := sheet.Rows[rowInSheet]
+	if columnInSheet >= len(column.Cells) || columnInSheet < 0 {
+		var columnIndices []int
 		for key := range column.Cells {
-			rows = append(rows, key)
+			columnIndices = append(columnIndices, key)
 		}
-		return nil, fmt.Errorf("row %d not found in xlsx sheet. Found these: %v", row, rows)
+		return nil, fmt.Errorf("column %d not found in row %d of xlsx sheet. Found these: %v", columnInSheet, rowInSheet, columnIndices)
 	}
-	return column.Cells[row], nil
+	return column.Cells[columnInSheet], nil
 }
 
 // GetDataFromCell returns the cell contents at the specified cell position in an xlsx sheet.

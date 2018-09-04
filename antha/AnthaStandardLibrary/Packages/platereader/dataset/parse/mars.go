@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/platereader/dataset"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
@@ -37,12 +38,10 @@ func ParseMarsXLSXOutput(xlsxname string, sheet int) (dataoutput dataset.MarsDat
 
 // ParseMarsXLSXBinary parses mars data from excel filename
 func ParseMarsXLSXBinary(xlsxContents []byte, sheet int) (dataoutput dataset.MarsData, err error) {
-
 	clario, headerrowcount, err := parseHeadLines(xlsxContents, sheet)
 	if err != nil {
 		return
 	}
-
 	wellmap, err := parseWellData(xlsxContents, sheet, headerrowcount)
 	if err != nil {
 		return
@@ -154,11 +153,9 @@ func parseWellData(xlsxBinary []byte, sheet int, headerrows int) (welldatamap ma
 	var timestring string
 	var timestamp time.Duration
 	xlsx, err := spreadsheet.OpenXLSXBinary(xlsxBinary)
-
 	if err != nil {
 		return
 	}
-
 	sheet1 := xlsx.Sheets[sheet]
 	if sheet1.MaxRow == 0 {
 		return welldatamap, fmt.Errorf("No well data found in Mars data file")
@@ -174,9 +171,11 @@ func parseWellData(xlsxBinary []byte, sheet int, headerrows int) (welldatamap ma
 
 		cellstr := cell.String()
 
-		if cellstr == "A" {
-			wellrowstart = i
-			break
+		if len(cellstr) == 1 {
+			if unicode.IsLetter(rune(cellstr[0])) {
+				wellrowstart = i
+				break
+			}
 		}
 
 	}

@@ -58,6 +58,14 @@ func NewLength(v float64, unit string) Length {
 	return Length{NewTypedMeasurement("Length", v, unit)}
 }
 
+// CopyLength duplicate the Length
+func CopyLength(v Length) Length {
+	if isNil(v.ConcreteMeasurement) {
+		return Length{}
+	}
+	return NewLength(v.RawValue(), v.Unit().PrefixedSymbol())
+}
+
 // area
 type Area struct {
 	*ConcreteMeasurement
@@ -66,6 +74,14 @@ type Area struct {
 // make an area unit
 func NewArea(v float64, unit string) Area {
 	return Area{NewTypedMeasurement("Area", v, unit)}
+}
+
+// CopyArea duplicate the Area
+func CopyArea(v Area) Area {
+	if isNil(v.ConcreteMeasurement) {
+		return Area{}
+	}
+	return NewArea(v.RawValue(), v.Unit().PrefixedSymbol())
 }
 
 func ZeroArea() Area {
@@ -86,8 +102,7 @@ func CopyVolume(v Volume) Volume {
 	if isNil(v.ConcreteMeasurement) {
 		return Volume{}
 	}
-	ret := NewVolume(v.RawValue(), v.Unit().PrefixedSymbol())
-	return ret
+	return NewVolume(v.RawValue(), v.Unit().PrefixedSymbol())
 }
 
 // AddVolumes adds a set of volumes.
@@ -157,8 +172,10 @@ func (c Concentration) Dup() Concentration {
 }
 
 func CopyConcentration(v Concentration) Concentration {
-	ret := NewConcentration(v.RawValue(), v.Unit().PrefixedSymbol())
-	return ret
+	if isNil(v.ConcreteMeasurement) {
+		return Concentration{}
+	}
+	return NewConcentration(v.RawValue(), v.Unit().PrefixedSymbol())
 }
 
 // MultiplyConcentration multiplies a concentration by a factor.
@@ -246,6 +263,14 @@ func NewTemperature(v float64, unit string) Temperature {
 	return Temperature{NewTypedMeasurement("Temperature", v, unit)}
 }
 
+// CopyTemperature duplicate the Temperature
+func CopyTemperature(v Temperature) Temperature {
+	if isNil(v.ConcreteMeasurement) {
+		return Temperature{}
+	}
+	return NewTemperature(v.RawValue(), v.Unit().PrefixedSymbol())
+}
+
 // time
 type Time struct {
 	*ConcreteMeasurement
@@ -254,7 +279,14 @@ type Time struct {
 // NewTime creates a time unit.
 func NewTime(v float64, unit string) (t Time) {
 	return Time{NewTypedMeasurement("Time", v, unit)}
+}
 
+// CopyTime duplicate the Time
+func CopyTime(v Time) Time {
+	if isNil(v.ConcreteMeasurement) {
+		return Time{}
+	}
+	return NewTime(v.RawValue(), v.Unit().PrefixedSymbol())
 }
 
 func (t Time) Seconds() float64 {
@@ -285,6 +317,14 @@ func NewMass(v float64, unit string) Mass {
 	return Mass{NewTypedMeasurement("Mass", v, unit)}
 }
 
+// CopyMass duplicate the Mass
+func CopyMass(v Mass) Mass {
+	if isNil(v.ConcreteMeasurement) {
+		return Mass{}
+	}
+	return NewMass(v.RawValue(), v.Unit().PrefixedSymbol())
+}
+
 // defines mass to be a SubstanceQuantity
 func (m *Mass) Quantity() Measurement {
 	return m
@@ -300,9 +340,25 @@ func NewMoles(v float64, unit string) Moles {
 	return Moles{NewTypedMeasurement("Moles", v, unit)}
 }
 
+// CopyMoles duplicate the Moles
+func CopyMoles(v Moles) Moles {
+	if isNil(v.ConcreteMeasurement) {
+		return Moles{}
+	}
+	return NewMoles(v.RawValue(), v.Unit().PrefixedSymbol())
+}
+
 // generate a new Amount in moles
 func NewAmount(v float64, unit string) Moles {
 	return Moles{NewTypedMeasurement("Moles", v, unit)}
+}
+
+// CopyAmount duplicate the Moles
+func CopyAmount(v Moles) Moles {
+	if isNil(v.ConcreteMeasurement) {
+		return Moles{}
+	}
+	return NewAmount(v.RawValue(), v.Unit().PrefixedSymbol())
 }
 
 // defines Moles to be a SubstanceQuantity
@@ -320,6 +376,14 @@ func NewAngle(v float64, unit string) Angle {
 	return Angle{NewTypedMeasurement("Angle", v, unit)}
 }
 
+// CopyAngle duplicate the Angle
+func CopyAngle(v Angle) Angle {
+	if isNil(v.ConcreteMeasurement) {
+		return Angle{}
+	}
+	return NewAngle(v.RawValue(), v.Unit().PrefixedSymbol())
+}
+
 // angular velocity (one way or another)
 
 type AngularVelocity struct {
@@ -328,6 +392,14 @@ type AngularVelocity struct {
 
 func NewAngularVelocity(v float64, unit string) AngularVelocity {
 	return AngularVelocity{NewTypedMeasurement("AngularVelocity", v, unit)}
+}
+
+// CopyAngularVelocity duplicate the AngularVelocity
+func CopyAngularVelocity(v AngularVelocity) AngularVelocity {
+	if isNil(v.ConcreteMeasurement) {
+		return AngularVelocity{}
+	}
+	return NewAngularVelocity(v.RawValue(), v.Unit().PrefixedSymbol())
 }
 
 // this is really Mass Length/Time^2
@@ -340,6 +412,14 @@ func NewEnergy(v float64, unit string) Energy {
 	return Energy{NewTypedMeasurement("Energy", v, unit)}
 }
 
+// CopyEnergy duplicate the Energy
+func CopyEnergy(v Energy) Energy {
+	if isNil(v.ConcreteMeasurement) {
+		return Energy{}
+	}
+	return NewEnergy(v.RawValue(), v.Unit().PrefixedSymbol())
+}
+
 // a Force
 type Force struct {
 	*ConcreteMeasurement
@@ -350,6 +430,14 @@ func NewForce(v float64, unit string) Force {
 	return Force{NewTypedMeasurement("Force", v, unit)}
 }
 
+// CopyForce duplicate the Force
+func CopyForce(v Force) Force {
+	if isNil(v.ConcreteMeasurement) {
+		return Force{}
+	}
+	return NewForce(v.RawValue(), v.Unit().PrefixedSymbol())
+}
+
 // a Pressure structure
 type Pressure struct {
 	*ConcreteMeasurement
@@ -358,6 +446,14 @@ type Pressure struct {
 // make a new pressure in Pascals
 func NewPressure(v float64, unit string) Pressure {
 	return Pressure{NewTypedMeasurement("Pressure", v, unit)}
+}
+
+// CopyPressure duplicate the Pressure
+func CopyPressure(v Pressure) Pressure {
+	if isNil(v.ConcreteMeasurement) {
+		return Pressure{}
+	}
+	return NewPressure(v.RawValue(), v.Unit().PrefixedSymbol())
 }
 
 // defines a concentration unit
@@ -432,6 +528,14 @@ func NewSpecificHeatCapacity(v float64, unit string) SpecificHeatCapacity {
 	return SpecificHeatCapacity{NewTypedMeasurement("SpecificHeatCapacity", v, unit)}
 }
 
+// CopySpecificHeatCapacity duplicate the SpecificHeatCapacity
+func CopySpecificHeatCapacity(v SpecificHeatCapacity) SpecificHeatCapacity {
+	if isNil(v.ConcreteMeasurement) {
+		return SpecificHeatCapacity{}
+	}
+	return NewSpecificHeatCapacity(v.RawValue(), v.Unit().PrefixedSymbol())
+}
+
 // a structure which defines a density
 type Density struct {
 	*ConcreteMeasurement
@@ -440,6 +544,14 @@ type Density struct {
 // make a new density structure in SI units
 func NewDensity(v float64, unit string) Density {
 	return Density{NewTypedMeasurement("Density", v, unit)}
+}
+
+// CopyDensity duplicate the Density
+func CopyDensity(v Density) Density {
+	if isNil(v.ConcreteMeasurement) {
+		return Density{}
+	}
+	return NewDensity(v.RawValue(), v.Unit().PrefixedSymbol())
 }
 
 type FlowRate struct {
@@ -452,6 +564,14 @@ func NewFlowRate(v float64, unit string) FlowRate {
 	return FlowRate{NewTypedMeasurement("FlowRate", v, unit)}
 }
 
+// CopyFlowRate duplicate the FlowRate
+func CopyFlowRate(v FlowRate) FlowRate {
+	if isNil(v.ConcreteMeasurement) {
+		return FlowRate{}
+	}
+	return NewFlowRate(v.RawValue(), v.Unit().PrefixedSymbol())
+}
+
 type Velocity struct {
 	*ConcreteMeasurement
 }
@@ -460,6 +580,14 @@ type Velocity struct {
 
 func NewVelocity(v float64, unit string) Velocity {
 	return Velocity{NewTypedMeasurement("Velocity", v, unit)}
+}
+
+// CopyVelocity duplicate the Velocity
+func CopyVelocity(v Velocity) Velocity {
+	if isNil(v.ConcreteMeasurement) {
+		return Velocity{}
+	}
+	return NewVelocity(v.RawValue(), v.Unit().PrefixedSymbol())
 }
 
 type Acceleration struct {
@@ -472,6 +600,14 @@ func NewAcceleration(v float64, unit string) Acceleration {
 	return Acceleration{NewTypedMeasurement("Acceleration", v, unit)}
 }
 
+// CopyAcceleration duplicate the Acceleration
+func CopyAcceleration(v Acceleration) Acceleration {
+	if isNil(v.ConcreteMeasurement) {
+		return Acceleration{}
+	}
+	return NewAcceleration(v.RawValue(), v.Unit().PrefixedSymbol())
+}
+
 type Rate struct {
 	*ConcreteMeasurement
 }
@@ -480,10 +616,34 @@ func NewRate(v float64, unit string) (r Rate, err error) {
 	return Rate{NewTypedMeasurement("Rate", v, unit)}, nil
 }
 
+// CopyRate duplicate the Rate
+func CopyRate(v Rate) Rate {
+	if isNil(v.ConcreteMeasurement) {
+		return Rate{}
+	}
+	if r, err := NewRate(v.RawValue(), v.Unit().PrefixedSymbol()); err != nil {
+		panic(err)
+	} else {
+		return r
+	}
+}
+
 type Voltage struct {
 	*ConcreteMeasurement
 }
 
 func NewVoltage(value float64, unit string) (Voltage, error) {
 	return Voltage{NewTypedMeasurement("Voltage", value, unit)}, nil
+}
+
+// CopyVoltage duplicate the Voltage
+func CopyVoltage(v Voltage) Voltage {
+	if isNil(v.ConcreteMeasurement) {
+		return Voltage{}
+	}
+	if v, err := NewVoltage(v.RawValue(), v.Unit().PrefixedSymbol()); err != nil {
+		panic(err)
+	} else {
+		return v
+	}
 }

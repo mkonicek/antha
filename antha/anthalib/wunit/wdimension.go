@@ -590,24 +590,6 @@ func CopyVelocity(v Velocity) Velocity {
 	return NewVelocity(v.RawValue(), v.Unit().PrefixedSymbol())
 }
 
-type Acceleration struct {
-	*ConcreteMeasurement
-}
-
-// NewAcceleration create a new acceleration with the given units which will
-// be looked up in the global unit registry
-func NewAcceleration(v float64, unit string) Acceleration {
-	return Acceleration{NewTypedMeasurement("Acceleration", v, unit)}
-}
-
-// CopyAcceleration duplicate the Acceleration
-func CopyAcceleration(v Acceleration) Acceleration {
-	if isNil(v.ConcreteMeasurement) {
-		return Acceleration{}
-	}
-	return NewAcceleration(v.RawValue(), v.Unit().PrefixedSymbol())
-}
-
 type Rate struct {
 	*ConcreteMeasurement
 }

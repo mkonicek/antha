@@ -1,11 +1,57 @@
 package wtype
 
 import (
+	"encoding/json"
 	"math"
+	"reflect"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
+
+func TestMovementbehaviourJSONSerialise(t *testing.T) {
+
+	wait1, err := NewGenericAction(wunit.NewTime(5.0, "min"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	wait2, err := NewGenericAction(wunit.NewTime(2.0, "ms"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	safety, err := NewMoveToSafetyHeightAction(wunit.NewLength(104, "mm"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	x, err := NewLinearAcceleration(wunit.NewVelocity(0.1, "mm/s"), wunit.NewVelocity(15, "mm/s"), wunit.NewVelocity(100, "mm/s"), wunit.NewAcceleration(0.0, "mm/s^2"), wunit.NewAcceleration(50, "mm/s^2"), wunit.NewAcceleration(500, "mm/s^2"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	y, err := NewLinearAcceleration(wunit.NewVelocity(0.1, "mm/s"), wunit.NewVelocity(20, "mm/s"), wunit.NewVelocity(100, "mm/s"), wunit.NewAcceleration(0.0, "mm/s^2"), wunit.NewAcceleration(60, "mm/s^2"), wunit.NewAcceleration(500, "mm/s^2"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	z, err := NewLinearAcceleration(wunit.NewVelocity(0.1, "mm/s"), wunit.NewVelocity(3, "mm/s"), wunit.NewVelocity(10, "mm/s"), wunit.NewAcceleration(0.0, "mm/s^2"), wunit.NewAcceleration(20, "mm/s^2"), wunit.NewAcceleration(50, "mm/s^2"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var b MovementBehaviour
+
+	if a, err := NewMovementBehaviour(x, y, z, [][]Dimension{{XDim, YDim}, {ZDim}}, []MovementAction{wait2, safety}, []MovementAction{wait1}); err != nil {
+		t.Fatal(err)
+	} else if bytes, err := json.Marshal(a); err != nil {
+		t.Fatal(err)
+	} else if err := json.Unmarshal(bytes, &b); err != nil {
+		t.Fatal(err)
+	} else if !reflect.DeepEqual(a, b) {
+		t.Errorf("deserialised MovementBehaviour didn't match:\n e: %v\n g:%v", a, b)
+	}
+}
 
 type DurationToMoveBetweenTest struct {
 	Initial                 Coordinates

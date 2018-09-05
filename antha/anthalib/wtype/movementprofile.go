@@ -112,6 +112,11 @@ func NewGenericAction(time wunit.Time) (*GenericAction, error) {
 	}, nil
 }
 
+// String return a string representation
+func (self *GenericAction) String() string {
+	return fmt.Sprintf("GenericAction(%v)", self.TimeTaken)
+}
+
 // Duration return the time taken by the action and the final position of the head assembly
 func (self *GenericAction) Duration(location Coordinates, behaviour *MovementBehaviour) (wunit.Time, Coordinates) {
 	return wunit.CopyTime(self.TimeTaken), location
@@ -131,11 +136,16 @@ func NewMoveToSafetyHeightAction(safetyHeight wunit.Length) (*MoveToSafetyHeight
 	}, nil
 }
 
+// String return a string representation
+func (self *MoveToSafetyHeightAction) String() string {
+	return fmt.Sprintf("MoveToSafetyHeight(%v)", self.SafetyHeight)
+}
+
 // Duration return the time taken by the action and the final position of the head assembly
 func (self *MoveToSafetyHeightAction) Duration(location Coordinates, behaviour *MovementBehaviour) (wunit.Time, Coordinates) {
 	safetyHeightMm := self.SafetyHeight.MustInStringUnit("mm").RawValue()
-	location.Z = safetyHeightMm
-	return behaviour.Profiles[ZDim].GetTimeToTravel(wunit.NewLength(safetyHeightMm-location.Z, "mm")), location
+	duration := behaviour.Profiles[ZDim].GetTimeToTravel(wunit.NewLength(safetyHeightMm-location.Z, "mm"))
+	return duration, Coordinates{X: location.X, Y: location.Y, Z: safetyHeightMm}
 }
 
 // LinearMovementProfile movement behaviour is one direction only
@@ -184,6 +194,10 @@ func NewLinearAcceleration(minSpeed, speed, maxSpeed wunit.Velocity, minAccel, a
 	}
 }
 
+func (self *LinearAcceleration) String() string {
+	return fmt.Sprintf("LinearAcceleration(V=%v[%v-%v],A=%v[%v-%v])", self.Speed, self.MinSpeed, self.MaxSpeed, self.Acceleration, self.MinAcceleration, self.MaxAcceleration)
+}
+
 // SetVelocity set the velocity
 func (self *LinearAcceleration) SetVelocity(v wunit.Velocity) error {
 	if v.LessThan(self.MinSpeed) || v.GreaterThan(self.MaxSpeed) {
@@ -223,8 +237,6 @@ func (self *LinearAcceleration) GetTimeToTravel(distance wunit.Length) wunit.Tim
 	if distanceAtConstantVelocity := (distanceM - 2.0*distanceToMaxVelocity); distanceAtConstantVelocity > 0.0 {
 		timeForMaxVelocity := vMax / aMax
 		timeAtConstantVelocity := distanceAtConstantVelocity / vMax
-		fmt.Printf("timeForMaxVelocity: %f\n", timeForMaxVelocity)
-		fmt.Printf("distanceToMaxVelocity: %f\n", distanceToMaxVelocity)
 		return wunit.NewTime(2.0*timeForMaxVelocity+timeAtConstantVelocity, "s")
 	} else {
 		// from (3) and by symmetry

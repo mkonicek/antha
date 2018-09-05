@@ -1,12 +1,231 @@
 package wtype
 
 import (
-	"fmt"
 	"math"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
+
+type DurationToMoveBetweenTest struct {
+	Initial                 Coordinates
+	Final                   Coordinates
+	ExpectedDurationSeconds float64
+	Tolerance               float64
+}
+
+func (self *DurationToMoveBetweenTest) Run(t *testing.T, mb *MovementBehaviour) {
+	duration := mb.DurationToMoveBetween(self.Initial, self.Final)
+	if got := duration.MustInStringUnit("s").RawValue(); math.Abs(got-self.ExpectedDurationSeconds) > self.Tolerance {
+		t.Errorf("DurationToMoveBetween(%v, %v): got %v, expected %f s", self.Initial, self.Final, duration, self.ExpectedDurationSeconds)
+	}
+}
+
+type DurationToMoveBetweenTests []DurationToMoveBetweenTest
+
+func (self DurationToMoveBetweenTests) Run(t *testing.T, mb *MovementBehaviour) {
+	for _, test := range self {
+		test.Run(t, mb)
+	}
+}
+
+type MovementBehaviourTest struct {
+	Name        string //since string of MovementBehaviour would be too long
+	Input       *MovementBehaviour
+	ShouldError bool //true if initialisation should raise an error
+	Tests       DurationToMoveBetweenTests
+}
+
+func (self *MovementBehaviourTest) expectingError(err error) bool {
+	return (err != nil) == self.ShouldError
+}
+
+func (self *MovementBehaviourTest) Run(t *testing.T) {
+	t.Run(self.Name, func(t *testing.T) {
+		if mb, err := NewMovementBehaviour(self.Input.Profiles[XDim], self.Input.Profiles[YDim], self.Input.Profiles[ZDim], self.Input.Order, self.Input.BeforeMove, self.Input.AfterMove); !self.expectingError(err) {
+			t.Errorf("in constructor: expecting error %t, got error %v", self.ShouldError, err)
+			return
+		} else if !self.ShouldError {
+			self.Tests.Run(t, mb)
+		}
+	})
+}
+
+type MovementBehaviourTests []MovementBehaviourTest
+
+func (self MovementBehaviourTests) Run(t *testing.T) {
+	for _, test := range self {
+		test.Run(t)
+	}
+}
+
+func TestMovementBehaviour(t *testing.T) {
+	profile, err := NewLinearAcceleration(
+		wunit.NewVelocity(1.0, "mm/s"),
+		wunit.NewVelocity(5.0, "mm/s"),
+		wunit.NewVelocity(10.0, "mm/s"),
+		wunit.NewAcceleration(1.0, "mm/s^2"),
+		wunit.NewAcceleration(5.0, "mm/s^2"),
+		wunit.NewAcceleration(10.0, "mm/s^2"),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	waitOneSec, err := NewGenericAction(wunit.NewTime(1.0, "s"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	waitTwoSec, err := NewGenericAction(wunit.NewTime(2.0, "s"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := NewGenericAction(wunit.NewTime(-2.0, "s")); err == nil {
+		t.Error("no error produced for GenericAction with negative time")
+	}
+
+	moveToSafeHeight, err := NewMoveToSafetyHeightAction(wunit.NewLength(5, "mm"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	MovementBehaviourTests{
+		{
+			Name: "missing Y profile",
+			Input: &MovementBehaviour{
+				Profiles: []LinearMovementProfile{profile, nil, profile},
+				Order:    [][]Dimension{{XDim}, {YDim}, {ZDim}},
+			},
+			ShouldError: true,
+		},
+		{
+			Name: "missing XDim",
+			Input: &MovementBehaviour{
+				Profiles: []LinearMovementProfile{profile, profile, profile},
+				Order:    [][]Dimension{{YDim}, {ZDim}},
+			},
+			ShouldError: true,
+		},
+		{
+			Name: "repeated ZDim",
+			Input: &MovementBehaviour{
+				Profiles: []LinearMovementProfile{profile, profile, profile},
+				Order:    [][]Dimension{{XDim, ZDim}, {YDim}, {ZDim}},
+			},
+			ShouldError: true,
+		},
+		{
+			Name: "several ordering errors",
+			Input: &MovementBehaviour{
+				Profiles: []LinearMovementProfile{profile, profile, profile},
+				Order:    [][]Dimension{{XDim, ZDim}, {ZDim}},
+			},
+			ShouldError: true,
+		},
+		{
+			Name: "OK simple",
+			Input: &MovementBehaviour{
+				Profiles: []LinearMovementProfile{profile, profile, profile},
+				Order:    [][]Dimension{{XDim}, {YDim}, {ZDim}},
+			},
+			Tests: DurationToMoveBetweenTests{
+				{
+					Initial: Coordinates{},
+					Final:   Coordinates{5, 5, 5},
+					ExpectedDurationSeconds: 6, //movements carried out separately so 2s each
+					Tolerance:               1e-5,
+				},
+				{
+					Initial: Coordinates{},
+					Final:   Coordinates{5, 2.5, 5},
+					ExpectedDurationSeconds: 4 + math.Sqrt(2),
+					Tolerance:               1e-5,
+				},
+				{
+					Initial: Coordinates{},
+					Final:   Coordinates{},
+					ExpectedDurationSeconds: 0,
+					Tolerance:               1e-5,
+				},
+			},
+		},
+		{
+			Name: "OK XY Simultaneous",
+			Input: &MovementBehaviour{
+				Profiles: []LinearMovementProfile{profile, profile, profile},
+				Order:    [][]Dimension{{XDim, YDim}, {ZDim}},
+			},
+			Tests: DurationToMoveBetweenTests{
+				{
+					Initial: Coordinates{},
+					Final:   Coordinates{5, 5, 5},
+					ExpectedDurationSeconds: 4,
+					Tolerance:               1e-5,
+				},
+				{
+					Initial: Coordinates{},
+					Final:   Coordinates{5, 2.5, 5},
+					ExpectedDurationSeconds: 4, //shorter distance has no effect as waiting for X
+					Tolerance:               1e-5,
+				},
+				{
+					Initial: Coordinates{},
+					Final:   Coordinates{},
+					ExpectedDurationSeconds: 0,
+					Tolerance:               1e-5,
+				},
+			},
+		},
+		{
+			Name: "OK with Generic",
+			Input: &MovementBehaviour{
+				Profiles:   []LinearMovementProfile{profile, profile, profile},
+				Order:      [][]Dimension{{XDim, YDim}, {ZDim}},
+				BeforeMove: []MovementAction{waitOneSec},
+				AfterMove:  []MovementAction{waitTwoSec},
+			},
+			Tests: DurationToMoveBetweenTests{
+				{
+					Initial: Coordinates{},
+					Final:   Coordinates{X: 5, Y: 5, Z: 5},
+					ExpectedDurationSeconds: 7,
+					Tolerance:               1e-5,
+				},
+				{
+					Initial: Coordinates{X: 10, Y: 10, Z: 10},
+					Final:   Coordinates{X: 10, Y: 10, Z: 10},
+					ExpectedDurationSeconds: 3, //assume that no machines interperet "move to current pos" as noop and not run actions...
+					Tolerance:               1e-5,
+				},
+			},
+		},
+		{
+			Name: "OK with SafetyHeight",
+			Input: &MovementBehaviour{
+				Profiles:   []LinearMovementProfile{profile, profile, profile},
+				Order:      [][]Dimension{{XDim, YDim}, {ZDim}},
+				BeforeMove: []MovementAction{waitOneSec, moveToSafeHeight},
+				AfterMove:  []MovementAction{waitTwoSec},
+			},
+			Tests: DurationToMoveBetweenTests{
+				{
+					Initial: Coordinates{},
+					Final:   Coordinates{X: 5, Y: 5},
+					ExpectedDurationSeconds: 9,
+					Tolerance:               1e-5,
+				},
+				{
+					Initial: Coordinates{},
+					Final:   Coordinates{},
+					ExpectedDurationSeconds: 7,
+					Tolerance:               1e-5,
+				},
+			},
+		},
+	}.Run(t)
+}
 
 type LASetVelocityTest struct {
 	Velocity    wunit.Velocity
@@ -88,7 +307,7 @@ func (self *LinearAccelerationTest) expectingError(err error) bool {
 }
 
 func (self *LinearAccelerationTest) Run(t *testing.T) {
-	t.Run(fmt.Sprintf("V=[%v-%v],A=[%v-%v]", self.Input.MinSpeed, self.Input.MaxSpeed, self.Input.MinAcceleration, self.Input.MaxAcceleration), func(t *testing.T) {
+	t.Run(self.Input.String(), func(t *testing.T) {
 		if la, err := NewLinearAcceleration(self.Input.MinSpeed, self.Input.Speed, self.Input.MaxSpeed, self.Input.MinAcceleration, self.Input.Acceleration, self.Input.MaxAcceleration); !self.expectingError(err) {
 			t.Errorf("while validating: expecting error %t, got error %v", self.ShouldError, err)
 		} else if !self.ShouldError {

@@ -174,24 +174,30 @@ type LinearAcceleration struct {
 }
 
 func NewLinearAcceleration(minSpeed, speed, maxSpeed wunit.Velocity, minAccel, accel, maxAccel wunit.Acceleration) (*LinearAcceleration, error) {
-	if minSpeed.GreaterThan(maxSpeed) {
+	if !(minSpeed.IsZero() || minSpeed.IsPositive()) {
+		return nil, errors.New("minimum speed must be non-negative")
+	} else if !(minAccel.IsZero() || minAccel.IsPositive()) {
+		return nil, errors.New("minimum acceleration must be non-negative")
+	} else if minSpeed.GreaterThan(maxSpeed) {
 		return nil, errors.Errorf("minimum speed (%v) cannot be greater than maximum speed (%v)", minSpeed, maxSpeed)
-	} else if speed.GreaterThan(maxSpeed) || speed.LessThan(minSpeed) {
-		return nil, errors.Errorf("speed (%v) must be within allowable range [%v - %v]", speed, minSpeed, maxSpeed)
 	} else if minAccel.GreaterThan(maxAccel) {
 		return nil, errors.Errorf("minimum acceleration (%v) cannot be greater than maximum acceleration (%v)", minAccel, maxAccel)
-	} else if accel.GreaterThan(maxAccel) || accel.LessThan(minAccel) {
-		return nil, errors.Errorf("acceleration (%v) must be within allowable range [%v - %v]", accel, minAccel, maxAccel)
-	} else {
-		return &LinearAcceleration{
-			MinSpeed:        wunit.CopyVelocity(minSpeed),
-			Speed:           wunit.CopyVelocity(speed),
-			MaxSpeed:        wunit.CopyVelocity(maxSpeed),
-			MinAcceleration: wunit.CopyAcceleration(minAccel),
-			Acceleration:    wunit.CopyAcceleration(accel),
-			MaxAcceleration: wunit.CopyAcceleration(maxAccel),
-		}, nil
 	}
+
+	ret := &LinearAcceleration{
+		MinSpeed:        wunit.CopyVelocity(minSpeed),
+		Speed:           wunit.CopyVelocity(speed),
+		MaxSpeed:        wunit.CopyVelocity(maxSpeed),
+		MinAcceleration: wunit.CopyAcceleration(minAccel),
+		Acceleration:    wunit.CopyAcceleration(accel),
+		MaxAcceleration: wunit.CopyAcceleration(maxAccel),
+	}
+	if err := ret.SetVelocity(speed); err != nil {
+		return nil, err
+	} else if err := ret.SetAcceleration(accel); err != nil {
+		return nil, err
+	}
+	return ret, nil
 }
 
 func (self *LinearAcceleration) String() string {
@@ -200,8 +206,8 @@ func (self *LinearAcceleration) String() string {
 
 // SetVelocity set the velocity
 func (self *LinearAcceleration) SetVelocity(v wunit.Velocity) error {
-	if v.LessThan(self.MinSpeed) || v.GreaterThan(self.MaxSpeed) {
-		return errors.Errorf("cannot set velocity: %v is outside allowable range [%v - %v]", v, self.MinSpeed, self.MaxSpeed)
+	if v.LessThan(self.MinSpeed) || v.GreaterThan(self.MaxSpeed) || !v.IsPositive() {
+		return errors.Errorf("cannot set velocity to %v: must be positive and within allowable range [%v - %v]", v, self.MinSpeed, self.MaxSpeed)
 	}
 	self.Speed = wunit.CopyVelocity(v)
 	return nil
@@ -209,8 +215,8 @@ func (self *LinearAcceleration) SetVelocity(v wunit.Velocity) error {
 
 // SetAcceleration set the acceleration
 func (self *LinearAcceleration) SetAcceleration(v wunit.Acceleration) error {
-	if v.LessThan(self.MinAcceleration) || v.GreaterThan(self.MaxAcceleration) {
-		return errors.Errorf("cannot set acceleration: %v is outside allowable range [%v - %v]", v, self.MinAcceleration, self.MaxAcceleration)
+	if v.LessThan(self.MinAcceleration) || v.GreaterThan(self.MaxAcceleration) || !v.IsPositive() {
+		return errors.Errorf("cannot set acceleration to %v: must be positive and within allowable range [%v - %v]", v, self.MinAcceleration, self.MaxAcceleration)
 	}
 	self.Acceleration = wunit.CopyAcceleration(v)
 	return nil

@@ -331,19 +331,89 @@ func TestLinearAcceleration(t *testing.T) {
 		{
 			Input: &LinearAcceleration{
 				MinSpeed:        wunit.NewVelocity(1.0, "mm/s"),
-				Speed:           wunit.NewVelocity(4.0, "mm/s"),
+				Speed:           wunit.NewVelocity(0.0, "mm/s"),
 				MaxSpeed:        wunit.NewVelocity(10.0, "mm/s"),
 				MinAcceleration: wunit.NewAcceleration(1.0, "mm/s^2"),
 				Acceleration:    wunit.NewAcceleration(1.0, "mm/s^2"),
 				MaxAcceleration: wunit.NewAcceleration(10.0, "mm/s^2"),
 			},
+			ShouldError: true,
+		},
+		{
+			Input: &LinearAcceleration{
+				MinSpeed:        wunit.NewVelocity(10.0, "mm/s"),
+				Speed:           wunit.NewVelocity(4.0, "mm/s"),
+				MaxSpeed:        wunit.NewVelocity(1.0, "mm/s"),
+				MinAcceleration: wunit.NewAcceleration(1.0, "mm/s^2"),
+				Acceleration:    wunit.NewAcceleration(3.0, "mm/s^2"),
+				MaxAcceleration: wunit.NewAcceleration(10.0, "mm/s^2"),
+			},
+			ShouldError: true,
+		},
+		{
+			Input: &LinearAcceleration{
+				MinSpeed:        wunit.NewVelocity(1.0, "mm/s"),
+				Speed:           wunit.NewVelocity(4.0, "mm/s"),
+				MaxSpeed:        wunit.NewVelocity(10.0, "mm/s"),
+				MinAcceleration: wunit.NewAcceleration(10.0, "mm/s^2"),
+				Acceleration:    wunit.NewAcceleration(3.0, "mm/s^2"),
+				MaxAcceleration: wunit.NewAcceleration(1.0, "mm/s^2"),
+			},
+			ShouldError: true,
+		},
+		{
+			Input: &LinearAcceleration{
+				MinSpeed:        wunit.NewVelocity(1.0, "mm/s"),
+				Speed:           wunit.NewVelocity(4.0, "mm/s"),
+				MaxSpeed:        wunit.NewVelocity(10.0, "mm/s"),
+				MinAcceleration: wunit.NewAcceleration(-1.0, "mm/s^2"),
+				Acceleration:    wunit.NewAcceleration(3.0, "mm/s^2"),
+				MaxAcceleration: wunit.NewAcceleration(10.0, "mm/s^2"),
+			},
+			ShouldError: true,
+		},
+		{
+			Input: &LinearAcceleration{
+				MinSpeed:        wunit.NewVelocity(1.0, "mm/s"),
+				Speed:           wunit.NewVelocity(4.0, "mm/s"),
+				MaxSpeed:        wunit.NewVelocity(10.0, "mm/s"),
+				MinAcceleration: wunit.NewAcceleration(1.0, "mm/s^2"),
+				Acceleration:    wunit.NewAcceleration(11.0, "mm/s^2"),
+				MaxAcceleration: wunit.NewAcceleration(10.0, "mm/s^2"),
+			},
+			ShouldError: true,
+		},
+		{
+			Input: &LinearAcceleration{
+				MinSpeed:        wunit.NewVelocity(-2.0, "mm/s"),
+				Speed:           wunit.NewVelocity(4.0, "mm/s"),
+				MaxSpeed:        wunit.NewVelocity(10.0, "mm/s"),
+				MinAcceleration: wunit.NewAcceleration(0.0, "mm/s^2"),
+				Acceleration:    wunit.NewAcceleration(0.0, "mm/s^2"),
+				MaxAcceleration: wunit.NewAcceleration(10.0, "mm/s^2"),
+			},
+			ShouldError: true,
+		},
+		{
+			Input: &LinearAcceleration{
+				MinSpeed:        wunit.NewVelocity(0.0, "mm/s"),
+				Speed:           wunit.NewVelocity(4.0, "mm/s"),
+				MaxSpeed:        wunit.NewVelocity(10.0, "mm/s"),
+				MinAcceleration: wunit.NewAcceleration(0.0, "mm/s^2"),
+				Acceleration:    wunit.NewAcceleration(1.0, "mm/s^2"),
+				MaxAcceleration: wunit.NewAcceleration(10.0, "mm/s^2"),
+			},
 			SetVelocity: LASetVelocityTests{
 				{
-					Velocity:    wunit.NewVelocity(0.5, "mm/s"),
+					Velocity:    wunit.NewVelocity(-0.5, "mm/s"),
 					ShouldError: true,
 				},
 				{
 					Velocity:    wunit.NewVelocity(10.5, "mm/s"),
+					ShouldError: true,
+				},
+				{
+					Velocity:    wunit.NewVelocity(0, "mm/s"),
 					ShouldError: true,
 				},
 				{
@@ -352,7 +422,11 @@ func TestLinearAcceleration(t *testing.T) {
 			},
 			SetAcceleration: LASetAccelerationTests{
 				{
-					Acceleration: wunit.NewAcceleration(0.5, "mm/s^2"),
+					Acceleration: wunit.NewAcceleration(0, "mm/s^2"),
+					ShouldError:  true,
+				},
+				{
+					Acceleration: wunit.NewAcceleration(-0.5, "mm/s^2"),
 					ShouldError:  true,
 				},
 				{

@@ -91,7 +91,7 @@ func PathlengthCorrect(pathlength wunit.Length, reading wtype.Absorbance) (pathl
 
 	referencepathlength := wunit.NewLength(10, "mm")
 
-	pathlengthcorrected.Reading = reading.Reading * referencepathlength.RawValue() / pathlength.RawValue()
+	pathlengthcorrected.Reading = reading.Reading * referencepathlength.SIValue() / pathlength.SIValue()
 	return
 }
 
@@ -115,9 +115,7 @@ func Concentration(pathlengthcorrected wtype.Absorbance, molarabsorbtivityatwave
 	ε := molarabsorbtivityatwavelengthLpermolpercm // L/Mol/cm
 
 	concfloat := A.Reading / (float64(l) * ε) // Mol/L
-	// fmt.Println("concfloat", concfloat)
-	conc = wunit.NewConcentration(concfloat, "M/l")
-	// fmt.Println("concfloat", conc)
+	conc = wunit.NewConcentration(concfloat, "Mol/l")
 	return
 }
 

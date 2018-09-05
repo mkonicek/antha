@@ -57,12 +57,12 @@ func (self LASetAccelerationTests) Run(t *testing.T, la *LinearAcceleration) {
 type LAGetTimeToTravelTest struct {
 	Distance            wunit.Length
 	ExpectedTimeSeconds float64
-	TolerancePercent    float64
+	Tolerance           float64
 }
 
 func (self *LAGetTimeToTravelTest) Run(t *testing.T, la *LinearAcceleration) {
 	timeInS := la.GetTimeToTravel(self.Distance).MustInStringUnit("s").RawValue()
-	if tol := self.TolerancePercent * self.ExpectedTimeSeconds / 100.0; math.Abs(self.ExpectedTimeSeconds-timeInS) > tol {
+	if math.Abs(self.ExpectedTimeSeconds-timeInS) > self.Tolerance {
 		t.Errorf("GetTimeToTravel(%v): got %f s expected %f s", self.Distance, timeInS, self.ExpectedTimeSeconds)
 	}
 }
@@ -148,17 +148,17 @@ func TestLinearAcceleration(t *testing.T) {
 				{ //constantly accelerating or decelerating to full speed
 					Distance:            wunit.NewLength(5, "mm"),
 					ExpectedTimeSeconds: 2.0,
-					TolerancePercent:    0.01,
+					Tolerance:           1.0e-5,
 				},
 				{ //constantly accelerating or decelerating to half speed
 					Distance:            wunit.NewLength(2.5, "mm"),
 					ExpectedTimeSeconds: math.Sqrt(2.0),
-					TolerancePercent:    0.01,
+					Tolerance:           1.0e-5,
 				},
 				{ //1 second at constant velocity
 					Distance:            wunit.NewLength(10, "mm"),
 					ExpectedTimeSeconds: 3.0,
-					TolerancePercent:    0.01,
+					Tolerance:           1.0e-5,
 				},
 			},
 		},

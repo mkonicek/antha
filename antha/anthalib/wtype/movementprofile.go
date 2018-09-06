@@ -72,8 +72,7 @@ func (self *MovementBehaviour) DurationToMoveBetween(startPosition, endPosition 
 	for _, movementGroup := range self.Order {
 		longest := wunit.NewTime(0.0, "s")
 		for _, dim := range movementGroup {
-			dist := wunit.NewLength(math.Abs(endPosition.Dim(dim)-startPosition.Dim(dim)), "mm")
-			time := self.Profiles[dim].GetTimeToTravel(dist)
+			time := self.Profiles[dim].TimeToTravelBetween(startPosition.AsLength(dim), endPosition.AsLength(dim))
 			if time.GreaterThan(longest) {
 				longest = time
 			}
@@ -217,16 +216,16 @@ func (self *MoveToSafetyHeightAction) MarshalJSON() ([]byte, error) {
 
 // Duration return the time taken by the action and the final position of the head assembly
 func (self *MoveToSafetyHeightAction) Duration(location Coordinates, behaviour *MovementBehaviour) (wunit.Time, Coordinates) {
-	safetyHeightMm := self.SafetyHeight.MustInStringUnit("mm").RawValue()
-	duration := behaviour.Profiles[ZDim].GetTimeToTravel(wunit.NewLength(safetyHeightMm-location.Z, "mm"))
-	return duration, Coordinates{X: location.X, Y: location.Y, Z: safetyHeightMm}
+	duration := behaviour.Profiles[ZDim].TimeToTravelBetween(wunit.NewLength(location.Z, "mm"), self.SafetyHeight)
+	return duration, Coordinates{X: location.X, Y: location.Y, Z: self.SafetyHeight.MustInStringUnit("mm").RawValue()}
 }
 
 // LinearMovementProfile describe the movement behaviour in one direction only
 type LinearMovementProfile interface {
-	// GetTimeToTravel calculate the time required to travel the given distance
-	// starting and ending at a complete stop
-	GetTimeToTravel(wunit.Length) wunit.Time
+	// TimeToTravelBetween calculate the time taken to travel from start to end,
+	// assuming that the head assembly is stationary at the start and end of the
+	// movement
+	TimeToTravelBetween(start, end wunit.Length) wunit.Time
 
 	// SetVelocity set the maximum velocity for the movement
 	SetVelocity(wunit.Velocity) error
@@ -351,12 +350,14 @@ func (self *LinearAcceleration) SetAcceleration(v wunit.Acceleration) error {
 	return nil
 }
 
-// GetTimeToTravel calculate the time required to travel the given distance
-func (self *LinearAcceleration) GetTimeToTravel(distance wunit.Length) wunit.Time {
+// TimeToTravelBetween how long does it take to travel from start to end
+func (self *LinearAcceleration) TimeToTravelBetween(start, end wunit.Length) wunit.Time {
 	//convert everything into SI units
 	vMax := self.Speed.MustInStringUnit("m/s").RawValue()
 	aMax := self.Acceleration.MustInStringUnit("m/s^2").RawValue()
-	distanceM := distance.MustInStringUnit("m").RawValue()
+	distance := wunit.NewLength(end.RawValue(), end.Unit().PrefixedSymbol())
+	distance.Subtract(start)
+	distanceM := math.Abs(distance.MustInStringUnit("m").RawValue())
 
 	// for constant acceleration:
 	//   \ddot{x} = aMax            (1)

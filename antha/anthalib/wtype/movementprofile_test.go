@@ -319,33 +319,34 @@ func (self LASetAccelerationTests) Run(t *testing.T, la *LinearAcceleration) {
 	}
 }
 
-type LAGetTimeToTravelTest struct {
-	Distance            wunit.Length
+type LATimeToTravelBetweenTest struct {
+	Start               wunit.Length
+	End                 wunit.Length
 	ExpectedTimeSeconds float64
 	Tolerance           float64
 }
 
-func (self *LAGetTimeToTravelTest) Run(t *testing.T, la *LinearAcceleration) {
-	timeInS := la.GetTimeToTravel(self.Distance).MustInStringUnit("s").RawValue()
+func (self *LATimeToTravelBetweenTest) Run(t *testing.T, la *LinearAcceleration) {
+	timeInS := la.TimeToTravelBetween(self.Start, self.End).MustInStringUnit("s").RawValue()
 	if math.Abs(self.ExpectedTimeSeconds-timeInS) > self.Tolerance {
-		t.Errorf("GetTimeToTravel(%v): got %f s expected %f s", self.Distance, timeInS, self.ExpectedTimeSeconds)
+		t.Errorf("TimeToTravelBetween(%v, %v): got %f s expected %f s", self.Start, self.End, timeInS, self.ExpectedTimeSeconds)
 	}
 }
 
-type LAGetTimeToTravelTests []*LAGetTimeToTravelTest
+type LATimeToTravelBetweenTests []*LATimeToTravelBetweenTest
 
-func (self LAGetTimeToTravelTests) Run(t *testing.T, la *LinearAcceleration) {
+func (self LATimeToTravelBetweenTests) Run(t *testing.T, la *LinearAcceleration) {
 	for _, test := range self {
 		test.Run(t, la)
 	}
 }
 
 type LinearAccelerationTest struct {
-	Input           *LinearAcceleration
-	ShouldError     bool //should initialisation result in an error
-	SetVelocity     LASetVelocityTests
-	SetAcceleration LASetAccelerationTests
-	GetTimeToTravel LAGetTimeToTravelTests
+	Input               *LinearAcceleration
+	ShouldError         bool //should initialisation result in an error
+	SetVelocity         LASetVelocityTests
+	SetAcceleration     LASetAccelerationTests
+	TimeToTravelBetween LATimeToTravelBetweenTests
 }
 
 func (self *LinearAccelerationTest) expectingError(err error) bool {
@@ -359,7 +360,7 @@ func (self *LinearAccelerationTest) Run(t *testing.T) {
 		} else if !self.ShouldError {
 			self.SetVelocity.Run(t, la)
 			self.SetAcceleration.Run(t, la)
-			self.GetTimeToTravel.Run(t, la)
+			self.TimeToTravelBetween.Run(t, la)
 		}
 	})
 }
@@ -483,19 +484,22 @@ func TestLinearAcceleration(t *testing.T) {
 					Acceleration: wunit.NewAcceleration(5.0, "mm/s^2"),
 				},
 			},
-			GetTimeToTravel: LAGetTimeToTravelTests{
+			TimeToTravelBetween: LATimeToTravelBetweenTests{
 				{ //constantly accelerating or decelerating to full speed
-					Distance:            wunit.NewLength(5, "mm"),
+					Start:               wunit.NewLength(5, "mm"),
+					End:                 wunit.NewLength(10, "mm"),
 					ExpectedTimeSeconds: 2.0,
 					Tolerance:           1.0e-5,
 				},
 				{ //constantly accelerating or decelerating to half speed
-					Distance:            wunit.NewLength(2.5, "mm"),
+					Start:               wunit.NewLength(2.5, "mm"),
+					End:                 wunit.NewLength(5, "mm"),
 					ExpectedTimeSeconds: math.Sqrt(2.0),
 					Tolerance:           1.0e-5,
 				},
 				{ //1 second at constant velocity
-					Distance:            wunit.NewLength(10, "mm"),
+					Start:               wunit.NewLength(10, "mm"),
+					End:                 wunit.NewLength(20, "mm"),
 					ExpectedTimeSeconds: 3.0,
 					Tolerance:           1.0e-5,
 				},

@@ -83,6 +83,11 @@ func (a Coordinates) Dim(x Dimension) float64 {
 	}
 }
 
+// AsLength return the given dimension as a Length with units
+func (self Coordinates) AsLength(dim Dimension) wunit.Length {
+	return wunit.NewLength(self.Dim(dim), "mm")
+}
+
 //Add Addition returns a new wtype.Coordinates
 func (self Coordinates) Add(rhs Coordinates) Coordinates {
 	return Coordinates{self.X + rhs.X,

@@ -1,6 +1,7 @@
 package wtype
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
 	"math"
@@ -11,7 +12,7 @@ import (
 
 // MovementBehaviour describe movement behaviour in three dimensions
 type MovementBehaviour struct {
-	Profiles   []LinearMovementProfile
+	Profiles   MovementProfile
 	Order      [][]Dimension //Order in which movement is carried out - dimensions in the same list are carried out simultaneously
 	BeforeMove []MovementAction
 	AfterMove  []MovementAction
@@ -25,7 +26,7 @@ func NewMovementBehaviour(xProfile, yProfile, zProfile LinearMovementProfile, or
 		return nil, err
 	} else {
 		return &MovementBehaviour{
-			Profiles:   []LinearMovementProfile{xProfile, yProfile, zProfile},
+			Profiles:   MovementProfile{xProfile, yProfile, zProfile},
 			Order:      order,
 			BeforeMove: beforeActions,
 			AfterMove:  afterActions,
@@ -161,6 +162,48 @@ type LinearMovementProfile interface {
 	SetAcceleration(wunit.Acceleration) error
 }
 
+type MovementProfile [3]LinearMovementProfile
+
+func (self MovementProfile) UnmarshalJSON(b []byte) error {
+	var profiles []*json.RawMessage
+	err := json.Unmarshal(b, &profiles)
+	if err != nil {
+		return errors.WithMessage(err, "unmarshalling MovementProfile")
+	} else if len(profiles) != 3 {
+		return errors.Errorf("unmarshalling MovementProfile: expecting 3 profiles, got %d", len(profiles))
+	}
+
+	m := map[string]*json.RawMessage{}
+	for i, profile := range profiles {
+		if err := json.Unmarshal(*profile, &m); err != nil {
+			return errors.WithMessage(err, "unmarshalling LinearMovementProfile")
+		}
+		var t linearMovementProfileType
+		if err := json.Unmarshal(*m["Type"], &t); err != nil {
+			return errors.WithMessage(err, "unmarshalling type")
+		}
+
+		switch t {
+		case linearAccelerationType:
+			var la LinearAcceleration
+			if err := json.Unmarshal(*profile, &la); err != nil {
+				return errors.WithMessage(err, "unmarshalling LinearAcceleration")
+			}
+			self[i] = &la
+		default:
+			return errors.Errorf("unmarhsalling MovementProfile: unknown linearMovementProfileType %q", t)
+		}
+	}
+
+	return nil
+}
+
+type linearMovementProfileType string
+
+const (
+	linearAccelerationType linearMovementProfileType = "linearacceleration"
+)
+
 // LinearAcceleration accelerates at constant acceleration at maximum acceleration
 // until reaching maximum velocity, continues at maximum velocity, then decelerates
 // continuously at maximum acceleration to a stop
@@ -200,8 +243,20 @@ func NewLinearAcceleration(minSpeed, speed, maxSpeed wunit.Velocity, minAccel, a
 	return ret, nil
 }
 
+// String a string representation
 func (self *LinearAcceleration) String() string {
 	return fmt.Sprintf("LinearAcceleration(V=%v[%v-%v],A=%v[%v-%v])", self.Speed, self.MinSpeed, self.MaxSpeed, self.Acceleration, self.MinAcceleration, self.MaxAcceleration)
+}
+
+// MarshalJSON serialise the object
+func (self *LinearAcceleration) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		LinearAcceleration
+		Type linearMovementProfileType
+	}{
+		Type:               linearAccelerationType,
+		LinearAcceleration: *self,
+	})
 }
 
 // SetVelocity set the velocity

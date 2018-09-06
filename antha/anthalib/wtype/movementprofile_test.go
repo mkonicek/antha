@@ -141,7 +141,7 @@ func TestMovementBehaviour(t *testing.T) {
 		{
 			Name: "missing Y profile",
 			Input: &MovementBehaviour{
-				Profiles: []LinearMovementProfile{profile, nil, profile},
+				Profiles: MovementProfile{profile, nil, profile},
 				Order:    [][]Dimension{{XDim}, {YDim}, {ZDim}},
 			},
 			ShouldError: true,
@@ -149,7 +149,7 @@ func TestMovementBehaviour(t *testing.T) {
 		{
 			Name: "missing XDim",
 			Input: &MovementBehaviour{
-				Profiles: []LinearMovementProfile{profile, profile, profile},
+				Profiles: MovementProfile{profile, profile, profile},
 				Order:    [][]Dimension{{YDim}, {ZDim}},
 			},
 			ShouldError: true,
@@ -157,7 +157,7 @@ func TestMovementBehaviour(t *testing.T) {
 		{
 			Name: "repeated ZDim",
 			Input: &MovementBehaviour{
-				Profiles: []LinearMovementProfile{profile, profile, profile},
+				Profiles: MovementProfile{profile, profile, profile},
 				Order:    [][]Dimension{{XDim, ZDim}, {YDim}, {ZDim}},
 			},
 			ShouldError: true,
@@ -165,7 +165,7 @@ func TestMovementBehaviour(t *testing.T) {
 		{
 			Name: "several ordering errors",
 			Input: &MovementBehaviour{
-				Profiles: []LinearMovementProfile{profile, profile, profile},
+				Profiles: MovementProfile{profile, profile, profile},
 				Order:    [][]Dimension{{XDim, ZDim}, {ZDim}},
 			},
 			ShouldError: true,
@@ -173,7 +173,7 @@ func TestMovementBehaviour(t *testing.T) {
 		{
 			Name: "OK simple",
 			Input: &MovementBehaviour{
-				Profiles: []LinearMovementProfile{profile, profile, profile},
+				Profiles: MovementProfile{profile, profile, profile},
 				Order:    [][]Dimension{{XDim}, {YDim}, {ZDim}},
 			},
 			Tests: DurationToMoveBetweenTests{
@@ -200,7 +200,7 @@ func TestMovementBehaviour(t *testing.T) {
 		{
 			Name: "OK XY Simultaneous",
 			Input: &MovementBehaviour{
-				Profiles: []LinearMovementProfile{profile, profile, profile},
+				Profiles: MovementProfile{profile, profile, profile},
 				Order:    [][]Dimension{{XDim, YDim}, {ZDim}},
 			},
 			Tests: DurationToMoveBetweenTests{
@@ -227,7 +227,7 @@ func TestMovementBehaviour(t *testing.T) {
 		{
 			Name: "OK with Generic",
 			Input: &MovementBehaviour{
-				Profiles:   []LinearMovementProfile{profile, profile, profile},
+				Profiles:   MovementProfile{profile, profile, profile},
 				Order:      [][]Dimension{{XDim, YDim}, {ZDim}},
 				BeforeMove: []MovementAction{waitOneSec},
 				AfterMove:  []MovementAction{waitTwoSec},
@@ -250,7 +250,7 @@ func TestMovementBehaviour(t *testing.T) {
 		{
 			Name: "OK with SafetyHeight",
 			Input: &MovementBehaviour{
-				Profiles:   []LinearMovementProfile{profile, profile, profile},
+				Profiles:   MovementProfile{profile, profile, profile},
 				Order:      [][]Dimension{{XDim, YDim}, {ZDim}},
 				BeforeMove: []MovementAction{waitOneSec, moveToSafeHeight},
 				AfterMove:  []MovementAction{waitTwoSec},

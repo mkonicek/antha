@@ -20,9 +20,8 @@ type WOPlateReader struct{}
 // Ensure satisfies Device interface
 var _ target.Device = (*WOPlateReader)(nil)
 
-// NewWOPlateReader returns a new Write-Only Plate Reader Used by
-// antha-runner
-func NewWOPlateReader() *WOPlateReader {
+// returns a new Write-Only Plate Reader Used by antha-runner
+func New() *WOPlateReader {
 	return &WOPlateReader{}
 }
 

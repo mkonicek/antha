@@ -21,9 +21,8 @@ type QPCRDevice struct {
 var _ target.Device = (*QPCRDevice)(nil)
 
 // NewQPCRDevice returns a new QPCR Machine
-func NewQPCRDevice() *QPCRDevice {
-	ret := &QPCRDevice{}
-	return ret
+func New() *QPCRDevice {
+	return &QPCRDevice{}
 }
 
 // CanCompile implements a Device

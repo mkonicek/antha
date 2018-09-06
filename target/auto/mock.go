@@ -46,7 +46,7 @@ func (a *MockDevice) ToDevice() (target.Device, error) {
 	// Very basic for now
 	switch a.DeviceClass {
 	case "antha.woplatereader.v1":
-		return woplatereader.NewWOPlateReader(), nil
+		return woplatereader.New(), nil
 	}
 
 	return nil, fmt.Errorf("unknown mock device class: '%s'", a.DeviceClass)

@@ -47,9 +47,9 @@ const (
 type Shape struct {
 	ShapeName  ShapeTypeID
 	LengthUnit string
-	H          float64
-	W          float64
-	D          float64
+	H          float64 // in mm
+	W          float64 // in mm
+	D          float64 // in mm
 }
 
 func (sh *Shape) Equals(sh2 *Shape) bool {

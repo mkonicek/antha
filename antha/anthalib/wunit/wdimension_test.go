@@ -2,14 +2,11 @@ package wunit
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"math"
 	"testing"
 )
 
 type MeasurementConstructor func(float64, string) Measurement
-
-type MeasurementCopier func(Measurement) Measurement
 
 type TestFn func(*testing.T, Measurement)
 
@@ -23,32 +20,7 @@ type NewMeasurementTest struct {
 	ConvertToString  map[string]float64
 }
 
-func (self *NewMeasurementTest) assertMatching(m Measurement) error {
-	if math.Abs(m.SIValue()-self.ExpectedSIValue) > 1.0e-9 {
-		return errors.Errorf("wrong SIValue: expected %e, got %e", self.ExpectedSIValue, m.SIValue())
-	}
-
-	if e, g := self.ExpectedBaseUnit, m.Unit().BaseSISymbol(); e != g {
-		return errors.Errorf("wrong base unit: expected \"%s\", got \"%s\"", e, g)
-	}
-
-	if e, g := self.ExpectedPrefix, m.Unit().Prefix().Symbol; e != g {
-		return errors.Errorf("wrong base prefix: expected \"%s\", got \"%s\"", e, g)
-	}
-
-	if e, g := self.Value, m.ConvertToString(self.Unit); math.Abs(e-g) > 1.0e-9 {
-		return errors.Errorf("(\"%s\" [%T]).ConvertToString(\"%s\") = %f, expected %f", m, m, self.Unit, g, e)
-	}
-
-	for unit, e := range self.ConvertToString {
-		if g := m.ConvertToString(unit); math.Abs(e-g) > 1.0e-9 {
-			return errors.Errorf("(\"%s\" [%T]).ConvertToString(\"%s\") = %f, expected %f", m, m, self.Unit, g, e)
-		}
-	}
-	return nil
-}
-
-func (self *NewMeasurementTest) Run(t *testing.T, constructor MeasurementConstructor, copier MeasurementCopier) {
+func (self *NewMeasurementTest) Run(t *testing.T, constructor MeasurementConstructor) {
 
 	t.Run(fmt.Sprintf("%f_%s", self.Value, self.Unit), func(t *testing.T) {
 		defer func() {
@@ -59,19 +31,29 @@ func (self *NewMeasurementTest) Run(t *testing.T, constructor MeasurementConstru
 
 		m := constructor(self.Value, self.Unit)
 
-		if self.ShouldPanic { //don't check these if we were expecting error, the defer statement will add one
-			return
-		}
-
-		copy := copier(m)
-
-		if err := self.assertMatching(m); err != nil {
-			t.Error(errors.WithMessage(err, "while testing original"))
-		} else {
-			m.IncrBy(copy) // change the original to test that it has no effect on the copy
-			if err := self.assertMatching(copy); err != nil {
-				t.Error(errors.WithMessage(err, "while testing copy"))
+		if !self.ShouldPanic { //don't check these if we were expecting error, the defer statement will add one
+			if math.Abs(m.SIValue()-self.ExpectedSIValue) > 1.0e-9 {
+				t.Errorf("wrong SIValue: expected %e, got %e", self.ExpectedSIValue, m.SIValue())
 			}
+
+			if e, g := self.ExpectedBaseUnit, m.Unit().BaseSISymbol(); e != g {
+				t.Errorf("wrong base unit: expected \"%s\", got \"%s\"", e, g)
+			}
+
+			if e, g := self.ExpectedPrefix, m.Unit().Prefix().Symbol; e != g {
+				t.Errorf("wrong base prefix: expected \"%s\", got \"%s\"", e, g)
+			}
+
+			if e, g := self.Value, m.ConvertToString(self.Unit); math.Abs(e-g) > 1.0e-9 {
+				t.Errorf("(\"%s\" [%T]).ConvertToString(\"%s\") = %f, expected %f", m, m, self.Unit, g, e)
+			}
+
+			for unit, e := range self.ConvertToString {
+				if g := m.ConvertToString(unit); math.Abs(e-g) > 1.0e-9 {
+					t.Errorf("(\"%s\" [%T]).ConvertToString(\"%s\") = %f, expected %f", m, m, self.Unit, g, e)
+				}
+			}
+
 		}
 
 	})
@@ -79,9 +61,9 @@ func (self *NewMeasurementTest) Run(t *testing.T, constructor MeasurementConstru
 
 type NewMeasurementTests []*NewMeasurementTest
 
-func (self NewMeasurementTests) Run(t *testing.T, constructor MeasurementConstructor, copier MeasurementCopier) {
+func (self NewMeasurementTests) Run(t *testing.T, constructor MeasurementConstructor) {
 	for _, test := range self {
-		test.Run(t, constructor, copier)
+		test.Run(t, constructor)
 	}
 }
 
@@ -115,8 +97,6 @@ func TestNewLength(t *testing.T) {
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewLength(v, u)
-	}, func(m Measurement) Measurement {
-		return CopyLength(m.(Length))
 	})
 }
 
@@ -143,8 +123,6 @@ func TestNewArea(t *testing.T) {
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewArea(v, u)
-	}, func(m Measurement) Measurement {
-		return CopyArea(m.(Area))
 	})
 }
 
@@ -178,8 +156,6 @@ func TestNewVolume(t *testing.T) {
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewVolume(v, u)
-	}, func(m Measurement) Measurement {
-		return CopyVolume(m.(Volume))
 	})
 }
 
@@ -220,8 +196,6 @@ func TestNewTemperature(t *testing.T) {
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewTemperature(v, u)
-	}, func(m Measurement) Measurement {
-		return CopyTemperature(m.(Temperature))
 	})
 }
 
@@ -262,8 +236,6 @@ func TestNewTime(t *testing.T) {
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewTime(v, u)
-	}, func(m Measurement) Measurement {
-		return CopyTime(m.(Time))
 	})
 }
 
@@ -293,8 +265,6 @@ func TestNewMass(t *testing.T) {
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewMass(v, u)
-	}, func(m Measurement) Measurement {
-		return CopyMass(m.(Mass))
 	})
 }
 
@@ -321,8 +291,6 @@ func TestNewMoles(t *testing.T) {
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewMoles(v, u)
-	}, func(m Measurement) Measurement {
-		return CopyMoles(m.(Moles))
 	})
 }
 
@@ -349,8 +317,6 @@ func TestNewAmount(t *testing.T) {
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewAmount(v, u)
-	}, func(m Measurement) Measurement {
-		return CopyAmount(m.(Moles))
 	})
 }
 
@@ -380,8 +346,6 @@ func TestNewAngle(t *testing.T) {
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewAngle(v, u)
-	}, func(m Measurement) Measurement {
-		return CopyAngle(m.(Angle))
 	})
 }
 
@@ -404,8 +368,6 @@ func TestNewAnglularVelocity(t *testing.T) {
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewAngularVelocity(v, u)
-	}, func(m Measurement) Measurement {
-		return CopyAngularVelocity(m.(AngularVelocity))
 	})
 }
 
@@ -425,8 +387,6 @@ func TestNewEnergy(t *testing.T) {
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewEnergy(v, u)
-	}, func(m Measurement) Measurement {
-		return CopyEnergy(m.(Energy))
 	})
 }
 
@@ -446,8 +406,6 @@ func TestNewForce(t *testing.T) {
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewForce(v, u)
-	}, func(m Measurement) Measurement {
-		return CopyForce(m.(Force))
 	})
 }
 
@@ -477,8 +435,6 @@ func TestNewPressure(t *testing.T) {
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewPressure(v, u)
-	}, func(m Measurement) Measurement {
-		return CopyPressure(m.(Pressure))
 	})
 }
 
@@ -512,8 +468,6 @@ func TestNewConcentration(t *testing.T) {
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewConcentration(v, u)
-	}, func(m Measurement) Measurement {
-		return CopyConcentration(m.(Concentration))
 	})
 }
 
@@ -533,8 +487,6 @@ func TestNewSpecificHeatCapacity(t *testing.T) {
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewSpecificHeatCapacity(v, u)
-	}, func(m Measurement) Measurement {
-		return CopySpecificHeatCapacity(m.(SpecificHeatCapacity))
 	})
 }
 
@@ -554,8 +506,6 @@ func TestNewDensity(t *testing.T) {
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewDensity(v, u)
-	}, func(m Measurement) Measurement {
-		return CopyDensity(m.(Density))
 	})
 }
 
@@ -575,8 +525,6 @@ func TestNewFlowRate(t *testing.T) {
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewFlowRate(v, u)
-	}, func(m Measurement) Measurement {
-		return CopyFlowRate(m.(FlowRate))
 	})
 }
 
@@ -596,29 +544,6 @@ func TestNewVelocity(t *testing.T) {
 		},
 	}.Run(t, func(v float64, u string) Measurement {
 		return NewVelocity(v, u)
-	}, func(m Measurement) Measurement {
-		return CopyVelocity(m.(Velocity))
-	})
-}
-
-func TestNewAcceleration(t *testing.T) {
-	NewMeasurementTests{
-		{
-			Value:            1.0,
-			Unit:             "mm/s^2",
-			ExpectedSIValue:  1.0e-3,
-			ExpectedBaseUnit: "m/s^2",
-			ExpectedPrefix:   "m",
-		},
-		{
-			Value:       1.0,
-			Unit:        "shane williams",
-			ShouldPanic: true,
-		},
-	}.Run(t, func(v float64, u string) Measurement {
-		return NewAcceleration(v, u)
-	}, func(m Measurement) Measurement {
-		return CopyAcceleration(m.(Acceleration))
 	})
 }
 
@@ -656,8 +581,6 @@ func TestNewRate(t *testing.T) {
 		} else {
 			return r
 		}
-	}, func(m Measurement) Measurement {
-		return CopyRate(m.(Rate))
 	})
 }
 
@@ -681,8 +604,6 @@ func TestNewVoltage(t *testing.T) {
 		} else {
 			return r
 		}
-	}, func(m Measurement) Measurement {
-		return CopyVoltage(m.(Voltage))
 	})
 }
 

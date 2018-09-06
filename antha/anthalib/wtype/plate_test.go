@@ -3,6 +3,7 @@ package wtype
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"reflect"
 	"strings"
 	"testing"
@@ -499,17 +500,53 @@ func TestSpecialRetention(t *testing.T) {
 func TestWellCoordsToCoords(t *testing.T) {
 
 	plate := makeplatefortest()
+	c := NewLHComponent()
+	c.Vol = 100.0
+	c.Vunit = "ul"
+	plate.GetChildByAddress(MakeWellCoords("A1")).(*LHWell).AddComponent(c)
+	plate.Welltype.SetLiquidLevelModel(wutil.Quadratic{A: 0.402, B: 7.069, C: 0.0})
 
-	pos, ok := plate.WellCoordsToCoords(MakeWellCoords("A1"), BottomReference)
-	if !ok {
-		t.Fatal("well A1 doesn't exist!")
+	type TestCase struct {
+		Address          string
+		Reference        WellReference
+		ExpectedPosition Coordinates
+		ExpectingError   bool
 	}
 
-	xExpected := plate.WellXStart
-	yExpected := plate.WellYStart
+	tests := []TestCase{
+		{
+			Address:          "A1",
+			Reference:        BottomReference,
+			ExpectedPosition: Coordinates{X: plate.WellXStart, Y: plate.WellYStart, Z: plate.WellZStart + plate.Welltype.Bottomh},
+		},
+		{
+			Address:          "A1",
+			Reference:        TopReference,
+			ExpectedPosition: Coordinates{X: plate.WellXStart, Y: plate.WellYStart, Z: plate.WellZStart + plate.Welltype.GetSize().Z},
+		},
+		{
+			Address:          "A1",
+			Reference:        LiquidReference,
+			ExpectedPosition: Coordinates{X: plate.WellXStart, Y: plate.WellYStart, Z: plate.WellZStart + plate.Welltype.Bottomh + 9.264858420611434},
+		},
+		{
+			Address:        "Z1",
+			Reference:      TopReference,
+			ExpectingError: true,
+		},
+	}
 
-	if pos.X != xExpected || pos.Y != yExpected {
-		t.Errorf("position was wrong: expected (%f, %f) got (%f, %f)", xExpected, yExpected, pos.X, pos.Y)
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%s_%v", test.Address, test.Reference), func(t *testing.T) {
+			pos, ok := plate.WellCoordsToCoords(MakeWellCoords(test.Address), test.Reference)
+			if !ok != test.ExpectingError {
+				t.Fatalf("expecting error: %t, got error: %t", test.ExpectingError, !ok)
+			}
+
+			if !test.ExpectingError && !test.ExpectedPosition.Equals(pos) {
+				t.Errorf("position was wrong: expected %v got %v", test.ExpectedPosition, pos)
+			}
+		})
 	}
 
 }

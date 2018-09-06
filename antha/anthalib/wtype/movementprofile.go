@@ -10,12 +10,12 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
-// MovementBehaviour describe movement behaviour in three dimensions
+// MovementBehaviour describe movement behaviour of the head assembly in three dimensions
 type MovementBehaviour struct {
-	Profiles   MovementProfile
-	Order      [][]Dimension //Order in which movement is carried out - dimensions in the same list are carried out simultaneously
-	BeforeMove MovementActions
-	AfterMove  MovementActions
+	Profiles   MovementProfile // how does the head assembly move in each timension
+	Order      [][]Dimension   // Order in which movement is carried out - dimensions in the same list are carried out simultaneously
+	BeforeMove MovementActions // actions which are carried out before each move
+	AfterMove  MovementActions // actions which are carried out after each move
 }
 
 // NewMovementBehaviour builds a new movement behaviour
@@ -34,7 +34,7 @@ func NewMovementBehaviour(xProfile, yProfile, zProfile LinearMovementProfile, or
 	}
 }
 
-// assertOrderValid each dimension should feature exactly once
+// assertOrderValid each dimension must feature exactly once
 func assertOrderValid(order [][]Dimension) error {
 	errs := []string{}
 	seen := map[Dimension]int{}
@@ -97,6 +97,7 @@ type MovementAction interface {
 	Duration(location Coordinates, behaviour *MovementBehaviour) (wunit.Time, Coordinates)
 }
 
+// MovementActions a slice of actions that are carried out in series
 type MovementActions []MovementAction
 
 type movementActionType string
@@ -221,7 +222,7 @@ func (self *MoveToSafetyHeightAction) Duration(location Coordinates, behaviour *
 	return duration, Coordinates{X: location.X, Y: location.Y, Z: safetyHeightMm}
 }
 
-// LinearMovementProfile movement behaviour is one direction only
+// LinearMovementProfile describe the movement behaviour in one direction only
 type LinearMovementProfile interface {
 	// GetTimeToTravel calculate the time required to travel the given distance
 	// starting and ending at a complete stop
@@ -243,7 +244,7 @@ const (
 // MovementProfile combines three LinearMovementProfiles to represent behaviour in each dimension
 type MovementProfile [3]LinearMovementProfile
 
-// UnmarshalJSON unmarshal each LinearMovementProfile into the relevant struct
+// UnmarshalJSON unmarshal each LinearMovementProfile, peserving
 func (self *MovementProfile) UnmarshalJSON(b []byte) error {
 	var profiles []*json.RawMessage
 	if err := json.Unmarshal(b, &profiles); err != nil {
@@ -288,6 +289,7 @@ type LinearAcceleration struct {
 	Acceleration    wunit.Acceleration
 }
 
+// NewLinearAcceleration builds a new LinearAcceleration, checking that the passed parameters are valid, returning an error if not
 func NewLinearAcceleration(minSpeed, speed, maxSpeed wunit.Velocity, minAccel, accel, maxAccel wunit.Acceleration) (*LinearAcceleration, error) {
 	if !(minSpeed.IsZero() || minSpeed.IsPositive()) {
 		return nil, errors.New("minimum speed must be non-negative")
@@ -315,7 +317,7 @@ func NewLinearAcceleration(minSpeed, speed, maxSpeed wunit.Velocity, minAccel, a
 	return ret, nil
 }
 
-// String a string representation
+// String a string representation useful for debugging
 func (self *LinearAcceleration) String() string {
 	return fmt.Sprintf("LinearAcceleration(V=%v[%v-%v],A=%v[%v-%v])", self.Speed, self.MinSpeed, self.MaxSpeed, self.Acceleration, self.MinAcceleration, self.MaxAcceleration)
 }

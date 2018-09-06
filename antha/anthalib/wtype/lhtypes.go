@@ -424,6 +424,7 @@ type LHHeadAssemblyPosition struct {
 type LHHeadAssembly struct {
 	Positions    []*LHHeadAssemblyPosition
 	MotionLimits *BBox
+	Behaviour    *MovementBehaviour
 }
 
 //NewLHHeadAssembly build a new head assembly

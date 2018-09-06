@@ -38,7 +38,7 @@ func (a *QPCRDevice) MoveCost(from target.Device) int64 {
 	return 0
 }
 
-func (dev *QPCRDevice) callForInstruction(inst *ast.QPCRInstruction) (target.Inst, error) {
+func (dev *QPCRDevice) transform(inst *ast.QPCRInstruction) (target.Inst, error) {
 	if inst.Definition == "" {
 		return nil, errors.New("Blank experiment file for qPCR instruction.")
 	}
@@ -116,7 +116,7 @@ func (dev *QPCRDevice) Compile(ctx context.Context, nodes []ast.Node) ([]target.
 	insts := make(target.Insts, 0, 2*len(nodes))
 	for _, node := range nodes {
 		inst := node.(*ast.Command).Inst.(*ast.QPCRInstruction)
-		if call, err := dev.callForInstruction(inst); err != nil {
+		if call, err := dev.transform(inst); err != nil {
 			return nil, err
 		} else {
 			insts = append(insts, dev.makePrompt(inst), call)

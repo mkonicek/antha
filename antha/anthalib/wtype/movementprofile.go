@@ -159,7 +159,7 @@ func NewGenericAction(time wunit.Time) (*GenericAction, error) {
 		return nil, errors.New("time taken must be non-negative")
 	}
 	return &GenericAction{
-		TimeTaken: wunit.CopyTime(time),
+		TimeTaken: wunit.NewTime(time.RawValue(), time.Unit().PrefixedSymbol()),
 	}, nil
 }
 
@@ -181,7 +181,7 @@ func (self *GenericAction) MarshalJSON() ([]byte, error) {
 
 // Duration return the time taken by the action and the final position of the head assembly
 func (self *GenericAction) Duration(location Coordinates, behaviour *MovementBehaviour) (wunit.Time, Coordinates) {
-	return wunit.CopyTime(self.TimeTaken), location
+	return wunit.NewTime(self.TimeTaken.RawValue(), self.TimeTaken.Unit().PrefixedSymbol()), location
 }
 
 // MoveToSafetyHeightAction move in the Z-Direction to a machine specific safety height to avoid in-transit collisions
@@ -194,7 +194,7 @@ func NewMoveToSafetyHeightAction(safetyHeight wunit.Length) (*MoveToSafetyHeight
 	// since it's possible the robot has a wierd coordinate system, safety height
 	// might be negative
 	return &MoveToSafetyHeightAction{
-		SafetyHeight: wunit.CopyLength(safetyHeight),
+		SafetyHeight: wunit.NewLength(safetyHeight.RawValue(), safetyHeight.Unit().PrefixedSymbol()),
 	}, nil
 }
 
@@ -301,12 +301,12 @@ func NewLinearAcceleration(minSpeed, speed, maxSpeed wunit.Velocity, minAccel, a
 	}
 
 	ret := &LinearAcceleration{
-		MinSpeed:        wunit.CopyVelocity(minSpeed),
-		Speed:           wunit.CopyVelocity(speed),
-		MaxSpeed:        wunit.CopyVelocity(maxSpeed),
-		MinAcceleration: wunit.CopyAcceleration(minAccel),
-		Acceleration:    wunit.CopyAcceleration(accel),
-		MaxAcceleration: wunit.CopyAcceleration(maxAccel),
+		MinSpeed:        wunit.NewVelocity(minSpeed.RawValue(), minSpeed.Unit().PrefixedSymbol()),
+		Speed:           wunit.NewVelocity(speed.RawValue(), speed.Unit().PrefixedSymbol()),
+		MaxSpeed:        wunit.NewVelocity(maxSpeed.RawValue(), maxSpeed.Unit().PrefixedSymbol()),
+		MinAcceleration: wunit.NewAcceleration(minAccel.RawValue(), minAccel.Unit().PrefixedSymbol()),
+		Acceleration:    wunit.NewAcceleration(accel.RawValue(), accel.Unit().PrefixedSymbol()),
+		MaxAcceleration: wunit.NewAcceleration(maxAccel.RawValue(), maxAccel.Unit().PrefixedSymbol()),
 	}
 	if err := ret.SetVelocity(speed); err != nil {
 		return nil, err
@@ -337,7 +337,7 @@ func (self *LinearAcceleration) SetVelocity(v wunit.Velocity) error {
 	if v.LessThan(self.MinSpeed) || v.GreaterThan(self.MaxSpeed) || !v.IsPositive() {
 		return errors.Errorf("cannot set velocity to %v: must be positive and within allowable range [%v - %v]", v, self.MinSpeed, self.MaxSpeed)
 	}
-	self.Speed = wunit.CopyVelocity(v)
+	self.Speed = wunit.NewVelocity(v.RawValue(), v.Unit().PrefixedSymbol())
 	return nil
 }
 
@@ -346,7 +346,7 @@ func (self *LinearAcceleration) SetAcceleration(v wunit.Acceleration) error {
 	if v.LessThan(self.MinAcceleration) || v.GreaterThan(self.MaxAcceleration) || !v.IsPositive() {
 		return errors.Errorf("cannot set acceleration to %v: must be positive and within allowable range [%v - %v]", v, self.MinAcceleration, self.MaxAcceleration)
 	}
-	self.Acceleration = wunit.CopyAcceleration(v)
+	self.Acceleration = wunit.NewAcceleration(v.RawValue(), v.Unit().PrefixedSymbol())
 	return nil
 }
 

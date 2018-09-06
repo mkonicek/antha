@@ -14,8 +14,8 @@ import (
 type MovementBehaviour struct {
 	Profiles   MovementProfile
 	Order      [][]Dimension //Order in which movement is carried out - dimensions in the same list are carried out simultaneously
-	BeforeMove []MovementAction
-	AfterMove  []MovementAction
+	BeforeMove MovementActions
+	AfterMove  MovementActions
 }
 
 // NewMovementBehaviour builds a new movement behaviour
@@ -97,6 +97,56 @@ type MovementAction interface {
 	Duration(location Coordinates, behaviour *MovementBehaviour) (wunit.Time, Coordinates)
 }
 
+type MovementActions []MovementAction
+
+type movementActionType string
+
+const (
+	genericActionType            movementActionType = "genericaction"
+	moveToSafeteHeightActionType                    = "movetosafetyheight"
+)
+
+// UnmarshalJSON unmarshal the list of actions into the correct concrete types
+func (self *MovementActions) UnmarshalJSON(b []byte) error {
+	var actions []*json.RawMessage
+	if err := json.Unmarshal(b, &actions); err != nil {
+		return errors.WithMessage(err, "unmarshalling MovementActions")
+	}
+
+	*self = make(MovementActions, 0, len(actions))
+	for _, action := range actions {
+		m := map[string]*json.RawMessage{}
+		if err := json.Unmarshal(*action, &m); err != nil {
+			return errors.WithMessage(err, "unmarshalling MovementAction")
+		}
+
+		var t movementActionType
+		if err := json.Unmarshal(*m["Type"], &t); err != nil {
+			return errors.WithMessage(err, "unmarshalling MovementAction type")
+		}
+
+		switch t {
+		case genericActionType:
+			var ga GenericAction
+			if err := json.Unmarshal(*action, &ga); err != nil {
+				return errors.WithMessage(err, "unmarshalling GenericAction")
+			}
+			*self = append(*self, &ga)
+
+		case moveToSafeteHeightActionType:
+			var mtsh MoveToSafetyHeightAction
+			if err := json.Unmarshal(*action, &mtsh); err != nil {
+				return errors.WithMessage(err, "unmarshalling MoveToSafetyHeightAction")
+			}
+			*self = append(*self, &mtsh)
+
+		default:
+			return errors.Errorf("cannot unmarshal unknown action type %q", t)
+		}
+	}
+	return nil
+}
+
 // GenericAction an action which happens in constant time at the begining or end of a move
 // for example locking or unlocking a head
 type GenericAction struct {
@@ -116,6 +166,17 @@ func NewGenericAction(time wunit.Time) (*GenericAction, error) {
 // String return a string representation
 func (self *GenericAction) String() string {
 	return fmt.Sprintf("GenericAction(%v)", self.TimeTaken)
+}
+
+// MarshalJSON serialise the action to JSON
+func (self *GenericAction) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		GenericAction
+		Type movementActionType
+	}{
+		Type:          genericActionType,
+		GenericAction: *self,
+	})
 }
 
 // Duration return the time taken by the action and the final position of the head assembly
@@ -142,6 +203,17 @@ func (self *MoveToSafetyHeightAction) String() string {
 	return fmt.Sprintf("MoveToSafetyHeight(%v)", self.SafetyHeight)
 }
 
+// MarshalJSON serialise the action to JSON
+func (self *MoveToSafetyHeightAction) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		MoveToSafetyHeightAction
+		Type movementActionType
+	}{
+		Type: moveToSafeteHeightActionType,
+		MoveToSafetyHeightAction: *self,
+	})
+}
+
 // Duration return the time taken by the action and the final position of the head assembly
 func (self *MoveToSafetyHeightAction) Duration(location Coordinates, behaviour *MovementBehaviour) (wunit.Time, Coordinates) {
 	safetyHeightMm := self.SafetyHeight.MustInStringUnit("mm").RawValue()
@@ -162,19 +234,26 @@ type LinearMovementProfile interface {
 	SetAcceleration(wunit.Acceleration) error
 }
 
+type linearMovementProfileType string
+
+const (
+	linearAccelerationType linearMovementProfileType = "linearacceleration"
+)
+
+// MovementProfile combines three LinearMovementProfiles to represent behaviour in each dimension
 type MovementProfile [3]LinearMovementProfile
 
-func (self MovementProfile) UnmarshalJSON(b []byte) error {
+// UnmarshalJSON unmarshal each LinearMovementProfile into the relevant struct
+func (self *MovementProfile) UnmarshalJSON(b []byte) error {
 	var profiles []*json.RawMessage
-	err := json.Unmarshal(b, &profiles)
-	if err != nil {
+	if err := json.Unmarshal(b, &profiles); err != nil {
 		return errors.WithMessage(err, "unmarshalling MovementProfile")
 	} else if len(profiles) != 3 {
 		return errors.Errorf("unmarshalling MovementProfile: expecting 3 profiles, got %d", len(profiles))
 	}
 
-	m := map[string]*json.RawMessage{}
 	for i, profile := range profiles {
+		m := map[string]*json.RawMessage{}
 		if err := json.Unmarshal(*profile, &m); err != nil {
 			return errors.WithMessage(err, "unmarshalling LinearMovementProfile")
 		}
@@ -189,20 +268,13 @@ func (self MovementProfile) UnmarshalJSON(b []byte) error {
 			if err := json.Unmarshal(*profile, &la); err != nil {
 				return errors.WithMessage(err, "unmarshalling LinearAcceleration")
 			}
-			self[i] = &la
+			(*self)[i] = &la
 		default:
 			return errors.Errorf("unmarhsalling MovementProfile: unknown linearMovementProfileType %q", t)
 		}
 	}
-
 	return nil
 }
-
-type linearMovementProfileType string
-
-const (
-	linearAccelerationType linearMovementProfileType = "linearacceleration"
-)
 
 // LinearAcceleration accelerates at constant acceleration at maximum acceleration
 // until reaching maximum velocity, continues at maximum velocity, then decelerates

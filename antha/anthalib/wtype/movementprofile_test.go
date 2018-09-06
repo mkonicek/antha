@@ -48,7 +48,7 @@ func TestMovementbehaviourJSONSerialise(t *testing.T) {
 		t.Fatal(err)
 	} else if err := json.Unmarshal(bytes, &b); err != nil {
 		t.Fatal(err)
-	} else if !reflect.DeepEqual(a, b) {
+	} else if !reflect.DeepEqual(a, &b) {
 		t.Errorf("deserialised MovementBehaviour didn't match:\n e: %v\n g:%v", a, b)
 	}
 }

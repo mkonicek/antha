@@ -139,54 +139,13 @@ type runOpt struct {
 	RunTest                bool
 }
 
-type runInput struct {
-	BundleFile     string
-	ParametersFile string
-	WorkflowFile   string
-}
-
-func unmarshalRunInput(in *runInput) (*executeutil.Bundle, error) {
-	var wdata, pdata, bdata []byte
-	var err error
-
-	if len(in.BundleFile) != 0 {
-		bdata, err = ioutil.ReadFile(in.BundleFile)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		wdata, err = ioutil.ReadFile(in.WorkflowFile)
-		if err != nil {
-			return nil, err
-		}
-
-		pdata, err = ioutil.ReadFile(in.ParametersFile)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return executeutil.Unmarshal(executeutil.UnmarshalOpt{
-		WorkflowData: wdata,
-		BundleData:   bdata,
-		ParamsData:   pdata,
-	})
-}
-
 func (a *runOpt) Run() error {
-	bundle, err := unmarshalRunInput(&runInput{
-		BundleFile:     a.BundleFile,
-		ParametersFile: a.ParametersFile,
-		WorkflowFile:   a.WorkflowFile,
-	})
+	bundle, err := executeutil.UnmarshalSingle(a.BundleFile, a.WorkflowFile, a.ParametersFile)
 	if err != nil {
 		return err
 	}
 
-	wdesc := &(bundle.Desc)
-	params := &(bundle.RawParams)
-
-	mixerOpt := mixer.DefaultOpt.Merge(params.Config).Merge(&a.MixerOpt)
+	mixerOpt := mixer.DefaultOpt.Merge(bundle.RawParams.Config).Merge(&a.MixerOpt)
 	opt := auto.Opt{
 		MaybeArgs: []interface{}{mixerOpt},
 	}
@@ -214,8 +173,8 @@ func (a *runOpt) Run() error {
 
 	rout, err := execute.Run(ctx, execute.Opt{
 		Target:   t.Target,
-		Workflow: wdesc,
-		Params:   params,
+		Workflow: &bundle.Desc,
+		Params:   &bundle.RawParams,
 		TransitionalReadLocalFiles: true,
 	})
 	if err != nil {
@@ -244,13 +203,9 @@ func (a *runOpt) Run() error {
 
 	if a.TestBundleFileName != "" {
 		expected := workflowtest.SaveTestOutputs(rout, "")
-		bundleWithOutputs := executeutil.Bundle{
-			Desc:      *wdesc,
-			RawParams: *params,
-			TestOpt:   expected,
-		}
+		bundleWithOutputs := *bundle
+		bundleWithOutputs.TestOpt = expected
 		serializedOutputs, err := json.MarshalIndent(bundleWithOutputs, "", "  ")
-
 		if err != nil {
 			return err
 		}

@@ -2,11 +2,9 @@ package executeutil
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 
 	"github.com/antha-lang/antha/execute"
 	"github.com/antha-lang/antha/workflow"
@@ -15,25 +13,21 @@ import (
 
 // A TestInput is a workflow, its iputs and expected output
 type TestInput struct {
+	Dir          string
 	BundlePath   string
 	ParamsPath   string
-	Params       *execute.RawParams
 	WorkflowPath string
+	Params       *execute.RawParams
 	Workflow     *workflow.Desc
-	Expected     *workflowtest.TestOpt
-	Dir          string
+	Expected     workflowtest.TestOpt
 }
 
 // Paths returns the filepaths that this TestInput was created from
 func (a TestInput) Paths() (rs []string) {
-	if len(a.BundlePath) != 0 {
-		rs = append(rs, a.BundlePath)
-	}
-	if len(a.ParamsPath) != 0 {
-		rs = append(rs, a.ParamsPath)
-	}
-	if len(a.WorkflowPath) != 0 {
-		rs = append(rs, a.WorkflowPath)
+	for _, s := range []string{a.BundlePath, a.ParamsPath, a.WorkflowPath} {
+		if s != "" {
+			rs = append(rs, s)
+		}
 	}
 	return
 }
@@ -45,10 +39,11 @@ func (a byPath) Len() int {
 }
 
 func (a byPath) Less(i, j int) bool {
-	if a[i].WorkflowPath == a[j].WorkflowPath {
-		return a[i].ParamsPath < a[j].ParamsPath
+	x, y := a[i], a[j]
+	if x.WorkflowPath == y.WorkflowPath {
+		return x.ParamsPath < y.ParamsPath
 	}
-	return a[i].WorkflowPath < a[j].WorkflowPath
+	return x.WorkflowPath < y.WorkflowPath
 }
 
 func (a byPath) Swap(i, j int) {
@@ -57,44 +52,22 @@ func (a byPath) Swap(i, j int) {
 
 // FindTestInputs finds any test inputs under basePath.
 func FindTestInputs(basePath string) ([]*TestInput, error) {
-	wfiles := make(map[string][]string)
-	pfiles := make(map[string][]string)
-	bfiles := make(map[string][]string)
+	// we have to group files by directory so we can match up params
+	// and workflows later on.
+	filesByDir := make(map[string][]string)
 
-	// Find candidate inputs (*{bundle,parameters,workflow}*.{json,yml,yaml})
-	// from directory
+	// 1. find all json files
 	walk := func(p string, fi os.FileInfo, err error) error {
 		if err != nil {
 			return err
-		}
-		if fi.IsDir() {
+		} else if fi.IsDir() {
 			return nil
-		}
-		pabs, err := filepath.Abs(p)
-		if err != nil {
+		} else if pabs, err := filepath.Abs(p); err != nil {
 			return err
+		} else if b := filepath.Base(pabs); filepath.Ext(b) == ".json" {
+			dir := filepath.Dir(pabs)
+			filesByDir[dir] = append(filesByDir[dir], pabs)
 		}
-
-		dir := filepath.Dir(pabs)
-		b := filepath.Base(pabs)
-
-		switch filepath.Ext(b) {
-		case ".json":
-		case ".yml":
-		case ".yaml":
-		default:
-			return nil
-		}
-
-		switch {
-		case strings.Contains(b, "workflow"):
-			wfiles[dir] = append(wfiles[dir], pabs)
-		case strings.Contains(b, "param"):
-			pfiles[dir] = append(pfiles[dir], pabs)
-		case strings.Contains(b, "bundle"):
-			bfiles[dir] = append(bfiles[dir], pabs)
-		}
-
 		return nil
 	}
 
@@ -110,82 +83,75 @@ func FindTestInputs(basePath string) ([]*TestInput, error) {
 		return nil, err
 	}
 
-	// Match workflow with parameter files
-	var inputs []*TestInput
-	for dir, wfs := range wfiles {
-		pfs := pfiles[dir]
-		switch nwfs, npfs := len(wfs), len(pfs); {
-		case nwfs == 0 || npfs == 0:
-			continue
-		case nwfs == npfs:
-			// Matching number of pairs in directory: pair them up lexicographically
-			sort.Strings(wfs)
-			sort.Strings(pfs)
-			for idx := range wfs {
-				inputs = append(inputs, &TestInput{
-					WorkflowPath: wfs[idx],
-					ParamsPath:   pfs[idx],
-					Dir:          dir,
-				})
-			}
-		case nwfs == 1:
-			// If just one workflow, assume the parameters are for this workflow
-			for idx := range pfs {
-				inputs = append(inputs, &TestInput{
-					WorkflowPath: wfs[0],
-					ParamsPath:   pfs[idx],
-					Dir:          dir,
-				})
-			}
-		default:
-			continue
-		}
-	}
+	testInputs := make([]*TestInput, 0, len(filesByDir))
 
-	// Bundles
-	for dir, bfs := range bfiles {
-		for _, bf := range bfs {
-			inputs = append(inputs, &TestInput{
-				BundlePath: bf,
-				Dir:        dir,
+	for dir, files := range filesByDir {
+		bundles, workflows, params, errs := UnmarshalAll(files...)
+		// errors are not fatal in this case
+		for path, bundle := range bundles {
+			testInputs = append(testInputs, &TestInput{
+				Dir:          dir,
+				BundlePath:   path,
+				ParamsPath:   path,
+				WorkflowPath: path,
+				Params:       &bundle.RawParams,
+				Workflow:     &bundle.Desc,
+				Expected:     bundle.TestOpt,
 			})
 		}
+
+		if len(workflows) == 0 || len(params) == 0 {
+			continue
+
+		} else if len(workflows) == 1 { // we assume all the params are for this one workflow
+			template := TestInput{Dir: dir}
+			for path, workflow := range workflows {
+				template.WorkflowPath = path
+				template.Workflow = workflow
+			}
+			for path, param := range params {
+				templateCopy := template
+				templateCopy.ParamsPath = path
+				templateCopy.Params = param
+				testInputs = append(testInputs, &templateCopy)
+			}
+
+		} else if len(workflows) == len(params) { // assume they match 1-1 based on lexicographical sort
+			workflowKeys := make([]string, 0, len(workflows))
+			paramsKeys := make([]string, 0, len(params))
+			for k := range workflows {
+				workflowKeys = append(workflowKeys, k)
+			}
+			for k := range params {
+				paramsKeys = append(paramsKeys, k)
+			}
+			sort.Strings(workflowKeys)
+			sort.Strings(paramsKeys)
+
+			for idx, workflowPath := range workflowKeys {
+				paramPath := paramsKeys[idx]
+				workflow := workflows[workflowPath]
+				param := params[paramPath]
+
+				testInputs = append(testInputs, &TestInput{
+					Dir:          dir,
+					ParamsPath:   paramPath,
+					WorkflowPath: workflowPath,
+					Params:       param,
+					Workflow:     workflow,
+				})
+			}
+
+		} else {
+			errs = append(errs, fmt.Errorf("Confused by %s where we have %d workflows and %d params. Skipping dir.", dir, len(workflows), len(params)))
+		}
+
+		if len(errs) > 0 {
+			fmt.Printf("Non fatal errors encountered when loading from %s:\n\t%v\n", dir, errs)
+		}
 	}
 
-	open := func(name string) ([]byte, error) {
-		if len(name) == 0 {
-			return nil, nil
-		}
-		return ioutil.ReadFile(name)
-	}
+	sort.Sort(byPath(testInputs))
 
-	for _, input := range inputs {
-		var wdata, pdata, bdata []byte
-		var err error
-		if bdata, err = open(input.BundlePath); err != nil {
-			return nil, fmt.Errorf("error reading %q: %s", input.BundlePath, err)
-		}
-		if wdata, err = open(input.WorkflowPath); err != nil {
-			return nil, fmt.Errorf("error reading %q: %s", input.WorkflowPath, err)
-		}
-		if pdata, err = open(input.ParamsPath); err != nil {
-			return nil, fmt.Errorf("error reading %q: %s", input.ParamsPath, err)
-		}
-
-		bundle, err := Unmarshal(UnmarshalOpt{
-			BundleData:   bdata,
-			ParamsData:   pdata,
-			WorkflowData: wdata,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("error parsing %q: %s", strings.Join(input.Paths(), ","), err)
-		}
-		input.Params = &(bundle.RawParams)
-		input.Workflow = &(bundle.Desc)
-		input.Expected = &(bundle.TestOpt)
-	}
-
-	sort.Sort(byPath(inputs))
-
-	return inputs, nil
+	return testInputs, nil
 }

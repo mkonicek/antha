@@ -64,7 +64,7 @@ func FindTestInputs(basePath string) ([]*TestInput, error) {
 			return nil
 		} else if pabs, err := filepath.Abs(p); err != nil {
 			return err
-		} else if b := filepath.Base(pabs); filepath.Ext(b) == ".json" {
+		} else if filepath.Ext(pabs) == ".json" {
 			dir := filepath.Dir(pabs)
 			filesByDir[dir] = append(filesByDir[dir], pabs)
 		}

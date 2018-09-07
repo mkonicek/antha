@@ -19,8 +19,8 @@ type Bundle struct {
 	workflowtest.TestOpt
 }
 
-// Attempts to read and parse all the file paths supplied,
-// categorising the content into Bundles, Workflows and
+// UnmarshalAll attempts to read and parse all the file paths
+// supplied, categorising the content into Bundles, Workflows and
 // Params. Resulting maps have the path as the key.
 func UnmarshalAll(paths ...string) (map[string]*Bundle, map[string]*workflow.Desc, map[string]*execute.RawParams, utils.ErrorSlice) {
 	var errs utils.ErrorSlice
@@ -29,20 +29,19 @@ func UnmarshalAll(paths ...string) (map[string]*Bundle, map[string]*workflow.Des
 	params := make(map[string]*execute.RawParams, len(paths))
 	workflows := make(map[string]*workflow.Desc, len(paths))
 
-	containers := make([]Bundle, len(paths))
-	for idx, path := range paths {
-		if bites, err := ioutil.ReadFile(path); err != nil {
+	for _, path := range paths {
+		if bytes, err := ioutil.ReadFile(path); err != nil {
 			errs = append(errs, fmt.Errorf("Error when reading file %s: %v", path, err))
 		} else {
-			container := &containers[idx]
-			if err := json.Unmarshal(bites, container); err != nil {
+			bundle := &Bundle{}
+			if err := json.Unmarshal(bytes, bundle); err != nil {
 				errs = append(errs, fmt.Errorf("Error when parsing content of %s: %v", path, err))
-			} else if container.Processes != nil && container.Parameters != nil { // it's a bundle
-				bundles[path] = container
-			} else if container.Processes != nil { // it's a workflow
-				workflows[path] = &container.Desc
-			} else if container.Parameters != nil { // it's a params
-				params[path] = &container.RawParams
+			} else if bundle.Processes != nil && bundle.Parameters != nil { // it's a bundle
+				bundles[path] = bundle
+			} else if bundle.Processes != nil { // it's a workflow
+				workflows[path] = &bundle.Desc
+			} else if bundle.Parameters != nil { // it's a params
+				params[path] = &bundle.RawParams
 			} else { // shrug
 				errs = append(errs, fmt.Errorf("Unable to identify content of %s", path))
 			}
@@ -51,8 +50,15 @@ func UnmarshalAll(paths ...string) (map[string]*Bundle, map[string]*workflow.Des
 	return bundles, workflows, params, errs
 }
 
+// UnmarshalSingle can either be supplied with a single bundlePath, or
+// with both a workflowPath and a paramsPath. This slightly unusual
+// API exists because there are a few places where due to flags or
+// other sources of input, it is simplest to provide all possible
+// inputs here. The bundle returned will either be constructed from
+// the bundlePath alone, or from both the workflowPath and
+// paramsPath. Any other combination will error.
 func UnmarshalSingle(bundlePath, workflowPath, paramsPath string) (*Bundle, error) {
-	if bundlePath != "" {
+	if bundlePath != "" && workflowPath == "" && paramsPath == "" {
 		if bundles, _, _, err := UnmarshalAll(bundlePath); err != nil {
 			return nil, err
 		} else if len(bundles) != 1 {
@@ -64,7 +70,7 @@ func UnmarshalSingle(bundlePath, workflowPath, paramsPath string) (*Bundle, erro
 			panic("Unreachable")
 		}
 
-	} else if workflowPath != "" && paramsPath != "" {
+	} else if bundlePath == "" && workflowPath != "" && paramsPath != "" {
 		if _, workflows, params, err := UnmarshalAll(workflowPath, paramsPath); err != nil {
 			return nil, err
 		} else if len(workflows) != 1 {

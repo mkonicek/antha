@@ -217,7 +217,7 @@ func (ins *LHInstruction) IsMixInPlace() bool {
 func (ins *LHInstruction) IsDummy() bool {
 	if ins.Type == LHIMIX && ins.IsMixInPlace() && len(ins.Components) == 1 {
 		// instructions of this form generally mean "do nothing"
-		// but have very useful side-effects
+		// but they have the effect of ensuring that the compoenent ID is changed
 		return true
 	}
 

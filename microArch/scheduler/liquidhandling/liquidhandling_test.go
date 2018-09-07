@@ -1075,6 +1075,35 @@ func TestDistinctPlateNames(t *testing.T) {
 
 }
 
+func TestEP3DummyInstruction(t *testing.T) {
+	ctx := GetContextForTest()
+
+	lh := GetLiquidHandlerForTest(ctx)
+	lh.ExecutionPlanner = ExecutionPlanner3
+	rq := GetLHRequestForTest()
+	configure_request_simple(ctx, rq)
+	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
+	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
+
+	//add a dummy instruction for each instruction
+	for _, ins := range rq.LHInstructions {
+		for _, cmp := range ins.Results {
+			mix := mixer.GenericMix(mixer.MixOptions{Components: []*wtype.Liquid{cmp}})
+			if !mix.IsDummy() {
+				t.Fatalf("failed to make a dummy instruction: mix.Components[0].IsSample() = %t, cmp.IsSample() = %t", mix.Components[0].IsSample(), cmp.IsSample())
+			}
+			rq.Add_instruction(mix)
+		}
+	}
+
+	err := lh.Plan(ctx, rq)
+
+	if err != nil {
+		t.Fatal(fmt.Sprint("Got planning error: ", err))
+	}
+
+}
+
 func assertCoordsEq(lhs, rhs []wtype.Coordinates) bool {
 	if len(lhs) != len(rhs) {
 		return false

@@ -30,6 +30,12 @@ func mergeMovs(ris []RobotInstruction) []RobotInstruction {
 	return insOut
 }
 
+// CompareInstructionSets will use the comparators to detect
+// differences between setA and setB. This allows you to compare,
+// using any arbitrary property, instructions of the same type. The
+// comparison is between the minimum length of setA and setB - an
+// unmatched suffix will cause an error but will not be passed to any
+// comparator.
 func CompareInstructionSets(setA, setB []RobotInstruction, comparators ...RobotInstructionComparatorFunc) utils.ErrorSlice {
 	setAMerged := mergeMovs(setA)
 	setBMerged := mergeMovs(setB)

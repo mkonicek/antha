@@ -16,10 +16,9 @@ func TestTipCounting(t *testing.T) {
 	lh.ExecutionPlanner = ExecutionPlanner3
 	rq := GetLHRequestForTest()
 	configure_request_simple(ctx, rq)
-	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
-	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
+	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
+	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
 
-	rq.ConfigureYourself()
 	err := lh.Plan(ctx, rq)
 
 	if err != nil {

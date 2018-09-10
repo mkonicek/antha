@@ -506,16 +506,6 @@ func (self *Velocity3D) Dup() *Velocity3D {
 	}
 }
 
-// Acceleration represent rate of change of velocity
-type Acceleration struct {
-	*ConcreteMeasurement
-}
-
-// NewAcceleration create a new typed acceleration object, checking that the given unit is supported
-func NewAcceleration(v float64, unit string) Acceleration {
-	return Acceleration{ConcreteMeasurement: NewTypedMeasurement("Acceleration", v, unit)}
-}
-
 type Rate struct {
 	*ConcreteMeasurement
 }

@@ -112,6 +112,7 @@ type HeadAssemblyParams struct {
 	MotionLimits    *wtype.BBox
 	PositionOffsets []wtype.Coordinates
 	Heads           []HeadParams
+	Velocity        *wtype.VelocityRange
 }
 
 func makeLHHeadAssembly(ha HeadAssemblyParams) *wtype.LHHeadAssembly {
@@ -122,6 +123,7 @@ func makeLHHeadAssembly(ha HeadAssemblyParams) *wtype.LHHeadAssembly {
 	for _, h := range ha.Heads {
 		ret.LoadHead(makeLHHead(h))
 	}
+	ret.Velocity = ha.Velocity.Dup()
 	return ret
 }
 
@@ -841,6 +843,19 @@ func (self *SetPipetteSpeed) Convert() liquidhandling.TerminalRobotInstruction {
 	ret := liquidhandling.NewSetPipetteSpeedInstruction()
 	ret.Head = self.head
 	ret.Channel = self.channel
+	ret.Speed = self.speed
+	return ret
+}
+
+//SetDriveSpeed
+type SetDriveSpeed struct {
+	drive string
+	speed float64
+}
+
+func (self *SetDriveSpeed) Convert() liquidhandling.TerminalRobotInstruction {
+	ret := liquidhandling.NewSetDriveSpeedInstruction()
+	ret.Drive = self.drive
 	ret.Speed = self.speed
 	return ret
 }

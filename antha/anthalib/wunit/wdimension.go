@@ -489,8 +489,9 @@ func (self *Velocity3D) SetAxis(a Axis, v Velocity) {
 		self.Y = v
 	case ZAxis:
 		self.Z = v
+	default:
+		panic("unknown axis")
 	}
-	panic("unknown axis")
 }
 
 // Dup return a copy of the velocities

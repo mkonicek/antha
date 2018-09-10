@@ -644,6 +644,20 @@ func (self *AdaptorGroup) SetRobot(r *RobotState) {
 	self.robot = r
 }
 
+func (self *AdaptorGroup) SetDriveSpeed(a wunit.Axis, v wunit.Velocity) error {
+	if self.velocityRange != nil {
+		if min, max := self.velocityRange.Min.GetAxis(a), self.velocityRange.Max.GetAxis(a); v.LessThan(min) || v.GreaterThan(max) {
+			return errors.Errorf("%v is outside allowable range [%v - %v]", v, min, max)
+		}
+	} else {
+		if !v.IsPositive() {
+			return errors.Errorf("speed must be positive")
+		}
+	}
+	self.velocity.SetAxis(a, v)
+	return nil
+}
+
 // -------------------------------------------------------------------------------
 //                            RobotState
 // -------------------------------------------------------------------------------

@@ -1473,17 +1473,19 @@ func (self *VirtualLiquidHandler) SetDriveSpeed(drive string, rate float64) driv
 
 	v := wunit.NewVelocity(rate, "mm/s")
 
+	describe := func() string {
+		return fmt.Sprintf("while setting head group %d drive %s speed to %v", groupNumber, drive, v)
+	}
+
 	if group, err := self.state.GetAdaptorGroup(groupNumber); err != nil {
-		self.AddError(err.Error())
+		self.AddErrorf("%s: %s", describe(), err.Error())
 		return ret
 	} else if axis, err := wunit.AxisFromString(drive); err != nil {
-		self.AddError(err.Error())
+		self.AddErrorf("%s: %s", describe(), err.Error())
 		return ret
-	} else if group.velocityRange != nil && (v.LessThan(group.velocityRange.Min.GetAxis(axis)) || v.GreaterThan(group.velocityRange.Max.GetAxis(axis))) {
-		self.AddErrorf("cannot set head group %d drive %s speed to %v: allowable range is [%v - %v]", groupNumber, drive, v, group.velocityRange.Min.GetAxis(axis), group.velocityRange.Max.GetAxis(axis))
+	} else if err := group.SetDriveSpeed(axis, v); err != nil {
+		self.AddErrorf("%s: %s", describe(), err.Error())
 		return ret
-	} else {
-		group.velocity.SetAxis(axis, v)
 	}
 	return ret
 }

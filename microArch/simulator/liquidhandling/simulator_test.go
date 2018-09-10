@@ -26,6 +26,7 @@ import (
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
@@ -171,6 +172,80 @@ func Test_SetPippetteSpeed(t *testing.T) {
 			},
 			ExpectedErrors: []string{
 				"(warn) SetPipetteSpeed[1]: Head 0 is not independent, setting pipette speed for channel 3 sets all other channels as well",
+			},
+		},
+	}.Run(t)
+}
+
+func TestSetDriveSpeed(t *testing.T) {
+	props := defaultLHProperties()
+
+	//set max and minimum drive speeds
+	props.HeadAssemblies[0].Velocity = &wtype.VelocityRange{
+		Min: &wunit.Velocity3D{
+			X: wunit.NewVelocity(0.5, "mm/s"),
+			Y: wunit.NewVelocity(0.5, "mm/s"),
+			Z: wunit.NewVelocity(0.1, "mm/s"),
+		},
+		Max: &wunit.Velocity3D{
+			X: wunit.NewVelocity(50, "mm/s"),
+			Y: wunit.NewVelocity(50, "mm/s"),
+			Z: wunit.NewVelocity(10, "mm/s"),
+		},
+	}
+
+	SimulatorTests{
+		{
+			Name: "OK",
+			Instructions: []TestRobotInstruction{
+				&Initialize{},
+				&SetDriveSpeed{drive: "X", speed: 5.},
+				&SetDriveSpeed{drive: "Y", speed: 5.},
+				&SetDriveSpeed{drive: "Z", speed: 5.},
+			},
+		},
+		{
+			Name: "invalid drive",
+			Instructions: []TestRobotInstruction{
+				&Initialize{},
+				&SetDriveSpeed{drive: "Q", speed: 5.},
+			},
+			ExpectedErrors: []string{
+				"(err) SetDriveSpeed[1]: while setting head group 0 drive Q speed to 5 mm/s: unknown axis \"Q\"",
+			},
+		},
+		{
+			Name: "negative value",
+			Instructions: []TestRobotInstruction{
+				&Initialize{},
+				&SetDriveSpeed{drive: "Z", speed: -5.},
+			},
+			ExpectedErrors: []string{
+				"(err) SetDriveSpeed[1]: while setting head group 0 drive Z speed to -5 mm/s: speed must be positive",
+			},
+		},
+		{
+			Name: "OK - with speed limits",
+			Instructions: []TestRobotInstruction{
+				&Initialize{},
+				&SetDriveSpeed{drive: "X", speed: 5.},
+				&SetDriveSpeed{drive: "Y", speed: 5.},
+				&SetDriveSpeed{drive: "Z", speed: 5.},
+			},
+		},
+		{
+			Name:  "Outside range",
+			Props: props,
+			Instructions: []TestRobotInstruction{
+				&Initialize{},
+				&SetDriveSpeed{drive: "X", speed: 0.2},
+				&SetDriveSpeed{drive: "Y", speed: 0.2},
+				&SetDriveSpeed{drive: "Z", speed: 0.01},
+			},
+			ExpectedErrors: []string{
+				"(err) SetDriveSpeed[1]: while setting head group 0 drive X speed to 0.2 mm/s: 0.2 mm/s is outside allowable range [0.5 mm/s - 50 mm/s]",
+				"(err) SetDriveSpeed[2]: while setting head group 0 drive Y speed to 0.2 mm/s: 0.2 mm/s is outside allowable range [0.5 mm/s - 50 mm/s]",
+				"(err) SetDriveSpeed[3]: while setting head group 0 drive Z speed to 0.01 mm/s: 0.01 mm/s is outside allowable range [0.1 mm/s - 10 mm/s]",
 			},
 		},
 	}.Run(t)

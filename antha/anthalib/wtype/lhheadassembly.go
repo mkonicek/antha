@@ -1,19 +1,44 @@
 package wtype
 
 import (
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/pkg/errors"
 )
 
-//LHHeadAssemblyPosition a position within a head assembly
+// LHHeadAssemblyPosition a position within a head assembly
 type LHHeadAssemblyPosition struct {
 	Offset Coordinates
 	Head   *LHHead
 }
 
+// Velocity3D struct composed of lengths in three axes
+type Velocity3D struct {
+	X, Y, Z wunit.Velocity
+}
+
+// VelocityRange the minimum and maximum velocities for the head assembly.
+// nil implies no limit
+type VelocityRange struct {
+	Min, Max *Velocity3D
+}
+
+// Acceleration3D acceleration in three axes
+type Acceleration3D struct {
+	X, Y, Z *wunit.Acceleration
+}
+
+// AccelerationRange minimum and maximum accelerations for the head assembly.
+// nil implies no limit
+type AccelerationRange struct {
+	Min, Max *Acceleration3D
+}
+
 //LHHeadAssembly represent a set of LHHeads which are constrained to move together
 type LHHeadAssembly struct {
 	Positions    []*LHHeadAssemblyPosition
-	MotionLimits *BBox
+	MotionLimits *BBox              //the limits on range of motion of the head assembly, nil if unspecified
+	Velocity     *VelocityRange     // the range of valid velocities for the head, nil if unspecified
+	Acceleration *AccelerationRange // the range of valid accelerations for the head, nil if unspecified
 }
 
 //NewLHHeadAssembly build a new head assembly

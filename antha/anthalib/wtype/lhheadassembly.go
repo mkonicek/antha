@@ -1,9 +1,43 @@
 package wtype
 
 import (
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/pkg/errors"
+	"strings"
+
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
+
+type Axis int
+
+const (
+	XAxis Axis = iota
+	YAxis
+	ZAxis
+)
+
+func (a Axis) String() string {
+	switch a {
+	case XAxis:
+		return "X"
+	case YAxis:
+		return "Y"
+	case ZAxis:
+		return "Z"
+	}
+	panic("unknown axis")
+}
+
+func AxisFromString(a string) (Axis, error) {
+	switch strings.ToUpper(a) {
+	case "X":
+		return XAxis, nil
+	case "Y":
+		return YAxis, nil
+	case "Z":
+		return ZAxis, nil
+	}
+	return Axis(-1), errors.Errorf("unknown axis %q", a)
+}
 
 // LHHeadAssemblyPosition a position within a head assembly
 type LHHeadAssemblyPosition struct {
@@ -16,10 +50,59 @@ type Velocity3D struct {
 	X, Y, Z wunit.Velocity
 }
 
+// GetAxis return the velocity in the axis specified
+func (self *Velocity3D) GetAxis(a Axis) wunit.Velocity {
+	switch a {
+	case XAxis:
+		return self.X
+	case YAxis:
+		return self.Y
+	case ZAxis:
+		return self.Z
+	}
+	panic("unknown axis")
+}
+
+// SetAxis return the velocity in the axis specified
+func (self *Velocity3D) SetAxis(a Axis, v wunit.Velocity) {
+	switch a {
+	case XAxis:
+		self.X = v
+	case YAxis:
+		self.Y = v
+	case ZAxis:
+		self.Z = v
+	}
+	panic("unknown axis")
+}
+
+// Dup return a copy of the velocities
+func (self *Velocity3D) Dup() *Velocity3D {
+	if self == nil {
+		return nil
+	}
+	return &Velocity3D{
+		X: wunit.NewVelocity(self.X.RawValue(), self.X.Unit().PrefixedSymbol()),
+		Y: wunit.NewVelocity(self.Y.RawValue(), self.Y.Unit().PrefixedSymbol()),
+		Z: wunit.NewVelocity(self.Z.RawValue(), self.Z.Unit().PrefixedSymbol()),
+	}
+}
+
 // VelocityRange the minimum and maximum velocities for the head assembly.
 // nil implies no limit
 type VelocityRange struct {
 	Min, Max *Velocity3D
+}
+
+// Dup return a copy of the range
+func (self *VelocityRange) Dup() *VelocityRange {
+	if self == nil {
+		return nil
+	}
+	return &VelocityRange{
+		Min: self.Min.Dup(),
+		Max: self.Max.Dup(),
+	}
 }
 
 // Acceleration3D acceleration in three axes
@@ -27,10 +110,36 @@ type Acceleration3D struct {
 	X, Y, Z *wunit.Acceleration
 }
 
+// Dup return a copy of the accelerations
+func (self *Acceleration3D) Dup() *Acceleration3D {
+	if self == nil {
+		return nil
+	}
+	x := wunit.NewAcceleration(self.X.RawValue(), self.X.Unit().PrefixedSymbol())
+	y := wunit.NewAcceleration(self.Y.RawValue(), self.Y.Unit().PrefixedSymbol())
+	z := wunit.NewAcceleration(self.Z.RawValue(), self.Z.Unit().PrefixedSymbol())
+	return &Acceleration3D{
+		X: &x,
+		Y: &y,
+		Z: &z,
+	}
+}
+
 // AccelerationRange minimum and maximum accelerations for the head assembly.
 // nil implies no limit
 type AccelerationRange struct {
 	Min, Max *Acceleration3D
+}
+
+// Dup return a copy of the range
+func (self *AccelerationRange) Dup() *AccelerationRange {
+	if self == nil {
+		return nil
+	}
+	return &AccelerationRange{
+		Min: self.Min.Dup(),
+		Max: self.Max.Dup(),
+	}
 }
 
 //LHHeadAssembly represent a set of LHHeads which are constrained to move together

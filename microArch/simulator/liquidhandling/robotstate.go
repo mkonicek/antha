@@ -508,23 +508,56 @@ func (self *AdaptorState) GetTipCoordsToLoad(tb *wtype.LHTipbox, num int) ([][]w
 //                            AdaptorGroup
 // -------------------------------------------------------------------------------
 
-//Represent a set of adaptors which are physically attached
+// AdaptorGroup simulate a set of adaptors which are physically attached
 type AdaptorGroup struct {
-	adaptors     []*AdaptorState
-	offsets      []wtype.Coordinates
-	motionLimits *wtype.BBox
-	position     wtype.Coordinates
-	robot        *RobotState
+	adaptors          []*AdaptorState
+	offsets           []wtype.Coordinates
+	motionLimits      *wtype.BBox
+	velocity          *wtype.Velocity3D
+	velocityRange     *wtype.VelocityRange
+	acceleration      *wtype.Acceleration3D
+	accelerationRange *wtype.AccelerationRange
+	position          wtype.Coordinates
+	robot             *RobotState
 }
 
-func NewAdaptorGroup(offsets []wtype.Coordinates, motionLimits *wtype.BBox) *AdaptorGroup {
-	ret := AdaptorGroup{
-		adaptors:     make([]*AdaptorState, len(offsets)),
-		offsets:      offsets,
-		motionLimits: motionLimits,
+// NewAdaptorGroup convert a HeadAssembly into an AdaptorGroup for simulation
+func NewAdaptorGroup(assembly *wtype.LHHeadAssembly) *AdaptorGroup {
+
+	offsets := make([]wtype.Coordinates, len(assembly.Positions))
+	for i, pos := range assembly.Positions {
+		offsets[i] = pos.Offset
 	}
 
-	return &ret
+	group := &AdaptorGroup{
+		adaptors:          make([]*AdaptorState, len(offsets)),
+		offsets:           offsets,
+		motionLimits:      assembly.MotionLimits.Dup(),
+		velocity:          &wtype.Velocity3D{},
+		velocityRange:     assembly.Velocity.Dup(),
+		acceleration:      &wtype.Acceleration3D{},
+		accelerationRange: assembly.Acceleration.Dup(),
+	}
+
+	for i, pos := range assembly.Positions {
+		if pos.Head == nil { //ignore assembly position which have nothing loaded
+			continue
+		}
+		p := pos.Head.Adaptor.Params
+		//9mm spacing currently hardcoded.
+		//At some point we'll either need to fetch this from the driver or
+		//infer it from the type of tipboxes/plates accepted
+		spacing := wtype.Coordinates{X: 0, Y: 0, Z: 0}
+		if p.Orientation == wtype.LHVChannel {
+			spacing.Y = 9.
+		} else if p.Orientation == wtype.LHHChannel {
+			spacing.X = 9.
+		}
+		adaptor := NewAdaptorState(pos.Head.Adaptor.Name, p.Independent, p.Multi, spacing, coneRadius, p, pos.Head.TipLoading)
+		group.LoadAdaptor(i, adaptor)
+	}
+
+	return group
 }
 
 //GetAdaptor get an adaptor state

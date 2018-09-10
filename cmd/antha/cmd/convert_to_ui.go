@@ -5,6 +5,7 @@ import (
 	"os"
 	"regexp"
 
+	"github.com/antha-lang/antha/execute/executeutil"
 	"github.com/antha-lang/antha/target/mixer"
 	"github.com/antha-lang/antha/workflow"
 	"github.com/spf13/cobra"
@@ -163,12 +164,7 @@ func convertToUI(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	bundle, err := unmarshalRunInput(&runInput{
-		BundleFile:     viper.GetString("bundle"),
-		ParametersFile: viper.GetString("parameters"),
-		WorkflowFile:   viper.GetString("workflow"),
-	})
-
+	bundle, err := executeutil.UnmarshalSingle(viper.GetString("bundle"), viper.GetString("workflow"), viper.GetString("parameters"))
 	if err != nil {
 		return err
 	}

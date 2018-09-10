@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"reflect"
-	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/utils"
 )
 
 func mergeMovs(ris []RobotInstruction) []RobotInstruction {
@@ -30,24 +30,20 @@ func mergeMovs(ris []RobotInstruction) []RobotInstruction {
 	return insOut
 }
 
-type errorSlice []error
-
-func (es errorSlice) Error() string {
-	strs := make([]string, len(es))
-	for i, err := range es {
-		strs[i] = err.Error()
-	}
-	return strings.Join(strs, "\n")
-}
-
-func CompareInstructionSets(setA, setB []RobotInstruction, comparators ...RobotInstructionComparatorFunc) errorSlice {
+// CompareInstructionSets will use the comparators to detect
+// differences between setA and setB. This allows you to compare,
+// using any arbitrary property, instructions of the same type. The
+// comparison is between the minimum length of setA and setB - an
+// unmatched suffix will cause an error but will not be passed to any
+// comparator.
+func CompareInstructionSets(setA, setB []RobotInstruction, comparators ...RobotInstructionComparatorFunc) utils.ErrorSlice {
 	setAMerged := mergeMovs(setA)
 	setBMerged := mergeMovs(setB)
 	return orderedInstructionComparison(setAMerged, setBMerged, comparators)
 }
 
-func orderedInstructionComparison(setA, setB []RobotInstruction, comparators []RobotInstructionComparatorFunc) errorSlice {
-	var errs errorSlice
+func orderedInstructionComparison(setA, setB []RobotInstruction, comparators []RobotInstructionComparatorFunc) utils.ErrorSlice {
+	var errs utils.ErrorSlice
 
 	lenA, lenB := len(setA), len(setB)
 	lenToCompare := lenA
@@ -238,14 +234,14 @@ type RobotInstructionComparatorFunc func(*robotInstructionComparator) *RobotInst
 
 // we deliberately return the ground type errorSlice so that the
 // caller can flatten together multiple errorSlices.
-func compareRobotInstructions(a, b RobotInstruction, comparators []RobotInstructionComparatorFunc) errorSlice {
+func compareRobotInstructions(a, b RobotInstruction, comparators []RobotInstructionComparatorFunc) utils.ErrorSlice {
 	if a == nil || b == nil {
-		return errorSlice{fmt.Errorf("Cannot compare with nil RobotInstructions: %#v %#v", a, b)}
+		return utils.ErrorSlice{fmt.Errorf("Cannot compare with nil RobotInstructions: %#v %#v", a, b)}
 	} else if a.Type() != b.Type() {
-		return errorSlice{fmt.Errorf("Instructions of different types (%s != %s)", a.Type(), b.Type())}
+		return utils.ErrorSlice{fmt.Errorf("Instructions of different types (%s != %s)", a.Type(), b.Type())}
 	}
 
-	var errs errorSlice
+	var errs utils.ErrorSlice
 	ric := &robotInstructionComparator{a: a, b: b}
 	for _, comp := range comparators {
 		ric.aFields = ric.aFields[:0]

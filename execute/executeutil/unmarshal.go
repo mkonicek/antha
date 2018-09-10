@@ -58,7 +58,7 @@ func UnmarshalAll(paths ...string) (map[string]*Bundle, map[string]*workflow.Des
 // the bundlePath alone, or from both the workflowPath and
 // paramsPath. Any other combination will error.
 func UnmarshalSingle(bundlePath, workflowPath, paramsPath string) (*Bundle, error) {
-	if bundlePath != "" && workflowPath == "" && paramsPath == "" {
+	if bundlePath != "" {
 		if bundles, _, _, err := UnmarshalAll(bundlePath); err != nil {
 			return nil, err
 		} else if len(bundles) != 1 {
@@ -70,7 +70,7 @@ func UnmarshalSingle(bundlePath, workflowPath, paramsPath string) (*Bundle, erro
 			panic("Unreachable")
 		}
 
-	} else if bundlePath == "" && workflowPath != "" && paramsPath != "" {
+	} else if workflowPath != "" && paramsPath != "" {
 		if _, workflows, params, err := UnmarshalAll(workflowPath, paramsPath); err != nil {
 			return nil, err
 		} else if len(workflows) != 1 {

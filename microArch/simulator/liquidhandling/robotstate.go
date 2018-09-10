@@ -510,15 +510,13 @@ func (self *AdaptorState) GetTipCoordsToLoad(tb *wtype.LHTipbox, num int) ([][]w
 
 // AdaptorGroup simulate a set of adaptors which are physically attached
 type AdaptorGroup struct {
-	adaptors          []*AdaptorState
-	offsets           []wtype.Coordinates
-	motionLimits      *wtype.BBox
-	velocity          *wtype.Velocity3D
-	velocityRange     *wtype.VelocityRange
-	acceleration      *wtype.Acceleration3D
-	accelerationRange *wtype.AccelerationRange
-	position          wtype.Coordinates
-	robot             *RobotState
+	adaptors      []*AdaptorState
+	offsets       []wtype.Coordinates
+	motionLimits  *wtype.BBox
+	velocity      *wunit.Velocity3D
+	velocityRange *wtype.VelocityRange
+	position      wtype.Coordinates
+	robot         *RobotState
 }
 
 // NewAdaptorGroup convert a HeadAssembly into an AdaptorGroup for simulation
@@ -530,13 +528,11 @@ func NewAdaptorGroup(assembly *wtype.LHHeadAssembly) *AdaptorGroup {
 	}
 
 	group := &AdaptorGroup{
-		adaptors:          make([]*AdaptorState, len(offsets)),
-		offsets:           offsets,
-		motionLimits:      assembly.MotionLimits.Dup(),
-		velocity:          &wtype.Velocity3D{},
-		velocityRange:     assembly.Velocity.Dup(),
-		acceleration:      &wtype.Acceleration3D{},
-		accelerationRange: assembly.Acceleration.Dup(),
+		adaptors:      make([]*AdaptorState, len(offsets)),
+		offsets:       offsets,
+		motionLimits:  assembly.MotionLimits.Dup(),
+		velocity:      &wunit.Velocity3D{},
+		velocityRange: assembly.Velocity.Dup(),
 	}
 
 	for i, pos := range assembly.Positions {

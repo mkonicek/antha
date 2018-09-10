@@ -1476,7 +1476,7 @@ func (self *VirtualLiquidHandler) SetDriveSpeed(drive string, rate float64) driv
 	if group, err := self.state.GetAdaptorGroup(groupNumber); err != nil {
 		self.AddError(err.Error())
 		return ret
-	} else if axis, err := wtype.AxisFromString(drive); err != nil {
+	} else if axis, err := wunit.AxisFromString(drive); err != nil {
 		self.AddError(err.Error())
 		return ret
 	} else if group.velocityRange != nil && (v.LessThan(group.velocityRange.Min.GetAxis(axis)) || v.GreaterThan(group.velocityRange.Max.GetAxis(axis))) {

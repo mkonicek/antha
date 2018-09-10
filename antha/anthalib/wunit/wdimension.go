@@ -462,6 +462,49 @@ func NewVelocity(v float64, unit string) Velocity {
 	return Velocity{NewTypedMeasurement("Velocity", v, unit)}
 }
 
+// Velocity3D struct composed of lengths in three axes
+type Velocity3D struct {
+	X, Y, Z Velocity
+}
+
+// GetAxis return the velocity in the axis specified
+func (self *Velocity3D) GetAxis(a Axis) Velocity {
+	switch a {
+	case XAxis:
+		return self.X
+	case YAxis:
+		return self.Y
+	case ZAxis:
+		return self.Z
+	}
+	panic("unknown axis")
+}
+
+// SetAxis return the velocity in the axis specified
+func (self *Velocity3D) SetAxis(a Axis, v Velocity) {
+	switch a {
+	case XAxis:
+		self.X = v
+	case YAxis:
+		self.Y = v
+	case ZAxis:
+		self.Z = v
+	}
+	panic("unknown axis")
+}
+
+// Dup return a copy of the velocities
+func (self *Velocity3D) Dup() *Velocity3D {
+	if self == nil {
+		return nil
+	}
+	return &Velocity3D{
+		X: NewVelocity(self.X.RawValue(), self.X.Unit().PrefixedSymbol()),
+		Y: NewVelocity(self.Y.RawValue(), self.Y.Unit().PrefixedSymbol()),
+		Z: NewVelocity(self.Z.RawValue(), self.Z.Unit().PrefixedSymbol()),
+	}
+}
+
 // Acceleration represent rate of change of velocity
 type Acceleration struct {
 	*ConcreteMeasurement

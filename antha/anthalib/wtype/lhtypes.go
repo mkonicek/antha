@@ -458,6 +458,7 @@ func (self *LHHeadAssembly) DupWithoutHeads() *LHHeadAssembly {
 	ret := &LHHeadAssembly{
 		Positions:    make([]*LHHeadAssemblyPosition, 0, len(self.Positions)),
 		MotionLimits: self.MotionLimits.Dup(),
+		Velocity:     self.Velocity.Dup(),
 	}
 	for _, pos := range self.Positions {
 		ret.AddPosition(pos.Offset)

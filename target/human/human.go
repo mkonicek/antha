@@ -112,11 +112,6 @@ func (a *Human) generate(cmd interface{}) ([]target.Inst, error) {
 			Message: cmd.Message,
 		})
 
-	case *ast.AwaitInst:
-		insts = append(insts, &target.Prompt{
-			Message: fmt.Sprintf("Now get some data for %s %s", cmd.Tags, cmd.AwaitID),
-		})
-
 	case *wtype.PRInstruction:
 		insts = append(insts, &target.Manual{
 			Dev:     a,

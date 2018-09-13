@@ -1,5 +1,12 @@
 package wtype
 
+import (
+	"github.com/pkg/errors"
+	"math"
+
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
+)
+
 // ChannelGeometry describes the layout of cones within an adaptor and their
 // movement limits
 type ChannelGeometry struct {
@@ -20,6 +27,7 @@ type ChannelSpacing struct {
 // If any position is nil, it is unspecified and that cone can be moved to any
 // location.
 func (self *ChannelSpacing) CanMoveTo(spacing [][]*Coordinates) bool {
+	return false
 }
 
 // LinearChannelSpacing represents channel spacing in one dimension
@@ -44,7 +52,7 @@ func (self *FixedChannelSpacing) TimeToMoveBetween(initial []float64, final []*f
 
 	for i, p := range final {
 		if pos := float64(i) * spacing; p == nil {
-			(*final)[i] = pos
+			final[i] = &pos
 		} else {
 			if math.Abs(*final[i]-pos) > 1e-5 {
 				return ret, errors.New("fixed adaptor cannot reach position")
@@ -72,7 +80,7 @@ func (self *ExtendableChannelSpacing) TimeToMoveBetween(initial []float64, final
 	for i := range final {
 		if final[i] == nil {
 			p := initial[i]
-			(*final)[i] = &p
+			final[i] = &p
 		}
 	}
 
@@ -132,7 +140,8 @@ func (self *RelativeChannelSpacing) TimeToMoveBetween(initial []float64, final [
 		if lastIndex != -1 {
 			step := *f - *final[lastIndex]
 			for j := 1; i < i-lastIndex-1; j++ {
-				final[lastIndex+j] = *final[lastIndex] + float64(j)*step
+				v := *final[lastIndex] + float64(j)*step
+				final[lastIndex+j] = &v
 			}
 		}
 		lastIndex = i
@@ -165,7 +174,7 @@ func (self *RelativeChannelSpacing) TimeToMoveBetween(initial []float64, final [
 		final[i] = &v
 	}
 	for i := 0; i < firstNonNil; i++ {
-		v := *final[fistNonNil] + float64(i-firstNonNil)*step
+		v := *final[firstNonNil] + float64(i-firstNonNil)*step
 		final[i] = &v
 	}
 

@@ -35,7 +35,6 @@ type LHInstruction struct {
 	ID               string
 	BlockID          BlockID
 	SName            string
-	Order            int
 	Components       []*Liquid
 	ContainerType    string
 	Welladdress      string

@@ -34,7 +34,6 @@ func InsType(i int) string {
 type LHInstruction struct {
 	ID               string
 	BlockID          BlockID
-	SName            string
 	Components       []*Liquid
 	ContainerType    string
 	Welladdress      string

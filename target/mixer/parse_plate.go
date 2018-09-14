@@ -127,6 +127,13 @@ func ParsePlateCSV(ctx context.Context, inData io.Reader, validationOptions ...V
 	return parsePlateCSVWithValidationConfig(ctx, inData, validationOptions...)
 }
 
+// removeModifiedPolicySuffix will trim a _modified suffix from a LiquidType in the CSV file.
+// These are added to LiquidType names when a Liquid is modified in an element.
+func removeModifiedPolicySuffix(policyName string) string {
+	splitPolicy := strings.Split(policyName, "_modified")
+	return splitPolicy[0]
+}
+
 // parsePlateCSVWithValidationConfig parses a csv file into a plate.
 //
 // CSV plate format: (? denotes optional, whitespace for clarity)
@@ -254,7 +261,7 @@ func parsePlateCSVWithValidationConfig(ctx context.Context, inData io.Reader, vc
 
 		wellField := get(rec, 0)
 		cname := get(rec, 1)
-		ctypeField := get(rec, 2)
+		ctypeField := unModifyTypeName(get(rec, 2))
 
 		well, err := validWellCoord(wellField)
 		if err != nil {
@@ -271,6 +278,7 @@ func parsePlateCSVWithValidationConfig(ctx context.Context, inData io.Reader, vc
 		}
 
 		ctype, err := wtype.LiquidTypeFromString(wtype.PolicyName(ctypeField))
+
 		if err != nil {
 			warnings = append(warnings, fmt.Sprintf("line %d: component type %q not found in default system types, using (%q); this may generate undesirable behaviour if this is not a custom type known by the system: %s", lineNo, ctypeField, ctype, err))
 		}

@@ -359,8 +359,16 @@ func addCustomPolicies(mixes []*wtype.LHInstruction, lhreq *planner.LHRequest) e
 	return nil
 }
 
+const modifiedPolicySuffix = "_modified_"
+
 func makemodifiedTypeName(componentType wtype.LiquidType, number int) string {
-	return string(componentType) + "_modified_" + strconv.Itoa(number)
+	return string(componentType) + modifiedPolicySuffix + strconv.Itoa(number)
+}
+
+// unModifyTypeName will trim a _modified_ suffix from a LiquidType in the CSV file.
+// These are added to LiquidType names when a Liquid is modified in an element.
+func unModifyTypeName(componentType string) string {
+	return strings.Split(componentType, modifiedPolicySuffix)[0]
 }
 
 func (a *Mixer) makeMix(ctx context.Context, mixes []*wtype.LHInstruction) (*target.Mix, error) {

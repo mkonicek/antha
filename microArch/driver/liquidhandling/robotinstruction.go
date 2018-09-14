@@ -383,9 +383,9 @@ func (sori *SetOfRobotInstructions) UnmarshalJSON(b []byte) error {
 		case "MIX":
 			ins = NewMixInstruction()
 		case "SPS":
-			ins = NewSetPipetteSpeedInstruction()
+			ins = NewSetPipetteSpeedInstruction(0, 0, 0.)
 		case "SDS":
-			ins = NewSetDriveSpeedInstruction()
+			ins = NewSetDriveSpeedInstruction("", 0.0)
 		case "BLO":
 			ins = NewBlowoutInstruction()
 		case "LOD":

@@ -840,11 +840,7 @@ type SetPipetteSpeed struct {
 }
 
 func (self *SetPipetteSpeed) Convert() liquidhandling.TerminalRobotInstruction {
-	ret := liquidhandling.NewSetPipetteSpeedInstruction()
-	ret.Head = self.head
-	ret.Channel = self.channel
-	ret.Speed = self.speed
-	return ret
+	return liquidhandling.NewSetPipetteSpeedInstruction(self.head, self.channel, self.speed)
 }
 
 //SetDriveSpeed
@@ -854,10 +850,7 @@ type SetDriveSpeed struct {
 }
 
 func (self *SetDriveSpeed) Convert() liquidhandling.TerminalRobotInstruction {
-	ret := liquidhandling.NewSetDriveSpeedInstruction()
-	ret.Drive = self.drive
-	ret.Speed = self.speed
-	return ret
+	return liquidhandling.NewSetDriveSpeedInstruction(self.drive, self.speed)
 }
 
 //AddPlateTo

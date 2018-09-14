@@ -624,6 +624,19 @@ func (lhw *LHWell) GetLiquidLevel(volume wunit.Volume) float64 {
 	}
 }
 
+// GetLiquidVolume estimate the volume of liquid for a given liquid level.
+// performs the inverse of GetLiquidLevel
+func (lhw *LHWell) GetLiquidVolume(height wunit.Length) wunit.Volume {
+	if f := lhw.GetLiquidLevelModel(); f == nil {
+		return wunit.ZeroVolume()
+	} else if quad, ok := f.(*wutil.Quadratic); !ok {
+		return wunit.ZeroVolume()
+	} else {
+		h := height.MustInStringUnit("mm").RawValue()
+		return wunit.NewVolume(quad.A*h*h+quad.B*h+quad.C, "ul")
+	}
+}
+
 //HasLiquidLevelModel returns whether the well has a model for use with
 //liquid level following
 func (lhw *LHWell) HasLiquidLevelModel() bool {

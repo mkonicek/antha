@@ -1744,6 +1744,105 @@ func (ins *SuckInstruction) GetParameter(name InstructionParameter) interface{} 
 	}
 }
 
+func (ins *SuckInstruction) getInitialVolumesByWell() map[string]wunit.Volume {
+	ret := make(map[string]wunit.Volume, ins.Multi)
+	for i, well := range ins.WellFrom {
+		//overwrite, since these should be the same for each well
+		ret[well] = wunit.CopyVolume(ins.FVolume[i])
+	}
+	return ret
+}
+
+func (ins *SuckInstruction) getRemovedVolumesByWell() map[string]wunit.Volume {
+	ret := make(map[string]wunit.Volume, ins.Multi)
+	for i, well := range ins.WellFrom {
+		if _, ok := ret[well]; !ok {
+			ret[well] = wunit.CopyVolume(ins.Volume[i])
+		} else {
+			ret[well].IncrBy(ins.Volume[i])
+		}
+	}
+	return ret
+}
+
+func (ins *SuckInstruction) getFinalVolumesByWell() map[string]wunit.Volume {
+	ret := make(map[string]wunit.Volume, ins.Multi)
+	initial := ins.getInitialVolumesByWell()
+	removed := ins.getRemovedVolumesByWell()
+	for _, well := range ins.WellFrom {
+		ret[well] = wunit.SubtractVolumes(initial[well], removed[well])
+	}
+	return ret
+}
+
+func (ins *SuckInstruction) getAspirate(volumes []wunit.Volume, useLLF []bool) RobotInstruction {
+	aspins := NewAspirateInstruction()
+	aspins.Head = ins.Head
+	aspins.Multi = ins.Multi
+	aspins.Overstroke = ins.Overstroke
+	aspins.What = ins.What
+	aspins.Plt = ins.FPlateType
+
+	for _, vol := range volumes {
+		aspins.Volume = append(aspins.Volume, wunit.CopyVolume(vol))
+	}
+	for _, llf := range useLLF {
+		aspins.LLF = append(aspins.LLF, llf)
+	}
+	for len(aspins.LLF) < aspins.Multi {
+		aspins.LLF = append(aspins.LLF, false)
+	}
+
+	return aspins
+}
+
+func (ins *SuckInstruction) getMove(reference int, volume []wunit.Volume, offsetX, offsetY, offsetZ float64) RobotInstruction {
+	mov := NewMoveInstruction()
+	mov.Head = ins.Head
+
+	mov.Pos = ins.PltFrom
+	mov.Plt = ins.FPlateType
+	mov.Well = ins.WellFrom
+	mov.WVolume = volume
+
+	for i := 0; i < ins.Multi; i++ {
+		mov.Reference = append(mov.Reference, reference)
+		mov.OffsetX = append(mov.OffsetX, offsetX)
+		mov.OffsetY = append(mov.OffsetY, offsetY)
+		mov.OffsetZ = append(mov.OffsetZ, offsetZ)
+	}
+	return mov
+}
+
+func (ins *SuckInstruction) getMoveMix(volume []wunit.Volume, cycles int, offsetX, offsetY, offsetZ float64, blowout bool) RobotInstruction {
+	mix := NewMoveMixInstruction()
+	mix.Head = ins.Head
+	mix.Plt = ins.PltFrom
+	mix.PlateType = ins.FPlateType
+	mix.Well = ins.WellFrom
+	mix.Multi = ins.Multi
+	mix.What = ins.What
+	mix.Volume = volume
+
+	for k := 0; k < ins.Multi; k++ {
+		mix.OffsetX = append(mix.OffsetX, offsetX)
+		mix.OffsetY = append(mix.OffsetY, offsetY)
+		mix.OffsetZ = append(mix.OffsetZ, offsetZ)
+		mix.Cycles = append(mix.Cycles, cycles)
+		mix.Blowout = append(mix.Blowout, blowout)
+	}
+
+	return mix
+}
+
+func (ins *SuckInstruction) getChannelsByWell() map[string][]int {
+	ret := make(map[string][]int, ins.Multi)
+	for i, well := range ins.WellFrom {
+		ret[well] = append(ret[well], i)
+	}
+	return ret
+}
+
 func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	// MIS XXX -- separate out channel-level parameters from head-level ones
 	ret := make([]RobotInstruction, 0, 1)
@@ -1777,27 +1876,6 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		return []RobotInstruction{}, errors.Wrap(err, fmt.Sprintf("setting default pipette speed for policy %s", text.PrettyPrint(pol)))
 	}
 
-	// offsets
-	ofx := SafeGetF64(pol, "ASPXOFFSET")
-	ofy := SafeGetF64(pol, "ASPYOFFSET")
-	ofz := SafeGetF64(pol, "ASPZOFFSET")
-	ofzadj := SafeGetF64(pol, "OFFSETZADJUST")
-	ofz += ofzadj
-	ofz, err = makeZOffsetSafe(ctx, prms, ofz, ins.Head, ins.PltFrom, ins.TipType)
-	if err != nil {
-		return nil, err
-	}
-
-	mixofx := SafeGetF64(pol, "PRE_MIX_X")
-	mixofy := SafeGetF64(pol, "PRE_MIX_Y")
-	mixofz := SafeGetF64(pol, "PRE_MIX_Z")
-	mixofz += ofzadj
-	final_asp_ref := SafeGetInt(pol, "ASPREFERENCE")
-	mixofz, err = makeZOffsetSafe(ctx, prms, mixofz, ins.Head, ins.PltFrom, ins.TipType)
-	if err != nil {
-		return nil, err
-	}
-
 	//LLF
 	use_llf, any_llf := get_use_llf(pol, ins.Multi, ins.PltFrom, prms)
 	if any_llf {
@@ -1807,7 +1885,6 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 			plate := prms.Plates[ins.PltFrom[i]]
 
 			if h := plate.Welltype.GetLiquidLevel(ins.FVolume[i]); h <= below_surface {
-				fmt.Printf("Disabling LLF as h (%f) < below_surface (%f)\n", h, below_surface)
 				//we're going to immediately hit the bottom if we use LLF, so disable it
 				any_llf = false
 				for j := 0; j < ins.Multi; j++ {
@@ -1817,270 +1894,173 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		}
 	}
 
-	if any_llf {
-		//override reference
-		final_asp_ref = 2 //liquid level
-		//override ofz
-		ofz = -SafeGetF64(pol, "LLFBELOWSURFACE")
+	// offsets
+	ofx := SafeGetF64(pol, "ASPXOFFSET")
+	ofy := SafeGetF64(pol, "ASPYOFFSET")
+	ofzadj := SafeGetF64(pol, "OFFSETZADJUST")
+	ofz := SafeGetF64(pol, "ASPZOFFSET") + ofzadj
+	ofz, err = makeZOffsetSafe(ctx, prms, ofz, ins.Head, ins.PltFrom, ins.TipType)
+	if err != nil {
+		return nil, err
 	}
 
 	// do we need to enter slowly?
-	entryspeed, gentlynow := pol["ASPENTRYSPEED"]
-	if gentlynow {
+	if entryspeed, gentlynow := pol["ASPENTRYSPEED"]; gentlynow {
 		// go to the well top
-		mov := NewMoveInstruction()
-
-		mov.Head = ins.Head
-		mov.Pos = ins.PltFrom
-		mov.Plt = ins.FPlateType
-		mov.Well = ins.WellFrom
-		mov.WVolume = ins.FVolume
-		for i := 0; i < ins.Multi; i++ {
-			mov.Reference = append(mov.Reference, 1)
-			mov.OffsetX = append(mov.OffsetX, ofx)
-			mov.OffsetY = append(mov.OffsetY, ofy)
-			mov.OffsetZ = append(mov.OffsetZ, 5.0)
-		}
-		ret = append(ret, mov)
+		ret = append(ret, ins.getMove(1, ins.FVolume, ofx, ofy, 5.0))
 
 		// set the speed
-		spd := NewSetDriveSpeedInstruction()
-		spd.Drive = "Z"
-		spd.Speed = entryspeed.(float64)
-		ret = append(ret, spd)
-
+		ret = append(ret, NewSetDriveSpeedInstruction("Z", entryspeed.(float64)))
 	}
 
 	// do we pre-mix?
-	_, premix := pol["PRE_MIX"]
-	cycles := SafeGetInt(pol, "PRE_MIX")
-
-	if premix && cycles > 0 {
+	if cycles := SafeGetInt(pol, "PRE_MIX"); cycles > 0 {
 		// add the premix step
-		mix := NewMoveMixInstruction()
-		mix.Head = ins.Head
-		mix.Plt = ins.PltFrom
-		mix.PlateType = ins.FPlateType
-		mix.Well = ins.WellFrom
-		mix.Multi = ins.Multi
-		mix.What = ins.What
-		// TODO get rid of this HARD CODE
-		mix.Blowout = []bool{false}
 
-		_, ok := pol["PRE_MIX_VOLUME"]
-		mix.Volume = ins.Volume
-		mixvol := SafeGetF64(pol, "PRE_MIX_VOLUME")
+		volume := make([]wunit.Volume, ins.Multi)
+		if _, preMixVolSet := pol["PRE_MIX_VOLUME"]; preMixVolSet {
+			mixvol := SafeGetF64(pol, "PRE_MIX_VOLUME")
 
-		// if not set we use the instruction value
+			// TODO -- corresponding checks when set
+			if mixvol < wtype.Globals.MIN_REASONABLE_VOLUME_UL {
+				return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("PRE_MIX_VOLUME set below minimum allowed: %f min %f", mixvol, wtype.Globals.MIN_REASONABLE_VOLUME_UL))
+			} else if vmixvol := wunit.NewVolume(mixvol, "ul"); !ins.Prms.CanMove(vmixvol, true) {
+				if SafeGetBool(pol, "MIX_VOLUME_OVERRIDE_TIP_MAX") {
+					mixvol = ins.Prms.Maxvol.ConvertToString("ul")
+				} else {
+					// this is an error in channel choice but the user has to deal... needs modificationst
+					return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("PRE_MIX_VOLUME not compatible with optimal channel choice: requested %s channel limits are %s", vmixvol.ToString(), ins.Prms.VolumeLimitString()))
+				}
+			}
 
-		// XXX -- only looking at first vol specified
-		if mixvol == 0.0 {
-			mixvol = ins.Volume[0].ConvertToString("ul")
-		}
-
-		vmixvol := wunit.NewVolume(mixvol, "ul")
-
-		// TODO -- corresponding checks when set
-		if mixvol < wtype.Globals.MIN_REASONABLE_VOLUME_UL {
-			return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("PRE_MIX_VOLUME set below minimum allowed: %f min %f", mixvol, wtype.Globals.MIN_REASONABLE_VOLUME_UL))
-		} else if !ins.Prms.CanMove(vmixvol, true) {
-			override := SafeGetBool(pol, "MIX_VOLUME_OVERRIDE_TIP_MAX")
-			if override {
-				mixvol = ins.Prms.Maxvol.ConvertToString("ul")
-			} else {
-				// this is an error in channel choice but the user has to deal... needs modificationst
-				return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("PRE_MIX_VOLUME not compatible with optimal channel choice: requested %s channel limits are %s", vmixvol.ToString(), ins.Prms.VolumeLimitString()))
+			for i := range volume {
+				volume[i] = wunit.NewVolume(mixvol, "ul")
+			}
+		} else {
+			for i := range volume {
+				volume[i] = wunit.CopyVolume(ins.Volume[i])
 			}
 		}
 
-		if ok {
-			v := make([]wunit.Volume, ins.Multi)
-			for i := 0; i < ins.Multi; i++ {
-				vl := wunit.NewVolume(mixvol, "ul")
-				v[i] = vl
-			}
-			mix.Volume = v
+		mixofx := SafeGetF64(pol, "PRE_MIX_X")
+		mixofy := SafeGetF64(pol, "PRE_MIX_Y")
+		mixofz, err := makeZOffsetSafe(ctx, prms, SafeGetF64(pol, "PRE_MIX_Z")+ofzadj, ins.Head, ins.PltFrom, ins.TipType)
+		if err != nil {
+			return nil, err
 		}
-		// offsets
-
-		for k := 0; k < ins.Multi; k++ {
-			mix.OffsetX = append(mix.OffsetX, mixofx)
-		}
-
-		for k := 0; k < ins.Multi; k++ {
-			mix.OffsetY = append(mix.OffsetY, mixofy)
-		}
-		for k := 0; k < ins.Multi; k++ {
-			mix.OffsetZ = append(mix.OffsetZ, mixofz)
-		}
-
-		c := make([]int, ins.Multi)
-
-		for i := 0; i < ins.Multi; i++ {
-			c[i] = cycles
-		}
-
-		// set speed
-
-		//_, changepipspeed := pol["PRE_MIX_RATE"]
+		mix := ins.getMoveMix(volume, cycles, mixofx, mixofy, mixofz, false)
 
 		mixrate := SafeGetF64(pol, "PRE_MIX_RATE")
 
 		changepipspeed := (mixrate != defaultpspeed) && (mixrate > 0.0)
 
 		if changepipspeed {
-			mixrate, err = checkAndSaften(mixrate, head.Params.Minspd.RawValue(), head.Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds)
-			if err != nil {
+			if mixrate, err := checkAndSaften(mixrate, head.Params.Minspd.RawValue(), head.Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds); err != nil {
 				return []RobotInstruction{}, errors.Wrap(err, "setting pre mix pipetting speed")
+			} else {
+				ret = append(ret, NewSetPipetteSpeedInstruction(ins.Head, -1, mixrate))
 			}
-
-			setspd := NewSetPipetteSpeedInstruction()
-			setspd.Head = ins.Head
-			setspd.Channel = -1 // all channels
-			setspd.Speed = mixrate
-			ret = append(ret, setspd)
 		}
 
-		mix.Cycles = c
 		ret = append(ret, mix)
 
 		if changepipspeed {
-			sps := NewSetPipetteSpeedInstruction()
-			sps.Head = ins.Head
-			sps.Channel = -1 // all channels
-			sps.Speed = defaultpspeed
-			ret = append(ret, sps)
+			ret = append(ret, NewSetPipetteSpeedInstruction(ins.Head, -1, defaultpspeed))
 		}
 	}
-
-	/*
-		discrepancy := false
-
-		if premix {
-			// check whether there is a discrepancy between the mix reference
-			// etc. and the asp reference... if not we don't need to move
-
-			discrepancy = discrepancy || (mixofx != ofx)
-			discrepancy = discrepancy || (mixofy != ofy)
-			discrepancy = discrepancy || (mixofz != ofz)
-		}
-	*/
-	//nb moves are mandatory
-	mov := NewMoveInstruction()
-	mov.Head = ins.Head
-
-	mov.Pos = ins.PltFrom
-	mov.Plt = ins.FPlateType
-	mov.Well = ins.WellFrom
-	mov.WVolume = ins.FVolume
-
-	for i := 0; i < ins.Multi; i++ {
-		mov.Reference = append(mov.Reference, final_asp_ref)
-		mov.OffsetX = append(mov.OffsetX, ofx)
-		mov.OffsetY = append(mov.OffsetY, ofy)
-		mov.OffsetZ = append(mov.OffsetZ, ofz)
-	}
-	ret = append(ret, mov)
 
 	// Set the pipette speed if needed
-
 	apspeed := SafeGetF64(pol, "ASPSPEED")
-
 	changepspeed := (apspeed != defaultpspeed) && (apspeed > 0.0)
-
 	if changepspeed {
-		apspeed, err = checkAndSaften(apspeed, head.Params.Minspd.RawValue(), head.Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds)
-
-		if err != nil {
+		if apspeed, err = checkAndSaften(apspeed, head.Params.Minspd.RawValue(), head.Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds); err != nil {
 			return []RobotInstruction{}, errors.Wrap(err, "setting pipette aspirate speed")
+		} else {
+			ret = append(ret, NewSetPipetteSpeedInstruction(ins.Head, -1, apspeed))
 		}
-		sps := NewSetPipetteSpeedInstruction()
-		sps.Head = ins.Head
-		sps.Channel = -1 // all channels
-		sps.Speed = apspeed
-		ret = append(ret, sps)
 	}
 
-	// now we aspirate
-
-	if any_llf {
-		startingVolumes := make(map[string]float64, len(ins.WellFrom))
-		removedVolumes := make(map[string]float64, len(ins.WellFrom))
-		for i, well := range ins.WellFrom {
-			startingVolumes[well] = ins.FVolume[i].MustInStringUnit("ul")
-			removedVolumes[well] += ins.Volume[i].MustInStringUnit("ul")
-		}
-
-		fmt.Printf("  startingVolumes: %v\n  removedVolumes: %v\n", startingVolumes, removedVolumes)
+	// get aspirate volume
+	volumes := make([]wunit.Volume, 0, len(ins.Volume))
+	for _, vol := range ins.Volume {
+		volumes = append(volumes, wunit.CopyVolume(vol))
 	}
-
-	aspins := NewAspirateInstruction()
-	aspins.Head = ins.Head
-	aspins.Volume = ins.Volume
-
-	ev, iwantmore := pol["EXTRA_ASP_VOLUME"]
-	if iwantmore {
+	if ev, iwantmore := pol["EXTRA_ASP_VOLUME"]; iwantmore {
 		extra_vol := ev.(wunit.Volume)
-		for i := range aspins.Volume {
-			aspins.Volume[i].Add(extra_vol)
+		for i := range volumes {
+			volumes[i].IncrBy(extra_vol)
 		}
 	}
 
-	aspins.Multi = ins.Multi
-	aspins.Overstroke = ins.Overstroke
-	aspins.What = ins.What
-	aspins.Plt = ins.FPlateType
+	fmt.Printf("Aspirate vol: %v\n", ins.Volume)
+	if any_llf {
+		llfBelowSurface := SafeGetF64(pol, "LLFBELOWSURFACE")
 
-	for i := 0; i < ins.Multi; i++ {
-		aspins.LLF = append(aspins.LLF, use_llf[i])
+		finalVolumes := ins.getFinalVolumesByWell()
+		channelsByWell := ins.getChannelsByWell()
+		minHeight := wunit.NewLength(llfBelowSurface+ofz, "mm")
+		// assume welltypes are all the same
+		minVolume := prms.Plates[ins.PltFrom[0]].Welltype.GetLiquidVolume(minHeight)
+
+		llfVolumes := make([]wunit.Volume, 0, ins.Multi)
+		for _, vol := range volumes {
+			llfVolumes = append(llfVolumes, wunit.CopyVolume(vol))
+		}
+
+		for well, final := range finalVolumes {
+			if final.LessThan(minVolume) {
+				//cannot aspirate all via LLF, leave the residual until later
+				residual := wunit.SubtractVolumes(minVolume, final)
+				//evenly split the residual between each channel accessing this well
+				residual.DivideBy(float64(len(channelsByWell[well])))
+				for _, ch := range channelsByWell[well] {
+					volumes[ch] = wunit.CopyVolume(residual)
+					llfVolumes[ch].DecrBy(residual)
+				}
+			} else {
+				for _, ch := range channelsByWell[well] {
+					volumes[ch] = wunit.ZeroVolume()
+				}
+			}
+		}
+
+		fmt.Printf("  LLF aspirate vol: %v\n", llfVolumes)
+		ret = append(ret, ins.getMove(2, ins.FVolume, ofx, ofy, -llfBelowSurface))
+		ret = append(ret, ins.getAspirate(llfVolumes, use_llf))
 	}
 
-	ret = append(ret, aspins)
+	positive := false
+	for _, vol := range volumes {
+		if vol.IsPositive() {
+			positive = true
+			break
+		}
+	}
+
+	if positive {
+		fmt.Printf("  non-LLF aspirate vol: %v\n", volumes)
+		ret = append(ret, ins.getMove(SafeGetInt(pol, "ASPREFERENCE"), ins.FVolume, ofx, ofy, ofz))
+		ret = append(ret, ins.getAspirate(volumes, nil))
+	}
 
 	// do we reset the pipette speed?
-
 	if changepspeed {
-		sps := NewSetPipetteSpeedInstruction()
-		sps.Head = ins.Head
-		sps.Channel = -1 // all channels
-		sps.Speed = defaultpspeed
-		ret = append(ret, sps)
+		ret = append(ret, NewSetPipetteSpeedInstruction(ins.Head, -1, defaultpspeed))
 	}
 
 	// do we wait
-
-	_, wait := pol["ASP_WAIT"]
-
-	wait_time := SafeGetF64(pol, "ASP_WAIT")
-
-	if wait && wait_time > 0.0 {
+	if wait_time := SafeGetF64(pol, "ASP_WAIT"); wait_time > 0.0 {
 		waitins := NewWaitInstruction()
 		waitins.Time = wait_time
 		ret = append(ret, waitins)
 	}
 
-	if gentlynow { // reset the drive speed
+	if _, gentlynow := pol["ASPENTRYSPEED"]; gentlynow { // reset the drive speed
 		// go to the well top
-		mov := NewMoveInstruction()
-
-		mov.Head = ins.Head
-		mov.Pos = ins.PltFrom
-		mov.Plt = ins.FPlateType
-		mov.Well = ins.WellFrom
-		mov.WVolume = ins.FVolume
-		for i := 0; i < ins.Multi; i++ {
-			mov.Reference = append(mov.Reference, 1)
-			mov.OffsetX = append(mov.OffsetX, ofx)
-			mov.OffsetY = append(mov.OffsetY, ofy)
-			mov.OffsetZ = append(mov.OffsetZ, 5.0)
-		}
-		ret = append(ret, mov)
+		ret = append(ret, ins.getMove(1, ins.FVolume, ofx, ofy, 5.0))
 
 		// now get ready to move fast again
-		spd := NewSetDriveSpeedInstruction()
-		spd.Drive = "Z"
-		spd.Speed = pol["DEFAULTZSPEED"].(float64)
-		ret = append(ret, spd)
+		ret = append(ret, NewSetDriveSpeedInstruction("Z", pol["DEFAULTZSPEED"].(float64)))
 	}
 
 	return ret, nil
@@ -2183,23 +2163,14 @@ func (scti *BlowInstruction) Params() MultiTransferParams {
 }
 
 func setDefaults(head int, pol wtype.LHPolicy) []RobotInstruction {
-	ret := make([]RobotInstruction, 0)
-
 	// pipetting speed
 	defaultpspeed := SafeGetF64(pol, "DEFAULTPIPETTESPEED")
-	setspd := NewSetPipetteSpeedInstruction()
-	setspd.Head = head
-	setspd.Channel = -1 // all channels
-	setspd.Speed = defaultpspeed
-	ret = append(ret, setspd)
+	sps := NewSetPipetteSpeedInstruction(head, -1, defaultpspeed)
 
 	// Z move speed
-	spd := NewSetDriveSpeedInstruction()
-	spd.Drive = "Z"
-	spd.Speed = pol["DEFAULTZSPEED"].(float64)
-	ret = append(ret, spd)
+	sds := NewSetDriveSpeedInstruction("Z", pol["DEFAULTZSPEED"].(float64))
 
-	return ret
+	return []RobotInstruction{sps, sds}
 }
 
 func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
@@ -2283,10 +2254,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		ret = append(ret, mov)
 
 		// set the speed
-		spd := NewSetDriveSpeedInstruction()
-		spd.Drive = "Z"
-		spd.Speed = entryspeed
-		ret = append(ret, spd)
+		ret = append(ret, NewSetDriveSpeedInstruction("Z", entryspeed))
 
 		/*
 			mov = NewMoveInstruction()
@@ -2303,10 +2271,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 			}
 			ret = append(ret, mov)
 			// reset the drive speed
-			spd = NewSetDriveSpeedInstruction()
-			spd.Drive = "Z"
-			spd.Speed = pol["DEFAULTZSPEED"].(float64)
-			ret = append(ret, spd)
+			ret = append(ret, NewSetDriveSpeedInstruction("Z", pol["DEFAULTZSPEED"].(float64)))
 		*/
 
 	}
@@ -2341,11 +2306,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 			return []RobotInstruction{}, errors.Wrap(err, "setting pipette dispense speed")
 		}
 
-		sps := NewSetPipetteSpeedInstruction()
-		sps.Head = ins.Head
-		sps.Channel = -1 // all channels
-		sps.Speed = dpspeed
-		ret = append(ret, sps)
+		ret = append(ret, NewSetPipetteSpeedInstruction(ins.Head, -1, dpspeed))
 	}
 
 	// now we dispense
@@ -2403,11 +2364,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	// do we reset the pipette speed?
 
 	if setpspeed {
-		sps := NewSetPipetteSpeedInstruction()
-		sps.Head = ins.Head
-		sps.Channel = -1 // all channels
-		sps.Speed = defaultpspeed
-		ret = append(ret, sps)
+		ret = append(ret, NewSetPipetteSpeedInstruction(ins.Head, -1, defaultpspeed))
 	}
 
 	// do we wait?
@@ -2525,22 +2482,14 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 			if err != nil {
 				return []RobotInstruction{}, errors.Wrap(err, "setting post mix pipetting speed")
 			}
-			setspd := NewSetPipetteSpeedInstruction()
-			setspd.Head = ins.Head
-			setspd.Channel = -1 // all channels
-			setspd.Speed = mixrate
-			ret = append(ret, setspd)
+			ret = append(ret, NewSetPipetteSpeedInstruction(ins.Head, -1, mixrate))
 		}
 
 		mix.Cycles = c
 		ret = append(ret, mix)
 
 		if changespeed {
-			sps := NewSetPipetteSpeedInstruction()
-			sps.Head = ins.Head
-			sps.Channel = -1 // all channels
-			sps.Speed = defaultpspeed
-			ret = append(ret, sps)
+			ret = append(ret, NewSetPipetteSpeedInstruction(ins.Head, -1, defaultpspeed))
 		}
 
 		// if we wait we need to do this here as well
@@ -2587,11 +2536,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 
 	if gentlydoesit {
 		// reset the drive speed
-		spd := NewSetDriveSpeedInstruction()
-		spd.Drive = "Z"
-		spd.Speed = pol["DEFAULTZSPEED"].(float64)
-		ret = append(ret, spd)
-
+		ret = append(ret, NewSetDriveSpeedInstruction("Z", pol["DEFAULTZSPEED"].(float64)))
 	}
 
 	// now do we reset?
@@ -2619,9 +2564,12 @@ type SetPipetteSpeedInstruction struct {
 	Speed   float64
 }
 
-func NewSetPipetteSpeedInstruction() *SetPipetteSpeedInstruction {
+func NewSetPipetteSpeedInstruction(head int, channel int, speed float64) *SetPipetteSpeedInstruction {
 	v := &SetPipetteSpeedInstruction{
 		InstructionType: SPS,
+		Head:            head,
+		Channel:         channel,
+		Speed:           speed,
 	}
 	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
 	return v
@@ -2669,9 +2617,13 @@ type SetDriveSpeedInstruction struct {
 	Speed float64
 }
 
-func NewSetDriveSpeedInstruction() *SetDriveSpeedInstruction {
+// NewSetDriveSpeedInstruction set the speed at which the head will move
+// drive should be "X", "Y", or "Z", and speed is the speed in mm/s
+func NewSetDriveSpeedInstruction(drive string, speed float64) *SetDriveSpeedInstruction {
 	v := &SetDriveSpeedInstruction{
 		InstructionType: SDS,
+		Drive:           drive,
+		Speed:           speed,
 	}
 	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
 	return v

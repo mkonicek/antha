@@ -465,7 +465,19 @@ func summarisePlates(wells []*wtype.LHWell, elems []int) string {
 		return fmt.Sprintf("plate \"%s\"", up[0])
 	}
 	return fmt.Sprintf("plates \"%s\"", strings.Join(up, "\",\""))
+}
 
+func summariseWellContents(coordinates []wtype.WellCoords, plate *wtype.LHPlate) string {
+	ret := make([]string, 0, len(coordinates))
+	for _, coords := range coordinates {
+		if well, ok := plate.GetChildByAddress(coords).(*wtype.LHWell); ok {
+			vol := well.CurrentVolume() //nolint
+			height := plate.Welltype.GetLiquidLevel(vol)
+			ret = append(ret, fmt.Sprintf("%s (%.3f mm)", vol, height))
+		}
+	}
+
+	return summariseStrings(ret)
 }
 
 //summarisePlateWells list wells for each plate preserving order

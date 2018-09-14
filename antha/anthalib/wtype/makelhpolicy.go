@@ -68,6 +68,7 @@ func MakePolicies() map[string]LHPolicy {
 	add(MakeSingleChannelPolicy(), "SingleChannel")
 	add(MakeSmartMixSingleChannelPolicy(), "SmartMixSingleChannel")
 	add(MakeLLFPolicy(), "LiquidLevel")
+	add(MakeSingleChannelLLFPolicy(), "SingleChannelLiquidLevel")
 	add(MakeSmartMixLLFPolicy(), "SmartMixLiquidLevel")
 	add(MakeMultiWaterPolicy(), "multiwater")
 	add(MakeCulturePolicy(), "culture")
@@ -318,6 +319,13 @@ func MakeLLFPolicy() LHPolicy {
 	pol := MakeWaterPolicy()
 	pol["USE_LLF"] = true
 	pol["DESCRIPTION"] = "Default policy designed for pipetting water, permitting multi-channel use and aspirating and dispensing at the liquid level. Includes a blowout step for added accuracy and no post-mixing."
+	return pol
+}
+
+func MakeSingleChannelLLFPolicy() LHPolicy {
+	pol := MakeSingleChannelPolicy()
+	pol["USE_LLF"] = true
+	pol["DESCRIPTION"] = "Default policy designed for pipetting water, permitting only single-channel use and aspirating and dispensing at the liquid level. Includes a blowout step for added accuracy and no post-mixing."
 	return pol
 }
 

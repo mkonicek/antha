@@ -151,28 +151,6 @@ func (it *IChain) Print() {
 	}
 }
 
-func (it *IChain) InputIDs() string {
-	s := ""
-
-	for _, ins := range it.Values {
-		for _, c := range ins.Components {
-			s += c.ID + "   "
-		}
-		s += ","
-	}
-
-	return s
-}
-
-func (it *IChain) ProductIDs() string {
-	s := ""
-
-	for _, ins := range it.Values {
-		s += strings.Join(ins.ProductIDs(), " ") + "   "
-	}
-	return s
-}
-
 //FlattenInstructionIDs returns a slice containing the IDs of each instruction
 //in the chain in order
 func (it *IChain) FlattenInstructionIDs() []string {

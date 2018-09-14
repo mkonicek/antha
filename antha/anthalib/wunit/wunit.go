@@ -61,6 +61,11 @@ type Measurement interface {
 	InUnit(p PrefixedUnit) (Measurement, error)
 	// InStringUnit wrapper for InUnit which fetches the unit from the global UnitRegistry
 	InStringUnit(symbol string) (Measurement, error)
+	// MustInUnit get a new Measurement with the new units, equivalent to InUnit except calls panic() if units are not compatible
+	MustInUnit(p PrefixedUnit) Measurement
+	// MustInStringUnit wrapper for InUnit which fetches the unit from the global UnitRegistry,
+	// equivalent to InStringUnit but calls panic() if units are incompatible
+	MustInStringUnit(symbol string) Measurement
 	// ConvertToString deprecated, please use ConvertTo or InStringUnit
 	ConvertToString(s string) float64
 	// IncrBy add to this measurement
@@ -157,6 +162,24 @@ func (cm *ConcreteMeasurement) InStringUnit(symbol string) (Measurement, error) 
 		return nil, err
 	} else {
 		return cm.InUnit(unit)
+	}
+}
+
+// MustInUnit convert to the given unit, calls panic() if the units are not compatible
+func (cm *ConcreteMeasurement) MustInUnit(p PrefixedUnit) Measurement {
+	if ret, err := cm.InUnit(p); err != nil {
+		panic(err)
+	} else {
+		return ret
+	}
+}
+
+// MustInStringUnit return a new measurement in the new units
+func (cm *ConcreteMeasurement) MustInStringUnit(symbol string) Measurement {
+	if ret, err := cm.InStringUnit(symbol); err != nil {
+		panic(err)
+	} else {
+		return ret
 	}
 }
 

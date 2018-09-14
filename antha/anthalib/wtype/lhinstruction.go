@@ -10,14 +10,12 @@ import (
 // enum of instruction types
 
 const (
-	LHIEND = iota
-	LHIMIX
-	LHIWAI
+	LHIMIX = iota
 	LHIPRM
 	LHISPL
 )
 
-var InsNames = []string{"END", "MIX", "WAIT", "PROMPT", "SPLIT"}
+var InsNames = []string{"MIX", "PROMPT", "SPLIT"}
 
 func InsType(i int) string {
 
@@ -34,8 +32,6 @@ func InsType(i int) string {
 type LHInstruction struct {
 	ID               string
 	BlockID          BlockID
-	SName            string
-	Order            int
 	Components       []*Liquid
 	ContainerType    string
 	Welladdress      string
@@ -64,7 +60,7 @@ func (ins LHInstruction) String() string {
 		ins.PlateName,
 		ins.PlateID,
 		ins.Welladdress,
-		ins.ProductIDs(),
+		ComponentVector(ins.Results),
 	)
 
 	if ins.IsMixInPlace() {
@@ -104,32 +100,6 @@ func (ins *LHInstruction) Summarize(indent int) string {
 	}
 
 	return strings.Join(lines, "\n")
-}
-
-func (lhi *LHInstruction) ProductIDs() []string {
-	r := make([]string, 0, len(lhi.Results))
-
-	for _, p := range lhi.Results {
-		r = append(r, p.ID)
-	}
-
-	return r
-}
-
-func (lhi *LHInstruction) InputIDs() []string {
-	r := make([]string, 0, len(lhi.Components))
-	for _, c := range lhi.Components {
-		r = append(r, c.ID)
-	}
-	return r
-}
-
-func (lhi *LHInstruction) GetPlateType() string {
-	if lhi.OutPlate != nil {
-		return lhi.OutPlate.Type
-	}
-
-	return lhi.Platetype
 }
 
 // privatised in favour of specific instruction constructors

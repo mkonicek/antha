@@ -25,7 +25,6 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
-	"math"
 
 	"github.com/pkg/errors"
 
@@ -33,7 +32,6 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/antha/anthalib/wutil/text"
 	"github.com/antha-lang/antha/inventory"
 	anthadriver "github.com/antha-lang/antha/microArch/driver"
@@ -1807,25 +1805,13 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		//Is the liquid height in each well higher than below_surface
 		for i := 0; i < ins.Multi; i++ {
 			plate := prms.Plates[ins.PltFrom[i]]
-			if plate.Welltype.HasLiquidLevelModel() {
-				ll_model, quad := plate.Welltype.GetLiquidLevelModel().(*wutil.Quadratic)
-				if !quad {
-					return ret, fmt.Errorf("Non-quadratic LL model is unsupported")
-				}
-				vol := ins.FVolume[i].ConvertToString("ul") - ins.Volume[i].ConvertToString("ul")
-				//C == 0 by definition for quad models
-				h := (-ll_model.B + math.Sqrt(ll_model.B*ll_model.B+4.*ll_model.A*vol)) / (2. * ll_model.A)
 
-				if h <= below_surface {
-					//we're going to hit the bottom if we LLF all the way
-					//TODO: we should generate two asp commands
-					//one with LLF until we reach close to the bottom
-					//and another without LLF so we don't smack into the bottom
-					//For Now: just diable LLF and continue as before
-					any_llf = false
-					for j := 0; j < ins.Multi; j++ {
-						use_llf[j] = false
-					}
+			if h := plate.Welltype.GetLiquidLevel(ins.FVolume[i]); h <= below_surface {
+				fmt.Printf("Disabling LLF as h (%f) < below_surface (%f)\n", h, below_surface)
+				//we're going to immediately hit the bottom if we use LLF, so disable it
+				any_llf = false
+				for j := 0; j < ins.Multi; j++ {
+					use_llf[j] = false
 				}
 			}
 		}
@@ -2016,6 +2002,17 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	}
 
 	// now we aspirate
+
+	if any_llf {
+		startingVolumes := make(map[string]float64, len(ins.WellFrom))
+		removedVolumes := make(map[string]float64, len(ins.WellFrom))
+		for i, well := range ins.WellFrom {
+			startingVolumes[well] = ins.FVolume[i].MustInStringUnit("ul")
+			removedVolumes[well] += ins.Volume[i].MustInStringUnit("ul")
+		}
+
+		fmt.Printf("  startingVolumes: %v\n  removedVolumes: %v\n", startingVolumes, removedVolumes)
+	}
 
 	aspins := NewAspirateInstruction()
 	aspins.Head = ins.Head

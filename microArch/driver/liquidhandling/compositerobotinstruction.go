@@ -1876,24 +1876,6 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		return []RobotInstruction{}, errors.Wrap(err, fmt.Sprintf("setting default pipette speed for policy %s", text.PrettyPrint(pol)))
 	}
 
-	//LLF
-	use_llf, any_llf := get_use_llf(pol, ins.Multi, ins.PltFrom, prms)
-	if any_llf {
-		below_surface := SafeGetF64(pol, "LLFBELOWSURFACE")
-		//Is the liquid height in each well higher than below_surface
-		for i := 0; i < ins.Multi; i++ {
-			plate := prms.Plates[ins.PltFrom[i]]
-
-			if h := plate.Welltype.GetLiquidLevel(ins.FVolume[i]); h <= below_surface {
-				//we're going to immediately hit the bottom if we use LLF, so disable it
-				any_llf = false
-				for j := 0; j < ins.Multi; j++ {
-					use_llf[j] = false
-				}
-			}
-		}
-	}
-
 	// offsets
 	ofx := SafeGetF64(pol, "ASPXOFFSET")
 	ofy := SafeGetF64(pol, "ASPYOFFSET")
@@ -1975,8 +1957,6 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	if changepspeed {
 		if apspeed, err = checkAndSaften(apspeed, head.Params.Minspd.RawValue(), head.Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds); err != nil {
 			return []RobotInstruction{}, errors.Wrap(err, "setting pipette aspirate speed")
-		} else {
-			ret = append(ret, NewSetPipetteSpeedInstruction(ins.Head, -1, apspeed))
 		}
 	}
 
@@ -1992,41 +1972,48 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		}
 	}
 
-	fmt.Printf("Aspirate vol: %v\n", ins.Volume)
-	if any_llf {
+	//LLF
+	if useLLF, anyLLF := getUseLLF(pol, ins.Multi, ins.PltFrom, prms); anyLLF {
 		llfBelowSurface := SafeGetF64(pol, "LLFBELOWSURFACE")
-
-		finalVolumes := ins.getFinalVolumesByWell()
-		channelsByWell := ins.getChannelsByWell()
 		minHeight := wunit.NewLength(llfBelowSurface+ofz, "mm")
-		// assume welltypes are all the same
-		minVolume := prms.Plates[ins.PltFrom[0]].Welltype.GetLiquidVolume(minHeight)
+		minVolume := prms.Plates[ins.PltFrom[0]].Welltype.GetLiquidVolume(minHeight) // assume welltypes are all the same
 
-		llfVolumes := make([]wunit.Volume, 0, ins.Multi)
-		for _, vol := range volumes {
-			llfVolumes = append(llfVolumes, wunit.CopyVolume(vol))
+		for _, initial := range ins.getInitialVolumesByWell() {
+			anyLLF = anyLLF && !initial.LessThan(minVolume)
 		}
+		if anyLLF {
 
-		for well, final := range finalVolumes {
-			if final.LessThan(minVolume) {
-				//cannot aspirate all via LLF, leave the residual until later
-				residual := wunit.SubtractVolumes(minVolume, final)
-				//evenly split the residual between each channel accessing this well
-				residual.DivideBy(float64(len(channelsByWell[well])))
-				for _, ch := range channelsByWell[well] {
-					volumes[ch] = wunit.CopyVolume(residual)
-					llfVolumes[ch].DecrBy(residual)
-				}
-			} else {
-				for _, ch := range channelsByWell[well] {
-					volumes[ch] = wunit.ZeroVolume()
+			finalVolumes := ins.getFinalVolumesByWell()
+			channelsByWell := ins.getChannelsByWell()
+
+			llfVolumes := make([]wunit.Volume, 0, ins.Multi)
+			for _, vol := range volumes {
+				llfVolumes = append(llfVolumes, wunit.CopyVolume(vol))
+			}
+
+			for well, final := range finalVolumes {
+				if final.LessThan(minVolume) {
+					//cannot aspirate all via LLF, leave the residual until later
+					residual := wunit.SubtractVolumes(minVolume, final)
+					//evenly split the residual between each channel accessing this well
+					residual.DivideBy(float64(len(channelsByWell[well])))
+					for _, ch := range channelsByWell[well] {
+						volumes[ch] = wunit.CopyVolume(residual)
+						llfVolumes[ch].DecrBy(residual)
+					}
+				} else {
+					for _, ch := range channelsByWell[well] {
+						volumes[ch] = wunit.ZeroVolume()
+					}
 				}
 			}
-		}
 
-		fmt.Printf("  LLF aspirate vol: %v\n", llfVolumes)
-		ret = append(ret, ins.getMove(2, ins.FVolume, ofx, ofy, -llfBelowSurface))
-		ret = append(ret, ins.getAspirate(llfVolumes, use_llf))
+			ret = append(ret, ins.getMove(2, ins.FVolume, ofx, ofy, -llfBelowSurface))
+			if changepspeed {
+				ret = append(ret, NewSetPipetteSpeedInstruction(ins.Head, -1, apspeed))
+			}
+			ret = append(ret, ins.getAspirate(llfVolumes, useLLF))
+		}
 	}
 
 	positive := false
@@ -2038,8 +2025,10 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	}
 
 	if positive {
-		fmt.Printf("  non-LLF aspirate vol: %v\n", volumes)
 		ret = append(ret, ins.getMove(SafeGetInt(pol, "ASPREFERENCE"), ins.FVolume, ofx, ofy, ofz))
+		if changepspeed {
+			ret = append(ret, NewSetPipetteSpeedInstruction(ins.Head, -1, apspeed))
+		}
 		ret = append(ret, ins.getAspirate(volumes, nil))
 	}
 
@@ -2222,7 +2211,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	defaultspeed := SafeGetF64(pol, "DEFAULTZSPEED")
 
 	//LLF
-	use_llf, any_llf := get_use_llf(pol, ins.Multi, ins.PltTo, prms)
+	use_llf, any_llf := getUseLLF(pol, ins.Multi, ins.PltTo, prms)
 	if any_llf {
 		//override reference
 		ref = 2 //liquid level
@@ -3534,7 +3523,7 @@ func getMulti(w []string) int {
 	return c
 }
 
-func get_use_llf(pol wtype.LHPolicy, multi int, plates []string, prms *LHProperties) ([]bool, bool) {
+func getUseLLF(pol wtype.LHPolicy, multi int, plates []string, prms *LHProperties) ([]bool, bool) {
 	use_llf := make([]bool, multi)
 	any_llf := false
 	enable_llf := SafeGetBool(pol, "USE_LLF")

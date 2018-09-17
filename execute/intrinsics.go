@@ -2,16 +2,12 @@ package execute
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	api "github.com/antha-lang/antha/api/v1"
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/driver"
-	"github.com/antha-lang/antha/inject"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/microArch/sampletracker"
 	"github.com/antha-lang/antha/target"
@@ -460,97 +456,4 @@ func splitSample(ctx context.Context, component *wtype.Liquid, volume wunit.Volu
 	}
 
 	return inst
-}
-
-// AwaitData breaks execution pending return of requested data
-func AwaitData(
-	ctx context.Context,
-	object Annotatable,
-	meta *api.DeviceMetadata,
-	nextElement, replaceParam string,
-	nextInput, currentOutput inject.Value) {
-
-	if err := awaitData(ctx, object, meta, nextElement, replaceParam, nextInput, currentOutput); err != nil {
-		panic(err)
-	}
-}
-
-func clone(object inject.Value) (inject.Value, error) {
-	bs, err := json.Marshal(object)
-	if err != nil {
-		return nil, err
-	}
-	if err := json.Unmarshal(bs, &object); err != nil {
-		return nil, err
-	}
-
-	return object, nil
-}
-
-func awaitData(
-	ctx context.Context,
-	object Annotatable,
-	meta *api.DeviceMetadata,
-	nextElement, replaceParam string,
-	nextInput, currentOutput inject.Value) error {
-
-	switch t := object.(type) {
-	case *wtype.Plate:
-	default:
-		return fmt.Errorf("cannot wait for data on %v type, only LHPlate allowed", t)
-	}
-
-	nextInput, err := clone(nextInput)
-	if err != nil {
-		return err
-	}
-
-	currentOutput, err = clone(currentOutput)
-	if err != nil {
-		return err
-	}
-
-	// Get Data Request
-	req := ast.Request{
-		Selector: []ast.NameValue{
-			target.DriverSelectorV1DataSource,
-		},
-	}
-
-	// Update all components
-	plate := object.(*wtype.Plate)
-
-	allComp := plate.AllContents()
-
-	var updatedComp []*wtype.Liquid
-	for _, c := range allComp {
-		updatedComp = append(updatedComp, newCompFromComp(ctx, c))
-	}
-
-	_ = updatedComp // currently unused
-
-	await := &ast.AwaitInst{
-		AwaitID:              plate.ID,
-		NextElement:          nextElement,
-		NextElementInput:     nextInput,
-		ReplaceParam:         replaceParam,
-		CurrentElementOutput: currentOutput,
-	}
-
-	if meta != nil {
-		await.Tags = meta.Tags
-	}
-
-	// Create Instruction
-	inst := &commandInst{
-		Args: allComp,
-		Command: &ast.Command{
-			Requests: []ast.Request{req},
-			Inst:     await,
-		},
-		result: updatedComp,
-	}
-
-	Issue(ctx, inst)
-	return nil
 }

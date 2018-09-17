@@ -189,7 +189,7 @@ type LHWellParams struct {
 	zdim             float64
 	bottomh          float64
 	dunit            string
-	liquidLevelModel *wutil.Quadratic
+	liquidLevelModel wutil.Func1Prm
 }
 
 func makeLHWell(p *LHWellParams) *wtype.LHWell {

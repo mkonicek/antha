@@ -1786,6 +1786,10 @@ func (ins *SuckInstruction) getAspirate(volumes []wunit.Volume, useLLF []bool) R
 	for _, vol := range volumes {
 		aspins.Volume = append(aspins.Volume, wunit.CopyVolume(vol))
 	}
+	for len(aspins.Volume) < aspins.Multi {
+		aspins.Volume = append(aspins.Volume, wunit.ZeroVolume())
+	}
+
 	aspins.LLF = append(aspins.LLF, useLLF...)
 	for len(aspins.LLF) < aspins.Multi {
 		aspins.LLF = append(aspins.LLF, false)

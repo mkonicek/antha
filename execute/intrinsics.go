@@ -152,7 +152,7 @@ func mixerPrompt(ctx context.Context, opts mixerPromptOpts) *commandInst {
 	inst.SetGeneration(opts.ComponentIn.Generation())
 	inst.Message = opts.Message
 	inst.AddOutput(opts.Component)
-	inst.AddComponent(opts.ComponentIn)
+	inst.AddInput(opts.ComponentIn)
 	inst.PassThrough[opts.ComponentIn.ID] = opts.Component
 
 	return &commandInst{

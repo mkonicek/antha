@@ -143,7 +143,7 @@ func (inst *LHInstruction) AddOutput(cmp *Liquid) {
 	inst.Outputs = append(inst.Outputs, cmp)
 }
 
-func (inst *LHInstruction) AddComponent(cmp *Liquid) {
+func (inst *LHInstruction) AddInput(cmp *Liquid) {
 	if inst == nil {
 		return
 	}

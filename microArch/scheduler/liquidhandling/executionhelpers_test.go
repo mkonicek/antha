@@ -17,7 +17,7 @@ func GetMixForTest(id string, input ...*wtype.Liquid) (*wtype.LHInstruction, *wt
 	mix := wtype.NewLHMixInstruction()
 	mix.ID = id
 	for _, ip := range input {
-		mix.AddComponent(ip)
+		mix.AddInput(ip)
 	}
 	mix.AddOutput(output)
 
@@ -29,7 +29,7 @@ func GetSplitForTest(id string, input *wtype.Liquid, volume float64) (*wtype.LHI
 	split.ID = id
 	moving, remaining := mixer.SplitSample(input, wunit.NewVolume(volume, "ul"))
 
-	split.AddComponent(input)
+	split.AddInput(input)
 	split.AddOutput(moving)
 	split.AddOutput(remaining)
 
@@ -44,7 +44,7 @@ func GetPromptForTest(message string, inputs ...*wtype.Liquid) (*wtype.LHInstruc
 		output := input.Cp()
 		output.ParentID = input.ID
 		input.DaughterID = output.ID
-		ret.AddComponent(input)
+		ret.AddInput(input)
 		ret.AddOutput(output)
 	}
 

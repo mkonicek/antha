@@ -112,9 +112,9 @@ func configure_request_simple(ctx context.Context, rq *LHRequest) {
 		mmxs := mixer.Sample(mmx, wunit.NewVolume(8.0, "ul"))
 		ps := mixer.Sample(part, wunit.NewVolume(1.0, "ul"))
 
-		ins.AddComponent(ws)
-		ins.AddComponent(mmxs)
-		ins.AddComponent(ps)
+		ins.AddInput(ws)
+		ins.AddInput(mmxs)
+		ins.AddInput(ps)
 		ins.AddOutput(GetComponentForTest(ctx, "water", wunit.NewVolume(17.0, "ul")))
 		rq.Add_instruction(ins)
 	}
@@ -132,9 +132,9 @@ func configure_request_total_volume(ctx context.Context, rq *LHRequest) {
 		mmxs := mixer.Sample(mmx, wunit.NewVolume(8.0, "ul"))
 		ps := mixer.Sample(part, wunit.NewVolume(1.0, "ul"))
 
-		ins.AddComponent(ws)
-		ins.AddComponent(mmxs)
-		ins.AddComponent(ps)
+		ins.AddInput(ws)
+		ins.AddInput(mmxs)
+		ins.AddInput(ps)
 		ins.AddOutput(GetComponentForTest(ctx, "water", wunit.NewVolume(17.0, "ul")))
 		rq.Add_instruction(ins)
 	}
@@ -152,9 +152,9 @@ func configure_request_bigger(ctx context.Context, rq *LHRequest) {
 		mmxs := mixer.Sample(mmx, wunit.NewVolume(8.0, "ul"))
 		ps := mixer.Sample(part, wunit.NewVolume(1.0, "ul"))
 
-		ins.AddComponent(ws)
-		ins.AddComponent(mmxs)
-		ins.AddComponent(ps)
+		ins.AddInput(ws)
+		ins.AddInput(mmxs)
+		ins.AddInput(ps)
 		ins.AddOutput(GetComponentForTest(ctx, "water", wunit.NewVolume(17.0, "ul")))
 		rq.Add_instruction(ins)
 	}
@@ -168,7 +168,7 @@ func configureMultiChannelTestRequest(ctx context.Context, rq *LHRequest) {
 		ins := wtype.NewLHMixInstruction()
 		ws := mixer.Sample(water, wunit.NewVolume(50.0, "ul"))
 
-		ins.AddComponent(ws)
+		ins.AddInput(ws)
 
 		ins.AddOutput(GetComponentForTest(ctx, "water", wunit.NewVolume(50, "ul")))
 		rq.Add_instruction(ins)
@@ -211,7 +211,7 @@ func configureTransferRequestForZTest(policyName string, transferVol wunit.Volum
 		ins := wtype.NewLHMixInstruction()
 		ws := mixer.Sample(liq, transferVol)
 
-		ins.AddComponent(ws)
+		ins.AddInput(ws)
 
 		expectedProduct := GetComponentForTest(ctx, "water", transferVol)
 
@@ -245,7 +245,7 @@ func configureSingleChannelTestRequest(ctx context.Context, rq *LHRequest) {
 		ins := wtype.NewLHMixInstruction()
 		ws := mixer.Sample(water, wunit.NewVolume(50.0, "ul"))
 
-		ins.AddComponent(ws)
+		ins.AddInput(ws)
 
 		ins.AddOutput(GetComponentForTest(ctx, "water", wunit.NewVolume(50, "ul")))
 		rq.Add_instruction(ins)
@@ -289,7 +289,7 @@ func configureTransferRequestMutliSamplesTest(policyName string, samples ...*wty
 
 		sample.SetPolicyName(wtype.PolicyName(policyName))
 
-		ins.AddComponent(sample)
+		ins.AddInput(sample)
 		ins.AddOutput(GetComponentForTest(ctx, "water", sample.Volume()))
 
 		if !it.Valid() {
@@ -337,9 +337,9 @@ func configure_request_overfilled(ctx context.Context, rq *LHRequest) {
 		mmxs := mixer.Sample(mmx, wunit.NewVolume(160.0, "ul"))
 		ps := mixer.Sample(part, wunit.NewVolume(20.0, "ul"))
 
-		ins.AddComponent(ws)
-		ins.AddComponent(mmxs)
-		ins.AddComponent(ps)
+		ins.AddInput(ws)
+		ins.AddInput(mmxs)
+		ins.AddInput(ps)
 		ins.AddOutput(GetComponentForTest(ctx, "water", wunit.NewVolume(340.0, "ul")))
 		rq.Add_instruction(ins)
 	}

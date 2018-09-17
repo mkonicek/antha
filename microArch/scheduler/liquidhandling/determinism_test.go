@@ -24,9 +24,9 @@ func configure_request_quitebig(ctx context.Context, rq *LHRequest) {
 		mmxs := mixer.Sample(mmx, wunit.NewVolume(21.0, "ul"))
 		ps := mixer.Sample(part, wunit.NewVolume(1.0, "ul"))
 
-		ins.AddComponent(ws)
-		ins.AddComponent(mmxs)
-		ins.AddComponent(ps)
+		ins.AddInput(ws)
+		ins.AddInput(mmxs)
+		ins.AddInput(ps)
 		ins.AddOutput(GetComponentForTest(ctx, "water", wunit.NewVolume(43.0, "ul")))
 		ins.Outputs[0].CName = fmt.Sprintf("DANGER_MIX_%d", k)
 		ins.SetGeneration(k + 1)

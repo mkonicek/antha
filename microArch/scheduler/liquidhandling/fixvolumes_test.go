@@ -307,7 +307,7 @@ func TestFixVolumesSplitSample(t *testing.T) {
 
 		// make the split instruction
 		splitIns := wtype.NewLHSplitInstruction()
-		splitIns.AddComponent(c3)
+		splitIns.AddInput(c3)
 		splitIns.AddOutput(smp)
 		splitIns.AddOutput(newC3)
 		c3.Vol = 100.0

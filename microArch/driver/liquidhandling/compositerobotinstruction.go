@@ -1759,7 +1759,7 @@ func (ins *SuckInstruction) getRemovedVolumesByWell() map[string]wunit.Volume {
 		if _, ok := ret[well]; !ok {
 			ret[well] = wunit.CopyVolume(ins.Volume[i])
 		} else {
-			ret[well].IncrBy(ins.Volume[i])
+			ret[well].IncrBy(ins.Volume[i]) //nolint - since volume units are all compatible
 		}
 	}
 	return ret
@@ -1786,9 +1786,7 @@ func (ins *SuckInstruction) getAspirate(volumes []wunit.Volume, useLLF []bool) R
 	for _, vol := range volumes {
 		aspins.Volume = append(aspins.Volume, wunit.CopyVolume(vol))
 	}
-	for _, llf := range useLLF {
-		aspins.LLF = append(aspins.LLF, llf)
-	}
+	aspins.LLF = append(aspins.LLF, useLLF...)
 	for len(aspins.LLF) < aspins.Multi {
 		aspins.LLF = append(aspins.LLF, false)
 	}
@@ -1968,7 +1966,7 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	if ev, iwantmore := pol["EXTRA_ASP_VOLUME"]; iwantmore {
 		extra_vol := ev.(wunit.Volume)
 		for i := range volumes {
-			volumes[i].IncrBy(extra_vol)
+			volumes[i].IncrBy(extra_vol) //nolint - since volume units are all compatible
 		}
 	}
 
@@ -1999,7 +1997,7 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 					residual.DivideBy(float64(len(channelsByWell[well])))
 					for _, ch := range channelsByWell[well] {
 						volumes[ch] = wunit.CopyVolume(residual)
-						llfVolumes[ch].DecrBy(residual)
+						llfVolumes[ch].DecrBy(residual) //nolint - since volume units are all compatible
 					}
 				} else {
 					for _, ch := range channelsByWell[well] {

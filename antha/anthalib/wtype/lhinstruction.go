@@ -154,12 +154,9 @@ func (inst *LHInstruction) AddInput(cmp *Liquid) {
 func (ins *LHInstruction) Generation() int {
 	return ins.gen
 }
+
 func (ins *LHInstruction) SetGeneration(i int) {
 	ins.gen = i
-}
-
-func (ins *LHInstruction) GetPlateID() string {
-	return ins.PlateID
 }
 
 func (ins *LHInstruction) SetPlateID(pid string) {

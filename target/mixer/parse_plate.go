@@ -127,13 +127,6 @@ func ParsePlateCSV(ctx context.Context, inData io.Reader, validationOptions ...V
 	return parsePlateCSVWithValidationConfig(ctx, inData, validationOptions...)
 }
 
-// removeModifiedPolicySuffix will trim a _modified suffix from a LiquidType in the CSV file.
-// These are added to LiquidType names when a Liquid is modified in an element.
-func removeModifiedPolicySuffix(policyName string) string {
-	splitPolicy := strings.Split(policyName, "_modified")
-	return splitPolicy[0]
-}
-
 // parsePlateCSVWithValidationConfig parses a csv file into a plate.
 //
 // CSV plate format: (? denotes optional, whitespace for clarity)

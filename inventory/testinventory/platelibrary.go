@@ -4748,7 +4748,9 @@ var plateBytes = []byte(`
   "WellXStart": 14.53,
   "WellYStart": 11.24,
   "WellZStart": 3.7,
-  "Extra": {}
+  "Extra": {
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+  }
  },
  {
   "PlateType": "GreinerSWVBottom_bioshake",
@@ -4775,7 +4777,8 @@ var plateBytes = []byte(`
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
-   ]
+   ],
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
   }
  },
  {
@@ -4803,7 +4806,8 @@ var plateBytes = []byte(`
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
-   ]
+   ],
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
   }
  },
  {
@@ -4828,7 +4832,9 @@ var plateBytes = []byte(`
   "WellXStart": 14.53,
   "WellYStart": 11.24,
   "WellZStart": 43.7,
-  "Extra": {}
+  "Extra": {
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+  }
  },
  {
   "PlateType": "GreinerSWVBottom_riser18",
@@ -4852,7 +4858,9 @@ var plateBytes = []byte(`
   "WellXStart": 14.53,
   "WellYStart": 11.24,
   "WellZStart": 21.7,
-  "Extra": {}
+  "Extra": {
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+  }
  },
  {
   "PlateType": "GreinerSWVBottom_riser20",
@@ -4876,7 +4884,9 @@ var plateBytes = []byte(`
   "WellXStart": 14.53,
   "WellYStart": 11.24,
   "WellZStart": 23.7,
-  "Extra": {}
+  "Extra": {
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+  }
  },
  {
   "PlateType": "GreinerSWVBottom_riser40",
@@ -4900,7 +4910,9 @@ var plateBytes = []byte(`
   "WellXStart": 14.53,
   "WellYStart": 11.24,
   "WellZStart": 43.7,
-  "Extra": {}
+  "Extra": {
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+  }
  },
  {
   "PlateType": "GreinerSWVBottom_shallowriser",
@@ -4924,7 +4936,9 @@ var plateBytes = []byte(`
   "WellXStart": 14.53,
   "WellYStart": 11.24,
   "WellZStart": 23.7,
-  "Extra": {}
+  "Extra": {
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+  }
  },
  {
   "PlateType": "GreinerSWVBottom_shallowriser18",
@@ -4948,7 +4962,9 @@ var plateBytes = []byte(`
   "WellXStart": 14.53,
   "WellYStart": 11.24,
   "WellZStart": 21.7,
-  "Extra": {}
+  "Extra": {
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+  }
  },
  {
   "PlateType": "GreinerSWVBottom_with_AB_magnetic_ring_stand",
@@ -4972,7 +4988,9 @@ var plateBytes = []byte(`
   "WellXStart": 14.53,
   "WellYStart": 11.24,
   "WellZStart": 15.95,
-  "Extra": {}
+  "Extra": {
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+  }
  },
  {
   "PlateType": "GreinerV96FromSpec",
@@ -4996,7 +5014,9 @@ var plateBytes = []byte(`
   "WellXStart": 14.38,
   "WellYStart": 11.24,
   "WellZStart": 3.7,
-  "Extra": {}
+  "Extra": {
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+  }
  },
  {
   "PlateType": "GreinerV96FromSpec_bioshake",
@@ -5023,7 +5043,8 @@ var plateBytes = []byte(`
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
-   ]
+   ],
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
   }
  },
  {
@@ -5051,7 +5072,8 @@ var plateBytes = []byte(`
   "Extra": {
    "constraint-Pipetmax": [
     "position_1"
-   ]
+   ],
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
   }
  },
  {
@@ -5076,7 +5098,9 @@ var plateBytes = []byte(`
   "WellXStart": 14.38,
   "WellYStart": 11.24,
   "WellZStart": 43.7,
-  "Extra": {}
+  "Extra": {
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+  }
  },
  {
   "PlateType": "GreinerV96FromSpec_riser18",
@@ -5100,7 +5124,9 @@ var plateBytes = []byte(`
   "WellXStart": 14.38,
   "WellYStart": 11.24,
   "WellZStart": 21.7,
-  "Extra": {}
+  "Extra": {
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+  }
  },
  {
   "PlateType": "GreinerV96FromSpec_riser20",
@@ -5124,7 +5150,9 @@ var plateBytes = []byte(`
   "WellXStart": 14.38,
   "WellYStart": 11.24,
   "WellZStart": 23.7,
-  "Extra": {}
+  "Extra": {
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+  }
  },
  {
   "PlateType": "GreinerV96FromSpec_riser40",
@@ -5148,7 +5176,9 @@ var plateBytes = []byte(`
   "WellXStart": 14.38,
   "WellYStart": 11.24,
   "WellZStart": 43.7,
-  "Extra": {}
+  "Extra": {
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+  }
  },
  {
   "PlateType": "GreinerV96FromSpec_shallowriser",
@@ -5172,7 +5202,9 @@ var plateBytes = []byte(`
   "WellXStart": 14.38,
   "WellYStart": 11.24,
   "WellZStart": 23.7,
-  "Extra": {}
+  "Extra": {
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+  }
  },
  {
   "PlateType": "GreinerV96FromSpec_shallowriser18",
@@ -5196,7 +5228,9 @@ var plateBytes = []byte(`
   "WellXStart": 14.38,
   "WellYStart": 11.24,
   "WellZStart": 21.7,
-  "Extra": {}
+  "Extra": {
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+  }
  },
  {
   "PlateType": "IDT96",
@@ -10374,7 +10408,7 @@ var plateBytes = []byte(`
   "WellZStart": 1.3359999999999999,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
-   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
   }
  },
  {
@@ -10404,7 +10438,7 @@ var plateBytes = []byte(`
    "constraint-Pipetmax": [
     "position_1"
    ],
-   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
   }
  },
  {
@@ -10431,7 +10465,7 @@ var plateBytes = []byte(`
   "WellZStart": 1.7,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
-   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
   }
  },
  {
@@ -10461,7 +10495,7 @@ var plateBytes = []byte(`
    "constraint-Pipetmax": [
     "position_1"
    ],
-   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
   }
  },
  {
@@ -10488,7 +10522,7 @@ var plateBytes = []byte(`
   "WellZStart": 30.7,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
-   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
   }
  },
  {
@@ -10515,7 +10549,7 @@ var plateBytes = []byte(`
   "WellZStart": 17.7,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
-   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
   }
  },
  {
@@ -10542,7 +10576,7 @@ var plateBytes = []byte(`
   "WellZStart": 11.7,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
-   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
   }
  },
  {
@@ -10569,7 +10603,7 @@ var plateBytes = []byte(`
   "WellZStart": 1.3359999999999999,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
-   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
   }
  },
  {
@@ -10823,7 +10857,7 @@ var plateBytes = []byte(`
    "constraint-Pipetmax": [
     "position_1"
    ],
-   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
   }
  },
  {
@@ -10853,7 +10887,7 @@ var plateBytes = []byte(`
    "constraint-Pipetmax": [
     "position_1"
    ],
-   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
   }
  },
  {
@@ -10883,7 +10917,7 @@ var plateBytes = []byte(`
    "constraint-Pipetmax": [
     "position_1"
    ],
-   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
   }
  },
  {
@@ -10910,7 +10944,7 @@ var plateBytes = []byte(`
   "WellZStart": 41.336000000000006,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
-   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
   }
  },
  {
@@ -10937,7 +10971,7 @@ var plateBytes = []byte(`
   "WellZStart": 19.336,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
-   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
   }
  },
  {
@@ -10964,7 +10998,7 @@ var plateBytes = []byte(`
   "WellZStart": 21.336,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
-   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
   }
  },
  {
@@ -10991,7 +11025,7 @@ var plateBytes = []byte(`
   "WellZStart": 41.336000000000006,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
-   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
   }
  },
  {
@@ -11018,7 +11052,7 @@ var plateBytes = []byte(`
   "WellZStart": 21.336,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
-   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
   }
  },
  {
@@ -11045,7 +11079,7 @@ var plateBytes = []byte(`
   "WellZStart": 19.336,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
-   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
   }
  },
  {
@@ -11072,7 +11106,7 @@ var plateBytes = []byte(`
   "WellZStart": 20.735999999999997,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
-   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
   }
  },
  {
@@ -11099,7 +11133,7 @@ var plateBytes = []byte(`
   "WellZStart": 14.7,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
-   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
   }
  },
  {
@@ -11126,7 +11160,7 @@ var plateBytes = []byte(`
   "WellZStart": 29.7,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
-   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
   }
  },
  {
@@ -11153,7 +11187,7 @@ var plateBytes = []byte(`
   "WellZStart": 17.336,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
-   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
   }
  },
  {
@@ -11180,7 +11214,7 @@ var plateBytes = []byte(`
   "WellZStart": 10.7,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
-   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
   }
  },
  {
@@ -11431,7 +11465,7 @@ var plateBytes = []byte(`
   "WellZStart": 0.7,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
-   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
   }
  },
  {
@@ -11461,7 +11495,7 @@ var plateBytes = []byte(`
    "constraint-Pipetmax": [
     "position_1"
    ],
-   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
   }
  },
  {
@@ -11488,7 +11522,7 @@ var plateBytes = []byte(`
   "WellZStart": 27.2,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
-   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
   }
  },
  {
@@ -11515,7 +11549,7 @@ var plateBytes = []byte(`
   "WellZStart": 16.7,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
-   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
   }
  },
  {
@@ -11542,7 +11576,7 @@ var plateBytes = []byte(`
   "WellZStart": 10.7,
   "Extra": {
    "afvfunc": "{\"Quartic\":\"\",\"A\":-3.3317851312e-9,\"B\":0.00000225834467,\"C\":-0.0006305492472,\"D\":0.1328156706978,\"E\":0}",
-   "ll_model": "{\"Quadratic\":\"\",\"A\":0,\"B\":25,\"C\":0}"
+   "ll_model": "{\"Quadratic\":\"\",\"A\":0.402,\"B\":7.069,\"C\":0}"
   }
  }
 ]

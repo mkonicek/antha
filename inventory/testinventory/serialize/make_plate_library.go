@@ -663,8 +663,7 @@ func makePCRPlateWell() *wtype.LHWell {
 	pcrplatewell.SetAfVFunc(afs)
 
 	//LiquidLevel model for LL Following: vol_f estimates volume given height
-	//vol_f := wutil.Quadratic{A: 0.402, B: 7.069, C: 0.0}
-	vol_f := wutil.Quadratic{A: 0., B: 200.0 / 8.0, C: 0.}
+	vol_f := wutil.Quadratic{A: 0.402, B: 7.069, C: 0.0}
 	pcrplatewell.SetLiquidLevelModel(vol_f)
 
 	return pcrplatewell
@@ -711,6 +710,10 @@ func makeGreinerVBottomPlate() *wtype.Plate {
 
 	rwshp := wtype.NewShape(wtype.CylinderShape, "mm", 6.2, 6.2, 10.0)
 	welltype := wtype.NewLHWell("ul", 230, 10, rwshp, bottomtype, xdim, ydim, zdim, bottomh, "mm")
+
+	//linear liquid level model derived empirically
+	vol_f := wutil.Quadratic{A: 0., B: 200.0 / 8.0, C: 0.}
+	welltype.SetLiquidLevelModel(vol_f)
 
 	plate := wtype.NewLHPlate("GreinerSWVBottom", "Greiner", 8, 12, makePlateCoords(15), welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
 
@@ -1127,6 +1130,10 @@ func makeGreinerVFromSpec() *wtype.LHPlate {
 	newWellShape := wtype.NewShape(wellShape, dimensionUnit, xdim, ydim, zdim)
 
 	newWelltype := wtype.NewLHWell(volUnit, maxVolume, minVolume, newWellShape, bottomtype, xdim, ydim, zdim, bottomh, dimensionUnit)
+
+	//linear liquid level model derived empirically
+	vol_f := wutil.Quadratic{A: 0., B: 200.0 / 8.0, C: 0.}
+	newWelltype.SetLiquidLevelModel(vol_f)
 
 	plate := wtype.NewLHPlate(plateName, manufacturer, numberOfRows, numberOfColumns, makePlateCoords(overallHeight), newWelltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
 

@@ -50,7 +50,7 @@ func getMixInstructions(ctx context.Context, numInstructions int, componentNames
 		}
 
 		ins := wtype.NewLHMixInstruction()
-		ins.Components = append(ins.Components, components...)
+		ins.Inputs = append(ins.Inputs, components...)
 
 		result := components[0].Dup()
 		for j, c := range components {
@@ -59,7 +59,7 @@ func getMixInstructions(ctx context.Context, numInstructions int, componentNames
 			}
 			result.Mix(c)
 		}
-		ins.AddResult(result)
+		ins.AddOutput(result)
 
 		ret = append(ret, ins)
 	}

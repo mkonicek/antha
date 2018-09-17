@@ -19,7 +19,7 @@ func TestIChain(t *testing.T) {
 		cmp.ID = k
 
 		ins.AddComponent(cmp)
-		ins.AddResult(wtype.NewLHComponent())
+		ins.AddOutput(wtype.NewLHComponent())
 		chain.Add(ins)
 	}
 }
@@ -50,9 +50,9 @@ func TestIChain2(t *testing.T) {
 		ins := wtype.NewLHMixInstruction()
 		ins.AddComponent(k)
 		if i != len(s)-1 {
-			ins.AddProduct(cmps[i+1])
+			ins.AddOutput(cmps[i+1])
 		} else {
-			ins.AddResult(wtype.NewLHComponent())
+			ins.AddOutput(wtype.NewLHComponent())
 		}
 		chain.Add(ins)
 	}
@@ -94,9 +94,9 @@ func TestIChain3(t *testing.T) {
 		ins := wtype.NewLHMixInstruction()
 		ins.AddComponent(k)
 		if i != len(s)-1 && cmp.ID != "Z" && cmp.ID != "Y" {
-			ins.AddProduct(cmps[i+1])
+			ins.AddOutput(cmps[i+1])
 		} else {
-			ins.AddProduct(wtype.NewLHComponent())
+			ins.AddOutput(wtype.NewLHComponent())
 		}
 		chain.Add(ins)
 	}

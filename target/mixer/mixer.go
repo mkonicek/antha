@@ -309,7 +309,7 @@ func addCustomPolicies(mixes []*wtype.LHInstruction, lhreq *planner.LHRequest) e
 	userPolicyRuleSet := wtype.NewLHPolicyRuleSet()
 
 	for _, mixInstruction := range mixes {
-		for _, component := range mixInstruction.Components {
+		for _, component := range mixInstruction.Inputs {
 			if len(component.Policy) > 0 {
 				if matchingSystemPolicy, found := allPolicies[string(component.Type)]; found {
 					mergedPolicy := mergePolicies(matchingSystemPolicy, component.Policy)

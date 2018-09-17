@@ -59,7 +59,7 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 
 	// -- migrate this to chains of dependent instructions
 	for _, instruction := range instructions {
-		components := instruction.Components
+		components := instruction.Inputs
 
 		// we need to identify the concentration components
 		// and the total volume components, if we have
@@ -222,7 +222,7 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 	newInstructions := make(map[string]*wtype.LHInstruction, len(instructions))
 
 	for _, instruction := range instructions {
-		components := instruction.Components
+		components := instruction.Inputs
 		arrCncs := make([]*wtype.Liquid, 0, len(components))
 		arrTvol := make([]*wtype.Liquid, 0, len(components))
 		arrSvol := make([]*wtype.Liquid, 0, len(components))
@@ -280,7 +280,7 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 
 		// finally we replace the components in this instruction
 
-		instruction.Components = arrFinalComponents
+		instruction.Inputs = arrFinalComponents
 
 		// and put the new instruction in the array
 

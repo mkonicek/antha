@@ -151,7 +151,7 @@ func mixerPrompt(ctx context.Context, opts mixerPromptOpts) *commandInst {
 	inst := wtype.NewLHPromptInstruction()
 	inst.SetGeneration(opts.ComponentIn.Generation())
 	inst.Message = opts.Message
-	inst.AddProduct(opts.Component)
+	inst.AddOutput(opts.Component)
 	inst.AddComponent(opts.ComponentIn)
 	inst.PassThrough[opts.ComponentIn.ID] = opts.Component
 
@@ -320,14 +320,14 @@ func NewPlate(ctx context.Context, typ string) *wtype.Plate {
 
 func mix(ctx context.Context, inst *wtype.LHInstruction) *commandInst {
 	inst.BlockID = wtype.NewBlockID(getID(ctx))
-	inst.Results[0].BlockID = inst.BlockID
-	result := inst.Results[0]
+	inst.Outputs[0].BlockID = inst.BlockID
+	result := inst.Outputs[0]
 	//result.BlockID = inst.BlockID // DELETEME
 
 	mx := 0
 	var reqs []ast.Request
 	// from the protocol POV components need to be passed by value
-	for i, c := range wtype.CopyComponentArray(inst.Components) {
+	for i, c := range wtype.CopyComponentArray(inst.Inputs) {
 		if c.CName == "" {
 			panic("Nameless Component used in Mix - this is not permitted")
 		}
@@ -350,7 +350,7 @@ func mix(ctx context.Context, inst *wtype.LHInstruction) *commandInst {
 	result.DeclareInstance()
 
 	return &commandInst{
-		Args: inst.Components,
+		Args: inst.Inputs,
 		Command: &ast.Command{
 			Requests: reqs,
 			Inst:     inst,
@@ -374,14 +374,14 @@ func genericMix(ctx context.Context, generic *wtype.LHInstruction) *wtype.Liquid
 // Mix mixes components
 func Mix(ctx context.Context, components ...*wtype.Liquid) *wtype.Liquid {
 	return genericMix(ctx, mixer.GenericMix(mixer.MixOptions{
-		Components: components,
+		Inputs: components,
 	}))
 }
 
 // MixInto mixes components
 func MixInto(ctx context.Context, outplate *wtype.Plate, address string, components ...*wtype.Liquid) *wtype.Liquid {
 	return genericMix(ctx, mixer.GenericMix(mixer.MixOptions{
-		Components:  components,
+		Inputs:      components,
 		Destination: outplate,
 		Address:     address,
 	}))
@@ -390,10 +390,10 @@ func MixInto(ctx context.Context, outplate *wtype.Plate, address string, compone
 // MixNamed mixes components
 func MixNamed(ctx context.Context, outplatetype, address string, platename string, components ...*wtype.Liquid) *wtype.Liquid {
 	return genericMix(ctx, mixer.GenericMix(mixer.MixOptions{
-		Components: components,
-		PlateType:  outplatetype,
-		Address:    address,
-		PlateName:  platename,
+		Inputs:    components,
+		PlateType: outplatetype,
+		Address:   address,
+		PlateName: platename,
 	}))
 }
 
@@ -402,10 +402,10 @@ func MixNamed(ctx context.Context, outplatetype, address string, platename strin
 // TODO: Addresses break dependence information. Deprecated.
 func MixTo(ctx context.Context, outplatetype, address string, platenum int, components ...*wtype.Liquid) *wtype.Liquid {
 	return genericMix(ctx, mixer.GenericMix(mixer.MixOptions{
-		Components: components,
-		PlateType:  outplatetype,
-		Address:    address,
-		PlateNum:   platenum,
+		Inputs:    components,
+		PlateType: outplatetype,
+		Address:   address,
+		PlateNum:  platenum,
 	}))
 }
 
@@ -434,12 +434,12 @@ func splitSample(ctx context.Context, component *wtype.Liquid, volume wunit.Volu
 	split := wtype.NewLHSplitInstruction()
 
 	// this will count as a mix-in-place effectively
-	split.Components = append(split.Components, component.Dup())
+	split.Inputs = append(split.Inputs, component.Dup())
 
 	cmpMoving, cmpStaying := mixer.SplitSample(component, volume)
 
-	split.Results = append(split.Results, cmpMoving)
-	split.Results = append(split.Results, cmpStaying)
+	split.Outputs = append(split.Outputs, cmpMoving)
+	split.Outputs = append(split.Outputs, cmpStaying)
 
 	// Create Instruction
 	inst := &commandInst{

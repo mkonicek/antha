@@ -17,7 +17,7 @@ func TestTGraph(t *testing.T) {
 		ins := wtype.NewLHMixInstruction()
 		cmpOut := wtype.NewLHComponent()
 		ins.AddComponent(cmpIn)
-		ins.AddProduct(cmpOut)
+		ins.AddOutput(cmpOut)
 		tIns = append(tIns, ins)
 		cmpIn = cmpOut
 	}
@@ -77,15 +77,15 @@ func TestTGraphSplit(t *testing.T) {
 	ins := wtype.NewLHMixInstruction()
 
 	ins.AddComponent(moving)
-	ins.AddProduct(cmpOut)
+	ins.AddOutput(cmpOut)
 	tIns = append(tIns, ins)
 
 	// split
 	ins = wtype.NewLHSplitInstruction()
 	ins.AddComponent(cmpOut)
 
-	ins.AddProduct(moving)
-	ins.AddProduct(remaining)
+	ins.AddOutput(moving)
+	ins.AddOutput(remaining)
 
 	tIns = append(tIns, ins)
 
@@ -94,7 +94,7 @@ func TestTGraphSplit(t *testing.T) {
 	ins = wtype.NewLHMixInstruction()
 
 	ins.AddComponent(remaining)
-	ins.AddProduct(wtype.NewLHComponent())
+	ins.AddOutput(wtype.NewLHComponent())
 	tIns = append(tIns, ins)
 
 	tgraph, err := MakeTGraph(tIns)

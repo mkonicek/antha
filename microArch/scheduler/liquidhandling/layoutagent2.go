@@ -224,23 +224,23 @@ func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling
 			// as the input
 			// set pass throughs
 
-			for i := 0; i < len(v.Components); i++ {
-				v.PassThrough[v.Components[i].ID].Loc = v.Components[i].Loc
+			for i := 0; i < len(v.Inputs); i++ {
+				v.PassThrough[v.Inputs[i].ID].Loc = v.Inputs[i].Loc
 			}
 			continue
 		} else if v.Type == wtype.LHISPL {
 			// similar to the above, just ensure the results both have the right location set
-			v.Results[0].Loc = v.Components[0].Loc
-			v.Results[1].Loc = v.Components[0].Loc
+			v.Outputs[0].Loc = v.Inputs[0].Loc
+			v.Outputs[1].Loc = v.Inputs[0].Loc
 		}
 
-		lkp[v.ID] = make([]*wtype.Liquid, 0, 1) //v.Result
-		lk2[v.Results[0].ID] = v.ID
+		lkp[v.ID] = make([]*wtype.Liquid, 0, 1) //v.Output
+		lk2[v.Outputs[0].ID] = v.ID
 	}
 
 	for _, id := range order {
 		v := request.LHInstructions[id]
-		for _, c := range v.Components {
+		for _, c := range v.Inputs {
 			// if this component has the same ID
 			// as the result of another instruction
 			// we map it in
@@ -253,7 +253,7 @@ func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling
 		}
 
 		// now we put the actual result in
-		lkp[v.ID] = append(lkp[v.ID], v.Results[0])
+		lkp[v.ID] = append(lkp[v.ID], v.Outputs[0])
 	}
 
 	sampletracker := sampletracker.GetSampleTracker()
@@ -391,22 +391,22 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 			// and now it should indeed be set
 
 			// really?
-			if len(v.Components) == 0 {
+			if len(v.Inputs) == 0 {
 				continue
 			}
 
-			if v.Components[0].PlateLocation().ID == "" {
-				addr, ok := st.GetLocationOf(v.Components[0].ID)
+			if v.Inputs[0].PlateLocation().ID == "" {
+				addr, ok := st.GetLocationOf(v.Inputs[0].ID)
 
 				if !ok {
-					err := wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("MIX IN PLACE WITH NO LOCATION SET FOR %s", v.Components[0].Name()))
+					err := wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("MIX IN PLACE WITH NO LOCATION SET FOR %s", v.Inputs[0].Name()))
 					return s, m, err
 				}
 
-				v.Components[0].Loc = addr
+				v.Inputs[0].Loc = addr
 			}
 
-			addr := v.Components[0].Loc
+			addr := v.Inputs[0].Loc
 			tx := strings.Split(addr, ":")
 
 			// do we know about the plate?
@@ -421,7 +421,7 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 			request.LHInstructions[k].SetPlateID(tx[0])
 			request.LHInstructions[k].Platetype = lookUp.Type
 			request.LHInstructions[k].OutPlate = lookUp
-			request.LHInstructions[k].Results[0].Loc = addr
+			request.LHInstructions[k].Outputs[0].Loc = addr
 
 			// same as condition 1 except we get the plate id somewhere else
 			i := defined(tx[0], s)

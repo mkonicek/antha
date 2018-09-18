@@ -500,7 +500,7 @@ func NewVelocity(v float64, unit string) Velocity {
 	return Velocity{NewTypedMeasurement("Velocity", v, unit)}
 }
 
-// Velocity3D struct composed of lengths in three axes
+// Velocity3D struct composed of velocities in three axes
 type Velocity3D struct {
 	X, Y, Z Velocity
 }

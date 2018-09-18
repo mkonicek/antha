@@ -32,7 +32,8 @@ func InsType(i int) string {
 type LHInstruction struct {
 	ID               string
 	BlockID          BlockID
-	Components       []*Liquid
+	Inputs           []*Liquid
+	Outputs          []*Liquid
 	ContainerType    string
 	Welladdress      string
 	PlateID          string
@@ -42,7 +43,6 @@ type LHInstruction struct {
 	Conc             float64
 	Tvol             float64
 	Majorlayoutgroup int
-	Results          []*Liquid
 	gen              int
 	PlateName        string
 	OutPlate         *Plate
@@ -56,11 +56,11 @@ func (ins LHInstruction) String() string {
 		ins.InsType(),
 		ins.Generation(),
 		ins.ID,
-		ComponentVector(ins.Components),
+		ComponentVector(ins.Inputs),
 		ins.PlateName,
 		ins.PlateID,
 		ins.Welladdress,
-		ComponentVector(ins.Results),
+		ComponentVector(ins.Outputs),
 	)
 
 	if ins.IsMixInPlace() {
@@ -82,7 +82,7 @@ func (ins *LHInstruction) Summarize(indent int) string {
 
 	switch ins.Type {
 	case LHIMIX:
-		for _, cmp := range ins.Components {
+		for _, cmp := range ins.Inputs {
 			lines = append(lines, fmt.Sprintf("%s  %s", indentStr, cmp.Summarize()))
 		}
 		if ins.Welladdress != "" && ins.OutPlate != nil {
@@ -91,8 +91,8 @@ func (ins *LHInstruction) Summarize(indent int) string {
 			lines = append(lines, fmt.Sprintf(indentStr+"to plate of type %s", ins.Platetype))
 		}
 
-		if len(ins.Results) > 0 {
-			lines = append(lines, fmt.Sprintf(indentStr+"Resulting volume: %v", ins.Results[0].Summarize()))
+		if len(ins.Outputs) > 0 {
+			lines = append(lines, fmt.Sprintf(indentStr+"Resulting volume: %v", ins.Outputs[0].Summarize()))
 		}
 
 	default:
@@ -139,31 +139,24 @@ func (inst *LHInstruction) GetID() string {
 	return inst.ID
 }
 
-func (ins *LHInstruction) AddResult(cmp *Liquid) {
-	ins.AddProduct(cmp)
+func (inst *LHInstruction) AddOutput(cmp *Liquid) {
+	inst.Outputs = append(inst.Outputs, cmp)
 }
 
-func (inst *LHInstruction) AddProduct(cmp *Liquid) {
-	inst.Results = append(inst.Results, cmp)
-}
-
-func (inst *LHInstruction) AddComponent(cmp *Liquid) {
+func (inst *LHInstruction) AddInput(cmp *Liquid) {
 	if inst == nil {
 		return
 	}
 
-	inst.Components = append(inst.Components, cmp)
+	inst.Inputs = append(inst.Inputs, cmp)
 }
 
 func (ins *LHInstruction) Generation() int {
 	return ins.gen
 }
+
 func (ins *LHInstruction) SetGeneration(i int) {
 	ins.gen = i
-}
-
-func (ins *LHInstruction) GetPlateID() string {
-	return ins.PlateID
 }
 
 func (ins *LHInstruction) SetPlateID(pid string) {
@@ -175,17 +168,17 @@ func (ins *LHInstruction) IsMixInPlace() bool {
 		return false
 	}
 
-	if len(ins.Components) == 0 {
+	if len(ins.Inputs) == 0 {
 		return false
 	}
 
-	smp := ins.Components[0].IsSample()
+	smp := ins.Inputs[0].IsSample()
 	return !smp
 }
 
 //IsDummy return true if the instruction has no effect
 func (ins *LHInstruction) IsDummy() bool {
-	if ins.Type == LHIMIX && ins.IsMixInPlace() && len(ins.Components) == 1 {
+	if ins.Type == LHIMIX && ins.IsMixInPlace() && len(ins.Inputs) == 1 {
 		// instructions of this form generally mean "do nothing"
 		// but they have the effect of ensuring that the compoenent ID is changed
 		return true
@@ -195,7 +188,7 @@ func (ins *LHInstruction) IsDummy() bool {
 }
 
 func (ins *LHInstruction) HasAnyParent() bool {
-	for _, v := range ins.Components {
+	for _, v := range ins.Inputs {
 		if v.HasAnyParent() {
 			return true
 		}
@@ -205,7 +198,7 @@ func (ins *LHInstruction) HasAnyParent() bool {
 }
 
 func (ins *LHInstruction) HasParent(id string) bool {
-	for _, v := range ins.Components {
+	for _, v := range ins.Inputs {
 		if v.HasParent(id) {
 			return true
 		}
@@ -220,7 +213,7 @@ func (ins *LHInstruction) ParentString() string {
 
 	tx := make([]string, 0, 1)
 
-	for _, v := range ins.Components {
+	for _, v := range ins.Inputs {
 		//s += v.ParentID + "_"
 
 		pid := v.ParentID
@@ -252,7 +245,7 @@ func (ins *LHInstruction) NamesOfComponentsMoving() string {
 
 func (ins *LHInstruction) ComponentsMoving() []*Liquid {
 	ca := make([]*Liquid, 0)
-	for i, v := range ins.Components {
+	for i, v := range ins.Inputs {
 		// ignore component 1 if this is a mix-in-place
 		if i == 0 && ins.IsMixInPlace() {
 			continue
@@ -269,17 +262,17 @@ func (ins *LHInstruction) Wellcoords() WellCoords {
 
 func (ins *LHInstruction) AdjustVolumesBy(r float64) {
 	// each subcomponent is assumed to scale linearly
-	for _, c := range ins.Components {
+	for _, c := range ins.Inputs {
 		c.Vol *= r
 	}
-	for _, rslt := range ins.Results {
+	for _, rslt := range ins.Outputs {
 		rslt.Vol *= r
 	}
 }
 
 func (ins *LHInstruction) InputVolumeMap(addition wunit.Volume) map[string]wunit.Volume {
-	r := make(map[string]wunit.Volume, len(ins.Components))
-	for i, c := range ins.Components {
+	r := make(map[string]wunit.Volume, len(ins.Inputs))
+	for i, c := range ins.Inputs {
 		nom := c.FullyQualifiedName()
 		myAdd := addition.Dup()
 

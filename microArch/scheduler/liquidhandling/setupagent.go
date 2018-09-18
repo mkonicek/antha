@@ -115,7 +115,7 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 			if ins.Type != wtype.LHIMIX {
 				continue
 			}
-			tx := strings.Split(ins.Results[0].Loc, ":")
+			tx := strings.Split(ins.Outputs[0].Loc, ":")
 
 			if len(tx) == 2 {
 				pa := tx[0]

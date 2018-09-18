@@ -24,7 +24,7 @@ func (lhiv LHIVector) MaxLen() int {
 		if i == nil {
 			continue
 		}
-		ll := len(i.Components)
+		ll := len(i.Inputs)
 
 		if ll > l {
 			l = ll
@@ -42,11 +42,11 @@ func (lhiv LHIVector) CompsAt(i int) []*wtype.Liquid {
 			continue
 		}
 
-		if ins == nil || i >= len(ins.Components) {
+		if ins == nil || i >= len(ins.Inputs) {
 			continue
 		}
 
-		ret[ix] = ins.Components[i].Dup()
+		ret[ix] = ins.Inputs[i].Dup()
 
 		ret[ix].Loc = ins.PlateID + ":" + ins.Welladdress
 	}

@@ -107,8 +107,8 @@ func (req *LHRequest) GetSolutionsFromInputPlates() (map[string][]*wtype.Liquid,
 			continue
 		}
 		if ins.IsMixInPlace() {
-			if !ins.Components[0].PlateLocation().IsZero() {
-				uniques[ins.Components[0].PlateLocation()] = ins.Components[0]
+			if !ins.Inputs[0].PlateLocation().IsZero() {
+				uniques[ins.Inputs[0].PlateLocation()] = ins.Inputs[0]
 			}
 			//else {
 			// this will be autoallocated

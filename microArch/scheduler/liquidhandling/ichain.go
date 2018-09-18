@@ -124,10 +124,10 @@ func (it *IChain) Print() {
 		for j := 0; j < len(it.Values); j++ {
 			if it.Values[j].Type == wtype.LHIMIX {
 				fmt.Printf("MIX    %2d: %s \n", j, it.Values[j].ID)
-				for i := 0; i < len(it.Values[j].Components); i++ {
-					fmt.Print(" ", it.Values[j].Components[i].ID, ":", it.Values[j].Components[i].FullyQualifiedName(), "@", it.Values[j].Components[i].Volume().ToString(), " \n")
+				for i := 0; i < len(it.Values[j].Inputs); i++ {
+					fmt.Print(" ", it.Values[j].Inputs[i].ID, ":", it.Values[j].Inputs[i].FullyQualifiedName(), "@", it.Values[j].Inputs[i].Volume().ToString(), " \n")
 				}
-				fmt.Println(":", it.Values[j].Results[0].ID, ":", it.Values[j].Platetype, " ", it.Values[j].PlateName, " ", it.Values[j].Welladdress)
+				fmt.Println(":", it.Values[j].Outputs[0].ID, ":", it.Values[j].Platetype, " ", it.Values[j].PlateName, " ", it.Values[j].Welladdress)
 				fmt.Printf("-- ")
 			} else if it.Values[j].Type == wtype.LHIPRM {
 				fmt.Println("PROMPT ", it.Values[j].Message, "-- ")
@@ -136,9 +136,9 @@ func (it *IChain) Print() {
 				}
 			} else if it.Values[j].Type == wtype.LHISPL {
 				fmt.Printf("SPLIT %2d: %s ", j, it.Values[j].ID)
-				fmt.Println(" ", it.Values[j].Components[0].ID, ":", it.Values[j].Components[0].FullyQualifiedName(), " : ", it.Values[j].PlateName, " ", it.Values[j].Welladdress)
-				fmt.Println(" MOVE:", it.Values[j].Results[0].ID, ":", it.Values[j].Results[0].FullyQualifiedName(), "@", it.Values[j].Results[0].Volume().ToString())
-				fmt.Println(" STAY:", it.Values[j].Results[1].ID, ":", it.Values[j].Results[1].FullyQualifiedName(), "@", it.Values[j].Results[1].Volume().ToString())
+				fmt.Println(" ", it.Values[j].Inputs[0].ID, ":", it.Values[j].Inputs[0].FullyQualifiedName(), " : ", it.Values[j].PlateName, " ", it.Values[j].Welladdress)
+				fmt.Println(" MOVE:", it.Values[j].Outputs[0].ID, ":", it.Values[j].Outputs[0].FullyQualifiedName(), "@", it.Values[j].Outputs[0].Volume().ToString())
+				fmt.Println(" STAY:", it.Values[j].Outputs[1].ID, ":", it.Values[j].Outputs[1].FullyQualifiedName(), "@", it.Values[j].Outputs[1].Volume().ToString())
 				fmt.Printf("-- \n")
 			} else {
 				fmt.Println("WTF?   ", wtype.InsType(it.Values[j].Type), "-- ")
@@ -344,7 +344,7 @@ func (bg ByResultComponent) Less(i, j int) bool {
 	}
 
 	// compare the names of the resultant components
-	c = strings.Compare(bg[i].Results[0].CName, bg[j].Results[0].CName)
+	c = strings.Compare(bg[i].Outputs[0].CName, bg[j].Outputs[0].CName)
 
 	if c != 0 {
 		return c < 0

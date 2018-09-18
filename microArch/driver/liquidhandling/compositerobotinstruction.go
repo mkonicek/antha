@@ -1775,7 +1775,7 @@ func (ins *SuckInstruction) getFinalVolumesByWell() map[string]wunit.Volume {
 	return ret
 }
 
-func (ins *SuckInstruction) getAspirate(volumes []wunit.Volume, useLLF []bool) RobotInstruction {
+func (ins *SuckInstruction) getAspirate(volumes []wunit.Volume, useLLF []bool) *AspirateInstruction {
 	aspins := NewAspirateInstruction()
 	aspins.Head = ins.Head
 	aspins.Multi = ins.Multi
@@ -1798,7 +1798,7 @@ func (ins *SuckInstruction) getAspirate(volumes []wunit.Volume, useLLF []bool) R
 	return aspins
 }
 
-func (ins *SuckInstruction) getMove(reference int, volume []wunit.Volume, offsetX, offsetY, offsetZ float64) RobotInstruction {
+func (ins *SuckInstruction) getMove(reference int, volume []wunit.Volume, offsetX, offsetY, offsetZ float64) *MoveInstruction {
 	mov := NewMoveInstruction()
 	mov.Head = ins.Head
 
@@ -1816,7 +1816,7 @@ func (ins *SuckInstruction) getMove(reference int, volume []wunit.Volume, offset
 	return mov
 }
 
-func (ins *SuckInstruction) getMoveMix(volume []wunit.Volume, cycles int, offsetX, offsetY, offsetZ float64, blowout bool) RobotInstruction {
+func (ins *SuckInstruction) getMoveMix(volume []wunit.Volume, cycles int, offsetX, offsetY, offsetZ float64, blowout bool) *MoveMixInstruction {
 	mix := NewMoveMixInstruction()
 	mix.Head = ins.Head
 	mix.Plt = ins.PltFrom

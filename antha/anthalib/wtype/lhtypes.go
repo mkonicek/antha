@@ -439,9 +439,9 @@ func (self *VelocityRange) Dup() *VelocityRange {
 
 //LHHeadAssembly represent a set of LHHeads which are constrained to move together
 type LHHeadAssembly struct {
-	Positions    []*LHHeadAssemblyPosition
-	MotionLimits *BBox          //the limits on range of motion of the head assembly, nil if unspecified
-	Velocity     *VelocityRange // the range of valid velocities for the head, nil if unspecified
+	Positions      []*LHHeadAssemblyPosition
+	MotionLimits   *BBox          //the limits on range of motion of the head assembly, nil if unspecified
+	VelocityLimits *VelocityRange // the range of valid velocities for the head, nil if unspecified
 }
 
 //NewLHHeadAssembly build a new head assembly
@@ -456,9 +456,9 @@ func NewLHHeadAssembly(MotionLimits *BBox) *LHHeadAssembly {
 //DupWithoutHeads copy the headassembly leaving all positions in the new assembly unloaded
 func (self *LHHeadAssembly) DupWithoutHeads() *LHHeadAssembly {
 	ret := &LHHeadAssembly{
-		Positions:    make([]*LHHeadAssemblyPosition, 0, len(self.Positions)),
-		MotionLimits: self.MotionLimits.Dup(),
-		Velocity:     self.Velocity.Dup(),
+		Positions:      make([]*LHHeadAssemblyPosition, 0, len(self.Positions)),
+		MotionLimits:   self.MotionLimits.Dup(),
+		VelocityLimits: self.VelocityLimits.Dup(),
 	}
 	for _, pos := range self.Positions {
 		ret.AddPosition(pos.Offset)

@@ -173,7 +173,7 @@ func MakeGilsonForTest() *liquidhandling.LHProperties {
 	ha.AddPosition(wtype.Coordinates{0, 0, 0})
 	ha.LoadHead(hvhead)
 	ha.LoadHead(lvhead)
-	ha.Velocity = &wtype.VelocityRange{
+	ha.VelocityLimits = &wtype.VelocityRange{
 		Min: &wunit.Velocity3D{
 			X: wunit.NewVelocity(1.0, "mm/s"),
 			Y: wunit.NewVelocity(1.0, "mm/s"),

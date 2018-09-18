@@ -221,9 +221,9 @@ func EncodePtrToLHHeadAssembly(assembly *wtype.LHHeadAssembly, headMap map[*wtyp
 }
 func EncodeLHHeadAssemblyMessage(assembly *wtype.LHHeadAssembly, headMap map[*wtype.LHHead]int) *pb.LHHeadAssemblyMessage {
 	ret := pb.LHHeadAssemblyMessage{
-		Positions:    EncodeArrayOfPtrToLHHeadAssemblyPosition(assembly.Positions, headMap),
-		MotionLimits: EncodePtrToBBox(assembly.MotionLimits),
-		Velocity:     EncodePtrToVelocityRange(assembly.Velocity),
+		Positions:      EncodeArrayOfPtrToLHHeadAssemblyPosition(assembly.Positions, headMap),
+		MotionLimits:   EncodePtrToBBox(assembly.MotionLimits),
+		VelocityLimits: EncodePtrToVelocityRange(assembly.VelocityLimits),
 	}
 	return &ret
 }
@@ -273,9 +273,9 @@ func DecodePtrToLHHeadAssembly(arg *pb.PtrToLHHeadAssemblyMessage, heads []*wtyp
 }
 func DecodeLHHeadAssembly(arg *pb.LHHeadAssemblyMessage, heads []*wtype.LHHead) *wtype.LHHeadAssembly {
 	ret := wtype.LHHeadAssembly{
-		Positions:    DecodeArrayOfPtrToLHHeadAssemblyPositions(arg.Positions, heads),
-		MotionLimits: DecodePtrToBBox(arg.MotionLimits),
-		Velocity:     DecodePtrToVelocityRange(arg.Velocity),
+		Positions:      DecodeArrayOfPtrToLHHeadAssemblyPositions(arg.Positions, heads),
+		MotionLimits:   DecodePtrToBBox(arg.MotionLimits),
+		VelocityLimits: DecodePtrToVelocityRange(arg.VelocityLimits),
 	}
 	return &ret
 }

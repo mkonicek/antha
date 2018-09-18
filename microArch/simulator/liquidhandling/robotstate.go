@@ -532,7 +532,7 @@ func NewAdaptorGroup(assembly *wtype.LHHeadAssembly) *AdaptorGroup {
 		offsets:       offsets,
 		motionLimits:  assembly.MotionLimits.Dup(),
 		velocity:      &wunit.Velocity3D{},
-		velocityRange: assembly.Velocity.Dup(),
+		velocityRange: assembly.VelocityLimits.Dup(),
 	}
 
 	for i, pos := range assembly.Positions {

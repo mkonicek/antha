@@ -112,7 +112,7 @@ type HeadAssemblyParams struct {
 	MotionLimits    *wtype.BBox
 	PositionOffsets []wtype.Coordinates
 	Heads           []HeadParams
-	Velocity        *wtype.VelocityRange
+	VelocityLimits  *wtype.VelocityRange
 }
 
 func makeLHHeadAssembly(ha HeadAssemblyParams) *wtype.LHHeadAssembly {
@@ -123,7 +123,7 @@ func makeLHHeadAssembly(ha HeadAssemblyParams) *wtype.LHHeadAssembly {
 	for _, h := range ha.Heads {
 		ret.LoadHead(makeLHHead(h))
 	}
-	ret.Velocity = ha.Velocity.Dup()
+	ret.VelocityLimits = ha.VelocityLimits.Dup()
 	return ret
 }
 

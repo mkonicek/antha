@@ -181,7 +181,7 @@ func TestSetDriveSpeed(t *testing.T) {
 	props := defaultLHProperties()
 
 	//set max and minimum drive speeds
-	props.HeadAssemblies[0].Velocity = &wtype.VelocityRange{
+	props.HeadAssemblies[0].VelocityLimits = &wtype.VelocityRange{
 		Min: &wunit.Velocity3D{
 			X: wunit.NewVelocity(0.5, "mm/s"),
 			Y: wunit.NewVelocity(0.5, "mm/s"),

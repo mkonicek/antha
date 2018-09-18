@@ -589,7 +589,7 @@ message ArrayOfPtrToLHHeadAssemblyPositionMessage {
 message LHHeadAssemblyMessage {
     ArrayOfPtrToLHHeadAssemblyPositionMessage Positions = 1;
     PtrToBBoxMessage MotionLimits = 2;
-    PtrToVelocityRangeMessage Velocity = 3;
+    PtrToVelocityRangeMessage VelocityLimits = 3;
 }
 message PtrToLHHeadAssemblyMessage {
     LHHeadAssemblyMessage val = 1;

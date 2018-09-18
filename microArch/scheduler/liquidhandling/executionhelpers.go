@@ -192,11 +192,11 @@ func aggregatePromptsWithSameMessage(inss []*wtype.LHInstruction, topolGraph gra
 		for _, ar := range iar {
 			ins := wtype.NewLHPromptInstruction()
 			ins.Message = msg
-			ins.AddResult(wtype.NewLHComponent())
+			ins.AddOutput(wtype.NewLHComponent())
 			for _, ins2 := range ar {
-				for _, cmp := range ins2.Components {
-					ins.Components = append(ins.Components, cmp)
-					ins.PassThrough[cmp.ID] = ins2.Results[0]
+				for _, cmp := range ins2.Inputs {
+					ins.Inputs = append(ins.Inputs, cmp)
+					ins.PassThrough[cmp.ID] = ins2.Outputs[0]
 				}
 			}
 			insOut = append(insOut, graph.Node(ins))
@@ -268,9 +268,9 @@ func (bo ByOrdinal) Less(i, j int) bool {
 
 // TODO -- refactor this to pass robot through
 func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, carryvol wunit.Volume, legacyVolume bool) (insOut *driver.TransferInstruction, err error) {
-	cmps := insIn.Components
+	cmps := insIn.Inputs
 
-	lenToMake := len(insIn.Components)
+	lenToMake := len(insIn.Inputs)
 
 	if insIn.IsMixInPlace() {
 		lenToMake = lenToMake - 1
@@ -394,7 +394,7 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 			}
 
 			// TODO -- danger here, is result definitely set?
-			wlt.WContents.ID = insIn.Results[0].ID
+			wlt.WContents.ID = insIn.Outputs[0].ID
 			wlf.WContents.AddDaughterComponent(wlt.WContents)
 
 			//fmt.Println("HERE GOES: ", i, wh[i], vf[i].ToString(), vt[i].ToString(), va[i].ToString(), pt[i], wt[i], pf[i], wf[i], pfwx[i], pfwy[i], ptwx[i], ptwy[i])

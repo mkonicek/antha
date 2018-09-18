@@ -282,7 +282,7 @@ func (data MarsData) Absorbance(well string, wavelength int, options ...interfac
 	} else {
 		errs = append(errs, err.Error())
 	}
-	result, err = data.ReadingsAsAverage(well, platereader.EMWAVELENGTH, wavelength, strings.Join([]string{"(", strconv.Itoa(wavelength), ")"}, ""))
+	result, err = data.ReadingsAsAverage(well, platereader.EMWAVELENGTH, wavelength, strings.Join([]string{"(", strconv.Itoa(wavelength), ""}, ""))
 
 	if err == nil {
 		return wtype.Absorbance{

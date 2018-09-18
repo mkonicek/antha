@@ -64,7 +64,7 @@ func GetInputs(
 			continue
 		}
 
-		for ix, component := range instruction.Components {
+		for ix, component := range instruction.Inputs {
 			// Ignore components which already exist
 			if component.IsInstance() {
 				continue

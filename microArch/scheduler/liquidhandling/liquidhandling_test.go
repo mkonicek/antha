@@ -112,10 +112,10 @@ func configure_request_simple(ctx context.Context, rq *LHRequest) {
 		mmxs := mixer.Sample(mmx, wunit.NewVolume(8.0, "ul"))
 		ps := mixer.Sample(part, wunit.NewVolume(1.0, "ul"))
 
-		ins.AddComponent(ws)
-		ins.AddComponent(mmxs)
-		ins.AddComponent(ps)
-		ins.AddProduct(GetComponentForTest(ctx, "water", wunit.NewVolume(17.0, "ul")))
+		ins.AddInput(ws)
+		ins.AddInput(mmxs)
+		ins.AddInput(ps)
+		ins.AddOutput(GetComponentForTest(ctx, "water", wunit.NewVolume(17.0, "ul")))
 		rq.Add_instruction(ins)
 	}
 
@@ -132,10 +132,10 @@ func configure_request_total_volume(ctx context.Context, rq *LHRequest) {
 		mmxs := mixer.Sample(mmx, wunit.NewVolume(8.0, "ul"))
 		ps := mixer.Sample(part, wunit.NewVolume(1.0, "ul"))
 
-		ins.AddComponent(ws)
-		ins.AddComponent(mmxs)
-		ins.AddComponent(ps)
-		ins.AddProduct(GetComponentForTest(ctx, "water", wunit.NewVolume(17.0, "ul")))
+		ins.AddInput(ws)
+		ins.AddInput(mmxs)
+		ins.AddInput(ps)
+		ins.AddOutput(GetComponentForTest(ctx, "water", wunit.NewVolume(17.0, "ul")))
 		rq.Add_instruction(ins)
 	}
 
@@ -152,10 +152,10 @@ func configure_request_bigger(ctx context.Context, rq *LHRequest) {
 		mmxs := mixer.Sample(mmx, wunit.NewVolume(8.0, "ul"))
 		ps := mixer.Sample(part, wunit.NewVolume(1.0, "ul"))
 
-		ins.AddComponent(ws)
-		ins.AddComponent(mmxs)
-		ins.AddComponent(ps)
-		ins.AddProduct(GetComponentForTest(ctx, "water", wunit.NewVolume(17.0, "ul")))
+		ins.AddInput(ws)
+		ins.AddInput(mmxs)
+		ins.AddInput(ps)
+		ins.AddOutput(GetComponentForTest(ctx, "water", wunit.NewVolume(17.0, "ul")))
 		rq.Add_instruction(ins)
 	}
 
@@ -168,9 +168,9 @@ func configureMultiChannelTestRequest(ctx context.Context, rq *LHRequest) {
 		ins := wtype.NewLHMixInstruction()
 		ws := mixer.Sample(water, wunit.NewVolume(50.0, "ul"))
 
-		ins.AddComponent(ws)
+		ins.AddInput(ws)
 
-		ins.AddProduct(GetComponentForTest(ctx, "water", wunit.NewVolume(50, "ul")))
+		ins.AddOutput(GetComponentForTest(ctx, "water", wunit.NewVolume(50, "ul")))
 		rq.Add_instruction(ins)
 	}
 
@@ -211,7 +211,7 @@ func configureTransferRequestForZTest(policyName string, transferVol wunit.Volum
 		ins := wtype.NewLHMixInstruction()
 		ws := mixer.Sample(liq, transferVol)
 
-		ins.AddComponent(ws)
+		ins.AddInput(ws)
 
 		expectedProduct := GetComponentForTest(ctx, "water", transferVol)
 
@@ -221,7 +221,7 @@ func configureTransferRequestForZTest(policyName string, transferVol wunit.Volum
 		}
 		expectedProduct.SetName(policyName)
 
-		ins.AddProduct(expectedProduct)
+		ins.AddOutput(expectedProduct)
 
 		rq.Add_instruction(ins)
 	}
@@ -245,9 +245,9 @@ func configureSingleChannelTestRequest(ctx context.Context, rq *LHRequest) {
 		ins := wtype.NewLHMixInstruction()
 		ws := mixer.Sample(water, wunit.NewVolume(50.0, "ul"))
 
-		ins.AddComponent(ws)
+		ins.AddInput(ws)
 
-		ins.AddProduct(GetComponentForTest(ctx, "water", wunit.NewVolume(50, "ul")))
+		ins.AddOutput(GetComponentForTest(ctx, "water", wunit.NewVolume(50, "ul")))
 		rq.Add_instruction(ins)
 	}
 
@@ -289,8 +289,8 @@ func configureTransferRequestMutliSamplesTest(policyName string, samples ...*wty
 
 		sample.SetPolicyName(wtype.PolicyName(policyName))
 
-		ins.AddComponent(sample)
-		ins.AddProduct(GetComponentForTest(ctx, "water", sample.Volume()))
+		ins.AddInput(sample)
+		ins.AddOutput(GetComponentForTest(ctx, "water", sample.Volume()))
 
 		if !it.Valid() {
 			return nil, errors.New("out of space on input plate")
@@ -337,10 +337,10 @@ func configure_request_overfilled(ctx context.Context, rq *LHRequest) {
 		mmxs := mixer.Sample(mmx, wunit.NewVolume(160.0, "ul"))
 		ps := mixer.Sample(part, wunit.NewVolume(20.0, "ul"))
 
-		ins.AddComponent(ws)
-		ins.AddComponent(mmxs)
-		ins.AddComponent(ps)
-		ins.AddProduct(GetComponentForTest(ctx, "water", wunit.NewVolume(340.0, "ul")))
+		ins.AddInput(ws)
+		ins.AddInput(mmxs)
+		ins.AddInput(ps)
+		ins.AddOutput(GetComponentForTest(ctx, "water", wunit.NewVolume(340.0, "ul")))
 		rq.Add_instruction(ins)
 	}
 
@@ -982,7 +982,7 @@ func TestEP3Negative(t *testing.T) {
 
 	//make one volume of one instruction negative
 	for _, ins := range rq.LHInstructions {
-		cmp := ins.Components[0]
+		cmp := ins.Inputs[0]
 		cmp.Vol = -1.0
 		break
 	}
@@ -1006,7 +1006,7 @@ func TestEP3WrongResult(t *testing.T) {
 
 	//make one of the results wrong
 	for _, ins := range rq.LHInstructions {
-		ins.Results[0].Vol = 299792458.0
+		ins.Outputs[0].Vol = 299792458.0
 		break
 	}
 	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
@@ -1029,7 +1029,7 @@ func TestEP3WrongTotalVolume(t *testing.T) {
 
 	//set an invalid total volume for one of the instructions
 	for _, ins := range rq.LHInstructions {
-		for _, cmp := range ins.Components {
+		for _, cmp := range ins.Inputs {
 			if cmp.Tvol > 0.0 {
 				cmp.Tvol = 5.0
 			}
@@ -1087,10 +1087,10 @@ func TestEP3DummyInstruction(t *testing.T) {
 
 	//add a dummy instruction for each instruction
 	for _, ins := range rq.LHInstructions {
-		for _, cmp := range ins.Results {
-			mix := mixer.GenericMix(mixer.MixOptions{Components: []*wtype.Liquid{cmp}})
+		for _, cmp := range ins.Outputs {
+			mix := mixer.GenericMix(mixer.MixOptions{Inputs: []*wtype.Liquid{cmp}})
 			if !mix.IsDummy() {
-				t.Fatalf("failed to make a dummy instruction: mix.Components[0].IsSample() = %t, cmp.IsSample() = %t", mix.Components[0].IsSample(), cmp.IsSample())
+				t.Fatalf("failed to make a dummy instruction: mix.Inputs[0].IsSample() = %t, cmp.IsSample() = %t", mix.Inputs[0].IsSample(), cmp.IsSample())
 			}
 			rq.Add_instruction(mix)
 		}
@@ -1223,18 +1223,18 @@ func TestPlateIDMap(t *testing.T) {
 func getTestSplitSample(component *wtype.Liquid, volume float64) *wtype.LHInstruction {
 	ret := wtype.NewLHSplitInstruction()
 
-	ret.Components = append(ret.Components, component.Dup())
+	ret.Inputs = append(ret.Inputs, component.Dup())
 	cmpMoving, cmpStaying := mixer.SplitSample(component, wunit.NewVolume(volume, "ul"))
 
-	ret.Results = append(ret.Results, cmpMoving, cmpStaying)
+	ret.Outputs = append(ret.Outputs, cmpMoving, cmpStaying)
 
 	return ret
 }
 
 func getTestMix(components []*wtype.Liquid, address string) *wtype.LHInstruction {
 	mix := mixer.GenericMix(mixer.MixOptions{
-		Components: components,
-		Address:    address,
+		Inputs:  components,
+		Address: address,
 	})
 
 	mx := 0
@@ -1244,8 +1244,8 @@ func getTestMix(components []*wtype.Liquid, address string) *wtype.LHInstruction
 		}
 	}
 	mix.SetGeneration(mx)
-	mix.Results[0].SetGeneration(mx + 1)
-	mix.Results[0].DeclareInstance()
+	mix.Outputs[0].SetGeneration(mx + 1)
+	mix.Outputs[0].DeclareInstance()
 
 	return mix
 }
@@ -1271,9 +1271,9 @@ func TestSplitSampleMultichannel(t *testing.T) {
 
 			split := getTestSplitSample(lastStock, 20.0)
 
-			mix := getTestMix([]*wtype.Liquid{split.Results[0], diluentSample}, wc.FormatA1())
+			mix := getTestMix([]*wtype.Liquid{split.Outputs[0], diluentSample}, wc.FormatA1())
 
-			lastStock = mix.Results[0]
+			lastStock = mix.Outputs[0]
 
 			instructions = append(instructions, mix, split)
 		}

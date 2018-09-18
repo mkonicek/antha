@@ -114,17 +114,17 @@ func ValidateRequest(request *LHRequest) error {
 		if ins.Type != wtype.LHIMIX {
 			continue
 		}
-		for i, cmp := range ins.Components {
+		for i, cmp := range ins.Inputs {
 			if cmp.Vol == 0.0 && cmp.Conc == 0.0 && cmp.Tvol == 0.0 {
 				errstr := fmt.Sprintf("Nil mix (no volume, concentration or total volume) requested: %d : ", i)
 
-				for j := 0; j < len(ins.Components); j++ {
-					ss := ins.Components[i].CName
+				for j := 0; j < len(ins.Inputs); j++ {
+					ss := ins.Inputs[i].CName
 					if j == i {
 						ss = strings.ToUpper(ss)
 					}
 
-					if j != len(ins.Components)-1 {
+					if j != len(ins.Inputs)-1 {
 						ss += ", "
 					}
 
@@ -656,7 +656,7 @@ func assertVolumesNonNegative(request *LHRequest) error {
 			continue
 		}
 
-		for _, cmp := range ins.Components {
+		for _, cmp := range ins.Inputs {
 			if cmp.Volume().LessThan(wunit.ZeroVolume()) {
 				return wtype.LHErrorf(wtype.LH_ERR_VOL, "negative volume for component \"%s\" in instruction:\n%s", cmp.CName, ins.Summarize(1))
 			}
@@ -674,7 +674,7 @@ func assertTotalVolumesMatch(request *LHRequest) error {
 
 		totalVolume := wunit.ZeroVolume()
 
-		for _, cmp := range ins.Components {
+		for _, cmp := range ins.Inputs {
 			if tV := cmp.TotalVolume(); !tV.IsZero() {
 				if !totalVolume.IsZero() && !tV.EqualTo(totalVolume) {
 					return wtype.LHErrorf(wtype.LH_ERR_VOL, "multiple distinct total volumes specified in instruction:\n%s", ins.Summarize(1))
@@ -696,7 +696,7 @@ func assertMixResultsCorrect(request *LHRequest) error {
 		totalVolume := wunit.ZeroVolume()
 		volumeSum := wunit.ZeroVolume()
 
-		for _, cmp := range ins.Components {
+		for _, cmp := range ins.Inputs {
 			if tV := cmp.TotalVolume(); !tV.IsZero() {
 				totalVolume = tV
 			} else if v := cmp.Volume(); !v.IsZero() {
@@ -704,12 +704,12 @@ func assertMixResultsCorrect(request *LHRequest) error {
 			}
 		}
 
-		if len(ins.Results) != 1 {
+		if len(ins.Outputs) != 1 {
 			return wtype.LHErrorf(wtype.LH_ERR_DIRE, "mix instruction has %d results specified, expecting one at instruction:\n%s",
-				len(ins.Results), ins.Summarize(1))
+				len(ins.Outputs), ins.Summarize(1))
 		}
 
-		resultVolume := ins.Results[0].Volume()
+		resultVolume := ins.Outputs[0].Volume()
 
 		if !totalVolume.IsZero() && !totalVolume.EqualTo(resultVolume) {
 			return wtype.LHErrorf(wtype.LH_ERR_VOL, "total volume (%v) does not match resulting volume (%v) for instruction:\n%s",
@@ -730,7 +730,7 @@ func assertWellNotOverfilled(ctx context.Context, request *LHRequest) error {
 			continue
 		}
 
-		resultVolume := ins.Results[0].Volume()
+		resultVolume := ins.Outputs[0].Volume()
 
 		var plate *wtype.Plate
 		if ins.OutPlate != nil {
@@ -785,7 +785,7 @@ func anotherSanityCheck(request *LHRequest) {
 	for _, ins := range request.LHInstructions {
 		// we must not share pointers
 
-		for _, c := range ins.Components {
+		for _, c := range ins.Inputs {
 			ins2, ok := p[c]
 			if ok {
 				panic(fmt.Sprintf("POINTER REUSE: Instructions %s %s for component %s %s", ins.ID, ins2.ID, c.ID, c.CName))
@@ -794,23 +794,23 @@ func anotherSanityCheck(request *LHRequest) {
 			p[c] = ins
 		}
 
-		ins2, ok := p[ins.Results[0]]
+		ins2, ok := p[ins.Outputs[0]]
 
 		if ok {
-			panic(fmt.Sprintf("POINTER REUSE: Instructions %s %s for component %s %s", ins.ID, ins2.ID, ins.Results[0].ID, ins.Results[0].CName))
+			panic(fmt.Sprintf("POINTER REUSE: Instructions %s %s for component %s %s", ins.ID, ins2.ID, ins.Outputs[0].ID, ins.Outputs[0].CName))
 		}
 
-		p[ins.Results[0]] = ins
+		p[ins.Outputs[0]] = ins
 	}
 }
 
 func forceSanity(request *LHRequest) {
 	for _, ins := range request.LHInstructions {
-		for i := 0; i < len(ins.Components); i++ {
-			ins.Components[i] = ins.Components[i].Dup()
+		for i := 0; i < len(ins.Inputs); i++ {
+			ins.Inputs[i] = ins.Inputs[i].Dup()
 		}
 
-		ins.Results[0] = ins.Results[0].Dup()
+		ins.Outputs[0] = ins.Outputs[0].Dup()
 	}
 }
 
@@ -1137,7 +1137,7 @@ func (lh *Liquidhandler) fix_post_names(rq *LHRequest) error {
 			continue
 		}
 
-		tx := strings.Split(inst.Results[0].Loc, ":")
+		tx := strings.Split(inst.Outputs[0].Loc, ":")
 		newid, ok := lh.plateIDMap[tx[0]]
 		if !ok {
 			return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("No output plate mapped to %s", tx[0]))
@@ -1161,13 +1161,13 @@ func (lh *Liquidhandler) fix_post_names(rq *LHRequest) error {
 		oldInst := assignment[well]
 		if oldInst == nil {
 			assignment[well] = inst
-		} else if prev, cur := oldInst.Results[0].Generation(), inst.Results[0].Generation(); prev < cur {
+		} else if prev, cur := oldInst.Outputs[0].Generation(), inst.Outputs[0].Generation(); prev < cur {
 			assignment[well] = inst
 		}
 	}
 
 	for well, inst := range assignment {
-		well.WContents.CName = inst.Results[0].CName
+		well.WContents.CName = inst.Outputs[0].CName
 	}
 
 	return nil

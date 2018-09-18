@@ -24,9 +24,10 @@ package wunit
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"math"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 // NewTypedMeasurement create a new measurement from the global registry asserting that
@@ -272,6 +273,43 @@ func (t Time) AsDuration() time.Duration {
 
 func FromDuration(t time.Duration) Time {
 	return NewTime(float64(t.Seconds()), "s")
+}
+
+// CopyTime creates a safe duplicate of a time value.
+func CopyTime(time Time) Time {
+	return NewTime(time.RawValue(), time.Unit().PrefixedSymbol())
+}
+
+// AddTimes sums a variable number of Time arguments.
+// If the dimension of the times are different the product will be returned in the SI value of Time (seconds).
+func AddTimes(timesToAdd ...Time) (sum Time) {
+	if len(timesToAdd) == 0 {
+		return
+	}
+
+	sum = (NewTime(0.0, timesToAdd[0].Unit().PrefixedSymbol()))
+	for _, time := range timesToAdd {
+		sum.Add(time)
+	}
+	return sum
+}
+
+// SubtractTimes subtracts a variable number of Time arguments from timeToSubtractFrom.
+func SubtractTimes(timeToSubtractFrom Time, timesToSubtract ...Time) (newTime Time) {
+	newTime = (CopyTime(timeToSubtractFrom))
+	timeToSubtract := AddTimes(timesToSubtract...)
+	newTime.Subtract(timeToSubtract)
+	return
+}
+
+// MultiplyTime multiplies a Time by a factor.
+func MultiplyTime(v Time, factor float64) Time {
+	return NewTime(v.RawValue()*float64(factor), v.Unit().PrefixedSymbol())
+}
+
+// DivideTime divides a Time by a factor.
+func DivideTime(v Time, factor float64) Time {
+	return NewTime(v.RawValue()/float64(factor), v.Unit().PrefixedSymbol())
 }
 
 // mass

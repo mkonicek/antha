@@ -254,7 +254,7 @@ func parsePlateCSVWithValidationConfig(ctx context.Context, inData io.Reader, vc
 
 		wellField := get(rec, 0)
 		cname := get(rec, 1)
-		ctypeField := get(rec, 2)
+		ctypeField := unModifyTypeName(get(rec, 2))
 
 		well, err := validWellCoord(wellField)
 		if err != nil {
@@ -271,6 +271,7 @@ func parsePlateCSVWithValidationConfig(ctx context.Context, inData io.Reader, vc
 		}
 
 		ctype, err := wtype.LiquidTypeFromString(wtype.PolicyName(ctypeField))
+
 		if err != nil {
 			warnings = append(warnings, fmt.Sprintf("line %d: component type %q not found in default system types, using (%q); this may generate undesirable behaviour if this is not a custom type known by the system: %s", lineNo, ctypeField, ctype, err))
 		}

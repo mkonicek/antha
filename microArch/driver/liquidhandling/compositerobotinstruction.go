@@ -1783,6 +1783,8 @@ func (ins *SuckInstruction) getAspirate(volumes []wunit.Volume, useLLF []bool) *
 	aspins.What = ins.What
 	aspins.Plt = ins.FPlateType
 
+	fmt.Printf("  getAspirate(%v, %v)\n", volumes, useLLF)
+
 	for _, vol := range volumes {
 		aspins.Volume = append(aspins.Volume, wunit.CopyVolume(vol))
 	}
@@ -1806,6 +1808,8 @@ func (ins *SuckInstruction) getMove(reference int, volume []wunit.Volume, offset
 	mov.Plt = ins.FPlateType
 	mov.Well = ins.WellFrom
 	mov.WVolume = volume
+
+	fmt.Printf("  getMove(%d, %v, zoff = %f)\n", reference, volume, offsetZ)
 
 	for i := 0; i < ins.Multi; i++ {
 		mov.Reference = append(mov.Reference, reference)
@@ -1975,12 +1979,14 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	}
 
 	//LLF
+	fmt.Printf("Suck: Generate: initialVolumes: %v\n", ins.getInitialVolumesByWell())
 	if useLLF, anyLLF := getUseLLF(pol, ins.Multi, ins.PltFrom, prms); anyLLF {
 		llfBelowSurface := SafeGetF64(pol, "LLFBELOWSURFACE")
 		minHeight := wunit.NewLength(llfBelowSurface+ofz, "mm")
 		minVolume := prms.Plates[ins.PltFrom[0]].Welltype.GetLiquidVolume(minHeight) // assume welltypes are all the same
 
 		for _, initial := range ins.getInitialVolumesByWell() {
+			fmt.Printf("Suck: initial %v, min %v\n", initial, minVolume)
 			anyLLF = anyLLF && !initial.LessThan(minVolume)
 		}
 		if anyLLF {

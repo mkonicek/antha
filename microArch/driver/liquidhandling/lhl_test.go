@@ -1303,6 +1303,12 @@ func TestAspLLF(t *testing.T) {
 			ExpectedInstructions: "[SPS,SDS,MOV,ASP]",
 			Assertions: []*InstructionAssertion{
 				{
+					Instruction: 2, //Mov
+					Values: map[InstructionParameter]interface{}{
+						"REFERENCE": []int{int(wtype.BottomReference)},
+					},
+				},
+				{
 					Instruction: 3, //Asp
 					Values: map[InstructionParameter]interface{}{
 						"LLF": []bool{false},

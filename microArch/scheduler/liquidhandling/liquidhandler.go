@@ -969,6 +969,10 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		return err
 	}
 
+	for id, plate := range request.InputPlates {
+		fmt.Printf("A: inputPlates[%q].Wellcoords[\"A1\"].CurrentVolume() = %v\n", id, plate.Wellcoords["A1"].CurrentVolume())
+	}
+
 	// final insurance that plate names will be safe
 
 	request = fixDuplicatePlateNames(request)
@@ -983,10 +987,18 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		return err
 	}
 
+	for id, plate := range request.InputPlates {
+		fmt.Printf("B: inputPlates[%q].Wellcoords[\"A1\"].CurrentVolume() = %v\n", id, plate.Wellcoords["A1"].CurrentVolume())
+	}
+
 	// now make instructions
 	request, err = this.ExecutionPlan(ctx, request)
 	if err != nil {
 		return err
+	}
+
+	for id, plate := range request.InputPlates {
+		fmt.Printf("B1: inputPlates[%q].Wellcoords[\"A1\"].CurrentVolume() = %v\n", id, plate.Wellcoords["A1"].CurrentVolume())
 	}
 
 	// counts tips used in this run -- reads instructions generated above so must happen
@@ -996,14 +1008,26 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		return err
 	}
 
+	for id, plate := range request.InputPlates {
+		fmt.Printf("B2: inputPlates[%q].Wellcoords[\"A1\"].CurrentVolume() = %v\n", id, plate.Wellcoords["A1"].CurrentVolume())
+	}
+
 	// Ensures tip boxes and wastes are correct for initial and final robot states
 	this.Refresh_tipboxes_tipwastes(request)
 
+	for id, plate := range request.InputPlates {
+		fmt.Printf("B3: inputPlates[%q].Wellcoords[\"A1\"].CurrentVolume() = %v\n", id, plate.Wellcoords["A1"].CurrentVolume())
+	}
 	// revise the volumes - this makes sure the volumes requested are correct
-	err = this.revise_volumes(request)
-
-	if err != nil {
+	if err := this.revise_volumes(request); err != nil {
 		return err
+	}
+	if request, err = this.ExecutionPlan(ctx, request); err != nil {
+		return errors.WithMessage(err, "in second round of execution plan")
+	}
+
+	for id, plate := range request.InputPlates {
+		fmt.Printf("C: inputPlates[%q].Wellcoords[\"A1\"].CurrentVolume() = %v\n", id, plate.Wellcoords["A1"].CurrentVolume())
 	}
 	// ensure the after state is correct
 	this.fix_post_ids()
@@ -1013,6 +1037,10 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	}
 
 	err = assertNoTemporaryPlates(ctx, request)
+
+	for id, plate := range request.InputPlates {
+		fmt.Printf("D: inputPlates[%q].Wellcoords[\"A1\"].CurrentVolume() = %v\n", id, plate.Wellcoords["A1"].CurrentVolume())
+	}
 
 	return err
 }

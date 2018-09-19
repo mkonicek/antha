@@ -27,8 +27,8 @@ func TestUniquePlateName(t *testing.T) {
 
 		doTheTest := func(t *testing.T) {
 			rq := NewLHRequest()
-			rq.Input_plates = dat.InputPlates
-			rq.Output_plates = dat.OutputPlates
+			rq.InputPlates = dat.InputPlates
+			rq.OutputPlates = dat.OutputPlates
 
 			for v := 0; v < 100; v++ {
 				nom := getSafeInputPlateName(rq, 1)

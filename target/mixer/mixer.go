@@ -75,7 +75,7 @@ type lhreq struct {
 func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 	// MIS -- this might be a hole. We probably need to invoke the sample tracker here
 	addPlate := func(req *planner.LHRequest, ip *wtype.Plate) error {
-		if _, seen := req.Input_plates[ip.ID]; seen {
+		if _, seen := req.InputPlates[ip.ID]; seen {
 			return fmt.Errorf("plate %q already added", ip.ID)
 		}
 		req.AddUserPlate(ip)
@@ -107,15 +107,15 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 	plan := planner.Init(prop)
 
 	if p := a.opt.MaxPlates; p != nil {
-		req.Input_setup_weights["MAX_N_PLATES"] = *p
+		req.InputSetupWeights["MAX_N_PLATES"] = *p
 	}
 
 	if p := a.opt.MaxWells; p != nil {
-		req.Input_setup_weights["MAX_N_WELLS"] = *p
+		req.InputSetupWeights["MAX_N_WELLS"] = *p
 	}
 
 	if p := a.opt.ResidualVolumeWeight; p != nil {
-		req.Input_setup_weights["RESIDUAL_VOLUME_WEIGHT"] = *p
+		req.InputSetupWeights["RESIDUAL_VOLUME_WEIGHT"] = *p
 	}
 
 	// TODO -- error check here to prevent nil values
@@ -127,7 +127,7 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 				return nil, err
 			}
 
-			req.Input_platetypes = append(req.Input_platetypes, p)
+			req.InputPlatetypes = append(req.InputPlatetypes, p)
 		}
 	}
 
@@ -137,7 +137,7 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 			if err != nil {
 				return nil, err
 			}
-			req.Output_platetypes = append(req.Output_platetypes, p)
+			req.OutputPlatetypes = append(req.OutputPlatetypes, p)
 		}
 	}
 
@@ -309,7 +309,7 @@ func addCustomPolicies(mixes []*wtype.LHInstruction, lhreq *planner.LHRequest) e
 	userPolicyRuleSet := wtype.NewLHPolicyRuleSet()
 
 	for _, mixInstruction := range mixes {
-		for _, component := range mixInstruction.Components {
+		for _, component := range mixInstruction.Inputs {
 			if len(component.Policy) > 0 {
 				if matchingSystemPolicy, found := allPolicies[string(component.Type)]; found {
 					mergedPolicy := mergePolicies(matchingSystemPolicy, component.Policy)
@@ -398,24 +398,24 @@ func (a *Mixer) makeMix(ctx context.Context, mixes []*wtype.LHInstruction) (*tar
 
 	for _, m := range mixes {
 		if m.OutPlate != nil {
-			p, ok := r.LHRequest.Output_plates[m.OutPlate.ID]
+			p, ok := r.LHRequest.OutputPlates[m.OutPlate.ID]
 			if ok && p != m.OutPlate {
 				return nil, fmt.Errorf("Mix setup error: Plate %s already requested in different state for mix.", p.ID)
 			}
-			r.LHRequest.Output_plates[m.OutPlate.ID] = m.OutPlate
+			r.LHRequest.OutputPlates[m.OutPlate.ID] = m.OutPlate
 		}
 	}
 
 	r.LHRequest.BlockID = getID(mixes)
 
 	for _, mix := range mixes {
-		if len(mix.Platetype) != 0 && !hasPlate(r.LHRequest.Output_platetypes, mix.Platetype, mix.PlateID) {
+		if len(mix.Platetype) != 0 && !hasPlate(r.LHRequest.OutputPlatetypes, mix.Platetype, mix.PlateID) {
 			p, err := inventory.NewPlate(ctx, mix.Platetype)
 			if err != nil {
 				return nil, err
 			}
 			p.ID = mix.PlateID
-			r.LHRequest.Output_platetypes = append(r.LHRequest.Output_platetypes, p)
+			r.LHRequest.OutputPlatetypes = append(r.LHRequest.OutputPlatetypes, p)
 		}
 		r.LHRequest.Add_instruction(mix)
 	}

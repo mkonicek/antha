@@ -62,7 +62,7 @@ func resultCmpMap(inss []*wtype.LHInstruction) map[string]*wtype.LHInstruction {
 	res := make(map[string]*wtype.LHInstruction, len(inss))
 	for _, ins := range inss {
 		if ins.Type == wtype.LHIMIX {
-			res[ins.Results[0].ID] = ins
+			res[ins.Outputs[0].ID] = ins
 		} else if ins.Type == wtype.LHIPRM {
 			// we use passthrough instead
 			for _, cmp := range ins.PassThrough {
@@ -71,7 +71,7 @@ func resultCmpMap(inss []*wtype.LHInstruction) map[string]*wtype.LHInstruction {
 		} else if ins.Type == wtype.LHISPL {
 			// Splits need to go after the use of result 0
 			// and before the use of result 1
-			res[ins.Results[1].ID] = ins
+			res[ins.Outputs[1].ID] = ins
 		}
 	}
 
@@ -82,7 +82,7 @@ func cmpInsMap(inss []*wtype.LHInstruction) map[string]*wtype.LHInstruction {
 	res := make(map[string]*wtype.LHInstruction, len(inss))
 	for _, ins := range inss {
 		if ins.Type == wtype.LHIMIX {
-			for _, c := range ins.Components {
+			for _, c := range ins.Inputs {
 				res[c.ID] = ins
 			}
 		} else if ins.Type == wtype.LHIPRM {
@@ -105,7 +105,7 @@ func getEdges(n *wtype.LHInstruction, resultMap, cmpMap map[string]*wtype.LHInst
 
 	if n.Type == wtype.LHISPL {
 		// cmpMap answers the question "which instruction *uses* this?"
-		cmp := n.Results[0]
+		cmp := n.Outputs[0]
 
 		var lhi *wtype.LHInstruction
 		var ok bool
@@ -123,7 +123,7 @@ func getEdges(n *wtype.LHInstruction, resultMap, cmpMap map[string]*wtype.LHInst
 	// we make this backwards since it's easier to say where something's coming from than where
 	// it's going to
 
-	for _, cmp := range n.Components {
+	for _, cmp := range n.Inputs {
 		// resultMap answers the question "which instruction *makes* this?"
 		// for samples we need to ask for the parent component
 		var lhi *wtype.LHInstruction

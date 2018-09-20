@@ -3,56 +3,44 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
 type MultiChannelTest struct {
-	Name             string
-	Liquidhandler    *Liquidhandler
-	Instructions     InstructionBuilder
-	InputPlateTypes  []string
-	OutputPlateTypes []string
-	ExpectingError   bool
-	Assertions       Assertions
+	Name           string
+	Liquidhandler  *Liquidhandler
+	Instructions   InstructionBuilder
+	InputPlates    []*wtype.LHPlate
+	OutputPlates   []*wtype.LHPlate
+	ExpectingError bool
+	Assertions     Assertions
 }
 
-func (test *MultiChannelTest) Run(t *testing.T) {
-	t.Run(test.Name, test.run)
+func (test *MultiChannelTest) Run(ctx context.Context, t *testing.T) {
+	t.Run(test.Name, func(t *testing.T) {
+		test.run(ctx, t)
+	})
 }
 
-func (test *MultiChannelTest) run(t *testing.T) {
-	ctx := GetContextForTest()
-
+func (test *MultiChannelTest) run(ctx context.Context, t *testing.T) {
 	request := NewLHRequest()
 	for _, ins := range test.Instructions(ctx) {
 		request.Add_instruction(ins)
 	}
 
-	if input, err := test.makePlates(ctx, test.InputPlateTypes); err != nil {
-		t.Fatal(errors.WithMessage(err, "while making input plates"))
-	} else {
-		request.InputPlatetypes = append(request.InputPlatetypes, input...)
+	request.InputPlatetypes = append(request.InputPlatetypes, test.InputPlates...)
+	request.OutputPlatetypes = append(request.OutputPlatetypes, test.OutputPlates...)
+
+	if test.Liquidhandler == nil {
+		test.Liquidhandler = GetLiquidHandlerForTest(ctx)
 	}
 
-	if output, err := test.makePlates(ctx, test.OutputPlateTypes); err != nil {
-		t.Fatal(errors.WithMessage(err, "while making output plates"))
-	} else {
-		request.OutputPlatetypes = append(request.OutputPlatetypes, output...)
-	}
-
-	lh := test.Liquidhandler
-	if lh == nil {
-		lh = GetLiquidHandlerForTest(ctx)
-	}
-
-	if err := lh.Plan(ctx, request); !test.expected(err) {
+	if err := test.Liquidhandler.Plan(ctx, request); !test.expected(err) {
 		t.Fatalf("expecting error = %t: got error %v", test.ExpectingError, err)
 	}
 
@@ -63,19 +51,40 @@ func (test *MultiChannelTest) run(t *testing.T) {
 		for i, ins := range request.Instructions {
 			fmt.Printf("  %02d: %v\n", i, liquidhandling.InsToString(ins))
 		}
+	} else if !test.ExpectingError {
+		test.checkPlateIDMap(t)
 	}
 }
 
-func (test *MultiChannelTest) makePlates(ctx context.Context, plateTypes []string) ([]*wtype.LHPlate, error) {
-	ret := make([]*wtype.LHPlate, 0, len(plateTypes))
-	for _, plateType := range plateTypes {
-		if p, err := inventory.NewPlate(ctx, plateType); err != nil {
-			return nil, err
-		} else {
-			ret = append(ret, p)
+func (test *MultiChannelTest) checkPlateIDMap(t *testing.T) {
+	beforePlates := test.Liquidhandler.Properties.PlateLookup
+	afterPlates := test.Liquidhandler.FinalProperties.PlateLookup
+	idMap := test.Liquidhandler.PlateIDMap()
+
+	//check that idMap refers to things that exist
+	for beforeID, afterID := range idMap {
+		beforeObj, ok := beforePlates[beforeID]
+		if !ok {
+			t.Errorf("idMap key \"%s\" doesn't exist in initial LHProperties.PlateLookup", beforeID)
+			continue
+		}
+		afterObj, ok := afterPlates[afterID]
+		if !ok {
+			t.Errorf("idMap value \"%s\" doesn't exist in final LHProperties.PlateLookup", afterID)
+			continue
+		}
+		//check that you don't have tipboxes turning into plates, for example
+		if beforeClass, afterClass := wtype.ClassOf(beforeObj), wtype.ClassOf(afterObj); beforeClass != afterClass {
+			t.Errorf("planner has turned a %s into a %s", beforeClass, afterClass)
 		}
 	}
-	return ret, nil
+
+	//check that everything in beforePlates is mapped to something
+	for id, obj := range beforePlates {
+		if _, ok := idMap[id]; !ok {
+			t.Errorf("%s with id %s exists in initial LHProperties, but isn't mapped to final LHProperties", wtype.ClassOf(obj), id)
+		}
+	}
 }
 
 func (test *MultiChannelTest) expected(err error) bool {
@@ -84,9 +93,9 @@ func (test *MultiChannelTest) expected(err error) bool {
 
 type MultiChannelTests []*MultiChannelTest
 
-func (tests MultiChannelTests) Run(t *testing.T) {
+func (tests MultiChannelTests) Run(ctx context.Context, t *testing.T) {
 	for _, test := range tests {
-		test.Run(t)
+		test.Run(ctx, t)
 	}
 }
 
@@ -116,13 +125,14 @@ func AssertNumberOf(iType *liquidhandling.InstructionType, count int) Assertion 
 	}
 }
 
-type TestOutput struct {
+type TestMixComponent struct {
 	LiquidName    string
 	VolumesByWell map[string]float64
 	LiquidType    wtype.LiquidType
+	Sampler       func(*wtype.Liquid, wunit.Volume) *wtype.Liquid
 }
 
-func (self TestOutput) AddSamples(ctx context.Context, samples map[string][]*wtype.Liquid) {
+func (self TestMixComponent) AddSamples(ctx context.Context, samples map[string][]*wtype.Liquid) {
 	var totalVolume float64
 	for _, v := range self.VolumesByWell {
 		totalVolume += v
@@ -134,13 +144,13 @@ func (self TestOutput) AddSamples(ctx context.Context, samples map[string][]*wty
 	}
 
 	for well, vol := range self.VolumesByWell {
-		samples[well] = append(samples[well], mixer.Sample(source, wunit.NewVolume(vol, "ul")))
+		samples[well] = append(samples[well], self.Sampler(source, wunit.NewVolume(vol, "ul")))
 	}
 }
 
-type TestOutputs []TestOutput
+type TestMixComponents []TestMixComponent
 
-func (self TestOutputs) AddSamples(ctx context.Context, samples map[string][]*wtype.Liquid) {
+func (self TestMixComponents) AddSamples(ctx context.Context, samples map[string][]*wtype.Liquid) {
 	for _, to := range self {
 		to.AddSamples(ctx, samples)
 	}
@@ -148,7 +158,7 @@ func (self TestOutputs) AddSamples(ctx context.Context, samples map[string][]*wt
 
 type InstructionBuilder func(context.Context) []*wtype.LHInstruction
 
-func Mixes(outputPlateType string, components TestOutputs) InstructionBuilder {
+func Mixes(outputPlateType string, components TestMixComponents) InstructionBuilder {
 	return func(ctx context.Context) []*wtype.LHInstruction {
 
 		samplesByWell := make(map[string][]*wtype.Liquid)
@@ -168,114 +178,10 @@ func Mixes(outputPlateType string, components TestOutputs) InstructionBuilder {
 	}
 }
 
-func TestMultichannel1(t *testing.T) {
-
-	MultiChannelTests{
-		{
-			Name: "single channel",
-			Instructions: Mixes("pcrplate_skirted_riser18", TestOutputs{
-				{
-					LiquidName: "water",
-					VolumesByWell: map[string]float64{
-						"A1": 8.0,
-						"B1": 8.0,
-						"C1": 8.0,
-						"D1": 8.0,
-						"E1": 8.0,
-						"F1": 8.0,
-						"G1": 8.0,
-						"H1": 8.0,
-					},
-					LiquidType: wtype.LTSingleChannel,
-				},
-				{
-					LiquidName: "mastermix_sapI",
-					VolumesByWell: map[string]float64{
-						"A1": 8.0,
-						"B1": 8.0,
-						"C1": 8.0,
-						"D1": 8.0,
-						"E1": 8.0,
-						"F1": 8.0,
-						"G1": 8.0,
-						"H1": 8.0,
-					},
-					LiquidType: wtype.LTSingleChannel,
-				},
-				{
-					LiquidName: "dna",
-					VolumesByWell: map[string]float64{
-						"A1": 1.0,
-						"B1": 1.0,
-						"C1": 1.0,
-						"D1": 1.0,
-						"E1": 1.0,
-						"F1": 1.0,
-						"G1": 1.0,
-						"H1": 1.0,
-					},
-					LiquidType: wtype.LTSingleChannel,
-				},
-			}),
-			InputPlateTypes:  []string{"DWST12"},
-			OutputPlateTypes: []string{"pcrplate_skirted_riser18"},
-			Assertions: Assertions{
-				AssertNumberOf(liquidhandling.ASP, 3*8), //no multichanneling
-				AssertNumberOf(liquidhandling.DSP, 3*8), //no multichanneling
-			},
-		},
-		{
-			Name: "multi channel",
-			Instructions: Mixes("pcrplate_skirted_riser18", TestOutputs{
-				{
-					LiquidName: "water",
-					VolumesByWell: map[string]float64{
-						"A1": 8.0,
-						"B1": 8.0,
-						"C1": 8.0,
-						"D1": 8.0,
-						"E1": 8.0,
-						"F1": 8.0,
-						"G1": 8.0,
-						"H1": 8.0,
-					},
-					LiquidType: wtype.LTWater,
-				},
-				{
-					LiquidName: "mastermix_sapI",
-					VolumesByWell: map[string]float64{
-						"A1": 8.0,
-						"B1": 8.0,
-						"C1": 8.0,
-						"D1": 8.0,
-						"E1": 8.0,
-						"F1": 8.0,
-						"G1": 8.0,
-						"H1": 8.0,
-					},
-					LiquidType: wtype.LTWater,
-				},
-				{
-					LiquidName: "dna",
-					VolumesByWell: map[string]float64{
-						"A1": 1.0,
-						"B1": 1.0,
-						"C1": 1.0,
-						"D1": 1.0,
-						"E1": 1.0,
-						"F1": 1.0,
-						"G1": 1.0,
-						"H1": 1.0,
-					},
-					LiquidType: wtype.LTWater,
-				},
-			}),
-			InputPlateTypes:  []string{"DWST12"},
-			OutputPlateTypes: []string{"pcrplate_skirted_riser18"},
-			Assertions: Assertions{
-				AssertNumberOf(liquidhandling.ASP, 3), //full multichanneling
-				AssertNumberOf(liquidhandling.DSP, 3), //full multichanneling
-			},
-		},
-	}.Run(t)
+func ColumnWise(rows int, volumes []float64) map[string]float64 {
+	ret := make(map[string]float64, len(volumes))
+	for i, v := range volumes {
+		ret[wtype.WellCoords{X: i / rows, Y: i % rows}.FormatA1()] = v
+	}
+	return ret
 }

@@ -3,6 +3,7 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
@@ -85,6 +86,77 @@ func (test *MultiChannelTest) checkPlateIDMap(t *testing.T) {
 			t.Errorf("%s with id %s exists in initial LHProperties, but isn't mapped to final LHProperties", wtype.ClassOf(obj), id)
 		}
 	}
+}
+
+func (test *MultiChannelTest) checkPositionConsistency(t *testing.T) {
+	for pos := range test.Liquidhandler.Properties.PosLookup {
+
+		id1, ok1 := test.Liquidhandler.Properties.PosLookup[pos]
+		id2, ok2 := test.Liquidhandler.FinalProperties.PosLookup[pos]
+
+		if ok1 && !ok2 || ok2 && !ok1 {
+			t.Fatal(fmt.Sprintf("Position %s inconsistent: Before %t after %t", pos, ok1, ok2))
+		}
+
+		p1 := test.Liquidhandler.Properties.PlateLookup[id1]
+		p2 := test.Liquidhandler.FinalProperties.PlateLookup[id2]
+
+		// check types
+
+		t1 := reflect.TypeOf(p1)
+		t2 := reflect.TypeOf(p2)
+
+		if t1 != t2 {
+			t.Fatal(fmt.Sprintf("Types of thing at position %s not same: %v %v", pos, t1, t2))
+		}
+
+		// ok nice we have some sort of consistency
+
+		switch p1.(type) {
+		case *wtype.Plate:
+			pp1 := p1.(*wtype.Plate)
+			pp2 := p2.(*wtype.Plate)
+			if pp1.Type != pp2.Type {
+				t.Fatal(fmt.Sprintf("Plates at %s not same type: %s %s", pos, pp1.Type, pp2.Type))
+			}
+			it := wtype.NewAddressIterator(pp1, wtype.ColumnWise, wtype.TopToBottom, wtype.LeftToRight, false)
+
+			for {
+				if !it.Valid() {
+					break
+				}
+				wc := it.Curr()
+				w1 := pp1.Wellcoords[wc.FormatA1()]
+				w2 := pp2.Wellcoords[wc.FormatA1()]
+
+				if w1.IsEmpty() && w2.IsEmpty() {
+					it.Next()
+					continue
+				}
+
+				if w1.WContents.ID == w2.WContents.ID {
+					t.Fatal(fmt.Sprintf("IDs before and after must differ"))
+				}
+				it.Next()
+			}
+		case *wtype.LHTipbox:
+			tb1 := p1.(*wtype.LHTipbox)
+			tb2 := p2.(*wtype.LHTipbox)
+
+			if tb1.Type != tb2.Type {
+				t.Fatal(fmt.Sprintf("Tipbox at changed type: %s %s", tb1.Type, tb2.Type))
+			}
+		case *wtype.LHTipwaste:
+			tw1 := p1.(*wtype.LHTipwaste)
+			tw2 := p2.(*wtype.LHTipwaste)
+
+			if tw1.Type != tw2.Type {
+				t.Fatal(fmt.Sprintf("Tipwaste changed type: %s %s", tw1.Type, tw2.Type))
+			}
+		}
+
+	}
+
 }
 
 func (test *MultiChannelTest) expected(err error) bool {

@@ -12,7 +12,7 @@ import (
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
-type MultiChannelTest struct {
+type PlanningTest struct {
 	Name           string
 	Liquidhandler  *Liquidhandler
 	Instructions   InstructionBuilder
@@ -22,13 +22,13 @@ type MultiChannelTest struct {
 	Assertions     Assertions
 }
 
-func (test *MultiChannelTest) Run(ctx context.Context, t *testing.T) {
+func (test *PlanningTest) Run(ctx context.Context, t *testing.T) {
 	t.Run(test.Name, func(t *testing.T) {
 		test.run(ctx, t)
 	})
 }
 
-func (test *MultiChannelTest) run(ctx context.Context, t *testing.T) {
+func (test *PlanningTest) run(ctx context.Context, t *testing.T) {
 	request := NewLHRequest()
 	for _, ins := range test.Instructions(ctx) {
 		request.Add_instruction(ins)
@@ -57,7 +57,7 @@ func (test *MultiChannelTest) run(ctx context.Context, t *testing.T) {
 	}
 }
 
-func (test *MultiChannelTest) checkPlateIDMap(t *testing.T) {
+func (test *PlanningTest) checkPlateIDMap(t *testing.T) {
 	beforePlates := test.Liquidhandler.Properties.PlateLookup
 	afterPlates := test.Liquidhandler.FinalProperties.PlateLookup
 	idMap := test.Liquidhandler.PlateIDMap()
@@ -88,7 +88,7 @@ func (test *MultiChannelTest) checkPlateIDMap(t *testing.T) {
 	}
 }
 
-func (test *MultiChannelTest) checkPositionConsistency(t *testing.T) {
+func (test *PlanningTest) checkPositionConsistency(t *testing.T) {
 	for pos := range test.Liquidhandler.Properties.PosLookup {
 
 		id1, ok1 := test.Liquidhandler.Properties.PosLookup[pos]
@@ -159,13 +159,13 @@ func (test *MultiChannelTest) checkPositionConsistency(t *testing.T) {
 
 }
 
-func (test *MultiChannelTest) expected(err error) bool {
+func (test *PlanningTest) expected(err error) bool {
 	return (err != nil) == test.ExpectingError
 }
 
-type MultiChannelTests []*MultiChannelTest
+type PlanningTests []*PlanningTest
 
-func (tests MultiChannelTests) Run(ctx context.Context, t *testing.T) {
+func (tests PlanningTests) Run(ctx context.Context, t *testing.T) {
 	for _, test := range tests {
 		test.Run(ctx, t)
 	}

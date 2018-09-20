@@ -161,7 +161,7 @@ func configure_request_bigger(ctx context.Context, rq *LHRequest) {
 
 }
 
-func configureMultiChannelTestRequest(ctx context.Context, rq *LHRequest) {
+func configurePlanningTestRequest(ctx context.Context, rq *LHRequest) {
 	water := GetComponentForTest(ctx, "multiwater", wunit.NewVolume(2000.0, "ul"))
 
 	for k := 0; k < 9; k++ {
@@ -535,7 +535,7 @@ func makeMultiTestRequest() (multiRq *LHRequest, err error) {
 	multiRq = GetLHRequestForTest()
 
 	// set to Multi channel test request
-	configureMultiChannelTestRequest(ctx, multiRq)
+	configurePlanningTestRequest(ctx, multiRq)
 	// add plates and tip boxes
 	multiRq.InputPlatetypes = append(multiRq.InputPlatetypes, GetPlateForTest())
 	multiRq.OutputPlatetypes = append(multiRq.OutputPlatetypes, GetPlateForTest())
@@ -829,7 +829,7 @@ func TestPlateReuse(t *testing.T) {
 
 func TestExecutionPlanning(t *testing.T) {
 	ctx := GetContextForTest()
-	MultiChannelTests{
+	PlanningTests{
 		{
 			Name: "simple planning",
 			Instructions: Mixes("pcrplate_skirted_riser", TestMixComponents{

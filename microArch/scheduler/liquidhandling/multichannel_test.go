@@ -54,6 +54,7 @@ func (test *PlanningTest) run(ctx context.Context, t *testing.T) {
 		}
 	} else if !test.ExpectingError {
 		test.checkPlateIDMap(t)
+		test.checkPositionConsistency(t)
 	}
 }
 

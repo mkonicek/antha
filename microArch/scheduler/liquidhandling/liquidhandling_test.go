@@ -121,26 +121,6 @@ func configure_request_simple(ctx context.Context, rq *LHRequest) {
 
 }
 
-func configure_request_total_volume(ctx context.Context, rq *LHRequest) {
-	water := GetComponentForTest(ctx, "water", wunit.NewVolume(100.0, "ul"))
-	mmx := GetComponentForTest(ctx, "mastermix_sapI", wunit.NewVolume(100.0, "ul"))
-	part := GetComponentForTest(ctx, "dna", wunit.NewVolume(50.0, "ul"))
-
-	for k := 0; k < 9; k++ {
-		ins := wtype.NewLHMixInstruction()
-		ws := mixer.SampleForTotalVolume(water, wunit.NewVolume(17.0, "ul"))
-		mmxs := mixer.Sample(mmx, wunit.NewVolume(8.0, "ul"))
-		ps := mixer.Sample(part, wunit.NewVolume(1.0, "ul"))
-
-		ins.AddInput(ws)
-		ins.AddInput(mmxs)
-		ins.AddInput(ps)
-		ins.AddOutput(GetComponentForTest(ctx, "water", wunit.NewVolume(17.0, "ul")))
-		rq.Add_instruction(ins)
-	}
-
-}
-
 func configure_request_bigger(ctx context.Context, rq *LHRequest) {
 	water := GetComponentForTest(ctx, "water", wunit.NewVolume(2000.0, "ul"))
 	mmx := GetComponentForTest(ctx, "mastermix_sapI", wunit.NewVolume(2000.0, "ul"))
@@ -322,26 +302,6 @@ func TestToWellVolume(t *testing.T) {
 
 	if err != nil {
 		t.Error(err.Error())
-	}
-
-}
-
-func configure_request_overfilled(ctx context.Context, rq *LHRequest) {
-	water := GetComponentForTest(ctx, "water", wunit.NewVolume(100.0, "ul"))
-	mmx := GetComponentForTest(ctx, "mastermix_sapI", wunit.NewVolume(100.0, "ul"))
-	part := GetComponentForTest(ctx, "dna", wunit.NewVolume(50.0, "ul"))
-
-	for k := 0; k < 9; k++ {
-		ins := wtype.NewLHMixInstruction()
-		ws := mixer.Sample(water, wunit.NewVolume(160.0, "ul"))
-		mmxs := mixer.Sample(mmx, wunit.NewVolume(160.0, "ul"))
-		ps := mixer.Sample(part, wunit.NewVolume(20.0, "ul"))
-
-		ins.AddInput(ws)
-		ins.AddInput(mmxs)
-		ins.AddInput(ps)
-		ins.AddOutput(GetComponentForTest(ctx, "water", wunit.NewVolume(340.0, "ul")))
-		rq.Add_instruction(ins)
 	}
 
 }
@@ -1025,36 +985,24 @@ func TestExecutionPlanning(t *testing.T) {
 				AssertNumberOf(liquidhandling.DSP, 3), //full multichanneling
 			},
 		},
-		/*		{
-				Name:          "independent multi channel",
-				Liquidhandler: GetIndependentLiquidHandlerForTest(ctx),
-				Instructions: Mixes("pcrplate_skirted_riser", TestMixComponents{
-					{
-						LiquidName:    "water",
-						VolumesByWell: ColumnWise(8, []float64{18.0, 7.0, 15.0, 12.0, 7.0, 8.0, 4.0, 8.0}),
-						LiquidType:    wtype.LTWater,
-						Sampler:       mixer.Sample,
-					},
-					{
-						LiquidName:    "mastermix_sapI",
-						VolumesByWell: ColumnWise(8, []float64{8.0, 7.0, 6.0, 7.0, 5.0, 2.0, 5.0, 6.0}),
-						LiquidType:    wtype.LTWater,
-						Sampler:       mixer.Sample,
-					},
-					{
-						LiquidName:    "dna",
-						VolumesByWell: ColumnWise(8, []float64{1.0, 0.9, 1.4, 1.8, 2.0, 1.7, 0.6, 1.0}),
-						LiquidType:    wtype.LTWater,
-						Sampler:       mixer.Sample,
-					},
-				}),
-				InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
-				OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
-				Assertions: Assertions{
-					AssertNumberOf(liquidhandling.ASP, 3), //full multichanneling
-					AssertNumberOf(liquidhandling.DSP, 3), //full multichanneling
+		{
+			Name:          "independent multi channel",
+			Liquidhandler: GetIndependentLiquidHandlerForTest(ctx),
+			Instructions: Mixes("pcrplate_skirted_riser", TestMixComponents{
+				{
+					LiquidName:    "water",
+					VolumesByWell: ColumnWise(8, []float64{18.0, 7.0, 15.0, 12.0, 7.0, 8.0, 4.0, 8.0}),
+					LiquidType:    wtype.LTWater,
+					Sampler:       mixer.Sample,
 				},
-			},*/
+			}),
+			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
+			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
+			Assertions: Assertions{
+				AssertNumberOf(liquidhandling.ASP, 1), //full multichanneling
+				AssertNumberOf(liquidhandling.DSP, 1), //full multichanneling
+			},
+		},
 		{
 			Name: "multi channel split-sample",
 			Instructions: func(ctx context.Context) []*wtype.LHInstruction {

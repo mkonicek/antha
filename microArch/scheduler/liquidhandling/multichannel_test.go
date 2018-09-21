@@ -48,9 +48,16 @@ func (test *PlanningTest) run(ctx context.Context, t *testing.T) {
 	test.Assertions.Assert(t, request)
 
 	if t.Failed() {
-		fmt.Println("Generated Instructions:")
+		fmt.Println("Generated instructions")
+		display := map[*liquidhandling.InstructionType]bool{
+			liquidhandling.MOV: true,
+			liquidhandling.ASP: true,
+			liquidhandling.DSP: true,
+		}
 		for i, ins := range request.Instructions {
-			fmt.Printf("  %02d: %v\n", i, liquidhandling.InsToString(ins))
+			if display[ins.Type()] {
+				fmt.Printf("  %d: %s\n", i, liquidhandling.InsToString(ins))
+			}
 		}
 	} else if !test.ExpectingError {
 		test.checkPlateIDMap(t)

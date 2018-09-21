@@ -256,6 +256,7 @@ func cmpsEqual(c1, c2 *wtype.Liquid) bool {
 }
 
 func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsReply, error) {
+	fmt.Printf("GetComponents(%v, multi = %d, independent = %t)\n", opt.Cmps, opt.Multi, opt.Independent)
 	rep := newReply()
 	// build list of possible sources -- this is a list of ComponentVectors
 
@@ -326,6 +327,8 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 		updateDests(currCmps, bestMatch)
 		rep.Transfers = append(rep.Transfers, matchToParallelTransfer(bestMatch))
 	}
+
+	fmt.Printf("return Transfers: %v\n", rep.Transfers)
 
 	return rep, nil
 }

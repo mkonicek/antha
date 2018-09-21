@@ -957,7 +957,7 @@ func TestExecutionPlanning(t *testing.T) {
 			},
 		},
 		{
-			Name: "multi channel",
+			Name: "multi channel dependent",
 			Instructions: Mixes("pcrplate_skirted_riser", TestMixComponents{
 				{
 					LiquidName:    "water",
@@ -986,7 +986,41 @@ func TestExecutionPlanning(t *testing.T) {
 			},
 		},
 		{
-			Name:          "independent multi channel",
+			Name: "single channel",
+			Instructions: Mixes("pcrplate_skirted_riser", TestMixComponents{
+				{
+					LiquidName:    "water",
+					VolumesByWell: ColumnWise(8, []float64{4.0, 0.0, 4.0, 0.0, 4.0, 0.0, 4.0, 0.0}),
+					LiquidType:    wtype.LTWater,
+					Sampler:       mixer.Sample,
+				},
+			}),
+			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
+			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
+			Assertions: Assertions{
+				AssertNumberOf(liquidhandling.ASP, 4),
+				AssertNumberOf(liquidhandling.DSP, 4),
+			},
+		},
+		{
+			Name: "multi and single channel",
+			Instructions: Mixes("pcrplate_skirted_riser", TestMixComponents{
+				{
+					LiquidName:    "water",
+					VolumesByWell: ColumnWise(8, []float64{4.0, 8.0, 4.0, 8.0, 4.0, 8.0, 4.0, 8.0}),
+					LiquidType:    wtype.LTWater,
+					Sampler:       mixer.Sample,
+				},
+			}),
+			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
+			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
+			Assertions: Assertions{
+				AssertNumberOf(liquidhandling.ASP, 5),
+				AssertNumberOf(liquidhandling.DSP, 5),
+			},
+		},
+		{
+			Name:          "multi channel independent",
 			Liquidhandler: GetIndependentLiquidHandlerForTest(ctx),
 			Instructions: Mixes("pcrplate_skirted_riser", TestMixComponents{
 				{

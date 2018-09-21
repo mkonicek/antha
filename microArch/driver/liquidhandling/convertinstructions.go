@@ -24,6 +24,7 @@ package liquidhandling
 
 import (
 	"context"
+	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
@@ -40,63 +41,13 @@ import (
 //	etc.
 //
 
-func ConvertInstructions(ctx context.Context, inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool, policy *wtype.LHPolicyRuleSet) (insOut []*TransferInstruction, robotOut *LHProperties, err error) {
-	// again again again we dup the robot
-
-	if multi != 1 {
-		rbt := robot.DupKeepIDs()
-
-		tfrs, err := convertInstructions(inssIn, rbt, carryvol, channelprms, multi, legacyVolume)
-
-		if err != nil {
-			return []*TransferInstruction{}, robot, err
-		}
-
-		// check if we actually generate any multichannel stuff here
-
-		mcHere, err := hasMCB(ctx, tfrs, rbt, policy)
-
-		if err != nil {
-			return []*TransferInstruction{}, robot, err
-		}
-
-		// if there's no multichannel here require only single channeling
-		// this is to make behaviour in regard of sources, atomic mixes
-		// correct
-		if !mcHere {
-			multi = 1
-		}
-	}
-
-	tfrs, err := convertInstructions(inssIn, robot, carryvol, channelprms, multi, legacyVolume)
-
-	if err != nil {
-		return []*TransferInstruction{}, robot, err
-	}
-
-	return tfrs, robot, nil
+func ConvertInstructions(ctx context.Context, inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool, policy *wtype.LHPolicyRuleSet) ([]*TransferInstruction, error) {
+	return convertInstructions(inssIn, robot, carryvol, channelprms, multi, legacyVolume)
 }
 
-func hasMCB(ctx context.Context, tfrs []*TransferInstruction, rbt *LHProperties, policy *wtype.LHPolicyRuleSet) (bool, error) {
-	for _, tfr := range tfrs {
-		instrx, err := tfr.Generate(ctx, policy, rbt)
+func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool) ([]*TransferInstruction, error) {
 
-		if err != nil {
-			return false, err
-		}
-
-		for _, ins := range instrx {
-			if ins.Type() == MCB {
-				return true, nil
-			}
-		}
-	}
-
-	return false, nil
-}
-
-func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool) (insOut []*TransferInstruction, err error) {
-	insOut = make([]*TransferInstruction, 0, 1)
+	insOut := make([]*TransferInstruction, 0, 1)
 
 	// TODO --> iterator?
 	var horiz bool
@@ -186,6 +137,10 @@ func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 
 	}
 
+	fmt.Printf("convertInstructions return %d\n", len(insOut))
+	for _, ins := range insOut {
+		fmt.Printf("  %s\n", InsToString(ins))
+	}
 	return insOut, nil
 }
 

@@ -76,24 +76,29 @@ func (mtp MultiTransferParams) RemoveInitialBlanks() MultiTransferParams {
 	return r
 }
 
-func (mtp MultiTransferParams) RemoveVolume(vol wunit.Volume) {
-	for _, t := range mtp.Transfers {
-		if !t.Zero() {
-			t.Volume.Subtract(vol)
+// RemoveVolumes reduce the volume of the ith transfer by vols[i]
+func (mtp MultiTransferParams) RemoveVolumes(vols []wunit.Volume) {
+	for i, t := range mtp.Transfers {
+		if !t.Zero() && i < len(vols) {
+			t.Volume.Subtract(vols[i])
 		}
 	}
 }
-func (mtp MultiTransferParams) RemoveFVolume(vol wunit.Volume) {
-	for _, t := range mtp.Transfers {
-		if !t.Zero() {
-			t.FVolume.Subtract(vol)
+
+// RemoveVolumes reduce the FVolume (from volumes) of the ith transfer by vols[i]
+func (mtp MultiTransferParams) RemoveFVolumes(vols []wunit.Volume) {
+	for i, t := range mtp.Transfers {
+		if !t.Zero() && i < len(vols) {
+			t.FVolume.Subtract(vols[i])
 		}
 	}
 }
-func (mtp MultiTransferParams) AddTVolume(vol wunit.Volume) {
-	for _, t := range mtp.Transfers {
-		if !t.Zero() {
-			t.TVolume.Add(vol)
+
+// RemoveVolumes increase the TVolume (to volumes) of the ith transfer by vols[i]
+func (mtp MultiTransferParams) AddTVolumes(vols []wunit.Volume) {
+	for i, t := range mtp.Transfers {
+		if !t.Zero() && i < len(vols) {
+			t.TVolume.Add(vols[i])
 		}
 	}
 }

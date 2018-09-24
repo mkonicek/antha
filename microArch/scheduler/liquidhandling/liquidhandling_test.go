@@ -1071,6 +1071,25 @@ func TestExecutionPlanning(t *testing.T) {
 				AssertNumberOf(liquidhandling.DSP, 4), //full multichanneling
 			},
 		},
+		{
+			Name: "single channel well use",
+			Instructions: Mixes("pcrplate_skirted_riser", TestMixComponents{
+				{
+					LiquidName:    "water",
+					VolumesByWell: ColumnWise(8, []float64{8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0}),
+					LiquidType:    wtype.LTSingleChannel,
+					Sampler:       mixer.Sample,
+				},
+			}),
+			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
+			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
+			Assertions: Assertions{
+				AssertNumberOf(liquidhandling.ASP, 8),                                                //no multichanneling
+				AssertInputLayout(map[string]string{"A1": "water"}),                                  // should all be in the same well since no multichanneling
+				AssertInitialInputWorkingVolumes(0.001, map[string]float64{"A1": (8.0 + 0.5) * 8.0}), // volume plus carry per transfer
+				AssertFinalInputWorkingVolumes(0.001, map[string]float64{"A1": 0.0}),
+			},
+		},
 	}.Run(ctx, t)
 
 }

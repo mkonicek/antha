@@ -34,7 +34,8 @@ func TestTipCounting(t *testing.T) {
 			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
 			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
 			Assertions: Assertions{
-				AssertTipsUsed([]wtype.TipEstimate{{TipType: "DFL10 Tip Rack (PIPETMAX 8x20)", NTips: 8 * 3, NTipBoxes: 1}}),
+				// re-use the first tip 8x since wells are empty, then change tip everytime for subsequent liquids
+				AssertTipsUsed([]wtype.TipEstimate{{TipType: "DFL10 Tip Rack (PIPETMAX 8x20)", NTips: 1 + 8*2, NTipBoxes: 1}}),
 			},
 		},
 		{

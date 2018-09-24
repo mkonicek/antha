@@ -50,9 +50,10 @@ func (test *PlanningTest) run(ctx context.Context, t *testing.T) {
 	if t.Failed() {
 		fmt.Println("Generated instructions")
 		display := map[*liquidhandling.InstructionType]bool{
-			liquidhandling.MOV: true,
+			liquidhandling.LOD: true,
 			liquidhandling.ASP: true,
 			liquidhandling.DSP: true,
+			liquidhandling.ULD: true,
 		}
 		for i, ins := range request.Instructions {
 			if display[ins.Type()] {
@@ -201,6 +202,15 @@ func AssertNumberOf(iType *liquidhandling.InstructionType, count int) Assertion 
 		}
 		if c != count {
 			t.Errorf("Expecting %d instrctions of type %s, got %d", count, iType, c)
+		}
+	}
+}
+
+// AssertTipsUsed check that the number of tips used is as expected
+func AssertTipsUsed(expected []wtype.TipEstimate) Assertion {
+	return func(t *testing.T, request *LHRequest) {
+		if !reflect.DeepEqual(expected, request.TipsUsed) {
+			t.Errorf("Expected %v Got %v", expected, request.TipsUsed)
 		}
 	}
 }

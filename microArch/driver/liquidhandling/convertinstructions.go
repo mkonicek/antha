@@ -24,7 +24,6 @@ package liquidhandling
 
 import (
 	"context"
-	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
@@ -137,10 +136,6 @@ func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 
 	}
 
-	fmt.Printf("convertInstructions return %d\n", len(insOut))
-	for _, ins := range insOut {
-		fmt.Printf("  %s\n", InsToString(ins))
-	}
 	return insOut, nil
 }
 

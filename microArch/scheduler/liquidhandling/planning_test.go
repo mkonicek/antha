@@ -58,20 +58,7 @@ func (test *PlanningTest) run(ctx context.Context, t *testing.T) {
 
 	test.Assertions.Assert(t, test.Liquidhandler, request)
 
-	if t.Failed() {
-		fmt.Println("Generated instructions")
-		//	display := map[*liquidhandling.InstructionType]bool{
-		//		liquidhandling.LOD: true,
-		//		liquidhandling.ASP: true,
-		//		liquidhandling.DSP: true,
-		//		liquidhandling.ULD: true,
-		//	}
-		for i, ins := range request.Instructions {
-			//if display[ins.Type()] {
-			fmt.Printf("  %d: %s\n", i, liquidhandling.InsToString(ins))
-			//}
-		}
-	} else if !test.ExpectingError {
+	if !t.Failed() && !test.ExpectingError {
 		test.checkPlateIDMap(t)
 		test.checkPositionConsistency(t)
 	}
@@ -269,7 +256,7 @@ func describePlateVolumes(order []string, plates map[string]*wtype.LHPlate) ([]m
 		} else {
 			for address, well := range plate.Wellcoords {
 				if !well.IsEmpty() {
-					got[address] = well.CurrentWorkingVolume().MustInStringUnit("ul").RawValue()
+					got[address] = well.CurrentVolume().MustInStringUnit("ul").RawValue()
 				}
 			}
 		}
@@ -305,7 +292,7 @@ func volumesMatch(tolerance float64, lhs, rhs map[string]float64) bool {
 // AssertInitialInputVolumes check that the input layout is as expected
 // expected is a map of well location (in A1 format) to liquid to volume in ul
 // tol is the maximum difference before an error is raised
-func AssertInitialInputWorkingVolumes(tol float64, expected ...map[string]float64) Assertion {
+func AssertInitialInputVolumes(tol float64, expected ...map[string]float64) Assertion {
 	return func(t *testing.T, lh *Liquidhandler, request *LHRequest) {
 
 		if got, err := describePlateVolumes(request.InputPlateOrder, request.InputPlates); err != nil {
@@ -323,7 +310,7 @@ func AssertInitialInputWorkingVolumes(tol float64, expected ...map[string]float6
 // AssertFinalInputVolumes check that the input layout is as expected
 // expected is a map of well location (in A1 format) to liquid to volume in ul
 // tol is the maximum difference before an error is raised
-func AssertFinalInputWorkingVolumes(tol float64, expected ...map[string]float64) Assertion {
+func AssertFinalInputVolumes(tol float64, expected ...map[string]float64) Assertion {
 	return func(t *testing.T, lh *Liquidhandler, request *LHRequest) {
 
 		pos := make([]string, 0, len(request.InputPlateOrder))
@@ -337,6 +324,29 @@ func AssertFinalInputWorkingVolumes(tol float64, expected ...map[string]float64)
 			for i, g := range got {
 				if !volumesMatch(tol, expected[i], g) {
 					t.Errorf("input plate %d doesn't match:\ne: %v\ng: %v", i, expected[i], g)
+				}
+			}
+		}
+	}
+}
+
+// AssertFinalOutputVolumes check that the output layout is as expected
+// expected is a map of well location (in A1 format) to liquid to volume in ul
+// tol is the maximum difference before an error is raised
+func AssertFinalOutputVolumes(tol float64, expected ...map[string]float64) Assertion {
+	return func(t *testing.T, lh *Liquidhandler, request *LHRequest) {
+
+		pos := make([]string, 0, len(request.OutputPlateOrder))
+		for _, in := range request.OutputPlateOrder {
+			pos = append(pos, lh.FinalProperties.PlateIDLookup[lh.plateIDMap[in]])
+		}
+
+		if got, err := describePlateVolumes(pos, lh.FinalProperties.Plates); err != nil {
+			t.Error(errors.WithMessage(err, "while asserting final output volumes"))
+		} else {
+			for i, g := range got {
+				if !volumesMatch(tol, expected[i], g) {
+					t.Errorf("output plate %d doesn't match:\ne: %v\ng: %v", i, expected[i], g)
 				}
 			}
 		}

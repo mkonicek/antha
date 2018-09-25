@@ -59,6 +59,15 @@ func GetPlateForTest() *wtype.Plate {
 	return plate
 }
 
+func PrefillPlateForTest(ctx context.Context, plate *wtype.LHPlate, liquidType string, volumes map[string]float64) *wtype.LHPlate {
+	for address, volume := range volumes {
+		cmp := GetComponentForTest(ctx, liquidType, wunit.NewVolume(volume, "ul"))
+		plate.Wellcoords[address].SetContents(cmp)
+	}
+
+	return plate
+}
+
 func GetTipwasteForTest() *wtype.LHTipwaste {
 	shp := wtype.NewShape("box", "mm", 123.0, 80.0, 92.0)
 	w := wtype.NewLHWell("ul", 800000.0, 800000.0, shp, 0, 123.0, 80.0, 92.0, 0.0, "mm")
@@ -1072,6 +1081,25 @@ func TestExecutionPlanning(t *testing.T) {
 			},
 		},
 		{
+			Name: "single channel auto allocation",
+			Instructions: Mixes("pcrplate_skirted_riser", TestMixComponents{
+				{
+					LiquidName:    "water",
+					VolumesByWell: ColumnWise(8, []float64{8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0}),
+					LiquidType:    wtype.LTSingleChannel,
+					Sampler:       mixer.Sample,
+				},
+			}),
+			InputPlates:  []*wtype.LHPlate{GetPlateForTest()},
+			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
+			Assertions: Assertions{
+				AssertNumberOf(liquidhandling.ASP, 8),                                                //no multichanneling
+				AssertInputLayout(map[string]string{"A1": "water"}),                                  // should all be in the same well since no multichanneling
+				AssertInitialInputWorkingVolumes(0.001, map[string]float64{"A1": (8.0 + 0.5) * 8.0}), // volume plus carry per transfer
+				AssertFinalInputWorkingVolumes(0.001, map[string]float64{"A1": 0.0}),
+			},
+		},
+		{
 			Name: "single channel well use",
 			Instructions: Mixes("pcrplate_skirted_riser", TestMixComponents{
 				{
@@ -1081,13 +1109,13 @@ func TestExecutionPlanning(t *testing.T) {
 					Sampler:       mixer.Sample,
 				},
 			}),
-			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
+			InputPlates:  []*wtype.LHPlate{PrefillPlateForTest(ctx, GetPlateForTest(), "water", map[string]float64{"A1": 200.0, "B1": 200.0, "C1": 200.0})},
 			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
 			Assertions: Assertions{
-				AssertNumberOf(liquidhandling.ASP, 8),                                                //no multichanneling
-				AssertInputLayout(map[string]string{"A1": "water"}),                                  // should all be in the same well since no multichanneling
-				AssertInitialInputWorkingVolumes(0.001, map[string]float64{"A1": (8.0 + 0.5) * 8.0}), // volume plus carry per transfer
-				AssertFinalInputWorkingVolumes(0.001, map[string]float64{"A1": 0.0}),
+				AssertNumberOf(liquidhandling.ASP, 8),                                             //no multichanneling
+				AssertInputLayout(map[string]string{"A1": "water", "B1": "water", "C1": "water"}), // should all be in the same well since no multichanneling
+				AssertInitialInputWorkingVolumes(0.001, map[string]float64{"A1": 200.0, "B1": 200.0, "C1": 200.0}),
+				AssertFinalInputWorkingVolumes(0.001, map[string]float64{"A1": 200.0 - (8.0+0.5)*8.0, "B1": 200.0, "C1": 200.0}),
 			},
 		},
 	}.Run(ctx, t)

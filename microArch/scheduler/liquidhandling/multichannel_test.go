@@ -37,7 +37,15 @@ func (test *PlanningTest) run(ctx context.Context, t *testing.T) {
 		request.Add_instruction(ins)
 	}
 
-	request.InputPlatetypes = append(request.InputPlatetypes, test.InputPlates...)
+	for _, plate := range test.InputPlates {
+		if !plate.IsEmpty() {
+			request.AddUserPlate(plate)
+			plate = plate.Dup()
+			plate.Clean()
+		}
+		request.InputPlatetypes = append(request.InputPlatetypes, plate)
+	}
+
 	request.OutputPlatetypes = append(request.OutputPlatetypes, test.OutputPlates...)
 
 	if test.Liquidhandler == nil {
@@ -52,16 +60,16 @@ func (test *PlanningTest) run(ctx context.Context, t *testing.T) {
 
 	if t.Failed() {
 		fmt.Println("Generated instructions")
-		display := map[*liquidhandling.InstructionType]bool{
-			liquidhandling.LOD: true,
-			liquidhandling.ASP: true,
-			liquidhandling.DSP: true,
-			liquidhandling.ULD: true,
-		}
+		//	display := map[*liquidhandling.InstructionType]bool{
+		//		liquidhandling.LOD: true,
+		//		liquidhandling.ASP: true,
+		//		liquidhandling.DSP: true,
+		//		liquidhandling.ULD: true,
+		//	}
 		for i, ins := range request.Instructions {
-			if display[ins.Type()] {
-				fmt.Printf("  %d: %s\n", i, liquidhandling.InsToString(ins))
-			}
+			//if display[ins.Type()] {
+			fmt.Printf("  %d: %s\n", i, liquidhandling.InsToString(ins))
+			//}
 		}
 	} else if !test.ExpectingError {
 		test.checkPlateIDMap(t)
@@ -244,7 +252,7 @@ func AssertInputLayout(expected ...map[string]string) Assertion {
 			}
 
 			if !reflect.DeepEqual(expected[plateNum], got) {
-				t.Errorf("input plate %d doesn't match:\ne: %v\ng: %v", plateNum, expected, got)
+				t.Errorf("input plate %d doesn't match:\ne: %v\ng: %v", plateNum, expected[plateNum], got)
 			}
 		}
 	}
@@ -359,11 +367,31 @@ func (self TestMixComponent) AddSamples(ctx context.Context, samples map[string]
 	}
 }
 
+func (self TestMixComponent) AddToPlate(ctx context.Context, plate *wtype.LHPlate) {
+
+	for well, vol := range self.VolumesByWell {
+		cmp := GetComponentForTest(ctx, self.LiquidName, wunit.NewVolume(vol, "ul"))
+		if self.LiquidType != "" {
+			cmp.Type = self.LiquidType
+		}
+
+		plate.Wellcoords[well].SetContents(cmp)
+	}
+}
+
 type TestMixComponents []TestMixComponent
 
 func (self TestMixComponents) AddSamples(ctx context.Context, samples map[string][]*wtype.Liquid) {
 	for _, to := range self {
 		to.AddSamples(ctx, samples)
+	}
+}
+
+type TestInputLayout []TestMixComponent
+
+func (self TestInputLayout) AddToPlate(ctx context.Context, plate *wtype.LHPlate) {
+	for _, to := range self {
+		to.AddToPlate(ctx, plate)
 	}
 }
 

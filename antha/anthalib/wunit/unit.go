@@ -164,6 +164,12 @@ func (self *Unit) compatibleWith(pu PrefixedUnit) bool {
 
 // Copy return a pointer to a new Unit identical to this one
 func (self *Unit) Copy() *Unit {
-	ret := *self
-	return &ret
+	return &Unit{
+		name:       self.name,
+		symbol:     self.symbol,
+		siSymbol:   self.siSymbol,
+		prefix:     self.prefix,
+		multiplier: self.multiplier,
+		exponent:   self.exponent,
+	}
 }

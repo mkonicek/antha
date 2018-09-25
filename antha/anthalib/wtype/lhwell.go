@@ -260,6 +260,7 @@ func (w *LHWell) SetContents(newContents *Liquid) error {
 	}
 
 	w.WContents = newContents
+	w.updateComponentLocation()
 	return nil
 }
 
@@ -432,8 +433,7 @@ func (w *LHWell) Clear() {
 		return
 	}
 	w.WContents = NewLHComponent()
-	//death if this well is actually in a tipwaste
-	w.WContents.Loc = w.Plate.(*Plate).ID + ":" + w.Crds.FormatA1()
+	w.updateComponentLocation()
 }
 
 //IsEmpty returns true if the well contains nothing, though this does not mean that the working volume is greater than zero
@@ -451,7 +451,7 @@ func (w *LHWell) IsEmpty() bool {
 //Clean resets the volume in the well so that it's empty
 func (w *LHWell) Clean() {
 	w.WContents.Clean()
-	w.WContents.Loc = w.Plate.(*Plate).ID + ":" + w.Crds.FormatA1()
+	w.updateComponentLocation()
 	newExtra := make(map[string]interface{})
 
 	// some keys must be retained
@@ -463,6 +463,12 @@ func (w *LHWell) Clean() {
 	}
 
 	w.Extra = newExtra
+}
+
+func (w *LHWell) updateComponentLocation() {
+	if w.WContents != nil {
+		w.WContents.Loc = fmt.Sprintf("%s:%s", IDOf(w.Plate), w.Crds.FormatA1())
+	}
 }
 
 // copy of instance
@@ -656,8 +662,7 @@ func NewLHWell(vunit string, vol, rvol float64, shape *Shape, bott WellBottomTyp
 	well.Plate = nil
 	crds := ZeroWellCoords()
 	well.WContents = NewLHComponent()
-	//this field is even more daft now we usually don't know the plate at initialization
-	well.WContents.Loc = "nill:" + crds.FormatA1()
+	well.updateComponentLocation()
 
 	well.ID = GetUUID()
 	well.Crds = crds

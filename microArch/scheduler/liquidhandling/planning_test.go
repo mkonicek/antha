@@ -266,7 +266,6 @@ func describePlateVolumes(order []string, plates map[string]*wtype.LHPlate) ([]m
 			return nil, errors.Errorf("inconsistent InputPlateOrder in request: no id %s", plateID)
 		} else if plate == nil {
 			return nil, errors.New("nil input plate in request")
-			continue
 		} else {
 			for address, well := range plate.Wellcoords {
 				if !well.IsEmpty() {

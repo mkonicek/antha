@@ -1112,10 +1112,10 @@ func TestExecutionPlanning(t *testing.T) {
 			InputPlates:  []*wtype.LHPlate{PrefillPlateForTest(ctx, GetPlateForTest(), "water", map[string]float64{"A1": 200.0, "B1": 200.0, "C1": 200.0})},
 			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
 			Assertions: Assertions{
-				AssertNumberOf(liquidhandling.ASP, 8),                                             //no multichanneling
-				AssertInputLayout(map[string]string{"A1": "water", "B1": "water", "C1": "water"}), // should all be in the same well since no multichanneling
-				AssertInitialInputWorkingVolumes(0.001, map[string]float64{"A1": 200.0, "B1": 200.0, "C1": 200.0}),
-				AssertFinalInputWorkingVolumes(0.001, map[string]float64{"A1": 200.0 - (8.0+0.5)*8.0, "B1": 200.0, "C1": 200.0}),
+				AssertNumberOf(liquidhandling.ASP, 8),                                                                                //no multichanneling
+				AssertInputLayout(map[string]string{"A1": "water", "B1": "water", "C1": "water"}),                                    // should all be in the same well since no multichanneling
+				AssertInitialInputWorkingVolumes(0.001, map[string]float64{"A1": 200.0 - 5.0, "B1": 200.0 - 5.0, "C1": 200.0 - 5.0}), // 200 less the residual
+				AssertFinalInputWorkingVolumes(0.001, map[string]float64{"A1": 200.0 - (8.0+0.5)*8.0 - 5.0, "B1": 200.0 - 5.0, "C1": 200.0 - 5.0}),
 			},
 		},
 	}.Run(ctx, t)

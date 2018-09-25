@@ -410,6 +410,7 @@ func Mixes(outputPlateType string, components TestMixComponents) InstructionBuil
 				Inputs:    samples,
 				PlateType: outputPlateType,
 				Address:   well,
+				PlateName: "outputplate",
 			}))
 		}
 

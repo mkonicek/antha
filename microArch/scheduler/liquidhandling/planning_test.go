@@ -7,6 +7,7 @@ import (
 	"math"
 	"reflect"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
@@ -16,13 +17,13 @@ import (
 )
 
 type PlanningTest struct {
-	Name           string
-	Liquidhandler  *Liquidhandler
-	Instructions   InstructionBuilder
-	InputPlates    []*wtype.LHPlate
-	OutputPlates   []*wtype.LHPlate
-	ExpectingError bool
-	Assertions     Assertions
+	Name          string
+	Liquidhandler *Liquidhandler
+	Instructions  InstructionBuilder
+	InputPlates   []*wtype.LHPlate
+	OutputPlates  []*wtype.LHPlate
+	ErrorString   string
+	Assertions    Assertions
 }
 
 func (test *PlanningTest) Run(ctx context.Context, t *testing.T) {
@@ -53,12 +54,12 @@ func (test *PlanningTest) run(ctx context.Context, t *testing.T) {
 	}
 
 	if err := test.Liquidhandler.Plan(ctx, request); !test.expected(err) {
-		t.Fatalf("expecting error = %t: got error %v", test.ExpectingError, err)
+		t.Fatalf("expecting error = %q: got error %q", test.ErrorString, err.Error())
 	}
 
 	test.Assertions.Assert(t, test.Liquidhandler, request)
 
-	if !t.Failed() && !test.ExpectingError {
+	if !t.Failed() && test.ErrorString == "" {
 		test.checkPlateIDMap(t)
 		test.checkPositionConsistency(t)
 	}
@@ -167,7 +168,12 @@ func (test *PlanningTest) checkPositionConsistency(t *testing.T) {
 }
 
 func (test *PlanningTest) expected(err error) bool {
-	return (err != nil) == test.ExpectingError
+	if (err == nil) && test.ErrorString == "" {
+		return true
+	} else if err != nil {
+		return strings.HasPrefix(err.Error(), test.ErrorString)
+	}
+	return false
 }
 
 type PlanningTests []*PlanningTest

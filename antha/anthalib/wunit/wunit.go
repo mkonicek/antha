@@ -267,8 +267,14 @@ func (cm *ConcreteMeasurement) IsZero() bool {
 	return false
 }
 
+// IsPositive true if the measurement is positive by more than a very small delta
 func (cm *ConcreteMeasurement) IsPositive() bool {
 	return cm.Mvalue > 0.0 && !cm.IsZero()
+}
+
+// IsNegative true if the measurement is negative by more than a very small delta
+func (cm *ConcreteMeasurement) IsNegative() bool {
+	return cm.Mvalue < 0.0 && !cm.IsZero()
 }
 
 // less sensitive comparison operators

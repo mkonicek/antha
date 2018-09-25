@@ -880,9 +880,9 @@ func TestExecutionPlanning(t *testing.T) {
 					Sampler:       mixer.Sample,
 				},
 			}),
-			InputPlates:    []*wtype.LHPlate{GetTroughForTest()},
-			OutputPlates:   []*wtype.LHPlate{GetPlateForTest()},
-			ExpectingError: true,
+			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
+			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
+			ErrorString:  "7 (LH_ERR_VOL) : volume error : volume of resulting mix (340 ul) exceeds the well maximum (200 ul) for instruction:",
 		},
 		{
 			Name: "negative requested volume",
@@ -894,9 +894,9 @@ func TestExecutionPlanning(t *testing.T) {
 					Sampler:       mixer.Sample,
 				},
 			}),
-			InputPlates:    []*wtype.LHPlate{GetTroughForTest()},
-			OutputPlates:   []*wtype.LHPlate{GetPlateForTest()},
-			ExpectingError: true,
+			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
+			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
+			ErrorString:  "7 (LH_ERR_VOL) : volume error : negative volume for component \"water\" in instruction:",
 		},
 		{
 			Name: "invalid total volume",
@@ -920,9 +920,9 @@ func TestExecutionPlanning(t *testing.T) {
 					Sampler:       mixer.Sample,
 				},
 			}),
-			InputPlates:    []*wtype.LHPlate{GetTroughForTest()},
-			OutputPlates:   []*wtype.LHPlate{GetPlateForTest()},
-			ExpectingError: true,
+			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
+			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
+			ErrorString:  "7 (LH_ERR_VOL) : volume error : invalid total volume for component \"water\" in instruction:",
 		},
 		{
 			Name: "test dummy instruction removal",
@@ -1113,9 +1113,10 @@ func TestExecutionPlanning(t *testing.T) {
 			InputPlates:  []*wtype.LHPlate{PrefillPlateForTest(ctx, GetPlateForTest(), "water", map[string]float64{"A1": 200.0, "B1": 200.0, "C1": 200.0})},
 			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
 			Assertions: Assertions{
-				AssertNumberOf(liquidhandling.ASP, 8),                                             //no multichanneling
-				AssertInputLayout(map[string]string{"A1": "water", "B1": "water", "C1": "water"}), // should all be in the same well since no multichanneling
+				AssertNumberOf(liquidhandling.ASP, 8), //no multichanneling
+				AssertInputLayout(map[string]string{"A1": "water", "B1": "water", "C1": "water"}),
 				AssertInitialInputVolumes(0.001, map[string]float64{"A1": 200.0, "B1": 200.0, "C1": 200.0}),
+				// check that the same source well is used throughout since all of these operations are single channel
 				AssertFinalInputVolumes(0.001, map[string]float64{"A1": 200.0 - (8.0+0.5)*8.0, "B1": 200.0, "C1": 200.0}),
 			},
 		},

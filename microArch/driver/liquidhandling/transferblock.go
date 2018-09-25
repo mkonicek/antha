@@ -398,19 +398,15 @@ func get_cols(pdm wtype.Platedestmap, multi, wells int, contiguous, full bool) S
 }
 
 func colDup(in [][]*wtype.LHInstruction) [][]*wtype.LHInstruction {
-	dup := func(inss []*wtype.LHInstruction) []*wtype.LHInstruction {
-		r := make([]*wtype.LHInstruction, len(inss))
-
-		for i := 0; i < len(inss); i++ {
-			r[i] = inss[i]
-		}
-
-		return r
-	}
 	out := make([][]*wtype.LHInstruction, len(in))
 
 	for i, v := range in {
-		out[i] = dup(v)
+		r := make([]*wtype.LHInstruction, len(v))
+
+		for i := 0; i < len(v); i++ {
+			r[i] = v[i]
+		}
+		out[i] = r
 	}
 
 	return out
@@ -441,6 +437,8 @@ func get_col(pdm wtype.Platedestmap, col, multi, wells int, contiguous, full boo
 
 		wellsPerTip = wells / multi
 	}
+
+	fmt.Printf("len(pdm[col])-2 = %d\n", len(pdm[col])-2)
 
 	for s := 0; s < len(pdm[col])-2; s++ {
 		ret = make(IDSet, multi)

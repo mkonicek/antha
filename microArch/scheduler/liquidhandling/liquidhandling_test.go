@@ -948,16 +948,18 @@ func TestExecutionPlanning(t *testing.T) {
 					},
 				})(ctx)
 				//add a dummy instruction for each instruction
+				ret := make([]*wtype.LHInstruction, 0, len(instructions))
 				for _, ins := range instructions {
 					for _, cmp := range ins.Outputs {
 						mix := mixer.GenericMix(mixer.MixOptions{Inputs: []*wtype.Liquid{cmp}})
 						if !mix.IsDummy() {
 							t.Fatalf("failed to make a dummy instruction: mix.Inputs[0].IsSample() = %t, cmp.IsSample() = %t", mix.Inputs[0].IsSample(), cmp.IsSample())
 						}
-						instructions = append(instructions, ins)
+						ret = append(ret, ins)
+						ret = append(ret, mix)
 					}
 				}
-				return instructions
+				return ret
 			},
 			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
 			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},

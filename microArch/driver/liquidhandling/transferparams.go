@@ -79,7 +79,9 @@ func (mtp MultiTransferParams) RemoveInitialBlanks() MultiTransferParams {
 // RemoveVolumes reduce the volume of the ith transfer by vols[i]
 func (mtp MultiTransferParams) RemoveVolumes(vols []wunit.Volume) {
 	for i, t := range mtp.Transfers {
-		if !t.Zero() && i < len(vols) {
+		if i >= len(vols) {
+			break
+		} else if !t.Zero() {
 			t.Volume.Subtract(vols[i])
 		}
 	}
@@ -88,7 +90,9 @@ func (mtp MultiTransferParams) RemoveVolumes(vols []wunit.Volume) {
 // RemoveFVolumes reduce the FVolume (from volumes) of the ith transfer by vols[i]
 func (mtp MultiTransferParams) RemoveFVolumes(vols []wunit.Volume) {
 	for i, t := range mtp.Transfers {
-		if !t.Zero() && i < len(vols) {
+		if i >= len(vols) {
+			break
+		} else if !t.Zero() {
 			t.FVolume.Subtract(vols[i])
 		}
 	}
@@ -97,7 +101,9 @@ func (mtp MultiTransferParams) RemoveFVolumes(vols []wunit.Volume) {
 // AddTVolumes increase the TVolume (to volumes) of the ith transfer by vols[i]
 func (mtp MultiTransferParams) AddTVolumes(vols []wunit.Volume) {
 	for i, t := range mtp.Transfers {
-		if !t.Zero() && i < len(vols) {
+		if i >= len(vols) {
+			break
+		} else if !t.Zero() {
 			t.TVolume.Add(vols[i])
 		}
 	}

@@ -158,10 +158,9 @@ func (test *PlanningTest) checkPositionConsistency(t *testing.T) {
 func (test *PlanningTest) expected(err error) bool {
 	if err != nil && test.ErrorPrefix != "" {
 		return strings.HasPrefix(err.Error(), test.ErrorPrefix)
-	} else if err == nil && test.ErrorPrefix == "" {
-		return true
+	} else {
+		return err == nil && test.ErrorPrefix == ""
 	}
-	return false
 }
 
 type PlanningTests []*PlanningTest

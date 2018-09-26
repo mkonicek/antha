@@ -72,30 +72,7 @@ func NewVirtualLiquidHandler(props *liquidhandling.LHProperties, settings *Simul
 
 	//add the adaptors
 	for _, assembly := range props.HeadAssemblies {
-		offsets := make([]wtype.Coordinates, len(assembly.Positions))
-		for i, pos := range assembly.Positions {
-			offsets[i] = pos.Offset
-		}
-		group := NewAdaptorGroup(offsets, assembly.MotionLimits)
-
-		for i, pos := range assembly.Positions {
-			if pos.Head == nil {
-				continue
-			}
-			p := pos.Head.Adaptor.Params
-			//9mm spacing currently hardcoded.
-			//At some point we'll either need to fetch this from the driver or
-			//infer it from the type of tipboxes/plates accepted
-			spacing := wtype.Coordinates{X: 0, Y: 0, Z: 0}
-			if p.Orientation == wtype.LHVChannel {
-				spacing.Y = 9.
-			} else if p.Orientation == wtype.LHHChannel {
-				spacing.X = 9.
-			}
-			adaptor := NewAdaptorState(pos.Head.Adaptor.Name, p.Independent, p.Multi, spacing, coneRadius, p, pos.Head.TipLoading)
-			group.LoadAdaptor(i, adaptor)
-		}
-		vlh.state.AddAdaptorGroup(group)
+		vlh.state.AddAdaptorGroup(NewAdaptorGroup(assembly))
 	}
 
 	//Make the deck
@@ -1484,9 +1461,33 @@ func (self *VirtualLiquidHandler) SetPipetteSpeed(head, channel int, rate float6
 	return ret
 }
 
-//SetDriveSpeed - used
+// SetDriveSpeed sets the speed at which the head will move.
+// Drive should be one of "X", "Y", "Z", rate is expressed in mm/s.
+// XXX Bug: it is currently not possible to select which head assembly should be affected
+// currently assume we're talking about group zero
 func (self *VirtualLiquidHandler) SetDriveSpeed(drive string, rate float64) driver.CommandStatus {
-	return driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "SETDRIVESPEED ACK"}
+	ret := driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "SETDRIVESPEED ACK"}
+
+	//Assume we're talking about adaptor group zero
+	groupNumber := 0
+
+	v := wunit.NewVelocity(rate, "mm/s")
+
+	describe := func() string {
+		return fmt.Sprintf("while setting head group %d drive %s speed to %v", groupNumber, drive, v)
+	}
+
+	if group, err := self.state.GetAdaptorGroup(groupNumber); err != nil {
+		self.AddErrorf("%s: %s", describe(), err.Error())
+		return ret
+	} else if axis, err := wunit.AxisFromString(drive); err != nil {
+		self.AddErrorf("%s: %s", describe(), err.Error())
+		return ret
+	} else if err := group.SetDriveSpeed(axis, v); err != nil {
+		self.AddErrorf("%s: %s", describe(), err.Error())
+		return ret
+	}
+	return ret
 }
 
 //Stop - unused

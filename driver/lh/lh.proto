@@ -589,6 +589,7 @@ message ArrayOfPtrToLHHeadAssemblyPositionMessage {
 message LHHeadAssemblyMessage {
     ArrayOfPtrToLHHeadAssemblyPositionMessage Positions = 1;
     PtrToBBoxMessage MotionLimits = 2;
+    PtrToVelocityRangeMessage VelocityLimits = 3;
 }
 message PtrToLHHeadAssemblyMessage {
     LHHeadAssemblyMessage val = 1;
@@ -747,3 +748,28 @@ message TransferReply{
 message SubComponentMessage{
 	AnyMessage Arg_1 = 1;
 }
+
+message VelocityMessage{
+    PtrToConcreteMeasurementMessage ConcreteMeasurement = 1;
+}
+
+message Velocity3DMessage{
+    VelocityMessage X = 1;
+    VelocityMessage Y = 2;
+    VelocityMessage Z = 3;
+}
+
+message PtrToVelocity3DMessage{
+    Velocity3DMessage val = 1;
+}
+
+message VelocityRangeMessage{
+    PtrToVelocity3DMessage Min = 1;
+    PtrToVelocity3DMessage Max = 2;
+}
+
+message PtrToVelocityRangeMessage{
+    VelocityRangeMessage val = 1;
+}
+
+

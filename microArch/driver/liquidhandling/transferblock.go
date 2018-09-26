@@ -73,8 +73,7 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 		// aggregates across components
 		//TODO --> allow setting legacy volume if necessary
 
-		// in fact we do not return a different robot now... but we might
-		tfr, robot, err = ConvertInstructions(ctx, insset, robot, wunit.NewVolume(0.5, "ul"), prm, prm.Multi, false, policy)
+		tfr, err = ConvertInstructions(ctx, insset, robot, wunit.NewVolume(0.5, "ul"), prm, prm.Multi, false, policy)
 		if err != nil {
 			return inss, err
 		}
@@ -121,7 +120,7 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 
 		insset := []*wtype.LHInstruction{ins}
 
-		tfr, robot, err = ConvertInstructions(ctx, insset, robot, wunit.NewVolume(0.5, "ul"), prm, 1, false, policy)
+		tfr, err = ConvertInstructions(ctx, insset, robot, wunit.NewVolume(0.5, "ul"), prm, 1, false, policy)
 
 		if err != nil {
 			return inss, err

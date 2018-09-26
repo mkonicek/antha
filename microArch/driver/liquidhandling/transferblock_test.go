@@ -97,15 +97,6 @@ func getTransferBlock2Component(ctx context.Context) (*TransferBlockInstruction,
 	return getTransferBlock(ctx, inss, "pcrplate_skirted_riser40")
 }
 
-func getTransferBlock3Component(ctx context.Context) (*TransferBlockInstruction, *wtype.Plate) {
-	inss, err := getMixInstructions(ctx, 8, []string{inventory.WaterType, "tartrazine", "ethanol"}, []float64{100.0, 64.0, 12.0})
-	if err != nil {
-		panic(err)
-	}
-
-	return getTransferBlock(ctx, inss, "pcrplate_skirted_riser40")
-}
-
 func getTestRobot(ctx context.Context, dstp *wtype.Plate, platetype string) *LHProperties {
 	rbt, err := makeGilsonWithTipboxesForTest(ctx)
 	if err != nil {
@@ -480,80 +471,6 @@ func TestBigWellMultichannelPositive(t *testing.T) {
 	}
 
 	testPositive(ctx, ris, pol, rbt, t)
-}
-
-func TestInsByInsMixPositiveMultichannel(t *testing.T) {
-	ctx := GetContextForTest()
-
-	tb, dstp := getTransferBlock3Component(ctx)
-
-	rbt := getTestRobot(ctx, dstp, "DWST12_riser40")
-
-	pol, err := wtype.GetLHPolicyForTest()
-	if err != nil {
-		t.Error(err)
-	}
-
-	// allow multi
-	pol.Policies["water"]["CAN_MULTI"] = true
-
-	ris, err := tb.Generate(ctx, pol, rbt)
-
-	if err != nil {
-		t.Error(err)
-	}
-
-	// component-by-component multichanneling should be supported IFF
-	// we can do all the solutions in the subset
-
-	if len(ris) != 1 {
-		t.Errorf("Error: Expected 1 transfer got %d", len(ris))
-	}
-
-	tf := ris[0].(*TransferInstruction)
-
-	if len(tf.Transfers) != 3 {
-		t.Errorf("Error: Expected 3 transfers got %d", len(tf.Transfers))
-	}
-
-	testPositive(ctx, ris, pol, rbt, t)
-}
-
-func TestInsByInsMixNegativeMultichannel(t *testing.T) {
-	ctx := GetContextForTest()
-
-	tb, dstp := getTransferBlock3Component(ctx)
-
-	rbt := getTestRobot(ctx, dstp, "DWST12_riser40")
-
-	pol, err := wtype.GetLHPolicyForTest()
-	if err != nil {
-		t.Error(err)
-	}
-
-	// allow multi
-	pol.Policies["water"]["CAN_MULTI"] = false
-
-	ris, err := tb.Generate(ctx, pol, rbt)
-
-	if err != nil {
-		t.Error(err)
-	}
-
-	// atomic mixes now come through all split up... in future this should revert to the
-	// older case of 8 x 3 transfers either by merging or something else
-
-	if len(ris) != 1 {
-		t.Errorf("Error: Expected 1 transfers got %d", len(ris))
-	}
-
-	tf := ris[0].(*TransferInstruction)
-
-	if len(tf.Transfers) != 24 {
-		t.Errorf("Error: Expected 24 transfers got %d", len(tf.Transfers))
-	}
-
-	testNegative(ctx, ris, pol, rbt, t)
 }
 
 // TODO --> Create new version of the below

@@ -9,7 +9,19 @@ import (
 )
 
 func GetLiquidHandlerForTest(ctx context.Context) *Liquidhandler {
+	return Init(makeGilson(ctx))
+}
+
+func GetIndependentLiquidHandlerForTest(ctx context.Context) *Liquidhandler {
 	gilson := makeGilson(ctx)
+	for _, head := range gilson.Heads {
+		head.Params.Independent = true
+	}
+
+	for _, adaptor := range gilson.Adaptors {
+		adaptor.Params.Independent = true
+	}
+
 	return Init(gilson)
 }
 

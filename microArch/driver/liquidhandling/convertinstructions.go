@@ -40,46 +40,26 @@ import (
 //	etc.
 //
 
-func ConvertInstructions(ctx context.Context, inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool, policy *wtype.LHPolicyRuleSet) (insOut []*TransferInstruction, robotOut *LHProperties, err error) {
-	// again again again we dup the robot
-
-	if multi != 1 {
-		rbt := robot.DupKeepIDs()
-
-		tfrs, err := convertInstructions(inssIn, rbt, carryvol, channelprms, multi, legacyVolume)
-
-		if err != nil {
-			return []*TransferInstruction{}, robot, err
-		}
-
-		// check if we actually generate any multichannel stuff here
-
-		mcHere, err := hasMCB(ctx, tfrs, rbt, policy)
-
-		if err != nil {
-			return []*TransferInstruction{}, robot, err
-		}
-
-		// if there's no multichannel here require only single channeling
-		// this is to make behaviour in regard of sources, atomic mixes
-		// correct
-		if !mcHere {
-			multi = 1
-		}
+func ConvertInstructions(ctx context.Context, inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool, policy *wtype.LHPolicyRuleSet) ([]*TransferInstruction, error) {
+	// we call convertInstructions twice because
+	// 1) calling convertInstructions with multi = 8 when there are no actual multichannel instructions causes
+	//    undesirable source volume selection, see tests "TestExecutionPlanning/single_channel_well_use", and
+	//    "TestExecutionPlanning/single_channel_auto_allocation"
+	// 2) convertInstructions makes changes to robot, meaning that it must be called exactly once with the the copy of robot passed to the function
+	if transfers, err := convertInstructions(inssIn, robot.DupKeepIDs(), carryvol, channelprms, multi, legacyVolume); err != nil {
+		return nil, err
+	} else if hasMCB, err := hasMultiChannelBlock(ctx, transfers, robot, policy); err != nil {
+		return nil, err
+	} else if hasMCB {
+		return convertInstructions(inssIn, robot, carryvol, channelprms, multi, legacyVolume)
+	} else {
+		return convertInstructions(inssIn, robot, carryvol, channelprms, 1, legacyVolume)
 	}
-
-	tfrs, err := convertInstructions(inssIn, robot, carryvol, channelprms, multi, legacyVolume)
-
-	if err != nil {
-		return []*TransferInstruction{}, robot, err
-	}
-
-	return tfrs, robot, nil
 }
 
-func hasMCB(ctx context.Context, tfrs []*TransferInstruction, rbt *LHProperties, policy *wtype.LHPolicyRuleSet) (bool, error) {
+func hasMultiChannelBlock(ctx context.Context, tfrs []*TransferInstruction, rbt *LHProperties, policy *wtype.LHPolicyRuleSet) (bool, error) {
 	for _, tfr := range tfrs {
-		instrx, err := tfr.Generate(ctx, policy, rbt)
+		instrx, err := tfr.Dup().Generate(ctx, policy, rbt)
 
 		if err != nil {
 			return false, err
@@ -95,8 +75,9 @@ func hasMCB(ctx context.Context, tfrs []*TransferInstruction, rbt *LHProperties,
 	return false, nil
 }
 
-func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool) (insOut []*TransferInstruction, err error) {
-	insOut = make([]*TransferInstruction, 0, 1)
+func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool) ([]*TransferInstruction, error) {
+
+	insOut := make([]*TransferInstruction, 0, 1)
 
 	// TODO --> iterator?
 	var horiz bool

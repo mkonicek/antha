@@ -59,6 +59,15 @@ func GetPlateForTest() *wtype.Plate {
 	return plate
 }
 
+func PrefillPlateForTest(ctx context.Context, plate *wtype.LHPlate, liquidType string, volumes map[string]float64) *wtype.LHPlate {
+	for address, volume := range volumes {
+		cmp := GetComponentForTest(ctx, liquidType, wunit.NewVolume(volume, "ul"))
+		plate.Wellcoords[address].SetContents(cmp)
+	}
+
+	return plate
+}
+
 func GetTipwasteForTest() *wtype.LHTipwaste {
 	shp := wtype.NewShape("box", "mm", 123.0, 80.0, 92.0)
 	w := wtype.NewLHWell("ul", 800000.0, 800000.0, shp, 0, 123.0, 80.0, 92.0, 0.0, "mm")
@@ -121,26 +130,6 @@ func configure_request_simple(ctx context.Context, rq *LHRequest) {
 
 }
 
-func configure_request_total_volume(ctx context.Context, rq *LHRequest) {
-	water := GetComponentForTest(ctx, "water", wunit.NewVolume(100.0, "ul"))
-	mmx := GetComponentForTest(ctx, "mastermix_sapI", wunit.NewVolume(100.0, "ul"))
-	part := GetComponentForTest(ctx, "dna", wunit.NewVolume(50.0, "ul"))
-
-	for k := 0; k < 9; k++ {
-		ins := wtype.NewLHMixInstruction()
-		ws := mixer.SampleForTotalVolume(water, wunit.NewVolume(17.0, "ul"))
-		mmxs := mixer.Sample(mmx, wunit.NewVolume(8.0, "ul"))
-		ps := mixer.Sample(part, wunit.NewVolume(1.0, "ul"))
-
-		ins.AddInput(ws)
-		ins.AddInput(mmxs)
-		ins.AddInput(ps)
-		ins.AddOutput(GetComponentForTest(ctx, "water", wunit.NewVolume(17.0, "ul")))
-		rq.Add_instruction(ins)
-	}
-
-}
-
 func configure_request_bigger(ctx context.Context, rq *LHRequest) {
 	water := GetComponentForTest(ctx, "water", wunit.NewVolume(2000.0, "ul"))
 	mmx := GetComponentForTest(ctx, "mastermix_sapI", wunit.NewVolume(2000.0, "ul"))
@@ -161,7 +150,7 @@ func configure_request_bigger(ctx context.Context, rq *LHRequest) {
 
 }
 
-func configureMultiChannelTestRequest(ctx context.Context, rq *LHRequest) {
+func configurePlanningTestRequest(ctx context.Context, rq *LHRequest) {
 	water := GetComponentForTest(ctx, "multiwater", wunit.NewVolume(2000.0, "ul"))
 
 	for k := 0; k < 9; k++ {
@@ -322,26 +311,6 @@ func TestToWellVolume(t *testing.T) {
 
 	if err != nil {
 		t.Error(err.Error())
-	}
-
-}
-
-func configure_request_overfilled(ctx context.Context, rq *LHRequest) {
-	water := GetComponentForTest(ctx, "water", wunit.NewVolume(100.0, "ul"))
-	mmx := GetComponentForTest(ctx, "mastermix_sapI", wunit.NewVolume(100.0, "ul"))
-	part := GetComponentForTest(ctx, "dna", wunit.NewVolume(50.0, "ul"))
-
-	for k := 0; k < 9; k++ {
-		ins := wtype.NewLHMixInstruction()
-		ws := mixer.Sample(water, wunit.NewVolume(160.0, "ul"))
-		mmxs := mixer.Sample(mmx, wunit.NewVolume(160.0, "ul"))
-		ps := mixer.Sample(part, wunit.NewVolume(20.0, "ul"))
-
-		ins.AddInput(ws)
-		ins.AddInput(mmxs)
-		ins.AddInput(ps)
-		ins.AddOutput(GetComponentForTest(ctx, "water", wunit.NewVolume(340.0, "ul")))
-		rq.Add_instruction(ins)
 	}
 
 }
@@ -535,7 +504,7 @@ func makeMultiTestRequest() (multiRq *LHRequest, err error) {
 	multiRq = GetLHRequestForTest()
 
 	// set to Multi channel test request
-	configureMultiChannelTestRequest(ctx, multiRq)
+	configurePlanningTestRequest(ctx, multiRq)
 	// add plates and tip boxes
 	multiRq.InputPlatetypes = append(multiRq.InputPlatetypes, GetPlateForTest())
 	multiRq.OutputPlatetypes = append(multiRq.OutputPlatetypes, GetPlateForTest())
@@ -827,226 +796,389 @@ func TestPlateReuse(t *testing.T) {
 	}
 }
 
-func TestBeforeVsAfter(t *testing.T) {
+func TestExecutionPlanning(t *testing.T) {
 	ctx := GetContextForTest()
-
-	lh := GetLiquidHandlerForTest(ctx)
-	rq := GetLHRequestForTest()
-	configure_request_simple(ctx, rq)
-	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
-	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
-
-	err := lh.Plan(ctx, rq)
-
-	if err != nil {
-		t.Fatal(fmt.Sprint("Got an error planning with no inputs: ", err))
-	}
-
-	for pos := range lh.Properties.PosLookup {
-
-		id1, ok1 := lh.Properties.PosLookup[pos]
-		id2, ok2 := lh.FinalProperties.PosLookup[pos]
-
-		if ok1 && !ok2 || ok2 && !ok1 {
-			t.Fatal(fmt.Sprintf("Position %s inconsistent: Before %t after %t", pos, ok1, ok2))
-		}
-
-		p1 := lh.Properties.PlateLookup[id1]
-		p2 := lh.FinalProperties.PlateLookup[id2]
-
-		// check types
-
-		t1 := reflect.TypeOf(p1)
-		t2 := reflect.TypeOf(p2)
-
-		if t1 != t2 {
-			t.Fatal(fmt.Sprintf("Types of thing at position %s not same: %v %v", pos, t1, t2))
-		}
-
-		// ok nice we have some sort of consistency
-
-		switch p1.(type) {
-		case *wtype.Plate:
-			pp1 := p1.(*wtype.Plate)
-			pp2 := p2.(*wtype.Plate)
-			if pp1.Type != pp2.Type {
-				t.Fatal(fmt.Sprintf("Plates at %s not same type: %s %s", pos, pp1.Type, pp2.Type))
-			}
-			it := wtype.NewAddressIterator(pp1, wtype.ColumnWise, wtype.TopToBottom, wtype.LeftToRight, false)
-
-			for {
-				if !it.Valid() {
-					break
+	PlanningTests{
+		{
+			Name: "simple planning",
+			Instructions: Mixes("pcrplate_skirted_riser", TestMixComponents{
+				{
+					LiquidName:    "water",
+					VolumesByWell: ColumnWise(8, []float64{8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0}),
+					LiquidType:    wtype.LTSingleChannel,
+					Sampler:       mixer.Sample,
+				},
+				{
+					LiquidName:    "mastermix_sapI",
+					VolumesByWell: ColumnWise(8, []float64{8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0}),
+					LiquidType:    wtype.LTSingleChannel,
+					Sampler:       mixer.Sample,
+				},
+				{
+					LiquidName:    "dna",
+					VolumesByWell: ColumnWise(8, []float64{1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}),
+					LiquidType:    wtype.LTSingleChannel,
+					Sampler:       mixer.Sample,
+				},
+			}),
+			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
+			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
+			Assertions: Assertions{
+				NumberOfAssertion(liquidhandling.ASP, 3*8), //no multichanneling
+				NumberOfAssertion(liquidhandling.DSP, 3*8), //no multichanneling
+			},
+		},
+		{
+			Name: "total volume",
+			Instructions: Mixes("pcrplate_skirted_riser", TestMixComponents{
+				{
+					LiquidName:    "water",
+					VolumesByWell: ColumnWise(8, []float64{17.0, 17.0, 17.0, 17.0, 17.0, 17.0, 17.0, 17.0}),
+					LiquidType:    wtype.LTSingleChannel,
+					Sampler:       mixer.SampleForTotalVolume,
+				},
+				{
+					LiquidName:    "mastermix_sapI",
+					VolumesByWell: ColumnWise(8, []float64{8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0}),
+					LiquidType:    wtype.LTSingleChannel,
+					Sampler:       mixer.Sample,
+				},
+				{
+					LiquidName:    "dna",
+					VolumesByWell: ColumnWise(8, []float64{1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}),
+					LiquidType:    wtype.LTSingleChannel,
+					Sampler:       mixer.Sample,
+				},
+			}),
+			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
+			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
+			Assertions: Assertions{
+				NumberOfAssertion(liquidhandling.ASP, 3*8), //no multichanneling
+				NumberOfAssertion(liquidhandling.DSP, 3*8), //no multichanneling
+				FinalOutputVolumesAssertion(0.001, map[string]float64{"A1": 17.0, "B1": 17.0, "C1": 17.0, "D1": 17.0, "E1": 17.0, "F1": 17.0, "G1": 17.0, "H1": 17.0}),
+			},
+		},
+		{
+			Name: "overfull wells",
+			Instructions: Mixes("pcrplate_skirted_riser", TestMixComponents{
+				{
+					LiquidName:    "water",
+					VolumesByWell: ColumnWise(8, []float64{160.0, 160.0, 160.0, 160.0, 160.0, 160.0, 160.0, 160.0}),
+					LiquidType:    wtype.LTSingleChannel,
+					Sampler:       mixer.Sample,
+				},
+				{
+					LiquidName:    "mastermix_sapI",
+					VolumesByWell: ColumnWise(8, []float64{160.0, 160.0, 160.0, 160.0, 160.0, 160.0, 160.0, 160.0}),
+					LiquidType:    wtype.LTSingleChannel,
+					Sampler:       mixer.Sample,
+				},
+				{
+					LiquidName:    "dna",
+					VolumesByWell: ColumnWise(8, []float64{20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0}),
+					LiquidType:    wtype.LTSingleChannel,
+					Sampler:       mixer.Sample,
+				},
+			}),
+			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
+			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
+			ErrorPrefix:  "7 (LH_ERR_VOL) : volume error : volume of resulting mix (340 ul) exceeds the well maximum (200 ul) for instruction:",
+		},
+		{
+			Name: "negative requested volume",
+			Instructions: Mixes("pcrplate_skirted_riser", TestMixComponents{
+				{
+					LiquidName:    "water",
+					VolumesByWell: ColumnWise(8, []float64{8.0, -1.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0}),
+					LiquidType:    wtype.LTSingleChannel,
+					Sampler:       mixer.Sample,
+				},
+			}),
+			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
+			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
+			ErrorPrefix:  "7 (LH_ERR_VOL) : volume error : negative volume for component \"water\" in instruction:",
+		},
+		{
+			Name: "invalid total volume",
+			Instructions: Mixes("pcrplate_skirted_riser", TestMixComponents{
+				{
+					LiquidName:    "water",
+					VolumesByWell: ColumnWise(8, []float64{5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0}),
+					LiquidType:    wtype.LTSingleChannel,
+					Sampler:       mixer.SampleForTotalVolume,
+				},
+				{
+					LiquidName:    "mastermix_sapI",
+					VolumesByWell: ColumnWise(8, []float64{8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0}),
+					LiquidType:    wtype.LTSingleChannel,
+					Sampler:       mixer.Sample,
+				},
+				{
+					LiquidName:    "dna",
+					VolumesByWell: ColumnWise(8, []float64{1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}),
+					LiquidType:    wtype.LTSingleChannel,
+					Sampler:       mixer.Sample,
+				},
+			}),
+			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
+			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
+			ErrorPrefix:  "7 (LH_ERR_VOL) : volume error : invalid total volume for component \"water\" in instruction:",
+		},
+		{
+			Name: "test dummy instruction removal",
+			Instructions: func(ctx context.Context) []*wtype.LHInstruction {
+				instructions := Mixes("pcrplate_skirted_riser", TestMixComponents{
+					{
+						LiquidName:    "water",
+						VolumesByWell: ColumnWise(8, []float64{8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0}),
+						LiquidType:    wtype.LTSingleChannel,
+						Sampler:       mixer.Sample,
+					},
+					{
+						LiquidName:    "mastermix_sapI",
+						VolumesByWell: ColumnWise(8, []float64{8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0}),
+						LiquidType:    wtype.LTSingleChannel,
+						Sampler:       mixer.Sample,
+					},
+					{
+						LiquidName:    "dna",
+						VolumesByWell: ColumnWise(8, []float64{1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}),
+						LiquidType:    wtype.LTSingleChannel,
+						Sampler:       mixer.Sample,
+					},
+				})(ctx)
+				//add a dummy instruction for each instruction
+				ret := make([]*wtype.LHInstruction, 0, len(instructions))
+				for _, ins := range instructions {
+					for _, cmp := range ins.Outputs {
+						mix := mixer.GenericMix(mixer.MixOptions{Inputs: []*wtype.Liquid{cmp}})
+						if !mix.IsDummy() {
+							t.Fatalf("failed to make a dummy instruction: mix.Inputs[0].IsSample() = %t, cmp.IsSample() = %t", mix.Inputs[0].IsSample(), cmp.IsSample())
+						}
+						ret = append(ret, ins)
+						ret = append(ret, mix)
+					}
 				}
-				wc := it.Curr()
-				w1 := pp1.Wellcoords[wc.FormatA1()]
-				w2 := pp2.Wellcoords[wc.FormatA1()]
-
-				if w1.IsEmpty() && w2.IsEmpty() {
-					it.Next()
-					continue
+				return ret
+			},
+			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
+			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
+			Assertions: Assertions{
+				NumberOfAssertion(liquidhandling.ASP, 3*8), //no multichanneling
+				NumberOfAssertion(liquidhandling.DSP, 3*8), //no multichanneling
+			},
+		},
+		{
+			Name: "test result volume doesn't match total volume",
+			Instructions: func(ctx context.Context) []*wtype.LHInstruction {
+				instructions := Mixes("pcrplate_skirted_riser", TestMixComponents{
+					{
+						LiquidName:    "water",
+						VolumesByWell: ColumnWise(8, []float64{17.0, 17.0, 17.0, 17.0, 17.0, 17.0, 17.0, 17.0}),
+						LiquidType:    wtype.LTSingleChannel,
+						Sampler:       mixer.SampleForTotalVolume,
+					},
+					{
+						LiquidName:    "mastermix_sapI",
+						VolumesByWell: ColumnWise(8, []float64{8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0}),
+						LiquidType:    wtype.LTSingleChannel,
+						Sampler:       mixer.Sample,
+					},
+					{
+						LiquidName:    "dna",
+						VolumesByWell: ColumnWise(8, []float64{1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}),
+						LiquidType:    wtype.LTSingleChannel,
+						Sampler:       mixer.Sample,
+					},
+				})(ctx)
+				for _, ins := range instructions {
+					ins.Outputs[0].Vol = 10.0
 				}
-				/*
-					fmt.Println(pp1.PlateName, " ", pp1.Type)
-					fmt.Println(pp2.PlateName, " ", pp2.Type)
-					fmt.Println(wc.FormatA1())
-					fmt.Println(w1.ID, " ", w1.WContents.ID, " ", w1.WContents.CName, " ", w1.WContents.Vol)
-					fmt.Println(w2.ID, " ", w2.WContents.ID, " ", w2.WContents.CName, " ", w2.WContents.Vol)
-				*/
-
-				if w1.WContents.ID == w2.WContents.ID {
-					t.Fatal(fmt.Sprintf("IDs before and after must differ"))
+				return instructions
+			},
+			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
+			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
+			ErrorPrefix:  "7 (LH_ERR_VOL) : volume error : total volume (17 ul) does not match resulting volume (10 ul)",
+		},
+		{
+			Name: "test result volume doesn't match volume sum",
+			Instructions: func(ctx context.Context) []*wtype.LHInstruction {
+				instructions := Mixes("pcrplate_skirted_riser", TestMixComponents{
+					{
+						LiquidName:    "water",
+						VolumesByWell: ColumnWise(8, []float64{17.0, 17.0, 17.0, 17.0, 17.0, 17.0, 17.0, 17.0}),
+						LiquidType:    wtype.LTSingleChannel,
+						Sampler:       mixer.Sample,
+					},
+				})(ctx)
+				for _, ins := range instructions {
+					ins.Outputs[0].Vol = 10.0
 				}
-				it.Next()
-			}
-		case *wtype.LHTipbox:
-			tb1 := p1.(*wtype.LHTipbox)
-			tb2 := p2.(*wtype.LHTipbox)
+				return instructions
+			},
+			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
+			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
+			ErrorPrefix:  "7 (LH_ERR_VOL) : volume error : sum of requested volumes (17 ul) does not match result volume (10 ul)",
+		},
+		{
+			Name: "multi channel dependent",
+			Instructions: Mixes("pcrplate_skirted_riser", TestMixComponents{
+				{
+					LiquidName:    "water",
+					VolumesByWell: ColumnWise(8, []float64{8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0}),
+					LiquidType:    wtype.LTWater,
+					Sampler:       mixer.Sample,
+				},
+				{
+					LiquidName:    "mastermix_sapI",
+					VolumesByWell: ColumnWise(8, []float64{50.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0}),
+					LiquidType:    wtype.LTWater,
+					Sampler:       mixer.Sample,
+				},
+				{
+					LiquidName:    "dna",
+					VolumesByWell: ColumnWise(8, []float64{1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}),
+					LiquidType:    wtype.LTWater,
+					Sampler:       mixer.Sample,
+				},
+			}),
+			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
+			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
+			Assertions: Assertions{
+				NumberOfAssertion(liquidhandling.ASP, 3), //full multichanneling
+				NumberOfAssertion(liquidhandling.DSP, 3), //full multichanneling
+			},
+		},
+		{
+			Name: "single channel",
+			Instructions: Mixes("pcrplate_skirted_riser", TestMixComponents{
+				{
+					LiquidName:    "water",
+					VolumesByWell: ColumnWise(8, []float64{4.0, 0.0, 4.0, 0.0, 4.0, 0.0, 4.0, 0.0}),
+					LiquidType:    wtype.LTWater,
+					Sampler:       mixer.Sample,
+				},
+			}),
+			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
+			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
+			Assertions: Assertions{
+				NumberOfAssertion(liquidhandling.ASP, 4),
+				NumberOfAssertion(liquidhandling.DSP, 4),
+			},
+		},
+		{
+			Name: "multi and single channel",
+			Instructions: Mixes("pcrplate_skirted_riser", TestMixComponents{
+				{
+					LiquidName:    "water",
+					VolumesByWell: ColumnWise(8, []float64{4.0, 8.0, 4.0, 8.0, 4.0, 8.0, 4.0, 8.0}),
+					LiquidType:    wtype.LTWater,
+					Sampler:       mixer.Sample,
+				},
+			}),
+			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
+			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
+			Assertions: Assertions{
+				NumberOfAssertion(liquidhandling.ASP, 5),
+				NumberOfAssertion(liquidhandling.DSP, 5),
+			},
+		},
+		{
+			Name:          "multi channel independent",
+			Liquidhandler: GetIndependentLiquidHandlerForTest(ctx),
+			Instructions: Mixes("pcrplate_skirted_riser", TestMixComponents{
+				{
+					LiquidName:    "water",
+					VolumesByWell: ColumnWise(8, []float64{18.0, 7.0, 15.0, 12.0, 7.0, 8.0, 4.0, 8.0}),
+					LiquidType:    wtype.LTWater,
+					Sampler:       mixer.Sample,
+				},
+			}),
+			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
+			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
+			Assertions: Assertions{
+				NumberOfAssertion(liquidhandling.ASP, 1), //full multichanneling
+				NumberOfAssertion(liquidhandling.DSP, 1), //full multichanneling
+			},
+		},
+		{
+			Name: "multi channel split-sample",
+			Instructions: func(ctx context.Context) []*wtype.LHInstruction {
 
-			if tb1.Type != tb2.Type {
-				t.Fatal(fmt.Sprintf("Tipbox at changed type: %s %s", tb1.Type, tb2.Type))
-			}
-		case *wtype.LHTipwaste:
-			tw1 := p1.(*wtype.LHTipwaste)
-			tw2 := p2.(*wtype.LHTipwaste)
+				var instructions []*wtype.LHInstruction
 
-			if tw1.Type != tw2.Type {
-				t.Fatal(fmt.Sprintf("Tipwaste changed type: %s %s", tw1.Type, tw2.Type))
-			}
-		}
+				diluent := GetComponentForTest(ctx, "multiwater", wunit.NewVolume(1000.0, "ul"))
+				stock := GetComponentForTest(ctx, "dna", wunit.NewVolume(1000, "ul"))
+				stock.Type = wtype.LTMultiWater
 
-	}
+				for y := 0; y < 8; y++ {
+					lastStock := stock
+					for x := 0; x < 2; x++ {
+						diluentSample := mixer.Sample(diluent, wunit.NewVolume(20.0, "ul"))
+
+						split := getTestSplitSample(lastStock, 20.0)
+
+						wc := wtype.WellCoords{X: x, Y: y}
+						mix := getTestMix([]*wtype.Liquid{split.Outputs[0], diluentSample}, wc.FormatA1())
+
+						lastStock = mix.Outputs[0]
+
+						instructions = append(instructions, mix, split)
+					}
+				}
+				return instructions
+			},
+			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
+			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
+			Assertions: Assertions{
+				NumberOfAssertion(liquidhandling.ASP, 4), //full multichanneling - 2 ops per dilution row
+				NumberOfAssertion(liquidhandling.DSP, 4), //full multichanneling
+			},
+		},
+		{
+			Name: "single channel auto allocation",
+			Instructions: Mixes("pcrplate_skirted_riser", TestMixComponents{
+				{
+					LiquidName:    "water",
+					VolumesByWell: ColumnWise(8, []float64{8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0}),
+					LiquidType:    wtype.LTSingleChannel,
+					Sampler:       mixer.Sample,
+				},
+			}),
+			InputPlates:  []*wtype.LHPlate{GetPlateForTest()},
+			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
+			Assertions: Assertions{
+				NumberOfAssertion(liquidhandling.ASP, 8),                                           //no multichanneling
+				InputLayoutAssertion(map[string]string{"A1": "water"}),                             // should all be in the same well since no multichanneling
+				InitialInputVolumesAssertion(0.001, map[string]float64{"A1": (8.0+0.5)*8.0 + 5.0}), // volume plus carry per transfer plus residual
+				FinalInputVolumesAssertion(0.001, map[string]float64{"A1": 5.0}),
+			},
+		},
+		{
+			Name: "single channel well use",
+			Instructions: Mixes("pcrplate_skirted_riser", TestMixComponents{
+				{
+					LiquidName:    "water",
+					VolumesByWell: ColumnWise(8, []float64{8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0}),
+					LiquidType:    wtype.LTSingleChannel,
+					Sampler:       mixer.Sample,
+				},
+			}),
+			InputPlates:  []*wtype.LHPlate{PrefillPlateForTest(ctx, GetPlateForTest(), "water", map[string]float64{"A1": 200.0, "B1": 200.0, "C1": 200.0})},
+			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
+			Assertions: Assertions{
+				NumberOfAssertion(liquidhandling.ASP, 8), //no multichanneling
+				InputLayoutAssertion(map[string]string{"A1": "water", "B1": "water", "C1": "water"}),
+				InitialInputVolumesAssertion(0.001, map[string]float64{"A1": 200.0, "B1": 200.0, "C1": 200.0}),
+				// check that the same source well is used throughout since all of these operations are single channel
+				FinalInputVolumesAssertion(0.001, map[string]float64{"A1": 200.0 - (8.0+0.5)*8.0, "B1": 200.0, "C1": 200.0}),
+			},
+		},
+	}.Run(ctx, t)
 
 }
 
-func TestEP3(t *testing.T) {
-	ctx := GetContextForTest()
-
-	lh := GetLiquidHandlerForTest(ctx)
-	lh.ExecutionPlanner = ExecutionPlanner3
-	rq := GetLHRequestForTest()
-	configure_request_simple(ctx, rq)
-	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
-	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
-
-	err := lh.Plan(ctx, rq)
-
-	if err != nil {
-		t.Fatal(fmt.Sprint("Got planning error: ", err))
-	}
-
-}
-
-func TestEP3TotalVolume(t *testing.T) {
-	ctx := GetContextForTest()
-
-	lh := GetLiquidHandlerForTest(ctx)
-	lh.ExecutionPlanner = ExecutionPlanner3
-	rq := GetLHRequestForTest()
-	configure_request_total_volume(ctx, rq)
-	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
-	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
-
-	err := lh.Plan(ctx, rq)
-
-	if err != nil {
-		t.Fatal(fmt.Sprint("Got planning error: ", err))
-	}
-
-}
-
-func TestEP3Overfilled(t *testing.T) {
-	ctx := GetContextForTest()
-
-	lh := GetLiquidHandlerForTest(ctx)
-	lh.ExecutionPlanner = ExecutionPlanner3
-	rq := GetLHRequestForTest()
-	configure_request_overfilled(ctx, rq)
-	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
-	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
-
-	err := lh.Plan(ctx, rq)
-
-	if err == nil {
-		t.Fatal("Overfull wells did not cause planning error")
-	}
-}
-
-func TestEP3Negative(t *testing.T) {
-	ctx := GetContextForTest()
-
-	lh := GetLiquidHandlerForTest(ctx)
-	lh.ExecutionPlanner = ExecutionPlanner3
-	rq := GetLHRequestForTest()
-	configure_request_simple(ctx, rq)
-
-	//make one volume of one instruction negative
-	for _, ins := range rq.LHInstructions {
-		cmp := ins.Inputs[0]
-		cmp.Vol = -1.0
-		break
-	}
-	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
-	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
-
-	err := lh.Plan(ctx, rq)
-
-	if err == nil {
-		t.Fatal("Negative volume did not cause a planning error")
-	}
-}
-
-func TestEP3WrongResult(t *testing.T) {
-	ctx := GetContextForTest()
-
-	lh := GetLiquidHandlerForTest(ctx)
-	lh.ExecutionPlanner = ExecutionPlanner3
-	rq := GetLHRequestForTest()
-	configure_request_simple(ctx, rq)
-
-	//make one of the results wrong
-	for _, ins := range rq.LHInstructions {
-		ins.Outputs[0].Vol = 299792458.0
-		break
-	}
-	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
-	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
-
-	err := lh.Plan(ctx, rq)
-
-	if err == nil {
-		t.Fatal("Negative volume did not cause a planning error")
-	}
-}
-
-func TestEP3WrongTotalVolume(t *testing.T) {
-	ctx := GetContextForTest()
-
-	lh := GetLiquidHandlerForTest(ctx)
-	lh.ExecutionPlanner = ExecutionPlanner3
-	rq := GetLHRequestForTest()
-	configure_request_total_volume(ctx, rq)
-
-	//set an invalid total volume for one of the instructions
-	for _, ins := range rq.LHInstructions {
-		for _, cmp := range ins.Inputs {
-			if cmp.Tvol > 0.0 {
-				cmp.Tvol = 5.0
-			}
-		}
-		break
-	}
-	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
-	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
-
-	err := lh.Plan(ctx, rq)
-
-	if err == nil {
-		t.Fatal("Negative volume did not cause a planning error")
-	}
-}
-
-func TestDistinctPlateNames(t *testing.T) {
+func TestFixDuplicatePlateNames(t *testing.T) {
 	rq := NewLHRequest()
 	for i := 0; i < 100; i++ {
 		p := &wtype.Plate{ID: fmt.Sprintf("anID-%d", i), PlateName: "aName"}
@@ -1071,35 +1203,6 @@ func TestDistinctPlateNames(t *testing.T) {
 		} else {
 			t.Errorf("fixDuplicatePlateNames failed to prevent duplicates: found at least two of %s", p.PlateName)
 		}
-	}
-
-}
-
-func TestEP3DummyInstruction(t *testing.T) {
-	ctx := GetContextForTest()
-
-	lh := GetLiquidHandlerForTest(ctx)
-	lh.ExecutionPlanner = ExecutionPlanner3
-	rq := GetLHRequestForTest()
-	configure_request_simple(ctx, rq)
-	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
-	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
-
-	//add a dummy instruction for each instruction
-	for _, ins := range rq.LHInstructions {
-		for _, cmp := range ins.Outputs {
-			mix := mixer.GenericMix(mixer.MixOptions{Inputs: []*wtype.Liquid{cmp}})
-			if !mix.IsDummy() {
-				t.Fatalf("failed to make a dummy instruction: mix.Inputs[0].IsSample() = %t, cmp.IsSample() = %t", mix.Inputs[0].IsSample(), cmp.IsSample())
-			}
-			rq.Add_instruction(mix)
-		}
-	}
-
-	err := lh.Plan(ctx, rq)
-
-	if err != nil {
-		t.Fatal(fmt.Sprint("Got planning error: ", err))
 	}
 
 }
@@ -1174,52 +1277,6 @@ func TestShouldSetWellTargets(t *testing.T) {
 	}
 }
 
-func TestPlateIDMap(t *testing.T) {
-	ctx := GetContextForTest()
-
-	lh := GetLiquidHandlerForTest(ctx)
-	lh.ExecutionPlanner = ExecutionPlanner3
-	rq := GetLHRequestForTest()
-	configure_request_simple(ctx, rq)
-	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
-	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
-
-	err := lh.Plan(ctx, rq)
-
-	if err != nil {
-		t.Fatal(fmt.Sprint("Got planning error: ", err))
-	}
-
-	beforePlates := lh.Properties.PlateLookup
-	afterPlates := lh.FinalProperties.PlateLookup
-	idMap := lh.PlateIDMap()
-
-	//check that idMap refers to things that exist
-	for beforeID, afterID := range idMap {
-		beforeObj, ok := beforePlates[beforeID]
-		if !ok {
-			t.Errorf("idMap key \"%s\" doesn't exist in initial LHProperties.PlateLookup", beforeID)
-			continue
-		}
-		afterObj, ok := afterPlates[afterID]
-		if !ok {
-			t.Errorf("idMap value \"%s\" doesn't exist in final LHProperties.PlateLookup", afterID)
-			continue
-		}
-		//check that you don't have tipboxes turning into plates, for example
-		if beforeClass, afterClass := wtype.ClassOf(beforeObj), wtype.ClassOf(afterObj); beforeClass != afterClass {
-			t.Errorf("planner has turned a %s into a %s", beforeClass, afterClass)
-		}
-	}
-
-	//check that everything in beforePlates is mapped to something
-	for id, obj := range beforePlates {
-		if _, ok := idMap[id]; !ok {
-			t.Errorf("%s with id %s exists in initial LHProperties, but isn't mapped to final LHProperties", wtype.ClassOf(obj), id)
-		}
-	}
-}
-
 func getTestSplitSample(component *wtype.Liquid, volume float64) *wtype.LHInstruction {
 	ret := wtype.NewLHSplitInstruction()
 
@@ -1248,72 +1305,4 @@ func getTestMix(components []*wtype.Liquid, address string) *wtype.LHInstruction
 	mix.Outputs[0].DeclareInstance()
 
 	return mix
-}
-
-func TestSplitSampleMultichannel(t *testing.T) {
-
-	ctx := GetContextForTest()
-
-	var instructions []*wtype.LHInstruction
-
-	diluent := GetComponentForTest(ctx, "multiwater", wunit.NewVolume(1000.0, "ul"))
-	stock := GetComponentForTest(ctx, "dna", wunit.NewVolume(1000, "ul"))
-	stock.Type = wtype.LTMultiWater
-
-	wc := wtype.MakeWellCoords("A1")
-
-	for y := 0; y < 8; y++ {
-		lastStock := stock
-		wc.Y = y
-		for x := 0; x < 2; x++ {
-			wc.X = x
-			diluentSample := mixer.Sample(diluent, wunit.NewVolume(20.0, "ul"))
-
-			split := getTestSplitSample(lastStock, 20.0)
-
-			mix := getTestMix([]*wtype.Liquid{split.Outputs[0], diluentSample}, wc.FormatA1())
-
-			lastStock = mix.Outputs[0]
-
-			instructions = append(instructions, mix, split)
-		}
-	}
-
-	lh, rq, err := runPlan(ctx, instructions)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	//assert that there is some 8-way multi channel
-	seenMultiEight := false
-	for _, ins := range rq.Instructions {
-		if multi, ok := ins.GetParameter(liquidhandling.MULTI).(int); ok && multi == 8 {
-			seenMultiEight = true
-		}
-	}
-
-	if !seenMultiEight {
-		t.Error("Expected 8-way multichanneling but none seen")
-	}
-
-	OutputSetup(lh.FinalProperties)
-
-}
-
-func runPlan(ctx context.Context, instructions []*wtype.LHInstruction) (*Liquidhandler, *LHRequest, error) {
-
-	lh := GetLiquidHandlerForTest(ctx)
-	rq := GetLHRequestForTest()
-	for _, ins := range instructions {
-		rq.Add_instruction(ins)
-	}
-	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
-	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
-
-	err := lh.Plan(ctx, rq)
-	if err != nil {
-		return nil, nil, errors.WithMessage(err, "while planning")
-	}
-
-	return lh, rq, nil
 }

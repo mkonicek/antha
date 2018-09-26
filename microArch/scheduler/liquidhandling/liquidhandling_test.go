@@ -824,8 +824,8 @@ func TestExecutionPlanning(t *testing.T) {
 			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
 			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
 			Assertions: Assertions{
-				AssertNumberOf(liquidhandling.ASP, 3*8), //no multichanneling
-				AssertNumberOf(liquidhandling.DSP, 3*8), //no multichanneling
+				NumberOfAssertion(liquidhandling.ASP, 3*8), //no multichanneling
+				NumberOfAssertion(liquidhandling.DSP, 3*8), //no multichanneling
 			},
 		},
 		{
@@ -853,8 +853,9 @@ func TestExecutionPlanning(t *testing.T) {
 			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
 			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
 			Assertions: Assertions{
-				AssertNumberOf(liquidhandling.ASP, 3*8), //no multichanneling
-				AssertNumberOf(liquidhandling.DSP, 3*8), //no multichanneling
+				NumberOfAssertion(liquidhandling.ASP, 3*8), //no multichanneling
+				NumberOfAssertion(liquidhandling.DSP, 3*8), //no multichanneling
+				FinalOutputVolumesAssertion(0.001, map[string]float64{"A1": 17.0, "B1": 17.0, "C1": 17.0, "D1": 17.0, "E1": 17.0, "F1": 17.0, "G1": 17.0, "H1": 17.0}),
 			},
 		},
 		{
@@ -879,9 +880,9 @@ func TestExecutionPlanning(t *testing.T) {
 					Sampler:       mixer.Sample,
 				},
 			}),
-			InputPlates:    []*wtype.LHPlate{GetTroughForTest()},
-			OutputPlates:   []*wtype.LHPlate{GetPlateForTest()},
-			ExpectingError: true,
+			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
+			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
+			ErrorPrefix:  "7 (LH_ERR_VOL) : volume error : volume of resulting mix (340 ul) exceeds the well maximum (200 ul) for instruction:",
 		},
 		{
 			Name: "negative requested volume",
@@ -893,9 +894,9 @@ func TestExecutionPlanning(t *testing.T) {
 					Sampler:       mixer.Sample,
 				},
 			}),
-			InputPlates:    []*wtype.LHPlate{GetTroughForTest()},
-			OutputPlates:   []*wtype.LHPlate{GetPlateForTest()},
-			ExpectingError: true,
+			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
+			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
+			ErrorPrefix:  "7 (LH_ERR_VOL) : volume error : negative volume for component \"water\" in instruction:",
 		},
 		{
 			Name: "invalid total volume",
@@ -919,9 +920,9 @@ func TestExecutionPlanning(t *testing.T) {
 					Sampler:       mixer.Sample,
 				},
 			}),
-			InputPlates:    []*wtype.LHPlate{GetTroughForTest()},
-			OutputPlates:   []*wtype.LHPlate{GetPlateForTest()},
-			ExpectingError: true,
+			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
+			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
+			ErrorPrefix:  "7 (LH_ERR_VOL) : volume error : invalid total volume for component \"water\" in instruction:",
 		},
 		{
 			Name: "test dummy instruction removal",
@@ -947,23 +948,77 @@ func TestExecutionPlanning(t *testing.T) {
 					},
 				})(ctx)
 				//add a dummy instruction for each instruction
+				ret := make([]*wtype.LHInstruction, 0, len(instructions))
 				for _, ins := range instructions {
 					for _, cmp := range ins.Outputs {
 						mix := mixer.GenericMix(mixer.MixOptions{Inputs: []*wtype.Liquid{cmp}})
 						if !mix.IsDummy() {
 							t.Fatalf("failed to make a dummy instruction: mix.Inputs[0].IsSample() = %t, cmp.IsSample() = %t", mix.Inputs[0].IsSample(), cmp.IsSample())
 						}
-						instructions = append(instructions, ins)
+						ret = append(ret, ins)
+						ret = append(ret, mix)
 					}
+				}
+				return ret
+			},
+			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
+			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
+			Assertions: Assertions{
+				NumberOfAssertion(liquidhandling.ASP, 3*8), //no multichanneling
+				NumberOfAssertion(liquidhandling.DSP, 3*8), //no multichanneling
+			},
+		},
+		{
+			Name: "test result volume doesn't match total volume",
+			Instructions: func(ctx context.Context) []*wtype.LHInstruction {
+				instructions := Mixes("pcrplate_skirted_riser", TestMixComponents{
+					{
+						LiquidName:    "water",
+						VolumesByWell: ColumnWise(8, []float64{17.0, 17.0, 17.0, 17.0, 17.0, 17.0, 17.0, 17.0}),
+						LiquidType:    wtype.LTSingleChannel,
+						Sampler:       mixer.SampleForTotalVolume,
+					},
+					{
+						LiquidName:    "mastermix_sapI",
+						VolumesByWell: ColumnWise(8, []float64{8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0}),
+						LiquidType:    wtype.LTSingleChannel,
+						Sampler:       mixer.Sample,
+					},
+					{
+						LiquidName:    "dna",
+						VolumesByWell: ColumnWise(8, []float64{1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}),
+						LiquidType:    wtype.LTSingleChannel,
+						Sampler:       mixer.Sample,
+					},
+				})(ctx)
+				for _, ins := range instructions {
+					ins.Outputs[0].Vol = 10.0
 				}
 				return instructions
 			},
 			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
 			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
-			Assertions: Assertions{
-				AssertNumberOf(liquidhandling.ASP, 3*8), //no multichanneling
-				AssertNumberOf(liquidhandling.DSP, 3*8), //no multichanneling
+			ErrorPrefix:  "7 (LH_ERR_VOL) : volume error : total volume (17 ul) does not match resulting volume (10 ul)",
+		},
+		{
+			Name: "test result volume doesn't match volume sum",
+			Instructions: func(ctx context.Context) []*wtype.LHInstruction {
+				instructions := Mixes("pcrplate_skirted_riser", TestMixComponents{
+					{
+						LiquidName:    "water",
+						VolumesByWell: ColumnWise(8, []float64{17.0, 17.0, 17.0, 17.0, 17.0, 17.0, 17.0, 17.0}),
+						LiquidType:    wtype.LTSingleChannel,
+						Sampler:       mixer.Sample,
+					},
+				})(ctx)
+				for _, ins := range instructions {
+					ins.Outputs[0].Vol = 10.0
+				}
+				return instructions
 			},
+			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
+			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
+			ErrorPrefix:  "7 (LH_ERR_VOL) : volume error : sum of requested volumes (17 ul) does not match result volume (10 ul)",
 		},
 		{
 			Name: "multi channel dependent",
@@ -990,8 +1045,8 @@ func TestExecutionPlanning(t *testing.T) {
 			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
 			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
 			Assertions: Assertions{
-				AssertNumberOf(liquidhandling.ASP, 3), //full multichanneling
-				AssertNumberOf(liquidhandling.DSP, 3), //full multichanneling
+				NumberOfAssertion(liquidhandling.ASP, 3), //full multichanneling
+				NumberOfAssertion(liquidhandling.DSP, 3), //full multichanneling
 			},
 		},
 		{
@@ -1007,8 +1062,8 @@ func TestExecutionPlanning(t *testing.T) {
 			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
 			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
 			Assertions: Assertions{
-				AssertNumberOf(liquidhandling.ASP, 4),
-				AssertNumberOf(liquidhandling.DSP, 4),
+				NumberOfAssertion(liquidhandling.ASP, 4),
+				NumberOfAssertion(liquidhandling.DSP, 4),
 			},
 		},
 		{
@@ -1024,8 +1079,8 @@ func TestExecutionPlanning(t *testing.T) {
 			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
 			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
 			Assertions: Assertions{
-				AssertNumberOf(liquidhandling.ASP, 5),
-				AssertNumberOf(liquidhandling.DSP, 5),
+				NumberOfAssertion(liquidhandling.ASP, 5),
+				NumberOfAssertion(liquidhandling.DSP, 5),
 			},
 		},
 		{
@@ -1042,8 +1097,8 @@ func TestExecutionPlanning(t *testing.T) {
 			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
 			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
 			Assertions: Assertions{
-				AssertNumberOf(liquidhandling.ASP, 1), //full multichanneling
-				AssertNumberOf(liquidhandling.DSP, 1), //full multichanneling
+				NumberOfAssertion(liquidhandling.ASP, 1), //full multichanneling
+				NumberOfAssertion(liquidhandling.DSP, 1), //full multichanneling
 			},
 		},
 		{
@@ -1076,8 +1131,8 @@ func TestExecutionPlanning(t *testing.T) {
 			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
 			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
 			Assertions: Assertions{
-				AssertNumberOf(liquidhandling.ASP, 4), //full multichanneling - 2 ops per dilution row
-				AssertNumberOf(liquidhandling.DSP, 4), //full multichanneling
+				NumberOfAssertion(liquidhandling.ASP, 4), //full multichanneling - 2 ops per dilution row
+				NumberOfAssertion(liquidhandling.DSP, 4), //full multichanneling
 			},
 		},
 		{
@@ -1093,10 +1148,10 @@ func TestExecutionPlanning(t *testing.T) {
 			InputPlates:  []*wtype.LHPlate{GetPlateForTest()},
 			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
 			Assertions: Assertions{
-				AssertNumberOf(liquidhandling.ASP, 8),                                                //no multichanneling
-				AssertInputLayout(map[string]string{"A1": "water"}),                                  // should all be in the same well since no multichanneling
-				AssertInitialInputWorkingVolumes(0.001, map[string]float64{"A1": (8.0 + 0.5) * 8.0}), // volume plus carry per transfer
-				AssertFinalInputWorkingVolumes(0.001, map[string]float64{"A1": 0.0}),
+				NumberOfAssertion(liquidhandling.ASP, 8),                                           //no multichanneling
+				InputLayoutAssertion(map[string]string{"A1": "water"}),                             // should all be in the same well since no multichanneling
+				InitialInputVolumesAssertion(0.001, map[string]float64{"A1": (8.0+0.5)*8.0 + 5.0}), // volume plus carry per transfer plus residual
+				FinalInputVolumesAssertion(0.001, map[string]float64{"A1": 5.0}),
 			},
 		},
 		{
@@ -1112,10 +1167,11 @@ func TestExecutionPlanning(t *testing.T) {
 			InputPlates:  []*wtype.LHPlate{PrefillPlateForTest(ctx, GetPlateForTest(), "water", map[string]float64{"A1": 200.0, "B1": 200.0, "C1": 200.0})},
 			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
 			Assertions: Assertions{
-				AssertNumberOf(liquidhandling.ASP, 8),                                                                                //no multichanneling
-				AssertInputLayout(map[string]string{"A1": "water", "B1": "water", "C1": "water"}),                                    // should all be in the same well since no multichanneling
-				AssertInitialInputWorkingVolumes(0.001, map[string]float64{"A1": 200.0 - 5.0, "B1": 200.0 - 5.0, "C1": 200.0 - 5.0}), // 200 less the residual
-				AssertFinalInputWorkingVolumes(0.001, map[string]float64{"A1": 200.0 - (8.0+0.5)*8.0 - 5.0, "B1": 200.0 - 5.0, "C1": 200.0 - 5.0}),
+				NumberOfAssertion(liquidhandling.ASP, 8), //no multichanneling
+				InputLayoutAssertion(map[string]string{"A1": "water", "B1": "water", "C1": "water"}),
+				InitialInputVolumesAssertion(0.001, map[string]float64{"A1": 200.0, "B1": 200.0, "C1": 200.0}),
+				// check that the same source well is used throughout since all of these operations are single channel
+				FinalInputVolumesAssertion(0.001, map[string]float64{"A1": 200.0 - (8.0+0.5)*8.0, "B1": 200.0, "C1": 200.0}),
 			},
 		},
 	}.Run(ctx, t)

@@ -7,6 +7,7 @@ import (
 	"math"
 	"reflect"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
@@ -16,13 +17,13 @@ import (
 )
 
 type PlanningTest struct {
-	Name           string
-	Liquidhandler  *Liquidhandler
-	Instructions   InstructionBuilder
-	InputPlates    []*wtype.LHPlate
-	OutputPlates   []*wtype.LHPlate
-	ExpectingError bool
-	Assertions     Assertions
+	Name          string
+	Liquidhandler *Liquidhandler
+	Instructions  InstructionBuilder
+	InputPlates   []*wtype.LHPlate
+	OutputPlates  []*wtype.LHPlate
+	ErrorPrefix   string
+	Assertions    Assertions
 }
 
 func (test *PlanningTest) Run(ctx context.Context, t *testing.T) {
@@ -53,25 +54,12 @@ func (test *PlanningTest) run(ctx context.Context, t *testing.T) {
 	}
 
 	if err := test.Liquidhandler.Plan(ctx, request); !test.expected(err) {
-		t.Fatalf("expecting error = %t: got error %v", test.ExpectingError, err)
+		t.Fatalf("expecting error = %q: got error %q", test.ErrorPrefix, err.Error())
 	}
 
 	test.Assertions.Assert(t, test.Liquidhandler, request)
 
-	if t.Failed() {
-		fmt.Println("Generated instructions")
-		//	display := map[*liquidhandling.InstructionType]bool{
-		//		liquidhandling.LOD: true,
-		//		liquidhandling.ASP: true,
-		//		liquidhandling.DSP: true,
-		//		liquidhandling.ULD: true,
-		//	}
-		for i, ins := range request.Instructions {
-			//if display[ins.Type()] {
-			fmt.Printf("  %d: %s\n", i, liquidhandling.InsToString(ins))
-			//}
-		}
-	} else if !test.ExpectingError {
+	if !t.Failed() && test.ErrorPrefix == "" {
 		test.checkPlateIDMap(t)
 		test.checkPositionConsistency(t)
 	}
@@ -114,7 +102,7 @@ func (test *PlanningTest) checkPositionConsistency(t *testing.T) {
 		id1, ok1 := test.Liquidhandler.Properties.PosLookup[pos]
 		id2, ok2 := test.Liquidhandler.FinalProperties.PosLookup[pos]
 
-		if ok1 && !ok2 || ok2 && !ok1 {
+		if ok1 != ok2 {
 			t.Fatal(fmt.Sprintf("Position %s inconsistent: Before %t after %t", pos, ok1, ok2))
 		}
 
@@ -139,25 +127,13 @@ func (test *PlanningTest) checkPositionConsistency(t *testing.T) {
 			if pp1.Type != pp2.Type {
 				t.Fatal(fmt.Sprintf("Plates at %s not same type: %s %s", pos, pp1.Type, pp2.Type))
 			}
-			it := wtype.NewAddressIterator(pp1, wtype.ColumnWise, wtype.TopToBottom, wtype.LeftToRight, false)
 
-			for {
-				if !it.Valid() {
-					break
-				}
-				wc := it.Curr()
-				w1 := pp1.Wellcoords[wc.FormatA1()]
-				w2 := pp2.Wellcoords[wc.FormatA1()]
-
-				if w1.IsEmpty() && w2.IsEmpty() {
-					it.Next()
+			for it := wtype.NewAddressIterator(pp1, wtype.ColumnWise, wtype.TopToBottom, wtype.LeftToRight, false); it.Valid(); it.Next() {
+				if w1, w2 := pp1.Wellcoords[it.Curr().FormatA1()], pp2.Wellcoords[it.Curr().FormatA1()]; w1.IsEmpty() && w2.IsEmpty() {
 					continue
+				} else if w1.WContents.ID == w2.WContents.ID {
+					t.Fatal("IDs before and after must differ")
 				}
-
-				if w1.WContents.ID == w2.WContents.ID {
-					t.Fatal(fmt.Sprintf("IDs before and after must differ"))
-				}
-				it.Next()
 			}
 		case *wtype.LHTipbox:
 			tb1 := p1.(*wtype.LHTipbox)
@@ -180,7 +156,11 @@ func (test *PlanningTest) checkPositionConsistency(t *testing.T) {
 }
 
 func (test *PlanningTest) expected(err error) bool {
-	return (err != nil) == test.ExpectingError
+	if err != nil && test.ErrorPrefix != "" {
+		return strings.HasPrefix(err.Error(), test.ErrorPrefix)
+	} else {
+		return err == nil && test.ErrorPrefix == ""
+	}
 }
 
 type PlanningTests []*PlanningTest
@@ -201,9 +181,9 @@ func (s Assertions) Assert(t *testing.T, lh *Liquidhandler, request *LHRequest) 
 	}
 }
 
-// AssertNumberOf check that the number of instructions of the given type is
+// NumberOfAssertion check that the number of instructions of the given type is
 // equal to count
-func AssertNumberOf(iType *liquidhandling.InstructionType, count int) Assertion {
+func NumberOfAssertion(iType *liquidhandling.InstructionType, count int) Assertion {
 	return func(t *testing.T, lh *Liquidhandler, request *LHRequest) {
 		var c int
 		for _, ins := range request.Instructions {
@@ -217,8 +197,8 @@ func AssertNumberOf(iType *liquidhandling.InstructionType, count int) Assertion 
 	}
 }
 
-// AssertTipsUsed check that the number of tips used is as expected
-func AssertTipsUsed(expected []wtype.TipEstimate) Assertion {
+// TipsUsedAssertion check that the number of tips used is as expected
+func TipsUsedAssertion(expected []wtype.TipEstimate) Assertion {
 	return func(t *testing.T, lh *Liquidhandler, request *LHRequest) {
 		if !reflect.DeepEqual(expected, request.TipsUsed) {
 			t.Errorf("Expected %v Got %v", expected, request.TipsUsed)
@@ -226,9 +206,9 @@ func AssertTipsUsed(expected []wtype.TipEstimate) Assertion {
 	}
 }
 
-// AssertInputLayout check that the input layout is as expected
+// InputLayoutAssertion check that the input layout is as expected
 // expected is a map of well location (in A1 format) to liquid name for each input plate
-func AssertInputLayout(expected ...map[string]string) Assertion {
+func InputLayoutAssertion(expected ...map[string]string) Assertion {
 	return func(t *testing.T, lh *Liquidhandler, request *LHRequest) {
 		if len(request.InputPlateOrder) != len(expected) {
 			t.Errorf("expected %d input plates, got %d", len(expected), len(request.InputPlateOrder))
@@ -239,20 +219,17 @@ func AssertInputLayout(expected ...map[string]string) Assertion {
 			got := make(map[string]string)
 			if plate, ok := request.InputPlates[plateID]; !ok {
 				t.Errorf("while asserting input layout: inconsistent InputPlateOrder in request: no id %q in liquidhandler", plateID)
-				continue
 			} else if plate == nil {
 				t.Errorf("nil input plate in request")
-				continue
 			} else {
 				for address, well := range plate.Wellcoords {
 					if !well.IsEmpty() {
 						got[address] = well.Contents().CName
 					}
 				}
-			}
-
-			if !reflect.DeepEqual(expected[plateNum], got) {
-				t.Errorf("input plate %d doesn't match:\ne: %v\ng: %v", plateNum, expected[plateNum], got)
+				if !reflect.DeepEqual(expected[plateNum], got) {
+					t.Errorf("input plate %d doesn't match:\ne: %v\ng: %v", plateNum, expected[plateNum], got)
+				}
 			}
 		}
 	}
@@ -269,12 +246,11 @@ func describePlateVolumes(order []string, plates map[string]*wtype.LHPlate) ([]m
 		} else {
 			for address, well := range plate.Wellcoords {
 				if !well.IsEmpty() {
-					got[address] = well.CurrentWorkingVolume().MustInStringUnit("ul").RawValue()
+					got[address] = well.CurrentVolume().MustInStringUnit("ul").RawValue()
 				}
 			}
+			ret = append(ret, got)
 		}
-
-		ret = append(ret, got)
 	}
 	return ret, nil
 }
@@ -302,10 +278,10 @@ func volumesMatch(tolerance float64, lhs, rhs map[string]float64) bool {
 	return true
 }
 
-// AssertInitialInputVolumes check that the input layout is as expected
+// InitialInputVolumesAssertion check that the input layout is as expected
 // expected is a map of well location (in A1 format) to liquid to volume in ul
 // tol is the maximum difference before an error is raised
-func AssertInitialInputWorkingVolumes(tol float64, expected ...map[string]float64) Assertion {
+func InitialInputVolumesAssertion(tol float64, expected ...map[string]float64) Assertion {
 	return func(t *testing.T, lh *Liquidhandler, request *LHRequest) {
 
 		if got, err := describePlateVolumes(request.InputPlateOrder, request.InputPlates); err != nil {
@@ -320,10 +296,10 @@ func AssertInitialInputWorkingVolumes(tol float64, expected ...map[string]float6
 	}
 }
 
-// AssertFinalInputVolumes check that the input layout is as expected
+// FinalInputVolumesAssertion check that the input layout is as expected
 // expected is a map of well location (in A1 format) to liquid to volume in ul
 // tol is the maximum difference before an error is raised
-func AssertFinalInputWorkingVolumes(tol float64, expected ...map[string]float64) Assertion {
+func FinalInputVolumesAssertion(tol float64, expected ...map[string]float64) Assertion {
 	return func(t *testing.T, lh *Liquidhandler, request *LHRequest) {
 
 		pos := make([]string, 0, len(request.InputPlateOrder))
@@ -337,6 +313,29 @@ func AssertFinalInputWorkingVolumes(tol float64, expected ...map[string]float64)
 			for i, g := range got {
 				if !volumesMatch(tol, expected[i], g) {
 					t.Errorf("input plate %d doesn't match:\ne: %v\ng: %v", i, expected[i], g)
+				}
+			}
+		}
+	}
+}
+
+// FinalOutputVolumesAssertion check that the output layout is as expected
+// expected is a map of well location (in A1 format) to liquid to volume in ul
+// tol is the maximum difference before an error is raised
+func FinalOutputVolumesAssertion(tol float64, expected ...map[string]float64) Assertion {
+	return func(t *testing.T, lh *Liquidhandler, request *LHRequest) {
+
+		pos := make([]string, 0, len(request.OutputPlateOrder))
+		for _, in := range request.OutputPlateOrder {
+			pos = append(pos, lh.FinalProperties.PlateIDLookup[lh.plateIDMap[in]])
+		}
+
+		if got, err := describePlateVolumes(pos, lh.FinalProperties.Plates); err != nil {
+			t.Error(errors.WithMessage(err, "while asserting final output volumes"))
+		} else {
+			for i, g := range got {
+				if !volumesMatch(tol, expected[i], g) {
+					t.Errorf("output plate %d doesn't match:\ne: %v\ng: %v", i, expected[i], g)
 				}
 			}
 		}

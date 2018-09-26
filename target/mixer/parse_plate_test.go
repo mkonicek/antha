@@ -464,6 +464,40 @@ C1,neb5compcells,culture,20.5,ul,0,ng/ul
 				},
 			},
 		},
+		{
+			File: []byte(
+				`
+pcrplate_skirted_riser40,Input_plate_1,LiquidType,Vol,Vol Unit,Conc,Conc Unit
+A1,water,randomType_modified_1,140.5,ul,0,mg/l
+C1,neb5compcells,culture,20.5,ul,0,ng/ul
+`),
+			NoWarnings: false,
+			Expected: &wtype.Plate{
+				Type: "pcrplate_skirted_riser40",
+				Wellcoords: map[string]*wtype.LHWell{
+					"A1": {
+						WContents: &wtype.Liquid{
+							CName: "water",
+							Type:  wtype.LiquidType("randomType"),
+							Vol:   140.5,
+							Vunit: "ul",
+							Conc:  0,
+							Cunit: "mg/l",
+						},
+					},
+					"C1": {
+						WContents: &wtype.Liquid{
+							CName: "neb5compcells",
+							Type:  wtype.LTCulture,
+							Vol:   20.5,
+							Vunit: "ul",
+							Conc:  0,
+							Cunit: "mg/l",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for i, tc := range suite {
@@ -499,4 +533,43 @@ A5,milk,water,500.0,ul,0,g/l,
 	if err == nil {
 		t.Error("Overfull well A5 failed to generate error")
 	}
+}
+
+func TestUnModifyTypeName(t *testing.T) {
+
+	type modifiedPolicyTest struct {
+		Original, ExpectedProduct string
+	}
+
+	var tests = []modifiedPolicyTest{
+		{
+			Original:        "water_modified_1",
+			ExpectedProduct: "water",
+		},
+		{
+			Original:        "water_modified_2_modified_1",
+			ExpectedProduct: "water",
+		},
+		{
+			Original:        "water",
+			ExpectedProduct: "water",
+		},
+		{
+			Original:        "_modified_2",
+			ExpectedProduct: "",
+		},
+	}
+
+	for _, test := range tests {
+		result := unModifyTypeName(test.Original)
+		if result != test.ExpectedProduct {
+			t.Error(
+				"Error removing modified suffix from policy: \n",
+				"For: ", test.Original, "\n",
+				"Expected Product: ", test.ExpectedProduct, "\n",
+				"Got: ", result, "\n",
+			)
+		}
+	}
+
 }

@@ -269,6 +269,9 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 
 		for _, component := range arrTvol {
 			vol := wunit.SubtractVolumes(totalvol, cmpvol)
+			if vol.IsNegative() {
+				return nil, nil, wtype.LHErrorf(wtype.LH_ERR_VOL, "invalid total volume for component %q in instruction:\n%s", component.CName, instruction.Summarize(1))
+			}
 			component.SetVolume(vol)
 			component.Tvol = 0.0 // reset Tvol
 			arrFinalComponents = append(arrFinalComponents, component)

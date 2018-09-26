@@ -221,8 +221,9 @@ func EncodePtrToLHHeadAssembly(assembly *wtype.LHHeadAssembly, headMap map[*wtyp
 }
 func EncodeLHHeadAssemblyMessage(assembly *wtype.LHHeadAssembly, headMap map[*wtype.LHHead]int) *pb.LHHeadAssemblyMessage {
 	ret := pb.LHHeadAssemblyMessage{
-		Positions:    EncodeArrayOfPtrToLHHeadAssemblyPosition(assembly.Positions, headMap),
-		MotionLimits: EncodePtrToBBox(assembly.MotionLimits),
+		Positions:      EncodeArrayOfPtrToLHHeadAssemblyPosition(assembly.Positions, headMap),
+		MotionLimits:   EncodePtrToBBox(assembly.MotionLimits),
+		VelocityLimits: EncodePtrToVelocityRange(assembly.VelocityLimits),
 	}
 	return &ret
 }
@@ -272,8 +273,9 @@ func DecodePtrToLHHeadAssembly(arg *pb.PtrToLHHeadAssemblyMessage, heads []*wtyp
 }
 func DecodeLHHeadAssembly(arg *pb.LHHeadAssemblyMessage, heads []*wtype.LHHead) *wtype.LHHeadAssembly {
 	ret := wtype.LHHeadAssembly{
-		Positions:    DecodeArrayOfPtrToLHHeadAssemblyPositions(arg.Positions, heads),
-		MotionLimits: DecodePtrToBBox(arg.MotionLimits),
+		Positions:      DecodeArrayOfPtrToLHHeadAssemblyPositions(arg.Positions, heads),
+		MotionLimits:   DecodePtrToBBox(arg.MotionLimits),
+		VelocityLimits: DecodePtrToVelocityRange(arg.VelocityLimits),
 	}
 	return &ret
 }
@@ -1351,4 +1353,76 @@ func DecodeSubComponentMessage(arg *pb.SubComponentMessage) wtype.ComponentList 
 	}
 
 	return cl
+}
+
+func DecodePtrToVelocityRange(arg *pb.PtrToVelocityRangeMessage) *wtype.VelocityRange {
+	if arg == nil || arg.Val == nil {
+		return nil
+	}
+	ret := DecodeVelocityRange(arg.Val)
+	return &ret
+}
+
+func EncodePtrToVelocityRange(arg *wtype.VelocityRange) *pb.PtrToVelocityRangeMessage {
+	return &pb.PtrToVelocityRangeMessage{
+		Val: EncodeVelocityRange(arg),
+	}
+}
+
+func DecodeVelocityRange(arg *pb.VelocityRangeMessage) wtype.VelocityRange {
+	return wtype.VelocityRange{
+		Min: DecodePtrToVelocity3D(arg.Min),
+		Max: DecodePtrToVelocity3D(arg.Max),
+	}
+}
+
+func EncodeVelocityRange(arg *wtype.VelocityRange) *pb.VelocityRangeMessage {
+	if arg == nil {
+		return nil
+	}
+	return &pb.VelocityRangeMessage{
+		Min: EncodePtrToVelocity3D(arg.Min),
+		Max: EncodePtrToVelocity3D(arg.Max),
+	}
+}
+
+func EncodePtrToVelocity3D(arg *wunit.Velocity3D) *pb.PtrToVelocity3DMessage {
+	return &pb.PtrToVelocity3DMessage{
+		Val: EncodeVelocity3D(arg),
+	}
+}
+
+func DecodePtrToVelocity3D(arg *pb.PtrToVelocity3DMessage) *wunit.Velocity3D {
+	if arg == nil || arg.Val == nil {
+		return nil
+	}
+	r := DecodeVelocity3D(arg.Val)
+	return &r
+}
+
+func EncodeVelocity3D(arg *wunit.Velocity3D) *pb.Velocity3DMessage {
+	if arg == nil {
+		return nil
+	}
+	return &pb.Velocity3DMessage{
+		X: EncodeVelocity(arg.X),
+		Y: EncodeVelocity(arg.Y),
+		Z: EncodeVelocity(arg.Z),
+	}
+}
+
+func DecodeVelocity3D(arg *pb.Velocity3DMessage) wunit.Velocity3D {
+	return wunit.Velocity3D{
+		X: DecodeVelocity(arg.X),
+		Y: DecodeVelocity(arg.Y),
+		Z: DecodeVelocity(arg.Z),
+	}
+}
+
+func EncodeVelocity(arg wunit.Velocity) *pb.VelocityMessage {
+	return &pb.VelocityMessage{ConcreteMeasurement: EncodePtrToConcreteMeasurement(arg.ConcreteMeasurement)}
+}
+
+func DecodeVelocity(arg *pb.VelocityMessage) wunit.Velocity {
+	return wunit.Velocity{ConcreteMeasurement: (*wunit.ConcreteMeasurement)(DecodePtrToConcreteMeasurement(arg.ConcreteMeasurement))}
 }

@@ -1186,6 +1186,8 @@ func removeDummyInstructions(rq *LHRequest) *LHRequest {
 		return rq
 	}
 
+	fmt.Println("Pruning dummy instructions")
+
 	oo := make([]string, 0, len(rq.OutputOrder)-len(toRemove))
 
 	for _, ins := range rq.OutputOrder {

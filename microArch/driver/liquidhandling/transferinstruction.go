@@ -471,14 +471,13 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 
 			// non independent heads must have all volumes the same
 			if !mci.Prms.Independent {
-				maxvol := vols.MaxMultiTransferVolume(prms.MinPossibleVolume())
-
-				// if we can't do it, we can't do it
-				if maxvol.IsZero() {
+				if maxvol := vols.MaxMultiTransferVolume(prms.MinPossibleVolume()); !maxvol.IsZero() {
+					for i := range vols {
+						vols[i] = wunit.CopyVolume(maxvol)
+					}
+				} else {
+					// we can't transfer any volumes with the non-independent head so move on to the next parallelset
 					continue
-				}
-				for i := range vols {
-					vols[i] = wunit.CopyVolume(maxvol)
 				}
 			}
 

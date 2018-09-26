@@ -508,23 +508,52 @@ func (self *AdaptorState) GetTipCoordsToLoad(tb *wtype.LHTipbox, num int) ([][]w
 //                            AdaptorGroup
 // -------------------------------------------------------------------------------
 
-//Represent a set of adaptors which are physically attached
+// AdaptorGroup simulate a set of adaptors which are physically attached
 type AdaptorGroup struct {
-	adaptors     []*AdaptorState
-	offsets      []wtype.Coordinates
-	motionLimits *wtype.BBox
-	position     wtype.Coordinates
-	robot        *RobotState
+	adaptors      []*AdaptorState
+	offsets       []wtype.Coordinates
+	motionLimits  *wtype.BBox
+	velocity      *wunit.Velocity3D
+	velocityRange *wtype.VelocityRange
+	position      wtype.Coordinates
+	robot         *RobotState
 }
 
-func NewAdaptorGroup(offsets []wtype.Coordinates, motionLimits *wtype.BBox) *AdaptorGroup {
-	ret := AdaptorGroup{
-		adaptors:     make([]*AdaptorState, len(offsets)),
-		offsets:      offsets,
-		motionLimits: motionLimits,
+// NewAdaptorGroup convert a HeadAssembly into an AdaptorGroup for simulation
+func NewAdaptorGroup(assembly *wtype.LHHeadAssembly) *AdaptorGroup {
+
+	offsets := make([]wtype.Coordinates, len(assembly.Positions))
+	for i, pos := range assembly.Positions {
+		offsets[i] = pos.Offset
 	}
 
-	return &ret
+	group := &AdaptorGroup{
+		adaptors:      make([]*AdaptorState, len(offsets)),
+		offsets:       offsets,
+		motionLimits:  assembly.MotionLimits.Dup(),
+		velocity:      &wunit.Velocity3D{},
+		velocityRange: assembly.VelocityLimits.Dup(),
+	}
+
+	for i, pos := range assembly.Positions {
+		if pos.Head == nil { //ignore assembly position which have nothing loaded
+			continue
+		}
+		p := pos.Head.Adaptor.Params
+		//9mm spacing currently hardcoded.
+		//At some point we'll either need to fetch this from the driver or
+		//infer it from the type of tipboxes/plates accepted
+		spacing := wtype.Coordinates{X: 0, Y: 0, Z: 0}
+		if p.Orientation == wtype.LHVChannel {
+			spacing.Y = 9.
+		} else if p.Orientation == wtype.LHHChannel {
+			spacing.X = 9.
+		}
+		adaptor := NewAdaptorState(pos.Head.Adaptor.Name, p.Independent, p.Multi, spacing, coneRadius, p, pos.Head.TipLoading)
+		group.LoadAdaptor(i, adaptor)
+	}
+
+	return group
 }
 
 //GetAdaptor get an adaptor state
@@ -613,6 +642,20 @@ func (self *AdaptorGroup) GetRobot() *RobotState {
 
 func (self *AdaptorGroup) SetRobot(r *RobotState) {
 	self.robot = r
+}
+
+func (self *AdaptorGroup) SetDriveSpeed(a wunit.Axis, v wunit.Velocity) error {
+	if self.velocityRange != nil {
+		if min, max := self.velocityRange.Min.GetAxis(a), self.velocityRange.Max.GetAxis(a); v.LessThan(min) || v.GreaterThan(max) {
+			return errors.Errorf("%v is outside allowable range [%v - %v]", v, min, max)
+		}
+	} else {
+		if !v.IsPositive() {
+			return errors.Errorf("speed must be positive")
+		}
+	}
+	self.velocity.SetAxis(a, v)
+	return nil
 }
 
 // -------------------------------------------------------------------------------

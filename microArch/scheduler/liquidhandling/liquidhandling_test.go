@@ -824,8 +824,8 @@ func TestExecutionPlanning(t *testing.T) {
 			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
 			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
 			Assertions: Assertions{
-				AssertNumberOf(liquidhandling.ASP, 3*8), //no multichanneling
-				AssertNumberOf(liquidhandling.DSP, 3*8), //no multichanneling
+				NumberOfAssertion(liquidhandling.ASP, 3*8), //no multichanneling
+				NumberOfAssertion(liquidhandling.DSP, 3*8), //no multichanneling
 			},
 		},
 		{
@@ -853,9 +853,9 @@ func TestExecutionPlanning(t *testing.T) {
 			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
 			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
 			Assertions: Assertions{
-				AssertNumberOf(liquidhandling.ASP, 3*8), //no multichanneling
-				AssertNumberOf(liquidhandling.DSP, 3*8), //no multichanneling
-				AssertFinalOutputVolumes(0.001, map[string]float64{"A1": 17.0, "B1": 17.0, "C1": 17.0, "D1": 17.0, "E1": 17.0, "F1": 17.0, "G1": 17.0, "H1": 17.0}),
+				NumberOfAssertion(liquidhandling.ASP, 3*8), //no multichanneling
+				NumberOfAssertion(liquidhandling.DSP, 3*8), //no multichanneling
+				FinalOutputVolumesAssertion(0.001, map[string]float64{"A1": 17.0, "B1": 17.0, "C1": 17.0, "D1": 17.0, "E1": 17.0, "F1": 17.0, "G1": 17.0, "H1": 17.0}),
 			},
 		},
 		{
@@ -964,8 +964,8 @@ func TestExecutionPlanning(t *testing.T) {
 			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
 			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
 			Assertions: Assertions{
-				AssertNumberOf(liquidhandling.ASP, 3*8), //no multichanneling
-				AssertNumberOf(liquidhandling.DSP, 3*8), //no multichanneling
+				NumberOfAssertion(liquidhandling.ASP, 3*8), //no multichanneling
+				NumberOfAssertion(liquidhandling.DSP, 3*8), //no multichanneling
 			},
 		},
 		{
@@ -1045,8 +1045,8 @@ func TestExecutionPlanning(t *testing.T) {
 			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
 			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
 			Assertions: Assertions{
-				AssertNumberOf(liquidhandling.ASP, 3), //full multichanneling
-				AssertNumberOf(liquidhandling.DSP, 3), //full multichanneling
+				NumberOfAssertion(liquidhandling.ASP, 3), //full multichanneling
+				NumberOfAssertion(liquidhandling.DSP, 3), //full multichanneling
 			},
 		},
 		{
@@ -1062,8 +1062,8 @@ func TestExecutionPlanning(t *testing.T) {
 			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
 			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
 			Assertions: Assertions{
-				AssertNumberOf(liquidhandling.ASP, 4),
-				AssertNumberOf(liquidhandling.DSP, 4),
+				NumberOfAssertion(liquidhandling.ASP, 4),
+				NumberOfAssertion(liquidhandling.DSP, 4),
 			},
 		},
 		{
@@ -1079,8 +1079,8 @@ func TestExecutionPlanning(t *testing.T) {
 			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
 			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
 			Assertions: Assertions{
-				AssertNumberOf(liquidhandling.ASP, 5),
-				AssertNumberOf(liquidhandling.DSP, 5),
+				NumberOfAssertion(liquidhandling.ASP, 5),
+				NumberOfAssertion(liquidhandling.DSP, 5),
 			},
 		},
 		{
@@ -1097,8 +1097,8 @@ func TestExecutionPlanning(t *testing.T) {
 			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
 			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
 			Assertions: Assertions{
-				AssertNumberOf(liquidhandling.ASP, 1), //full multichanneling
-				AssertNumberOf(liquidhandling.DSP, 1), //full multichanneling
+				NumberOfAssertion(liquidhandling.ASP, 1), //full multichanneling
+				NumberOfAssertion(liquidhandling.DSP, 1), //full multichanneling
 			},
 		},
 		{
@@ -1131,8 +1131,8 @@ func TestExecutionPlanning(t *testing.T) {
 			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
 			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
 			Assertions: Assertions{
-				AssertNumberOf(liquidhandling.ASP, 4), //full multichanneling - 2 ops per dilution row
-				AssertNumberOf(liquidhandling.DSP, 4), //full multichanneling
+				NumberOfAssertion(liquidhandling.ASP, 4), //full multichanneling - 2 ops per dilution row
+				NumberOfAssertion(liquidhandling.DSP, 4), //full multichanneling
 			},
 		},
 		{
@@ -1148,10 +1148,10 @@ func TestExecutionPlanning(t *testing.T) {
 			InputPlates:  []*wtype.LHPlate{GetPlateForTest()},
 			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
 			Assertions: Assertions{
-				AssertNumberOf(liquidhandling.ASP, 8),                                           //no multichanneling
-				AssertInputLayout(map[string]string{"A1": "water"}),                             // should all be in the same well since no multichanneling
-				AssertInitialInputVolumes(0.001, map[string]float64{"A1": (8.0+0.5)*8.0 + 5.0}), // volume plus carry per transfer plus residual
-				AssertFinalInputVolumes(0.001, map[string]float64{"A1": 5.0}),
+				NumberOfAssertion(liquidhandling.ASP, 8),                                           //no multichanneling
+				InputLayoutAssertion(map[string]string{"A1": "water"}),                             // should all be in the same well since no multichanneling
+				InitialInputVolumesAssertion(0.001, map[string]float64{"A1": (8.0+0.5)*8.0 + 5.0}), // volume plus carry per transfer plus residual
+				FinalInputVolumesAssertion(0.001, map[string]float64{"A1": 5.0}),
 			},
 		},
 		{
@@ -1167,11 +1167,11 @@ func TestExecutionPlanning(t *testing.T) {
 			InputPlates:  []*wtype.LHPlate{PrefillPlateForTest(ctx, GetPlateForTest(), "water", map[string]float64{"A1": 200.0, "B1": 200.0, "C1": 200.0})},
 			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
 			Assertions: Assertions{
-				AssertNumberOf(liquidhandling.ASP, 8), //no multichanneling
-				AssertInputLayout(map[string]string{"A1": "water", "B1": "water", "C1": "water"}),
-				AssertInitialInputVolumes(0.001, map[string]float64{"A1": 200.0, "B1": 200.0, "C1": 200.0}),
+				NumberOfAssertion(liquidhandling.ASP, 8), //no multichanneling
+				InputLayoutAssertion(map[string]string{"A1": "water", "B1": "water", "C1": "water"}),
+				InitialInputVolumesAssertion(0.001, map[string]float64{"A1": 200.0, "B1": 200.0, "C1": 200.0}),
 				// check that the same source well is used throughout since all of these operations are single channel
-				AssertFinalInputVolumes(0.001, map[string]float64{"A1": 200.0 - (8.0+0.5)*8.0, "B1": 200.0, "C1": 200.0}),
+				FinalInputVolumesAssertion(0.001, map[string]float64{"A1": 200.0 - (8.0+0.5)*8.0, "B1": 200.0, "C1": 200.0}),
 			},
 		},
 	}.Run(ctx, t)

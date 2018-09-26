@@ -182,9 +182,9 @@ func (s Assertions) Assert(t *testing.T, lh *Liquidhandler, request *LHRequest) 
 	}
 }
 
-// AssertNumberOf check that the number of instructions of the given type is
+// NumberOfAssertion check that the number of instructions of the given type is
 // equal to count
-func AssertNumberOf(iType *liquidhandling.InstructionType, count int) Assertion {
+func NumberOfAssertion(iType *liquidhandling.InstructionType, count int) Assertion {
 	return func(t *testing.T, lh *Liquidhandler, request *LHRequest) {
 		var c int
 		for _, ins := range request.Instructions {
@@ -198,8 +198,8 @@ func AssertNumberOf(iType *liquidhandling.InstructionType, count int) Assertion 
 	}
 }
 
-// AssertTipsUsed check that the number of tips used is as expected
-func AssertTipsUsed(expected []wtype.TipEstimate) Assertion {
+// TipsUsedAssertion check that the number of tips used is as expected
+func TipsUsedAssertion(expected []wtype.TipEstimate) Assertion {
 	return func(t *testing.T, lh *Liquidhandler, request *LHRequest) {
 		if !reflect.DeepEqual(expected, request.TipsUsed) {
 			t.Errorf("Expected %v Got %v", expected, request.TipsUsed)
@@ -207,9 +207,9 @@ func AssertTipsUsed(expected []wtype.TipEstimate) Assertion {
 	}
 }
 
-// AssertInputLayout check that the input layout is as expected
+// InputLayoutAssertion check that the input layout is as expected
 // expected is a map of well location (in A1 format) to liquid name for each input plate
-func AssertInputLayout(expected ...map[string]string) Assertion {
+func InputLayoutAssertion(expected ...map[string]string) Assertion {
 	return func(t *testing.T, lh *Liquidhandler, request *LHRequest) {
 		if len(request.InputPlateOrder) != len(expected) {
 			t.Errorf("expected %d input plates, got %d", len(expected), len(request.InputPlateOrder))
@@ -279,10 +279,10 @@ func volumesMatch(tolerance float64, lhs, rhs map[string]float64) bool {
 	return true
 }
 
-// AssertInitialInputVolumes check that the input layout is as expected
+// InitialInputVolumesAssertion check that the input layout is as expected
 // expected is a map of well location (in A1 format) to liquid to volume in ul
 // tol is the maximum difference before an error is raised
-func AssertInitialInputVolumes(tol float64, expected ...map[string]float64) Assertion {
+func InitialInputVolumesAssertion(tol float64, expected ...map[string]float64) Assertion {
 	return func(t *testing.T, lh *Liquidhandler, request *LHRequest) {
 
 		if got, err := describePlateVolumes(request.InputPlateOrder, request.InputPlates); err != nil {
@@ -297,10 +297,10 @@ func AssertInitialInputVolumes(tol float64, expected ...map[string]float64) Asse
 	}
 }
 
-// AssertFinalInputVolumes check that the input layout is as expected
+// FinalInputVolumesAssertion check that the input layout is as expected
 // expected is a map of well location (in A1 format) to liquid to volume in ul
 // tol is the maximum difference before an error is raised
-func AssertFinalInputVolumes(tol float64, expected ...map[string]float64) Assertion {
+func FinalInputVolumesAssertion(tol float64, expected ...map[string]float64) Assertion {
 	return func(t *testing.T, lh *Liquidhandler, request *LHRequest) {
 
 		pos := make([]string, 0, len(request.InputPlateOrder))
@@ -320,10 +320,10 @@ func AssertFinalInputVolumes(tol float64, expected ...map[string]float64) Assert
 	}
 }
 
-// AssertFinalOutputVolumes check that the output layout is as expected
+// FinalOutputVolumesAssertion check that the output layout is as expected
 // expected is a map of well location (in A1 format) to liquid to volume in ul
 // tol is the maximum difference before an error is raised
-func AssertFinalOutputVolumes(tol float64, expected ...map[string]float64) Assertion {
+func FinalOutputVolumesAssertion(tol float64, expected ...map[string]float64) Assertion {
 	return func(t *testing.T, lh *Liquidhandler, request *LHRequest) {
 
 		pos := make([]string, 0, len(request.OutputPlateOrder))

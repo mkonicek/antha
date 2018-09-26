@@ -969,6 +969,58 @@ func TestExecutionPlanning(t *testing.T) {
 			},
 		},
 		{
+			Name: "test result volume doesn't match total volume",
+			Instructions: func(ctx context.Context) []*wtype.LHInstruction {
+				instructions := Mixes("pcrplate_skirted_riser", TestMixComponents{
+					{
+						LiquidName:    "water",
+						VolumesByWell: ColumnWise(8, []float64{17.0, 17.0, 17.0, 17.0, 17.0, 17.0, 17.0, 17.0}),
+						LiquidType:    wtype.LTSingleChannel,
+						Sampler:       mixer.SampleForTotalVolume,
+					},
+					{
+						LiquidName:    "mastermix_sapI",
+						VolumesByWell: ColumnWise(8, []float64{8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0}),
+						LiquidType:    wtype.LTSingleChannel,
+						Sampler:       mixer.Sample,
+					},
+					{
+						LiquidName:    "dna",
+						VolumesByWell: ColumnWise(8, []float64{1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}),
+						LiquidType:    wtype.LTSingleChannel,
+						Sampler:       mixer.Sample,
+					},
+				})(ctx)
+				for _, ins := range instructions {
+					ins.Outputs[0].Vol = 10.0
+				}
+				return instructions
+			},
+			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
+			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
+			ErrorString:  "7 (LH_ERR_VOL) : volume error : total volume (17 ul) does not match resulting volume (10 ul)",
+		},
+		{
+			Name: "test result volume doesn't match volume sum",
+			Instructions: func(ctx context.Context) []*wtype.LHInstruction {
+				instructions := Mixes("pcrplate_skirted_riser", TestMixComponents{
+					{
+						LiquidName:    "water",
+						VolumesByWell: ColumnWise(8, []float64{17.0, 17.0, 17.0, 17.0, 17.0, 17.0, 17.0, 17.0}),
+						LiquidType:    wtype.LTSingleChannel,
+						Sampler:       mixer.Sample,
+					},
+				})(ctx)
+				for _, ins := range instructions {
+					ins.Outputs[0].Vol = 10.0
+				}
+				return instructions
+			},
+			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
+			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
+			ErrorString:  "7 (LH_ERR_VOL) : volume error : sum of requested volumes (17 ul) does not match result volume (10 ul)",
+		},
+		{
 			Name: "multi channel dependent",
 			Instructions: Mixes("pcrplate_skirted_riser", TestMixComponents{
 				{

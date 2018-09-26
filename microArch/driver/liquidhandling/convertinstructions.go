@@ -42,7 +42,7 @@ import (
 
 func ConvertInstructions(ctx context.Context, inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool, policy *wtype.LHPolicyRuleSet) ([]*TransferInstruction, error) {
 	// we call convertInstructions twice because
-	// 1) calling convertInstructions with multi = 8 when there are no actuall multichannel instructions causes
+	// 1) calling convertInstructions with multi = 8 when there are no actual multichannel instructions causes
 	//    undesirable source volume selection, see tests "TestExecutionPlanning/single_channel_well_use", and
 	//    "TestExecutionPlanning/single_channel_auto_allocation"
 	// 2) convertInstructions makes changes to robot, meaning that it must be called exactly once with the the copy of robot passed to the function

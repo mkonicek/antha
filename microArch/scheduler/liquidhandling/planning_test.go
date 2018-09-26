@@ -220,20 +220,17 @@ func AssertInputLayout(expected ...map[string]string) Assertion {
 			got := make(map[string]string)
 			if plate, ok := request.InputPlates[plateID]; !ok {
 				t.Errorf("while asserting input layout: inconsistent InputPlateOrder in request: no id %q in liquidhandler", plateID)
-				continue
 			} else if plate == nil {
 				t.Errorf("nil input plate in request")
-				continue
 			} else {
 				for address, well := range plate.Wellcoords {
 					if !well.IsEmpty() {
 						got[address] = well.Contents().CName
 					}
 				}
-			}
-
-			if !reflect.DeepEqual(expected[plateNum], got) {
-				t.Errorf("input plate %d doesn't match:\ne: %v\ng: %v", plateNum, expected[plateNum], got)
+				if !reflect.DeepEqual(expected[plateNum], got) {
+					t.Errorf("input plate %d doesn't match:\ne: %v\ng: %v", plateNum, expected[plateNum], got)
+				}
 			}
 		}
 	}
@@ -253,9 +250,8 @@ func describePlateVolumes(order []string, plates map[string]*wtype.LHPlate) ([]m
 					got[address] = well.CurrentVolume().MustInStringUnit("ul").RawValue()
 				}
 			}
+			ret = append(ret, got)
 		}
-
-		ret = append(ret, got)
 	}
 	return ret, nil
 }

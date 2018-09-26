@@ -882,7 +882,7 @@ func TestExecutionPlanning(t *testing.T) {
 			}),
 			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
 			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
-			ErrorString:  "7 (LH_ERR_VOL) : volume error : volume of resulting mix (340 ul) exceeds the well maximum (200 ul) for instruction:",
+			ErrorPrefix:  "7 (LH_ERR_VOL) : volume error : volume of resulting mix (340 ul) exceeds the well maximum (200 ul) for instruction:",
 		},
 		{
 			Name: "negative requested volume",
@@ -896,7 +896,7 @@ func TestExecutionPlanning(t *testing.T) {
 			}),
 			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
 			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
-			ErrorString:  "7 (LH_ERR_VOL) : volume error : negative volume for component \"water\" in instruction:",
+			ErrorPrefix:  "7 (LH_ERR_VOL) : volume error : negative volume for component \"water\" in instruction:",
 		},
 		{
 			Name: "invalid total volume",
@@ -922,7 +922,7 @@ func TestExecutionPlanning(t *testing.T) {
 			}),
 			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
 			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
-			ErrorString:  "7 (LH_ERR_VOL) : volume error : invalid total volume for component \"water\" in instruction:",
+			ErrorPrefix:  "7 (LH_ERR_VOL) : volume error : invalid total volume for component \"water\" in instruction:",
 		},
 		{
 			Name: "test dummy instruction removal",
@@ -998,7 +998,7 @@ func TestExecutionPlanning(t *testing.T) {
 			},
 			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
 			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
-			ErrorString:  "7 (LH_ERR_VOL) : volume error : total volume (17 ul) does not match resulting volume (10 ul)",
+			ErrorPrefix:  "7 (LH_ERR_VOL) : volume error : total volume (17 ul) does not match resulting volume (10 ul)",
 		},
 		{
 			Name: "test result volume doesn't match volume sum",
@@ -1018,7 +1018,7 @@ func TestExecutionPlanning(t *testing.T) {
 			},
 			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
 			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
-			ErrorString:  "7 (LH_ERR_VOL) : volume error : sum of requested volumes (17 ul) does not match result volume (10 ul)",
+			ErrorPrefix:  "7 (LH_ERR_VOL) : volume error : sum of requested volumes (17 ul) does not match result volume (10 ul)",
 		},
 		{
 			Name: "multi channel dependent",

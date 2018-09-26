@@ -22,7 +22,7 @@ type PlanningTest struct {
 	Instructions  InstructionBuilder
 	InputPlates   []*wtype.LHPlate
 	OutputPlates  []*wtype.LHPlate
-	ErrorString   string
+	ErrorPrefix   string
 	Assertions    Assertions
 }
 
@@ -54,12 +54,12 @@ func (test *PlanningTest) run(ctx context.Context, t *testing.T) {
 	}
 
 	if err := test.Liquidhandler.Plan(ctx, request); !test.expected(err) {
-		t.Fatalf("expecting error = %q: got error %q", test.ErrorString, err.Error())
+		t.Fatalf("expecting error = %q: got error %q", test.ErrorPrefix, err.Error())
 	}
 
 	test.Assertions.Assert(t, test.Liquidhandler, request)
 
-	if !t.Failed() && test.ErrorString == "" {
+	if !t.Failed() && test.ErrorPrefix == "" {
 		test.checkPlateIDMap(t)
 		test.checkPositionConsistency(t)
 	}
@@ -156,10 +156,10 @@ func (test *PlanningTest) checkPositionConsistency(t *testing.T) {
 }
 
 func (test *PlanningTest) expected(err error) bool {
-	if (err == nil) && test.ErrorString == "" {
+	if err != nil && test.ErrorPrefix != "" {
+		return strings.HasPrefix(err.Error(), test.ErrorPrefix)
+	} else if err == nil && test.ErrorPrefix == "" {
 		return true
-	} else if err != nil {
-		return strings.HasPrefix(err.Error(), test.ErrorString)
 	}
 	return false
 }

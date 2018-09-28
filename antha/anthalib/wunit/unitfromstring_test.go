@@ -174,24 +174,6 @@ func TestParseConcentration(t *testing.T) {
 			Conc:              NewConcentration(1, "X"),
 			ComponentNameOnly: "(1X)",
 		},
-		{
-			ComponentName:     "5% w/v magic potion",
-			ContainsConc:      true,
-			Conc:              NewConcentration(5, "% w/v"),
-			ComponentNameOnly: "magic potion",
-		},
-		{
-			ComponentName:     "5 w/v magic potion",
-			ContainsConc:      true,
-			Conc:              NewConcentration(5, "% w/v"),
-			ComponentNameOnly: "magic potion",
-		},
-		{
-			ComponentName:     "5 % w/v magic potion",
-			ContainsConc:      true,
-			Conc:              NewConcentration(5, "% w/v"),
-			ComponentNameOnly: "magic potion",
-		},
 	}.Run(t)
 }
 

@@ -24,10 +24,93 @@ package wunit
 
 import (
 	"encoding/json"
-	"fmt"
 	"reflect"
 	"testing"
 )
+
+func RunConcentrationTest(t *testing.T, input Concentration) {
+	t.Run(input.String(), func(t *testing.T) {
+		var output Concentration
+		if bs, err := json.Marshal(input); err != nil {
+			t.Error(err)
+		} else if err := json.Unmarshal(bs, &output); err != nil {
+			t.Error(err)
+		} else if !reflect.DeepEqual(input, output) {
+			t.Errorf("before and output don't match:\ne: %v\ng: %v", input, output)
+		}
+	})
+}
+
+func TestConcentrationSerialization(t *testing.T) {
+	for _, unit := range GetGlobalUnitRegistry().ListValidUnitsForType("Concentration") {
+		for _, value := range []float64{-5.91209102398, 0.0, 1.123131231231e58} {
+			RunConcentrationTest(t, NewConcentration(value, unit))
+		}
+	}
+}
+
+func RunVolumeTest(t *testing.T, input Volume) {
+	t.Run(input.String(), func(t *testing.T) {
+		var output Volume
+		if bs, err := json.Marshal(input); err != nil {
+			t.Error(err)
+		} else if err := json.Unmarshal(bs, &output); err != nil {
+			t.Error(err)
+		} else if !reflect.DeepEqual(input, output) {
+			t.Errorf("before and output don't match:\ne: %v\ng: %v", input, output)
+		}
+	})
+}
+
+func TestVolumeSerialization(t *testing.T) {
+	for _, unit := range GetGlobalUnitRegistry().ListValidUnitsForType("Volume") {
+		for _, value := range []float64{-5.91209102398, 0.0, 1.123131231231e58} {
+			RunVolumeTest(t, NewVolume(value, unit))
+		}
+	}
+}
+
+func RunMassTest(t *testing.T, input Mass) {
+	t.Run(input.String(), func(t *testing.T) {
+		var output Mass
+		if bs, err := json.Marshal(input); err != nil {
+			t.Error(err)
+		} else if err := json.Unmarshal(bs, &output); err != nil {
+			t.Error(err)
+		} else if !reflect.DeepEqual(input, output) {
+			t.Errorf("before and output don't match:\ne: %v\ng: %v", input, output)
+		}
+	})
+}
+
+func TestMassSerialization(t *testing.T) {
+	for _, unit := range GetGlobalUnitRegistry().ListValidUnitsForType("Mass") {
+		for _, value := range []float64{-5.91209102398, 0.0, 1.123131231231e58} {
+			RunMassTest(t, NewMass(value, unit))
+		}
+	}
+}
+
+func RunLengthTest(t *testing.T, input Length) {
+	t.Run(input.String(), func(t *testing.T) {
+		var output Length
+		if bs, err := json.Marshal(input); err != nil {
+			t.Error(err)
+		} else if err := json.Unmarshal(bs, &output); err != nil {
+			t.Error(err)
+		} else if !reflect.DeepEqual(input, output) {
+			t.Errorf("before and output don't match:\ne: %v\ng: %v", input, output)
+		}
+	})
+}
+
+func TestLengthSerialization(t *testing.T) {
+	for _, unit := range GetGlobalUnitRegistry().ListValidUnitsForType("Length") {
+		for _, value := range []float64{-5.91209102398, 0.0, 1.123131231231e58} {
+			RunLengthTest(t, NewLength(value, unit))
+		}
+	}
+}
 
 func TestVolumeMarshal(t *testing.T) {
 	var v Volume
@@ -57,8 +140,6 @@ func TestVolumeMarshal(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(v, v3) {
-		fmt.Println(v.ToString())
-		fmt.Println(v3.ToString())
 		t.Fatalf("volumes not equal, expecting %v, got %v", v, v3)
 	}
 }

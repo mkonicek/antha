@@ -24,9 +24,6 @@ package wunit
 
 import (
 	"encoding/json"
-	"fmt"
-	"io"
-	"strings"
 )
 
 type stringer interface {
@@ -42,20 +39,14 @@ func marshal(x stringer) ([]byte, error) {
 	return json.Marshal(s)
 }
 
-func unmarshal(b []byte) (value float64, unit string, err error) {
+func unmarshal(b []byte) (float64, string, error) {
 	var s *string
-	if err = json.Unmarshal(b, &s); err != nil {
-		return
-	} else if s == nil {
-		return
+	if err := json.Unmarshal(b, &s); err != nil {
+		return 0.0, "", err
+	} else if s == nil || *s == "" {
+		return 0.0, "", nil
 	}
-	if _, err = fmt.Fscanf(strings.NewReader(*s), "%e%s", &value, &unit); err != nil && err == io.EOF {
-		unit = ""
-		if _, err = fmt.Fscanf(strings.NewReader(*s), "%e", &value); err != nil {
-			return
-		}
-	}
-	return
+	return extractFloat(*s)
 }
 
 func (m Volume) MarshalJSON() ([]byte, error) {

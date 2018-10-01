@@ -196,6 +196,9 @@ func (cm *ConcreteMeasurement) ConvertToString(s string) float64 {
 // The value will be formatted in scientific notation for large exponents and the value unbounded.
 // The Summary() method should be used to return a rounded string.
 func (cm *ConcreteMeasurement) String() string {
+	if cm.IsNil() {
+		return ""
+	}
 	return fmt.Sprintf("%g %s", cm.RawValue(), cm.Unit().PrefixedSymbol())
 }
 

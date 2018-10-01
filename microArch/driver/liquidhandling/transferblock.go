@@ -437,8 +437,6 @@ func get_col(pdm wtype.Platedestmap, col, multi, wells int, contiguous, full boo
 		wellsPerTip = wells / multi
 	}
 
-	fmt.Printf("len(pdm[col])-2 = %d\n", len(pdm[col])-2)
-
 	for s := 0; s < len(pdm[col])-2; s++ {
 		ret = make(IDSet, multi)
 		//newcol := make([][]*wtype.LHInstruction, len(pdm[col]))

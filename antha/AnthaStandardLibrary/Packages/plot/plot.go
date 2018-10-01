@@ -92,26 +92,31 @@ func Export(plt *plot.Plot, heightstr string, lengthstr string, filename string)
 // specified for a set of x values.  The length of any yvalue dataset must be
 // equal to the length of xvalues or the function will stop and return an
 // error.
-func Plot(Xvalues []float64, Yvaluearray [][]float64) (plt *plot.Plot, err error) {
+// Any labels added will correspond to the position of yValueSets.
+// e.g. if two yValueSets are specified and two labels added, the first label will be used to
+// annotate the first yValueSet and the second to annotate the second yValueSet.
+// If no label is provided, the dataset is annotated with the index of the data set.
+// If one label is provided but more than one dataset, the specified label will be used for the first yValueSet.
+func Plot(xValues []float64, yValueSets [][]float64, labels ...string) (plt *plot.Plot, err error) {
 	// now plot the graph
 
 	// the data points
-	pts := make([]plotter.XYer, 0) //len(Xdatarange))
+	xVsYPlots := make([]plotter.XYer, 0)
 
 	// each specific set for each datapoint
-	for _, ydataset := range Yvaluearray {
+	for _, ydataset := range yValueSets {
 
-		if len(ydataset) != len(Xvalues) {
+		if len(ydataset) != len(xValues) {
 			return nil, fmt.Errorf("cannot plot x by y: x length %d is not the same as y length %d",
-				len(Xvalues), len(ydataset))
+				len(xValues), len(ydataset))
 		}
 
-		xys := make(plotter.XYs, len(ydataset))
-		for j := range xys {
-			xys[j].X = Xvalues[j]
-			xys[j].Y = ydataset[j]
+		xVsYPlot := make(plotter.XYs, len(ydataset))
+		for j := range xVsYPlot {
+			xVsYPlot[j].X = xValues[j]
+			xVsYPlot[j].Y = ydataset[j]
 		}
-		pts = append(pts, xys)
+		xVsYPlots = append(xVsYPlots, xVsYPlot)
 	}
 	plt, err = plot.New()
 
@@ -144,14 +149,32 @@ func Plot(Xvalues []float64, Yvaluearray [][]float64) (plt *plot.Plot, err error
 
 	*/
 
-	ptsinterface := make([]interface{}, 0)
+	plotsAsInterfaceValues := make([]interface{}, 0)
 
-	for i, pt := range pts {
-		ptsinterface = append(ptsinterface, fmt.Sprint("run_", i))
-		ptsinterface = append(ptsinterface, pt)
+	for i, xVsYPlot := range xVsYPlots {
+		var label string
+		if i < len(labels) {
+			label = labels[i]
+		}
+		if len(label) == 0 {
+			label = fmt.Sprint("run_", i)
+		}
+		plotsAsInterfaceValues = append(plotsAsInterfaceValues, label)
+		plotsAsInterfaceValues = append(plotsAsInterfaceValues, xVsYPlot)
 	}
 
-	err = plotutil.AddScatters(plt, ptsinterface...) //AddScattersXYer(plt, pts)
+	// AddScatters adds Scatter plotters to a plot.
+	// The variadic arguments must be either strings
+	// or plotter.XYers.  Each plotter.XYer is added to
+	// the plot using the next color, and glyph shape
+	// via the Color and Shape functions. If a
+	// plotter.XYer is immediately preceeded by
+	// a string then a legend entry is added to the plot
+	// using the string as the name.
+	//
+	// If an error occurs then none of the plotters are added
+	// to the plot, and the error is returned.
+	err = plotutil.AddScatters(plt, plotsAsInterfaceValues...)
 	if err != nil {
 		return
 	}

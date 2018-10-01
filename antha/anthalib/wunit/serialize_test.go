@@ -43,10 +43,9 @@ func measurementsEqual(lhs, rhs Measurement) bool {
 	return false
 }
 
-func concentrationSerializationTest(t *testing.T, input string, expected Concentration) {
+func serializationTest(t *testing.T, input string, expected, output Measurement) {
 	t.Run(input, func(t *testing.T) {
-		var output Concentration
-		if err := json.Unmarshal([]byte("\""+input+"\""), &output); err != nil {
+		if err := json.Unmarshal([]byte("\""+input+"\""), output); err != nil {
 			t.Error(err)
 		} else if !measurementsEqual(expected, output) {
 			t.Errorf("deserialised measurement not as expected:\ne: %v\ng: %v", expected, output)
@@ -63,60 +62,26 @@ func concentrationSerializationTest(t *testing.T, input string, expected Concent
 func TestConcentrationSerialization(t *testing.T) {
 	for _, unit := range GetGlobalUnitRegistry().ListValidUnitsForType("Concentration") {
 		for _, value := range []float64{-5.91209102398, 0.0, 1.123131231231e58, math.Inf(+1), math.Inf(-1), math.NaN()} {
-			concentrationSerializationTest(t, fmt.Sprintf("%g %s", value, unit), NewConcentration(value, unit))
-			concentrationSerializationTest(t, fmt.Sprintf("%g%s", value, unit), NewConcentration(value, unit))
+			serializationTest(t, fmt.Sprintf("%g %s", value, unit), NewConcentration(value, unit), &Concentration{})
+			serializationTest(t, fmt.Sprintf("%g%s", value, unit), NewConcentration(value, unit), &Concentration{})
 		}
 	}
-}
-
-func massSerializationTest(t *testing.T, input string, expected Mass) {
-	t.Run(input, func(t *testing.T) {
-		var output Mass
-		if err := json.Unmarshal([]byte("\""+input+"\""), &output); err != nil {
-			t.Error(err)
-		} else if !measurementsEqual(expected, output) {
-			t.Errorf("deserialised measurement not as expected:\ne: %v\ng: %v", expected, output)
-		} else if bs, err := json.Marshal(output); err != nil {
-			t.Error(err)
-		} else if err := json.Unmarshal(bs, &output); err != nil {
-			t.Error(err)
-		} else if !measurementsEqual(expected, output) {
-			t.Errorf("serialised measurement was deserialised incorrectly:e: %v\ng: %v", expected, output)
-		}
-	})
 }
 
 func TestMassSerialization(t *testing.T) {
 	for _, unit := range GetGlobalUnitRegistry().ListValidUnitsForType("Mass") {
 		for _, value := range []float64{-5.91209102398, 0.0, 1.123131231231e58} {
-			massSerializationTest(t, fmt.Sprintf("%g %s", value, unit), NewMass(value, unit))
-			massSerializationTest(t, fmt.Sprintf("%g%s", value, unit), NewMass(value, unit))
+			serializationTest(t, fmt.Sprintf("%g %s", value, unit), NewMass(value, unit), &Mass{})
+			serializationTest(t, fmt.Sprintf("%g%s", value, unit), NewMass(value, unit), &Mass{})
 		}
 	}
-}
-
-func timeSerializationTest(t *testing.T, input string, expected Time) {
-	t.Run(input, func(t *testing.T) {
-		var output Time
-		if err := json.Unmarshal([]byte("\""+input+"\""), &output); err != nil {
-			t.Error(err)
-		} else if !measurementsEqual(expected, output) {
-			t.Errorf("deserialised measurement not as expected:\ne: %v\ng: %v", expected, output)
-		} else if bs, err := json.Marshal(output); err != nil {
-			t.Error(err)
-		} else if err := json.Unmarshal(bs, &output); err != nil {
-			t.Error(err)
-		} else if !measurementsEqual(expected, output) {
-			t.Errorf("serialised measurement was deserialised incorrectly:e: %v\ng: %v", expected, output)
-		}
-	})
 }
 
 func TestTimeSerialization(t *testing.T) {
 	for _, unit := range GetGlobalUnitRegistry().ListValidUnitsForType("Time") {
 		for _, value := range []float64{-5.91209102398, 0.0, 1.123131231231e58} {
-			timeSerializationTest(t, fmt.Sprintf("%g %s", value, unit), NewTime(value, unit))
-			timeSerializationTest(t, fmt.Sprintf("%g%s", value, unit), NewTime(value, unit))
+			serializationTest(t, fmt.Sprintf("%g %s", value, unit), NewTime(value, unit), &Time{})
+			serializationTest(t, fmt.Sprintf("%g%s", value, unit), NewTime(value, unit), &Time{})
 		}
 	}
 }

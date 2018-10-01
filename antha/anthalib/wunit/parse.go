@@ -23,14 +23,13 @@
 package wunit
 
 import (
-	"github.com/pkg/errors"
 	"strconv"
 )
 
 // extractFloat extract the longest valid float from the left hand side of
-// the string and return it and the remainder of the string
-// returns an error if no float is found
-func extractFloat(s string) (float64, string, error) {
+// the string and returns the float and the remaining string.
+// If no float is found, returns zero and the entire string.
+func extractFloat(s string) (float64, string) {
 	var longest int
 	var ret float64
 	for i := range s {
@@ -40,8 +39,5 @@ func extractFloat(s string) (float64, string, error) {
 		}
 	}
 
-	if longest == 0 {
-		return 0.0, s, errors.Errorf("unable to extract float from %q", s)
-	}
-	return ret, s[longest:], nil
+	return ret, s[longest:]
 }

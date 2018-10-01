@@ -24,6 +24,7 @@ package wunit
 
 import (
 	"encoding/json"
+	"github.com/pkg/errors"
 )
 
 type stringer interface {
@@ -46,7 +47,12 @@ func unmarshal(b []byte) (float64, string, error) {
 	} else if s == nil || *s == "" {
 		return 0.0, "", nil
 	}
-	return extractFloat(*s)
+
+	if v, u := extractFloat(*s); len(u) == len(*s) {
+		return 0.0, "", errors.Errorf("couldn't parse float from %q", *s)
+	} else {
+		return v, u, nil
+	}
 }
 
 func (m Volume) MarshalJSON() ([]byte, error) {

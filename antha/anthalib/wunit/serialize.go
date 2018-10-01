@@ -42,16 +42,14 @@ func marshal(x stringer) ([]byte, error) {
 
 func unmarshal(b []byte) (float64, string, error) {
 	var s *string
-	if err := json.Unmarshal(b, &s); err != nil {
+	if err := json.Unmarshal(b, &s); err != nil || s == nil || *s == "" {
 		return 0.0, "", err
-	} else if s == nil || *s == "" {
-		return 0.0, "", nil
 	}
 
-	if v, u := extractFloat(*s); len(u) == len(*s) {
+	if value, unit := extractFloat(*s); len(unit) == len(*s) {
 		return 0.0, "", errors.Errorf("couldn't parse float from %q", *s)
 	} else {
-		return v, u, nil
+		return value, unit, nil
 	}
 }
 

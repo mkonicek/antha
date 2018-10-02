@@ -127,21 +127,27 @@ func (self *UnitRegistry) addUnitByType(measurementType, symbol string) {
 		self.unitByType[measurementType] = make(map[string]bool)
 	}
 
-	if _, ok := self.orderedUnitByType[measurementType]; !ok {
-		self.orderedUnitByType[measurementType] = []string{}
-	}
-
 	self.unitByType[measurementType][symbol] = true
 
+	ordered := self.orderedUnitByType[measurementType]
+
+	if ordered == nil {
+		// 32 is a magic number, hopefully more than the number of symbols for any
+		// particular measurement type
+		ordered = make([]string, 0, 32)
+	}
+
 	pos := 0
-	for pos < len(self.orderedUnitByType[measurementType]) {
-		if symbol <= self.orderedUnitByType[measurementType][pos] {
+	for pos < len(ordered) {
+		if symbol <= ordered[pos] {
 			break
 		}
 		pos++
 	}
 
-	self.orderedUnitByType[measurementType] = append(self.orderedUnitByType[measurementType][:pos], append([]string{symbol}, self.orderedUnitByType[measurementType][pos:]...)...)
+	ordered = append(ordered[:pos+1], ordered[pos:]...)
+	ordered[pos] = symbol
+	self.orderedUnitByType[measurementType] = ordered
 }
 
 // ValidUnitForType return true if the given symbol represents a unit that is valid

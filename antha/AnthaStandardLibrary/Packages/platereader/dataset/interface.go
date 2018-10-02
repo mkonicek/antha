@@ -16,6 +16,7 @@ type PlateReaderData interface {
 ///////
 type AbsorbanceData interface {
 	Absorbance(wellname string, wavelength int, options ...interface{}) (average wtype.Absorbance, err error)
+	AllAbsorbanceData() (map[string][]wtype.Absorbance, error)
 }
 
 type FluorescenceData interface {

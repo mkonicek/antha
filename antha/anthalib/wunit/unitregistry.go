@@ -137,16 +137,26 @@ func (self *UnitRegistry) addUnitByType(measurementType, symbol string) {
 		ordered = make([]string, 0, 32)
 	}
 
+	self.orderedUnitByType[measurementType] = insertionSort(ordered, symbol)
+}
+
+// insertionSort inserts value into slice such that ordering is maintained
+// slice can be empty or nil
+func insertionSort(slice []string, value string) []string {
+	//find out where to add the value
 	pos := 0
-	for ; pos < len(ordered); pos++ {
-		if symbol <= ordered[pos] {
+	for ; pos < len(slice); pos++ {
+		if value <= slice[pos] {
 			break
 		}
 	}
 
-	ordered = append(ordered[:pos+1], ordered[pos:]...)
-	ordered[pos] = symbol
-	self.orderedUnitByType[measurementType] = ordered
+	//make sure there's space for the value
+	slice = append(slice, "")
+	slice = append(slice[:pos+1], slice[pos:len(slice)-1]...)
+	slice[pos] = value
+
+	return slice
 }
 
 // ValidUnitForType return true if the given symbol represents a unit that is valid

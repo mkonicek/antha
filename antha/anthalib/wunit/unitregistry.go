@@ -138,11 +138,10 @@ func (self *UnitRegistry) addUnitByType(measurementType, symbol string) {
 	}
 
 	pos := 0
-	for pos < len(ordered) {
+	for ; pos < len(ordered); pos++ {
 		if symbol <= ordered[pos] {
 			break
 		}
-		pos++
 	}
 
 	ordered = append(ordered[:pos+1], ordered[pos:]...)

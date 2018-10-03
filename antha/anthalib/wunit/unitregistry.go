@@ -2,26 +2,27 @@ package wunit
 
 import (
 	"github.com/pkg/errors"
-	"sort"
 	"strings"
 	"sync"
 )
 
 // UnitRegistry store all the valid units in the library
 type UnitRegistry struct {
-	unitByType   map[string]map[string]bool
-	unitBySymbol map[string]*Unit
-	aliases      map[string]string
-	mutex        *sync.Mutex
+	unitByType        map[string]map[string]bool
+	orderedUnitByType map[string][]string
+	unitBySymbol      map[string]*Unit
+	aliases           map[string]string
+	mutex             *sync.Mutex
 }
 
 // NewUnitRegistry build a new empty unit registry
 func NewUnitRegistry() *UnitRegistry {
 	return &UnitRegistry{
-		unitByType:   make(map[string]map[string]bool),
-		unitBySymbol: make(map[string]*Unit),
-		aliases:      make(map[string]string),
-		mutex:        &sync.Mutex{},
+		unitByType:        make(map[string]map[string]bool),
+		orderedUnitByType: make(map[string][]string),
+		unitBySymbol:      make(map[string]*Unit),
+		aliases:           make(map[string]string),
+		mutex:             &sync.Mutex{},
 	}
 }
 
@@ -87,7 +88,7 @@ func (self *UnitRegistry) declareAlias(measurementType, symbol, target string) e
 	} else if existing, ok := self.unitBySymbol[symbol]; ok {
 		return errors.Errorf("cannot declare alias %s == %s: would shadow pre-existing unit %v", symbol, target, existing)
 	} else {
-		self.unitByType[measurementType][symbol] = true
+		self.addUnitByType(measurementType, symbol)
 		self.aliases[symbol] = target
 		return nil
 	}
@@ -116,13 +117,46 @@ func (self *UnitRegistry) declareUnit(measurementType string, unit *Unit) error 
 	if _, ok := self.unitBySymbol[unit.PrefixedSymbol()]; ok {
 		return errors.Errorf("cannot declare unit %q: unit already declared", unit.PrefixedSymbol())
 	}
+	self.addUnitByType(measurementType, unit.PrefixedSymbol())
+	self.unitBySymbol[unit.PrefixedSymbol()] = unit.Copy()
+	return nil
+}
+
+func (self *UnitRegistry) addUnitByType(measurementType, symbol string) {
 	if _, ok := self.unitByType[measurementType]; !ok {
 		self.unitByType[measurementType] = make(map[string]bool)
 	}
 
-	self.unitByType[measurementType][unit.PrefixedSymbol()] = true
-	self.unitBySymbol[unit.PrefixedSymbol()] = unit.Copy()
-	return nil
+	self.unitByType[measurementType][symbol] = true
+
+	ordered := self.orderedUnitByType[measurementType]
+
+	if ordered == nil {
+		// 32 is a magic number, hopefully more than the number of symbols for any
+		// particular measurement type
+		ordered = make([]string, 0, 32)
+	}
+
+	self.orderedUnitByType[measurementType] = insertionSort(ordered, symbol)
+}
+
+// insertionSort inserts value into slice such that ordering is maintained
+// slice can be empty or nil
+func insertionSort(slice []string, value string) []string {
+	//find out where to add the value
+	pos := 0
+	for ; pos < len(slice); pos++ {
+		if value <= slice[pos] {
+			break
+		}
+	}
+
+	//make sure there's space for the value
+	slice = append(slice, "")
+	slice = append(slice[:pos+1], slice[pos:len(slice)-1]...)
+	slice[pos] = value
+
+	return slice
 }
 
 // ValidUnitForType return true if the given symbol represents a unit that is valid
@@ -146,7 +180,7 @@ func (self *UnitRegistry) AssertValidUnitForType(measurementType, symbol string)
 	self.mutex.Lock()
 	defer self.mutex.Unlock()
 	if !self.validUnitForType(measurementType, symbol) {
-		return errors.Errorf("invalid symbol %q for measurement type %q, valid symbols are %v", symbol, measurementType, self.unitByType[measurementType])
+		return errors.Errorf("invalid symbol %q for measurement type %q, valid symbols are %v", symbol, measurementType, self.orderedUnitByType[measurementType])
 	}
 	return nil
 }
@@ -156,16 +190,7 @@ func (self *UnitRegistry) AssertValidUnitForType(measurementType, symbol string)
 func (self *UnitRegistry) ListValidUnitsForType(measurementType string) []string {
 	self.mutex.Lock()
 	defer self.mutex.Unlock()
-	if symbols, ok := self.unitByType[measurementType]; !ok {
-		return nil
-	} else {
-		ret := make([]string, 0, len(symbols))
-		for symbol := range symbols {
-			ret = append(ret, symbol)
-		}
-		sort.Strings(ret)
-		return ret
-	}
+	return self.orderedUnitByType[measurementType]
 }
 
 // DeclareDerivedUnit such that references to "symbol" are converted to "target" using

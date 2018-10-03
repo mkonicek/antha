@@ -3665,9 +3665,16 @@ func makeZOffsetSafe(ctx context.Context, prms *LHProperties, zoffset float64, h
 		return zoffset, nil
 	}
 
-	tipbox, err := inventory.NewTipbox(ctx, tiptype)
-	if err != nil {
-		return zoffset, err
+	var tipbox *wtype.LHTipbox
+	for _, tb := range prms.Tipboxes {
+		if tb.Tiptype.Type == tiptype {
+			tipbox = tb
+			break
+		}
+	}
+	if tipbox == nil {
+		// this can only happen if there's an error in channel selection
+		return zoffset, wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("instruction requested tip type %q but none found in parameters: please report this to the authors", tiptype))
 	}
 
 	//safetyZHeight is a small offset to avoid predicted collisions due to numerical error

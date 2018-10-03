@@ -123,6 +123,30 @@ func (data MarsData) TimeCourse(wellname string, exWavelength int, emWavelength 
 	return
 }
 
+// AllAbsorbanceData returns all absorbance readings using the well location as key.
+func (data MarsData) AllAbsorbanceData() (readings map[string][]wtype.Absorbance, err error) {
+
+	readings = make(map[string][]wtype.Absorbance, len(data.Dataforeachwell))
+
+	for wellName, wellData := range data.Dataforeachwell {
+
+		var wellReadings = make([]wtype.Absorbance, len(wellData.Data.Readings[0]))
+
+		for readingIndex, measurement := range wellData.Data.Readings[0] {
+			wellReadings[readingIndex] = wtype.Absorbance{
+				Wavelength:   float64(measurement.RWavelength),
+				Reading:      measurement.Reading,
+				WellLocation: wtype.MakeWellCoordsA1(wellName),
+				Annotations:  []string{measurement.ReadingType},
+			}
+		}
+
+		readings[wellName] = wellReadings
+	}
+
+	return readings, nil
+}
+
 // AbsScanData returns all wavelengths and readings for a specified well.
 func (data MarsData) AbsScanData(well string) (wavelengths []int, Readings []float64) {
 	wavelengths = make([]int, 0)
@@ -257,8 +281,9 @@ func (data MarsData) Absorbance(well string, wavelength int, options ...interfac
 		result, err := data.ReadingsAsAverage(well, platereader.EMWAVELENGTH, wavelength, fmt.Sprint(options[0]))
 		if err == nil {
 			return wtype.Absorbance{
-				Reading:    result,
-				Wavelength: float64(wavelength),
+				Reading:     result,
+				Wavelength:  float64(wavelength),
+				Annotations: []string{fmt.Sprint(options[0])},
 			}, nil
 		} else {
 			errs = append(errs, err.Error())

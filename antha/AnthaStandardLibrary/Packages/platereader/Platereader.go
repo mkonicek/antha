@@ -46,9 +46,9 @@ func Blankcorrect(blank wtype.Absorbance, sample wtype.Absorbance) (blankcorrect
 		sample.Reader == blank.Reader {
 		blankcorrected.Reading = sample.Reading - blank.Reading
 
-		blankcorrected.Status = append(blankcorrected.Status, sample.Status...)
+		blankcorrected.Annotations = append(blankcorrected.Annotations, sample.Annotations...)
 
-		blankcorrected.Status = append(blankcorrected.Status, "Blank Corrected")
+		blankcorrected.Annotations = append(blankcorrected.Annotations, "Blank Corrected")
 	} else {
 		err = fmt.Errorf("Cannot pathlength correct as Absorbance readings %+v and %+v are incompatible due to either wavelength, pathlength or reader differences", sample, blank)
 	}

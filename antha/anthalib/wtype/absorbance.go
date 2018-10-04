@@ -84,7 +84,7 @@ type Absorbance struct {
 //
 func (a Absorbance) WavelengthToNearestNm() int {
 	if uint64(toNM(a.Wavelength)) > math.MaxUint64 {
-		panic(errors.Errorf("the value for wavelength %f cannot be safely converted to an integer value", a.Wavelength))
+		panic(errors.Errorf("the value for wavelength %v cannot be safely converted to an integer value", a.Wavelength))
 	}
 	return int(toNM(a.Wavelength))
 }

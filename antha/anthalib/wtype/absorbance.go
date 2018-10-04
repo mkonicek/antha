@@ -25,6 +25,7 @@ package wtype
 import (
 	"fmt"
 	"math"
+	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/pkg/errors"
@@ -88,6 +89,26 @@ func (a Absorbance) WavelengthToNearestNm() int {
 	return int(toNM(a.Wavelength))
 }
 
+// IsBlankCorrected returns true if the absorbance reading has been blank corrected
+func (a Absorbance) IsBlankCorrected() bool {
+	for _, correction := range a.Corrections {
+		if correction.Type == BlankCorrected {
+			return true
+		}
+	}
+	return false
+}
+
+// IsPathLengthCorrected returns true if the absorbance reading has been pathlength corrected
+func (a Absorbance) IsPathLengthCorrected() bool {
+	for _, correction := range a.Corrections {
+		if correction.Type == PathLengthCorrected {
+			return true
+		}
+	}
+	return false
+}
+
 func toNM(l wunit.Length) float64 {
 	return l.SIValue() * wunit.Nano.Value
 }
@@ -115,24 +136,47 @@ func (sample *Absorbance) Dup() *Absorbance {
 
 // BlankCorrect subtracts the blank reading from the sample absorbance.
 // If the blank sample is not equivalent to the sample, based on wavelength and pathlength, an error is returned.
-func (sample *Absorbance) BlankCorrect(blank *Absorbance) error {
-
-	if sample.Wavelength.EqualToRounded(blank.Wavelength, 9); sample.Pathlength.EqualToRounded(blank.Pathlength, 4) &&
-		sample.Reader == blank.Reader {
-		sample.Reading = sample.Reading - blank.Reading
-		sample.Corrections = append(sample.Corrections, AbsorbanceCorrection{Type: BlankCorrected, CorrectionReading: blank})
-		return nil
+func (sample *Absorbance) BlankCorrect(blanks ...*Absorbance) error {
+	var errs []string
+	for _, blank := range blanks {
+		if sample.Wavelength.EqualToRounded(blank.Wavelength, 9); sample.Pathlength.EqualToRounded(blank.Pathlength, 4) && sample.Reader == blank.Reader {
+			sample.Reading = sample.Reading - blank.Reading
+			sample.Corrections = append(sample.Corrections,
+				AbsorbanceCorrection{
+					Type:              BlankCorrected,
+					CorrectionReading: blank,
+				},
+			)
+		} else {
+			errs = append(errs,
+				fmt.Sprintf(
+					`cannot pathlength correct as Absorbance readings for 
+			sample (%+v) and blank (%+v) are incompatible due to 
+			either wavelength, pathlength or reader differences.`,
+					sample,
+					blank,
+				),
+			)
+		}
 	}
-	return fmt.Errorf("Cannot pathlength correct as Absorbance readings for sample (%+v) and blank (%+v) are incompatible due to either wavelength, pathlength or reader differences. ", sample, blank)
+
+	if len(errs) > 0 {
+		return errors.Errorf(strings.Join(errs, ";"))
+	}
+	return nil
 }
 
 // PathLengthCorrect normalises an absorbance reading
 // to a standard reference pathlength of 1cm.
 // 1cm is the pathlength used to normalise absorbance readings to OD.
-func (sample *Absorbance) PathLengthCorrect(pathlength wunit.Length) {
+func (sample *Absorbance) PathLengthCorrect(pathlength wunit.Length) error {
+
+	if sample.IsPathLengthCorrected() {
+		return errors.Errorf("absorbance sample %+v has already been pathlength corrected", sample)
+	}
 
 	sample.Reading = sample.Reading * ReferencePathlength.RawValue() / pathlength.RawValue()
 
 	sample.Corrections = append(sample.Corrections, AbsorbanceCorrection{Type: PathLengthCorrected, CorrectionReading: nil})
-	return
+	return nil
 }

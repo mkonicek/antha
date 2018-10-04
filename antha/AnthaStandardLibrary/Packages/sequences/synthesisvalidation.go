@@ -20,9 +20,9 @@ func ValidateSynthesis(parts []wtype.DNASequence, vector string, manufacturer st
 
 	_, inmap := SynthesisStandards[manufacturer]
 
-	if inmap == false {
+	if !inmap {
 		keys := make([]string, 0)
-		for key, _ := range SynthesisStandards {
+		for key := range SynthesisStandards {
 			keys = append(keys, key)
 		}
 
@@ -48,7 +48,7 @@ func ValidateSynthesis(parts []wtype.DNASequence, vector string, manufacturer st
 	}
 
 	// check if vector is appropriate
-	if search.InStrings(vectorR, vector) == false {
+	if !search.InStrings(vectorR, vector) {
 		vectorstatus = fmt.Sprint("Warning: Non-standard vector used for", manufacturer,
 			"synthesis. Please see manufacturer instructions for the standard vector or the use of custom vectors")
 	} else {
@@ -67,7 +67,7 @@ func ValidateSynthesis(parts []wtype.DNASequence, vector string, manufacturer st
 			status = status + ". " + fmt.Sprint("Warning:", part.Nm, "is long and may be difficult to sythesise")
 			bad = true
 		} else if strings.Contains(strings.ToUpper(part.Seq), strings.Repeat("A", a)) || strings.Contains(strings.ToUpper(part.Seq), strings.Repeat("T", a)) ||
-			strings.Contains(strings.ToUpper(part.Seq), strings.Repeat("C", a)) || strings.Contains(strings.ToUpper(part.Seq), strings.Repeat("A", a)) == true {
+			strings.Contains(strings.ToUpper(part.Seq), strings.Repeat("C", a)) || strings.Contains(strings.ToUpper(part.Seq), strings.Repeat("A", a)) {
 			status = status + ". " + fmt.Sprint("Warning:", part.Nm, "is highly repetetive and unsuitable for synthesis")
 			bad = true
 		} else if GCC > 0.65 || GCC < 0.40 {
@@ -92,7 +92,7 @@ func ValidateSynthesis(parts []wtype.DNASequence, vector string, manufacturer st
 
 	status = vectorstatus + status
 
-	if bad == true {
+	if bad {
 		ok = false
 	}
 
@@ -100,49 +100,49 @@ func ValidateSynthesis(parts []wtype.DNASequence, vector string, manufacturer st
 }
 
 var SynthesisStandards = map[string]map[string]interface{}{
-	"Gen9": map[string]interface{}{
+	"Gen9": {
 		"Vector":    []string{"pG9m-2"},
 		"MaxLength": 10000,
 		"MinLength": 400,
 		"RepeatMax": 70,
 		"MinOrder":  20000,
 	},
-	"DNA20": map[string]interface{}{
+	"DNA20": {
 		"Vector":    []string{"pJ341", "pJ221", "pJ321", "pJ201", "pJ344", "pJ224", "pJ324", "pJ204", "pJ347", "pJ227", "pJ327", "pJ207", "pJ348", "pJ228", "pJ328", "pJ208", "pJ349", "pJ229", "pJ329", "pJ209", "pJ351", "pJ231", "pJ331", "pJ211", "J354", "pJ234", "pJ334", "pJ214", "pJ357", "pJ234", "pJ334", "pJ217", "pJ358", "pJ238", "pJ338", "pJ218", "pJ359", "pJ239", "pJ339", "pJ219", "pM265", "pM268", "pM269", "pM275", "pM278", "pM279", "pM269E-19C", "pM269Y-19C", "pM262", "pM263", "pM264", "pM272", "pM273", "pM273", "pM274"},
 		"MaxLength": 3000,
 		"MinLength": 400,
 		"RepeatMax": 70,
 		"MinOrder":  0,
 	},
-	"GenScript": map[string]interface{}{
+	"GenScript": {
 		"Vector":    []string{"pUC57", "pUC57-Kan", "pUC57-Simple", "pUC57-mini", "pUC18", "pUC19"},
 		"MaxLength": 8000,
 		"MinLength": 400,
 		"RepeatMax": 70,
 		"MinOrder":  455,
 	},
-	"GeneWiz": map[string]interface{}{
+	"GeneWiz": {
 		"Vector":    []string{"pUC57"},
 		"MaxLength": 10000,
 		"MinLength": 200,
 		"RepeatMax": 70,
 		"MinOrder":  455,
 	},
-	"OriGene": map[string]interface{}{
+	"OriGene": {
 		"Vector":    []string{"pUCAmp", "pUCKan", "pUCAmpMinusMCS", "pUCKanMinusMCS"},
 		"MaxLength": 10000,
 		"MinLength": 200,
 		"RepeatMax": 70,
 		"MinOrder":  455,
 	},
-	"GeneArt": map[string]interface{}{
+	"GeneArt": {
 		"Vector":    []string{"pUCAmp", "pUCKan", "pUCAmpMinusMCS", "pUCKanMinusMCS"},
 		"MaxLength": 10000,
 		"MinLength": 200,
 		"RepeatMax": 70,
 		"MinOrder":  455,
 	},
-	"EuroFins": map[string]interface{}{
+	"EuroFins": {
 		"Vector":    []string{"pEX-A2", "pEX-K4"},
 		"MaxLength": 10000,
 		"MinLength": 200,

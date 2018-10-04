@@ -41,6 +41,11 @@ func LHError(code int, detail string) error {
 	return errors.New(s)
 }
 
+//LHErrorf convenience method for formatting error messages
+func LHErrorf(code int, format string, values ...interface{}) error {
+	return LHError(code, fmt.Sprintf(format, values...))
+}
+
 func LHErrorCodeFromErr(err error) int {
 	tx := strings.Split(err.Error(), " ")
 

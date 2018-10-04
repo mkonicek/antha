@@ -47,17 +47,17 @@ func (a *ShakerIncubator) carrierClose() driver.Call {
 
 func (a *ShakerIncubator) reset() []driver.Call {
 	return []driver.Call{
-		driver.Call{
+		{
 			Method: "/antha.shakerincubator.v1.ShakerIncubator/ShakeStop",
 			Args:   &shakerincubator.Blank{},
 			Reply:  &shakerincubator.BoolReply{},
 		},
-		driver.Call{
+		{
 			Method: "/antha.shakerincubator.v1.ShakerIncubator/TemperatureReset",
 			Args:   &shakerincubator.Blank{},
 			Reply:  &shakerincubator.BoolReply{},
 		},
-		driver.Call{
+		{
 			Method: "/antha.shakerincubator.v1.ShakerIncubator/CarrierOpen",
 			Args:   &shakerincubator.Blank{},
 			Reply:  &shakerincubator.BoolReply{},
@@ -97,7 +97,7 @@ func (a *ShakerIncubator) generate(cmd interface{}) ([]target.Inst, error) {
 
 	var initializers []target.Inst
 	var finalizers []target.Inst
-	var insts []target.Inst
+	var insts target.Insts
 
 	initializers = append(initializers, &target.Run{
 		Dev:   a,
@@ -166,5 +166,6 @@ func (a *ShakerIncubator) generate(cmd interface{}) ([]target.Inst, error) {
 		})
 	}
 
-	return target.SequentialOrder(insts...), nil
+	insts.SequentialOrder()
+	return insts, nil
 }

@@ -32,6 +32,10 @@ import (
 // GDXToDNASequence parses DNA sequence files in .gdx format into a set of DNA sequences of type []wtype.DNASequence
 func GDXToDNASequence(sequenceFile wtype.File) (partsList []wtype.DNASequence, err error) {
 	data, err := sequenceFile.ReadAll()
+	if err != nil {
+		return nil, err
+	}
+
 	var gdx parse.Project
 	err = xml.Unmarshal(data, &gdx)
 

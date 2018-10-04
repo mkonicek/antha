@@ -24,58 +24,35 @@
 package text
 
 import (
-	"fmt"
-
-	"github.com/mgutz/ansi"
+	"github.com/antha-lang/antha/antha/anthalib/wutil/text"
 )
 
 // Print prints to standard out a string description highlighted in red followed by a values in unformatted text
-func Print(description string, values ...interface{}) {
-	fmt.Println(ansi.Color(description, "red"), values)
-}
+var Print = text.Print
 
 // Sprint returns a string description highlighted in red followed by the values in unformatted text
-func Sprint(description string, values ...interface{}) (fmtd string) {
-	fmtd = fmt.Sprintln(ansi.Color(description, "red"), values)
-	return
-}
+var Sprint = text.Sprint
 
 // Red changes string colour to red
-func Red(s string) string {
-	return ansi.Color(s, "red")
-}
+var Red = text.Red
 
 // Blue changes string colour to blue
-func Blue(s string) string {
-	return ansi.Color(s, "blue")
-}
+var Blue = text.Blue
 
 // Green changes string colour to green
-func Green(s string) string {
-	return ansi.Color(s, "green")
-}
+var Green = text.Green
 
 // Yellow changes string colour to yellow
-func Yellow(s string) string {
-	return ansi.Color(s, "yellow")
-}
+var Yellow = text.Yellow
 
 // Magenta changes string colour to magenta
-func Magenta(s string) string {
-	return ansi.Color(s, "magenta")
-}
+var Magenta = text.Magenta
 
 // Cyan changes string colour to cyan
-func Cyan(s string) string {
-	return ansi.Color(s, "cyan")
-}
+var Cyan = text.Cyan
 
 // White changes string colour to white
-func White(s string) string {
-	return ansi.Color(s, "white")
-}
+var White = text.White
 
 // Black changes string colour to black
-func Black(s string) string {
-	return ansi.Color(s, "black")
-}
+var Black = text.Black

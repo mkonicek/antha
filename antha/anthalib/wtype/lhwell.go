@@ -23,7 +23,9 @@
 package wtype
 
 import (
+	"encoding/json"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -33,47 +35,143 @@ import (
 	"github.com/antha-lang/antha/microArch/logger"
 )
 
+type WellBottomType int
+
 const (
-	LHWBFLAT = iota
-	LHWBU
-	LHWBV
+	FlatWellBottom WellBottomType = iota
+	UWellBottom
+	VWellBottom
 )
 
-func BottomType(well *LHWell) (desc string) {
+var WellBottomNames []string = []string{"flat", "U", "V"}
 
-	if well.Bottom == 0 {
-		desc = "flat bottomed"
-	}
-	if well.Bottom == 1 {
-		desc = "U bottomed"
-	}
-	if well.Bottom == 2 {
-		desc = "V bottomed"
-	}
-	return
+func (bt WellBottomType) String() string {
+	return WellBottomNames[bt]
 }
 
 // structure representing a well on a microplate - description of a destination
 type LHWell struct {
 	ID        string
 	Inst      string
-	Plateinst string
-	Plateid   string
-	Platetype string
-	Crds      string
-	MaxVol    float64
-	Vunit     string
-	WContents *LHComponent
-	Rvol      float64
+	Crds      WellCoords
+	MaxVol    float64 //Maximum total capacity of the well
+	WContents *Liquid
+	Rvol      float64 //Residual volume which can't be removed from the well
 	WShape    *Shape
-	Bottom    int
-	Xdim      float64
-	Ydim      float64
-	Zdim      float64
+	Bottom    WellBottomType
+	Bounds    BBox
 	Bottomh   float64
-	Dunit     string
 	Extra     map[string]interface{}
-	Plate     *LHPlate `gotopb:"-" json:"-"`
+	Plate     LHObject `gotopb:"-" json:"-"`
+}
+
+//@implement Named
+func (self *LHWell) GetName() string {
+	return fmt.Sprintf("%s@%s", self.Crds.FormatA1(), NameOf(self.Plate))
+}
+
+func (self *LHWell) GetID() string {
+	return self.ID
+}
+
+//@implement Typed
+func (self *LHWell) GetType() string {
+	return fmt.Sprintf("well_in_%s", TypeOf(self.Plate))
+}
+
+//@implement Classy
+func (self *LHWell) GetClass() string {
+	return "well"
+}
+
+func (self *LHWell) GetWellCoords() WellCoords {
+	if self == nil {
+		return ZeroWellCoords()
+	}
+	return self.Crds
+}
+
+//@implement LHObject
+func (self *LHWell) GetPosition() Coordinates {
+	return OriginOf(self).Add(self.Bounds.GetPosition())
+}
+
+//@implement LHObject
+func (self *LHWell) GetSize() Coordinates {
+	return self.Bounds.GetSize()
+}
+
+func (self *LHWell) GetVolumeUnit() string {
+	return "ul"
+}
+
+//@implement LHObject
+func (self *LHWell) GetBoxIntersections(box BBox) []LHObject {
+	//relative box
+	box.SetPosition(box.GetPosition().Subtract(OriginOf(self)))
+	if self.Bounds.IntersectsBox(box) {
+		return []LHObject{self}
+	}
+	return nil
+}
+
+//@implement LHObject
+func (self *LHWell) GetPointIntersections(point Coordinates) []LHObject {
+	//relative point
+	point = point.Subtract(OriginOf(self))
+	//At some point this should be called self.shape for a more accurate intersection test
+	//see branch shape-changes
+	if self.Bounds.IntersectsPoint(point) {
+		return []LHObject{self}
+	}
+	return nil
+}
+
+//@implement LHObject
+func (self *LHWell) SetOffset(point Coordinates) error {
+	self.Bounds.SetPosition(point)
+	return nil
+}
+
+//@implement LHObject
+func (self *LHWell) SetParent(p LHObject) error {
+	//Seems unlikely, but I suppose wells that you can take from one plate and insert
+	//into another could be feasible with some funky labware
+	if plate, ok := p.(*Plate); ok {
+		self.Plate = plate
+		return nil
+	}
+	if tb, ok := p.(*LHTipwaste); ok {
+		self.Plate = tb
+		return nil
+	}
+	return fmt.Errorf("Cannot set well parent to %s \"%s\", only plates allowed", ClassOf(p), NameOf(p))
+}
+
+//@implement LHObject
+func (self *LHWell) ClearParent() {
+	self.Plate = nil
+}
+
+//@implement LHObject
+func (self *LHWell) GetParent() LHObject {
+	if self == nil {
+		return nil
+	}
+	return self.Plate
+}
+
+//Duplicate copies an LHObject
+func (self *LHWell) Duplicate(keepIDs bool) LHObject {
+	return self.dup(keepIDs)
+}
+
+//DimensionsString returns a string description of the position and size of the object and its children.
+func (self *LHWell) DimensionsString() string {
+	if self == nil {
+		return "nil well"
+	}
+	return fmt.Sprintf("Well %s at %v+%v", self.GetName(), self.GetPosition(), self.GetSize())
 }
 
 func (w LHWell) String() string {
@@ -81,43 +179,29 @@ func (w LHWell) String() string {
 		`LHWELL{
 ID        : %s,
 Inst      : %s,
-Plateinst : %s,
-Plateid   : %s,
-Platetype : %s,
 Crds      : %s,
-MaxVol    : %g,
-Vunit     : %s,
+MaxVol    : %g ul,
 WContents : %v,
-Rvol      : %g,
+Rvol      : %g ul,
 WShape    : %v,
-Bottom    : %d,
-Xdim      : %g,
-Ydim      : %g,
-Zdim      : %g,
+Bottom    : %s,
+size      : [%v x %v x %v]mm,
 Bottomh   : %g,
-Dunit     : %s,
 Extra     : %v,
-Plate     : %v,
 }`,
 		w.ID,
 		w.Inst,
-		w.Plateinst,
-		w.Plateid,
-		w.Platetype,
-		w.Crds,
+		w.Crds.FormatA1(),
 		w.MaxVol,
-		w.Vunit,
 		w.WContents,
 		w.Rvol,
 		w.WShape,
-		w.Bottom,
-		w.Xdim,
-		w.Ydim,
-		w.Zdim,
+		WellBottomNames[w.Bottom],
+		w.GetSize().X,
+		w.GetSize().Y,
+		w.GetSize().Z,
 		w.Bottomh,
-		w.Dunit,
 		w.Extra,
-		w.Plate,
 	)
 }
 
@@ -150,102 +234,54 @@ func (w *LHWell) UnProtect() {
 	w.Extra["protected"] = false
 }
 
-func (w *LHWell) Contents() *LHComponent {
-	// be careful
+func (w *LHWell) Contents() *Liquid {
 	if w == nil {
 		logger.Debug("CONTENTS OF NIL WELL REQUESTED")
-		// XXX XXX XXX see below ... returning nil here makes a lot more sense
-		return NewLHComponent()
+		return nil
 	}
-	// this makes no sense - we should maintain the
-	// contract that the contents of a well are fixed,
-	// not make a new content
-	// XXX XXX XXX
-	// --> mark this for imminent cleanup
-	//     best replacement: set well contents then return that
+
 	if w.WContents == nil {
-		return NewLHComponent()
+		w.WContents = NewLHComponent()
 	}
 
 	return w.WContents
 }
 
-func (w *LHWell) Currvol() float64 {
+func (w *LHWell) SetContents(newContents *Liquid) error {
 	if w == nil {
-		return 0.0
+		return nil
 	}
-	return w.Contents().Vol
+	maxVol := w.MaxVolume()
+	if newContents.Volume().GreaterThan(maxVol) {
+		//HJK: Disabling overflow errors until CarryVolume issues are resolved
+		//return LHError(LH_ERR_VOL,
+		//	fmt.Sprintf("Cannot set %s as contents of well %s as maximum volume is %s", newContents.GetName(), w.GetName(), maxVol)s
+		logger.Warning(fmt.Sprintf("setting %s as contents of well %s even though maximum volume is %s", newContents.GetName(), w.GetName(), maxVol))
+	}
+
+	w.WContents = newContents
+	w.updateComponentLocation()
+	return nil
 }
 
-func (w *LHWell) CurrVolume() wunit.Volume {
+//CurrentVolume return the volume of the component currently in the well
+func (w *LHWell) CurrentVolume() wunit.Volume {
 	if w == nil {
 		return wunit.ZeroVolume()
 	}
 	return w.Contents().Volume()
 }
 
-func (w *LHWell) MaxVolume() wunit.Volume {
+//CurrentWorkingVolume return the available working volume in the well - i.e. current volume minus residual volume
+func (w *LHWell) CurrentWorkingVolume() wunit.Volume {
 	if w == nil {
 		return wunit.ZeroVolume()
 	}
-	return wunit.NewVolume(w.MaxVol, w.Vunit)
-}
-func (w *LHWell) Add(c *LHComponent) {
-	if w == nil {
-		return
-	}
-	//wasEmpty := w.Empty()
-	mv := wunit.NewVolume(w.MaxVol, w.Vunit)
-	cv := wunit.NewVolume(c.Vol, c.Vunit)
-	wv := w.CurrentVolume()
-	cv.Add(wv)
-	if cv.GreaterThan(mv) {
-		// could make this fatal but we don't track state well enough
-		// for that to be worthwhile
-		logger.Debug("WARNING: OVERFULL WELL AT ", w.Crds)
-	}
-
-	w.Contents().Mix(c)
-
-	//if wasEmpty {
-	// get rid of junk ID
-	//	logger.Track(fmt.Sprintf("MIX REPLACED WELL CONTENTS ID WAS %s NOW %s", w.WContents.ID, c.ID))
-	//w.WContents.ID = c.ID
-	//}
-}
-
-func (w *LHWell) Remove(v wunit.Volume) *LHComponent {
-	if w == nil {
-		return nil
-	}
-	// if the volume is too high we complain
-
-	if v.GreaterThan(w.CurrentVolume()) {
-		//logger.Debug("You ask too much: ", w.Crds, " ", v.ToString(), " I only have: ", w.CurrentVolume().ToString(), " PLATEID: ", w.Plateid)
-		return nil
-	}
-
-	ret := w.Contents().Dup()
-	ret.Vol = v.ConvertToString(w.Vunit)
-
-	w.Contents().Remove(v)
-	return ret
-}
-
-func (w *LHWell) PlateLocation() PlateLocation {
-	if w == nil {
-		return ZeroPlateLocation()
-	}
-	return w.WContents.PlateLocation()
-}
-
-func (w *LHWell) WorkingVolume() wunit.Volume {
-	if w == nil {
+	v := w.CurrentVolume()
+	v.Subtract(w.ResidualVolume())
+	if v.LessThan(wunit.ZeroVolume()) {
 		return wunit.ZeroVolume()
 	}
-	v := wunit.NewVolume(w.Currvol(), w.Vunit)
-	v2 := wunit.NewVolume(w.Rvol, w.Vunit)
-	v.Subtract(v2)
 	return v
 }
 
@@ -253,15 +289,106 @@ func (w *LHWell) ResidualVolume() wunit.Volume {
 	if w == nil {
 		return wunit.ZeroVolume()
 	}
-	v := wunit.NewVolume(w.Rvol, w.Vunit)
+	v := wunit.NewVolume(w.Rvol, "ul")
 	return v
 }
 
-func (w *LHWell) CurrentVolume() wunit.Volume {
+//MaxVolume get the maximum working volume of the well
+func (w *LHWell) MaxVolume() wunit.Volume {
 	if w == nil {
 		return wunit.ZeroVolume()
 	}
-	return w.Contents().Volume()
+	return wunit.NewVolume(w.MaxVol, "ul")
+}
+
+//MaxWorkingVolume get the total maximum working volume in the well, i.e. the max volume minus residual volume
+func (w *LHWell) MaxWorkingVolume() wunit.Volume {
+	if w == nil {
+		return wunit.ZeroVolume()
+	}
+	ret := w.MaxVolume()
+	ret.Subtract(w.ResidualVolume())
+	if ret.LessThan(wunit.ZeroVolume()) {
+		return wunit.ZeroVolume()
+	}
+	return ret
+}
+
+//AddComponent add some liquid to the well
+func (w *LHWell) AddComponent(c *Liquid) error {
+	if w == nil {
+		return nil
+	}
+	maxVol := w.MaxVolume()
+	curVol := w.CurrentVolume()
+	finalVol := c.Volume()
+	finalVol.Add(curVol)
+
+	if finalVol.GreaterThan(maxVol) {
+		//HJK: Disabled overflow errors while CarryVolume issues are resolved
+		//return fmt.Errorf("Cannot add %s to well \"%s\", well already contains %s and maximum volume is %s", c.GetName(), w.GetName(), curVol, maxVol)
+		logger.Warning(fmt.Sprintf("Adding %s to well \"%s\", even though well already contains %s and maximum volume is %s", c.Summarize(), w.GetName(), curVol, maxVol))
+	}
+
+	w.Contents().Mix(c)
+
+	return nil
+}
+
+//RemoveVolume remove some liquid from the well
+func (w *LHWell) RemoveVolume(v wunit.Volume) (*Liquid, error) {
+	if w == nil {
+		return nil, nil
+	}
+
+	// if the volume is too high we complain
+	if v.GreaterThan(w.CurrentWorkingVolume()) {
+		//HJK: Disabled underflow errors while CarryVolume issues are resolved
+		//return nil, fmt.Errorf("requested %s from well \"%s\" which only contains %s working volume", v, w.GetName(), w.CurrentWorkingVolume())
+		logger.Warning(fmt.Sprintf("requested %s from well \"%s\" which only contains %s working volume and %s total volume",
+			v, w.GetName(), w.CurrentWorkingVolume(), w.CurrentVolume()))
+	}
+
+	ret := w.Contents().Dup()
+	ret.Vol = v.ConvertToString("ul")
+
+	w.Contents().Remove(v)
+	return ret, nil
+}
+
+//RemoveCarry Remove the carry volume
+func (w *LHWell) RemoveCarry(v wunit.Volume) {
+	if w == nil {
+		return
+	}
+
+	w.Contents().Remove(v)
+}
+
+//IsVolumeValid tests whether the volume in the well is within the allowable range
+func (w *LHWell) IsVolumeValid() bool {
+	if w == nil {
+		return true
+	}
+	vol := w.CurrentVolume()
+
+	return vol.LessThan(w.MaxVolume()) && !vol.LessThan(wunit.ZeroVolume())
+}
+
+//ValidateVolume validates that the volume in the well is within allowable range
+func (w *LHWell) ValidateVolume() error {
+	if w.IsVolumeValid() {
+		return nil
+	}
+
+	return LHError(LH_ERR_VOL, fmt.Sprintf("well %s contains invalid volume %s, maximum volume is %s", w.GetName(), w.CurrentVolume(), w.MaxVolume()))
+}
+
+func (w *LHWell) PlateLocation() PlateLocation {
+	if w == nil {
+		return ZeroPlateLocation()
+	}
+	return w.WContents.PlateLocation()
 }
 
 //@implement Location
@@ -277,7 +404,7 @@ func (lhw *LHWell) Location_Name() string {
 	if lhw == nil {
 		return ""
 	}
-	return lhw.Platetype
+	return NameOf(lhw.Plate)
 }
 
 func (lhw *LHWell) Shape() *Shape {
@@ -298,7 +425,7 @@ func (w *LHWell) ContainerType() string {
 	if w == nil {
 		return ""
 	}
-	return w.Platetype
+	return TypeOf(w.Plate)
 }
 
 func (w *LHWell) Clear() {
@@ -306,36 +433,47 @@ func (w *LHWell) Clear() {
 		return
 	}
 	w.WContents = NewLHComponent()
-	w.WContents.Loc = w.Plateid + ":" + w.Crds
+	w.updateComponentLocation()
 }
 
-func (w *LHWell) Empty() bool {
+//IsEmpty returns true if the well contains nothing, though this does not mean that the working volume is greater than zero
+func (w *LHWell) IsEmpty() bool {
 	// nil wells are empty
 	if w == nil {
 		return true
 	}
 
-	if w.Currvol() <= 0.000001 {
-		return true
-	} else {
-		return false
+	tolerance := wunit.NewVolume(0.000001, "ul")
+
+	return w.CurrentVolume().LessThan(tolerance)
+}
+
+//Clean resets the volume in the well so that it's empty
+func (w *LHWell) Clean() {
+	w.WContents.Clean()
+	w.updateComponentLocation()
+	newExtra := make(map[string]interface{})
+
+	// some keys must be retained
+
+	for k, v := range w.Extra {
+		if isConstraintKey(k) || k == wellTargetKey || k == "IMSPECIAL" || k == "afvfunc" || k == "ll_model" {
+			newExtra[k] = v
+		}
+	}
+
+	w.Extra = newExtra
+}
+
+func (w *LHWell) updateComponentLocation() {
+	if w.WContents != nil {
+		w.WContents.Loc = fmt.Sprintf("%s:%s", IDOf(w.Plate), w.Crds.FormatA1())
 	}
 }
 
 // copy of instance
 func (lhw *LHWell) Dup() *LHWell {
-	if lhw == nil {
-		return nil
-	}
-	cp := NewLHWell(lhw.Platetype, lhw.Plateid, lhw.Crds, lhw.Vunit, lhw.MaxVol, lhw.Rvol, lhw.Shape().Dup(), lhw.Bottom, lhw.Xdim, lhw.Ydim, lhw.Zdim, lhw.Bottomh, lhw.Dunit)
-
-	for k, v := range lhw.Extra {
-		cp.Extra[k] = v
-	}
-
-	cp.WContents = lhw.Contents().Dup()
-
-	return cp
+	return lhw.dup(false)
 }
 
 // copy of type
@@ -343,27 +481,41 @@ func (lhw *LHWell) CDup() *LHWell {
 	if lhw == nil {
 		return nil
 	}
-	cp := NewLHWell(lhw.Platetype, lhw.Plateid, lhw.Crds, lhw.Vunit, lhw.MaxVol, lhw.Rvol, lhw.Shape().Dup(), lhw.Bottom, lhw.Xdim, lhw.Ydim, lhw.Zdim, lhw.Bottomh, lhw.Dunit)
+	cp := NewLHWell("ul", lhw.MaxVol, lhw.Rvol, lhw.Shape().Dup(), lhw.Bottom, lhw.GetSize().X, lhw.GetSize().Y, lhw.GetSize().Z, lhw.Bottomh, "mm")
+	cp.Plate = lhw.Plate
+	cp.Crds = lhw.Crds
+	cp.WContents = lhw.Contents().Dup()
+
 	for k, v := range lhw.Extra {
 		cp.Extra[k] = v
 	}
 
 	return cp
 }
+
 func (lhw *LHWell) DupKeepIDs() *LHWell {
+	return lhw.dup(true)
+}
+
+func (lhw *LHWell) dup(keep_ids bool) *LHWell {
 	if lhw == nil {
 		return nil
 	}
-	cp := NewLHWell(lhw.Platetype, lhw.Plateid, lhw.Crds, lhw.Vunit, lhw.MaxVol, lhw.Rvol, lhw.Shape().Dup(), lhw.Bottom, lhw.Xdim, lhw.Ydim, lhw.Zdim, lhw.Bottomh, lhw.Dunit)
+	cp := NewLHWell("ul", lhw.MaxVol, lhw.Rvol, lhw.Shape().Dup(), lhw.Bottom, lhw.GetSize().X, lhw.GetSize().Y, lhw.GetSize().Z, lhw.Bottomh, "mm")
+	cp.Plate = lhw.Plate
+	cp.Crds = lhw.Crds
+	cp.Bounds = lhw.Bounds
 
-	for k, v := range lhw.Extra {
-		cp.Extra[k] = v
+	if keep_ids {
+		cp.ID = lhw.ID
 	}
 
 	// Dup here doesn't change ID
 	cp.WContents = lhw.Contents().Dup()
 
-	cp.ID = lhw.ID
+	for k, v := range lhw.Extra {
+		cp.Extra[k] = v
+	}
 
 	return cp
 }
@@ -431,17 +583,71 @@ func (lhw *LHWell) GetAfVFunc() wutil.Func1Prm {
 	return x
 }
 
+//SetLiquidLevelModel sets the function which models the volume of liquid (uL) in
+//the well given it's height (mm)
+func (lhw *LHWell) SetLiquidLevelModel(m wutil.Func1Prm) {
+	if lhw == nil || m == nil {
+		return
+	}
+	mb, _ := json.Marshal(m)
+	ms := string(mb)
+	lhw.Extra["ll_model"] = ms
+}
+
+//GetLiquidLevelModel unmarshals and returns the volume model
+func (lhw *LHWell) GetLiquidLevelModel() wutil.Func1Prm {
+	if lhw == nil {
+		return nil
+	}
+
+	if ms, ok := lhw.Extra["ll_model"]; ok {
+		if f, err := wutil.UnmarshalFunc([]byte(ms.(string))); err == nil {
+			return f
+		} else {
+			panic(fmt.Sprintf("Can't unmarshal function, error: %s", err))
+		}
+	}
+	return nil
+}
+
+//GetLiquidLevel estimate the height of the liquid in mm from the bottom of the
+//well based on the volume in the well. Returns zero if no liquidlevel model is
+//set
+func (lhw *LHWell) GetLiquidLevel(volume wunit.Volume) float64 {
+	//the only form of liquid level model we currently support is:
+	//  volume[ul] = A * (height[mm])^2 + B * (height[mm]) + C
+	vol := volume.ConvertToString("ul")
+	if f := lhw.GetLiquidLevelModel(); f == nil {
+		return 0.0
+	} else if quad, ok := f.(*wutil.Quadratic); !ok {
+		return 0.0
+	} else if quad.C > vol { //no negative or imaginary heights
+		return 0.0
+	} else if quad.A == 0 { //linear model
+		return (vol - quad.C) / quad.B
+	} else {
+		return (-quad.B + math.Sqrt(quad.B*quad.B-4.0*quad.A*(quad.C-vol))) / (2.0 * quad.A)
+	}
+}
+
+//HasLiquidLevelModel returns whether the well has a model for use with
+//liquid level following
+func (lhw *LHWell) HasLiquidLevelModel() bool {
+	_, ret := lhw.Extra["ll_model"]
+	return ret
+}
+
 func (lhw *LHWell) CalculateMaxVolume() (vol wunit.Volume, err error) {
 	if lhw == nil {
 		return wunit.ZeroVolume(), fmt.Errorf("Nil well has no max volume")
 	}
 
-	if lhw.Bottom == 0 { // flat
+	if lhw.Bottom == FlatWellBottom { // flat
 		vol, err = lhw.Shape().Volume()
-	} /*else if lhw.Bottom == 1 { // round
+	} /*else if lhw.Bottom == UWellBottom { // round
 		vol, err = lhw.Shape().Volume()
 		// + additional calculation
-	} else if lhw.Bottom == 2 { // Pointed / v-shaped /pyramid
+	} else if lhw.Bottom == VWellBottom { // Pointed / v-shaped /pyramid
 		vol, err = lhw.Shape().Volume()
 		// + additional calculation
 	}
@@ -450,35 +656,35 @@ func (lhw *LHWell) CalculateMaxVolume() (vol wunit.Volume, err error) {
 }
 
 // make a new well structure
-func NewLHWell(platetype, plateid, crds, vunit string, vol, rvol float64, shape *Shape, bott int, xdim, ydim, zdim, bottomh float64, dunit string) *LHWell {
+func NewLHWell(vunit string, vol, rvol float64, shape *Shape, bott WellBottomType, xdim, ydim, zdim, bottomh float64, dunit string) *LHWell {
 	var well LHWell
 
+	well.Plate = nil
+	crds := ZeroWellCoords()
 	well.WContents = NewLHComponent()
-	well.WContents.Loc = plateid + ":" + crds
+	well.updateComponentLocation()
 
 	well.ID = GetUUID()
-	well.Platetype = platetype
-	well.Plateid = plateid
 	well.Crds = crds
-	well.MaxVol = vol
-	well.Rvol = rvol
-	well.Vunit = vunit
+	well.MaxVol = wunit.NewVolume(vol, vunit).ConvertToString("ul")
+	well.Rvol = wunit.NewVolume(rvol, vunit).ConvertToString("ul")
 	well.WShape = shape.Dup()
 	well.Bottom = bott
-	well.Xdim = xdim
-	well.Ydim = ydim
-	well.Zdim = zdim
-	well.Bottomh = bottomh
-	well.Dunit = dunit
+	well.Bounds = BBox{Coordinates{}, Coordinates{
+		wunit.NewLength(xdim, dunit).ConvertToString("mm"),
+		wunit.NewLength(ydim, dunit).ConvertToString("mm"),
+		wunit.NewLength(zdim, dunit).ConvertToString("mm"),
+	}}
+	well.Bottomh = wunit.NewLength(bottomh, dunit).ConvertToString("mm")
 	well.Extra = make(map[string]interface{})
 	return &well
 }
 
 // this function is somewhat buggy... need to define its responsibilities better
-func Get_Next_Well(plate *LHPlate, component *LHComponent, curwell *LHWell) (*LHWell, bool) {
+func Get_Next_Well(plate *Plate, component *Liquid, curwell *LHWell) (*LHWell, bool) {
 	vol := component.Vol
 
-	it := NewOneTimeColumnWiseIterator(plate)
+	it := NewAddressIterator(plate, ColumnWise, TopToBottom, LeftToRight, false)
 
 	if curwell != nil {
 		// quick check to see if we have room
@@ -489,21 +695,17 @@ func Get_Next_Well(plate *LHPlate, component *LHComponent, curwell *LHWell) (*LH
 			return curwell, true
 		}
 
-		startcoords := MakeWellCoords(curwell.Crds)
-		it.SetStartTo(startcoords)
-		it.Rewind()
-		it.Next()
+		startcoords := curwell.Crds
+		it.MoveTo(startcoords)
 	}
 
 	var new_well *LHWell
 
 	for wc := it.Curr(); it.Valid(); wc = it.Next() {
 
-		crds := wc.FormatA1()
+		new_well = plate.GetChildByAddress(wc).(*LHWell)
 
-		new_well = plate.Wellcoords[crds]
-
-		if new_well.Empty() {
+		if new_well.IsEmpty() {
 			break
 		}
 		/*
@@ -516,12 +718,15 @@ func Get_Next_Well(plate *LHPlate, component *LHComponent, curwell *LHWell) (*LH
 			}
 		*/
 		if !new_well.Contains(component) {
+			new_well = nil
 			continue
 		}
 		vol_left := get_vol_left(new_well)
 
 		if vol < vol_left {
 			break
+		} else {
+			new_well = nil
 		}
 	}
 
@@ -540,10 +745,10 @@ func get_vol_left(well *LHWell) float64 {
 	carry_vol := 10.0 // microlitres
 	//	total_carry_vol := float64(len(cnts)) * carry_vol
 	total_carry_vol := carry_vol // yeah right
-	Currvol := well.Currvol
-	rvol := well.Rvol
-	vol := well.MaxVol
-	return vol - (Currvol() + total_carry_vol + rvol)
+	Currvol := well.CurrentVolume().ConvertToString("ul")
+	rvol := well.ResidualVolume().ConvertToString("ul")
+	vol := well.MaxVolume().ConvertToString("ul")
+	return vol - (Currvol + total_carry_vol + rvol)
 }
 
 func (well *LHWell) DeclareTemporary() {
@@ -644,7 +849,7 @@ func (well *LHWell) Evaporate(time time.Duration, env Environment) VolumeCorrect
 		return ret
 	}
 
-	if well.Empty() {
+	if well.IsEmpty() {
 		return ret
 	}
 
@@ -654,7 +859,7 @@ func (well *LHWell) Evaporate(time time.Duration, env Environment) VolumeCorrect
 
 	vol := eng.EvaporationVolume(env.Temperature, "water", env.Humidity, time.Seconds(), env.MeanAirFlowVelocity, well.AreaForVolume(), env.Pressure)
 
-	r := well.Remove(vol)
+	r, _ := well.RemoveVolume(vol)
 
 	if r == nil {
 		well.WContents.Vol = 0.0
@@ -673,7 +878,18 @@ func (w *LHWell) ResetPlateID(newID string) {
 	}
 	ltx := strings.Split(w.WContents.Loc, ":")
 	w.WContents.Loc = newID + ":" + ltx[1]
-	w.Plateid = newID
+	//w.Plateid = newID
+}
+
+func (w *LHWell) XDim() float64 {
+	return w.Bounds.GetSize().X
+}
+
+func (w *LHWell) YDim() float64 {
+	return w.Bounds.GetSize().Y
+}
+func (w *LHWell) ZDim() float64 {
+	return w.Bounds.GetSize().Z
 }
 
 func (w *LHWell) IsUserAllocated() bool {
@@ -713,16 +929,16 @@ func (w *LHWell) ClearUserAllocated() {
 	w.Extra["UserAllocated"] = false
 }
 
-func (w *LHWell) Contains(cmp *LHComponent) bool {
+func (w *LHWell) Contains(cmp *Liquid) bool {
 	// obviously empty wells don't contain anything
-	if w.Empty() || cmp == nil {
+	if w.IsEmpty() || cmp == nil {
 		return false
 	}
 	// components are the keepers of this information
 	return cmp.Matches(w.WContents)
 }
 
-func (w *LHWell) UpdateContentID(IDBefore string, after *LHComponent) bool {
+func (w *LHWell) UpdateContentID(IDBefore string, after *Liquid) bool {
 	if w.WContents.ID == IDBefore {
 		/*
 			previous := w.WContents
@@ -737,7 +953,6 @@ func (w *LHWell) UpdateContentID(IDBefore string, after *LHComponent) bool {
 		w.WContents.AddParentComponent(w.WContents)
 		w.WContents.ID = after.ID
 		w.WContents.CName = after.CName
-
 		return true
 	}
 
@@ -746,11 +961,70 @@ func (w *LHWell) UpdateContentID(IDBefore string, after *LHComponent) bool {
 
 // CheckExtraKey checks if the key is a reserved name
 func (w LHWell) CheckExtraKey(s string) error {
-	reserved := []string{"protected", "afvfunc", "temporary", "autoallocated", "UserAllocated"}
+	reserved := []string{"protected", "afvfunc", "temporary", "autoallocated", "UserAllocated", "ll_model"}
 
 	if wutil.StrInStrArray(s, reserved) {
 		return fmt.Errorf("%s is a system key used by plates", s)
 	}
 
 	return nil
+}
+
+const wellTargetKey = "well_targets"
+
+func (w *LHWell) getTargetMap() map[string][]Coordinates {
+	m, ok := w.Extra[wellTargetKey]
+	if !ok {
+		ret := make(map[string][]Coordinates)
+		w.Extra[wellTargetKey] = ret
+		return ret
+	}
+	ret, ok := m.(map[string][]Coordinates)
+	//gets broken by serialise/deserialise
+	if !ok {
+		ret := make(map[string][]Coordinates)
+		for name, coords := range m.(map[string]interface{}) {
+			ret[name] = make([]Coordinates, 0)
+			for _, crd := range coords.([]interface{}) {
+				c := crd.(map[string]interface{})
+				ret[name] = append(ret[name], Coordinates{X: c["X"].(float64),
+					Y: c["Y"].(float64),
+					Z: c["Z"].(float64)})
+			}
+		}
+		return ret
+	}
+	return ret
+}
+
+//SetWellTargets sets the targets for each channel when accessing the well using
+//adaptor. offsets is a list of coordinates which specify the offset in mm from
+//the well center for each channel.
+//len(offsets) specifies the maximum number of channels which can access the well
+//simultaneously using adaptor
+func (w *LHWell) SetWellTargets(adaptor string, offsets []Coordinates) {
+	wtMap := w.getTargetMap()
+	wtMap[adaptor] = offsets
+}
+
+//GetWellTargets return the well targets for the given adaptor
+//if the adaptor has no defined targets, simply returns the well center
+func (w *LHWell) GetWellTargets(adaptor string) []Coordinates {
+	wtMap := w.getTargetMap()
+	adaptorTargets, ok := wtMap[adaptor]
+	if !ok {
+		return []Coordinates{}
+	}
+	return adaptorTargets
+}
+
+//GetAdaptorsWithTargets gets the list of the names of adaptors which have
+//targets defined for the well
+func (w *LHWell) ListAdaptorsWithTargets() []string {
+	wtMap := w.getTargetMap()
+	ret := make([]string, 0, len(wtMap))
+	for adaptorName := range wtMap {
+		ret = append(ret, adaptorName)
+	}
+	return ret
 }

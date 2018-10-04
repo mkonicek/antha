@@ -6,6 +6,7 @@ import (
 	"compress/gzip"
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -25,7 +26,7 @@ var (
 
 // A Mixer is a device plugin for mixer devices
 type Mixer struct {
-	driver     driver.ExtendedLiquidhandlingDriver
+	driver     driver.LiquidhandlingDriver
 	properties *driver.LHProperties // Prototype to create fresh properties
 	opt        Opt
 }
@@ -50,7 +51,7 @@ func (a *Mixer) CanCompile(req ast.Request) bool {
 }
 
 // MoveCost implements a Device
-func (a *Mixer) MoveCost(from target.Device) int {
+func (a *Mixer) MoveCost(from target.Device) int64 {
 	if from == a {
 		return 0
 	}
@@ -73,20 +74,31 @@ type lhreq struct {
 
 func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 	// MIS -- this might be a hole. We probably need to invoke the sample tracker here
-	addPlate := func(req *planner.LHRequest, ip *wtype.LHPlate) error {
-		if _, seen := req.Input_plates[ip.ID]; seen {
+	addPlate := func(req *planner.LHRequest, ip *wtype.Plate) error {
+		if _, seen := req.InputPlates[ip.ID]; seen {
 			return fmt.Errorf("plate %q already added", ip.ID)
 		}
-		//req.Input_plates[ip.ID] = ip
 		req.AddUserPlate(ip)
 		return nil
 	}
 
 	req := planner.NewLHRequest()
 
-	/// TODO --> a.opt.Destination isn't being passed through, this makes MixInto redundant
+	if data := a.opt.CustomPolicyData; len(data) > 0 {
+		lhpr := wtype.NewLHPolicyRuleSet()
 
-	if err := req.Policies.SetOption("USE_DRIVER_TIP_TRACKING", a.opt.UseDriverTipTracking); err != nil {
+		lhpr, err := wtype.AddUniversalRules(lhpr, data)
+		if err != nil {
+			return nil, err
+		}
+		req.AddUserPolicies(lhpr)
+	}
+
+	if set := a.opt.CustomPolicyRuleSet; set != nil {
+		req.AddUserPolicies(set)
+	}
+
+	if err := req.PolicyManager.SetOption("USE_DRIVER_TIP_TRACKING", a.opt.UseDriverTipTracking); err != nil {
 		return nil, err
 	}
 
@@ -95,41 +107,41 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 	plan := planner.Init(prop)
 
 	if p := a.opt.MaxPlates; p != nil {
-		req.Input_setup_weights["MAX_N_PLATES"] = *p
+		req.InputSetupWeights["MAX_N_PLATES"] = *p
 	}
 
 	if p := a.opt.MaxWells; p != nil {
-		req.Input_setup_weights["MAX_N_WELLS"] = *p
+		req.InputSetupWeights["MAX_N_WELLS"] = *p
 	}
 
 	if p := a.opt.ResidualVolumeWeight; p != nil {
-		req.Input_setup_weights["RESIDUAL_VOLUME_WEIGHT"] = *p
+		req.InputSetupWeights["RESIDUAL_VOLUME_WEIGHT"] = *p
 	}
 
 	// TODO -- error check here to prevent nil values
 
-	if p := a.opt.InputPlateType; len(p) != 0 {
+	if p := a.opt.InputPlateTypes; len(p) != 0 {
 		for _, v := range p {
 			p, err := inventory.NewPlate(ctx, v)
 			if err != nil {
 				return nil, err
 			}
 
-			req.Input_platetypes = append(req.Input_platetypes, p)
+			req.InputPlatetypes = append(req.InputPlatetypes, p)
 		}
 	}
 
-	if p := a.opt.OutputPlateType; len(p) != 0 {
+	if p := a.opt.OutputPlateTypes; len(p) != 0 {
 		for _, v := range p {
 			p, err := inventory.NewPlate(ctx, v)
 			if err != nil {
 				return nil, err
 			}
-			req.Output_platetypes = append(req.Output_platetypes, p)
+			req.OutputPlatetypes = append(req.OutputPlatetypes, p)
 		}
 	}
 
-	if p := a.opt.TipType; len(p) != 0 {
+	if p := a.opt.TipTypes; len(p) != 0 {
 		for _, v := range p {
 			t, err := inventory.NewTipbox(ctx, v)
 			if err != nil {
@@ -202,6 +214,10 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 
 	req.Options.FixVolumes = a.opt.FixVolumes
 
+	//physical simulation override
+
+	req.Options.IgnorePhysicalSimulation = a.opt.IgnorePhysicalSimulation
+
 	return &lhreq{
 		LHRequest:     req,
 		LHProperties:  prop,
@@ -227,7 +243,7 @@ func (a *Mixer) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, e
 		return nil, err
 	}
 
-	return target.SequentialOrder(mix), nil
+	return []target.Inst{mix}, nil
 }
 
 func (a *Mixer) saveFile(name string) ([]byte, error) {
@@ -261,8 +277,102 @@ func (a *Mixer) saveFile(name string) ([]byte, error) {
 	}
 }
 
+func mergePolicies(basePolicy, priorityPolicy wtype.LHPolicy) (newPolicy wtype.LHPolicy) {
+
+	newPolicy = make(wtype.LHPolicy)
+
+	for key, value := range priorityPolicy {
+		newPolicy[key] = value
+	}
+
+	for key, value := range basePolicy {
+		if _, found := priorityPolicy[key]; !found {
+			newPolicy[key] = value
+		}
+	}
+	return newPolicy
+}
+
+// any customised user policies are added to the LHRequest PolicyManager here
+// Any component type names with modified policies are iterated until unique i.e. SmartMix_modified_1
+func addCustomPolicies(mixes []*wtype.LHInstruction, lhreq *planner.LHRequest) error {
+	systemPolicyRuleSet := lhreq.GetPolicyManager().Policies()
+	systemPolicies := systemPolicyRuleSet.Policies
+	var userPolicies = make(map[string]wtype.LHPolicy)
+	var allPolicies = make(map[string]wtype.LHPolicy)
+	var liquidClassConversionMap = make(map[string]string)
+
+	for key, value := range systemPolicies {
+		allPolicies[key] = value
+	}
+
+	userPolicyRuleSet := wtype.NewLHPolicyRuleSet()
+
+	for _, mixInstruction := range mixes {
+		for _, component := range mixInstruction.Inputs {
+			if len(component.Policy) > 0 {
+				if matchingSystemPolicy, found := allPolicies[string(component.Type)]; found {
+					mergedPolicy := mergePolicies(matchingSystemPolicy, component.Policy)
+					if !wtype.EquivalentPolicies(mergedPolicy, matchingSystemPolicy) {
+						num := 1
+						newPolicyName := makemodifiedTypeName(component.Type, num)
+						existingCustomPolicy, found := allPolicies[newPolicyName]
+						for found {
+							// check if existing policy with modified name is the same
+							if !wtype.EquivalentPolicies(mergedPolicy, existingCustomPolicy) {
+								// if not increase number and try again
+								num++
+								newPolicyName = makemodifiedTypeName(component.Type, num)
+								existingCustomPolicy, found = allPolicies[newPolicyName]
+							} else {
+								// otherwise use existing modified policy
+								found = false
+							}
+						}
+						allPolicies[newPolicyName] = mergedPolicy
+						userPolicies[newPolicyName] = mergedPolicy
+						component.Type = wtype.LiquidType(newPolicyName)
+						liquidClassConversionMap[newPolicyName] = matchingSystemPolicy.Name()
+					}
+				} else {
+					allPolicies[string(component.Type)] = component.Policy
+					userPolicies[string(component.Type)] = component.Policy
+				}
+			}
+		}
+	}
+
+	if len(userPolicies) > 0 {
+		userPolicyRuleSet, err := wtype.AddUniversalRules(userPolicyRuleSet, userPolicies)
+		if err != nil {
+			return err
+		}
+		for newClass, original := range liquidClassConversionMap {
+			err := wtype.CopyRulesFromPolicy(userPolicyRuleSet, original, newClass)
+			if err != nil {
+				return err
+			}
+		}
+		lhreq.AddUserPolicies(userPolicyRuleSet)
+	}
+
+	return nil
+}
+
+const modifiedPolicySuffix = "_modified_"
+
+func makemodifiedTypeName(componentType wtype.LiquidType, number int) string {
+	return string(componentType) + modifiedPolicySuffix + strconv.Itoa(number)
+}
+
+// unModifyTypeName will trim a _modified_ suffix from a LiquidType in the CSV file.
+// These are added to LiquidType names when a Liquid is modified in an element.
+func unModifyTypeName(componentType string) string {
+	return strings.Split(componentType, modifiedPolicySuffix)[0]
+}
+
 func (a *Mixer) makeMix(ctx context.Context, mixes []*wtype.LHInstruction) (*target.Mix, error) {
-	hasPlate := func(plates []*wtype.LHPlate, typ, id string) bool {
+	hasPlate := func(plates []*wtype.Plate, typ, id string) bool {
 		for _, p := range plates {
 			if p.Type == typ && (id == "" || p.ID == id) {
 				return true
@@ -288,26 +398,32 @@ func (a *Mixer) makeMix(ctx context.Context, mixes []*wtype.LHInstruction) (*tar
 		return nil, err
 	}
 
+	// any customised user policies are added to the LHRequest PolicyManager here
+	// Any component type names with modified policies are iterated until unique i.e. SmartMix_modified_1
+	if err := addCustomPolicies(mixes, r.LHRequest); err != nil {
+		return nil, err
+	}
+
 	for _, m := range mixes {
 		if m.OutPlate != nil {
-			p, ok := r.LHRequest.Output_plates[m.OutPlate.ID]
+			p, ok := r.LHRequest.OutputPlates[m.OutPlate.ID]
 			if ok && p != m.OutPlate {
-				return nil, fmt.Errorf("Mix setup error: Plate %s already requested in different state", p.ID)
+				return nil, fmt.Errorf("Mix setup error: Plate %s already requested in different state for mix.", p.ID)
 			}
-			r.LHRequest.Output_plates[m.OutPlate.ID] = m.OutPlate
+			r.LHRequest.OutputPlates[m.OutPlate.ID] = m.OutPlate
 		}
 	}
 
 	r.LHRequest.BlockID = getID(mixes)
 
 	for _, mix := range mixes {
-		if len(mix.Platetype) != 0 && !hasPlate(r.LHRequest.Output_platetypes, mix.Platetype, mix.PlateID) {
+		if len(mix.Platetype) != 0 && !hasPlate(r.LHRequest.OutputPlatetypes, mix.Platetype, mix.PlateID) {
 			p, err := inventory.NewPlate(ctx, mix.Platetype)
 			if err != nil {
 				return nil, err
 			}
 			p.ID = mix.PlateID
-			r.LHRequest.Output_platetypes = append(r.LHRequest.Output_platetypes, p)
+			r.LHRequest.OutputPlatetypes = append(r.LHRequest.OutputPlatetypes, p)
 		}
 		r.LHRequest.Add_instruction(mix)
 	}
@@ -348,7 +464,7 @@ func (a *Mixer) makeMix(ctx context.Context, mixes []*wtype.LHInstruction) (*tar
 }
 
 // New creates a new Mixer
-func New(opt Opt, d driver.ExtendedLiquidhandlingDriver) (*Mixer, error) {
+func New(opt Opt, d driver.LiquidhandlingDriver) (*Mixer, error) {
 	p, status := d.GetCapabilities()
 	if !status.OK {
 		return nil, fmt.Errorf("cannot get capabilities: %s", status.Msg)

@@ -7,16 +7,18 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
-type ComponentVector []*LHComponent
+type ComponentVector []*Liquid
 
 func (cv ComponentVector) String() string {
 	s := fmt.Sprintf("%v %v %v", cv.GetNames(), cv.GetVols(), cv.GetWellCoords())
 	return s
 }
 
+//DeleteAllBelowVolume set all components whose volume is below vol to nil
 func (cv ComponentVector) DeleteAllBelowVolume(vol wunit.Volume) {
 	for i := 0; i < len(cv); i++ {
-		if cv[i] != nil && cv[i].Volume().LessThan(vol) {
+		//Volume.isZero() checks that volume is zero or within a small tolerace to zero
+		if v := cv[i].Volume(); v.LessThan(vol) && !wunit.SubtractVolumes(vol, v).IsZero() {
 			cv[i] = nil
 		}
 	}

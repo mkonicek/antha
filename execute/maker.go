@@ -13,7 +13,7 @@ type maker struct {
 	// Map from old LHComponent id to new id after sample
 	afterSample map[string][]string
 	// Map from from wtype world to ast world
-	byComp map[*wtype.LHComponent]*ast.UseComp
+	byComp map[*wtype.Liquid]*ast.UseComp
 	byID   map[string][]*ast.UseComp
 }
 
@@ -21,12 +21,12 @@ func newMaker() *maker {
 	return &maker{
 		afterInst:   make(map[string][]string),
 		afterSample: make(map[string][]string),
-		byComp:      make(map[*wtype.LHComponent]*ast.UseComp),
+		byComp:      make(map[*wtype.Liquid]*ast.UseComp),
 		byID:        make(map[string][]*ast.UseComp),
 	}
 }
 
-func (a *maker) makeComp(c *wtype.LHComponent) *ast.UseComp {
+func (a *maker) makeComp(c *wtype.Liquid) *ast.UseComp {
 	u, ok := a.byComp[c]
 	if !ok {
 		u = &ast.UseComp{
@@ -45,7 +45,7 @@ func (a *maker) makeCommand(in *commandInst) ast.Node {
 		in.Command.From = append(in.Command.From, a.makeComp(arg))
 	}
 
-	out := a.makeComp(in.result)
+	out := a.makeComp(in.result[0]) // MIS --> may need updating
 	out.From = append(out.From, in.Command)
 	return out
 }

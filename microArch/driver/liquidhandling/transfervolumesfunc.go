@@ -8,15 +8,17 @@ import (
 )
 
 func TransferVolumes(Vol, Min, Max wunit.Volume) ([]wunit.Volume, error) {
-	ret := make([]wunit.Volume, 0)
 
-	vol := Vol.ConvertTo(Min.Unit())
-	min := Min.RawValue()
-	max := Max.RawValue()
+	max, err := Max.InUnit(Vol.Unit())
+	if err != nil {
+		return nil, err
+	}
+
+	ret := make([]wunit.Volume, 0)
 
 	//	if vol < min {
 	if Vol.LessThanRounded(Min, 1) {
-		err := wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Liquid Handler cannot service volume requested: %f - minimum volume is %f", vol, min))
+		err := wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Liquid Handler cannot service volume requested: %v - minimum volume is %v", Vol, Min))
 		return ret, err
 	}
 
@@ -30,15 +32,14 @@ func TransferVolumes(Vol, Min, Max wunit.Volume) ([]wunit.Volume, error) {
 	// if vol/max = n then we do n+1 equal transfers of vol / (n+1)
 	// this should never be outside the range
 
-	n, _ := math.Modf(vol / max)
-
+	n, _ := math.Modf(Vol.RawValue() / max.RawValue())
 	n += 1
 
 	// should make sure of no rounding errors here... we want to
 	// make sure these are within the resolution of the channel
 
 	for i := 0; i < int(n); i++ {
-		ret = append(ret, wunit.NewVolume(vol/n, Vol.Unit().PrefixedSymbol()))
+		ret = append(ret, wunit.NewVolume(Vol.RawValue()/n, Vol.Unit().PrefixedSymbol()))
 	}
 
 	return ret, nil

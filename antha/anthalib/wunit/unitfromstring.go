@@ -24,20 +24,11 @@ package wunit
 
 import (
 	"fmt"
-	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
-
-func NormaliseUnit(unit string) (normalisedunit string) {
-
-	cm := NewPMeasurement(0, unit)
-
-	normalisedunit = cm.Unit().PrefixedSymbol()
-	return
-}
 
 // SplitValueAndUnit splits a joined value and unit in string format into seperate typed value and unit fields.
 // If the string input is not in the valid format of value followed by unit it will not be parsed correctly.
@@ -69,24 +60,29 @@ func SplitValueAndUnit(str string) (value float64, unit string) {
 // Not currently robust to situations where the component name (without the concentration) is more than one field (e.g. ammonium sulphate) or if the component name is a concatenation of component names (e.g. 1mM Glucose + 10mM Glycerol).
 func ParseConcentration(componentname string) (containsconc bool, conc Concentration, componentNameOnly string) {
 
-	approvedunits := UnitMap["Concentration"]
-
-	var sortedKeys []string
-
-	for k, _ := range approvedunits {
-		sortedKeys = append(sortedKeys, k)
-	}
-
-	sort.Strings(sortedKeys)
+	reg := GetGlobalUnitRegistry()
+	approvedUnits := reg.ListValidUnitsForType("Concentration")
 
 	fields := strings.Fields(componentname)
+
+	if len(fields) == 1 {
+		trimmed := strings.Trim(componentname, "()")
+		value, unit := SplitValueAndUnit(trimmed)
+		if unit == componentname {
+			return false, conc, componentname
+		}
+		if !reg.ValidUnitForType("Concentration", unit) {
+			return false, conc, componentname
+		}
+		return true, NewConcentration(value, unit), componentname
+	}
 	var unitmatchlength int
 	var longestmatchedunit string
 	var valueandunit string
 	var unit string
 	var valueString string
 	var notConcFields []string
-	for _, key := range sortedKeys {
+	for _, key := range approvedUnits {
 		for i, field := range fields {
 
 			/// if value and unit are separate fields
@@ -109,7 +105,7 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 						//break
 					}
 					// support for cases where concentration unit is given but no value
-				} else if trimmed := strings.Trim(field, "()"); trimmed == key {
+				} else if trimmed := strings.Trim(field, "()"); trimmed == key || field == key {
 					if len(key) > unitmatchlength {
 						notConcFields = make([]string, 0)
 						longestmatchedunit = key
@@ -126,7 +122,21 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 				}
 				// if value and unit are one joined field
 				// change this to separate number and match rest of valueandunit
-			} else if trimmed := strings.Trim(field, "()"); strings.HasSuffix(field, key) || strings.HasSuffix(trimmed, key) {
+			} else if trimmed := strings.Trim(field, "()"); trimmed == key || field == key {
+				if len(key) > unitmatchlength {
+					notConcFields = make([]string, 0)
+					longestmatchedunit = key
+					unitmatchlength = len(key)
+					valueandunit = field
+					if i > 0 {
+						notConcFields = append(notConcFields, fields[:i]...)
+					}
+					if len(fields) > i+1 {
+						notConcFields = append(notConcFields, fields[i+1:]...)
+					}
+					//break
+				}
+			} else if trimmed := strings.Trim(field, "()"); looksLikeNumberAndUnit(field, key) || looksLikeNumberAndUnit(trimmed, key) {
 				if len(key) > unitmatchlength {
 					notConcFields = make([]string, 0)
 					longestmatchedunit = key
@@ -163,9 +173,10 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 			} else {
 				if strings.Contains(componentname, wutil.MIXDELIMITER) {
 					return false, conc, componentname
+				} else {
+					fmt.Println("warning parsing componentname: ", componentname, ": ", err.Error())
+					return false, conc, componentname
 				}
-				panic(fmt.Sprint("error parsing componentname: ", componentname, ": ", err.Error()))
-				return false, conc, componentNameOnly
 			}
 		}
 	}
@@ -175,20 +186,29 @@ func ParseConcentration(componentname string) (containsconc bool, conc Concentra
 
 	return containsconc, conc, componentNameOnly
 }
+func looksLikeNumberAndUnit(testString string, targetUnit string) bool {
+	if strings.HasSuffix(testString, targetUnit) {
+		trimmed := strings.Split(testString, targetUnit)
+		if len(trimmed) == 0 {
+			return false
+		}
+		_, err := strconv.ParseFloat(trimmed[0], 64)
+		if err == nil {
+			return true
+		}
+		_, err = strconv.Atoi(trimmed[0])
+		if err == nil {
+			return true
+		}
+	}
+	return false
+}
 
 // ParseVolume parses a volume and valid unit (nl, ul, ml, l) in string format; handles cases where the volume is split with a space.
 func ParseVolume(volstring string) (volume Volume, err error) {
 	var volandunit []string
 
-	approvedunits := UnitMap["Volume"]
-
-	var sortedKeys []string
-
-	for k, _ := range approvedunits {
-		sortedKeys = append(sortedKeys, k)
-	}
-
-	sort.Strings(sortedKeys)
+	sortedKeys := GetGlobalUnitRegistry().ListValidUnitsForType("Volume")
 
 	var longestmatchedunit string
 
@@ -220,61 +240,3 @@ func ParseVolume(volstring string) (volume Volume, err error) {
 	volume = NewVolume(vol, longestmatchedunit)
 	return
 }
-
-/*
-
-func parseVol(volstring string) (volume Volume, err error) {
-	approvedunits := wunit.UnitMap["Volume"]
-
-	fields := strings.Fields(volstring)
-	var unitmatchlength int
-	var longestmatchedunit string
-	var valueandunit string
-
-	for key, _ := range approvedunits {
-		for _,field := range fields {
-		if strings.Contains(field,key){
-			if len(key) > unitmatchlength {
-				longestmatchedunit = key
-				unitmatchlength = len(key)
-				valueandunit = field
-				}
-			}
-		}
-	}
-
-	for _, field := range fields {
-		if len(fields)== 2 && field !=  longestmatchedunit {
-			componentNameOnly = field
-		}
-	}
-
-	// if no match, return original component name
-	if unitmatchlength == 0 {
-		return false, conc, componentname
-	}
-
-	concfields := strings.Split(valueandunit,longestmatchedunit)
-
-	value, err := strconv.ParseFloat(concfields[0],64)
-	if err != nil{
-		concfields[0] = strings.Trim(concfields[0], "()")
-		value, err = strconv.ParseFloat(concfields[0], 64)
-		if err != nil {
-			if concfields[0] == ""{
-				value = 0.0
-			}else{
-			panic(fmt.Sprint("error parsing componentname: ", componentname,": ",err.Error()))
-			return false, conc, componentNameOnly
-			}
-		}
-	}
-
-
-
-
-	conc = wunit.NewConcentration(value,longestmatchedunit)
-	containsconc = true
-	return
-}
-*/

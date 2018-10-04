@@ -27,7 +27,7 @@ type TestResults struct {
 // A MixTaskResult is the result if running a mix task
 type MixTaskResult struct {
 	Instructions liquidhandling.SetOfRobotInstructions
-	Outputs      map[string]*wtype.LHPlate
+	Outputs      map[string]*wtype.Plate
 }
 
 func generaliseInstructions(insIn []liquidhandling.TerminalRobotInstruction) []liquidhandling.RobotInstruction {
@@ -41,18 +41,16 @@ func generaliseInstructions(insIn []liquidhandling.TerminalRobotInstruction) []l
 	return insOut
 }
 
-func compareOutputs(outputs1, outputs2 map[string]*wtype.LHPlate, opt TestOpt) string {
+func compareOutputs(outputs1, outputs2 map[string]*wtype.Plate, opt TestOpt) string {
 	return joinErrors(CompareMixOutputs(outputs1, outputs2, unpackOutputComparisonOptions(opt.ComparisonOptions)).Errors)
 }
 
-func compareInstructions(genIns1, genIns2 []liquidhandling.RobotInstruction, opt TestOpt) string {
-	return joinErrors(
-		liquidhandling.CompareInstructionSets(
-			genIns1,
-			genIns2,
-			liquidhandling.ComparisonOpt{
-				InstructionParameters: unpackInstructionComparisonOptions(opt.ComparisonOptions),
-			}).Errors)
+func compareInstructions(genIns1, genIns2 []liquidhandling.RobotInstruction, opt TestOpt) error {
+	return liquidhandling.CompareInstructionSets(
+		genIns1,
+		genIns2,
+		unpackInstructionComparisonOptions(opt.ComparisonOptions)...,
+	)
 }
 
 // CompareTestResults compares an execution with an expected output
@@ -71,9 +69,9 @@ func CompareTestResults(runResult *execute.Result, opt TestOpt) error {
 		if opt.CompareInstructions {
 			genIns1 := opt.Results.MixTaskResults[i].Instructions.RobotInstructions // already RobotInstructions
 			genIns2 := generaliseInstructions(mixTasks[i].Request.Instructions)
-			ssss := compareInstructions(genIns1, genIns2, opt)
-			if ssss != "" {
-				errstr += ssss + "\n"
+			err := compareInstructions(genIns1, genIns2, opt)
+			if err != nil {
+				errstr += err.Error() + "\n"
 			}
 		} else if opt.CompareOutputs {
 			ssss := compareOutputs(opt.Results.MixTaskResults[i].Outputs, getMixTaskOutputs(mixTasks[i]), opt)
@@ -89,8 +87,8 @@ func CompareTestResults(runResult *execute.Result, opt TestOpt) error {
 	return nil
 }
 
-func getMixTaskOutputs(mix *target.Mix) map[string]*wtype.LHPlate {
-	outputs := make(map[string]*wtype.LHPlate)
+func getMixTaskOutputs(mix *target.Mix) map[string]*wtype.Plate {
+	outputs := make(map[string]*wtype.Plate)
 
 	// get output plates (ONLY)
 
@@ -134,9 +132,9 @@ func unpackOutputComparisonOptions(optIn string) ComparisonMode {
 	return ComparePlateTypesVolumes
 }
 
-func unpackInstructionComparisonOptions(optIn string) map[string][]string {
+func unpackInstructionComparisonOptions(optIn string) []liquidhandling.RobotInstructionComparatorFunc {
 	// v0 --> just compare everything
-	return liquidhandling.CompareAllParameters()
+	return liquidhandling.CompareAllParameters
 }
 
 func joinErrors(errors []error) string {

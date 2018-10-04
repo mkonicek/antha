@@ -22,10 +22,29 @@ func setUpTipsFor(ctx context.Context, lhp *liquidhandling.LHProperties) *liquid
 	return lhp
 }
 
-func makeLiquidhandlerLibrary(ctx context.Context) map[string]*liquidhandling.LHProperties {
-	robots := make(map[string]*liquidhandling.LHProperties, 2)
-	robots["GilsonPipetmax"] = makeGilson(ctx)
-	return robots
+const (
+	HVMinRate = 0.225
+	HVMaxRate = 37.5
+	LVMinRate = 0.0225
+	LVMaxRate = 3.75
+)
+
+func getHVConfig() *wtype.LHChannelParameter {
+	minvol := wunit.NewVolume(10, "ul")
+	maxvol := wunit.NewVolume(250, "ul")
+	minspd := wunit.NewFlowRate(HVMinRate, "ml/min")
+	maxspd := wunit.NewFlowRate(HVMaxRate, "ml/min")
+
+	return wtype.NewLHChannelParameter("HVconfig", "GilsonPipetmax", minvol, maxvol, minspd, maxspd, 8, false, wtype.LHVChannel, 0)
+}
+
+func getLVConfig() *wtype.LHChannelParameter {
+	newminvol := wunit.NewVolume(0.5, "ul")
+	newmaxvol := wunit.NewVolume(20, "ul")
+	newminspd := wunit.NewFlowRate(LVMinRate, "ml/min")
+	newmaxspd := wunit.NewFlowRate(LVMaxRate, "ml/min")
+
+	return wtype.NewLHChannelParameter("LVconfig", "GilsonPipetmax", newminvol, newmaxvol, newminspd, newmaxspd, 8, false, wtype.LHVChannel, 1)
 }
 
 func makeGilson(ctx context.Context) *liquidhandling.LHProperties {
@@ -38,7 +57,7 @@ func makeGilson(ctx context.Context) *liquidhandling.LHProperties {
 	z0 := -82.035
 	xi := 149.86
 	yi := 95.25
-	xp := x0
+	xp := x0 // nolint
 	yp := y0
 	zp := z0
 	for y := 0; y < 3; y++ {
@@ -52,7 +71,7 @@ func makeGilson(ctx context.Context) *liquidhandling.LHProperties {
 		}
 		yp += yi
 	}
-	lhp := liquidhandling.NewLHProperties(9, "Pipetmax", "Gilson", "discrete", "disposable", layout)
+	lhp := liquidhandling.NewLHProperties(9, "Pipetmax", "Gilson", liquidhandling.LLLiquidHandler, liquidhandling.DisposableTips, layout)
 	// get tips permissible from the factory
 	setUpTipsFor(ctx, lhp)
 
@@ -75,29 +94,25 @@ func makeGilson(ctx context.Context) *liquidhandling.LHProperties {
 	//	lhp.Tip_preferences = []int{2, 3, 6, 9, 5, 8, 4, 7}
 	//	lhp.Input_preferences = []int{24, 25, 26, 29, 28, 23}
 	//	lhp.Output_preferences = []int{10, 11, 12, 13, 14, 15}
-	minvol := wunit.NewVolume(10, "ul")
-	maxvol := wunit.NewVolume(250, "ul")
-	minspd := wunit.NewFlowRate(0.5, "ml/min")
-	maxspd := wunit.NewFlowRate(2, "ml/min")
 
-	hvconfig := wtype.NewLHChannelParameter("HVconfig", "GilsonPipetmax", minvol, maxvol, minspd, maxspd, 8, false, wtype.LHVChannel, 0)
+	hvconfig := getHVConfig()
 	hvadaptor := wtype.NewLHAdaptor("DummyAdaptor", "Gilson", hvconfig)
 	hvhead := wtype.NewLHHead("HVHead", "Gilson", hvconfig)
 	hvhead.Adaptor = hvadaptor
-	newminvol := wunit.NewVolume(0.5, "ul")
-	newmaxvol := wunit.NewVolume(20, "ul")
-	newminspd := wunit.NewFlowRate(0.1, "ml/min")
-	newmaxspd := wunit.NewFlowRate(0.5, "ml/min")
 
-	lvconfig := wtype.NewLHChannelParameter("LVconfig", "GilsonPipetmax", newminvol, newmaxvol, newminspd, newmaxspd, 8, false, wtype.LHVChannel, 1)
+	lvconfig := getLVConfig()
 	lvadaptor := wtype.NewLHAdaptor("DummyAdaptor", "Gilson", lvconfig)
 	lvhead := wtype.NewLHHead("LVHead", "Gilson", lvconfig)
 	lvhead.Adaptor = lvadaptor
 
-	lhp.Heads = append(lhp.Heads, hvhead)
-	lhp.Heads = append(lhp.Heads, lvhead)
-	lhp.HeadsLoaded = append(lhp.HeadsLoaded, hvhead)
-	lhp.HeadsLoaded = append(lhp.HeadsLoaded, lvhead)
+	ha := wtype.NewLHHeadAssembly(nil)
+	ha.AddPosition(wtype.Coordinates{X: 0, Y: -18.08, Z: 0})
+	ha.AddPosition(wtype.Coordinates{X: 0, Y: 0, Z: 0})
+	ha.LoadHead(hvhead)
+	ha.LoadHead(lvhead)
+	lhp.Heads = append(lhp.Heads, hvhead, lvhead)
+	lhp.Adaptors = append(lhp.Adaptors, hvadaptor, lvadaptor)
+	lhp.HeadAssemblies = append(lhp.HeadAssemblies, ha)
 
 	return lhp
 }

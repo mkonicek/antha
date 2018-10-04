@@ -15,10 +15,6 @@ var (
 		MaxPlates:            &defaultMaxPlates,
 		MaxWells:             &defaultMaxWells,
 		ResidualVolumeWeight: &defaultResidualVolumeWeight,
-		InputPlateType:       []string{"pcrplate_skirted_riser20"},
-		OutputPlateType:      []string{"pcrplate_skirted_riser20"},
-		InputPlates:          []*wtype.LHPlate{},
-		OutputPlates:         []*wtype.LHPlate{},
 		PlanningVersion:      "ep2",
 		LegacyVolume:         true,
 		FixVolumes:           true,
@@ -30,17 +26,17 @@ type Opt struct {
 	MaxPlates            *float64
 	MaxWells             *float64
 	ResidualVolumeWeight *float64
-	InputPlateType       []string
-	OutputPlateType      []string
-	TipType              []string
+	InputPlateTypes      []string
+	OutputPlateTypes     []string
+	TipTypes             []string
 	PlanningVersion      string
 
-	// Two methods of populating Opt.InputPlates
-	InputPlateData [][]byte         // From contents of files
-	InputPlates    []*wtype.LHPlate // Directly
+	// Two methods of populating input plates
+	InputPlateData [][]byte       // From contents of files
+	InputPlates    []*wtype.Plate // Directly
 
-	// Direct specification of Output plates
-	OutputPlates []*wtype.LHPlate
+	// Direct specification of output plates
+	OutputPlates []*wtype.Plate
 
 	// Specify file name in the instruction stream of any driver generated file
 	DriverOutputFileName string
@@ -53,12 +49,17 @@ type Opt struct {
 	DriverSpecificTipWastePreferences []string
 	DriverSpecificWashPreferences     []string
 
-	ModelEvaporation     bool
-	OutputSort           bool
-	PrintInstructions    bool
-	UseDriverTipTracking bool
-	LegacyVolume         bool // don't track volumes for intermediates
-	FixVolumes           bool // aim to revise requested volumes to service requirements
+	ModelEvaporation         bool
+	OutputSort               bool
+	PrintInstructions        bool
+	UseDriverTipTracking     bool
+	LegacyVolume             bool // Don't track volumes for intermediates
+	FixVolumes               bool // Aim to revise requested volumes to service requirements
+	IgnorePhysicalSimulation bool //ignore errors in physical simulation
+
+	// Two ways to set user liquid policies rule set
+	CustomPolicyData    map[string]wtype.LHPolicy // Set rule set from policies
+	CustomPolicyRuleSet *wtype.LHPolicyRuleSet    // Directly
 }
 
 // Merge two configs together and return the result. Values in the argument

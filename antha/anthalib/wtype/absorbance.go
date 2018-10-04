@@ -24,8 +24,10 @@ package wtype
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/pkg/errors"
 )
 
 // CorrectionType is a label given to describe the nature of the correction of an absorbance reading.
@@ -46,6 +48,10 @@ const (
 	ReferenceStandardCorrected CorrectionType = "Reference Standard Corrected"
 )
 
+// ReferencePathlength is 10mm and is the pathlength used to normalise an absorbance measurement to.
+// The value is the pathlength of a standard cuvette
+var ReferencePathlength = wunit.NewLength(10, "mm")
+
 // AbsorbanceCorrection stores the details of how an Absorbance reading has ben corrected.
 type AbsorbanceCorrection struct {
 	Type              CorrectionType
@@ -54,12 +60,36 @@ type AbsorbanceCorrection struct {
 
 // Absorbance stores the key properties of an absorbance reading.
 type Absorbance struct {
-	Reading     float64                `json:"Reading"`
-	Wavelength  wunit.Length           `json:"Wavelength"`
-	Pathlength  wunit.Length           `json:"Pathlength"`
-	Corrections []AbsorbanceCorrection `json:"Corrections"`
-	Reader      string                 `json:"Reader"`
-	ID          string                 `json:"ID"`
+	WellLocation WellCoords             `json:"WellCoords"`
+	Reading      float64                `json:"Reading"`
+	Wavelength   wunit.Length           `json:"Wavelength"`
+	Pathlength   wunit.Length           `json:"Pathlength"`
+	Corrections  []AbsorbanceCorrection `json:"Corrections"`
+	Reader       string                 `json:"Reader"`
+	ID           string                 `json:"ID"`
+	// Annotations is a field to add custom user labels
+	Annotations []string `json:"Annotations"`
+}
+
+// WavelengthToNearestNm will return the Wavelength field as an int.
+// Whilst it is possible that the wavelength used may be a decimal,
+// Wavelength would typically be expected to be in the form of an integer of the wavelength in nm.
+// In some platereader data sets this is stored as a float so this method is
+// intended to take the safest representation, as a float, and return the more
+// common representation, as an int, for parsers where it is known that the wavelength
+// is stored as an int.
+// This method would therefore not be safe to use for situations
+// where the wavelenWavelengthToNearestNm be represented by a decimal.
+//
+func (a Absorbance) WavelengthToNearestNm() int {
+	if uint64(toNM(a.Wavelength)) > math.MaxUint64 {
+		panic(errors.Errorf("the value for wavelength %f cannot be safely converted to an integer value", a.Wavelength))
+	}
+	return int(toNM(a.Wavelength))
+}
+
+func toNM(l wunit.Length) float64 {
+	return l.SIValue() * wunit.Nano.Value
 }
 
 type Reading interface {
@@ -69,6 +99,20 @@ type Reading interface {
 	CorrecttoRefStandard()
 }
 
+// Dup creates a duuplicate of the absorbance reading, with exact equality for all values.
+func (sample *Absorbance) Dup() *Absorbance {
+	return &Absorbance{
+		WellLocation: sample.WellLocation,
+		Reading:      sample.Reading,
+		Wavelength:   sample.Wavelength,
+		Pathlength:   sample.Pathlength,
+		Corrections:  append([]AbsorbanceCorrection{}, sample.Corrections...),
+		Reader:       sample.Reader,
+		ID:           sample.ID,
+		Annotations:  append([]string{}, sample.Annotations...),
+	}
+}
+
 // BlankCorrect subtracts the blank reading from the sample absorbance.
 // If the blank sample is not equivalent to the sample, based on wavelength and pathlength, an error is returned.
 func (sample *Absorbance) BlankCorrect(blank *Absorbance) error {
@@ -76,7 +120,6 @@ func (sample *Absorbance) BlankCorrect(blank *Absorbance) error {
 	if sample.Wavelength.EqualToRounded(blank.Wavelength, 9); sample.Pathlength.EqualToRounded(blank.Pathlength, 4) &&
 		sample.Reader == blank.Reader {
 		sample.Reading = sample.Reading - blank.Reading
-
 		sample.Corrections = append(sample.Corrections, AbsorbanceCorrection{Type: BlankCorrected, CorrectionReading: blank})
 		return nil
 	}
@@ -88,11 +131,8 @@ func (sample *Absorbance) BlankCorrect(blank *Absorbance) error {
 // 1cm is the pathlength used to normalise absorbance readings to OD.
 func (sample *Absorbance) PathLengthCorrect(pathlength wunit.Length) {
 
-	referencepathlength := wunit.NewLength(10, "mm")
-
-	sample.Reading = sample.Reading * referencepathlength.RawValue() / pathlength.RawValue()
+	sample.Reading = sample.Reading * ReferencePathlength.RawValue() / pathlength.RawValue()
 
 	sample.Corrections = append(sample.Corrections, AbsorbanceCorrection{Type: PathLengthCorrected, CorrectionReading: nil})
-
 	return
 }

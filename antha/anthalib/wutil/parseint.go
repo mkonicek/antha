@@ -26,11 +26,11 @@ import "strconv"
 import "strings"
 
 func ParseInt(str string) int {
-	i, _ := strconv.ParseInt(strings.Trim(str, " "), 10, 0)
+	i, _ := strconv.ParseInt(strings.Trim(str, " "), 10, 0) // nolint
 	return int(i)
 }
 
 func ParseFloat(str string) float64 {
-	f, _ := strconv.ParseFloat(strings.Trim(str, " "), 64)
+	f, _ := strconv.ParseFloat(strings.Trim(str, " "), 64) // nolint
 	return float64(f)
 }

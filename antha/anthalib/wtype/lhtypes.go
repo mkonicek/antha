@@ -25,14 +25,24 @@ package wtype
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
+type ChannelOrientation bool
+
 const (
-	LHVChannel = iota // vertical orientation
-	LHHChannel        // horizontal orientation
+	LHVChannel ChannelOrientation = iota%2 == 1 // vertical orientation
+	LHHChannel                                  // horizontal orientation
 )
+
+func (o ChannelOrientation) String() string {
+	if o == LHVChannel {
+		return "vertical"
+	}
+	return "horizontal"
+}
 
 // what constraints apply to adjacent channels
 type LHMultiChannelConstraint struct {
@@ -81,7 +91,7 @@ type LHChannelParameter struct {
 	Maxspd      wunit.FlowRate
 	Multi       int
 	Independent bool
-	Orientation int
+	Orientation ChannelOrientation
 	Head        int
 }
 
@@ -104,7 +114,7 @@ func (lhcp LHChannelParameter) VolumeLimitString() string {
 }
 
 func (lhcp LHChannelParameter) String() string {
-	return fmt.Sprintf("%s %s Minvol %s Maxvol %s Minspd %s Maxspd %s Multi %d Independent %t Ori %d Head %d", lhcp.Platform, lhcp.Name, lhcp.Minvol.ToString(), lhcp.Maxvol.ToString(), lhcp.Minspd.ToString(), lhcp.Maxspd.ToString(), lhcp.Multi, lhcp.Independent, lhcp.Orientation, lhcp.Head)
+	return fmt.Sprintf("%s %s Minvol %s Maxvol %s Minspd %s Maxspd %s Multi %d Independent %t Ori %v Head %d", lhcp.Platform, lhcp.Name, lhcp.Minvol.ToString(), lhcp.Maxvol.ToString(), lhcp.Minspd.ToString(), lhcp.Maxspd.ToString(), lhcp.Multi, lhcp.Independent, lhcp.Orientation, lhcp.Head)
 }
 
 // given the dimension of the plate, what is the constraint
@@ -143,7 +153,7 @@ func (lhcp LHChannelParameter) MarshalJSON() ([]byte, error) {
 		Maxspd      wunit.FlowRate
 		Multi       int
 		Independent bool
-		Orientation int
+		Orientation ChannelOrientation
 		Head        int
 	}{
 		lhcp.ID,
@@ -160,12 +170,26 @@ func (lhcp LHChannelParameter) MarshalJSON() ([]byte, error) {
 }
 
 func (lhcp *LHChannelParameter) Dup() *LHChannelParameter {
+	return lhcp.dup(false)
+}
+
+func (lhcp *LHChannelParameter) DupKeepIDs() *LHChannelParameter {
+	return lhcp.dup(true)
+}
+
+func (lhcp *LHChannelParameter) dup(keepIDs bool) *LHChannelParameter {
+	if lhcp == nil {
+		return nil
+	}
 	r := NewLHChannelParameter(lhcp.Name, lhcp.Platform, lhcp.Minvol, lhcp.Maxvol, lhcp.Minspd, lhcp.Maxspd, lhcp.Multi, lhcp.Independent, lhcp.Orientation, lhcp.Head)
+	if keepIDs {
+		r.ID = lhcp.ID
+	}
 
 	return r
 }
 
-func NewLHChannelParameter(name, platform string, minvol, maxvol wunit.Volume, minspd, maxspd wunit.FlowRate, multi int, independent bool, orientation int, head int) *LHChannelParameter {
+func NewLHChannelParameter(name, platform string, minvol, maxvol wunit.Volume, minspd, maxspd wunit.FlowRate, multi int, independent bool, orientation ChannelOrientation, head int) *LHChannelParameter {
 	var lhp LHChannelParameter
 	lhp.ID = GetUUID()
 	lhp.Name = name
@@ -267,7 +291,7 @@ type LHSolution struct {
 	Inst             string
 	SName            string
 	Order            int
-	Components       []*LHComponent
+	Components       []*Liquid
 	ContainerType    string
 	Welladdress      string
 	Plateaddress     string
@@ -334,98 +358,191 @@ func (lhs *LHSolution) GetAssignment() string {
 func New_Solution() *LHSolution {
 	var solution LHSolution
 	solution.ID = GetUUID()
-	solution.Components = make([]*LHComponent, 0, 4)
+	solution.Components = make([]*Liquid, 0, 4)
 	return &solution
 }
 
-// head
-type LHHead struct {
-	Name         string
-	Manufacturer string
-	ID           string
-	Adaptor      *LHAdaptor
-	Params       *LHChannelParameter
+type SequentialTipLoadingBehaviour int
+
+const (
+	//NoSequentialTipLoading tips are loaded all at once, an error is raised if not possible
+	NoSequentialTipLoading SequentialTipLoadingBehaviour = iota
+	//ForwardSequentialTipLoading chunks of contiguous tips are loaded sequentially in the order encountered
+	ForwardSequentialTipLoading
+	//ReverseSequentialTipLoading chunks of contiguous tips are loaded sequentially in reverse order
+	ReverseSequentialTipLoading
+)
+
+var sequentialTipLoadingBehaviourNames = map[SequentialTipLoadingBehaviour]string{
+	NoSequentialTipLoading:      "no sequential tip loading",
+	ForwardSequentialTipLoading: "forward sequential tip loading",
+	ReverseSequentialTipLoading: "reverse sequential tip loading",
 }
 
-func NewLHHead(name, mf string, params *LHChannelParameter) *LHHead {
-	var lhh LHHead
-	lhh.Manufacturer = mf
-	lhh.Name = name
-	lhh.Params = params
-	return &lhh
+func (s SequentialTipLoadingBehaviour) String() string {
+	return sequentialTipLoadingBehaviourNames[s]
 }
 
-func (head *LHHead) Dup() *LHHead {
-	h := NewLHHead(head.Name, head.Manufacturer, head.Params.Dup())
-	if head.Adaptor != nil {
-		h.Adaptor = head.Adaptor.Dup()
+//TipLoadingBehaviour describe the way in which tips are loaded
+type TipLoadingBehaviour struct {
+	//OverrideLoadTipsCommand true it the liquid handler will override which tips are loaded
+	OverrideLoadTipsCommand bool
+	//AutoRefillTipboxes are tipboxes automaticall refilled
+	AutoRefillTipboxes bool
+	//LoadingOrder are tips loaded ColumnWise or RowWise
+	LoadingOrder MajorOrder
+	//VerticalLoadingDirection the direction along which columns are loaded
+	VerticalLoadingDirection VerticalDirection
+	//HorizontalLoadingDirection the direction along which rows are loaded
+	HorizontalLoadingDirection HorizontalDirection
+	//ChunkingBehaviour how to load tips when the requested number aren't available contiguously
+	ChunkingBehaviour SequentialTipLoadingBehaviour
+}
+
+//String get a string description for debuggin
+func (s TipLoadingBehaviour) String() string {
+
+	autoRefill := ""
+	if !s.AutoRefillTipboxes {
+		autoRefill = "no "
 	}
 
-	return h
+	if !s.OverrideLoadTipsCommand {
+		return fmt.Sprintf("%sauto-refilling, no loading override", autoRefill)
+	}
+
+	return fmt.Sprintf("%sauto-refilling, loading order: %v, %v, %v, %v", autoRefill, s.LoadingOrder, s.VerticalLoadingDirection, s.HorizontalLoadingDirection, s.ChunkingBehaviour)
 }
 
-func (lhh *LHHead) GetParams() *LHChannelParameter {
-	if lhh.Adaptor == nil {
-		return lhh.Params
-	} else {
-		return lhh.Adaptor.GetParams()
+// LHHeadAssemblyPosition a position within a head assembly
+type LHHeadAssemblyPosition struct {
+	Offset Coordinates
+	Head   *LHHead
+}
+
+// VelocityRange the minimum and maximum velocities for the head assembly.
+// nil implies no limit
+type VelocityRange struct {
+	Min, Max *wunit.Velocity3D
+}
+
+// Dup return a copy of the range
+func (self *VelocityRange) Dup() *VelocityRange {
+	if self == nil {
+		return nil
+	}
+	return &VelocityRange{
+		Min: self.Min.Dup(),
+		Max: self.Max.Dup(),
 	}
 }
 
-// adaptor
-// TODO -- should be an array of loaded tips
-type LHAdaptor struct {
-	Name          string
-	ID            string
-	Manufacturer  string
-	Params        *LHChannelParameter
-	Ntipsloaded   int
-	Tiptypeloaded *LHTip
+//LHHeadAssembly represent a set of LHHeads which are constrained to move together
+type LHHeadAssembly struct {
+	Positions      []*LHHeadAssemblyPosition
+	MotionLimits   *BBox          //the limits on range of motion of the head assembly, nil if unspecified
+	VelocityLimits *VelocityRange // the range of valid velocities for the head, nil if unspecified
 }
 
-func NewLHAdaptor(name, mf string, params *LHChannelParameter) *LHAdaptor {
-	var lha LHAdaptor
-	lha.Name = name
-	lha.Manufacturer = mf
-	lha.Params = params
-	return &lha
+//NewLHHeadAssembly build a new head assembly
+func NewLHHeadAssembly(MotionLimits *BBox) *LHHeadAssembly {
+	ret := LHHeadAssembly{
+		Positions:    make([]*LHHeadAssemblyPosition, 0, 2),
+		MotionLimits: MotionLimits,
+	}
+	return &ret
 }
 
-func (lha *LHAdaptor) Dup() *LHAdaptor {
-	ad := NewLHAdaptor(lha.Name, lha.Manufacturer, lha.Params.Dup())
-	ad.Ntipsloaded = lha.Ntipsloaded
-	if !ad.Tiptypeloaded.IsNil() {
-		ad.Tiptypeloaded = lha.Tiptypeloaded.Dup()
+//DupWithoutHeads copy the headassembly leaving all positions in the new assembly unloaded
+func (self *LHHeadAssembly) DupWithoutHeads() *LHHeadAssembly {
+	ret := &LHHeadAssembly{
+		Positions:      make([]*LHHeadAssemblyPosition, 0, len(self.Positions)),
+		MotionLimits:   self.MotionLimits.Dup(),
+		VelocityLimits: self.VelocityLimits.Dup(),
+	}
+	for _, pos := range self.Positions {
+		ret.AddPosition(pos.Offset)
+	}
+	return ret
+}
+
+//AddPosition add a position to the head assembly with the given offset
+func (self *LHHeadAssembly) AddPosition(Offset Coordinates) {
+	p := LHHeadAssemblyPosition{
+		Offset: Offset,
+	}
+	self.Positions = append(self.Positions, &p)
+}
+
+//GetNumPositions get the number of positions added to the head assembly
+func (self *LHHeadAssembly) CountPositions() int {
+	return len(self.Positions)
+}
+
+//GetNumHeadsLoaded get the number of heads that are loaded into the assembly
+func (self *LHHeadAssembly) CountHeadsLoaded() int {
+	if self == nil {
+		return 0
 	}
 
-	return ad
-}
-
-func (lha *LHAdaptor) LoadTips(n int, tiptype *LHTip) bool {
-	if lha.Ntipsloaded > 0 {
-		return false
+	var r int
+	for _, pos := range self.Positions {
+		if pos.Head != nil {
+			r += 1
+		}
 	}
-
-	lha.Ntipsloaded = n
-	lha.Tiptypeloaded = tiptype
-	return true
+	return r
 }
 
-func (lha *LHAdaptor) UnloadTips() bool {
-	if lha.Ntipsloaded == 0 {
-		return false
+//GetLoadedHeads get an ordered slice of all the heads that have been loaded into the assembly
+func (self *LHHeadAssembly) GetLoadedHeads() []*LHHead {
+	if self == nil {
+		return make([]*LHHead, 0)
 	}
-
-	lha.Ntipsloaded = 0
-	lha.Tiptypeloaded = nil
-
-	return true
+	ret := make([]*LHHead, 0, len(self.Positions))
+	for _, pos := range self.Positions {
+		if pos.Head != nil {
+			ret = append(ret, pos.Head)
+		}
+	}
+	return ret
 }
 
-func (lha *LHAdaptor) GetParams() *LHChannelParameter {
-	if lha.Ntipsloaded == 0 {
-		return lha.Params
-	} else {
-		return lha.Params.MergeWithTip(lha.Tiptypeloaded)
+//LoadHead load a head into the next available position in the assembly, returns error if no positions
+//are available
+func (self *LHHeadAssembly) LoadHead(head *LHHead) error {
+	if self == nil {
+		return errors.New("cannot load head to nil assembly")
+	}
+	for _, pos := range self.Positions {
+		if pos.Head == nil {
+			pos.Head = head
+			return nil
+		}
+	}
+	return errors.New("cannot load head")
+}
+
+//UnloadHead unload a head from the assembly, return an error if the head is not loaded
+func (self *LHHeadAssembly) UnloadHead(head *LHHead) error {
+	if self == nil {
+		return nil
+	}
+	for _, pos := range self.Positions {
+		if pos.Head != nil && pos.Head.ID == head.ID {
+			pos.Head = head
+			return nil
+		}
+	}
+	return errors.New("cannot load head")
+}
+
+//UnloadAllHeads unload all heads from the assembly
+func (self *LHHeadAssembly) UnloadAllHeads() {
+	if self == nil {
+		return
+	}
+	for _, pos := range self.Positions {
+		pos.Head = nil
 	}
 }

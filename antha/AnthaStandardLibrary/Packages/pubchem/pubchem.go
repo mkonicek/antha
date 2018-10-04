@@ -95,6 +95,7 @@ func makeInputspec(domain string, namespace string, identifiers []string) (input
 	/*if operation_options != "" {
 		array = append(array,operation_options)
 	}*/
+
 	return inputspec
 }
 
@@ -204,7 +205,7 @@ func pugLookup(inputspec string, operationspec string, outputspec string, operat
 		return nil, err
 	}
 	if res != nil {
-		defer res.Body.Close()
+		defer res.Body.Close() // nolint
 	}
 
 	output, err := ioutil.ReadAll(res.Body)

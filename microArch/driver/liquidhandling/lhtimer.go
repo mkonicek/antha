@@ -1,49 +1,86 @@
 package liquidhandling
 
-import "time"
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"time"
+)
 
-// records timing info
-// preliminary implementation assumes all instructions of a given
-// type have the same timing, TimeFor is expressed in terms of the instruction
-// however so it will be possible to modify this behaviour in future
-
-type LHTimer struct {
-	Times []time.Duration
+// LHTimer provides timing for instructions
+type LHTimer interface {
+	TimeFor(r RobotInstruction) time.Duration
 }
 
-func NewTimer() *LHTimer {
-	var t LHTimer
-	t.Times = make([]time.Duration, 50)
-	return &t
+// deprecate this mess
+type OldLHTimer struct {
+	Times map[*InstructionType]time.Duration
 }
 
-func (t *LHTimer) TimeFor(r RobotInstruction) time.Duration {
-	var d time.Duration
-	if r.InstructionType() > 0 && r.InstructionType() < len(t.Times) {
-		d = t.Times[r.InstructionType()]
-		max := func(a []int) int {
-			m := a[0]
-			for i := 1; i < len(a); i++ {
-				if m < a[i] {
-					m = a[i]
-				}
-			}
-
-			return m
-		}
-		if r.InstructionType() == 34 { // MIX
-			// get cycles
-
-			prm := r.GetParameter("CYCLES")
-
-			cyc, ok := prm.([]int)
-
-			if ok {
-				d = time.Duration(int64(max(cyc)) * int64(d))
-			}
-		}
-
-	} else {
+func NewTimer() *OldLHTimer {
+	return &OldLHTimer{
+		Times: make(map[*InstructionType]time.Duration),
 	}
+}
+
+func (t *OldLHTimer) TimeFor(r RobotInstruction) time.Duration {
+	d := t.Times[r.Type()]
+	r.Visit(RobotInstructionBaseVisitor{
+		HandleMix: func(mix *MixInstruction) {
+			cyc := mix.Cycles
+			max := func(ds []int) int {
+				res := 0
+				for _, elem := range ds {
+					if elem > res {
+						res = elem
+					}
+				}
+				return res
+			}
+			d = time.Duration(int64(max(cyc)) * int64(d))
+		},
+	})
+
 	return d
+}
+
+type highLeveltimer struct {
+	name     string
+	model    string
+	flowRate float64 // nl/s
+	moveRate float64 // secs/well
+	scanRate float64 // secs/well
+}
+
+func (hlt highLeveltimer) TimeFor(ins RobotInstruction) time.Duration {
+	var totaltime float64
+
+	if ins.Type() == TFR {
+		tfr := ins.(*TransferInstruction)
+		lastFrom := wtype.WellCoords{}
+		lastTo := wtype.WellCoords{}
+		for _, mt := range tfr.Transfers {
+			for _, t := range mt.Transfers {
+				wcF := wtype.MakeWellCoords(t.WellFrom)
+				wcT := wtype.MakeWellCoords(t.WellTo)
+				totaltime += (manhattan(wcF, lastFrom) + manhattan(wcT, lastTo)) * hlt.moveRate // time to move plates
+				totaltime += t.Volume.ConvertToString("nl") / hlt.flowRate                      // time to do fluid transfer
+				totaltime += hlt.scanRate                                                       // time to scan src well
+
+			}
+		}
+	}
+
+	return time.Duration(int64(wutil.RoundInt(totaltime)) * 1000000000)
+}
+
+func manhattan(a, b wtype.WellCoords) float64 {
+	return float64(absI(a.X-b.X) + absI(a.Y-b.Y))
+}
+
+func absI(i int) int {
+	if i < 0 {
+		return -i
+	}
+
+	return i
 }

@@ -1,0 +1,121 @@
+syntax = "proto3";
+
+package antha.quantstudio.v1;
+
+service QuantStudioService {
+  // Base QS API
+  rpc RunExperiment(ExperimentRequest) returns (OptionalError);
+  rpc RunExperimentFromTemplate(TemplatedRequest) returns (OptionalError);
+  rpc RunExperimentNonblocking(ExperimentRequest) returns (OptionalError);
+  rpc RunExperimentFromTemplateNonblocking(TemplatedRequest)
+      returns (OptionalError);
+  rpc OpenTray(SessionInstrument) returns (OptionalError);
+  rpc CloseTray(SessionInstrument) returns (OptionalError);
+  rpc IsTrayIn(SessionInstrument) returns (BoolOrError);
+  rpc StartSession(Credentials) returns (SessionOrError);
+  rpc EndSession(Session) returns (OptionalError);
+  rpc GetBlockType(SessionInstrument) returns (BlockTypeOrError);
+  rpc GetInstrumentState(SessionInstrument) returns (StatusOrError);
+  rpc StopCurrentExperiment(SessionInstrument) returns (OptionalError);
+}
+
+message Blank {}
+
+message SessionOrError {
+  oneof reply {
+    Session session = 1;
+    Error error = 2;
+    Blank blank = 3;
+  }
+}
+
+message ExperimentFile { string url = 1; }
+
+message Barcode { string barcode = 1; }
+
+enum ErrorCode {
+  UNINITIALIZED = 0;
+  SESSION_INVALID = 1;
+  SESSION_EXISTING = 2;
+  AUTHENTICATION_FAILURE = 3;
+  USER_ACCOUNT_DISABLED = 4;
+  PASSWORD_EXPIRED = 5;
+  INSTRUMENT_UNKNOWN = 6;
+  INSTRUMENT_NOT_CONNECTED = 7;
+  INSTRUMENT_READY = 8;
+  INSTRUMENT_RUNNING = 9;
+  INSTRUMENT_PAUSED = 10;
+  INSTRUMENT_IN_ERROR = 11;
+  INSTRUMENT_FAIL_TO_START = 12;
+  INSTRUMENT_TRAY_OPENED = 13;
+  INSTRUMENT_TRAY_CLOSED = 14;
+  EXPERIMENT_NOT_FOUND = 15;
+  EXPERIMENT_READ_ERROR = 16;
+  EXPERIMENT_WRITE_ERROR = 17;
+  EXPERIMENT_VALIDATION_ERROR = 18;
+}
+
+enum BlockType {
+  ERROR = 0;
+  ARRAY_CARD_SAMPLE = 7;
+  WELL_384_20uL = 8;
+  WELL_96_100uL = 9;
+  WELL_96_200uL = 10;
+}
+
+message BlockTypeOrError {
+  oneof maybe_block_type {
+    BlockType block_type = 1;
+    Error error = 2;
+  }
+}
+
+message Error { ErrorCode code = 1; }
+
+message OptionalError {
+  oneof maybe_error {
+    Blank blank = 1;
+    ErrorCode error = 2;
+  }
+}
+
+message StatusOrError {
+  oneof maybe_status {
+    ErrorCode status = 1;
+    ErrorCode error = 2;
+  }
+}
+
+message ExperimentRequest {
+  SessionInstrument session_instrument = 1;
+  ExperimentFile experiment_file = 2;
+  Barcode barcode = 3;
+}
+
+message TemplatedRequest {
+  SessionInstrument session_instrument = 1;
+  ExperimentFile template_file = 2;
+  Barcode barcode = 3;
+  string output_path = 4;
+}
+
+message BoolOrError {
+  oneof maybe_bool {
+    bool result = 1;
+    ErrorCode error = 2;
+  }
+}
+
+message Session { string id = 1; }
+
+message Instrument { string id = 2; }
+
+message SessionInstrument {
+  Session session = 1;
+  Instrument instrument = 2;
+}
+
+message Credentials {
+  string user = 1;
+  string password = 2;
+}

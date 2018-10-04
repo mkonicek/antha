@@ -1,121 +1,13 @@
 package wtype
 
-import (
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
-	"reflect"
-)
-
-func CopyComponentArray(arin []*LHComponent) []*LHComponent {
-	r := make([]*LHComponent, len(arin))
+func CopyComponentArray(arin []*Liquid) []*Liquid {
+	r := make([]*Liquid, len(arin))
 
 	for i, v := range arin {
 		r[i] = v.Dup()
 	}
 
 	return r
-}
-
-// are tips going to align to wells?
-func TipsWellsAligned(prm LHChannelParameter, plt LHPlate, wellsfrom []string) bool {
-	// heads which can do independent multichanneling are dealt with separately
-
-	if prm.Independent {
-		return disContiguousTipsWellsAligned(prm, plt, wellsfrom)
-	} else {
-		return contiguousTipsWellsAligned(prm, plt, wellsfrom)
-	}
-}
-
-func disContiguousTipsWellsAligned(prm LHChannelParameter, plt LHPlate, wellsfrom []string) bool {
-	// inflate wellsfrom to full multichannel size
-	fullWellsFrom, ok := expandWellsFrom(prm.Orientation, plt, wellsfrom)
-
-	// not in right orientation, not in single column etc. etc
-	if !ok {
-		return false
-	}
-
-	// get the wells pointed at by the channels
-
-	channelWells := ChannelWells(prm, plt, fullWellsFrom)
-
-	// now does this work?
-
-	return reflect.DeepEqual(channelWells, fullWellsFrom)
-}
-
-func isInArr(s string, sa []string) bool {
-	for _, ss := range sa {
-		if ss == s {
-			return true
-		}
-	}
-
-	return false
-}
-
-func expandWellsFrom(orientation int, plt LHPlate, wellsfrom []string) ([]string, bool) {
-	wcArr := WCArrayFromStrings(wellsfrom)
-
-	var wells []*LHWell
-
-	// get column or row
-
-	switch orientation {
-	case LHHChannel:
-		wc := WCArrayRows(wcArr)
-		if len(wc) != 1 {
-			return []string{}, false
-		}
-
-		rowIndex := wc[0]
-
-		if rowIndex < 0 || rowIndex >= len(plt.Rows) {
-			return []string{}, false
-		}
-
-		wells = plt.Rows[rowIndex]
-
-	case LHVChannel:
-		wc := WCArrayCols(wcArr)
-		if len(wc) != 1 {
-			return []string{}, false
-		}
-
-		colIndex := wc[0]
-
-		if colIndex < 0 || colIndex >= len(plt.Cols) {
-			return []string{}, false
-		}
-
-		wells = plt.Cols[colIndex]
-
-	default:
-		return []string{}, false
-	}
-
-	WCs := A1ArrayFromWells(wells)
-
-	ret := make([]string, len(WCs))
-
-	for i := 0; i < len(WCs); i++ {
-		if isInArr(WCs[i], wellsfrom) {
-			ret[i] = WCs[i]
-		}
-	}
-
-	return ret, true
-}
-
-func contiguousTipsWellsAligned(prm LHChannelParameter, plt LHPlate, wellsfrom []string) bool {
-	// 1) find well coords for channels given parameters
-	// 2) compare to wells requested
-
-	channelwells := ChannelWells(prm, plt, wellsfrom)
-
-	// only works if all are filled
-
-	return wutil.StringArrayEqual(channelwells, wellsfrom)
 }
 
 func ChannelsUsed(wf []string) []bool {
@@ -130,7 +22,7 @@ func ChannelsUsed(wf []string) []bool {
 	return ret
 }
 
-func ChannelWells(prm LHChannelParameter, plt LHPlate, wellsfrom []string) []string {
+func ChannelWells(prm LHChannelParameter, plt Plate, wellsfrom []string) []string {
 	channelsused := ChannelsUsed(wellsfrom)
 
 	firstwell := ""
@@ -177,7 +69,7 @@ func ChannelWells(prm LHChannelParameter, plt LHPlate, wellsfrom []string) []str
 	return tipwells
 }
 
-func TipsPerWell(prm LHChannelParameter, p LHPlate) (int, int) {
+func TipsPerWell(prm LHChannelParameter, p Plate) (int, int) {
 	// assumptions:
 
 	// 1) sbs format plate
@@ -201,8 +93,6 @@ func TipsPerWell(prm LHChannelParameter, p LHPlate) (int, int) {
 			panic("Unsupported H head format (must be 12)")
 		}
 		nwells = p.WellsX()
-	} else {
-		// empty
 	}
 
 	// how many  tips fit into one well

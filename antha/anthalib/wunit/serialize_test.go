@@ -25,9 +25,66 @@ package wunit
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"reflect"
 	"testing"
 )
+
+// measurementsEqual returns true if the measurements are equal,
+// unlike lhs.EqualTo(rhs) treats NaN == NaN, +Inf == +Inf, -Inf == -Inf as true
+func measurementsEqual(lhs, rhs Measurement) bool {
+	if lhs.EqualTo(rhs) {
+		return true
+	} else if lhs.Unit().PrefixedSymbol() == rhs.Unit().PrefixedSymbol() {
+		return ((math.IsNaN(lhs.RawValue()) && math.IsNaN(rhs.RawValue())) ||
+			(math.IsInf(lhs.RawValue(), 1) && math.IsInf(rhs.RawValue(), 1)) ||
+			(math.IsInf(lhs.RawValue(), -1) && math.IsInf(rhs.RawValue(), -1)))
+	}
+	return false
+}
+
+func serializationTest(t *testing.T, input string, expected, output Measurement) {
+	t.Run(input, func(t *testing.T) {
+		if err := json.Unmarshal([]byte("\""+input+"\""), output); err != nil {
+			t.Error(err)
+		} else if !measurementsEqual(expected, output) {
+			t.Errorf("deserialised measurement not as expected:\ne: %v\ng: %v", expected, output)
+		} else if bs, err := json.Marshal(output); err != nil {
+			t.Error(err)
+		} else if err := json.Unmarshal(bs, &output); err != nil {
+			t.Error(err)
+		} else if !measurementsEqual(expected, output) {
+			t.Errorf("serialised measurement was deserialised incorrectly:e: %v\ng: %v", expected, output)
+		}
+	})
+}
+
+func TestConcentrationSerialization(t *testing.T) {
+	for _, unit := range GetGlobalUnitRegistry().ListValidUnitsForType("Concentration") {
+		for _, value := range []float64{-5.91209102398, 0.0, 1.123131231231e58, math.Inf(+1), math.Inf(-1), math.NaN()} {
+			serializationTest(t, fmt.Sprintf("%g %s", value, unit), NewConcentration(value, unit), &Concentration{})
+			serializationTest(t, fmt.Sprintf("%g%s", value, unit), NewConcentration(value, unit), &Concentration{})
+		}
+	}
+}
+
+func TestMassSerialization(t *testing.T) {
+	for _, unit := range GetGlobalUnitRegistry().ListValidUnitsForType("Mass") {
+		for _, value := range []float64{-5.91209102398, 0.0, 1.123131231231e58} {
+			serializationTest(t, fmt.Sprintf("%g %s", value, unit), NewMass(value, unit), &Mass{})
+			serializationTest(t, fmt.Sprintf("%g%s", value, unit), NewMass(value, unit), &Mass{})
+		}
+	}
+}
+
+func TestTimeSerialization(t *testing.T) {
+	for _, unit := range GetGlobalUnitRegistry().ListValidUnitsForType("Time") {
+		for _, value := range []float64{-5.91209102398, 0.0, 1.123131231231e58} {
+			serializationTest(t, fmt.Sprintf("%g %s", value, unit), NewTime(value, unit), &Time{})
+			serializationTest(t, fmt.Sprintf("%g%s", value, unit), NewTime(value, unit), &Time{})
+		}
+	}
+}
 
 func TestVolumeMarshal(t *testing.T) {
 	var v Volume
@@ -57,8 +114,6 @@ func TestVolumeMarshal(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(v, v3) {
-		fmt.Println(v.ToString())
-		fmt.Println(v3.ToString())
 		t.Fatalf("volumes not equal, expecting %v, got %v", v, v3)
 	}
 }

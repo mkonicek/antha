@@ -24,6 +24,7 @@ package liquidhandling
 
 import (
 	"fmt"
+
 	"github.com/Synthace/go-glpk/glpk"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -31,7 +32,7 @@ import (
 	//"github.com/antha-lang/antha/microArch/logger"
 )
 
-func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_types []*wtype.LHPlate, weight_constraint map[string]float64) map[string]map[*wtype.LHPlate]int {
+func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_types []*wtype.Plate, weight_constraint map[string]float64) map[string]map[*wtype.Plate]int {
 
 	//
 	//	optimization is set up as follows:
@@ -56,7 +57,7 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 
 	// defense
 
-	ppt := make([]*wtype.LHPlate, 0, len(plate_types))
+	ppt := make([]*wtype.Plate, 0, len(plate_types))
 	h := make(map[string]bool, len(plate_types))
 
 	for _, p := range plate_types {
@@ -96,7 +97,7 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 	// volume constraints
 	for cmp, vol := range component_volumes {
 		component_order[cur-1] = cmp
-		v := vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
+		v := vol.ConvertToString("ul")
 		lp.SetRowBnds(cur, glpk.LO, v, 9999999999999.0)
 		cur += 1
 	}
@@ -117,7 +118,7 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 	//debug
 	fmt.Println("Autoallocate: Max_n_wells: ", max_n_wells)
 	lp.SetRowBnds(cur, glpk.UP, -99999.0, max_n_wells)
-	cur += 1
+	cur += 1 // nolint
 	fmt.Println("Autoallocate: Residual volume weight: ", weight_constraint["RESIDUAL_VOLUME_WEIGHT"])
 
 	// set up the matrix columns
@@ -130,7 +131,7 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 		for _, plate := range plate_types {
 			// set up objective coefficient, column name and lower bound
 			rv := plate.Welltype.ResidualVolume()
-			coef := rv.ConvertTo(wunit.ParsePrefixedUnit("ul"))*float64(weight_constraint["RESIDUAL_VOLUME_WEIGHT"]) + 1.0
+			coef := rv.ConvertToString("ul")*float64(weight_constraint["RESIDUAL_VOLUME_WEIGHT"]) + 1.0
 			lp.SetObjCoef(cur, coef)
 			lp.SetColName(cur, component+"_"+plate.Type)
 			lp.SetColBnds(cur, glpk.LO, 0.0, 0.0)
@@ -146,7 +147,7 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 
 	ind := wutil.Series(0, num_cols)
 
-	for c, _ := range component_order {
+	for c := range component_order {
 		row := make([]float64, num_cols+1)
 		col := 0
 		for i := 0; i < len(component_order); i++ {
@@ -158,7 +159,7 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 					vol := plate_types[j].Welltype.MaxVolume()       //wunit.NewVolume(plate_types[j].Welltype.Vol, plate_types[j].Welltype.Vunit)
 					rvol := plate_types[j].Welltype.ResidualVolume() //wunit.NewVolume(plate_types[j].Welltype.Rvol, plate_types[j].Welltype.Vunit)
 					vol.Subtract(&rvol)
-					vc = vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
+					vc = vol.ConvertToString("ul")
 					//debug
 				}
 				row[col+1] = vc
@@ -208,17 +209,19 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 
 	iocp := glpk.NewIocp()
 	iocp.SetPresolve(true)
-	//debug
 	iocp.SetMsgLev(0)
-	lp.Intopt(iocp)
+	err := lp.Intopt(iocp)
+	if err != nil {
+		panic(err)
+	}
 
-	assignments := make(map[string]map[*wtype.LHPlate]int, len(component_volumes))
+	assignments := make(map[string]map[*wtype.Plate]int, len(component_volumes))
 
 	cur = 1
 
 	for i := 0; i < len(component_order); i++ {
 		nAss := 0
-		cmap := make(map[*wtype.LHPlate]int)
+		cmap := make(map[*wtype.Plate]int)
 		for j := 0; j < len(plate_types); j++ {
 			nwells := lp.MipColVal(cur)
 			if nwells > 0 {

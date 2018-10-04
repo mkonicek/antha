@@ -54,7 +54,7 @@ func (a *Command) NodeString() string {
 // A UseComp is a use of a liquid component
 type UseComp struct {
 	From  []Node
-	Value *wtype.LHComponent
+	Value *wtype.Liquid
 }
 
 // NodeString implements graph pretty printing
@@ -102,21 +102,6 @@ func (a *Graph) NumNodes() int {
 // Node implements a Graph
 func (a *Graph) Node(i int) graph.Node {
 	return a.Nodes[i]
-}
-
-// matching returns a subset of nodes that match the predicate
-func matching(pred func(Node) bool, nodes ...Node) (r []Node) {
-	for _, n := range nodes {
-		if !pred(n) {
-			continue
-		}
-		r = append(r, n)
-	}
-	return
-}
-
-func notNil(n Node) bool {
-	return n != nil
 }
 
 func setOut(n Node, i, deps int, x Node) {
@@ -233,4 +218,45 @@ func Deps(roots []Node) graph.Graph {
 			return root[n]
 		},
 	})
+}
+
+// FindReachingCommands returns the set of commands that have a path to the
+// given nodes without any intervening commands.
+func FindReachingCommands(nodes []Node) []*Command {
+	g := ToGraph(ToGraphOpt{Roots: nodes, WhichDeps: DataDeps})
+
+	var cmds []*Command
+	var queue []graph.Node
+
+	// Add immediate children to queue
+	for _, node := range nodes {
+		for i := 0; i < g.NumOuts(node); i++ {
+			queue = append(queue, g.Out(node, i))
+		}
+	}
+
+	// Breath-first search on queue
+	seen := make(map[graph.Node]bool)
+	for len(queue) > 0 {
+		node := queue[0]
+		queue = queue[1:]
+
+		// Check if we've been here before
+		if seen[node] {
+			continue
+		}
+		seen[node] = true
+
+		cmd, ok := node.(*Command)
+		if ok {
+			// Found a command, stop here
+			cmds = append(cmds, cmd)
+		} else {
+			// Keep looking
+			for i := 0; i < g.NumOuts(node); i++ {
+				queue = append(queue, g.Out(node, i))
+			}
+		}
+	}
+	return cmds
 }

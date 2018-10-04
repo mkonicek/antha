@@ -52,10 +52,10 @@ func TestTypeSugaring(t *testing.T) {
 
 	ast.Inspect(expr, antha.inspectTypes)
 	var buf1, buf2 bytes.Buffer
-	if err := compiler.Fprint(&buf1, fset, expr); err != nil {
+	if _, err := compiler.Fprint(&buf1, fset, expr); err != nil {
 		t.Fatal(err)
 	}
-	if err := compiler.Fprint(&buf2, fset, desired); err != nil {
+	if _, err := compiler.Fprint(&buf2, fset, desired); err != nil {
 		t.Fatal(err)
 	}
 	if !bytes.Equal(buf1.Bytes(), buf2.Bytes()) {
@@ -72,11 +72,11 @@ func TestRelativeToGoPath(t *testing.T) {
 	}
 
 	cases := []TestCase{
-		TestCase{GoPath: []string{"/xx"}, Name: "/xx/file", Expected: "file"},
-		TestCase{GoPath: []string{"/xx"}, Name: "file", Expected: "file"},
-		TestCase{GoPath: []string{"/noxx"}, Name: "/xx/file", Expected: "/xx/file"},
-		TestCase{GoPath: []string{"/xx", "/xx/deeper"}, Name: "/xx/file", Expected: "file"},
-		TestCase{GoPath: []string{"/xx", "/xx/deeper"}, Name: "/xx/deeper/file", Expected: "file"},
+		{GoPath: []string{"/xx"}, Name: "/xx/file", Expected: "file"},
+		{GoPath: []string{"/xx"}, Name: "file", Expected: "file"},
+		{GoPath: []string{"/noxx"}, Name: "/xx/file", Expected: "/xx/file"},
+		{GoPath: []string{"/xx", "/xx/deeper"}, Name: "/xx/file", Expected: "file"},
+		{GoPath: []string{"/xx", "/xx/deeper"}, Name: "/xx/deeper/file", Expected: "file"},
 	}
 
 	for idx, c := range cases {

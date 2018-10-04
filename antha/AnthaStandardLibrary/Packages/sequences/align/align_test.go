@@ -3,6 +3,7 @@ package align
 
 import (
 	"fmt"
+	"strings"
 
 	"testing"
 
@@ -22,7 +23,7 @@ type alignmentTest struct {
 
 var (
 	tests []alignmentTest = []alignmentTest{
-		alignmentTest{
+		{
 			Name: "Test1",
 			Seq1: wtype.DNASequence{
 				Nm:  "Seq1",
@@ -38,7 +39,7 @@ var (
 			AlignmentStartPos: 4,
 			AlignmentEndPos:   10,
 		},
-		alignmentTest{
+		{
 			Name: "Test2",
 			Seq1: wtype.DNASequence{
 				Nm:  "Seq3",
@@ -54,7 +55,7 @@ var (
 			AlignmentStartPos: 1,
 			AlignmentEndPos:   7,
 		},
-		alignmentTest{
+		{
 			Name: "Test3",
 			Seq1: wtype.DNASequence{
 				Nm:  "Seq5",
@@ -70,7 +71,7 @@ var (
 			AlignmentStartPos: 14,
 			AlignmentEndPos:   20,
 		},
-		alignmentTest{
+		{
 			Name: "TerminatorAlignmentCorrect",
 			Seq1: wtype.DNASequence{
 				Nm:  "SequencingResult",
@@ -86,7 +87,7 @@ var (
 			AlignmentStartPos: 0,
 			AlignmentEndPos:   0,
 		},
-		alignmentTest{
+		{
 			Name: "MismatchingAlignmentReverse",
 			Seq1: wtype.DNASequence{
 				Nm:  "TemplateSequence",
@@ -102,7 +103,7 @@ var (
 			AlignmentStartPos: 0,
 			AlignmentEndPos:   0,
 		},
-		alignmentTest{
+		{
 			Name: "plasmidAlignmentTest",
 			Seq1: wtype.DNASequence{
 				Nm:      "Seq3Plasmid",
@@ -119,7 +120,7 @@ var (
 			AlignmentStartPos: 17,
 			AlignmentEndPos:   7,
 		},
-		alignmentTest{
+		{
 			Name: "plasmidAlignmentTest2",
 			Seq1: wtype.DNASequence{
 				Nm:      "Seq3Plasmid",
@@ -136,7 +137,7 @@ var (
 			AlignmentStartPos: 1,
 			AlignmentEndPos:   9,
 		},
-		alignmentTest{
+		{
 			Name: "revTest",
 			Seq1: wtype.DNASequence{
 				Nm:      "Seq3Plasmid",
@@ -153,7 +154,7 @@ var (
 			AlignmentStartPos: 9,
 			AlignmentEndPos:   1,
 		},
-		alignmentTest{
+		{
 			Name: "plasmidRevTest",
 			Seq1: wtype.DNASequence{
 				Nm:      "Seq3Plasmid",
@@ -187,6 +188,23 @@ var (
 			},*/
 	}
 )
+
+// the biogo implementation of alignment requires the N nucleotides to be replaced with -
+func replaceN(seq wtype.DNASequence) wtype.DNASequence {
+
+	var newSeq []string
+
+	for _, letter := range seq.Seq {
+		if strings.ToUpper(string(letter)) == "N" {
+			letter = rune('-')
+		}
+		newSeq = append(newSeq, string(letter))
+	}
+
+	seq.Seq = strings.Join(newSeq, "")
+
+	return seq
+}
 
 // Align two dna sequences based on a specified scoring matrix
 func TestAlign(t *testing.T) {

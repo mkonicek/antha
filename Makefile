@@ -20,46 +20,21 @@ test: build
 # Parallelize with xargs because jamming everything into gometalinter is flaky
 # wrt to deadlines
 lint: test
-	mkdir -p .build
-	go list ./... | sed 1d \
-	  | grep -v /api/v1 \
-	  | grep -v /antha/ast \
-	  | grep -v /antha/token \
-	  | grep -v /driver \
-	  | grep -v /antha/AnthaStandardLibrary/Packages/asset \
-	  \
-	  | grep -v /antha/AnthaStandardLibrary/Packages/Optimization \
-	  | grep -v /antha/AnthaStandardLibrary/Packages/Labware \
-	  | grep -v /antha/AnthaStandardLibrary/Packages/Liquidclasses \
-	  | grep -v /antha/AnthaStandardLibrary/Packages/Parser \
-	  | grep -v /antha/AnthaStandardLibrary/Packages/UnitOperations \
-	  | grep -v /antha/AnthaStandardLibrary/Packages/setpoints \
-	  | grep -v /antha/AnthaStandardLibrary/Packages/buffers \
-	  | grep -v /antha/AnthaStandardLibrary/Packages/devices \
-	  | grep -v /antha/AnthaStandardLibrary/Packages/doe \
-	  | grep -v /antha/AnthaStandardLibrary/Packages/download \
-	  | grep -v /antha/AnthaStandardLibrary/Packages/eng \
-	  | grep -v /antha/AnthaStandardLibrary/Packages/igem \
-	  | grep -v /antha/AnthaStandardLibrary/Packages/pcr \
-	  | grep -v /antha/AnthaStandardLibrary/Packages/platereader \
-	  | grep -v /antha/AnthaStandardLibrary/Packages/pubchem \
-	  | grep -v /antha/AnthaStandardLibrary/Packages/sequences \
-	  | grep -v /antha/AnthaStandardLibrary/Packages/solutions \
-	  | grep -v /antha/anthalib/material \
-	  | grep -v /antha/inventory/testinventory \
-	  | grep -v /microArch \
-	  | grep -v /wtype \
-	  | grep -v /wunit \
-	  | grep -v /wutil \
-	  | sed -e 's|^$(PKG)|.|' \
-	  | tee .build/linted-dirs \
-	  | xargs -n 1 -P 2 $(XARGS_HAS_VERBOSE) -- gometalinter \
-	    --concurrency=2 \
-	    --enable-gc \
-	    --enable=staticcheck \
-	    --disable=gocyclo --disable=vetshadow --disable=aligncheck \
-	    --disable=gotype --disable=maligned \
-	    --deadline=5m
+	gometalinter \
+		--disable-all \
+		--enable=errcheck \
+		--enable=vet \
+		--enable=gosec \
+		--enable=deadcode \
+		--enable=ineffassign \
+		--enable=megacheck \
+		--enable=gofmt \
+		--enable-gc \
+		--deadline=5m \
+		-e 'driver/(pb/)?lh.*unkeyed' \
+		-e '\.pb\.go' \
+		-e 'usr/local/Cellar/go/*' \
+		./...
 
 docker-build: .build/antha-build-image .build/antha-build-withdeps-image
 

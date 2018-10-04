@@ -4,10 +4,10 @@ import "testing"
 
 func TestTreeReaches(t *testing.T) {
 	g := MakeTestGraph(map[string][]string{
-		"root": []string{"a", "b"},
-		"a":    []string{"c", "d"},
-		"b":    []string{"e"},
-		"e":    []string{"f", "g"},
+		"root": {"a", "b"},
+		"a":    {"c", "d"},
+		"b":    {"e"},
+		"e":    {"f", "g"},
 	})
 
 	expected := map[string]int{
@@ -36,9 +36,9 @@ func TestTreeReaches(t *testing.T) {
 
 func TestLoopReaches(t *testing.T) {
 	g := MakeTestGraph(map[string][]string{
-		"a": []string{"b"},
-		"b": []string{"c"},
-		"c": []string{"a"},
+		"a": {"b"},
+		"b": {"c"},
+		"c": {"a"},
 	})
 
 	expected := map[string]int{

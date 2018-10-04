@@ -37,18 +37,18 @@ import (
 type Option string
 
 const (
-	// Force overwriting of Order Details of a wtype.LHComponent in the SetOrderInfo function.
+	// Force overwriting of Order Details of a wtype.Liquid in the SetOrderInfo function.
 	ForceUpdate Option = "FORCEUPDATE"
 )
 
-// Key to look up order details from a wtype.LHComponent.
+// Key to look up order details from a wtype.Liquid.
 const OrderDetails = "ORDERDETAILS"
 
 var (
 	errNotFound = errors.New("no order info found")
 )
 
-// Details stores the order details of a wtype.LHComponent
+// Details stores the order details of a wtype.Liquid
 type Details struct {
 
 	// Name of Manufacturer.
@@ -85,11 +85,38 @@ type StorageConditions struct {
 
 // String returns a summary of any storage restrictions.
 func (s StorageConditions) String() string {
-	return fmt.Sprintf("%+v", s)
+	var sensitive []string
+	var notSensitive []string
+
+	names := map[string]bool{
+		"light":       s.LightSensitive,
+		"moisture":    s.MoistureSensistive,
+		"oxygen":      s.OxygenSensistive,
+		"freeze/thaw": s.FreezeThawSensitive,
+	}
+
+	for name, s := range names {
+		if s {
+			sensitive = append(sensitive, name)
+		} else {
+			notSensitive = append(notSensitive, name)
+		}
+	}
+
+	sensitivities := ""
+	if len(sensitive) > 0 {
+		sensitivities = fmt.Sprintf(", sensitive to %s", strings.Join(sensitive, ", "))
+	}
+	insensitivities := ""
+	if len(notSensitive) > 0 {
+		insensitivities = fmt.Sprintf(", not sensitive to %s", strings.Join(notSensitive, ", "))
+	}
+
+	return fmt.Sprintf("Temperature Range: [%v - %v]%s%s.", s.MinTemp, s.MaxTemp, sensitivities, insensitivities)
 }
 
 // GetOrderDetails returns order Details for a component.
-func GetOrderDetails(comp *wtype.LHComponent) (orderDetails Details, err error) {
+func GetOrderDetails(comp *wtype.Liquid) (orderDetails Details, err error) {
 
 	order, found := comp.Extra[OrderDetails]
 
@@ -113,10 +140,10 @@ func GetOrderDetails(comp *wtype.LHComponent) (orderDetails Details, err error) 
 	return
 }
 
-// SetOrderDetails adds order details to a wtype.LHComponent.
+// SetOrderDetails adds order details to a wtype.Liquid.
 // An error will be returned if order details are already encountered unless the ForceUpdate option is used as an Option argument in the function.
 // In which case any existing order details will be overwritten.
-func SetOrderDetails(comp *wtype.LHComponent, orderDetails Details, options ...Option) (*wtype.LHComponent, error) {
+func SetOrderDetails(comp *wtype.Liquid, orderDetails Details, options ...Option) (*wtype.Liquid, error) {
 
 	// look for existing order details
 	existingDetails, err := GetOrderDetails(comp)

@@ -1,8 +1,11 @@
 package liquidhandling
 
 import (
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"testing"
+
+	"github.com/antha-lang/antha/antha/anthalib/mixer"
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
 func TestTGraph(t *testing.T) {
@@ -13,13 +16,16 @@ func TestTGraph(t *testing.T) {
 	for k := 0; k < 10; k++ {
 		ins := wtype.NewLHMixInstruction()
 		cmpOut := wtype.NewLHComponent()
-		ins.AddComponent(cmpIn)
-		ins.AddProduct(cmpOut)
+		ins.AddInput(cmpIn)
+		ins.AddOutput(cmpOut)
 		tIns = append(tIns, ins)
 		cmpIn = cmpOut
 	}
 
-	tgraph := MakeTGraph(tIns)
+	tgraph, err := MakeTGraph(tIns)
+	if err != nil {
+		t.Error(err)
+	}
 
 	arrEq := func(ar1 []*wtype.LHInstruction, ar2 []*wtype.LHInstruction) bool {
 		if len(ar1) != len(ar2) {
@@ -40,12 +46,87 @@ func TestTGraph(t *testing.T) {
 	}
 
 	if tgraph.NumNodes() != 10 {
-		t.Errorf("NumNodes should report 10, instead reports %d", tgraph.NumNodes)
+		t.Errorf("NumNodes should report 10, instead reports %d", tgraph.NumNodes())
 	}
 
 	// edge check... we should have 9->8->7->6->5
 
 	for k := 9; k >= 1; k-- {
+		expect := tgraph.Node(k - 1)
+		got := tgraph.Out(tgraph.Node(k), 0)
+
+		if expect != got {
+			t.Errorf("this graph should be a chain - failed between nodes %d %d", k, k-1)
+		}
+	}
+}
+
+// TestTGraphSplit checks whether split instructions are working correctly
+// these are sorted so that they occur after use of their first return and
+// before the use of their second - this is because they update the ID of their
+// input component
+func TestTGraphSplit(t *testing.T) {
+	tIns := make([]*wtype.LHInstruction, 0, 3)
+
+	cmpIn := wtype.NewLHComponent()
+	moving, remaining := mixer.SplitSample(cmpIn, wunit.NewVolume(100.0, "ul"))
+
+	cmpOut := wtype.NewLHComponent()
+
+	// mix
+	ins := wtype.NewLHMixInstruction()
+
+	ins.AddInput(moving)
+	ins.AddOutput(cmpOut)
+	tIns = append(tIns, ins)
+
+	// split
+	ins = wtype.NewLHSplitInstruction()
+	ins.AddInput(cmpOut)
+
+	ins.AddOutput(moving)
+	ins.AddOutput(remaining)
+
+	tIns = append(tIns, ins)
+
+	// mix again
+
+	ins = wtype.NewLHMixInstruction()
+
+	ins.AddInput(remaining)
+	ins.AddOutput(wtype.NewLHComponent())
+	tIns = append(tIns, ins)
+
+	tgraph, err := MakeTGraph(tIns)
+	if err != nil {
+		t.Error(err)
+	}
+
+	arrEq := func(ar1 []*wtype.LHInstruction, ar2 []*wtype.LHInstruction) bool {
+		if len(ar1) != len(ar2) {
+			return false
+		}
+
+		for i := 0; i < len(ar1); i++ {
+			if ar1[i].ID != ar2[i].ID {
+				return false
+			}
+		}
+
+		return true
+	}
+
+	if !arrEq(tIns, tgraph.Nodes) {
+		t.Errorf("Nodes in tGraph should be identical to nodes inputted")
+	}
+
+	if tgraph.NumNodes() != 3 {
+		t.Errorf("NumNodes should report 3, instead reports %d", tgraph.NumNodes())
+	}
+
+	// edge check... we should have 3->2->1
+
+	for k := 2; k >= 1; k-- {
 		expect := tgraph.Node(k - 1)
 		got := tgraph.Out(tgraph.Node(k), 0)
 

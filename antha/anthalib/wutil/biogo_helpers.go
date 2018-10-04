@@ -26,10 +26,10 @@ import (
 	"bufio"
 	"os"
 
+	"github.com/antha-lang/antha/microArch/logger"
 	"github.com/biogo/biogo/io/seqio/fasta"
 	"github.com/biogo/biogo/seq"
 	"github.com/biogo/biogo/seq/linear"
-	"github.com/antha-lang/antha/microArch/logger"
 )
 
 func SeqToBioseq(s seq.Sequence) string {

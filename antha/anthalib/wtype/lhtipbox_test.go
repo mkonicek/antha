@@ -5,6 +5,19 @@ import (
 	"testing"
 )
 
+func makeTipForTest() *LHTip {
+	shp := NewShape("cylinder", "mm", 7.3, 7.3, 51.2)
+	return NewLHTip("me", "mytype", 0.5, 1000.0, "ul", false, shp, 44.7)
+}
+
+func makeTipboxForTest() *LHTipbox {
+	shp := NewShape("cylinder", "mm", 7.3, 7.3, 51.2)
+	w := NewLHWell("ul", 250.0, 10.0, shp, FlatWellBottom, 7.3, 7.3, 51.2, 0.0, "mm")
+	tiptype := makeTipForTest()
+	tb := NewLHTipbox(8, 12, Coordinates{127.76, 85.48, 120.0}, "me", "mytype", tiptype, w, 9.0, 9.0, 0.5, 0.5, 0.0)
+	return tb
+}
+
 func TestInflateMask(t *testing.T) {
 	m := []bool{true}
 
@@ -45,11 +58,7 @@ func TestMaskToWellCoords(t *testing.T) {
 
 // func NewLHTipbox(nrows, ncols int, height float64, manufacturer, boxtype string, tiptype *LHTip, well *LHWell, tipxoffset, tipyoffset, tipxstart, tipystart, tipzstart float64)
 func TestGetTipsMasked(t *testing.T) {
-	// func NewLHTip(mfr, ttype string, minvol, maxvol float64, volunit string)
-	shp := NewShape("cylinder", "mm", 7.3, 7.3, 51.2)
-	w := NewLHWell("mytypeWell", "", "A1", "ul", 250.0, 10.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
-	tiptype := NewLHTip("me", "mytype", 0.5, 1000.0, "ul")
-	tb := NewLHTipbox(8, 12, 120.0, "me", "mytype", tiptype, w, 0.0, 0.0, 0.0, 0.0, 0.0)
+	tb := makeTipboxForTest()
 
 	mask := []bool{true}
 
@@ -67,11 +76,7 @@ func TestGetTipsMasked(t *testing.T) {
 }
 
 func TestGetTipsMasked2(t *testing.T) {
-	// func NewLHTip(mfr, ttype string, minvol, maxvol float64, volunit string)
-	shp := NewShape("cylinder", "mm", 7.3, 7.3, 51.2)
-	w := NewLHWell("mytypeWell", "", "A1", "ul", 250.0, 10.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
-	tiptype := NewLHTip("me", "mytype", 0.5, 1000.0, "ul")
-	tb := NewLHTipbox(8, 12, 120.0, "me", "mytype", tiptype, w, 0.0, 0.0, 0.0, 0.0, 0.0)
+	tb := makeTipboxForTest()
 
 	mask := make([]bool, 8)
 	mask[2] = true
@@ -88,11 +93,8 @@ func TestGetTipsMasked2(t *testing.T) {
 	}
 }
 
-func TesthasCleanTips(t *testing.T) {
-	shp := NewShape("cylinder", "mm", 7.3, 7.3, 51.2)
-	w := NewLHWell("mytypeWell", "", "A1", "ul", 250.0, 10.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
-	tiptype := NewLHTip("me", "mytype", 0.5, 1000.0, "ul")
-	tb := NewLHTipbox(8, 12, 120.0, "me", "mytype", tiptype, w, 0.0, 0.0, 0.0, 0.0, 0.0)
+func TestHasCleanTips(t *testing.T) {
+	tb := makeTipboxForTest()
 
 	m := make([]bool, 8)
 
@@ -125,4 +127,66 @@ func TestTrimToMask(t *testing.T) {
 		t.Errorf("Expected %v, got %v", expected, trimmed)
 	}
 
+}
+
+func TestTipboxWellCoordsToCoords(t *testing.T) {
+
+	tb := makeTipboxForTest()
+
+	pos, ok := tb.WellCoordsToCoords(MakeWellCoords("A1"), BottomReference)
+	if !ok {
+		t.Fatal("well A1 doesn't exist!")
+	}
+
+	xExpected := tb.TipXStart
+	yExpected := tb.TipYStart
+
+	if pos.X != xExpected || pos.Y != yExpected {
+		t.Errorf("position was wrong: expected (%f, %f) got (%f, %f)", xExpected, yExpected, pos.X, pos.Y)
+	}
+
+}
+
+func TestTipboxCoordsToWellCoords(t *testing.T) {
+
+	tb := makeTipboxForTest()
+
+	pos := Coordinates{
+		X: tb.TipXStart + 0.75*tb.TipXOffset,
+		Y: tb.TipYStart + 0.75*tb.TipYOffset,
+	}
+
+	wc, delta := tb.CoordsToWellCoords(pos)
+
+	if e, g := "B2", wc.FormatA1(); e != g {
+		t.Errorf("Wrong well coordinates: expected %s, got %s", e, g)
+	}
+
+	eDelta := -0.25 * tb.TipXOffset
+	if delta.X != eDelta || delta.Y != eDelta {
+		t.Errorf("Delta incorrect: expected (%f, %f), got (%f, %f)", eDelta, eDelta, delta.X, delta.Y)
+	}
+
+}
+
+func TestTipboxGetWellBounds(t *testing.T) {
+
+	tb := makeTipboxForTest()
+
+	eStart := Coordinates{
+		X: 0.5 - 0.5*7.3,
+		Y: 0.5 - 0.5*7.3,
+		Z: 0.0,
+	}
+	eSize := Coordinates{
+		X: 9.0*11 + 7.3,
+		Y: 9.0*7 + 7.3,
+		Z: 51.2,
+	}
+	eBounds := NewBBox(eStart, eSize)
+	bounds := tb.GetTipBounds()
+
+	if e, g := eBounds.String(), bounds.String(); e != g {
+		t.Errorf("GetWellBounds incorrect: expected %v, got %v", eBounds, bounds)
+	}
 }

@@ -26,11 +26,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/url"
-	"os"
-	"path"
-
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/wtype/liquidtype"
 	"github.com/antha-lang/antha/cmd/antha/frontend"
 	"github.com/antha-lang/antha/cmd/antha/pretty"
 	"github.com/antha-lang/antha/cmd/antha/spawn"
@@ -44,12 +41,17 @@ import (
 	"github.com/antha-lang/antha/workflowtest"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"io/ioutil"
+	"net/url"
+	"os"
+	"path"
 )
 
 var runCmd = &cobra.Command{
-	Use:   "run",
-	Short: "Run an antha workflow",
-	RunE:  runWorkflow,
+	Use:           "run",
+	Short:         "Run an antha workflow",
+	RunE:          runWorkflow,
+	SilenceErrors: true,
 }
 
 func makeMixerOpt(ctx context.Context) (mixer.Opt, error) {
@@ -66,9 +68,9 @@ func makeMixerOpt(ctx context.Context) (mixer.Opt, error) {
 		f := i
 		opt.ResidualVolumeWeight = &f
 	}
-	opt.InputPlateType = GetStringSlice("inputPlateType")
-	opt.OutputPlateType = GetStringSlice("outputPlateType")
-	opt.TipType = GetStringSlice("tipType")
+	opt.InputPlateTypes = GetStringSlice("inputPlateTypes")
+	opt.OutputPlateTypes = GetStringSlice("outputPlateTypes")
+	opt.TipTypes = GetStringSlice("tipTypes")
 
 	for _, fn := range GetStringSlice("inputPlates") {
 		p, err := mixer.ParseInputPlateFile(ctx, fn)
@@ -76,6 +78,19 @@ func makeMixerOpt(ctx context.Context) (mixer.Opt, error) {
 			return opt, err
 		}
 		opt.InputPlates = append(opt.InputPlates, p)
+	}
+
+	policyFileName := viper.GetString("policyFile")
+
+	if policyFileName != "" {
+		data, err := ioutil.ReadFile(policyFileName)
+		if err != nil {
+			return opt, err
+		}
+		opt.CustomPolicyData, err = liquidtype.PolicyMakerFromBytes(data, wtype.PolicyName(liquidtype.BASEPolicy))
+		if err != nil {
+			return opt, err
+		}
 	}
 
 	opt.OutputSort = viper.GetBool("outputSort")
@@ -89,6 +104,7 @@ func makeMixerOpt(ctx context.Context) (mixer.Opt, error) {
 	opt.PrintInstructions = viper.GetBool("printInstructions")
 
 	opt.UseDriverTipTracking = viper.GetBool("useDriverTipTracking")
+	opt.IgnorePhysicalSimulation = viper.GetBool("ignorePhysicalSimulation")
 	opt.LegacyVolume = viper.GetBool("legacyVolumeTracking")
 
 	opt.FixVolumes = viper.GetBool("fixVolumes")
@@ -105,10 +121,11 @@ func makeContext() (context.Context, error) {
 			return nil, fmt.Errorf("component %q has unexpected type %T", desc.Name, obj)
 		}
 		if err := inject.Add(ctx, inject.Name{Repo: desc.Name, Stage: desc.Stage}, runner); err != nil {
-			return nil, fmt.Errorf("error adding protocol %q: %s", desc.Name, err)
+			return nil, fmt.Errorf("adding protocol %q: %s", desc.Name, err)
 		}
 	}
-	return testinventory.NewContext(ctx), nil
+	ctx = testinventory.NewContext(ctx)
+	return ctx, nil
 }
 
 type runOpt struct {
@@ -122,65 +139,27 @@ type runOpt struct {
 	RunTest                bool
 }
 
-type runInput struct {
-	BundleFile     string
-	ParametersFile string
-	WorkflowFile   string
-}
-
-func unmarshalRunInput(in *runInput) (*executeutil.Bundle, error) {
-	var wdata, pdata, bdata []byte
-	var err error
-
-	if len(in.BundleFile) != 0 {
-		bdata, err = ioutil.ReadFile(in.BundleFile)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		wdata, err = ioutil.ReadFile(in.WorkflowFile)
-		if err != nil {
-			return nil, err
-		}
-
-		pdata, err = ioutil.ReadFile(in.ParametersFile)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return executeutil.Unmarshal(executeutil.UnmarshalOpt{
-		WorkflowData: wdata,
-		BundleData:   bdata,
-		ParamsData:   pdata,
-	})
-}
-
 func (a *runOpt) Run() error {
-	bundle, err := unmarshalRunInput(&runInput{
-		BundleFile:     a.BundleFile,
-		ParametersFile: a.ParametersFile,
-		WorkflowFile:   a.WorkflowFile,
-	})
+	bundle, err := executeutil.UnmarshalSingle(a.BundleFile, a.WorkflowFile, a.ParametersFile)
 	if err != nil {
 		return err
 	}
 
-	wdesc := &(bundle.Desc)
-	params := &(bundle.RawParams)
-
-	mixerOpt := mixer.DefaultOpt.Merge(params.Config).Merge(&a.MixerOpt)
+	mixerOpt := mixer.DefaultOpt.Merge(bundle.RawParams.Config).Merge(&a.MixerOpt)
 	opt := auto.Opt{
 		MaybeArgs: []interface{}{mixerOpt},
 	}
 	for _, uri := range a.Drivers {
 		opt.Endpoints = append(opt.Endpoints, auto.Endpoint{URI: uri})
 	}
+
+	// Auto detect gRPC devices on network interfaces
 	t, err := auto.New(opt)
 	if err != nil {
 		return err
 	}
 
+	// frontend is deprecated
 	fe, err := frontend.New()
 	if err != nil {
 		return err
@@ -194,8 +173,8 @@ func (a *runOpt) Run() error {
 
 	rout, err := execute.Run(ctx, execute.Opt{
 		Target:   t.Target,
-		Workflow: wdesc,
-		Params:   params,
+		Workflow: &bundle.Desc,
+		Params:   &bundle.RawParams,
 		TransitionalReadLocalFiles: true,
 	})
 	if err != nil {
@@ -224,13 +203,9 @@ func (a *runOpt) Run() error {
 
 	if a.TestBundleFileName != "" {
 		expected := workflowtest.SaveTestOutputs(rout, "")
-		bundleWithOutputs := executeutil.Bundle{
-			Desc:      *wdesc,
-			RawParams: *params,
-			TestOpt:   expected,
-		}
-		serializedOutputs, err := json.Marshal(bundleWithOutputs)
-
+		bundleWithOutputs := *bundle
+		bundleWithOutputs.TestOpt = expected
+		serializedOutputs, err := json.MarshalIndent(bundleWithOutputs, "", "  ")
 		if err != nil {
 			return err
 		}
@@ -314,7 +289,7 @@ func runWorkflow(cmd *cobra.Command, args []string) error {
 		WorkflowFile:           viper.GetString("workflow"),
 		MixInstructionFileName: viper.GetString("mixInstructionFileName"),
 		TestBundleFileName:     viper.GetString("makeTestBundle"),
-		RunTest:                viper.GetBool("RunTest"),
+		RunTest:                viper.GetBool("runTest"),
 	}
 
 	return opt.Run()
@@ -329,6 +304,7 @@ func init() {
 	flags.Bool("outputSort", false, "Sort execution by output - improves tip usage")
 	flags.Bool("printInstructions", false, "Output the raw instructions sent to the driver")
 	flags.Bool("useDriverTipTracking", false, "If the driver has tip tracking available, use it")
+	flags.Bool("ignorePhysicalSimulation", false, "Ignore errors when physically simulating the workflow - use to suppress issues caused by bugs in physical simulations")
 	flags.Bool("withMulti", false, "Allow use of new multichannel planning - deprecated")
 	flags.Float64("residualVolumeWeight", 0.0, "Residual volume weight")
 	flags.Int("maxPlates", 0, "Maximum number of plates")
@@ -336,13 +312,15 @@ func init() {
 	flags.String("bundle", "", "Input bundle with parameters and workflow together (overrides parameter and workflow arguments)")
 	flags.String("makeTestBundle", "", "Generate json format bundle for testing and put it here")
 	flags.String("mixInstructionFileName", "", "Name of instructions files to output to for mixes")
-	flags.String("parameters", "parameters.json", "Parameters to workflow")
-	flags.String("workflow", "workflow.json", "Workflow definition file")
+	flags.String("parameters", "", "Parameters to workflow")
+	flags.String("workflow", "", "Workflow definition file")
 	flags.StringSlice("component", nil, "Uris of remote components ({tcp,go}://...); use multiple flags for multiple components")
 	flags.StringSlice("driver", nil, "Uris of remote drivers ({tcp,go}://...); use multiple flags for multiple drivers")
-	flags.StringSlice("inputPlateType", nil, "Default input plate types (in order of preference)")
+	flags.StringSlice("inputPlateTypes", nil, "Default input plate types (in order of preference)")
 	flags.StringSlice("inputPlates", nil, "File containing input plates")
-	flags.StringSlice("outputPlateType", nil, "Default output plate types (in order of preference)")
-	flags.StringSlice("tipType", nil, "Names of permitted tip types")
+	flags.StringSlice("outputPlateTypes", nil, "Default output plate types (in order of preference)")
+	flags.StringSlice("tipTypes", nil, "Names of permitted tip types")
+	flags.Bool("runTest", false, "run tests")
 	flags.Bool("fixVolumes", true, "Make all volumes sufficient for later uses")
+	flags.String("policyFile", "", "Design file of custom liquid policies in format of .xlsx JMP file")
 }

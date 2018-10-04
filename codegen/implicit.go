@@ -42,8 +42,8 @@ func isIncubator(dev target.Device) bool {
 
 // Hacky function to identify metadata for incubator setup in lieu of better
 // device modeling;
-func findIncubationPlates(prop *liquidhandling.LHProperties) ([]*wtype.LHPlate, error) {
-	var ret []*wtype.LHPlate
+func findIncubationPlates(prop *liquidhandling.LHProperties) ([]*wtype.Plate, error) {
+	var ret []*wtype.Plate
 	for _, plate := range prop.Plates {
 		switch {
 		case strings.HasSuffix(plate.Type, "bioshake"):
@@ -56,7 +56,7 @@ func findIncubationPlates(prop *liquidhandling.LHProperties) ([]*wtype.LHPlate, 
 	}
 
 	if len(ret) == 0 {
-		return nil, fmt.Errorf("no incubation plates found")
+		return nil, fmt.Errorf("no incubation plates found. Only bioshake plates are currently supported")
 	}
 
 	return ret, nil

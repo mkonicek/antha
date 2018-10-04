@@ -43,25 +43,28 @@ import (
 // probably needs splitting up to separate out the state information
 // from the properties information
 type LHProperties struct {
-	ID                   string
-	Nposns               int
-	Positions            map[string]*wtype.LHPosition
-	PlateLookup          map[string]interface{}
-	PosLookup            map[string]string
-	PlateIDLookup        map[string]string
-	Plates               map[string]*wtype.LHPlate
-	Tipboxes             map[string]*wtype.LHTipbox
-	Tipwastes            map[string]*wtype.LHTipwaste
-	Wastes               map[string]*wtype.LHPlate
-	Washes               map[string]*wtype.LHPlate
-	Devices              map[string]string
-	Model                string
-	Mnfr                 string
-	LHType               string
-	TipType              string
-	Heads                []*wtype.LHHead
-	HeadsLoaded          []*wtype.LHHead
-	Adaptors             []*wtype.LHAdaptor
+	ID            string
+	Nposns        int
+	Positions     map[string]*wtype.LHPosition
+	PlateLookup   map[string]interface{}
+	PosLookup     map[string]string
+	PlateIDLookup map[string]string
+	Plates        map[string]*wtype.Plate
+	Tipboxes      map[string]*wtype.LHTipbox
+	Tipwastes     map[string]*wtype.LHTipwaste
+	Wastes        map[string]*wtype.Plate
+	Washes        map[string]*wtype.Plate
+	Devices       map[string]string
+	Model         string
+	Mnfr          string
+	LHType        string
+	TipType       string
+	//Heads lists every head (whether loaded or not) that is available for the machine
+	Heads []*wtype.LHHead
+	//Adaptors lists every adaptor (whether loaded or not) that is available for the machine
+	Adaptors []*wtype.LHAdaptor
+	//HeadAssemblies describes how each loaded head and adaptor is loaded into the machine
+	HeadAssemblies       []*wtype.LHHeadAssembly
 	Tips                 []*wtype.LHTip
 	Tip_preferences      []string
 	Input_preferences    []string
@@ -98,8 +101,8 @@ func (p LHProperties) GetLayout() string {
 			lw := p.PlateLookup[plateID]
 
 			switch lw.(type) {
-			case *wtype.LHPlate:
-				plt := lw.(*wtype.LHPlate)
+			case *wtype.Plate:
+				plt := lw.(*wtype.Plate)
 				s += fmt.Sprintln("Plate ", plt.PlateName, " type ", plt.Mnfr, " ", plt.Type, " Contents:")
 				s += plt.GetLayout()
 			case *wtype.LHTipbox:
@@ -127,7 +130,7 @@ func (p LHProperties) OrderedPositionNames() []string {
 	// canonical ordering
 
 	s := make([]string, 0, len(p.Positions))
-	for n, _ := range p.Positions {
+	for n := range p.Positions {
 		s = append(s, n)
 	}
 
@@ -207,13 +210,52 @@ func ValidateLHProperties(props *LHProperties) (bool, string) {
 		return be, se
 	}
 
-	se = "LHProperties Error: No headsloaded array"
+	se = "LHProperties Error: No heads loaded"
 
-	if props.HeadsLoaded == nil {
+	if props.CountHeadsLoaded() == 0 {
 		return be, se
 	}
 
 	return bo, so
+}
+
+//CountHeadsLoaded return the total number of heads loaded into the machine
+func (lhp *LHProperties) CountHeadsLoaded() int {
+	var ret int
+	for _, assembly := range lhp.HeadAssemblies {
+		ret += assembly.CountHeadsLoaded()
+	}
+	return ret
+}
+
+//GetLoadedHeads get a slice of all the heads loaded in the machine
+func (lhp *LHProperties) GetLoadedHeads() []*wtype.LHHead {
+	ret := make([]*wtype.LHHead, 0, lhp.CountHeadsLoaded())
+	for _, assembly := range lhp.HeadAssemblies {
+		ret = append(ret, assembly.GetLoadedHeads()...)
+	}
+	return ret
+}
+
+//GetLoadedHead returns a specific head
+func (lhp *LHProperties) GetLoadedHead(i int) *wtype.LHHead {
+	//inefficient implementation for now since we only have a small number of heads
+	return lhp.GetLoadedHeads()[i]
+}
+
+//GetLoadedAdaptors get a slice of all the adaptors loaded in the machine
+func (lhp *LHProperties) GetLoadedAdaptors() []*wtype.LHAdaptor {
+	heads := lhp.GetLoadedHeads()
+	ret := make([]*wtype.LHAdaptor, 0, len(heads))
+	for _, head := range heads {
+		ret = append(ret, head.Adaptor)
+	}
+	return ret
+}
+
+//GetLoadedAdaptor get the adaptor loaded to the i^th head
+func (lhp *LHProperties) GetLoadedAdaptor(i int) *wtype.LHAdaptor {
+	return lhp.GetLoadedAdaptors()[i]
 }
 
 // copy constructor
@@ -232,28 +274,47 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 	}
 	r := NewLHProperties(lhp.Nposns, lhp.Model, lhp.Mnfr, lhp.LHType, lhp.TipType, lo)
 
+	if keepIDs {
+		r.ID = lhp.ID
+		for name, pos := range lhp.Positions {
+			r.Positions[name].ID = pos.ID
+		}
+	}
+
+	adaptorMap := make(map[*wtype.LHAdaptor]*wtype.LHAdaptor, len(lhp.Adaptors))
 	for _, a := range lhp.Adaptors {
-		ad := a.Dup()
+		var ad *wtype.LHAdaptor
 		if keepIDs {
-			ad.ID = a.ID
+			ad = a.DupKeepIDs()
+		} else {
+			ad = a.Dup()
 		}
 		r.Adaptors = append(r.Adaptors, ad)
+		adaptorMap[a] = ad
 	}
 
+	headMap := make(map[*wtype.LHHead]*wtype.LHHead, len(lhp.Heads))
 	for _, h := range lhp.Heads {
-		hd := h.Dup()
+		var hd *wtype.LHHead
+		adaptor := adaptorMap[h.Adaptor]
 		if keepIDs {
-			hd.ID = h.ID
+			hd = h.DupKeepIDs()
+		} else {
+			hd = h.Dup()
 		}
+		hd.Adaptor = adaptor
 		r.Heads = append(r.Heads, hd)
+		headMap[h] = hd
 	}
 
-	for _, hl := range lhp.HeadsLoaded {
-		hld := hl.Dup()
-		if keepIDs {
-			hld.ID = hl.ID
+	for _, assembly := range lhp.HeadAssemblies {
+		//duplicate the assmebly
+		newAssembly := assembly.DupWithoutHeads()
+		//now add the heads - this way r.HeadAssemblies and r.Heads refer to the same underlying LHHead
+		for _, oldHead := range assembly.GetLoadedHeads() {
+			newAssembly.LoadHead(headMap[oldHead]) //nolint - assemblies have the same number of positions
 		}
-		r.HeadsLoaded = append(r.HeadsLoaded, hld)
+		r.HeadAssemblies = append(r.HeadAssemblies, newAssembly)
 	}
 
 	// plate lookup can contain anything
@@ -275,12 +336,12 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 			newid = tmp.ID
 			pos = lhp.PlateIDLookup[name]
 			r.Tipwastes[pos] = tmp
-		case *wtype.LHPlate:
-			var tmp *wtype.LHPlate
+		case *wtype.Plate:
+			var tmp *wtype.Plate
 			if keepIDs {
-				tmp = pt.(*wtype.LHPlate).DupKeepIDs()
+				tmp = pt.(*wtype.Plate).DupKeepIDs()
 			} else {
-				tmp = pt.(*wtype.LHPlate).Dup()
+				tmp = pt.(*wtype.Plate).Dup()
 			}
 			pt2 = tmp
 			newid = tmp.ID
@@ -316,28 +377,6 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 		r.Devices[name] = dev
 	}
 
-	for name, head := range lhp.Heads {
-		r.Heads[name] = head.Dup()
-		if keepIDs {
-			r.Heads[name].ID = head.ID
-		}
-	}
-
-	for i, hl := range lhp.HeadsLoaded {
-		r.HeadsLoaded[i] = hl.Dup()
-		if keepIDs {
-			r.HeadsLoaded[i].ID = hl.ID
-		}
-	}
-
-	for i, ad := range lhp.Adaptors {
-		r.Adaptors[i] = ad.Dup()
-
-		if keepIDs {
-			r.Adaptors[i].ID = ad.ID
-		}
-	}
-
 	for _, tip := range lhp.Tips {
 		newtip := tip.Dup()
 		if keepIDs {
@@ -347,32 +386,18 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 		r.Tips = append(r.Tips, newtip)
 	}
 
-	for _, pref := range lhp.Tip_preferences {
-		r.Tip_preferences = append(r.Tip_preferences, pref)
-	}
-	for _, pref := range lhp.Input_preferences {
-		r.Input_preferences = append(r.Input_preferences, pref)
-	}
-	for _, pref := range lhp.Output_preferences {
-		r.Output_preferences = append(r.Output_preferences, pref)
-	}
-	for _, pref := range lhp.Waste_preferences {
-		r.Waste_preferences = append(r.Waste_preferences, pref)
-	}
-	for _, pref := range lhp.Tipwaste_preferences {
-		r.Tipwaste_preferences = append(r.Tipwaste_preferences, pref)
-	}
-	for _, pref := range lhp.Wash_preferences {
-		r.Wash_preferences = append(r.Wash_preferences, pref)
-	}
+	r.Tip_preferences = append(r.Tip_preferences, lhp.Tip_preferences...)
+	r.Input_preferences = append(r.Input_preferences, lhp.Input_preferences...)
+	r.Output_preferences = append(r.Output_preferences, lhp.Output_preferences...)
+	r.Waste_preferences = append(r.Waste_preferences, lhp.Waste_preferences...)
+	r.Tipwaste_preferences = append(r.Tipwaste_preferences, lhp.Tipwaste_preferences...)
+	r.Wash_preferences = append(r.Wash_preferences, lhp.Wash_preferences...)
 
 	if lhp.CurrConf != nil {
 		r.CurrConf = lhp.CurrConf.Dup()
 	}
 
-	for i, v := range lhp.Cnfvol {
-		r.Cnfvol[i] = v
-	}
+	copy(r.Cnfvol, lhp.Cnfvol)
 
 	for i, v := range lhp.Layout {
 		r.Layout[i] = v
@@ -389,6 +414,15 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 
 // constructor for the above
 func NewLHProperties(num_positions int, model, manufacturer, lhtype, tiptype string, layout map[string]wtype.Coordinates) *LHProperties {
+	// assert validity of lh and tip types
+
+	if !IsValidLiquidHandlerType(lhtype) {
+		panic(fmt.Sprintf("Invalid liquid handling type requested: %s", lhtype))
+	}
+	if !IsValidTipType(tiptype) {
+		panic(fmt.Sprintf("Invalid tip usage type requested: %s", tiptype))
+	}
+
 	var lhp LHProperties
 
 	lhp.ID = wtype.GetUUID()
@@ -400,9 +434,9 @@ func NewLHProperties(num_positions int, model, manufacturer, lhtype, tiptype str
 	lhp.LHType = lhtype
 	lhp.TipType = tiptype
 
-	lhp.Adaptors = make([]*wtype.LHAdaptor, 0, 2)
 	lhp.Heads = make([]*wtype.LHHead, 0, 2)
-	lhp.HeadsLoaded = make([]*wtype.LHHead, 0, 2)
+	lhp.Adaptors = make([]*wtype.LHAdaptor, 0, 2)
+	lhp.HeadAssemblies = make([]*wtype.LHHeadAssembly, 0, 2)
 
 	positions := make(map[string]*wtype.LHPosition, num_positions)
 
@@ -417,11 +451,11 @@ func NewLHProperties(num_positions int, model, manufacturer, lhtype, tiptype str
 	lhp.PosLookup = make(map[string]string, lhp.Nposns)
 	lhp.PlateLookup = make(map[string]interface{}, lhp.Nposns)
 	lhp.PlateIDLookup = make(map[string]string, lhp.Nposns)
-	lhp.Plates = make(map[string]*wtype.LHPlate, lhp.Nposns)
+	lhp.Plates = make(map[string]*wtype.Plate, lhp.Nposns)
 	lhp.Tipboxes = make(map[string]*wtype.LHTipbox, lhp.Nposns)
 	lhp.Tipwastes = make(map[string]*wtype.LHTipwaste, lhp.Nposns)
-	lhp.Wastes = make(map[string]*wtype.LHPlate, lhp.Nposns)
-	lhp.Washes = make(map[string]*wtype.LHPlate, lhp.Nposns)
+	lhp.Wastes = make(map[string]*wtype.Plate, lhp.Nposns)
+	lhp.Washes = make(map[string]*wtype.Plate, lhp.Nposns)
 	lhp.Devices = make(map[string]string, lhp.Nposns)
 	lhp.Heads = make([]*wtype.LHHead, 0, 2)
 	lhp.Tips = make([]*wtype.LHTip, 0, 3)
@@ -433,6 +467,20 @@ func NewLHProperties(num_positions int, model, manufacturer, lhtype, tiptype str
 	lhp.MaterialType = material.DEVICE
 
 	return &lhp
+}
+
+// GetLHType returns the declared type of liquid handler for driver selection purposes
+// e.g. High-Level (HLLiquidHandler) or Low-Level (LLLiquidHandler)
+// see lhtype.go in this directory
+func (lhp *LHProperties) GetLHType() string {
+	return lhp.LHType
+}
+
+// GetTipType returns the tip requirements of the liquid handler
+// options are None, Disposable, Fixed, Mixed
+// see lhtype.go in this directory
+func (lhp *LHProperties) GetTipType() string {
+	return lhp.TipType
 }
 
 func (lhp *LHProperties) TipsLeftOfType(tiptype string) int {
@@ -537,6 +585,7 @@ func (lhp *LHProperties) AddTipWasteTo(pos string, tipwaste *wtype.LHTipwaste) e
 	if lhp.PosLookup[pos] != "" {
 		return wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprintf("Trying to add tip waste to full position %s", pos))
 	}
+
 	lhp.Tipwastes[pos] = tipwaste
 	lhp.PlateLookup[tipwaste.ID] = tipwaste
 	lhp.PosLookup[pos] = tipwaste.ID
@@ -544,7 +593,32 @@ func (lhp *LHProperties) AddTipWasteTo(pos string, tipwaste *wtype.LHTipwaste) e
 	return nil
 }
 
-func (lhp *LHProperties) AddPlate(pos string, plate *wtype.LHPlate) error {
+func (lhp *LHProperties) AddInputPlate(plate *wtype.Plate) error {
+	for _, pref := range lhp.Input_preferences {
+		if lhp.PosLookup[pref] != "" {
+			continue
+		}
+
+		err := lhp.AddPlateTo(pref, plate)
+		return err
+	}
+
+	return wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprintf("Trying to add input plate %s, type %s", plate.PlateName, plate.Type))
+}
+func (lhp *LHProperties) AddOutputPlate(plate *wtype.Plate) error {
+	for _, pref := range lhp.Output_preferences {
+		if lhp.PosLookup[pref] != "" {
+			continue
+		}
+
+		err := lhp.AddPlateTo(pref, plate)
+		return err
+	}
+
+	return wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprintf("Trying to add output plate %s, type %s", plate.PlateName, plate.Type))
+}
+
+func (lhp *LHProperties) AddPlateTo(pos string, plate *wtype.Plate) error {
 	if lhp.PosLookup[pos] != "" {
 		return wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprintf("Trying to add plate to full position %s", pos))
 	}
@@ -573,21 +647,7 @@ func (lhp *LHProperties) RemovePlateAtPosition(pos string) {
 	delete(lhp.Plates, pos)
 }
 
-func (lhp *LHProperties) addWaste(waste *wtype.LHPlate) bool {
-	for _, pref := range lhp.Waste_preferences {
-		if lhp.PosLookup[pref] != "" {
-			continue
-		}
-
-		lhp.AddWasteTo(pref, waste)
-		return true
-	}
-
-	logger.Debug("NO WASTE SPACES LEFT")
-	return false
-}
-
-func (lhp *LHProperties) AddWasteTo(pos string, waste *wtype.LHPlate) bool {
+func (lhp *LHProperties) AddWasteTo(pos string, waste *wtype.Plate) bool {
 	if lhp.PosLookup[pos] != "" {
 		logger.Debug("CAN'T ADD WASTE TO FULL POSITION")
 		return false
@@ -599,7 +659,7 @@ func (lhp *LHProperties) AddWasteTo(pos string, waste *wtype.LHPlate) bool {
 	return true
 }
 
-func (lhp *LHProperties) AddWash(wash *wtype.LHPlate) bool {
+func (lhp *LHProperties) AddWash(wash *wtype.Plate) bool {
 	for _, pref := range lhp.Wash_preferences {
 		if lhp.PosLookup[pref] != "" {
 			continue
@@ -613,7 +673,7 @@ func (lhp *LHProperties) AddWash(wash *wtype.LHPlate) bool {
 	return false
 }
 
-func (lhp *LHProperties) AddWashTo(pos string, wash *wtype.LHPlate) bool {
+func (lhp *LHProperties) AddWashTo(pos string, wash *wtype.Plate) bool {
 	if lhp.PosLookup[pos] != "" {
 
 		logger.Debug("CAN'T ADD WASH TO FULL POSITION")
@@ -626,7 +686,7 @@ func (lhp *LHProperties) AddWashTo(pos string, wash *wtype.LHPlate) bool {
 	return true
 }
 
-func GetLocTox(cmp *wtype.LHComponent) ([]string, error) {
+func GetLocTox(cmp *wtype.Liquid) ([]string, error) {
 	// try the cmp's own loc
 
 	if cmp.Loc != "" {
@@ -693,7 +753,7 @@ func (lhp *LHProperties) mergeInputOutputPreferences() []string {
 	}
 
 	out, seen = mergeToSet(lhp.Input_preferences, out, seen)
-	out, seen = mergeToSet(lhp.Output_preferences, out, seen)
+	out, _ = mergeToSet(lhp.Output_preferences, out, seen)
 
 	return out
 }
@@ -703,14 +763,14 @@ func (lhp *LHProperties) mergeInputOutputPreferences() []string {
 // the ID may or may not refer to an instance which is previously made
 // but by this point we must have concrete locations for everything
 
-func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol wunit.Volume, legacyVolume bool) ([][]string, [][]string, [][]wunit.Volume, error) {
+func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.Liquid, carryvol wunit.Volume, legacyVolume bool) ([][]string, [][]string, [][]wunit.Volume, error) {
 	plateIDs := make([][]string, len(cmps))
 	wellCoords := make([][]string, len(cmps))
 	vols := make([][]wunit.Volume, len(cmps))
 
 	// locally keep volumes straight
 
-	localplates := make(map[string]*wtype.LHPlate, len(lhp.Plates))
+	localplates := make(map[string]*wtype.Plate, len(lhp.Plates))
 
 	for k, v := range lhp.Plates {
 		localplates[k] = v.DupKeepIDs()
@@ -731,14 +791,14 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol
 			// component we seek
 
 			p, ok := localplates[ipref]
-			if ok && !p.Empty() {
+			if ok && !p.IsEmpty() {
 				// whaddya got?
 				// nb this won't work if we need to split a volume across several plates
 				wcarr, varr, ok := p.BetterGetComponent(cmpdup, lhp.MinPossibleVolume(), legacyVolume)
 
 				if ok {
 					foundIt = true
-					for ix, _ := range wcarr {
+					for ix := range wcarr {
 						wc := wcarr[ix].FormatA1()
 						vl := varr[ix].Dup()
 						plateIDs[i] = append(plateIDs[i], p.ID)
@@ -757,106 +817,6 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.LHComponent, carryvol
 		if !foundIt {
 			err := wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("749: NO SOURCE FOR ", cmp.CName, " at volume ", cmp.Volume().ToString()))
 			return plateIDs, wellCoords, vols, err
-		}
-	}
-
-	return plateIDs, wellCoords, vols, nil
-}
-
-// GetComponents takes requests for components at particular volumes
-// + a measure of carry volume
-// returns lists of plate IDs + wells from which to get components or error
-
-func (lhp *LHProperties) legacyGetComponentsSingle(cmps []*wtype.LHComponent, carryvol wunit.Volume, legacyVolume bool) ([][]string, [][]string, [][]wunit.Volume, error) {
-	plateIDs := make([][]string, len(cmps))
-	wellCoords := make([][]string, len(cmps))
-	vols := make([][]wunit.Volume, len(cmps))
-
-	// groan
-
-	localplates := make(map[string]*wtype.LHPlate, len(lhp.Plates))
-
-	for k, v := range lhp.Plates {
-		localplates[k] = v.DupKeepIDs()
-	}
-
-	// need to disentangle some stuff here
-
-	for i, v := range cmps {
-		plateIDs[i] = make([]string, 0, 1)
-		wellCoords[i] = make([]string, 0, 1)
-		vols[i] = make([]wunit.Volume, 0, 1)
-		foundIt := false
-
-		vdup := v.Dup()
-		if v.IsInstance() {
-			/*
-					tx := strings.Split(v.Loc, ":")
-
-					if len(tx) < 2 || len(v.Loc) == 0 {
-						st := sampletracker.GetSampleTracker()
-						loc, _ := st.GetLocationOf(v.ID)
-						tx = strings.Split(loc, ":")
-					}
-
-
-				if len(tx) < 2 {
-					panic(fmt.Sprintf("NO LOCATION FOUND FOR COMPONENT: %s %s %s", v.ID, v.CName, v.Volume().ToString()))
-				}
-			*/
-
-			tx, err := GetLocTox(v)
-			if err != nil || len(tx) != 2 {
-				panic(fmt.Sprintf("NO LOCATION FOUND FOR COMPONENT: %s %s %s", v.ID, v.CName, v.Volume().ToString()))
-			}
-
-			plateIDs[i] = append(plateIDs[i], tx[0])
-			wellCoords[i] = append(wellCoords[i], tx[1])
-			vols[i] = append(vols[i], v.Volume().Dup())
-
-			//vol := v.Volume().Dup()
-			//vol.Add(carryvol)
-			/// XXX -- adding carry volumes is all very well but
-			// assumes we have made more of this component than we really need!
-			// -- this may just need to be removed pending a better fix
-			//lhp.RemoveComponent(tx[0], tx[1], vol)
-
-			foundIt = true
-
-		} else {
-			for _, ipref := range lhp.Input_preferences {
-				// check if the plate at position ipref has the
-				// component we seek
-
-				p, ok := localplates[ipref]
-				if ok {
-					// whaddya got?
-					// nb this won't work if we need to split a volume across several plates
-					wcarr, varr, ok := p.BetterGetComponent(vdup, lhp.MinPossibleVolume(), legacyVolume)
-
-					if ok {
-						foundIt = true
-						for ix, _ := range wcarr {
-							wc := wcarr[ix].FormatA1()
-							vl := varr[ix].Dup()
-							plateIDs[i] = append(plateIDs[i], p.ID)
-							wellCoords[i] = append(wellCoords[i], wc)
-							vols[i] = append(vols[i], vl)
-							vl = vl.Dup()
-							vl.Add(carryvol)
-							//lhp.RemoveComponent(p.ID, wc, vl)
-							p.RemoveComponent(wc, vl)
-						}
-						break
-					}
-				}
-			}
-
-			if !foundIt {
-				err := wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("NO SOURCE FOR ", v.CName, " at volume ", v.Volume().ToString()))
-				return plateIDs, wellCoords, vols, err
-			}
-
 		}
 	}
 
@@ -926,7 +886,7 @@ func (lhp *LHProperties) getCleanTipSubset(ctx context.Context, tipParams TipSub
 		wells, err = bx.GetTipsMasked(tipParams.Mask, tipParams.Channel.Orientation, true)
 
 		/*
-			if err != nil && !bx.Empty() {
+			if err != nil && !bx.IsEmpty() {
 				return wells, positions, boxtypes, err
 			}
 		*/
@@ -989,15 +949,13 @@ func (lhp *LHProperties) DropDirtyTips(channels []*wtype.LHChannelParameter) (we
 
 	foundit := false
 
-	wellNames := []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}
-
 	for pos, bx := range lhp.Tipwastes {
-		yes := bx.Dispose(channels)
-		if yes {
+		wellCoords, ok := bx.Dispose(channels)
+		if ok {
 			foundit = true
 			for i := 0; i < multi; i++ {
 				if channels[i] != nil {
-					wells[i] = wellNames[i]
+					wells[i] = wellCoords[i].FormatA1()
 					positions[i] = pos
 					boxtypes[i] = bx.Type
 				}
@@ -1018,7 +976,7 @@ func (lhp *LHProperties) DropDirtyTips(channels []*wtype.LHChannelParameter) (we
 func (lhp *LHProperties) GetMaterialType() material.MaterialType {
 	return lhp.MaterialType
 }
-func (lhp *LHProperties) GetTimer() *LHTimer {
+func (lhp *LHProperties) GetTimer() LHTimer {
 	return GetTimerFor(lhp.Mnfr, lhp.Model)
 }
 
@@ -1120,10 +1078,7 @@ func (lhp *LHProperties) CheckTipPrefCompatibility(prefs []string) bool {
 	if lhp.Mnfr == "CyBio" {
 		if lhp.Model == "Felix" {
 			for _, v := range prefs {
-				if !wutil.StrInStrArray(v, lhp.Tip_preferences) {
-					return false
-				}
-				return true
+				return wutil.StrInStrArray(v, lhp.Tip_preferences)
 			}
 		} else if lhp.Model == "GeneTheatre" {
 			for _, v := range prefs {
@@ -1164,6 +1119,10 @@ func (lhp *LHProperties) CheckPreferenceCompatibility(prefs []string) bool {
 			}
 			return 'A' <= pos[0] && pos[0] <= 'D' && '0' <= pos[1] && pos[1] <= '9'
 		}
+	} else if lhp.Mnfr == "Labcyte" {
+		checkFn = func(pos string) bool {
+			return false
+		}
 	}
 
 	if checkFn == nil {
@@ -1180,7 +1139,7 @@ func (lhp *LHProperties) CheckPreferenceCompatibility(prefs []string) bool {
 }
 
 type UserPlate struct {
-	Plate    *wtype.LHPlate
+	Plate    *wtype.Plate
 	Position string
 }
 type UserPlates []UserPlate
@@ -1204,40 +1163,20 @@ func (p *LHProperties) RestoreUserPlates(up UserPlates) {
 		// merge these
 		plate.Plate.MergeWith(oldPlate)
 
-		p.AddPlate(plate.Position, plate.Plate)
+		err := p.AddPlateTo(plate.Position, plate.Plate)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
 func (p *LHProperties) MinPossibleVolume() wunit.Volume {
-	if len(p.HeadsLoaded) == 0 {
+	headsLoaded := p.GetLoadedHeads()
+	if len(headsLoaded) == 0 {
 		return wunit.ZeroVolume()
 	}
-	minvol := p.HeadsLoaded[0].GetParams().Minvol
-	for _, head := range p.HeadsLoaded {
-		for _, tip := range p.Tips {
-			lhcp := head.Params.MergeWithTip(tip)
-			v := lhcp.Minvol
-			if v.LessThan(minvol) {
-				minvol = v
-			}
-		}
-
-	}
-
-	return minvol
-}
-
-func (p *LHProperties) MinCurrentVolume() wunit.Volume {
-	if len(p.HeadsLoaded) == 0 {
-		return wunit.ZeroVolume()
-	}
-
-	if len(p.Tips) == 0 {
-		return p.MinPossibleVolume()
-	}
-
-	minvol := p.HeadsLoaded[0].GetParams().Maxvol
-	for _, head := range p.HeadsLoaded {
+	minvol := headsLoaded[0].GetParams().Minvol
+	for _, head := range headsLoaded {
 		for _, tip := range p.Tips {
 			lhcp := head.Params.MergeWithTip(tip)
 			v := lhcp.Minvol
@@ -1265,11 +1204,7 @@ func (p *LHProperties) IsAddressable(pos string, crd wtype.WellCoords, channel, 
 
 func dupStrArr(sa []string) []string {
 	ret := make([]string, len(sa))
-
-	for i, v := range sa {
-		ret[i] = v
-	}
-
+	copy(ret, sa)
 	return ret
 }
 
@@ -1305,13 +1240,13 @@ func (p LHProperties) HasTipTracking() bool {
 	return false
 }
 
-func (p *LHProperties) UpdateComponentIDs(updates map[string]*wtype.LHComponent) {
+func (p *LHProperties) UpdateComponentIDs(updates map[string]*wtype.Liquid) {
 	for s, c := range updates {
 		p.UpdateComponentID(s, c)
 	}
 }
 
-func (p *LHProperties) UpdateComponentID(from string, to *wtype.LHComponent) bool {
+func (p *LHProperties) UpdateComponentID(from string, to *wtype.Liquid) bool {
 	for _, p := range p.Plates {
 		if p.FindAndUpdateID(from, to) {
 			return true

@@ -31,10 +31,10 @@ func TestInputSampleAutoAllocate(t *testing.T) {
 	s2 := mixer.Sample(cmp2, wunit.NewVolume(25.0, "ul"))
 
 	mo := mixer.MixOptions{
-		Components: []*wtype.LHComponent{s1, s2},
-		PlateType:  "pcrplate_skirted_riser20",
-		Address:    "A1",
-		PlateNum:   1,
+		Inputs:    []*wtype.Liquid{s1, s2},
+		PlateType: "pcrplate_skirted_riser20",
+		Address:   "A1",
+		PlateNum:  1,
 	}
 
 	ins := mixer.GenericMix(mo)
@@ -46,9 +46,7 @@ func TestInputSampleAutoAllocate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	rq.Input_platetypes = append(rq.Input_platetypes, pl)
-
-	rq.ConfigureYourself()
+	rq.InputPlatetypes = append(rq.InputPlatetypes, pl)
 
 	lh := Init(rbt)
 
@@ -65,7 +63,7 @@ func TestInputSampleAutoAllocate(t *testing.T) {
 func testSetup(rbt *liquidhandling.LHProperties, expected map[string]float64, t *testing.T) {
 	for _, p := range rbt.Plates {
 		for _, w := range p.Wellcoords {
-			if !w.Empty() {
+			if !w.IsEmpty() {
 				v, ok := expected[w.WContents.CName]
 
 				if !ok {
@@ -105,10 +103,10 @@ func TestInPlaceAutoAllocate(t *testing.T) {
 	cmp2.Vol = 50.0
 
 	mo := mixer.MixOptions{
-		Components: []*wtype.LHComponent{cmp1, cmp2},
-		PlateType:  "pcrplate_skirted_riser20",
-		Address:    "A1",
-		PlateNum:   1,
+		Inputs:    []*wtype.Liquid{cmp1, cmp2},
+		PlateType: "pcrplate_skirted_riser20",
+		Address:   "A1",
+		PlateNum:  1,
 	}
 
 	ins := mixer.GenericMix(mo)
@@ -120,9 +118,7 @@ func TestInPlaceAutoAllocate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	rq.Input_platetypes = append(rq.Input_platetypes, pl)
-
-	rq.ConfigureYourself()
+	rq.InputPlatetypes = append(rq.InputPlatetypes, pl)
 
 	lh := Init(rbt)
 

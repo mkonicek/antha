@@ -58,18 +58,20 @@ func (lh *Liquidhandler) Tip_box_setup(ctx context.Context, request *LHRequest) 
 	//
 
 	for _, ins := range instrx {
-		if ins.InstructionType() == lhdriver.LOD {
-			ttype := ins.GetParameter("TIPTYPE").([]string)[0]
-			ntips[ttype] += ins.GetParameter("MULTI").(int)
-			hs, ok := tiplocs[ttype]
+		ins.Visit(lhdriver.RobotInstructionBaseVisitor{
+			HandleLoadTips: func(lod *lhdriver.LoadTipsInstruction) {
+				ttype := lod.TipType[0]
+				ntips[ttype] += lod.Multi
+				hs, ok := tiplocs[ttype]
 
-			if !ok {
-				hs = make(map[string]int, 2)
-				tiplocs[ttype] = hs
-			}
+				if !ok {
+					hs = make(map[string]int, 2)
+					tiplocs[ttype] = hs
+				}
 
-			hs[ins.GetParameter("POS").([]string)[0]] += ins.GetParameter("MULTI").(int)
-		}
+				hs[lod.Pos[0]] += lod.Multi
+			},
+		})
 	}
 
 	h := make(map[string]int, 3)
@@ -85,7 +87,7 @@ func (lh *Liquidhandler) Tip_box_setup(ctx context.Context, request *LHRequest) 
 		if !ok {
 			tiplocs[actualtiptype] = tiplocs[tiptype]
 		} else {
-			for k, _ := range tiplocs[tiptype] {
+			for k := range tiplocs[tiptype] {
 				ar[k] += 1
 			}
 			tiplocs[actualtiptype] = ar
@@ -97,7 +99,7 @@ func (lh *Liquidhandler) Tip_box_setup(ctx context.Context, request *LHRequest) 
 	for actualtiptype, ntip := range h {
 		ar := tiplocs[actualtiptype]
 		ar2 := make([]string, 0, 1)
-		for k, _ := range ar {
+		for k := range ar {
 			ar2 = append(ar2, k)
 		}
 

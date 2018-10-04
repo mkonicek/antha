@@ -87,9 +87,10 @@ func (w *errWrapper) Close() error {
 
 // A File is data about a file
 type File struct {
-	Name string
-	Dir  string
-	Size int64
+	Name  string
+	Dir   string
+	Size  int64
+	IsDir bool
 }
 
 // ListFiles returns files for a job. If jobID is empty, list files for the
@@ -108,9 +109,10 @@ func (c *Client) ListFiles(ctx context.Context, jobID JobID) ([]*File, error) {
 	var files []*File
 	for _, fi := range fis {
 		files = append(files, &File{
-			Name: fi.Name(),
-			Dir:  dir,
-			Size: fi.Size(),
+			Name:  fi.Name(),
+			Dir:   dir,
+			IsDir: fi.IsDir(),
+			Size:  fi.Size(),
 		})
 	}
 

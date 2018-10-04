@@ -64,8 +64,6 @@ func DNASequencetoInterface(genes []wtype.DNASequence) (geneseqs []interface{}) 
 	for i, v := range genes {
 		vals[i] = v
 	}
-	for _, gene := range vals {
-		geneseqs = append(geneseqs, gene)
-	}
+	geneseqs = append(geneseqs, vals...)
 	return
 }

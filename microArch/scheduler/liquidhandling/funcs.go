@@ -34,7 +34,7 @@ func RaiseError(err string) {
 // looks up where a plate is mounted on a liquid handler as expressed in a request
 /* deprecated
 func PlateLookup(rq LHRequest, id string) string {
-	lookupmap := rq.Plate_lookup
+	lookupmap := rq.PlateLookup
 
 	if len(lookupmap) == 0 {
 		RaiseError("Cannot find plate lookup")

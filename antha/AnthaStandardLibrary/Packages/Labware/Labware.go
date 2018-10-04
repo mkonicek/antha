@@ -29,20 +29,20 @@ var (
 	// map of some labware properties
 
 	Labwaregeometry = map[string]map[string]float64{
-		"96DSW_axygen": map[string]float64{
+		"96DSW_axygen": {
 			"numberofwells": 96.0,
 			//"Surfacearea":   0.000005,
 			"Height": 0.01, // humidity ratio in saturated air at the same temperature as the water surface (kg/kg)  (kg H2O in kg Dry Air)
 			"Radius": 0.001,
 			"dv":     0.017,
 		},
-		"96DRW_axygen": map[string]float64{
+		"96DRW_axygen": {
 			"numberofwells": 96.0,
 			//"Surfacearea":   0.00004,
 			"Height": 10.0, // humidity ratio in saturated air at the same temperature as the water surface (kg/kg)  (kg H2O in kg Dry Air)
 			"Radius": 0.001,
 		},
-		"DSW24": map[string]float64{ //24 square wells, pyramidal bases (DOT Scientific, Inc., Burton, MI)
+		"DSW24": { //24 square wells, pyramidal bases (DOT Scientific, Inc., Burton, MI)
 			"numberofwells":     24.0,
 			"numberofwellsides": 4.0,
 			"height_m":          0.043, //m
@@ -59,7 +59,7 @@ var (
 			"k":      0.1,    // plastic thermal conductivity J s-1 m-1 °C-1 for polypropylene ~0.1-0.22 http://www.engineeringtoolbox.com/thermal-conductivity-d_429.html
 			"A":      0.0003, // plasticsurfacearea m2 in contact with ?
 		},
-		"pcrplate_skirted": map[string]float64{
+		"pcrplate_skirted": {
 			"numberofwells":     96.0,
 			"numberofwellsides": 1.0,
 			"height_m":          0.02075, //m
@@ -76,7 +76,7 @@ var (
 			"k":      0.1,      // plastic thermal conductivity J s-1 m-1 °C-1 for polypropylene ~0.1-0.22 http://www.engineeringtoolbox.com/thermal-conductivity-d_429.html
 			"A":      0.000198, // plasticsurfacearea m2 in contact with ?
 		},
-		"greiner_384": map[string]float64{ //
+		"greiner_384": { //
 			"numberofwells":     384.0,
 			"numberofwellsides": 4.0,
 			"height_m":          0.01,  //m

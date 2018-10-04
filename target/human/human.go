@@ -3,7 +3,6 @@ package human
 import (
 	"context"
 	"fmt"
-
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/target"
@@ -70,7 +69,7 @@ func (a *Human) CanCompile(req ast.Request) bool {
 }
 
 // MoveCost implements target.device MoveCost
-func (a *Human) MoveCost(from target.Device) int {
+func (a *Human) MoveCost(from target.Device) int64 {
 	if _, ok := from.(*Human); ok {
 		return HumanByHumanCost
 	}
@@ -113,9 +112,18 @@ func (a *Human) generate(cmd interface{}) ([]target.Inst, error) {
 			Message: cmd.Message,
 		})
 
-	case *ast.AwaitInst:
-		insts = append(insts, &target.Prompt{
-			Message: fmt.Sprintf("Now get some data for %s %s", cmd.Tags, cmd.AwaitID),
+	case *wtype.PRInstruction:
+		insts = append(insts, &target.Manual{
+			Dev:     a,
+			Label:   "plate-read",
+			Details: fmt.Sprintf("plate-read instruction. Options:'%s'", cmd.Options),
+		})
+
+	case *ast.QPCRInstruction:
+		insts = append(insts, &target.Manual{
+			Dev:     a,
+			Label:   "QPCR",
+			Details: fmt.Sprintf("QPCR request, definition %s, barcode %s", cmd.Definition, cmd.Barcode),
 		})
 
 	default:

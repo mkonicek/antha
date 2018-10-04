@@ -25,7 +25,13 @@ func ParsePCRExcel(designfile wtype.File) ([]pcr.Reaction, error) {
 		switch {
 		case filepath.Ext(designfile.Name) == ".xlsx":
 			csvfile1, err := xlsxparserBinary(data, 0, "Sheet2")
+			if err != nil {
+				return nil, err
+			}
 			csvfile2, err := xlsxparserBinary(data, 1, "Sheet2")
+			if err != nil {
+				return nil, err
+			}
 
 			pcrreaction, err = pcrReactionfromcsv(csvfile2.Name(), csvfile1.Name())
 			return pcrreaction, err
@@ -44,19 +50,31 @@ func ParsePCRExcel(designfile wtype.File) ([]pcr.Reaction, error) {
 }
 
 func pcrReactionfromcsv(designFile string, sequenceFile string) (pcrReactions []pcr.Reaction, err error) {
-
+	var errs []string
 	pcrDesigns := readPCRDesign(designFile)
 	partSequences := readPCRDesign(sequenceFile)
 	for _, pcrDesignFields := range pcrDesigns {
 		var newpcrReaction pcr.Reaction
-		newpcrReaction.ReactionName = pcrDesignFields[0]
-		newpcrReaction.Template.Nm = pcrDesignFields[1]
-		newpcrReaction.PrimerPair[0].Nm = pcrDesignFields[2]
-		newpcrReaction.PrimerPair[1].Nm = pcrDesignFields[3]
-		pcrReactions = append(pcrReactions, newpcrReaction)
+		if len(pcrDesignFields) > 0 {
+			newpcrReaction.ReactionName = pcrDesignFields[0]
+			if len(pcrDesignFields) > 1 {
+				newpcrReaction.Template.Nm = pcrDesignFields[1]
+			} else {
+				errs = append(errs, fmt.Sprintf("no template specified for %s", newpcrReaction.ReactionName))
+			}
+			if len(pcrDesignFields) > 2 {
+				newpcrReaction.PrimerPair[0].Nm = pcrDesignFields[2]
+			} else {
+				errs = append(errs, fmt.Sprintf("no primer 1 specified for %s", newpcrReaction.ReactionName))
+			}
+			if len(pcrDesignFields) > 3 {
+				newpcrReaction.PrimerPair[1].Nm = pcrDesignFields[3]
+			} else {
+				errs = append(errs, fmt.Sprintf("no primer 2 specified for %s", newpcrReaction.ReactionName))
+			}
+			pcrReactions = append(pcrReactions, newpcrReaction)
+		}
 	}
-
-	var status string
 
 	for i, pcrReaction := range pcrReactions {
 		var reactionPartCounter int
@@ -67,7 +85,7 @@ func pcrReactionfromcsv(designFile string, sequenceFile string) (pcrReactions []
 					if seqField[0] == sequenceField[0] {
 						y++
 						if y > 1 {
-							status = (status + "Part " + sequenceField[0] + " defined more than once in Sheet1 please specify a single entry. ")
+							errs = append(errs, "Part "+sequenceField[0]+" defined more than once in Sheet1 please specify a single entry. ")
 						}
 					}
 				}
@@ -77,20 +95,24 @@ func pcrReactionfromcsv(designFile string, sequenceFile string) (pcrReactions []
 				pcrReaction.Template.Seq = sequenceField[1]
 				reactionPartCounter++
 			} else if sequenceField[0] == pcrReaction.PrimerPair[0].Nm {
-				pcrReaction.PrimerPair[0].Seq = sequenceField[1]
+				if len(sequenceField) > 1 {
+					pcrReaction.PrimerPair[0].Seq = sequenceField[1]
+				}
 				reactionPartCounter++
 			} else if sequenceField[0] == pcrReaction.PrimerPair[1].Nm {
-				pcrReaction.PrimerPair[1].Seq = sequenceField[1]
+				if len(sequenceField) > 1 {
+					pcrReaction.PrimerPair[0].Seq = sequenceField[1]
+				}
 				reactionPartCounter++
 			}
 
 		}
 		if reactionPartCounter < 3 {
-			status = (status + "Please specify all parts for reaction " + pcrReactions[i].ReactionName + " in Sheet1. ")
+			errs = append(errs, "Please specify all parts for reaction "+pcrReactions[i].ReactionName+" in Sheet1. ")
 		}
 	}
-	if status != "" {
-		err = fmt.Errorf(status)
+	if len(errs) > 0 {
+		err = fmt.Errorf(strings.Join(errs, "\n"))
 	}
 	return
 }
@@ -100,12 +122,11 @@ func readPCRDesign(filename string) [][]string {
 	var constructs [][]string
 
 	csvfile, err := os.Open(filename)
-
 	if err != nil {
 		panic(err)
 	}
 
-	defer csvfile.Close()
+	defer csvfile.Close() //nolint
 
 	reader := csv.NewReader(csvfile)
 

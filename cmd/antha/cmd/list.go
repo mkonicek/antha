@@ -30,10 +30,11 @@ import (
 )
 
 const (
-	jsonOutput = "json"
-	yamlOutput = "yaml"
-	textOutput = "text"
-	csvOutput  = "csv"
+	jsonOutput         = "json"
+	yamlOutput         = "yaml"
+	textOutput         = "text"
+	csvOutput          = "csv"
+	descriptionsOutput = "descriptions"
 )
 
 var listCmd = &cobra.Command{
@@ -53,5 +54,7 @@ func init() {
 			textOutput,
 			yamlOutput,
 			jsonOutput,
+			csvOutput + " (plates and policy commands only)",
+			descriptionsOutput + " (policies only)",
 		}, ",")))
 }

@@ -41,7 +41,7 @@ func recognitionSeqHandler(RecognitionSeq string) (RecognitionSequence string, E
 	if strings.Count(RecognitionSeq, "(") == 1 &&
 		strings.Count(RecognitionSeq, "/") == 1 &&
 		strings.Count(RecognitionSeq, ")") == 1 &&
-		strings.HasSuffix(RecognitionSeq, ")") == true {
+		strings.HasSuffix(RecognitionSeq, ")") {
 
 		split := strings.Split(RecognitionSeq, "(")
 

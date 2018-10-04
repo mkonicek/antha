@@ -9,12 +9,12 @@ import (
 
 func makeWell() *LHWell {
 	swshp := NewShape("box", "mm", 8.2, 8.2, 41.3)
-	welltype := NewLHWell("DSW96", "", "", "ul", 1000, 100, swshp, LHWBV, 8.2, 8.2, 41.3, 4.7, "mm")
+	welltype := NewLHWell("ul", 1000, 100, swshp, VWellBottom, 8.2, 8.2, 41.3, 4.7, "mm")
 	welltype.WContents.Loc = "randomplate:A1"
 	return welltype
 }
 
-func makeComponent() *LHComponent {
+func makeComponent() *Liquid {
 	rand := wutil.GetRandom()
 	A := NewLHComponent()
 	A.Type = LTWater
@@ -31,7 +31,10 @@ func makeComponent() *LHComponent {
 func TestEmptyWellMix(t *testing.T) {
 	c := makeComponent()
 	w := makeWell()
-	w.Add(c)
+	err := w.AddComponent(c)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	if w.WContents.ID == c.ID {
 		t.Fatal("Well contents should have different ID to input component")
@@ -49,17 +52,28 @@ func TestFullWellMix(t *testing.T) {
 	c := makeComponent()
 	w := makeWell()
 	idb4 := w.WContents.ID
-	w.Add(c)
+
+	err := w.AddComponent(c)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	if w.WContents.HasParent(w.WContents.ID) {
 		t.Fatal("Components should not have themselves as parents! It's just too metaphysical")
 	}
 	d := makeComponent()
-	w.Add(d)
+
+	err = w.AddComponent(d)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	if w.WContents.ID == c.ID || w.WContents.ID == d.ID || w.WContents.ID == idb4 {
 		t.Fatal("Well contents should have new ID after mix")
 	}
-	if !w.WContents.HasParent(c.ID) || !w.WContents.HasParent(d.ID) {
-		t.Fatal("Well contents should have all parents set")
+
+	if !w.WContents.HasParent(d.ID) {
+		t.Fatal("Well contents should have last parent set")
 	}
 
 	if !d.HasDaughter(w.WContents.ID) {
@@ -72,33 +86,29 @@ func TestFullWellMix(t *testing.T) {
 
 	e := makeComponent()
 
-	w.Add(e)
+	err = w.AddComponent(e)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	f := makeComponent()
 
-	w.Add(f)
+	err = w.AddComponent(f)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	w2 := makeWell()
 
 	g := makeComponent()
 
-	w2.Add(w.WContents)
-	w2.Add(g)
-
-	if !w2.WContents.HasParent(c.ID) || !w2.WContents.HasParent(d.ID) || !w2.WContents.HasParent(e.ID) || !w2.WContents.HasParent(f.ID) || !w2.WContents.HasParent(w.WContents.ID) {
-		t.Fatal("Well contents should have all parents set...2")
+	err = w2.AddComponent(w.WContents)
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	/*
-		gra := w2.WContents.ParentTree()
-		fmt.Println(w2.WContents.ParentID)
-		fmt.Println(gra.Nodes)
-		for n, a := range gra.Outs {
-			fmt.Println(n, ":::", a)
-		}
-
-		s := graph.Print(graph.PrintOpt{Graph: &gra})
-
-		fmt.Println(s)
-	*/
+	err = w2.AddComponent(g)
+	if err != nil {
+		t.Fatal(err)
+	}
 }

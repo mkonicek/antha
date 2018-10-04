@@ -24,17 +24,17 @@ func configure_request_quitebig(ctx context.Context, rq *LHRequest) {
 		mmxs := mixer.Sample(mmx, wunit.NewVolume(21.0, "ul"))
 		ps := mixer.Sample(part, wunit.NewVolume(1.0, "ul"))
 
-		ins.AddComponent(ws)
-		ins.AddComponent(mmxs)
-		ins.AddComponent(ps)
-		ins.AddProduct(GetComponentForTest(ctx, "water", wunit.NewVolume(43.0, "ul")))
-		ins.Result.CName = fmt.Sprintf("DANGER_MIX_%d", k)
+		ins.AddInput(ws)
+		ins.AddInput(mmxs)
+		ins.AddInput(ps)
+		ins.AddOutput(GetComponentForTest(ctx, "water", wunit.NewVolume(43.0, "ul")))
+		ins.Outputs[0].CName = fmt.Sprintf("DANGER_MIX_%d", k)
 		ins.SetGeneration(k + 1)
 		rq.Add_instruction(ins)
 	}
 }
 
-func GetComponentForTest(ctx context.Context, name string, vol wunit.Volume) *wtype.LHComponent {
+func GetComponentForTest(ctx context.Context, name string, vol wunit.Volume) *wtype.Liquid {
 	c, err := inventory.NewComponent(ctx, name)
 	if err != nil {
 		panic(err)
@@ -48,10 +48,8 @@ func GetItHere(ctx context.Context) (*Liquidhandler, *LHRequest, error) {
 	lh := GetLiquidHandlerForTest(ctx)
 	rq := GetLHRequestForTest()
 	configure_request_quitebig(ctx, rq)
-	rq.Input_platetypes = append(rq.Input_platetypes, GetPlateForTest())
-	rq.Output_platetypes = append(rq.Output_platetypes, GetPlateForTest())
-
-	rq.ConfigureYourself()
+	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
+	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
 
 	err := lh.Plan(ctx, rq)
 	if err != nil {
@@ -70,9 +68,9 @@ func whereISthatplate(name string, robot *liquidhandling.LHProperties) string {
 	return "notheremate"
 }
 
-func itshere(name string, plate *wtype.LHPlate) bool {
+func itshere(name string, plate *wtype.Plate) bool {
 	for _, w := range plate.Wellcoords {
-		if w.Empty() {
+		if w.IsEmpty() {
 			continue
 		}
 		if w.WContents.CName == name {

@@ -28,7 +28,6 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
@@ -36,6 +35,8 @@ import (
 	"github.com/antha-lang/antha/microArch/sampletracker"
 )
 
+//ImprovedLayoutAgent assigns destinations to mix instructions
+//don't ask about how bad the original one (upon which the 'improvements' here were made) was...
 func ImprovedLayoutAgent(ctx context.Context, request *LHRequest, params *liquidhandling.LHProperties) (*LHRequest, error) {
 	// do this multiply based on the order in the chain
 
@@ -57,7 +58,7 @@ func ImprovedLayoutAgent(ctx context.Context, request *LHRequest, params *liquid
 
 		k += 1
 		if err != nil {
-			break
+			return request, err
 		}
 		ch = ch.Child
 	}
@@ -65,7 +66,7 @@ func ImprovedLayoutAgent(ctx context.Context, request *LHRequest, params *liquid
 	// prune out dead instructions from the assignments
 	filtered := make(map[string][]string)
 
-	for k, insAr := range request.Output_assignments {
+	for k, insAr := range request.OutputAssignments {
 		ar := make([]string, 0, len(insAr))
 		for _, v := range insAr {
 			_, ok := request.LHInstructions[v]
@@ -80,17 +81,17 @@ func ImprovedLayoutAgent(ctx context.Context, request *LHRequest, params *liquid
 		}
 	}
 
-	request.Output_assignments = filtered
+	request.OutputAssignments = filtered
 
 	return request, err
 }
 
 func map_in_user_plates(rq *LHRequest, pc []PlateChoice) []PlateChoice {
-	for _, p := range rq.Input_plates {
+	for _, p := range rq.InputPlates {
 		pc = map_in_user_plate(p, pc, rq)
 	}
 
-	for _, p := range rq.Output_plates {
+	for _, p := range rq.OutputPlates {
 		pc = map_in_user_plate(p, pc, rq)
 	}
 
@@ -111,15 +112,15 @@ func findInPC(ass, w string, pc PlateChoice) int {
 	return i
 }
 
-func map_in_user_plate(p *wtype.LHPlate, pc []PlateChoice, rq *LHRequest) []PlateChoice {
+func map_in_user_plate(p *wtype.Plate, pc []PlateChoice, rq *LHRequest) []PlateChoice {
 	nm := p.PlateName
 
-	it := wtype.NewOneTimeColumnWiseIterator(p)
+	it := wtype.NewAddressIterator(p, wtype.ColumnWise, wtype.TopToBottom, wtype.LeftToRight, false)
 
 	for wc := it.Curr(); it.Valid(); wc = it.Next() {
 		w := p.Wellcoords[wc.FormatA1()]
 
-		if w.Empty() {
+		if w.IsEmpty() {
 			continue
 		}
 
@@ -139,22 +140,6 @@ func map_in_user_plate(p *wtype.LHPlate, pc []PlateChoice, rq *LHRequest) []Plat
 		}
 	}
 	return pc
-}
-
-func find_insID(plateID, wellcoords string, rq *LHRequest) string {
-	r := ""
-	for _, ins := range rq.LHInstructions {
-		// ignore non-mix instructions
-		if ins.Type != wtype.LHIMIX {
-			continue
-		}
-		if ins.PlateID == plateID && ins.Welladdress == wellcoords {
-			r = ins.ID
-			break
-		}
-	}
-
-	return r
 }
 
 func getNameForID(pc []PlateChoice, id string) string {
@@ -211,20 +196,20 @@ func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling
 
 	// give them names
 
-	for _, v := range request.Output_plates {
-		if v.Name() == "" {
+	for _, v := range request.OutputPlates {
+		if wtype.NameOf(v) == "" {
 			v.PlateName = getNameForID(plate_choices, v.ID)
 		}
 	}
 
 	// now we have solutions of type 1 only -- we just need to
 	// say where on each plate they will go
-	// this needs to set Output_assignments
+	// this needs to set OutputAssignments
 	if err := make_layouts(ctx, request, plate_choices); err != nil {
 		return nil, nil, nil, err
 	}
 
-	lkp := make(map[string][]*wtype.LHComponent)
+	lkp := make(map[string][]*wtype.Liquid)
 	lk2 := make(map[string]string)
 	// fix the output locations correctly
 
@@ -233,26 +218,29 @@ func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling
 	for _, id := range order {
 		v := request.LHInstructions[id]
 		// pass ID through chain if not a mix
-		if v.Type != wtype.LHIMIX {
-			// the current contract on non-mix instructions is to pass in just one
-			// component as an input and one as an output
+		if v.Type == wtype.LHIPRM {
+			// the current contract on prompt instructions is to pass through a set of components
 			// on which basis we need only make sure the result has the same location
 			// as the input
 			// set pass throughs
 
-			for i := 0; i < len(v.Components); i++ {
-				v.PassThrough[v.Components[i].ID].Loc = v.Components[i].Loc
+			for i := 0; i < len(v.Inputs); i++ {
+				v.PassThrough[v.Inputs[i].ID].Loc = v.Inputs[i].Loc
 			}
 			continue
+		} else if v.Type == wtype.LHISPL {
+			// similar to the above, just ensure the results both have the right location set
+			v.Outputs[0].Loc = v.Inputs[0].Loc
+			v.Outputs[1].Loc = v.Inputs[0].Loc
 		}
 
-		lkp[v.ID] = make([]*wtype.LHComponent, 0, 1) //v.Result
-		lk2[v.Result.ID] = v.ID
+		lkp[v.ID] = make([]*wtype.Liquid, 0, 1) //v.Output
+		lk2[v.Outputs[0].ID] = v.ID
 	}
 
 	for _, id := range order {
 		v := request.LHInstructions[id]
-		for _, c := range v.Components {
+		for _, c := range v.Inputs {
 			// if this component has the same ID
 			// as the result of another instruction
 			// we map it in
@@ -265,13 +253,13 @@ func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling
 		}
 
 		// now we put the actual result in
-		lkp[v.ID] = append(lkp[v.ID], v.Result)
+		lkp[v.ID] = append(lkp[v.ID], v.Outputs[0])
 	}
 
 	sampletracker := sampletracker.GetSampleTracker()
 
 	// now map the output assignments in
-	for k, v := range request.Output_assignments {
+	for k, v := range request.OutputAssignments {
 		for _, id := range v {
 			l := lkp[id]
 			for _, x := range l {
@@ -319,8 +307,6 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 	st := sampletracker.GetSampleTracker()
 
 	// inconsistent plate types will be assigned randomly!
-	//	for k, v := range request.LHInstructions {
-	//for _, k := range request.Output_order {
 	x := 0
 	for _, k := range order {
 		x += 1
@@ -382,38 +368,45 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 				// check if this well is used... if so, we need another plate
 
 				if v.Welladdress != "" && wutil.StrInStrArray(v.Welladdress, s[i].Wells) {
-					id := wtype.NewUUID()
-					request.LHInstructions[k].SetPlateID(id)
-					s = append(s, PlateChoice{Platetype: v.Platetype, Assigned: []string{v.ID}, ID: v.PlateID, Wells: []string{v.Welladdress}, Name: nm, Output: []bool{true}})
 
-				} else {
+					// see if we can find a plate
 
-					s[i].Assigned = append(s[i].Assigned, v.ID)
-					s[i].Wells = append(s[i].Wells, v.Welladdress)
-					s[i].Output = append(s[i].Output, true)
+					i = findPlateWithWellFree(s, v.Platetype, v.Welladdress, v.PlateName)
+
+					if i == -1 {
+						// a '-1' means we didn't find one
+						id := wtype.NewUUID()
+						request.LHInstructions[k].SetPlateID(id)
+						s = append(s, PlateChoice{Platetype: v.Platetype, Assigned: []string{v.ID}, ID: v.PlateID, Wells: []string{v.Welladdress}, Name: nm, Output: []bool{true}})
+						i = len(s) - 1
+					}
 				}
+
+				s[i].Assigned = append(s[i].Assigned, v.ID)
+				s[i].Wells = append(s[i].Wells, v.Welladdress)
+				s[i].Output = append(s[i].Output, true)
 			}
 		} else if v.IsMixInPlace() {
 			// the first component sets the destination
 			// and now it should indeed be set
 
 			// really?
-			if len(v.Components) == 0 {
+			if len(v.Inputs) == 0 {
 				continue
 			}
 
-			if v.Components[0].Loc == "" {
-				addr, ok := st.GetLocationOf(v.Components[0].ID)
+			if v.Inputs[0].PlateLocation().ID == "" {
+				addr, ok := st.GetLocationOf(v.Inputs[0].ID)
 
 				if !ok {
-					err := wtype.LHError(wtype.LH_ERR_DIRE, "MIX IN PLACE WITH NO LOCATION SET")
+					err := wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("MIX IN PLACE WITH NO LOCATION SET FOR %s", v.Inputs[0].Name()))
 					return s, m, err
 				}
 
-				v.Components[0].Loc = addr
+				v.Inputs[0].Loc = addr
 			}
 
-			addr := v.Components[0].Loc
+			addr := v.Inputs[0].Loc
 			tx := strings.Split(addr, ":")
 
 			// do we know about the plate?
@@ -428,8 +421,7 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 			request.LHInstructions[k].SetPlateID(tx[0])
 			request.LHInstructions[k].Platetype = lookUp.Type
 			request.LHInstructions[k].OutPlate = lookUp
-
-			request.LHInstructions[k].Result.Loc = addr
+			request.LHInstructions[k].Outputs[0].Loc = addr
 
 			// same as condition 1 except we get the plate id somewhere else
 			i := defined(tx[0], s)
@@ -446,7 +438,7 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 						if s[i].Output[i2] {
 							s[i].Assigned[i2] = v.ID
 						} else {
-							s[i].Assigned[i2] = v.ProductID
+							s[i].Assigned[i2] = v.ProductIDs()[0]
 						}
 					*/
 					s[i].Assigned[i2] = v.ID
@@ -455,17 +447,19 @@ func get_and_complete_assignments(request *LHRequest, order []string, s []PlateC
 				}
 			}
 
-		} else {
-			// bare mix
-			// this is handled later
 		}
+
+		//else {
+		// bare mix
+		// this is handled later
+		//}
 	}
 
 	// make sure the plate choices all have defined types
 
-	for i, _ := range s {
+	for i := range s {
 		if s[i].Platetype == "" {
-			s[i].Platetype = request.Output_platetypes[0].Type
+			s[i].Platetype = request.OutputPlatetypes[0].Type
 		}
 	}
 
@@ -510,7 +504,9 @@ func choose_plates(ctx context.Context, request *LHRequest, pc []PlateChoice, or
 
 			if ass == -1 {
 				// make a new plate
-				ass = len(pc)
+				if len(request.OutputPlatetypes) == 0 {
+					return nil, fmt.Errorf("no output plate types specified. \n If not specifying output plate type in a Mix Command, at least one output plate type must be specified in config > outputPlateTypes.")
+				}
 				pc = append(pc, PlateChoice{Platetype: chooseAPlate(request, v), Assigned: []string{v.ID}, ID: wtype.GetUUID(), Wells: []string{""}, Name: "Output_plate_" + v.ID[0:6], Output: []bool{true}})
 				continue
 			}
@@ -630,28 +626,7 @@ func assignmentWithType(pt string, pc []PlateChoice) int {
 
 func chooseAPlate(request *LHRequest, ins *wtype.LHInstruction) string {
 	// for now we ignore ins and just choose the First Output Platetype
-	return request.Output_platetypes[0].Type
-}
-func stringinarray(s string, array []string) int {
-	r := -1
-
-	for i, k := range array {
-		if k == s {
-			r = i
-			break
-		}
-	}
-
-	return r
-}
-
-func plateidarray(arr []*wtype.LHPlate) []string {
-	ret := make([]string, 0, 3)
-
-	for _, v := range arr {
-		ret = append(ret, v.ID)
-	}
-	return ret
+	return request.OutputPlatetypes[0].Type
 }
 
 // we have potentially added extra theoretical plates above
@@ -675,10 +650,10 @@ func make_plates(ctx context.Context, request *LHRequest, order []string) (map[s
 			request.LHInstructions[k].SetPlateID(remap[v.PlateID])
 			continue
 		}
-		_, ok := request.Output_plates[v.PlateID]
+		_, ok := request.OutputPlates[v.PlateID]
 
 		// we don't remap input plates
-		_, ok2 := request.Input_plates[v.PlateID]
+		_, ok2 := request.InputPlates[v.PlateID]
 
 		// need to assign a new plate
 		if !(ok || ok2) {
@@ -687,7 +662,7 @@ func make_plates(ctx context.Context, request *LHRequest, order []string) (map[s
 				return nil, fmt.Errorf("cannot make plate %s: %s", v.Platetype, err)
 			}
 			plate.PlateName = request.LHInstructions[k].PlateName
-			request.Output_plates[plate.ID] = plate
+			request.OutputPlates[plate.ID] = plate
 			remap[v.PlateID] = plate.ID
 			request.LHInstructions[k].SetPlateID(remap[v.PlateID])
 		}
@@ -701,7 +676,7 @@ func make_layouts(ctx context.Context, request *LHRequest, pc []PlateChoice) err
 	//sampletracker := sampletracker.GetSampleTracker()
 	// we need to fill in the platechoice structure then
 	// transfer the info across to the solutions
-	//opa := request.Output_assignments
+	//opa := request.OutputAssignments
 	opa := make(map[string][]string)
 
 	for _, c := range pc {
@@ -716,19 +691,24 @@ func make_layouts(ctx context.Context, request *LHRequest, pc []PlateChoice) err
 
 		it := request.OutputIteratorFactory(plat)
 
-		//seed in the existing assignments
+		//put a dummy component in the assigned wells to mark them as used
 
 		for _, w := range c.Wells {
 			if w != "" {
 				wc := wtype.MakeWellCoords(w)
-				//plat.Cols[wc.X][wc.Y].Currvol += 100.0
-				dummycmp := wtype.NewLHComponent()
-				dummycmp.SetVolume(wunit.NewVolume(100.0, "ul"))
-				plat.Cols[wc.X][wc.Y].Add(dummycmp)
+
+				well, ok := plat.WellAt(wc)
+				if !ok {
+					return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("well (%s) specified is out of range of available wells for plate type %s", w, plat.Type))
+				}
+				err := markWellUsed(well)
+				if err != nil {
+					return err
+				}
 			}
 		}
 
-		for i, _ := range c.Assigned {
+		for i := range c.Assigned {
 			sID := c.Assigned[i]
 			well := ""
 			if i < len(c.Wells) {
@@ -739,14 +719,16 @@ func make_layouts(ctx context.Context, request *LHRequest, pc []PlateChoice) err
 
 			if well == "" {
 				wc := plat.NextEmptyWell(it)
-				if wc.IsZero() {
-					// something very bad has happened
-					//	logger.Fatal("DIRE WARNING: The unthinkable has happened... output plate has too many assignments!")
-					return wtype.LHError(wtype.LH_ERR_DIRE, "DIRE WARNING: The unthinkable has happened... output plate has too many assignments!")
+				well, ok := plat.WellAt(wc)
+				if !ok {
+					return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("too many assignments made to output plate \"%s\"", c.Platetype))
 				}
-				dummycmp := wtype.NewLHComponent()
-				dummycmp.SetVolume(wunit.NewVolume(100.0, "ul"))
-				plat.Cols[wc.X][wc.Y].Add(dummycmp)
+
+				err := markWellUsed(well)
+				if err != nil {
+					return err
+				}
+
 				request.LHInstructions[sID].Welladdress = wc.FormatA1()
 				assignment = c.ID + ":" + wc.FormatA1()
 				c.Wells[i] = wc.FormatA1()
@@ -758,6 +740,46 @@ func make_layouts(ctx context.Context, request *LHRequest, pc []PlateChoice) err
 		}
 	}
 
-	request.Output_assignments = opa
+	request.OutputAssignments = opa
 	return nil
+}
+
+//markWellUsed add a dummy component to the well so that it's marked as having been used
+func markWellUsed(well *wtype.LHWell) error {
+	//avoid adding a dummy component if one's already been added
+	if well.IsEmpty() {
+		dummycmp := wtype.NewLHComponent()
+		dummycmp.SetVolume(well.MaxVolume())
+		err := well.AddComponent(dummycmp)
+		if err != nil {
+			return wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Layout Agent : %s", err.Error()))
+		}
+	}
+	return nil
+}
+
+//findPlateWithWellFree(s, v.Platetype, v.Welladdress, v.PlateName)
+
+//findPlateWithWellFree looks in our array of plate choices to see if there already exists a plate of this type with this well free
+// optionally we can specify a name
+func findPlateWithWellFree(plateChoices []PlateChoice, plateType, wellAddress, plateName string) int {
+	// -1 indicates not found
+	ret := -1
+
+	for i := 0; i < len(plateChoices); i++ {
+		pc := plateChoices[i]
+		nm := pc.Name
+
+		// ensure that if name is empty it does not act as a constraint
+		if plateName == "" {
+			nm = ""
+		}
+
+		if pc.Platetype == plateType && nm == plateName && !wutil.StrInStrArray(wellAddress, pc.Wells) {
+			ret = i
+			break
+		}
+	}
+
+	return ret
 }

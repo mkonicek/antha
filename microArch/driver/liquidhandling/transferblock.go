@@ -11,19 +11,22 @@ import (
 )
 
 type TransferBlockInstruction struct {
-	GenericRobotInstruction
+	BaseRobotInstruction
+	*InstructionType
 	Inss []*wtype.LHInstruction
 }
 
-func NewTransferBlockInstruction(inss []*wtype.LHInstruction) TransferBlockInstruction {
-	tb := TransferBlockInstruction{}
-	tb.Inss = inss
-	tb.GenericRobotInstruction.Ins = RobotInstruction(&tb)
+func NewTransferBlockInstruction(inss []*wtype.LHInstruction) *TransferBlockInstruction {
+	tb := &TransferBlockInstruction{
+		InstructionType: TFB,
+		Inss:            inss,
+	}
+	tb.BaseRobotInstruction = NewBaseRobotInstruction(tb)
 	return tb
 }
 
-func (ti TransferBlockInstruction) InstructionType() int {
-	return TFB
+func (ins *TransferBlockInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.TransferBlock(ins)
 }
 
 // this attempts to find arrays of destinations which can potentially be done simultaneously
@@ -70,21 +73,37 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 		// aggregates across components
 		//TODO --> allow setting legacy volume if necessary
 
-		// in fact we do not return a different robot now... but we might
-		tfr, robot, err = ConvertInstructions(ctx, insset, robot, wunit.NewVolume(0.5, "ul"), prm, prm.Multi, false, policy)
-
+		tfr, err = ConvertInstructions(ctx, insset, robot, wunit.NewVolume(0.5, "ul"), prm, prm.Multi, false, policy)
 		if err != nil {
-			//panic(err)
 			return inss, err
 		}
 
 		// we merge instructions which are compatible
-
-		tfr = mergeTransfers(tfr)
+		//tfr = mergeTransfers(tfr)
 
 		for _, tf := range tfr {
 			inss = append(inss, RobotInstruction(tf))
 		}
+	}
+
+	toTransfers := func(inss []RobotInstruction) []*TransferInstruction {
+		r := make([]*TransferInstruction, len(inss))
+
+		for ix, ins := range inss {
+			r[ix] = ins.(*TransferInstruction)
+		}
+
+		return r
+	}
+
+	fromTransfers := func(inss []*TransferInstruction) []RobotInstruction {
+		r := make([]RobotInstruction, len(inss))
+
+		for i, ins := range inss {
+			r[i] = RobotInstruction(ins)
+		}
+
+		return r
 	}
 
 	// stuff that can't be done in parallel
@@ -101,11 +120,10 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 
 		insset := []*wtype.LHInstruction{ins}
 
-		// ConvertInstructions may now change which robot we use
-		tfr, robot, err = ConvertInstructions(ctx, insset, robot, wunit.NewVolume(0.5, "ul"), prm, 1, false, policy)
+		tfr, err = ConvertInstructions(ctx, insset, robot, wunit.NewVolume(0.5, "ul"), prm, 1, false, policy)
 
 		if err != nil {
-			panic(err)
+			return inss, err
 		}
 
 		for _, tf := range tfr {
@@ -114,6 +132,7 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 	}
 
 	//inss = append(inss, tfr...)
+	inss = fromTransfers(mergeTransfers(toTransfers(inss), policy))
 
 	return inss, nil
 }
@@ -132,10 +151,11 @@ func get_parallel_sets_robot(ctx context.Context, ins []*wtype.LHInstruction, ro
 	// part of the model here is just to make things possible, so that later
 	// on we can at least make this choice
 
-	possible_sets := make([]SetOfIDSets, 0, len(robot.HeadsLoaded))
+	headsLoaded := robot.GetLoadedHeads()
+	possible_sets := make([]SetOfIDSets, 0, len(headsLoaded))
 	corresponding_params := make([]*wtype.LHChannelParameter, 0, 1)
 
-	for _, head := range robot.HeadsLoaded {
+	for _, head := range headsLoaded {
 		// ignore heads which do not have multi
 
 		if head.GetParams().Multi == 1 {
@@ -168,7 +188,7 @@ type InsByComponent []*wtype.LHInstruction
 func (ibc InsByComponent) Len() int      { return len(ibc) }
 func (ibc InsByComponent) Swap(i, j int) { ibc[i], ibc[j] = ibc[j], ibc[i] }
 func (ibc InsByComponent) Less(i, j int) bool {
-	return strings.Compare(ibc[i].Result.CName, ibc[j].Result.CName) < 0
+	return strings.Compare(ibc[i].Outputs[0].CName, ibc[j].Outputs[0].CName) < 0
 }
 
 type InsByRow []*wtype.LHInstruction
@@ -218,7 +238,7 @@ func get_parallel_sets_head(ctx context.Context, head *wtype.LHHead, ins []*wtyp
 
 	for _, i := range ins {
 		// ignore empty instructions
-		if len(i.Components) == 0 {
+		if len(i.Inputs) == 0 {
 			continue
 		}
 
@@ -267,8 +287,6 @@ func get_parallel_sets_head(ctx context.Context, head *wtype.LHHead, ins []*wtyp
 			}
 		}
 	}
-
-	// ret here is just splurged straight out
 
 	return ret, nil
 }
@@ -379,19 +397,15 @@ func get_cols(pdm wtype.Platedestmap, multi, wells int, contiguous, full bool) S
 }
 
 func colDup(in [][]*wtype.LHInstruction) [][]*wtype.LHInstruction {
-	dup := func(inss []*wtype.LHInstruction) []*wtype.LHInstruction {
-		r := make([]*wtype.LHInstruction, len(inss))
-
-		for i := 0; i < len(inss); i++ {
-			r[i] = inss[i]
-		}
-
-		return r
-	}
 	out := make([][]*wtype.LHInstruction, len(in))
 
 	for i, v := range in {
-		out[i] = dup(v)
+		r := make([]*wtype.LHInstruction, len(v))
+
+		for i := 0; i < len(v); i++ {
+			r[i] = v[i]
+		}
+		out[i] = r
 	}
 
 	return out
@@ -481,73 +495,55 @@ func choose_parallel_sets(sets []SetOfIDSets, params []*wtype.LHChannelParameter
 	return ret, retp, nil
 }
 
-func (ti TransferBlockInstruction) GetParameter(p string) interface{} {
-	return nil
+func (ti TransferBlockInstruction) GetParameter(name InstructionParameter) interface{} {
+	return ti.BaseRobotInstruction.GetParameter(name)
 }
 
-func mergeTransfers(tfrs []*TransferInstruction) []*TransferInstruction {
+func mergeTransfers(tfrs []*TransferInstruction, policy *wtype.LHPolicyRuleSet) []*TransferInstruction {
 	ret := make([]*TransferInstruction, 0, len(tfrs))
 
-	// we strictly retain ordering here
+	for _, tf := range tfrs {
+		forMerge := findTransferForMerge(tf, ret, policy)
 
-	currTfr := tfrs[0]
-
-	for i := 1; i < len(tfrs); i++ {
-		if merged := tryMergeTransfer(currTfr, tfrs[i]); merged == nil {
-			ret = append(ret, currTfr)
-			currTfr = tfrs[i]
+		// true if ret is empty or nothing mergeable within
+		if forMerge == nil {
+			ret = append(ret, tf)
 		} else {
-			currTfr = merged
+			// forMerge is already in ret
+			forMerge.MergeWith(tf)
 		}
 	}
-
-	ret = append(ret, currTfr)
 
 	return ret
 }
 
-func tryMergeTransfer(ins1, ins2 *TransferInstruction) *TransferInstruction {
-	// merge any transfers which have sources in common
-
-	if commonSources(ins1, ins2) {
-		// appends everything from ins2 to ins1
-		return ins1.MergeWith(ins2)
+func findTransferForMerge(ins *TransferInstruction, arr []*TransferInstruction, policy *wtype.LHPolicyRuleSet) *TransferInstruction {
+	for _, ins2 := range arr {
+		if canMerge(ins, ins2, policy) {
+			return ins2
+		}
 	}
 
 	return nil
 }
 
-func commonSources(ins1, ins2 *TransferInstruction) bool {
-	a2Map := func(a []string) map[string]bool {
-		m := make(map[string]bool)
-		for _, v := range a {
-			if v == "" {
-				continue
-			}
-			m[v] = true
-		}
+func canMulti(policy wtype.LHPolicy) bool {
+	return policy["CAN_MULTI"].(bool)
+}
 
-		return m
+func canMerge(ins, ins2 *TransferInstruction, policy *wtype.LHPolicyRuleSet) bool {
+	// merge only if the merge doesn't break either
+
+	ins3 := ins.Dup()
+	ins3.MergeWith(ins2)
+
+	pol1, _ := GetPolicyFor(policy, ins)
+	pol2, _ := GetPolicyFor(policy, ins2)
+	pol3, _ := GetPolicyFor(policy, ins3)
+
+	if canMulti(pol1) == canMulti(pol2) {
+		return canMulti(pol1) == canMulti(pol3)
 	}
 
-	// we just compare component names
-
-	m := a2Map(ins1.Components)
-
-	if len(m) > 1 {
-		return false
-	}
-
-	for _, n := range ins2.Components {
-		if n == "" {
-			continue
-		}
-		_, ok := m[n]
-
-		if !ok {
-			return false
-		}
-	}
-
-	return true
+	return false
 }

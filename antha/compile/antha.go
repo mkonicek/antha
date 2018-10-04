@@ -206,6 +206,7 @@ func NewAntha(root *AnthaRoot) *Antha {
 	p.intrinsics = map[string]string{
 		"Centrifuge":    "execute.Centrifuge",
 		"Electroshock":  "execute.Electroshock",
+		"ExecuteMixes":  "execute.ExecuteMixes",
 		"Errorf":        "execute.Errorf",
 		"Handle":        "execute.Handle",
 		"Incubate":      "execute.Incubate",
@@ -218,7 +219,9 @@ func NewAntha(root *AnthaRoot) *Antha {
 		"NewPlate":      "execute.NewPlate",
 		"Prompt":        "execute.Prompt",
 		"ReadEM":        "execute.ReadEM",
+		"Sample":        "execute.Sample",
 		"SetInputPlate": "execute.SetInputPlate",
+		"SplitSample":   "execute.SplitSample",
 	}
 
 	p.types = map[string]string{
@@ -238,16 +241,18 @@ func NewAntha(root *AnthaRoot) *Antha {
 		"HandleOpt":            "execute.HandleOpt",
 		"JobID":                "jobfile.JobID",
 		"IncubateOpt":          "execute.IncubateOpt",
-		"LHComponent":          "wtype.LHComponent",
+		"LHComponent":          "wtype.Liquid",
 		"LHPlate":              "wtype.LHPlate",
 		"LHTip":                "wtype.LHTip",
 		"LHTipbox":             "wtype.LHTipbox",
 		"LHWell":               "wtype.LHWell",
 		"Length":               "wunit.Length",
+		"Liquid":               "wtype.Liquid",
 		"LiquidType":           "wtype.LiquidType",
 		"Mass":                 "wunit.Mass",
 		"Moles":                "wunit.Moles",
 		"PolicyName":           "wtype.PolicyName",
+		"Plate":                "wtype.Plate",
 		"Pressure":             "wunit.Pressure",
 		"Rate":                 "wunit.Rate",
 		"Resistance":           "wunit.Resistance",
@@ -278,7 +283,7 @@ func NewAntha(root *AnthaRoot) *Antha {
 	})
 	p.addImportReq(&importReq{
 		Path:    "github.com/antha-lang/antha/antha/anthalib/wunit",
-		UseExpr: "wunit.Make_units",
+		UseExpr: "wunit.GetGlobalUnitRegistry",
 	})
 	p.addImportReq(&importReq{
 		Path:    "github.com/antha-lang/antha/execute",
@@ -294,7 +299,8 @@ func NewAntha(root *AnthaRoot) *Antha {
 		Path: "github.com/antha-lang/antha/component",
 	})
 	p.addImportReq(&importReq{
-		Path: "github.com/antha-lang/antha/inject",
+		Path:    "github.com/antha-lang/antha/inject",
+		UseExpr: "inject.RegisterLineMap",
 	})
 
 	p.addImportReq(&importReq{
@@ -769,7 +775,8 @@ func (p *Antha) generateElement(fileSet *token.FileSet, file *ast.File) ([]byte,
 		Mode:     printerMode,
 		Tabwidth: tabWidth,
 	}
-	if err := compiler.Fprint(&buf, fileSet, file); err != nil {
+	lineMap, err := compiler.Fprint(&buf, fileSet, file)
+	if err != nil {
 		return nil, err
 	}
 
@@ -780,7 +787,7 @@ func (p *Antha) generateElement(fileSet *token.FileSet, file *ast.File) ([]byte,
 		return nil, err
 	}
 
-	if err := p.printFunctions(&out); err != nil {
+	if err := p.printFunctions(&out, lineMap); err != nil {
 		return nil, err
 	}
 
@@ -1139,7 +1146,7 @@ func encodeByteArray(bs []byte) string {
 }
 
 // printFunctions generates synthetic antha functions and data stuctures
-func (p *Antha) printFunctions(out io.Writer) error {
+func (p *Antha) printFunctions(out io.Writer, lineMap map[int]int) error {
 	// TODO: put the recover handler here when we get to multi-address space
 	// execution. In single-address space, the caller assumes that execeptions
 	// will bubble up through Run.
@@ -1151,6 +1158,7 @@ type Element struct {
 }
 
 func (Element) Run(_ctx context.Context, request *{{ .ModelPackage }}.Input) (response *{{ .ModelPackage }}.Output, err error) {
+	_ctx = execute.WithElementName(_ctx, {{ .ElementName }})
 	bs, err := json.Marshal(request)
 	if err != nil {
 		return nil, err
@@ -1273,6 +1281,11 @@ func init() {
 	_metadata = &api.ElementMetadata {
 		SourceSha256: {{.SHA256}},
 	}
+	inject.RegisterLineMap(
+		"{{ .GeneratedPath }}", {{ .Path }}, {{ .ElementName }},
+		map[int]int{
+			{{range $key, $value := .LineMap}}{{ $key }}: {{ $value }},
+		{{end}} })
 }
 `
 	type Param struct {
@@ -1284,6 +1297,7 @@ func init() {
 	}
 
 	type TVars struct {
+		GeneratedPath string
 		ModelPackage  string
 		ElementName   string
 		SHA256        string
@@ -1294,11 +1308,13 @@ func init() {
 		HasValidation bool
 		HasSetup      bool
 		HasAnalysis   bool
+		LineMap       map[int]int
 	}
 
 	elementPath := normalizePath(p.elementPath)
 
 	tv := TVars{
+		GeneratedPath: path.Join(p.protocolName, elementPackage, elementFilename),
 		ModelPackage:  modelPackage,
 		ElementName:   strconv.Quote(p.protocolName),
 		SHA256:        encodeByteArray(p.SourceSHA256),
@@ -1308,6 +1324,7 @@ func init() {
 		HasValidation: p.blocksUsed[token.VALIDATION],
 		HasSetup:      p.blocksUsed[token.SETUP],
 		HasAnalysis:   p.blocksUsed[token.ANALYSIS],
+		LineMap:       lineMap,
 	}
 
 	for _, msg := range p.messages {
@@ -1385,15 +1402,15 @@ func (p *Antha) desugarAnthaDecl(fileSet *token.FileSet, src *ast.File, d *ast.A
 		Params: &ast.FieldList{
 			Opening: d.Pos(),
 			List: []*ast.Field{
-				&ast.Field{
+				{
 					Names: identList("_ctx"),
 					Type:  mustParseExpr("context.Context"),
 				},
-				&ast.Field{
+				{
 					Names: identList("_input"),
 					Type:  mustParseExpr("*" + modelPackage + ".Input"),
 				},
-				&ast.Field{
+				{
 					Names: identList("_output"),
 					Type:  mustParseExpr("*" + modelPackage + ".Output"),
 				},

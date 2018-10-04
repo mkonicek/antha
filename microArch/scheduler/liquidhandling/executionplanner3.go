@@ -30,6 +30,24 @@ import (
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
+func allSplits(inss []*wtype.LHInstruction) bool {
+	for _, ins := range inss {
+		if ins.Type != wtype.LHISPL {
+			return false
+		}
+	}
+	return true
+}
+
+func hasSplit(inss []*wtype.LHInstruction) bool {
+	for _, ins := range inss {
+		if ins.Type == wtype.LHISPL {
+			return true
+		}
+	}
+	return false
+}
+
 // robot here should be a copy... this routine will be destructive of state
 func ExecutionPlanner3(ctx context.Context, request *LHRequest, robot *liquidhandling.LHProperties) (*LHRequest, error) {
 	ch := request.InstructionChain
@@ -42,8 +60,21 @@ func ExecutionPlanner3(ctx context.Context, request *LHRequest, robot *liquidhan
 		if ch.Values[0].Type == wtype.LHIPRM {
 			prm := liquidhandling.NewMessageInstruction(ch.Values[0])
 			request.InstructionSet.Add(prm)
-			//		robot.UpdateComponentIDs(ch.Values[0].PassThrough)
-			// thhis is now done in the generation process
+		} else if hasSplit(ch.Values) {
+			if !allSplits(ch.Values) {
+				insTypes := func(inss []*wtype.LHInstruction) string {
+					s := ""
+					for _, ins := range inss {
+						s += ins.InsType() + " "
+					}
+
+					return s
+				}
+				return nil, fmt.Errorf("Internal error: Failure in instruction sorting - got types %s in layer starting with split", insTypes(ch.Values))
+			}
+
+			splitBlock := liquidhandling.NewSplitBlockInstruction(ch.Values)
+			request.InstructionSet.Add(splitBlock)
 		} else {
 			// otherwise...
 			// make a transfer block instruction out of the incoming instructions
@@ -57,7 +88,7 @@ func ExecutionPlanner3(ctx context.Context, request *LHRequest, robot *liquidhan
 		ch = ch.Child
 	}
 
-	inx, err := request.InstructionSet.Generate(ctx, request.Policies, robot)
+	inx, err := request.InstructionSet.Generate(ctx, request.Policies(), robot)
 
 	if err != nil {
 		return nil, err
@@ -68,7 +99,7 @@ func ExecutionPlanner3(ctx context.Context, request *LHRequest, robot *liquidhan
 		_, ok := inx[i].(liquidhandling.TerminalRobotInstruction)
 
 		if !ok {
-			fmt.Println("ERROR: Instruction wrong type (", liquidhandling.InstructionTypeName(inx[i]), ")")
+			fmt.Println("ERROR: Instruction wrong type (", inx[i].Type().Name, ")")
 			continue
 		}
 

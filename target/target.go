@@ -45,6 +45,10 @@ var (
 		Name:  DriverSelectorV1Name,
 		Value: "antha.platereader.v1.PlateReader",
 	}
+	DriverSelectorV1QPCRDevice = ast.NameValue{
+		Name:  DriverSelectorV1Name,
+		Value: "antha.quantstudio.v1.QuantStudioService",
+	}
 )
 
 type targetKey int
@@ -65,7 +69,7 @@ func WithTarget(parent context.Context, t *Target) context.Context {
 	return context.WithValue(parent, theTargetKey, t)
 }
 
-// Target machine for execution.
+// Target for execution (collection of devices).
 type Target struct {
 	devices []Device
 }

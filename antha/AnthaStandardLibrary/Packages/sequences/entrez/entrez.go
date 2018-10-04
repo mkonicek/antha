@@ -85,14 +85,14 @@ func RetrieveRecords(query string, database string, Max int, ReturnType string) 
 			r, err = biogo.Fetch(database, p, tool, email, &h)
 			if err != nil {
 				if r != nil {
-					r.Close()
+					r.Close() // nolint
 				}
 				continue
 			}
 
 			_bn, err = io.Copy(buf, r)
 			bn += _bn
-			r.Close()
+			r.Close() // nolint
 			if err == nil {
 				break
 			}

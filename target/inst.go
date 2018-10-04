@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	lh "github.com/antha-lang/antha/microArch/scheduler/liquidhandling"
@@ -16,8 +15,10 @@ type Inst interface {
 	Device() Device
 	// DependsOn returns instructions that this instruction depends on
 	DependsOn() []Inst
-	// SetDependsOn updates DependsOn
-	SetDependsOn([]Inst)
+	// SetDependsOn sets to the list of dependencies to only the args
+	SetDependsOn(...Inst)
+	// AppendDependsOn adds to the args to the existing list of dependencies
+	AppendDependsOn(...Inst)
 }
 
 // An Initializer is an instruction with initialization instructions
@@ -36,6 +37,12 @@ type TimeEstimator interface {
 	GetTimeEstimate() float64
 }
 
+// A TipEstimator is an instruction that uses tips and provides information on how many
+type TipEstimator interface {
+	// GetTipEstimates returns an estimate of how many tips this instruction will use
+	GetTipEstimates() []wtype.TipEstimate
+}
+
 type dependsMixin struct {
 	Depends []Inst
 }
@@ -46,8 +53,13 @@ func (a *dependsMixin) DependsOn() []Inst {
 }
 
 // SetDependsOn implements an Inst
-func (a *dependsMixin) SetDependsOn(x []Inst) {
+func (a *dependsMixin) SetDependsOn(x ...Inst) {
 	a.Depends = x
+}
+
+// AppendDependsOn implements an Inst
+func (a *dependsMixin) AppendDependsOn(x ...Inst) {
+	a.Depends = append(a.Depends, x...)
 }
 
 type noDeviceMixin struct{}
@@ -80,7 +92,7 @@ type SetupIncubator struct {
 	Manual
 	// Corresponding mix
 	Mix              *Mix
-	IncubationPlates []*wtype.LHPlate
+	IncubationPlates []*wtype.Plate
 }
 
 var (
@@ -115,6 +127,18 @@ func (a *Mix) GetTimeEstimate() float64 {
 	}
 
 	return est
+}
+
+// GetTipEstimates implements a TipEstimator
+func (a *Mix) GetTipEstimates() []wtype.TipEstimate {
+	ret := []wtype.TipEstimate{}
+
+	if a.Request != nil {
+		ret = make([]wtype.TipEstimate, len(a.Request.TipsUsed))
+		copy(ret, a.Request.TipsUsed)
+	}
+
+	return ret
 }
 
 // GetInitializers implements an Initializer
@@ -195,27 +219,16 @@ type TimedWait struct {
 	Duration time.Duration
 }
 
-// SequentialOrder takes a set of instructions with out any dependencies and
-// modifies them to follow sequential order
-func SequentialOrder(insts ...Inst) []Inst {
-	for idx, inst := range insts {
-		if idx == 0 {
-			continue
+type Insts []Inst
+
+// SequentialOrder takes a slice of instructions and modifies them
+// in-place, resetting to sequential dependencies.
+func (insts Insts) SequentialOrder() {
+	if len(insts) > 1 {
+		prev := insts[0]
+		for _, cur := range insts[1:] {
+			cur.SetDependsOn(prev)
+			prev = cur
 		}
-		inst.SetDependsOn([]Inst{insts[idx-1]})
 	}
-
-	return insts
-}
-
-// AwaitData is a raw data-getting request
-type AwaitData struct {
-	dependsMixin
-	Dev  Device
-	Inst *ast.AwaitInst
-}
-
-// Device implements an Inst
-func (d *AwaitData) Device() Device {
-	return d.Dev
 }

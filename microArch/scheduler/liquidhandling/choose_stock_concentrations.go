@@ -129,7 +129,7 @@ func choose_stock_concentrations(minrequired map[string]float64, maxrequired map
 
 	prm := glpk.NewSmcp()
 	prm.SetMsgLev(0)
-	lp.Simplex(prm)
+	err := lp.Simplex(prm)
 
 	// now look at the solution
 
@@ -137,7 +137,7 @@ func choose_stock_concentrations(minrequired map[string]float64, maxrequired map
 
 	stat := lp.Status()
 
-	if stat != glpk.OPT {
+	if err != nil || stat != glpk.OPT {
 		// some problem
 		return concentrations
 	}

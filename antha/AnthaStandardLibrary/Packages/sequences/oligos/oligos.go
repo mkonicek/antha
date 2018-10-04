@@ -202,7 +202,7 @@ func FWDOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, max
 				}
 			}
 
-			if temppercentage <= maxGCcontent && minmeltingtemp.SIValue() < meltingtemp.SIValue() && maxmeltingtemp.SIValue() > meltingtemp.SIValue() && bindingsites == 1 && search.InStrings(seqstoavoid, tempoligoseq) == false && overlapthresholdfail == false {
+			if temppercentage <= maxGCcontent && minmeltingtemp.SIValue() < meltingtemp.SIValue() && maxmeltingtemp.SIValue() > meltingtemp.SIValue() && bindingsites == 1 && !search.PartialInStrings(seqstoavoid, tempoligoseq, search.IgnoreCase) && !overlapthresholdfail {
 				oligoseq.DNASequence = wtype.MakeSingleStrandedDNASequence("Primer", tempoligoseq)
 				oligoseq.GCContent = temppercentage
 				oligoseq.Length = len(tempoligoseq)
@@ -211,15 +211,27 @@ func FWDOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, max
 				return
 
 			} else {
-				err = fmt.Errorf("No primers found matching criteria: "+" last bindingsites = "+strconv.Itoa(bindingsites)+" last gc percentage= ", temppercentage, "last melting temp:", meltingtemp.ToString())
+				var combinedErrors []string
+				var i bool = true
+				var primerType, seqName string = "FORWARD", seq.Name()
+				switch i {
+				case temppercentage >= maxGCcontent:
+					combinedErrors = append(combinedErrors, gcContentErrorString(primerType, seqName, temppercentage, maxGCcontent))
+				case minmeltingtemp.SIValue() > meltingtemp.SIValue():
+					combinedErrors = append(combinedErrors, meltingTempErrorString(primerType, seqName, "minimum", meltingtemp.SIValue(), minmeltingtemp.SIValue()))
+				case maxmeltingtemp.SIValue() < meltingtemp.SIValue():
+					combinedErrors = append(combinedErrors, meltingTempErrorString(primerType, seqName, "maximum", meltingtemp.SIValue(), maxmeltingtemp.SIValue()))
+				case bindingsites > 1:
+					combinedErrors = append(combinedErrors, bindingSiteErrorString(primerType, seqName, bindingsites))
+				case search.PartialInStrings(seqstoavoid, tempoligoseq, search.IgnoreCase):
+					combinedErrors = append(combinedErrors, primerErrorString(primerType, seqName, " that contain the specified sequences to avoid.", " removing these from the parameters."))
+				case overlapthresholdfail:
+					combinedErrors = append(combinedErrors, primerErrorString(primerType, seqName, " that violate the overlap threshold.", " adjusting this parameter."))
+				}
+				err = fmt.Errorf(strings.Join(combinedErrors, "\n"))
 			}
 		}
 	}
-
-	//}else {
-	//	// fmt.Println("no oligos")
-	//	}
-
 	return
 }
 
@@ -263,7 +275,7 @@ func REVOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, max
 				}
 			}
 
-			if temppercentage <= maxGCcontent && minmeltingtemp.SIValue() < meltingtemp.SIValue() && maxmeltingtemp.SIValue() > meltingtemp.SIValue() && bindingsites == 1 && search.InStrings(seqstoavoid, tempoligoseq) == false && overlapthresholdfail == false {
+			if temppercentage <= maxGCcontent && minmeltingtemp.SIValue() < meltingtemp.SIValue() && maxmeltingtemp.SIValue() > meltingtemp.SIValue() && bindingsites == 1 && !search.PartialInStrings(seqstoavoid, tempoligoseq, search.IgnoreCase) && !overlapthresholdfail {
 				oligoseq.DNASequence = wtype.MakeSingleStrandedDNASequence("Primer", tempoligoseq)
 				oligoseq.GCContent = temppercentage
 				oligoseq.Length = len(tempoligoseq)
@@ -272,7 +284,24 @@ func REVOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, max
 				return
 
 			} else {
-				err = fmt.Errorf("No primers found matching criteria: "+" last bindingsites = "+strconv.Itoa(bindingsites)+" last gc percentage= ", temppercentage, "last melting temp:", meltingtemp.ToString())
+				var combinedErrors []string
+				var i bool = true
+				var primerType, seqName string = "REVERSE", seq.Name()
+				switch i {
+				case temppercentage >= maxGCcontent:
+					combinedErrors = append(combinedErrors, gcContentErrorString(primerType, seqName, temppercentage, maxGCcontent))
+				case minmeltingtemp.SIValue() > meltingtemp.SIValue():
+					combinedErrors = append(combinedErrors, meltingTempErrorString(primerType, seqName, "minimum", meltingtemp.SIValue(), minmeltingtemp.SIValue()))
+				case maxmeltingtemp.SIValue() < meltingtemp.SIValue():
+					combinedErrors = append(combinedErrors, meltingTempErrorString(primerType, seqName, "maximum", meltingtemp.SIValue(), maxmeltingtemp.SIValue()))
+				case bindingsites > 1:
+					combinedErrors = append(combinedErrors, bindingSiteErrorString(primerType, seqName, bindingsites))
+				case search.PartialInStrings(seqstoavoid, tempoligoseq, search.IgnoreCase):
+					combinedErrors = append(combinedErrors, primerErrorString(primerType, seqName, " that contain the specified sequences to avoid.", " removing these from the parameters."))
+				case overlapthresholdfail:
+					combinedErrors = append(combinedErrors, primerErrorString(primerType, seqName, " that violate the overlap threshold.", " adjusting this parameter."))
+				}
+				err = fmt.Errorf(strings.Join(combinedErrors, "\n"))
 			}
 		}
 	}
@@ -280,19 +309,43 @@ func REVOligoSeq(seq wtype.DNASequence, maxGCcontent float64, minlength int, max
 	return
 }
 
-func DesignFWDPRimerstoCoverFullSequence(seq wtype.DNASequence, sequenceinterval int, maxGCcontent float64, minlength int, maxlength int, minmeltingtemp wunit.Temperature, maxmeltingtemp wunit.Temperature, seqstoavoid []string, overlapthresholdwithseqstoavoid int) (primers []Primer) {
+// primerErrorString formats a textual message in the form of an erorr related to primerdesign.
+// primerorientation and sequence name are inputted, along with the error message i.e. "X not found in Y".
+// and a proposed resolution i.e. "Please put X in Y".
+func primerErrorString(primerOrientation, sequenceName, erorrString, resolutionString string) string {
+	errorBeginning := fmt.Sprintf(" For %s could only generate %s primers", sequenceName, primerOrientation)
+	resolutionBeginning := " Please try"
+	return fmt.Sprintf("%s%s%s%s", errorBeginning, erorrString, resolutionBeginning, resolutionString)
+}
 
-	primers = make([]Primer, 0)
+// gcContentErrorString formats a textual message in the form of an error related to a primer exceeding the maximum specified GC content.
+func gcContentErrorString(primerOrientation, sequenceName string, gcContent, maxGC float64) string {
+	return primerErrorString(primerOrientation, sequenceName, fmt.Sprintf(" with GC Content (%f) greater than the maximum GC Content specified (%f).", gcContent, maxGC), " lowering this parameter, or selecting a less-GC rich region.")
+}
 
-	avoidthese := make([]string, 0)
-
-	if len(seqstoavoid) != 0 {
-		for _, seq := range seqstoavoid {
-			avoidthese = append(avoidthese, seq)
-		}
+// meltingTempErrorString formats a textual message in the form of an error related to a primer being higher or lower than the temptype ("minimum" or "maximum")
+// values specified (mt and specifiedmt).
+func meltingTempErrorString(primerOrientation, sequenceName, tempType string, mt, specifiedmt float64) string {
+	var sign, indication string
+	if mt > specifiedmt {
+		sign, indication = "greater", "increasing"
+	} else {
+		sign, indication = "lower", "lowering"
 	}
-	for i := 1; i < len(seq.Sequence()); i = i + sequenceinterval {
+	return primerErrorString(primerOrientation, sequenceName, fmt.Sprintf(" with melting temperature (%f) %s than the %s melting temperature specified (%f).", mt, sign, tempType, specifiedmt), fmt.Sprintf(" %s this parameter.", indication))
+}
 
+// meltingTempErrorString formats a textual message if a primer has more than one binding site.
+func bindingSiteErrorString(primerOrientation, sequenceName string, bindingSites int) string {
+	return primerErrorString(primerOrientation, sequenceName, fmt.Sprintf(" with more than one (%d) binding sites.", bindingSites), " selecting another region.")
+}
+
+func DesignFWDPRimerstoCoverFullSequence(seq wtype.DNASequence, sequenceinterval int, maxGCcontent float64, minlength int, maxlength int, minmeltingtemp wunit.Temperature, maxmeltingtemp wunit.Temperature, seqstoavoid []string, overlapthresholdwithseqstoavoid int) (primers []Primer) {
+	primers = make([]Primer, 0)
+	avoidthese := make([]string, 0)
+	avoidthese = append(avoidthese, seqstoavoid...)
+
+	for i := 1; i < len(seq.Sequence()); i = i + sequenceinterval {
 		region := DNAregion(seq, i, len(seq.Sequence()))
 
 		primer, err := FWDOligoSeq(region, maxGCcontent, minlength, maxlength, minmeltingtemp, maxmeltingtemp, avoidthese, overlapthresholdwithseqstoavoid)
@@ -311,16 +364,9 @@ func DesignFWDPRimerstoCoverFullSequence(seq wtype.DNASequence, sequenceinterval
 }
 
 func DesignFWDPRimerstoCoverRegion(seq wtype.DNASequence, regionstart, regionend, sequenceinterval int, maxGCcontent float64, minlength int, maxlength int, minmeltingtemp wunit.Temperature, maxmeltingtemp wunit.Temperature, seqstoavoid []string, overlapthresholdwithseqstoavoid int) (primers []Primer) {
-
 	primers = make([]Primer, 0)
-
 	avoidthese := make([]string, 0)
-
-	if len(seqstoavoid) != 0 {
-		for _, seq := range seqstoavoid {
-			avoidthese = append(avoidthese, seq)
-		}
-	}
+	avoidthese = append(avoidthese, seqstoavoid...)
 
 	if regionstart-100 > 0 {
 		regionstart = regionstart - 100
@@ -387,16 +433,9 @@ func DesignPrimerstoFlankRegion(seq wtype.DNASequence, regionstart, regionend in
 */
 
 func DesignFWDPRimerstoCoverSequence(seq wtype.DNASequence, targetseq string, sequenceinterval int, maxGCcontent float64, minlength int, maxlength int, minmeltingtemp wunit.Temperature, maxmeltingtemp wunit.Temperature, seqstoavoid []string, overlapthresholdwithseqstoavoid int) (primers []Primer) {
-
 	primers = make([]Primer, 0)
-
 	avoidthese := make([]string, 0)
-
-	if len(seqstoavoid) != 0 {
-		for _, seq := range seqstoavoid {
-			avoidthese = append(avoidthese, seq)
-		}
-	}
+	avoidthese = append(avoidthese, seqstoavoid...)
 
 	seqsfound := sequences.FindSeqsinSeqs(seq.Sequence(), []string{targetseq})
 
@@ -445,16 +484,9 @@ func DesignFWDPRimerstoCoverSequence(seq wtype.DNASequence, targetseq string, se
 }
 
 func DesignFWDPRimerstoCoverFeature(seq wtype.DNASequence, targetfeaturename string, sequenceinterval int, maxGCcontent float64, minlength int, maxlength int, minmeltingtemp wunit.Temperature, maxmeltingtemp wunit.Temperature, seqstoavoid []string, overlapthresholdwithseqstoavoid int) (primers []Primer) {
-
 	primers = make([]Primer, 0)
-
 	avoidthese := make([]string, 0)
-
-	if len(seqstoavoid) != 0 {
-		for _, seq := range seqstoavoid {
-			avoidthese = append(avoidthese, seq)
-		}
-	}
+	avoidthese = append(avoidthese, seqstoavoid...)
 
 	features := seq.GetFeatureByName(targetfeaturename)
 	if len(features) == 0 {
@@ -465,15 +497,6 @@ func DesignFWDPRimerstoCoverFeature(seq wtype.DNASequence, targetfeaturename str
 		panic(panicstatement)
 	}
 
-	/*
-		coordinates := feature.Coordinates()
-
-		if len(coordinates) != 2 {
-			panicstatement := fmt.Sprintln("coordinates found == ", len(coordinates))
-			panic(panicstatement)
-		}
-	*/
-
 	targetseq := features[0].DNASeq
 
 	seqsfound := sequences.FindSeqsinSeqs(seq.Sequence(), []string{targetseq})
@@ -482,11 +505,6 @@ func DesignFWDPRimerstoCoverFeature(seq wtype.DNASequence, targetfeaturename str
 		panicstatement := fmt.Sprintln("found ", len(seqsfound), " instances of ", targetseq, " in ", seq)
 		panic(panicstatement)
 	}
-	/*
-		if len(seqsfound[0].Positions) != 2 {
-			panicstatement := fmt.Sprintln("positions found == ", len(seqsfound[0].Positions))
-			panic(panicstatement)
-		}*/
 
 	regionstart := seqsfound[0].Positions[0]
 	regionend := regionstart + len(targetseq)
@@ -496,26 +514,6 @@ func DesignFWDPRimerstoCoverFeature(seq wtype.DNASequence, targetfeaturename str
 	} else {
 		regionstart = 0
 	}
-	/*
-		regionstart := feature.StartPosition // coordinates[0]
-		regionend := feature.EndPosition     // coordinates[1]
-		// fmt.Println("feature:", targetfeaturename, "regions: ", regionstart, regionend)
-		if regionstart == 0 && regionend == 0 {
-			panic("no region!")
-		}
-
-		if regionstart-100 > 0 {
-			regionstart = regionstart - 100
-		} else {
-			regionstart = 0
-		}
-	*/
-
-	/*if regionstart > regionend {
-		temp := regionstart
-		regionstart = regionend
-		regionend = temp
-	}*/
 
 	for i := regionstart; i < regionend; i = i + sequenceinterval {
 
@@ -547,16 +545,14 @@ func MakeOutwardFacingPrimers(sequence wtype.DNASequence, maxGCcontent float64, 
 
 	endstartingpoint := wtype.MakeLinearDNASequence("endprimer", sequence.Sequence()[len(sequence.Sequence())-100:len(sequence.Sequence())-1])
 
-	oligoforpartsafter, _ = FWDOligoSeq(endstartingpoint, maxGCcontent, minlength, maxlength, minmeltingtemp, maxmeltingtemp, seqstoavoid, overlapthresholdwithseqstoavoid)
+	oligoforpartsafter, _ = FWDOligoSeq(endstartingpoint, maxGCcontent, minlength, maxlength, minmeltingtemp, maxmeltingtemp, seqstoavoid, overlapthresholdwithseqstoavoid) // nolint
 
 	// now reverse
 	reversesequence := wtype.RevComp(sequence.Sequence())
 
-	// fmt.Println("rev:", reversesequence)
-
 	endstartingpoint = wtype.MakeLinearDNASequence("endprimer", reversesequence[len(reversesequence)-100:len(reversesequence)-1])
 
-	oligoforpartsbefore, _ = FWDOligoSeq(endstartingpoint, maxGCcontent, minlength, maxlength, minmeltingtemp, maxmeltingtemp, seqstoavoid, overlapthresholdwithseqstoavoid)
+	oligoforpartsbefore, _ = FWDOligoSeq(endstartingpoint, maxGCcontent, minlength, maxlength, minmeltingtemp, maxmeltingtemp, seqstoavoid, overlapthresholdwithseqstoavoid) // nolint
 
 	oligoforpartsbefore.Reverse = true
 

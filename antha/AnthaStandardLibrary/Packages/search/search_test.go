@@ -48,12 +48,12 @@ func makeMassiveSlice(size int) []int {
 }
 
 var intTests = []searchIntsTest{
-	searchIntsTest{
+	{
 		slice:          []int{1, 2, 3, 4},
 		value:          4,
 		expectedResult: true,
 	},
-	searchIntsTest{
+	{
 		slice:          makeMassiveSlice(100000),
 		value:          9999,
 		expectedResult: true,
@@ -68,31 +68,31 @@ type searchStringsTest struct {
 }
 
 var stringTests = []searchStringsTest{
-	searchStringsTest{
+	{
 		slice:          []string{"a", "b"},
 		value:          "a",
 		ignoreCase:     IgnoreCase,
 		expectedResult: true,
 	},
-	searchStringsTest{
+	{
 		slice:          []string{"a", "b"},
 		value:          "A",
 		ignoreCase:     IgnoreCase,
 		expectedResult: true,
 	},
-	searchStringsTest{
+	{
 		slice:          []string{"a", "b"},
 		value:          "A ",
 		ignoreCase:     IgnoreCase,
 		expectedResult: true,
 	},
-	searchStringsTest{
+	{
 		slice:          []string{"a", "b"},
 		value:          "A",
 		ignoreCase:     "",
 		expectedResult: false,
 	},
-	searchStringsTest{
+	{
 		slice:          []string{},
 		value:          "A ",
 		ignoreCase:     IgnoreCase,
@@ -138,17 +138,17 @@ type seqSearchTest struct {
 }
 
 var seqTests = []seqSearchTest{
-	seqSearchTest{
+	{
 		slice: []wtype.DNASequence{
-			wtype.DNASequence{Nm: "Bob", Seq: "AACCACACTT"},
+			{Nm: "Bob", Seq: "AACCACACTT"},
 		},
 		value:          wtype.DNASequence{Nm: "bob", Seq: "AACCACACTT"},
 		expectedResult: true,
 		ignoreCase:     IgnoreCase,
 	},
-	seqSearchTest{
+	{
 		slice: []wtype.DNASequence{
-			wtype.DNASequence{Nm: "Bob", Seq: "AACCACACTT"},
+			{Nm: "Bob", Seq: "AACCACACTT"},
 		},
 		value:          wtype.DNASequence{Nm: "bob", Seq: "AACCACACTT"},
 		expectedResult: false,

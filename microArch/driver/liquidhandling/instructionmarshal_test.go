@@ -7,12 +7,13 @@ import (
 )
 
 func TestInstructionMarshal(t *testing.T) {
-	arr := make([]RobotInstruction, 0, 1)
-	arr = append(arr, NewMoveInstruction())
-	arr = append(arr, NewAspirateInstruction())
-	arr = append(arr, NewMoveInstruction())
-	arr = append(arr, NewDispenseInstruction())
-	arr = append(arr, NewMoveInstruction())
+	arr := []RobotInstruction{
+		NewMoveInstruction(),
+		NewAspirateInstruction(),
+		NewMoveInstruction(),
+		NewDispenseInstruction(),
+		NewMoveInstruction(),
+	}
 
 	marshalled, err := json.Marshal(SetOfRobotInstructions{RobotInstructions: arr})
 
@@ -28,7 +29,7 @@ func TestInstructionMarshal(t *testing.T) {
 		t.Error(err)
 	}
 
-	expected := []string{"MOV", "ASP", "MOV", "DSP", "MOV"}
+	expected := []*InstructionType{MOV, ASP, MOV, DSP, MOV}
 
 	got := insTypeArr(unmarshalled.RobotInstructions)
 

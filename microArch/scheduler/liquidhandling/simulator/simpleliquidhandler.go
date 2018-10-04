@@ -33,9 +33,6 @@ var (
 )
 
 type SimpleLiquidHandler struct {
-	pippetteSpeed float64
-	driveSpeed    float64
-	headState     int
 }
 
 type LHCommandStatus struct {
@@ -78,7 +75,7 @@ func (lh *SimpleLiquidHandler) UnloadTips(head, multi int) LHCommandStatus {
 	return LHCommandStatus{true, 0, "OK"}
 }
 func (lh *SimpleLiquidHandler) SetPipetteSpeed(rate float64) {
-	return
+
 }
 func (lh *SimpleLiquidHandler) SetDriveSpeed(drive string, rate float64) LHCommandStatus {
 	time.Sleep(DEFAULT_SLEEP_TIME)

@@ -202,7 +202,7 @@ func writeAn(outputDir string, steps []string, element *component.Component) err
 func writeBundle(outputDir string, element *component.Component, params map[string]interface{}) error {
 	desc := workflow.Desc{
 		Processes: map[string]workflow.Process{
-			"Process1": workflow.Process{
+			"Process1": {
 				Component: element.Name,
 			},
 		},
@@ -265,8 +265,8 @@ func newElement(cmd *cobra.Command, args []string) error {
 	type input struct {
 		A           float64
 		B           float64
-		ComponentA  *wtype.LHComponent
-		ComponentB  *wtype.LHComponent
+		ComponentA  *wtype.Liquid
+		ComponentB  *wtype.Liquid
 		Option      bool
 		String      string
 		StringArray []string
@@ -275,7 +275,7 @@ func newElement(cmd *cobra.Command, args []string) error {
 	}
 
 	type output struct {
-		MixedComponent *wtype.LHComponent
+		MixedComponent *wtype.Liquid
 		Sum            float64
 	}
 

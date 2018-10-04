@@ -22,114 +22,55 @@
 
 package wunit
 
-import (
-	"math"
+// SIPrefix
+type SIPrefix struct {
+	Symbol string  // short version of the prefix
+	Name   string  // long name of the prefix
+	Value  float64 // multiplier that the exponent applies to the value
+}
+
+// SIPrefixes a list containing all valid SI prefixes
+var SIPrefixes []SIPrefix
+
+func newPrefix(symbol, name string, value float64) SIPrefix {
+	ret := SIPrefix{
+		Symbol: symbol,
+		Name:   name,
+		Value:  value,
+	}
+	SIPrefixes = append(SIPrefixes, ret)
+	return ret
+}
+
+var ( //all supported SI prefixes, in smallest to largest order as they appear in SIPrefices
+	Yocto = newPrefix("y", "yocto", 1e-24)
+	Zepto = newPrefix("z", "zepto", 1e-21)
+	Atto  = newPrefix("a", "atto", 1e-18)
+	Femto = newPrefix("f", "femto", 1e-15)
+	Pico  = newPrefix("p", "pico", 1e-12)
+	Nano  = newPrefix("n", "nano", 1e-9)
+	Micro = newPrefix("u", "micro", 1e-6)
+	Milli = newPrefix("m", "milli", 1e-3)
+	Centi = newPrefix("c", "centi", 1e-2)
+	Deci  = newPrefix("d", "deci", 1e-1)
+	Deca  = newPrefix("da", "deca", 1e1)
+	Hecto = newPrefix("h", "hecto", 1e2)
+	Kilo  = newPrefix("k", "kilo", 1e3)
+	Mega  = newPrefix("M", "mega", 1e6)
+	Giga  = newPrefix("G", "giga", 1e9)
+	Tera  = newPrefix("T", "tera", 1e12)
+	Peta  = newPrefix("P", "peta", 1e15)
+	Exa   = newPrefix("E", "exa", 1e18)
+	Zetta = newPrefix("Z", "zetta", 1e21)
+	Yotta = newPrefix("Y", "yotta", 1e24)
+	None  = SIPrefix{Symbol: "", Name: "", Value: 1.0} // not a valid SIPrefix, hence not in SIPrefixes, but used for non-prefixed units
 )
 
-func RoundInt(v float64) int {
-	f := 1.0
-	if v < 0 {
-		f = -1.0
+// SIPrefixSymbols returns a list of all supported SI prefixes
+func SIPrefixSymbols() []string {
+	ret := make([]string, 0, len(SIPrefixes))
+	for _, prefix := range SIPrefixes {
+		ret = append(ret, prefix.Symbol)
 	}
-
-	return int(f * (0.5 + (f * v)))
-}
-
-// prefix library
-var prefices map[string]SIPrefix
-
-// maps log(prefix value) back to a symbol e.g. 2: c
-var seciferp map[int]string
-
-// structure defining an SI prefix
-type SIPrefix struct {
-	// prefix name
-	Name string
-	// meaning in base 10
-	Value float64
-}
-
-// helper function to allow lookup of prefix
-func SIPrefixBySymbol(symbol string) SIPrefix {
-	if prefices == nil {
-		prefices = MakePrefices()
-	}
-	// sugar to allow using empty prefix
-	if symbol == "" {
-		symbol = " "
-	}
-
-	return prefices[symbol]
-}
-
-// helper function for reverse lookup of prefix
-func ReverseLookupPrefix(i int) string {
-	if seciferp == nil {
-		seciferp = make(map[int]string, 26)
-		for k, v := range prefices {
-			lg := RoundInt(math.Log10(v.Value))
-			seciferp[lg] = k
-		}
-	}
-	return seciferp[i]
-}
-
-// multiply two prefix values
-// take care: there are no checks for going out of bounds
-// e.g. Z*Z will generate an error!
-func PrefixMul(x string, y string) string {
-	//multiply x by y, what do you get?
-
-	l1 := RoundInt(math.Log10(prefices[x].Value))
-	l2 := RoundInt(math.Log10(prefices[y].Value))
-
-	return ReverseLookupPrefix(l1 + l2)
-}
-
-// divide one prefix by another
-// take care: there are no checks for going out of bounds
-// e.g. Z/z will give an error!
-func PrefixDiv(x string, y string) string {
-	// divide x by y, what do you get?
-
-	l1 := RoundInt(math.Log10(prefices[x].Value))
-	l2 := RoundInt(math.Log10(prefices[y].Value))
-	return ReverseLookupPrefix(l1 - l2)
-}
-
-// make the prefix structure
-func MakePrefices() map[string]SIPrefix {
-	pref_map := make(map[string]SIPrefix, 20)
-	exponent := -24
-	pfcs := "yzafpnum"
-
-	for _, rune := range pfcs {
-		prefix := SIPrefix{string(rune), math.Pow10(exponent)}
-		//	logger.Debug(fmt.Sprintln(prefix))
-		pref_map[string(rune)] = prefix
-		exponent += 3
-	}
-
-	pfcs = "cd h"
-
-	exponent = -2
-
-	for _, rune := range pfcs {
-		prefix := SIPrefix{string(rune), math.Pow10(exponent)}
-		pref_map[string(rune)] = prefix
-		exponent += 1
-	}
-
-	exponent = 3
-
-	pfcs = "kMGTPEZY"
-
-	for _, rune := range pfcs {
-		prefix := SIPrefix{string(rune), math.Pow10(exponent)}
-		//	logger.Debug(fmt.Sprintln(prefix))
-		pref_map[string(rune)] = prefix
-		exponent += 3
-	}
-
-	return pref_map
+	return ret
 }

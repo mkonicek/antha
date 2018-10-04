@@ -20,10 +20,11 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-//Package containing functions for manipulating absorbance readings
+//Package platereader contains functions for manipulating absorbance readings and platereader data.
 package platereader
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -34,14 +35,14 @@ import (
 // If the blank sample is not equivalent to the sample, based on wavelength and pathlength, an error is returned.
 func Blankcorrect(blank *wtype.Absorbance, sample *wtype.Absorbance) (blankcorrected *wtype.Absorbance, err error) {
 
-	blankcorrected = sample
+	blankcorrected = sample.Dup()
 
 	err = blankcorrected.BlankCorrect(blank)
 
 	return
 }
 
-func EstimatePathLength(plate *wtype.LHPlate, volume wunit.Volume) (pathlength wunit.Length, err error) {
+func EstimatePathLength(plate *wtype.Plate, volume wunit.Volume) (pathlength wunit.Length, err error) {
 
 	if plate.Welltype.Bottom == 0 /* i.e. flat */ && plate.Welltype.Shape().LengthUnit == "mm" {
 		wellarea, err := plate.Welltype.CalculateMaxCrossSectionArea()
@@ -67,7 +68,7 @@ func EstimatePathLength(plate *wtype.LHPlate, volume wunit.Volume) (pathlength w
 			fmt.Println(volume.Unit().PrefixedSymbol(), wellvol.Unit().PrefixedSymbol(), wellarea.Unit().PrefixedSymbol(), wellarea.ToString())
 		}
 	} else {
-		err = fmt.Errorf("Can't yet estimate pathlength for this welltype shape unit ", plate.Welltype.Shape().LengthUnit, "or non flat bottom type")
+		err = errors.New(fmt.Sprint("Can't yet estimate pathlength for this welltype shape unit ", plate.Welltype.Shape().LengthUnit, "or non flat bottom type"))
 	}
 
 	return

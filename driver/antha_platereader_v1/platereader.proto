@@ -4,17 +4,15 @@ package antha.platereader.v1;
 
 service PlateReader {
   rpc PRRunProtocolByName (ProtocolRunRequest) returns (BoolReply) {}
-  rpc PROpen (Blank) returns (BoolReply){}
-}
-
-message BoolReply {
-  bool result = 1;
 }
 
 message ProtocolRunRequest {
   string ProtocolName = 1;
   string PlateID = 2;
+  string PlateLayout = 3;
+  string ProtocolOptions = 4;
 }
 
-message Blank{
+message BoolReply {
+  bool result = 1;
 }

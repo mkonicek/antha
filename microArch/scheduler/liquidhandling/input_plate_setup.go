@@ -28,6 +28,9 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/dustinkirkland/golang-petname"
+
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/inventory"
@@ -78,40 +81,28 @@ func (is InputSorter) Less(i, j int) bool {
 func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, error) {
 	st := sampletracker.GetSampleTracker()
 	// I think this might need moving too
-	input_platetypes := (*request).Input_platetypes
-	if input_platetypes == nil || len(input_platetypes) == 0 {
-		// XXX this is dangerous... until input_plate_linear is replaced we will hit big problems here
-		// this configuration needs to happen outside but for now...
-		input_platetypes, err := inventory.XXXNewPlates(ctx)
-		if err != nil {
-			return nil, err
-		}
-		(*request).Input_platetypes = input_platetypes
-		//debug
-	}
+	input_platetypes := request.InputPlatetypes
 
 	// we assume that input_plates is set if any locs are set
-	input_plates := (*request).Input_plates
+	input_plates := request.InputPlates
 
 	if len(input_plates) == 0 {
-		input_plates = make(map[string]*wtype.LHPlate, 3)
+		input_plates = make(map[string]*wtype.Plate, 3)
 	}
 
 	// need to fill each plate type
 
-	var curr_plate *wtype.LHPlate
+	var curr_plate *wtype.Plate
 
-	inputs := (*request).Input_solutions
+	inputs := request.InputSolutions.Solutions
 
-	input_order := make([]string, len((*request).Input_order))
-	for i, v := range (*request).Input_order {
-		input_order[i] = v
-	}
+	input_order := make([]string, len(request.InputSolutions.Order))
+	copy(input_order, request.InputSolutions.Order)
 
 	// this needs to be passed in via the request... must specify how much of inputs cannot
 	// be satisfied by what's already passed in
 
-	input_volumes := request.Input_vols_wanting
+	input_volumes := request.InputSolutions.VolumesWanting
 
 	// sort to make deterministic
 	// we sort by a) volume (descending) b) name (alphabetically)
@@ -122,20 +113,23 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 
 	input_order = isrt.Ordered
 
-	weights_constraints := request.Input_setup_weights
+	weights_constraints := request.InputSetupWeights
 
 	// get the assignment
 
-	var well_count_assignments map[string]map[*wtype.LHPlate]int
+	var well_count_assignments map[string]map[*wtype.Plate]int
 
 	if len(input_volumes) != 0 {
+		// If any input solutions need to be set up then we now check if there any input plate types set.
+		if len(input_platetypes) == 0 {
+			return nil, fmt.Errorf("no input plate set: \n  - Please upload plate file or select at least one input plate type in Configuration > Preferences > inputPlateTypes. \n - Important: Please add a riser to the plate choice for low profile plates such as PCR plates, 96 and 384 well plates. ")
+		}
 		well_count_assignments = choose_plate_assignments(input_volumes, input_platetypes, weights_constraints)
-
 	}
 
 	input_assignments := make(map[string][]string, len(well_count_assignments))
 
-	plates_in_play := make(map[string]*wtype.LHPlate)
+	plates_in_play := make(map[string]*wtype.Plate)
 
 	curplaten := 1
 	for _, cname := range input_order {
@@ -165,12 +159,11 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 		//logger.Debug(fmt.Sprintln("Well assignments: ", well_assignments))
 
 		var curr_well *wtype.LHWell
-		ass := make([]string, 0, 3)
+		var assignments []string
 
 		// best hack so far: add an extra well of everything
 		// in case we run out
 		for platetype, nwells := range well_assignments {
-
 			WellTot := nwells + 1
 
 			// unless it's an instance
@@ -186,9 +179,10 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 					if err != nil {
 						return nil, err
 					}
+
 					plates_in_play[platetype.Type] = p
 					curr_plate = plates_in_play[platetype.Type]
-					platename := fmt.Sprintf("Input_plate_%d", curplaten)
+					platename := getSafeInputPlateName(request, curplaten)
 					curr_plate.PlateName = platename
 					curplaten += 1
 					curr_plate.DeclareTemporary()
@@ -209,10 +203,10 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 
 				// now put it there
 
-				location := curr_plate.ID + ":" + curr_well.Crds
-				ass = append(ass, location)
+				location := curr_plate.ID + ":" + curr_well.Crds.FormatA1()
+				assignments = append(assignments, location)
 
-				var newcomponent *wtype.LHComponent
+				var newcomponent *wtype.Liquid
 
 				if isInstance(cname) {
 					newcomponent = component
@@ -221,21 +215,28 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 					curr_well.SetUserAllocated()
 				} else {
 					newcomponent = component.Dup()
-					newcomponent.Vol = curr_well.MaxVol
-					newcomponent.Vunit = curr_well.Vunit
+					newcomponent.Vol = curr_well.MaxVolume().RawValue()
+					newcomponent.Vunit = curr_well.MaxVolume().Unit().PrefixedSymbol()
 					newcomponent.Loc = location
-					volume.Subtract(curr_well.WorkingVolume())
+
+					//usefulVolume is the most we can get from the well assuming one transfer
+					usefulVolume := curr_well.CurrentWorkingVolume()
+					usefulVolume.Subtract(request.CarryVolume)
+					volume.Subtract(usefulVolume)
 				}
 
 				st.SetLocationOf(component.ID, location)
 
-				curr_well.Add(newcomponent)
+				err := curr_well.AddComponent(newcomponent)
+				if err != nil {
+					return nil, wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Input plate setup : %s", err.Error()))
+				}
 				curr_well.DeclareAutoallocated()
 				input_plates[curr_plate.ID] = curr_plate
 			}
 		}
 
-		input_assignments[cname] = ass
+		input_assignments[cname] = assignments
 	}
 
 	// add any remaining assignments
@@ -244,15 +245,15 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 		for _, vv := range v {
 			// this now means input assignments is always set...
 			// previously this was empty
-			if vv.Loc != "" && vv.Volume().GreaterThanFloat(0.0) {
+			if vv.Loc != "" && !vv.Volume().IsZero() {
 				// append it
 				input_assignments[vv.CName] = append(input_assignments[vv.CName], vv.Loc)
 			}
 		}
 	}
 
-	(*request).Input_plates = input_plates
-	(*request).Input_assignments = input_assignments
+	request.InputPlates = input_plates
+	request.InputAssignments = input_assignments
 
 	//return input_plates, input_assignments
 	return request, nil
@@ -265,4 +266,36 @@ func isInstance(s string) bool {
 	} else {
 		return false
 	}
+}
+
+// returns a unique plate name
+func getSafeInputPlateName(request *LHRequest, curplaten int) string {
+	return getSafePlateName(request, "auto_input_plate", "_", curplaten)
+}
+
+func getSafePlateName(request *LHRequest, prefix, sep string, curplaten int) string {
+	trialPlateName := randomPlateName(prefix, sep, curplaten)
+
+	for {
+		if request.HasPlateNamed(trialPlateName) {
+			trialPlateName = randomPlateName(prefix, sep, curplaten)
+
+		} else {
+			break
+		}
+	}
+
+	return trialPlateName
+}
+
+func randomPlateName(prefix, sep string, order int) string {
+
+	blackListed := []string{"crappie", "titmouse", "stinkbug"}
+
+	randomName := petname.Generate(1, "")
+	for search.InStrings(blackListed, randomName) {
+		randomName = petname.Generate(1, "")
+	}
+	tox := []string{prefix, fmt.Sprintf("%d", order), randomName}
+	return strings.Join(tox, sep)
 }

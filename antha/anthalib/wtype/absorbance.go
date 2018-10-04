@@ -120,9 +120,9 @@ type Reading interface {
 	CorrecttoRefStandard()
 }
 
-// Dup creates a duuplicate of the absorbance reading, with exact equality for all values.
-func (sample *Absorbance) Dup() *Absorbance {
-	return &Absorbance{
+// Dup creates a duplicate of the absorbance reading, with exact equality for all values.
+func (sample *Absorbance) Dup() Absorbance {
+	return Absorbance{
 		WellLocation: sample.WellLocation,
 		Reading:      sample.Reading,
 		Wavelength:   sample.Wavelength,
@@ -136,7 +136,7 @@ func (sample *Absorbance) Dup() *Absorbance {
 
 // BlankCorrect subtracts the blank reading from the sample absorbance.
 // If the blank sample is not equivalent to the sample, based on wavelength and pathlength, an error is returned.
-func (sample *Absorbance) BlankCorrect(blanks ...*Absorbance) error {
+func (sample *Absorbance) BlankCorrect(blanks ...Absorbance) error {
 	var errs []string
 	for _, blank := range blanks {
 		if sample.Wavelength.EqualToRounded(blank.Wavelength, 9); sample.Pathlength.EqualToRounded(blank.Pathlength, 4) && sample.Reader == blank.Reader {
@@ -144,7 +144,7 @@ func (sample *Absorbance) BlankCorrect(blanks ...*Absorbance) error {
 			sample.Corrections = append(sample.Corrections,
 				AbsorbanceCorrection{
 					Type:              BlankCorrected,
-					CorrectionReading: blank,
+					CorrectionReading: &blank,
 				},
 			)
 		} else {

@@ -24,8 +24,9 @@
 package platereader
 
 import (
-	"errors"
 	"fmt"
+
+	"github.com/pkg/errors"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -33,7 +34,7 @@ import (
 
 // BlankCorrect subtracts the blank reading from the sample absorbance.
 // If the blank sample is not equivalent to the sample, based on wavelength and pathlength, an error is returned.
-func Blankcorrect(blank *wtype.Absorbance, sample *wtype.Absorbance) (blankcorrected *wtype.Absorbance, err error) {
+func Blankcorrect(sample wtype.Absorbance, blank wtype.Absorbance) (blankcorrected wtype.Absorbance, err error) {
 
 	blankcorrected = sample.Dup()
 
@@ -77,11 +78,13 @@ func EstimatePathLength(plate *wtype.Plate, volume wunit.Volume) (pathlength wun
 // PathLengthCorrect normalises an absorbance reading
 // to a standard reference pathlength of 1cm.
 // 1cm is the pathlength used to normalise absorbance readings to OD.
-func PathlengthCorrect(pathlength wunit.Length, reading *wtype.Absorbance) (pathlengthcorrected *wtype.Absorbance) {
-
-	reading.PathLengthCorrect(pathlength)
-
-	return reading
+func PathlengthCorrect(pathlength wunit.Length, reading wtype.Absorbance) (pathlengthcorrected wtype.Absorbance) {
+	pathlengthcorrected = reading.Dup()
+	err := pathlengthcorrected.PathLengthCorrect(pathlength)
+	if err != nil {
+		panic(err)
+	}
+	return pathlengthcorrected
 }
 
 // based on Beer Lambert law A = ε l c
@@ -97,36 +100,16 @@ shifts in chemical equilibria as a function of concentration
 non-monochromatic radiation, deviations can be minimized by using a relatively flat part of the absorption spectrum such as the maximum of an absorption band
 stray light
 */
-func Concentration(pathlengthcorrected *wtype.Absorbance, molarabsorbtivityatwavelengthLpermolpercm float64) (conc wunit.Concentration) {
+func Concentration(pathlengthcorrected wtype.Absorbance, molarabsorbtivityatwavelengthLpermolpercm float64) (conc wunit.Concentration, err error) {
+
+	if !pathlengthcorrected.IsPathLengthCorrected() {
+		return wunit.Concentration{}, errors.Errorf("absorbance reading (%+v) has not been pathlength corrected, please use PathlengthCorrect method on the Absorbance value.", pathlengthcorrected)
+	}
 
 	A := pathlengthcorrected
 	l := 1                                         // 1cm if pathlengthcorrected add logic to use pathlength of absorbance reading input
 	ε := molarabsorbtivityatwavelengthLpermolpercm // L/Mol/cm
 
 	concfloat := A.Reading / (float64(l) * ε) // Mol/L
-	// fmt.Println("concfloat", concfloat)
-	conc = wunit.NewConcentration(concfloat, "M/l")
-	// fmt.Println("concfloat", conc)
-	return
+	return wunit.NewConcentration(concfloat, "Mol/l"), nil
 }
-
-//example
-
-/*
-func OD(Platetype wtype.LHPLate,wellvolume wtype.Volume,reading wtype.Absorbance) (od wtype.Absorbance){
-volumetopathlengthconversionfactor := 0.0533//WellCrosssectionalArea
-OD = (Blankcorrected_absorbance * 10/(total_volume*volumetopathlengthconversionfactor)// 0.0533 could be written as function of labware and liquid volume (or measureed height)
-}
-
-DCW = OD * ODtoDCWconversionfactor
-
-*/
-/*
-type Absorbance struct {
-	Reading    float64
-	Wavelength float64
-	Pathlength *wtype.Length
-	Status     *[]string
-	Reader     *string
-}
-*/

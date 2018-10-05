@@ -67,7 +67,8 @@ type Absorbance struct {
 	Pathlength   wunit.Length           `json:"Pathlength"`
 	Corrections  []AbsorbanceCorrection `json:"Corrections"`
 	Reader       string                 `json:"Reader"`
-	ID           string                 `json:"ID"`
+	// Source is the Liquid the absorbance reading was carried out on.
+	Source *Liquid `json:"Source"`
 	// Annotations is a field to add custom user labels
 	Annotations []string `json:"Annotations"`
 }
@@ -109,15 +110,19 @@ func (a Absorbance) IsPathLengthCorrected() bool {
 	return false
 }
 
-func toNM(l wunit.Length) float64 {
-	return l.SIValue() * wunit.Nano.Value
+// AddSource associates the Absorbance sample to the liquid which it corresponds to.
+// This is the actual sample that was measured rather than the original parent
+// sample which may have been diluted.
+func (a Absorbance) AddSource(l *Liquid) error {
+	if a.Source != nil {
+		return errors.New("error adding source liquid to absorbance reading; reading already has a source")
+	}
+	a.Source = l
+	return nil
 }
 
-type Reading interface {
-	BlankCorrect(blank Absorbance) error
-	PathLengthCorrect(pathlength wunit.Length)
-	NormaliseTo(target Absorbance)
-	CorrecttoRefStandard()
+func toNM(l wunit.Length) float64 {
+	return l.SIValue() * wunit.Nano.Value
 }
 
 // Dup creates a duplicate of the absorbance reading, with exact equality for all values.

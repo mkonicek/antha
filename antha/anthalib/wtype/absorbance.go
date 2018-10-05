@@ -134,7 +134,7 @@ func (sample *Absorbance) Dup() Absorbance {
 		Pathlength:   sample.Pathlength,
 		Corrections:  append([]AbsorbanceCorrection{}, sample.Corrections...),
 		Reader:       sample.Reader,
-		ID:           sample.ID,
+		Source:       sample.Source,
 		Annotations:  append([]string{}, sample.Annotations...),
 	}
 }

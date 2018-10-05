@@ -61,7 +61,7 @@ type AbsorbanceCorrection struct {
 
 // Absorbance stores the key properties of an absorbance reading.
 type Absorbance struct {
-	WellLocation WellCoords             `json:"WellCoords"`
+	WellLocation WellCoords             `json:"WellLocation"`
 	Reading      float64                `json:"Reading"`
 	Wavelength   wunit.Length           `json:"Wavelength"`
 	Pathlength   wunit.Length           `json:"Pathlength"`

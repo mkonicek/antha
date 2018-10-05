@@ -113,7 +113,7 @@ func (a Absorbance) IsPathLengthCorrected() bool {
 // AddSource associates the Absorbance sample to the liquid which it corresponds to.
 // This is the actual sample that was measured rather than the original parent
 // sample which may have been diluted.
-func (a Absorbance) AddSource(l *Liquid) error {
+func (a *Absorbance) AddSource(l *Liquid) error {
 	if a.Source != nil {
 		return errors.New("error adding source liquid to absorbance reading; reading already has a source")
 	}

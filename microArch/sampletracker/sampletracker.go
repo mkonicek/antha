@@ -12,14 +12,13 @@ type SampleTracker struct {
 	lock     sync.Mutex
 	records  map[string]string
 	forwards map[string]string
-	plates   map[string]*wtype.Plate
+	plates   []*wtype.Plate
 }
 
 func NewSampleTracker() *SampleTracker {
 	return &SampleTracker{
 		records:  make(map[string]string),
 		forwards: make(map[string]string),
-		plates:   make(map[string]*wtype.Plate),
 	}
 }
 
@@ -29,7 +28,7 @@ func (st *SampleTracker) SetInputPlate(p *wtype.Plate) {
 	st.lock.Lock()
 	defer st.lock.Unlock()
 
-	st.plates[p.ID] = p
+	st.plates = append(st.plates, p)
 
 	for _, w := range p.HWells {
 		if !w.IsEmpty() {
@@ -45,19 +44,7 @@ func (st *SampleTracker) GetInputPlates() []*wtype.Plate {
 	st.lock.Lock()
 	defer st.lock.Unlock()
 
-	var ret []*wtype.Plate
-	if len(st.plates) == 0 {
-		return ret
-	}
-	ret = make([]*wtype.Plate, 0, len(st.plates))
-
-	for _, p := range st.plates {
-		ret = append(ret, p)
-	}
-
-	st.plates = make(map[string]*wtype.Plate)
-
-	return ret
+	return st.plates
 }
 
 func (st *SampleTracker) setLocationOf(ID string, loc string) {

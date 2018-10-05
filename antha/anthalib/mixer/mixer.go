@@ -28,7 +28,6 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/microArch/sampletracker"
 )
 
 // SampleAll takes all of this liquid
@@ -67,10 +66,6 @@ func SplitSample(l *wtype.Liquid, v wunit.Volume) (moving, remaining *wtype.Liqu
 
 	remaining.Vol -= v.ConvertToString(remaining.Vunit)
 	remaining.ID = wtype.GetUUID()
-
-	sampletracker := sampletracker.GetSampleTracker()
-
-	sampletracker.UpdateIDOf(l.ID, remaining.ID)
 
 	return
 }

@@ -1,19 +1,17 @@
 package liquidhandling
 
 import (
-	"context"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/inventory"
-	"github.com/antha-lang/antha/inventory/testinventory"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
 func TestInputSampleAutoAllocate(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	rbt := makeGilson(ctx)
 	rq := NewLHRequest()
@@ -85,7 +83,7 @@ func testSetup(rbt *liquidhandling.LHProperties, expected map[string]float64, t 
 
 }
 func TestInPlaceAutoAllocate(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	rbt := makeGilson(ctx)
 	rq := NewLHRequest()

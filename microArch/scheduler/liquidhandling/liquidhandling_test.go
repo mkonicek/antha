@@ -39,11 +39,11 @@ import (
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/testinventory"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
+	"github.com/antha-lang/antha/microArch/sampletracker"
 )
 
 func GetContextForTest() context.Context {
-	ctx := testinventory.NewContext(context.Background())
-	return ctx
+	return sampletracker.NewContext(testinventory.NewContext(context.Background()))
 }
 
 func GetPlateForTest() *wtype.Plate {
@@ -1116,7 +1116,7 @@ func TestExecutionPlanning(t *testing.T) {
 					for x := 0; x < 2; x++ {
 						diluentSample := mixer.Sample(diluent, wunit.NewVolume(20.0, "ul"))
 
-						split := getTestSplitSample(lastStock, 20.0)
+						split := getTestSplitSample(ctx, lastStock, 20.0)
 
 						wc := wtype.WellCoords{X: x, Y: y}
 						mix := getTestMix([]*wtype.Liquid{split.Outputs[0], diluentSample}, wc.FormatA1())
@@ -1277,11 +1277,12 @@ func TestShouldSetWellTargets(t *testing.T) {
 	}
 }
 
-func getTestSplitSample(component *wtype.Liquid, volume float64) *wtype.LHInstruction {
+func getTestSplitSample(ctx context.Context, component *wtype.Liquid, volume float64) *wtype.LHInstruction {
 	ret := wtype.NewLHSplitInstruction()
 
 	ret.Inputs = append(ret.Inputs, component.Dup())
 	cmpMoving, cmpStaying := mixer.SplitSample(component, wunit.NewVolume(volume, "ul"))
+	sampletracker.FromContext(ctx).UpdateIDOf(component.ID, cmpStaying.ID)
 
 	ret.Outputs = append(ret.Outputs, cmpMoving, cmpStaying)
 

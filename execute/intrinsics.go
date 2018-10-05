@@ -24,8 +24,7 @@ type commandInst struct {
 
 // SetInputPlate notifies the planner about an input plate
 func SetInputPlate(ctx context.Context, plate *wtype.Plate) {
-	st := sampletracker.GetSampleTracker()
-	st.SetInputPlate(plate)
+	sampletracker.FromContext(ctx).SetInputPlate(plate)
 }
 
 // An IncubateOpt are options to an incubate command
@@ -50,14 +49,14 @@ type IncubateOpt struct {
 }
 
 func newCompFromComp(ctx context.Context, in *wtype.Liquid) *wtype.Liquid {
-	st := sampletracker.GetSampleTracker()
 	comp := in.Dup()
 	comp.ID = wtype.GetUUID()
 	comp.BlockID = wtype.NewBlockID(getID(ctx))
 	comp.SetGeneration(comp.Generation() + 1)
 
 	getMaker(ctx).UpdateAfterInst(in.ID, comp.ID)
-	st.UpdateIDOf(in.ID, comp.ID)
+	sampletracker.FromContext(ctx).UpdateIDOf(in.ID, comp.ID)
+
 	return comp
 }
 
@@ -437,6 +436,9 @@ func splitSample(ctx context.Context, component *wtype.Liquid, volume wunit.Volu
 	split.Inputs = append(split.Inputs, component.Dup())
 
 	cmpMoving, cmpStaying := mixer.SplitSample(component, volume)
+
+	//the ID of the component that is staying has been updated
+	sampletracker.FromContext(ctx).UpdateIDOf(component.ID, cmpStaying.ID)
 
 	split.Outputs = append(split.Outputs, cmpMoving)
 	split.Outputs = append(split.Outputs, cmpStaying)

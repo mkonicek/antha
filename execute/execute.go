@@ -9,6 +9,7 @@ import (
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/codegen"
 	"github.com/antha-lang/antha/inject"
+	"github.com/antha-lang/antha/microArch/sampletracker"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/workflow"
 )
@@ -38,7 +39,7 @@ type Opt struct {
 
 // Run is a simple entrypoint for one-shot execution of workflows.
 func Run(parent context.Context, opt Opt) (res *Result, err error) {
-	ctx := target.WithTarget(withID(parent, opt.ID), opt.Target)
+	ctx := sampletracker.NewContext(target.WithTarget(withID(parent, opt.ID), opt.Target))
 
 	w, err := workflow.New(workflow.Opt{FromDesc: opt.Workflow})
 	if err != nil {

@@ -27,7 +27,7 @@ func getLiquidForTest(name string, volume float64) *wtype.Liquid {
 }
 
 func TestLocations(t *testing.T) {
-	st := newSampleTracker()
+	st := NewSampleTracker()
 
 	positions := map[string]string{
 		"Who":          "First Base",
@@ -50,7 +50,7 @@ func TestLocations(t *testing.T) {
 }
 
 func TestUpdateIDOfBeforeLocation(t *testing.T) {
-	st := newSampleTracker()
+	st := NewSampleTracker()
 
 	st.UpdateIDOf("oldID", "newID")
 	assertLocation(t, st, "newID", "", false)
@@ -60,7 +60,7 @@ func TestUpdateIDOfBeforeLocation(t *testing.T) {
 }
 
 func TestUpdateIDOfAfterLocation(t *testing.T) {
-	st := newSampleTracker()
+	st := NewSampleTracker()
 
 	st.SetLocationOf("oldID", "Location")
 
@@ -81,7 +81,7 @@ func TestInputPlates(t *testing.T) {
 		well.SetContents(cmp)
 	}
 
-	st := newSampleTracker()
+	st := NewSampleTracker()
 
 	if got := len(st.GetInputPlates()); got != 0 {
 		t.Errorf("new sample tracker had %d input plates", got)

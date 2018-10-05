@@ -6,9 +6,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
-var stLock sync.Mutex
-var st *SampleTracker
-
 // SampleTracker record the location of components generated during element execution
 // as well as any explicitly set input plates
 type SampleTracker struct {
@@ -18,23 +15,12 @@ type SampleTracker struct {
 	plates   map[string]*wtype.Plate
 }
 
-func newSampleTracker() *SampleTracker {
+func NewSampleTracker() *SampleTracker {
 	return &SampleTracker{
 		records:  make(map[string]string),
 		forwards: make(map[string]string),
 		plates:   make(map[string]*wtype.Plate),
 	}
-}
-
-func GetSampleTracker() *SampleTracker {
-	stLock.Lock()
-	defer stLock.Unlock()
-
-	if st == nil {
-		st = newSampleTracker()
-	}
-
-	return st
 }
 
 // SetInputPlate declare the given plate as an input to the experiment

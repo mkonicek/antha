@@ -22,7 +22,8 @@ type commandInst struct {
 	Command *ast.Command
 }
 
-// SetInputPlate notifies the planner about an input plate
+// SetInputPlate Indicate to the scheduler the the contents of the plate is user
+// supplied. This modifies the argument to mark each well as such.
 func SetInputPlate(ctx context.Context, plate *wtype.Plate) {
 	sampletracker.FromContext(ctx).SetInputPlate(plate)
 }

@@ -63,11 +63,13 @@ func TestUpdateIDOfAfterLocation(t *testing.T) {
 	st := NewSampleTracker()
 
 	st.SetLocationOf("oldID", "Location")
+	assertLocation(t, st, "oldID", "Location", true)
 
 	assertLocation(t, st, "newID", "", false)
 	st.UpdateIDOf("oldID", "newID")
 
 	assertLocation(t, st, "newID", "Location", true)
+	assertLocation(t, st, "oldID", "Location", true)
 }
 
 func TestInputPlates(t *testing.T) {
@@ -89,20 +91,20 @@ func TestInputPlates(t *testing.T) {
 
 	st.SetInputPlate(p)
 
-	for it := wtype.NewAddressIterator(p, wtype.ColumnWise, wtype.TopToBottom, wtype.LeftToRight, false); it.Valid(); it.Next() {
-		well := p.GetChildByAddress(it.Curr()).(*wtype.LHWell)
-		if !well.IsUserAllocated() {
-			t.Errorf("Well %s wasn't marked as user allocated", well)
-		}
-
-		cmp := well.Contents()
-		assertLocation(t, st, cmp.ID, cmp.Loc, true)
-	}
-
 	if inputs := st.GetInputPlates(); len(inputs) != 1 {
 		t.Errorf("expected one input plate, got %d", len(inputs))
 	} else if inputs[0] != p {
 		t.Errorf("input plate didn't match %p != %p", inputs[0], p)
+	} else {
+		for it := wtype.NewAddressIterator(p, wtype.ColumnWise, wtype.TopToBottom, wtype.LeftToRight, false); it.Valid(); it.Next() {
+			well := inputs[0].GetChildByAddress(it.Curr()).(*wtype.LHWell)
+			if !well.IsUserAllocated() {
+				t.Errorf("Well %s wasn't marked as user allocated", well)
+			}
+
+			cmp := well.Contents()
+			assertLocation(t, st, cmp.ID, cmp.Loc, true)
+		}
 	}
 
 }

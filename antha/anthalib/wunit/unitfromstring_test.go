@@ -178,6 +178,11 @@ func TestParseConcentration(t *testing.T) {
 			Conc:              NewConcentration(1, "X"),
 			ComponentNameOnly: "(1X)",
 		},
+		{
+			ComponentName:     "Magnesium Acetate",
+			ContainsConc:      false,
+			ComponentNameOnly: "Magnesium Acetate",
+		},
 	}.Run(t)
 }
 

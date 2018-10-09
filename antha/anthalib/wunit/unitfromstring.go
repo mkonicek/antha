@@ -51,7 +51,6 @@ func SplitValueAndUnit(str string) (float64, string) {
 func ParseConcentration(s string) (bool, Concentration, string) {
 
 	reg := GetGlobalUnitRegistry()
-	approvedUnits := reg.ListValidUnitsForType("Concentration")
 
 	// unit location indicated by parentheses
 	if l, r := strings.Index(s, "("), strings.LastIndex(s, ")"); l < r {
@@ -66,11 +65,14 @@ func ParseConcentration(s string) (bool, Concentration, string) {
 		}
 	}
 
-	// unit at left
-	value, remainder := SplitValueAndUnit(s)
-	if sym, componentName := extractSymbol(remainder, approvedUnits); sym != "" {
-		if componentName := strings.TrimSpace(componentName); componentName != "" {
-			return true, NewConcentration(value, sym), componentName
+	approvedUnits := reg.ListValidUnitsForType("Concentration")
+
+	// value and unit at left
+	if value, remainder := SplitValueAndUnit(s); len(remainder) < len(s) { // value must be given for unit at left
+		if sym, componentName := extractSymbol(remainder, approvedUnits); sym != "" {
+			if componentName := strings.TrimSpace(componentName); componentName != "" {
+				return true, NewConcentration(value, sym), componentName
+			}
 		}
 	}
 

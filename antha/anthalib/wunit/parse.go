@@ -24,6 +24,7 @@ package wunit
 
 import (
 	"strconv"
+	"strings"
 )
 
 // extractFloat extract the longest valid float from the left hand side of
@@ -33,11 +34,53 @@ func extractFloat(s string) (float64, string) {
 	var longest int
 	var ret float64
 	for i := range s {
-		if f, err := strconv.ParseFloat(s[:i], 64); err == nil {
+		if f, err := strconv.ParseFloat(s[:i+1], 64); err == nil {
+			ret = f
+			longest = i + 1
+		}
+	}
+
+	return ret, s[longest:]
+}
+
+// extractLastFloat extract the longest valid float from the right hand side of
+// the string and return the float and the remaining string.
+// If no float is found, returns zero and the entire string.
+func extractLastFloat(s string) (float64, string) {
+	longest := len(s)
+	var ret float64
+	for i := len(s) - 1; i >= 0; i-- {
+		if f, err := strconv.ParseFloat(s[i:], 64); err == nil {
 			ret = f
 			longest = i
 		}
 	}
 
-	return ret, s[longest:]
+	return ret, s[:longest]
+}
+
+// extractSymbol extract the longest valid unit symbol from the left hand side
+// of the given string, returning the unit and the remaining string.
+// If no valid units are found, return "" and the entire string
+func extractSymbol(s string, validSymbols []string) (string, string) {
+	longest := ""
+	for _, v := range validSymbols {
+		if len(v) > len(longest) && strings.HasPrefix(s, v) {
+			longest = v
+		}
+	}
+	return longest, s[len(longest):]
+}
+
+// extractLastSymbol extract the longest valid unit symbol from the right hand side
+// of the given string, returning the unit and the remaining string.
+// If no valid units are found, return "" and the entire string
+func extractLastSymbol(s string, validSymbols []string) (string, string) {
+	longest := ""
+	for _, v := range validSymbols {
+		if len(v) > len(longest) && strings.HasSuffix(s, v) {
+			longest = v
+		}
+	}
+	return longest, s[:len(s)-len(longest)]
 }

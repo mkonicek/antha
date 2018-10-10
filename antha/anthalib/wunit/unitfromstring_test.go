@@ -23,7 +23,6 @@
 package wunit
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -35,7 +34,6 @@ type unitFromStringTest struct {
 }
 
 func (test *unitFromStringTest) Run(t *testing.T) {
-
 	t.Run(test.ComponentName, func(t *testing.T) {
 		a, b, c := ParseConcentration(test.ComponentName)
 		if a != test.ContainsConc {
@@ -91,6 +89,12 @@ func TestParseConcentration(t *testing.T) {
 			ComponentNameOnly: "Glucose",
 		},
 		{
+			ComponentName:     "1 % w/v C6",
+			ContainsConc:      true,
+			Conc:              NewConcentration(1.0, "% w/v"),
+			ComponentNameOnly: "C6",
+		},
+		{
 			ComponentName:     "1mM/l C6",
 			ContainsConc:      true,
 			Conc:              NewConcentration(1.0, "mM/l"),
@@ -133,6 +137,18 @@ func TestParseConcentration(t *testing.T) {
 			ComponentNameOnly: "solutionX",
 		},
 		{
+			ComponentName:     "A happy solution :-) 5 g/l",
+			ContainsConc:      true,
+			Conc:              NewConcentration(5.0, "g/l"),
+			ComponentNameOnly: "A happy solution :-)",
+		},
+		{
+			ComponentName:     "A sad solution :-( 5 g/l",
+			ContainsConc:      true,
+			Conc:              NewConcentration(5.0, "g/l"),
+			ComponentNameOnly: "A sad solution :-(",
+		},
+		{
 			ComponentName:     "solutionX (X)",
 			ContainsConc:      true,
 			Conc:              NewConcentration(0.0, "X"),
@@ -169,10 +185,32 @@ func TestParseConcentration(t *testing.T) {
 			ComponentNameOnly: "1X",
 		},
 		{
+			ComponentName:     "1 MOPS pH 7",
+			ContainsConc:      false,
+			ComponentNameOnly: "1 MOPS pH 7",
+		},
+		{
+			ComponentName:     "1 MOPS pH 7 (mM)",
+			ContainsConc:      true,
+			Conc:              NewConcentration(0.0, "mM"),
+			ComponentNameOnly: "1 MOPS pH 7",
+		},
+		{
+			ComponentName:     "281 mMol/l 1 MOPS pH 7",
+			ContainsConc:      true,
+			Conc:              NewConcentration(281.0, "mM"),
+			ComponentNameOnly: "1 MOPS pH 7",
+		},
+		{
 			ComponentName:     "(1X)",
 			ContainsConc:      true,
 			Conc:              NewConcentration(1, "X"),
 			ComponentNameOnly: "(1X)",
+		},
+		{
+			ComponentName:     "Magnesium Acetate",
+			ContainsConc:      false,
+			ComponentNameOnly: "Magnesium Acetate",
 		},
 	}.Run(t)
 }
@@ -231,62 +269,60 @@ type valueAndUnitTest struct {
 	valueandunit string
 }
 
-var volandUnitTests = []valueAndUnitTest{
-	{
-		value:        10,
-		unit:         "s",
-		valueandunit: "10s",
-	},
-	{
-		value:        10,
-		unit:         "s",
-		valueandunit: "10 s",
-	},
-	{
-		value:        10,
-		unit:         "",
-		valueandunit: "10",
-	},
+func (test *valueAndUnitTest) Run(t *testing.T) {
+	t.Run(test.valueandunit, func(t *testing.T) {
+		if val, unit := SplitValueAndUnit(test.valueandunit); val != test.value || unit != test.unit {
+			t.Errorf("expected = %f, %q; got = %f, %q;", test.value, test.unit, val, unit)
+		}
+	})
+}
 
-	{
-		value:        0,
-		unit:         "s",
-		valueandunit: "s",
-	},
-	{
-		value:        10.9090,
-		unit:         "ms",
-		valueandunit: "10.9090ms",
-	},
-	{
-		value:        2.16e+04,
-		unit:         "s",
-		valueandunit: "2.16e+04 s",
-	},
+type valueAndUnitTests []valueAndUnitTest
 
-	{
-		value:        2.16e+04,
-		unit:         "/s",
-		valueandunit: "2.16e+04 /s",
-	},
+func (tests valueAndUnitTests) Run(t *testing.T) {
+	for _, test := range tests {
+		test.Run(t)
+	}
 }
 
 func TestSplitValueAndUnit(t *testing.T) {
-	for _, test := range volandUnitTests {
-		val, unit := SplitValueAndUnit(test.valueandunit)
-		if val != test.value {
-			t.Error(
-				"for", fmt.Sprintf("%+v", test), "\n",
-				"Expected:", test.value, "\n",
-				"Got:", val, "\n",
-			)
-		}
-		if unit != test.unit {
-			t.Error(
-				"for", fmt.Sprintf("%+v", test), "\n",
-				"Expected:", test.unit, "\n",
-				"Got:", unit, "\n",
-			)
-		}
-	}
+	valueAndUnitTests{
+		{
+			value:        10,
+			unit:         "s",
+			valueandunit: "10s",
+		},
+		{
+			value:        10,
+			unit:         "s",
+			valueandunit: "10 s",
+		},
+		{
+			value:        10,
+			unit:         "",
+			valueandunit: "10",
+		},
+
+		{
+			value:        0,
+			unit:         "s",
+			valueandunit: "s",
+		},
+		{
+			value:        10.9090,
+			unit:         "ms",
+			valueandunit: "10.9090ms",
+		},
+		{
+			value:        2.16e+04,
+			unit:         "s",
+			valueandunit: "2.16e+04 s",
+		},
+
+		{
+			value:        2.16e+04,
+			unit:         "/s",
+			valueandunit: "2.16e+04 /s",
+		},
+	}.Run(t)
 }

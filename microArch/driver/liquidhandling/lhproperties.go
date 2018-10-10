@@ -36,7 +36,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/microArch/logger"
-	"github.com/antha-lang/antha/microArch/sampletracker"
 )
 
 // describes a liquid handler, its capabilities and current state
@@ -684,49 +683,6 @@ func (lhp *LHProperties) AddWashTo(pos string, wash *wtype.Plate) bool {
 	lhp.PosLookup[pos] = wash.ID
 	lhp.PlateIDLookup[wash.ID] = pos
 	return true
-}
-
-func GetLocTox(cmp *wtype.Liquid) ([]string, error) {
-	// try the cmp's own loc
-
-	if cmp.Loc != "" {
-		return strings.Split(cmp.Loc, ":"), nil
-	} else {
-		// try the ID of the thing
-
-		tx, err := getSTLocTox(cmp.ID)
-
-		if err == nil {
-			return tx, err
-		}
-
-		// now try its parent
-
-		tx, err = getSTLocTox(cmp.ParentID)
-
-		if err == nil {
-			return tx, err
-		}
-	}
-
-	return []string{}, fmt.Errorf("No location found")
-}
-
-func getSTLocTox(ID string) ([]string, error) {
-	st := sampletracker.GetSampleTracker()
-	loc, ok := st.GetLocationOf(ID)
-
-	if !ok {
-		return []string{}, fmt.Errorf("No location found")
-	}
-
-	tx := strings.Split(loc, ":")
-
-	if len(tx) == 2 {
-		return tx, nil
-	} else {
-		return []string{}, fmt.Errorf("No location found")
-	}
 }
 
 func (lhp *LHProperties) InputSearchPreferences() []string {

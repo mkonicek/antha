@@ -79,7 +79,7 @@ func (is InputSorter) Less(i, j int) bool {
 //OUTPUT: 	"input_plates"      -- these each have components in wells
 //		"input_assignments" -- map with arrays of assignment strings, i.e. {tea: [plate1:A:1, plate1:A:2...] }etc.
 func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, error) {
-	st := sampletracker.GetSampleTracker()
+	st := sampletracker.FromContext(ctx)
 	// I think this might need moving too
 	input_platetypes := request.InputPlatetypes
 

@@ -52,7 +52,7 @@ func ParseConcentration(s string) (bool, Concentration, string) {
 
 	reg := GetGlobalUnitRegistry()
 
-	// unit location indicated by parentheses
+	// unit location indicated by parentheses - e.g. "Glucose (6M)"
 	if l, r := strings.Index(s, "("), strings.LastIndex(s, ")"); l < r {
 		inParentheses := strings.TrimSpace(s[l+1 : r])
 		value, unit := extractFloat(inParentheses)
@@ -67,7 +67,7 @@ func ParseConcentration(s string) (bool, Concentration, string) {
 
 	approvedUnits := reg.ListValidUnitsForType("Concentration")
 
-	// value and unit at left
+	// value and unit at left - e.g. "6M Glucose", but not "6 Glucose"
 	if value, remainder := SplitValueAndUnit(s); len(remainder) < len(s) { // value must be given for unit at left
 		if sym, componentName := extractSymbol(remainder, approvedUnits); sym != "" {
 			if componentName := strings.TrimSpace(componentName); componentName != "" {
@@ -76,7 +76,7 @@ func ParseConcentration(s string) (bool, Concentration, string) {
 		}
 	}
 
-	// unit at right
+	// unit at right - e.g. "Glucose 6M" or "Glucose M", but not "SolutionX"
 	if sym, remainder := extractLastSymbol(s, approvedUnits); sym != "" && remainder != "" {
 		trimRemainder := strings.TrimSpace(remainder)
 		// units at the right must be preceded by either a number or a space

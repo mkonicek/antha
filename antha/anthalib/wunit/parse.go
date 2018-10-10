@@ -47,16 +47,16 @@ func extractFloat(s string) (float64, string) {
 // the string and return the float and the remaining string.
 // If no float is found, returns zero and the entire string.
 func extractLastFloat(s string) (float64, string) {
-	longest := len(s)
+	startAt := len(s)
 	var ret float64
 	for i := len(s) - 1; i >= 0; i-- {
 		if f, err := strconv.ParseFloat(s[i:], 64); err == nil {
 			ret = f
-			longest = i
+			startAt = i
 		}
 	}
 
-	return ret, s[:longest]
+	return ret, s[:startAt]
 }
 
 // extractSymbol extract the longest valid unit symbol from the left hand side

@@ -173,6 +173,23 @@ func TestParseConcentration(t *testing.T) {
 			ComponentNameOnly: "1X",
 		},
 		{
+			ComponentName:     "1 MOPS pH 7",
+			ContainsConc:      false,
+			ComponentNameOnly: "1 MOPS pH 7",
+		},
+		{
+			ComponentName:     "1 MOPS pH 7 (mM)",
+			ContainsConc:      true,
+			Conc:              NewConcentration(0.0, "mM"),
+			ComponentNameOnly: "1 MOPS pH 7",
+		},
+		{
+			ComponentName:     "281 mMol/l 1 MOPS pH 7",
+			ContainsConc:      true,
+			Conc:              NewConcentration(281.0, "mM"),
+			ComponentNameOnly: "1 MOPS pH 7",
+		},
+		{
 			ComponentName:     "(1X)",
 			ContainsConc:      true,
 			Conc:              NewConcentration(1, "X"),

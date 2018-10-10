@@ -137,6 +137,18 @@ func TestParseConcentration(t *testing.T) {
 			ComponentNameOnly: "solutionX",
 		},
 		{
+			ComponentName:     "A happy solution :-) 5 g/l",
+			ContainsConc:      true,
+			Conc:              NewConcentration(5.0, "g/l"),
+			ComponentNameOnly: "A happy solution :-)",
+		},
+		{
+			ComponentName:     "A sad solution :-( 5 g/l",
+			ContainsConc:      true,
+			Conc:              NewConcentration(5.0, "g/l"),
+			ComponentNameOnly: "A sad solution :-(",
+		},
+		{
 			ComponentName:     "solutionX (X)",
 			ContainsConc:      true,
 			Conc:              NewConcentration(0.0, "X"),

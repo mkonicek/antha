@@ -60,16 +60,26 @@ func extractLastFloat(s string) (float64, string) {
 }
 
 // extractSymbol extract the longest valid unit symbol from the left hand side
-// of the given string, returning the unit and the remaining string.
-// If no valid units are found, return "" and the entire string
+// of the given string, returning the symbol and the remaining string.
+// The symbol must either be terminated with a space (which will not be included
+// in the remainder) or the end of the string.
+// If no valid symbol is found, return "" and the entire string.
+// Examples
+//   extractSymbol("M Glucose", []string{"M"}) -> ("M", "Glucose")
+//   extractSymbol("M-Glucose", []string{"M"}) -> ("", "M-Glucose")
+//   extractSymbol("M", []string{"M"}) -> ("M", "")
 func extractSymbol(s string, validSymbols []string) (string, string) {
 	longest := ""
+	remainder := s
 	for _, v := range validSymbols {
 		if len(v) > len(longest) && strings.HasPrefix(s, v) {
-			longest = v
+			if r := s[len(v):]; strings.HasPrefix(r, " ") {
+				remainder = r
+				longest = v
+			}
 		}
 	}
-	return longest, s[len(longest):]
+	return longest, remainder
 }
 
 // extractLastSymbol extract the longest valid unit symbol from the right hand side

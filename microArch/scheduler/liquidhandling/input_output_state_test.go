@@ -9,7 +9,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/inventory"
-	"github.com/antha-lang/antha/inventory/testinventory"
 )
 
 type initFinalCmp struct {
@@ -38,7 +37,7 @@ func getComponents(ctx context.Context, t *testing.T) (cmp1, cmp2 *wtype.Liquid)
 
 /*
 func TestBeforeVsAfterUserPlateMixInPlace(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 	rq := makeRequest()
 	lh := makeLiquidhandler(ctx)
 
@@ -97,7 +96,7 @@ func TestBeforeVsAfterUserPlateMixInPlace(t *testing.T) {
 */
 
 func TestBeforeVsAfterUserPlateDest(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 	rq := makeRequest()
 	lh := makeLiquidhandler(ctx)
 
@@ -158,7 +157,7 @@ func TestBeforeVsAfterUserPlateDest(t *testing.T) {
 	compareInitFinalStates(t, lh, expected)
 }
 func TestBeforeVsAfterUserPlateAutoDest(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 	rq := makeRequest()
 	lh := makeLiquidhandler(ctx)
 
@@ -217,7 +216,7 @@ func TestBeforeVsAfterUserPlateAutoDest(t *testing.T) {
 }
 
 func TestBeforeVsAfterUserPlate(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 	rq := makeRequest()
 	lh := makeLiquidhandler(ctx)
 
@@ -280,7 +279,7 @@ func TestBeforeVsAfterUserPlate(t *testing.T) {
 
 /*
 func TestBeforeVsAfterMixInPlace(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 	rq := makeRequest()
 	lh := makeLiquidhandler(ctx)
 
@@ -326,7 +325,7 @@ func TestBeforeVsAfterMixInPlace(t *testing.T) {
 }
 */
 func TestBeforeVsAfterAutoAllocateDest(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 	rq := makeRequest()
 	lh := makeLiquidhandler(ctx)
 
@@ -364,7 +363,7 @@ func TestBeforeVsAfterAutoAllocateDest(t *testing.T) {
 }
 
 func TestBeforeVsAfterAutoAllocate(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 	rq := makeRequest()
 	lh := makeLiquidhandler(ctx)
 

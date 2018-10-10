@@ -179,7 +179,7 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 
 	// add plates requested via protocol
 
-	st := sampletracker.GetSampleTracker()
+	st := sampletracker.FromContext(ctx)
 
 	parr := st.GetInputPlates()
 

@@ -298,7 +298,6 @@ func runWorkflow(cmd *cobra.Command, args []string) error {
 func init() {
 	c := runCmd
 	flags := c.Flags()
-
 	RootCmd.AddCommand(c)
 	flags.Bool("legacyVolumeTracking", false, "Do not track volumes for intermediate components")
 	flags.Bool("outputSort", false, "Sort execution by output - improves tip usage")

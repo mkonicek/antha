@@ -108,8 +108,8 @@ func updateIDsAfterSplit(values []*wtype.LHInstruction, wanted map[string]wunit.
 // update IDs in this case
 func updateIDAfterSplit(ins *wtype.LHInstruction, in, out map[string]wunit.Volume) {
 	// splits convert their first argument into their second result
-	IDin := ins.Components[0].ID
-	cmpOut := ins.Results[1]
+	IDin := ins.Inputs[0].ID
+	cmpOut := ins.Outputs[1]
 	IDout := cmpOut.ID
 
 	vol, ok := getWantVol(in, cmpOut.FullyQualifiedName())
@@ -136,9 +136,9 @@ func findUpdateInstructionVolumes(ch *IChain, wanted map[string]wunit.Volume, pl
 
 	newWanted := make(map[string]wunit.Volume)
 	for _, ins := range ch.Values {
-		//wantVol, ok := wanted[ins.Results[0].FullyQualifiedName()]
+		//wantVol, ok := wanted[ins.Outputs[0].FullyQualifiedName()]
 
-		wantVol, ok := getWantVol(wanted, ins.Results[0].FullyQualifiedName())
+		wantVol, ok := getWantVol(wanted, ins.Outputs[0].FullyQualifiedName())
 
 		if ok {
 			_, reallyOK := plates[ins.PlateID]
@@ -147,17 +147,20 @@ func findUpdateInstructionVolumes(ch *IChain, wanted map[string]wunit.Volume, pl
 				if ins.PlateID != "" {
 					panic("Cannot fix volume for plate ID without corresponding type")
 				}
-			} else if !wantInPlace(wanted, ins.Results[0].FullyQualifiedName()) {
+			} else if !wantInPlace(wanted, ins.Outputs[0].FullyQualifiedName()) {
 				wantVol.Add(plates[ins.PlateID].Rows[0][0].ResidualVolume())
 				wantVol.Subtract(carryVol)
 			}
 
-			if wantVol.GreaterThan(ins.Results[0].Volume()) {
-				r := wantVol.RawValue() / ins.Results[0].Volume().ConvertTo(wantVol.Unit())
-				ins.AdjustVolumesBy(r)
+			if wantVol.GreaterThan(ins.Outputs[0].Volume()) {
+				if r, err := wunit.DivideVolumes(wantVol, ins.Outputs[0].Volume()); err != nil {
+					return nil, err
+				} else {
+					ins.AdjustVolumesBy(r)
+				}
 
-				//delete(wanted, ins.Results[0].FullyQualifiedName())
-				deleteWantOf(wanted, ins.Results[0].FullyQualifiedName())
+				//delete(wanted, ins.Outputs[0].FullyQualifiedName())
+				deleteWantOf(wanted, ins.Outputs[0].FullyQualifiedName())
 			}
 		}
 

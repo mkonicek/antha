@@ -22,7 +22,7 @@ func (ins QPCRInstruction) String() string {
 
 // NewQPCRInstruction creates a new QPCRInstruction
 func NewQPCRInstruction() *QPCRInstruction {
-	var inst QPCRInstruction
-	inst.ID = wtype.GetUUID()
-	return &inst
+	return &QPCRInstruction{
+		ID: wtype.GetUUID(),
+	}
 }

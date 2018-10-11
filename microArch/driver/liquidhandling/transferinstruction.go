@@ -89,6 +89,10 @@ func NewTransferInstruction(what, pltfrom, pltto, wellfrom, wellto, fplatetype, 
 	return tfri
 }
 
+func (ins *TransferInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.Transfer(ins)
+}
+
 func (ins *TransferInstruction) OutputTo(drv LiquidhandlingDriver) error {
 	hlld, ok := drv.(HighLevelLiquidhandlingDriver)
 
@@ -101,7 +105,7 @@ func (ins *TransferInstruction) OutputTo(drv LiquidhandlingDriver) error {
 
 	volumes := make([]float64, len(SetOfMultiTransferParams(ins.Transfers).Volume()))
 	for i, vol := range SetOfMultiTransferParams(ins.Transfers).Volume() {
-		volumes[i] = vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
+		volumes[i] = vol.ConvertToString("ul")
 	}
 
 	reply := hlld.Transfer(SetOfMultiTransferParams(ins.Transfers).What(), SetOfMultiTransferParams(ins.Transfers).PltFrom(), SetOfMultiTransferParams(ins.Transfers).WellFrom(), SetOfMultiTransferParams(ins.Transfers).PltTo(), SetOfMultiTransferParams(ins.Transfers).WellTo(), volumes)
@@ -180,34 +184,6 @@ func (ins *TransferInstruction) GetParameter(name InstructionParameter) interfac
 	default:
 		return ins.BaseRobotInstruction.GetParameter(name)
 	}
-}
-
-func (vs VolumeSet) MaxMultiTransferVolume(minLeave wunit.Volume) wunit.Volume {
-	// the minimum volume in the set... ensuring that we what we leave is
-	// either 0 or minLeave or greater
-
-	ret := vs[0].Dup()
-
-	for _, v := range vs {
-		if v.LessThan(ret) && !v.IsZero() {
-			ret = v.Dup()
-		}
-	}
-
-	vs2 := vs.Dup().Sub(ret)
-
-	if !vs2.NonZeros().Min().IsZero() && vs2.NonZeros().Min().LessThan(minLeave) {
-		//slightly inefficient but we refuse to leave less than minleave
-		ret.Subtract(minLeave)
-	}
-
-	// fail if ret is now < 0 or < the min possible
-
-	if ret.LessThan(wunit.ZeroVolume()) || ret.LessThan(minLeave) {
-		ret = wunit.ZeroVolume()
-	}
-
-	return ret
 }
 
 /*
@@ -493,30 +469,28 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 		for _, set := range parallelsets {
 			vols := VolumeSet(ins.Transfers[set].Volume())
 
-			maxvol := vols.MaxMultiTransferVolume(prms.MinPossibleVolume())
-
-			// if we can't do it, we can't do it
-			if maxvol.IsZero() {
-				continue
+			// non independent heads must have all volumes the same
+			if !mci.Prms.Independent {
+				if maxvol := vols.MaxMultiTransferVolume(prms.MinPossibleVolume()); !maxvol.IsZero() {
+					for i := range vols {
+						vols[i] = wunit.CopyVolume(maxvol)
+					}
+				} else {
+					// we can't transfer any volumes with the non-independent head so move on to the next parallelset
+					continue
+				}
 			}
 
 			tp := ins.Transfers[set].Dup()
-
 			for i := 0; i < len(tp.Transfers); i++ {
-				tp.Transfers[i].Volume = maxvol.Dup()
+				tp.Transfers[i].Volume = vols[i].Dup()
 			}
 
-			// now set the vols for the transfer and remove this from the instruction's volume
-
-			for i := range vols {
-				vols[i] = wunit.CopyVolume(maxvol)
-			}
-
-			ins.Transfers[set].RemoveVolume(maxvol)
+			ins.Transfers[set].RemoveVolumes(vols)
 
 			// set the from and to volumes for the relevant part of the instruction
-			ins.Transfers[set].RemoveFVolume(maxvol)
-			ins.Transfers[set].AddTVolume(maxvol)
+			ins.Transfers[set].RemoveFVolumes(vols)
+			ins.Transfers[set].AddTVolumes(vols)
 
 			mci.Multi = len(vols)
 			mci.AddTransferParams(tp)
@@ -534,7 +508,7 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 	lastWhat := ""
 	for _, t := range ins.Transfers {
 		for _, tp := range t.Transfers {
-			if tp.Volume.LessThanFloat(0.001) {
+			if !tp.Volume.IsPositive() {
 				continue
 			}
 

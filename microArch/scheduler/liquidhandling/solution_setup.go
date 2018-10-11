@@ -24,7 +24,6 @@ package liquidhandling
 
 import (
 	"fmt"
-	"sort"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -60,7 +59,7 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 
 	// -- migrate this to chains of dependent instructions
 	for _, instruction := range instructions {
-		components := instruction.Components
+		components := instruction.Inputs
 
 		// we need to identify the concentration components
 		// and the total volume components, if we have
@@ -160,7 +159,7 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 
 	//	fmt.Println("PRMS: ", prms)
 
-	if prms.CurrConf != nil && !prms.CurrConf.Minvol.LessThanFloat(0.00000001) {
+	if prms.CurrConf != nil && !prms.CurrConf.Minvol.IsZero() {
 		vmin = prms.CurrConf.Minvol
 	}
 
@@ -223,7 +222,7 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 	newInstructions := make(map[string]*wtype.LHInstruction, len(instructions))
 
 	for _, instruction := range instructions {
-		components := instruction.Components
+		components := instruction.Inputs
 		arrCncs := make([]*wtype.Liquid, 0, len(components))
 		arrTvol := make([]*wtype.Liquid, 0, len(components))
 		arrSvol := make([]*wtype.Liquid, 0, len(components))
@@ -261,7 +260,7 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 			vol := wunit.MultiplyVolume(totalvol, cnc/stockconcs[name])
 			cmpvol.Add(vol)
 			component.Vol = vol.RawValue()
-			component.Vunit = totalvol.Unit().ToString()
+			component.Vunit = totalvol.Unit().PrefixedSymbol()
 			component.StockConcentration = stockconcs[name]
 			arrFinalComponents = append(arrFinalComponents, component)
 		}
@@ -270,6 +269,9 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 
 		for _, component := range arrTvol {
 			vol := wunit.SubtractVolumes(totalvol, cmpvol)
+			if vol.IsNegative() {
+				return nil, nil, wtype.LHErrorf(wtype.LH_ERR_VOL, "invalid total volume for component %q in instruction:\n%s", component.CName, instruction.Summarize(1))
+			}
 			component.SetVolume(vol)
 			component.Tvol = 0.0 // reset Tvol
 			arrFinalComponents = append(arrFinalComponents, component)
@@ -281,7 +283,7 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 
 		// finally we replace the components in this instruction
 
-		instruction.Components = arrFinalComponents
+		instruction.Inputs = arrFinalComponents
 
 		// and put the new instruction in the array
 
@@ -326,23 +328,18 @@ func convertToSIValues(concMap map[string]wunit.Concentration) (floats map[strin
 }
 
 // converts all float values to concentration values with specified unit
-func convertFloatsToConc(floatMap map[string]float64, unit string) (concMap map[string]wunit.Concentration, err error) {
+func convertFloatsToConc(floatMap map[string]float64, unit string) (map[string]wunit.Concentration, error) {
 
-	_, ok := wunit.UnitMap["Concentration"][unit]
-	if !ok {
-		var approved []string
-		for u := range wunit.UnitMap["Concentration"] {
-			approved = append(approved, u)
-		}
-		sort.Strings(approved)
-		err = fmt.Errorf("unapproved concentration unit %q, approved units are %s", unit, approved)
-		return
+	reg := wunit.GetGlobalUnitRegistry()
+
+	if !reg.ValidUnitForType("Concentration", unit) {
+		return nil, fmt.Errorf("unapproved concentration unit %q, approved units are %v", unit, reg.ListValidUnitsForType("Concentration"))
 	}
 
-	concMap = make(map[string]wunit.Concentration, len(floatMap))
+	concMap := make(map[string]wunit.Concentration, len(floatMap))
 
 	for key, concValue := range floatMap {
 		concMap[key] = wunit.NewConcentration(concValue, unit)
 	}
-	return
+	return concMap, nil
 }

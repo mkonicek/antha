@@ -113,73 +113,89 @@ type Well struct {
 	WaveData string `xml:"WaveData"` // Scan data
 }
 
-type WavelengthReading struct {
-	Wavelength int
-	Reading    float64
-}
-
 func (w Well) IsScanData() bool {
 	return len(w.WaveData) > 0
 }
 
-func readingAtWavelength(readings []WavelengthReading, wavelength int) (reading float64, err error) {
+func readingAtWavelength(readings []wtype.Absorbance, wavelength int) (reading float64, err error) {
 	for _, reading := range readings {
-		if reading.Wavelength == wavelength {
+		if reading.WavelengthAsInt() == wavelength {
 			return reading.Reading, nil
 		}
 	}
 	return 0.0, fmt.Errorf("No reading found for wavelength %d: found: %+v", wavelength, readings)
 }
 
-// GetDataByWell returns all readings for that well.
-func (s SpectraMaxData) GetDataByWell(wellName string) (readings []WavelengthReading, err error) {
+// AllAbsorbanceData returns all readings for using the well name as key.
+func (s SpectraMaxData) AllAbsorbanceData() (readings map[string][]wtype.Absorbance, err error) {
+
+	var errs []string
 
 	wells := s.Experiment[0].PlateSections[0].Wavelengths[0].Wavelength.Wells[0].Wells
-	var w Well
-	var wellFound bool
 
-	for _, well := range wells {
-		if well.Name == wellName {
-			w = well
-			wellFound = true
-			break
-		}
-	}
+	readings = make(map[string][]wtype.Absorbance, len(wells))
 
-	if !wellFound {
-		return readings, fmt.Errorf("No readings found for well %s: found: %+v", wellName, s.Experiment[0].PlateSections[0].Wavelengths[0])
-	}
+	for _, w := range wells {
 
-	if w.IsScanData() {
-		dataStrings := strings.Fields(w.RawData)
-		wavelengthsStrings := strings.Fields(w.WaveData)
+		var wellReadings = make([]wtype.Absorbance, len(strings.Fields(w.WaveData)))
 
-		for i := range wavelengthsStrings {
-			wavelength, err := strconv.Atoi(wavelengthsStrings[i])
-			if err != nil {
-				return readings, err
+		if w.IsScanData() {
+			dataStrings := strings.Fields(w.RawData)
+			wavelengthsStrings := strings.Fields(w.WaveData)
+
+			for i := range wavelengthsStrings {
+				wavelength, err := strconv.ParseFloat(wavelengthsStrings[i], 64)
+				if err != nil {
+					return readings, err
+				}
+				data, err := strconv.ParseFloat(dataStrings[i], 64)
+				if err != nil {
+					return readings, err
+				}
+
+				wellReadings = append(wellReadings,
+					wtype.Absorbance{
+						WellLocation: wtype.MakeWellCoordsA1(w.Name),
+						Reading:      data,
+						Wavelength:   wavelength,
+					},
+				)
+
 			}
-			data, err := strconv.ParseFloat(dataStrings[i], 64)
-			if err != nil {
-				return readings, err
+
+			if len(wellReadings) == 0 {
+				errs = append(errs, fmt.Sprintf("well %s: No readings found; found: %+v", w.Name, wells))
 			}
 
-			var reading WavelengthReading
-			reading.Wavelength = wavelength
-			reading.Reading = data
-
-			readings = append(readings, reading)
-
+		} else {
+			errs = append(errs, fmt.Sprintf("well %s: Only Spectramax data in scan format is currently supported. Please run Absorbance reading as scan.", w.Name))
 		}
+		readings[w.Name] = wellReadings
 
-		if len(readings) == 0 {
-			return readings, fmt.Errorf("No readings found for well %s: found: %+v", wellName, wells)
-		}
-
-	} else {
-		return readings, fmt.Errorf("Only Spectramax data in scan format is currently supported. Please run Absorbance reading as scan")
 	}
-	return
+
+	if len(errs) > 0 {
+		return readings, fmt.Errorf("errors found returning AbsorbanceData: %s", strings.Join(errs, ";"))
+	}
+
+	return readings, nil
+}
+
+func (s SpectraMaxData) dataForWell(wellName string) ([]wtype.Absorbance, error) {
+
+	allWellData, err := s.AllAbsorbanceData()
+
+	if err != nil {
+		return nil, err
+	}
+
+	wellData, found := allWellData[wellName]
+
+	if !found {
+		return nil, fmt.Errorf("No data found for well %s", wellName)
+	}
+
+	return wellData, nil
 }
 
 func (c *customTime) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
@@ -267,7 +283,7 @@ func (s SpectraMaxData) ReadingsAsAverage(wellname string, emexortime platereade
 		return average, fmt.Errorf("currently spectramax data is only supported as an endpoint absorbance reading. Hence, FilterOption must be set to platereader.EMWAVELENGTH or platereader.EXWAVELENGTH and fieldvalue must be an int.")
 	}
 
-	wellData, err := s.GetDataByWell(wellname)
+	wellData, err := s.dataForWell(wellname)
 
 	if err != nil {
 		return average, err
@@ -298,16 +314,22 @@ func (s SpectraMaxData) Absorbance(wellname string, wavelength int, options ...i
 // FindOptimalAbsorbanceWavelength returns the wavelength for which the difference in signal between the sample and blank is greatest.
 func (s SpectraMaxData) FindOptimalAbsorbanceWavelength(wellname string, blankname string) (wavelength int, err error) {
 
-	wellData, err := s.GetDataByWell(wellname)
+	allWellData, err := s.AllAbsorbanceData()
 
 	if err != nil {
 		return wavelength, err
 	}
 
-	blankData, err := s.GetDataByWell(blankname)
+	wellData, found := allWellData[wellname]
 
-	if err != nil {
-		return wavelength, err
+	if !found {
+		return wavelength, fmt.Errorf("no data found for %s", wellname)
+	}
+
+	blankData, blankFound := allWellData[blankname]
+
+	if !blankFound {
+		return wavelength, fmt.Errorf("no data found for blank %s", blankname)
 	}
 
 	biggestdifferenceindex := 0
@@ -323,6 +345,6 @@ func (s SpectraMaxData) FindOptimalAbsorbanceWavelength(wellname string, blankna
 
 	}
 
-	wavelength = wellData[biggestdifferenceindex].Wavelength
+	wavelength = wellData[biggestdifferenceindex].WavelengthAsInt()
 	return wavelength, nil
 }

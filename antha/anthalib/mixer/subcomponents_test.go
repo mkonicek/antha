@@ -297,7 +297,7 @@ func TestUpdateComponentDetails(t *testing.T) {
 
 	someComponents := wtype.ComponentList{Components: map[string]wunit.Concentration{
 		"glycerol": wunit.NewConcentration(0.25, "g/l"),
-		"IPTG":     wunit.NewConcentration(0.25, "mM/l"),
+		"IPTG":     wunit.NewConcentration(0.25, "mMol/l"),
 		"water":    wunit.NewConcentration(0.25, "v/v"),
 		"LB":       wunit.NewConcentration(0.25, "X"),
 	},
@@ -305,7 +305,7 @@ func TestUpdateComponentDetails(t *testing.T) {
 
 	someOtherComponents := wtype.ComponentList{Components: map[string]wunit.Concentration{
 		"glycerol":    wunit.NewConcentration(0.5, "g/l"),
-		"IPTG":        wunit.NewConcentration(0.5, "mM/l"),
+		"IPTG":        wunit.NewConcentration(0.5, "mMol/l"),
 		"water":       wunit.NewConcentration(0.5, "v/v"),
 		"LB":          wunit.NewConcentration(0.25, "X"),
 		"Extra Thing": wunit.NewConcentration(1, "X"),
@@ -405,7 +405,7 @@ func TestUpdateComponentDetails(t *testing.T) {
 				Sample(sapI, wunit.NewVolume(5.0, "ul")),
 				Sample(t4, wunit.NewVolume(5.0, "ul")),
 			},
-			expectedProductName: "0.2 mM/l ATP+500 mg/l BSA+0.4 mM/l DTT+0.04 mM/l EDTA+200 g/l Glycerol+10 mM/l KCl+40 mM/l Magnesium Acetate+2 mM/l NaCl+200 mM/l Potassium Acetate+4 mM/l Tris-HCl+80 mM/l Tris-acetate",
+			expectedProductName: "0.2 mMol/l ATP+500 mg/l BSA+0.4 mMol/l DTT+0.04 mMol/l EDTA+200 g/l Glycerol+10 mMol/l KCl+40 mMol/l Magnesium Acetate+2 mMol/l NaCl+200 mMol/l Potassium Acetate+4 mMol/l Tris-HCl+80 mMol/l Tris-acetate",
 			expectedProductComponentList: wtype.ComponentList{
 				Components: map[string]wunit.Concentration{
 					"BSA":               conc("500mg/l"),
@@ -462,11 +462,11 @@ func TestUpdateComponentDetails(t *testing.T) {
 				Sample(iptg, wunit.NewVolume(65.0, "ul")),
 				Sample(lb, wunit.NewVolume(65.0, "ul")),
 			},
-			expectedProductName: "0.25 mM/l IPTG+0.25 X LB+0.25 g/l glycerol+0.25 v/v water",
+			expectedProductName: "0.25 mMol/l IPTG+0.25 X LB+0.25 g/l glycerol+0.25 v/v water",
 			expectedProductComponentList: wtype.ComponentList{
 				Components: map[string]wunit.Concentration{
 					"glycerol": wunit.NewConcentration(0.25, "g/l"),
-					"IPTG":     wunit.NewConcentration(0.25, "mM/l"),
+					"IPTG":     wunit.NewConcentration(0.25, "mMol/l"),
 					"water":    wunit.NewConcentration(0.25, "v/v"),
 					"LB":       wunit.NewConcentration(0.25, "X"),
 				},
@@ -499,11 +499,11 @@ func TestUpdateComponentDetails(t *testing.T) {
 				Sample(glycerol, wunit.NewVolume(50, "ul")),
 				Sample(iptg, wunit.NewVolume(50, "ul")),
 			},
-			expectedProductName: "0.1 mM/l IPTG+8 g/l Sodium Chloride+8 g/l Tryptone+4 g/l Yeast Extract+0.1 g/l glycerol",
+			expectedProductName: "0.1 mMol/l IPTG+8 g/l Sodium Chloride+8 g/l Tryptone+4 g/l Yeast Extract+0.1 g/l glycerol",
 			expectedProductComponentList: wtype.ComponentList{
 				Components: map[string]wunit.Concentration{
 					"glycerol":        wunit.NewConcentration(0.1, "g/l"),
-					"IPTG":            wunit.NewConcentration(0.1, "mM/l"),
+					"IPTG":            wunit.NewConcentration(0.1, "mMol/l"),
 					"Yeast Extract":   wunit.NewConcentration(4, "g/l"),
 					"Tryptone":        wunit.NewConcentration(8, "g/l"),
 					"Sodium Chloride": wunit.NewConcentration(8, "g/l"),
@@ -522,11 +522,11 @@ func TestUpdateComponentDetails(t *testing.T) {
 				Sample(mediaMixture, wunit.NewVolume(100.0, "ul")),
 				Sample(anotherMediaMixture, wunit.NewVolume(100.0, "ul")),
 			},
-			expectedProductName: "0.1 X Extra Thing+0.175 mM/l IPTG+0.05 X LB+0.175 g/l glycerol+0.675 v/v water",
+			expectedProductName: "0.1 X Extra Thing+0.175 mMol/l IPTG+0.05 X LB+0.175 g/l glycerol+0.675 v/v water",
 			expectedProductComponentList: wtype.ComponentList{
 				Components: map[string]wunit.Concentration{
 					"glycerol":    wunit.NewConcentration(0.175, "g/l"),
-					"IPTG":        wunit.NewConcentration(0.175, "mM/l"),
+					"IPTG":        wunit.NewConcentration(0.175, "mMol/l"),
 					"water":       wunit.NewConcentration(0.675, "v/v"),
 					"LB":          wunit.NewConcentration(0.05, "X"),
 					"Extra Thing": wunit.NewConcentration(0.1, "X"),
@@ -544,11 +544,11 @@ func TestUpdateComponentDetails(t *testing.T) {
 				Sample(iptg, wunit.NewVolume(65.0, "ul")),
 				Sample(mediaMixture, wunit.NewVolume(65.0, "ul")),
 			},
-			expectedProductName: "0.312 mM/l IPTG+0.0625 X LB+0.312 g/l glycerol+0.312 v/v water",
+			expectedProductName: "0.312 mMol/l IPTG+0.0625 X LB+0.312 g/l glycerol+0.312 v/v water",
 			expectedProductComponentList: wtype.ComponentList{
 				Components: map[string]wunit.Concentration{
 					"glycerol": wunit.NewConcentration(0.3125, "g/l"),
-					"IPTG":     wunit.NewConcentration(0.3125, "mM/l"),
+					"IPTG":     wunit.NewConcentration(0.3125, "mMol/l"),
 					"water":    wunit.NewConcentration(0.312, "v/v"),
 					"LB":       wunit.NewConcentration(0.0625, "X"),
 				},

@@ -17,9 +17,9 @@ func GetMixForTest(id string, input ...*wtype.Liquid) (*wtype.LHInstruction, *wt
 	mix := wtype.NewLHMixInstruction()
 	mix.ID = id
 	for _, ip := range input {
-		mix.AddComponent(ip)
+		mix.AddInput(ip)
 	}
-	mix.AddProduct(output)
+	mix.AddOutput(output)
 
 	return mix, output
 }
@@ -29,9 +29,9 @@ func GetSplitForTest(id string, input *wtype.Liquid, volume float64) (*wtype.LHI
 	split.ID = id
 	moving, remaining := mixer.SplitSample(input, wunit.NewVolume(volume, "ul"))
 
-	split.AddComponent(input)
-	split.AddProduct(moving)
-	split.AddProduct(remaining)
+	split.AddInput(input)
+	split.AddOutput(moving)
+	split.AddOutput(remaining)
 
 	return split, moving, remaining
 }
@@ -44,11 +44,11 @@ func GetPromptForTest(message string, inputs ...*wtype.Liquid) (*wtype.LHInstruc
 		output := input.Cp()
 		output.ParentID = input.ID
 		input.DaughterID = output.ID
-		ret.AddComponent(input)
-		ret.AddResult(output)
+		ret.AddInput(input)
+		ret.AddOutput(output)
 	}
 
-	return ret, ret.Results
+	return ret, ret.Outputs
 }
 
 func GetLiquidForTest(name string, volume float64) *wtype.Liquid {
@@ -68,34 +68,36 @@ type setOutputOrderTest struct {
 }
 
 func (self *setOutputOrderTest) Run(t *testing.T) {
-	rq := GetLHRequestForTest()
 
-	for _, ins := range self.Instructions {
-		rq.LHInstructions[ins.ID] = ins
+	insMap := make(map[string]*wtype.LHInstruction, len(self.Instructions))
+	for _, instruction := range self.Instructions {
+		insMap[instruction.ID] = instruction
 	}
 
-	rq.Options.OutputSort = self.OutputSort
-
-	err := setOutputOrder(rq)
+	ichain, err := buildInstructionChain(insMap)
 	if encounteredError := err != nil; self.ExpectingError != encounteredError {
 		t.Fatalf("ExpectingError: %t, Encountered Error: %v", self.ExpectingError, err)
 		return
 	}
 
-	if e, g := self.ChainHeight, rq.InstructionChain.Height(); e != g {
+	//sort the instructions within each link of the chain
+	ichain.sortInstructions(self.OutputSort)
+
+	if e, g := self.ChainHeight, ichain.Height(); e != g {
 		t.Fatalf("Instruction chain length mismatch, e: %d, g: %d", e, g)
 	}
-	if e, g := len(self.ExpectedOrder), len(rq.Output_order); e != g {
-		t.Fatalf("Expected Order length mismatch:\n\te: %v\n\tg: %v", self.ExpectedOrder, rq.Output_order)
+	if e, g := len(self.ExpectedOrder), len(ichain.FlattenInstructionIDs()); e != g {
+		t.Fatalf("Expected Order length mismatch:\n\te: %v\n\tg: %v", e, g)
 	}
 
-	outputOrder := make([]string, 0, len(rq.Output_order))
-	for _, id := range rq.Output_order {
+	sorted := ichain.GetOrderedLHInstructions()
+	outputOrder := make([]string, 0, len(sorted))
+	for _, ins := range sorted {
 		//for promts check the message as the ID is overwritten
-		if ins, ok := rq.LHInstructions[id]; ok && ins.Type == wtype.LHIPRM { //LHIPRM == prompt instruction
+		if ins.Type == wtype.LHIPRM { //LHIPRM == prompt instruction
 			outputOrder = append(outputOrder, ins.Message)
 		} else {
-			outputOrder = append(outputOrder, id)
+			outputOrder = append(outputOrder, ins.ID)
 		}
 	}
 

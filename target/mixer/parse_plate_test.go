@@ -160,7 +160,7 @@ func TestParsePlate(t *testing.T) {
 				`
 pcrplate_with_cooler,
 A1,water,water,50.0,ul,0,g/l,
-A4,tea,water,50.0,ul,10.0,mM/l,
+A4,tea,water,50.0,ul,10.0,mMol/l,
 A5,milk,water,100.0,ul,10.0,g/l,
 A6,,,0,ul,0,g/l,
 `),
@@ -185,7 +185,7 @@ A6,,,0,ul,0,g/l,
 							Vol:   50.0,
 							Vunit: "ul",
 							Conc:  10.0,
-							Cunit: "mM/l",
+							Cunit: "mMol/l",
 						},
 					},
 					"A5": {
@@ -206,7 +206,7 @@ A6,,,0,ul,0,g/l,
 				`
 pcrplate_with_cooler, afternoon tea tray, LiquidType, Vol,Vol Unit,Conc,Conc Unit, SubComponents
 A1,water,water,50.0,ul,0,g/l,
-A4,tea,water,50.0,ul,10.0,mM/l,tea leaves: ,5g/l,sugar:,1X,
+A4,tea,water,50.0,ul,10.0,mMol/l,tea leaves: ,5g/l,sugar:,1X,
 A5,milk,water,100.0,ul,10.0,g/l,
 A6,,,0,ul,0,g/l,
 `),
@@ -231,7 +231,7 @@ A6,,,0,ul,0,g/l,
 							Vol:   50.0,
 							Vunit: "ul",
 							Conc:  10.0,
-							Cunit: "mM/l",
+							Cunit: "mMol/l",
 							SubComponents: wtype.ComponentList{
 								Components: map[string]wunit.Concentration{
 									"tea leaves": wunit.NewConcentration(5.0, "g/L"),
@@ -258,7 +258,7 @@ A6,,,0,ul,0,g/l,
 				`
 pcrplate_with_cooler, afternoon tea tray, LiquidType, Vol,Vol Unit,Conc,Conc Unit, , ,SubComponents,
 A1,water,water,50.0,ul,0,g/l,
-A4,tea,water,50.0,ul,10.0,mM/l, some random user text, ,tea leaves: ,5g/l,sugar:,1X,
+A4,tea,water,50.0,ul,10.0,mMol/l, some random user text, ,tea leaves: ,5g/l,sugar:,1X,
 A5,milk,water,100.0,ul,10.0,g/l,
 A6,,,0,ul,0,g/l,
 `),
@@ -283,7 +283,7 @@ A6,,,0,ul,0,g/l,
 							Vol:   50.0,
 							Vunit: "ul",
 							Conc:  10.0,
-							Cunit: "mM/l",
+							Cunit: "mMol/l",
 							SubComponents: wtype.ComponentList{
 								Components: map[string]wunit.Concentration{
 									"tea leaves": wunit.NewConcentration(5.0, "g/L"),
@@ -310,7 +310,7 @@ A6,,,0,ul,0,g/l,
 				`
 pcrplate_with_cooler,
 A1,water,water,50.0,ul,0,g/l,
-A4,tea,water,50.0,ul,10.0,mM/l,
+A4,tea,water,50.0,ul,10.0,mMol/l,
 A5,milk,water,100.0,ul,10.0,g/l,
 A6,,,0,ul,0,g/l,
 `),
@@ -340,7 +340,7 @@ A6,,,0,ul,0,g/l,
 							Vol:   50.0,
 							Vunit: "ul",
 							Conc:  10.0,
-							Cunit: "mM/l",
+							Cunit: "mMol/l",
 						},
 					},
 					"A5": {
@@ -414,7 +414,7 @@ C1,neb5compcells,culture,20.5,ul,0,ng/ul
 							Vol:   50.0,
 							Vunit: "ul",
 							Conc:  10.0,
-							Cunit: "mM/l",
+							Cunit: "mMol/l",
 						},
 					},
 					"A5": {
@@ -435,6 +435,40 @@ C1,neb5compcells,culture,20.5,ul,0,ng/ul
 				`
 pcrplate_skirted_riser40,Input_plate_1,LiquidType,Vol,Vol Unit,Conc,Conc Unit
 A1,water,randomType,140.5,ul,0,mg/l
+C1,neb5compcells,culture,20.5,ul,0,ng/ul
+`),
+			NoWarnings: false,
+			Expected: &wtype.Plate{
+				Type: "pcrplate_skirted_riser40",
+				Wellcoords: map[string]*wtype.LHWell{
+					"A1": {
+						WContents: &wtype.Liquid{
+							CName: "water",
+							Type:  wtype.LiquidType("randomType"),
+							Vol:   140.5,
+							Vunit: "ul",
+							Conc:  0,
+							Cunit: "mg/l",
+						},
+					},
+					"C1": {
+						WContents: &wtype.Liquid{
+							CName: "neb5compcells",
+							Type:  wtype.LTCulture,
+							Vol:   20.5,
+							Vunit: "ul",
+							Conc:  0,
+							Cunit: "mg/l",
+						},
+					},
+				},
+			},
+		},
+		{
+			File: []byte(
+				`
+pcrplate_skirted_riser40,Input_plate_1,LiquidType,Vol,Vol Unit,Conc,Conc Unit
+A1,water,randomType_modified_1,140.5,ul,0,mg/l
 C1,neb5compcells,culture,20.5,ul,0,ng/ul
 `),
 			NoWarnings: false,
@@ -499,4 +533,43 @@ A5,milk,water,500.0,ul,0,g/l,
 	if err == nil {
 		t.Error("Overfull well A5 failed to generate error")
 	}
+}
+
+func TestUnModifyTypeName(t *testing.T) {
+
+	type modifiedPolicyTest struct {
+		Original, ExpectedProduct string
+	}
+
+	var tests = []modifiedPolicyTest{
+		{
+			Original:        "water_modified_1",
+			ExpectedProduct: "water",
+		},
+		{
+			Original:        "water_modified_2_modified_1",
+			ExpectedProduct: "water",
+		},
+		{
+			Original:        "water",
+			ExpectedProduct: "water",
+		},
+		{
+			Original:        "_modified_2",
+			ExpectedProduct: "",
+		},
+	}
+
+	for _, test := range tests {
+		result := unModifyTypeName(test.Original)
+		if result != test.ExpectedProduct {
+			t.Error(
+				"Error removing modified suffix from policy: \n",
+				"For: ", test.Original, "\n",
+				"Expected Product: ", test.ExpectedProduct, "\n",
+				"Got: ", result, "\n",
+			)
+		}
+	}
+
 }

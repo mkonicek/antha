@@ -25,6 +25,7 @@ package wtype
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -259,6 +260,7 @@ func (w *LHWell) SetContents(newContents *Liquid) error {
 	}
 
 	w.WContents = newContents
+	w.updateComponentLocation()
 	return nil
 }
 
@@ -431,8 +433,7 @@ func (w *LHWell) Clear() {
 		return
 	}
 	w.WContents = NewLHComponent()
-	//death if this well is actually in a tipwaste
-	w.WContents.Loc = w.Plate.(*Plate).ID + ":" + w.Crds.FormatA1()
+	w.updateComponentLocation()
 }
 
 //IsEmpty returns true if the well contains nothing, though this does not mean that the working volume is greater than zero
@@ -450,7 +451,7 @@ func (w *LHWell) IsEmpty() bool {
 //Clean resets the volume in the well so that it's empty
 func (w *LHWell) Clean() {
 	w.WContents.Clean()
-	w.WContents.Loc = w.Plate.(*Plate).ID + ":" + w.Crds.FormatA1()
+	w.updateComponentLocation()
 	newExtra := make(map[string]interface{})
 
 	// some keys must be retained
@@ -462,6 +463,12 @@ func (w *LHWell) Clean() {
 	}
 
 	w.Extra = newExtra
+}
+
+func (w *LHWell) updateComponentLocation() {
+	if w.WContents != nil {
+		w.WContents.Loc = fmt.Sprintf("%s:%s", IDOf(w.Plate), w.Crds.FormatA1())
+	}
 }
 
 // copy of instance
@@ -579,7 +586,7 @@ func (lhw *LHWell) GetAfVFunc() wutil.Func1Prm {
 //SetLiquidLevelModel sets the function which models the volume of liquid (uL) in
 //the well given it's height (mm)
 func (lhw *LHWell) SetLiquidLevelModel(m wutil.Func1Prm) {
-	if lhw == nil {
+	if lhw == nil || m == nil {
 		return
 	}
 	mb, _ := json.Marshal(m)
@@ -601,6 +608,26 @@ func (lhw *LHWell) GetLiquidLevelModel() wutil.Func1Prm {
 		}
 	}
 	return nil
+}
+
+//GetLiquidLevel estimate the height of the liquid in mm from the bottom of the
+//well based on the volume in the well. Returns zero if no liquidlevel model is
+//set
+func (lhw *LHWell) GetLiquidLevel(volume wunit.Volume) float64 {
+	//the only form of liquid level model we currently support is:
+	//  volume[ul] = A * (height[mm])^2 + B * (height[mm]) + C
+	vol := volume.ConvertToString("ul")
+	if f := lhw.GetLiquidLevelModel(); f == nil {
+		return 0.0
+	} else if quad, ok := f.(*wutil.Quadratic); !ok {
+		return 0.0
+	} else if quad.C > vol { //no negative or imaginary heights
+		return 0.0
+	} else if quad.A == 0 { //linear model
+		return (vol - quad.C) / quad.B
+	} else {
+		return (-quad.B + math.Sqrt(quad.B*quad.B-4.0*quad.A*(quad.C-vol))) / (2.0 * quad.A)
+	}
 }
 
 //HasLiquidLevelModel returns whether the well has a model for use with
@@ -635,8 +662,7 @@ func NewLHWell(vunit string, vol, rvol float64, shape *Shape, bott WellBottomTyp
 	well.Plate = nil
 	crds := ZeroWellCoords()
 	well.WContents = NewLHComponent()
-	//this field is even more daft now we usually don't know the plate at initialization
-	well.WContents.Loc = "nill:" + crds.FormatA1()
+	well.updateComponentLocation()
 
 	well.ID = GetUUID()
 	well.Crds = crds

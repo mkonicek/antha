@@ -25,21 +25,13 @@ package wunit
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"sort"
 )
 
 var (
 	noValues error = fmt.Errorf("empty slice specified as argument to sort function")
 )
-
-type incompatibleUnits struct {
-	unitA string
-	unitB string
-}
-
-func (err incompatibleUnits) Error() string {
-	return fmt.Sprintf("incompatible units of %s and %s. Please convert to same base unit if possible.", err.unitA, err.unitB)
-}
 
 // SortConcentrations sorts a set of Concentration values.
 // An error will be returned if no values are specified or the base units of any of the concentrations are incompatible,
@@ -86,11 +78,16 @@ func MaxConcentration(concs []Concentration) (max Concentration, err error) {
 	return sorted[len(sorted)-1], nil
 }
 
+// sameUnit returns an error if we cannot convert between unitA and unitB
 func sameUnit(unitA, unitB PrefixedUnit) error {
-	if unitA.BaseSISymbol() == unitB.BaseSISymbol() {
-		return nil
+	if a, ok := unitA.(*Unit); !ok {
+		return errors.Errorf("unsupported PrefixedUnit type %T", unitA)
+	} else if b, ok := unitB.(*Unit); !ok {
+		return errors.Errorf("unsupported PrefixedUnit type %T", unitB)
+	} else {
+		_, err := a.getConversionFactor(b)
+		return err
 	}
-	return incompatibleUnits{unitA: unitA.BaseSISymbol(), unitB: unitB.BaseSISymbol()}
 }
 
 type concentrationSet []Concentration
@@ -104,22 +101,7 @@ func (cs concentrationSet) Swap(i, j int) {
 }
 
 func (cs concentrationSet) Less(i, j int) bool {
-	iSIValue, iUnit := cs[i].SIValue(), cs[i].Unit().BaseSISymbol()
-	jSIValue, jUnit := cs[j].SIValue(), cs[j].Unit().BaseSISymbol()
-
-	if iUnit == jUnit {
-		return iSIValue < jSIValue
-	}
-
-	if iSIValue == 0.0 {
-		return iSIValue < jSIValue
-	}
-
-	if jSIValue == 0.0 {
-		return iSIValue < jSIValue
-	}
-
-	return false
+	return cs[i].SIValue() < cs[j].SIValue()
 }
 
 // SortVolumes sorts a set of Volume values.
@@ -175,12 +157,5 @@ func (cs volumeSet) Swap(i, j int) {
 }
 
 func (cs volumeSet) Less(i, j int) bool {
-	iSIValue, iUnit := cs[i].SIValue(), cs[i].Unit().BaseSISymbol()
-	jSIValue, jUnit := cs[j].SIValue(), cs[j].Unit().BaseSISymbol()
-
-	if iUnit == jUnit {
-		return iSIValue < jSIValue
-	}
-
-	return false
+	return cs[i].SIValue() < cs[j].SIValue()
 }

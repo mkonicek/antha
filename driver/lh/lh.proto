@@ -589,6 +589,7 @@ message ArrayOfPtrToLHHeadAssemblyPositionMessage {
 message LHHeadAssemblyMessage {
     ArrayOfPtrToLHHeadAssemblyPositionMessage Positions = 1;
     PtrToBBoxMessage MotionLimits = 2;
+    PtrToVelocityRangeMessage VelocityLimits = 3;
 }
 message PtrToLHHeadAssemblyMessage {
     LHHeadAssemblyMessage val = 1;
@@ -692,7 +693,7 @@ message PtrToShapeMessage{
 }
 message ConcreteMeasurementMessage {
 	double Arg_1 = 1;
-	PtrToGenericPrefixedUnitMessage Arg_2 = 2;
+	PtrToUnitMessage Arg_2 = 2;
 }
 message PtrToConcreteMeasurementMessage{
 	ConcreteMeasurementMessage arg_1=1;
@@ -720,25 +721,15 @@ message LHComponentMessage {
     MapstringAnyMessageMessage Arg_20 = 20;
 	SubComponentMessage Arg_21 = 21;
 }
-message GenericPrefixedUnitMessage {
-	GenericUnitMessage Arg_1 = 1;
-	SIPrefixMessage Arg_2 = 2;
+message PtrToUnitMessage{
+	UnitMessage arg_1=1;
 }
-message PtrToGenericPrefixedUnitMessage{
-	GenericPrefixedUnitMessage arg_1=1;
+message UnitMessage {
+    reserved 1, 2;
+    bytes JSONUnit = 3;
 }
 message BlockIDMessage {
 	string Arg_1 = 1;
-}
-message GenericUnitMessage {
-	string Arg_1 = 1;
-	string Arg_2 = 2;
-	double Arg_3 = 3;
-	string Arg_4 = 4;
-}
-message SIPrefixMessage {
-	string Arg_1 = 1;
-	double Arg_2 = 2;
 }
 
 message TransferRequest{
@@ -757,3 +748,28 @@ message TransferReply{
 message SubComponentMessage{
 	AnyMessage Arg_1 = 1;
 }
+
+message VelocityMessage{
+    PtrToConcreteMeasurementMessage ConcreteMeasurement = 1;
+}
+
+message Velocity3DMessage{
+    VelocityMessage X = 1;
+    VelocityMessage Y = 2;
+    VelocityMessage Z = 3;
+}
+
+message PtrToVelocity3DMessage{
+    Velocity3DMessage val = 1;
+}
+
+message VelocityRangeMessage{
+    PtrToVelocity3DMessage Min = 1;
+    PtrToVelocity3DMessage Max = 2;
+}
+
+message PtrToVelocityRangeMessage{
+    VelocityRangeMessage val = 1;
+}
+
+

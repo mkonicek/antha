@@ -1,19 +1,17 @@
 package liquidhandling
 
 import (
-	"context"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/inventory"
-	"github.com/antha-lang/antha/inventory/testinventory"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
 func TestInputSampleAutoAllocate(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	rbt := makeGilson(ctx)
 	rq := NewLHRequest()
@@ -31,10 +29,10 @@ func TestInputSampleAutoAllocate(t *testing.T) {
 	s2 := mixer.Sample(cmp2, wunit.NewVolume(25.0, "ul"))
 
 	mo := mixer.MixOptions{
-		Components: []*wtype.Liquid{s1, s2},
-		PlateType:  "pcrplate_skirted_riser20",
-		Address:    "A1",
-		PlateNum:   1,
+		Inputs:    []*wtype.Liquid{s1, s2},
+		PlateType: "pcrplate_skirted_riser20",
+		Address:   "A1",
+		PlateNum:  1,
 	}
 
 	ins := mixer.GenericMix(mo)
@@ -46,9 +44,7 @@ func TestInputSampleAutoAllocate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	rq.Input_platetypes = append(rq.Input_platetypes, pl)
-
-	rq.ConfigureYourself()
+	rq.InputPlatetypes = append(rq.InputPlatetypes, pl)
 
 	lh := Init(rbt)
 
@@ -87,7 +83,7 @@ func testSetup(rbt *liquidhandling.LHProperties, expected map[string]float64, t 
 
 }
 func TestInPlaceAutoAllocate(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	rbt := makeGilson(ctx)
 	rq := NewLHRequest()
@@ -105,10 +101,10 @@ func TestInPlaceAutoAllocate(t *testing.T) {
 	cmp2.Vol = 50.0
 
 	mo := mixer.MixOptions{
-		Components: []*wtype.Liquid{cmp1, cmp2},
-		PlateType:  "pcrplate_skirted_riser20",
-		Address:    "A1",
-		PlateNum:   1,
+		Inputs:    []*wtype.Liquid{cmp1, cmp2},
+		PlateType: "pcrplate_skirted_riser20",
+		Address:   "A1",
+		PlateNum:  1,
 	}
 
 	ins := mixer.GenericMix(mo)
@@ -120,9 +116,7 @@ func TestInPlaceAutoAllocate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	rq.Input_platetypes = append(rq.Input_platetypes, pl)
-
-	rq.ConfigureYourself()
+	rq.InputPlatetypes = append(rq.InputPlatetypes, pl)
 
 	lh := Init(rbt)
 

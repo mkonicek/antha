@@ -38,7 +38,7 @@ func RTLTipBehaviour() wtype.TipLoadingBehaviour {
 }
 
 func (self *tipCoordsTest) run(t *testing.T) {
-	tb := default_lhtipbox("testbox")
+	tb := defaultLHTipbox("testbox")
 
 	for _, tipAddrS := range self.tipsMissing {
 		wc := wtype.MakeWellCoords(tipAddrS)

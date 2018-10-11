@@ -132,7 +132,6 @@ type runOpt struct {
 	MixerOpt               mixer.Opt
 	Drivers                []string
 	BundleFile             string
-	TargetConfigFile       string
 	ParametersFile         string
 	WorkflowFile           string
 	MixInstructionFileName string
@@ -140,55 +139,13 @@ type runOpt struct {
 	RunTest                bool
 }
 
-type runInput struct {
-	BundleFile       string
-	TargetConfigFile string
-	ParametersFile   string
-	WorkflowFile     string
-}
-
-func unmarshalRunInput(in *runInput) (*executeutil.Bundle, error) {
-	var wdata, pdata, bdata []byte
-	var err error
-
-	if len(in.BundleFile) != 0 {
-		bdata, err = ioutil.ReadFile(in.BundleFile)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		wdata, err = ioutil.ReadFile(in.WorkflowFile)
-		if err != nil {
-			return nil, err
-		}
-
-		pdata, err = ioutil.ReadFile(in.ParametersFile)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return executeutil.Unmarshal(executeutil.UnmarshalOpt{
-		WorkflowData: wdata,
-		BundleData:   bdata,
-		ParamsData:   pdata,
-	})
-}
-
 func (a *runOpt) Run() error {
-	bundle, err := unmarshalRunInput(&runInput{
-		BundleFile:     a.BundleFile,
-		ParametersFile: a.ParametersFile,
-		WorkflowFile:   a.WorkflowFile,
-	})
+	bundle, err := executeutil.UnmarshalSingle(a.BundleFile, a.WorkflowFile, a.ParametersFile)
 	if err != nil {
 		return err
 	}
 
-	wdesc := &(bundle.Desc)
-	params := &(bundle.RawParams)
-
-	mixerOpt := mixer.DefaultOpt.Merge(params.Config).Merge(&a.MixerOpt)
+	mixerOpt := mixer.DefaultOpt.Merge(bundle.RawParams.Config).Merge(&a.MixerOpt)
 	opt := auto.Opt{
 		MaybeArgs: []interface{}{mixerOpt},
 	}
@@ -196,33 +153,10 @@ func (a *runOpt) Run() error {
 		opt.Endpoints = append(opt.Endpoints, auto.Endpoint{URI: uri})
 	}
 
-	// Either we get devices via:
-	//   (1) Auto detect gRPC devices on network interfaces
-	//   (2) Mock the device with file config
-
-	// (1) Devices via gRPC
+	// Auto detect gRPC devices on network interfaces
 	t, err := auto.New(opt)
 	if err != nil {
 		return err
-	}
-
-	// (2) Devices from Config file
-	targetConfig, err := auto.UnmarshalMockTargetConfig(a.TargetConfigFile)
-	if err != nil {
-		return fmt.Errorf(
-			"cannot decode target-config file %q: %s",
-			a.TargetConfigFile, err)
-	}
-
-	if targetConfig != nil {
-		for _, mockDevice := range targetConfig.MockDevices {
-			device, err := mockDevice.ToDevice()
-			if err != nil {
-				return fmt.Errorf("could not instantiate device from mock: %s", err)
-			}
-			t.Target.AddDevice(device)
-			fmt.Println(fmt.Sprintf("added mock device %q", mockDevice.DeviceName))
-		}
 	}
 
 	// frontend is deprecated
@@ -238,9 +172,9 @@ func (a *runOpt) Run() error {
 	}
 
 	rout, err := execute.Run(ctx, execute.Opt{
-		Target:   t.Target,
-		Workflow: wdesc,
-		Params:   params,
+		Target:                     t.Target,
+		Workflow:                   &bundle.Desc,
+		Params:                     &bundle.RawParams,
 		TransitionalReadLocalFiles: true,
 	})
 	if err != nil {
@@ -269,15 +203,9 @@ func (a *runOpt) Run() error {
 
 	if a.TestBundleFileName != "" {
 		expected := workflowtest.SaveTestOutputs(rout, "")
-		bundleWithOutputs := executeutil.Bundle{
-			Desc:       *wdesc,
-			RawParams:  *params,
-			TestOpt:    expected,
-			Version:    "1.2.0", // other versions fail
-			Properties: bundle.Properties,
-		}
+		bundleWithOutputs := *bundle
+		bundleWithOutputs.TestOpt = expected
 		serializedOutputs, err := json.MarshalIndent(bundleWithOutputs, "", "  ")
-
 		if err != nil {
 			return err
 		}
@@ -359,7 +287,6 @@ func runWorkflow(cmd *cobra.Command, args []string) error {
 		BundleFile:             viper.GetString("bundle"),
 		ParametersFile:         viper.GetString("parameters"),
 		WorkflowFile:           viper.GetString("workflow"),
-		TargetConfigFile:       viper.GetString("target"),
 		MixInstructionFileName: viper.GetString("mixInstructionFileName"),
 		TestBundleFileName:     viper.GetString("makeTestBundle"),
 		RunTest:                viper.GetBool("runTest"),
@@ -385,9 +312,8 @@ func init() {
 	flags.String("bundle", "", "Input bundle with parameters and workflow together (overrides parameter and workflow arguments)")
 	flags.String("makeTestBundle", "", "Generate json format bundle for testing and put it here")
 	flags.String("mixInstructionFileName", "", "Name of instructions files to output to for mixes")
-	flags.String("parameters", "parameters.json", "Parameters to workflow")
-	flags.String("workflow", "workflow.json", "Workflow definition file")
-	flags.String("target", "", "Mock target definition file")
+	flags.String("parameters", "", "Parameters to workflow")
+	flags.String("workflow", "", "Workflow definition file")
 	flags.StringSlice("component", nil, "Uris of remote components ({tcp,go}://...); use multiple flags for multiple components")
 	flags.StringSlice("driver", nil, "Uris of remote drivers ({tcp,go}://...); use multiple flags for multiple drivers")
 	flags.StringSlice("inputPlateTypes", nil, "Default input plate types (in order of preference)")

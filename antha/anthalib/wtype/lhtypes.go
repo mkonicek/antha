@@ -414,16 +414,34 @@ func (s TipLoadingBehaviour) String() string {
 	return fmt.Sprintf("%sauto-refilling, loading order: %v, %v, %v, %v", autoRefill, s.LoadingOrder, s.VerticalLoadingDirection, s.HorizontalLoadingDirection, s.ChunkingBehaviour)
 }
 
-//LHHeadAssemblyPosition a position within a head assembly
+// LHHeadAssemblyPosition a position within a head assembly
 type LHHeadAssemblyPosition struct {
 	Offset Coordinates
 	Head   *LHHead
 }
 
+// VelocityRange the minimum and maximum velocities for the head assembly.
+// nil implies no limit
+type VelocityRange struct {
+	Min, Max *wunit.Velocity3D
+}
+
+// Dup return a copy of the range
+func (self *VelocityRange) Dup() *VelocityRange {
+	if self == nil {
+		return nil
+	}
+	return &VelocityRange{
+		Min: self.Min.Dup(),
+		Max: self.Max.Dup(),
+	}
+}
+
 //LHHeadAssembly represent a set of LHHeads which are constrained to move together
 type LHHeadAssembly struct {
-	Positions    []*LHHeadAssemblyPosition
-	MotionLimits *BBox
+	Positions      []*LHHeadAssemblyPosition
+	MotionLimits   *BBox          //the limits on range of motion of the head assembly, nil if unspecified
+	VelocityLimits *VelocityRange // the range of valid velocities for the head, nil if unspecified
 }
 
 //NewLHHeadAssembly build a new head assembly
@@ -438,8 +456,9 @@ func NewLHHeadAssembly(MotionLimits *BBox) *LHHeadAssembly {
 //DupWithoutHeads copy the headassembly leaving all positions in the new assembly unloaded
 func (self *LHHeadAssembly) DupWithoutHeads() *LHHeadAssembly {
 	ret := &LHHeadAssembly{
-		Positions:    make([]*LHHeadAssemblyPosition, 0, len(self.Positions)),
-		MotionLimits: self.MotionLimits.Dup(),
+		Positions:      make([]*LHHeadAssemblyPosition, 0, len(self.Positions)),
+		MotionLimits:   self.MotionLimits.Dup(),
+		VelocityLimits: self.VelocityLimits.Dup(),
 	}
 	for _, pos := range self.Positions {
 		ret.AddPosition(pos.Offset)

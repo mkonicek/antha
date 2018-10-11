@@ -1171,10 +1171,16 @@ func (self *Plate) WellCoordsToCoords(wc WellCoords, r WellReference) (Coordinat
 
 	var z float64
 	//return the bottom as a lower bound for liquid reference
-	if r == BottomReference || r == LiquidReference {
+	if r == BottomReference {
 		z = child.GetPosition().Z + child.Bottomh
 	} else if r == TopReference {
 		z = child.GetPosition().Z + child.GetSize().Z
+	} else if r == LiquidReference {
+		if volInUl, err := child.CurrentVolume().InStringUnit("ul"); err != nil {
+			panic(err) // this really shouldn't happen as all volume units are compatible with "ul"
+		} else {
+			z = child.GetPosition().Z + child.Bottomh + self.Welltype.GetLiquidLevel(wunit.Volume{ConcreteMeasurement: volInUl.(*wunit.ConcreteMeasurement)})
+		}
 	}
 
 	center := child.GetPosition().Add(child.GetSize().Multiply(0.5))

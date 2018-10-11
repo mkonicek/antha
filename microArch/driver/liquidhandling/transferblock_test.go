@@ -50,7 +50,7 @@ func getMixInstructions(ctx context.Context, numInstructions int, componentNames
 		}
 
 		ins := wtype.NewLHMixInstruction()
-		ins.Components = append(ins.Components, components...)
+		ins.Inputs = append(ins.Inputs, components...)
 
 		result := components[0].Dup()
 		for j, c := range components {
@@ -59,7 +59,7 @@ func getMixInstructions(ctx context.Context, numInstructions int, componentNames
 			}
 			result.Mix(c)
 		}
-		ins.AddResult(result)
+		ins.AddOutput(result)
 
 		ret = append(ret, ins)
 	}
@@ -90,15 +90,6 @@ func getTransferBlock(ctx context.Context, inss []*wtype.LHInstruction, destPlat
 
 func getTransferBlock2Component(ctx context.Context) (*TransferBlockInstruction, *wtype.Plate) {
 	inss, err := getMixInstructions(ctx, 8, []string{inventory.WaterType, "tartrazine"}, []float64{100.0, 64.0})
-	if err != nil {
-		panic(err)
-	}
-
-	return getTransferBlock(ctx, inss, "pcrplate_skirted_riser40")
-}
-
-func getTransferBlock3Component(ctx context.Context) (*TransferBlockInstruction, *wtype.Plate) {
-	inss, err := getMixInstructions(ctx, 8, []string{inventory.WaterType, "tartrazine", "ethanol"}, []float64{100.0, 64.0, 12.0})
 	if err != nil {
 		panic(err)
 	}
@@ -482,80 +473,6 @@ func TestBigWellMultichannelPositive(t *testing.T) {
 	testPositive(ctx, ris, pol, rbt, t)
 }
 
-func TestInsByInsMixPositiveMultichannel(t *testing.T) {
-	ctx := GetContextForTest()
-
-	tb, dstp := getTransferBlock3Component(ctx)
-
-	rbt := getTestRobot(ctx, dstp, "DWST12_riser40")
-
-	pol, err := wtype.GetLHPolicyForTest()
-	if err != nil {
-		t.Error(err)
-	}
-
-	// allow multi
-	pol.Policies["water"]["CAN_MULTI"] = true
-
-	ris, err := tb.Generate(ctx, pol, rbt)
-
-	if err != nil {
-		t.Error(err)
-	}
-
-	// component-by-component multichanneling should be supported IFF
-	// we can do all the solutions in the subset
-
-	if len(ris) != 1 {
-		t.Errorf("Error: Expected 1 transfer got %d", len(ris))
-	}
-
-	tf := ris[0].(*TransferInstruction)
-
-	if len(tf.Transfers) != 3 {
-		t.Errorf("Error: Expected 3 transfers got %d", len(tf.Transfers))
-	}
-
-	testPositive(ctx, ris, pol, rbt, t)
-}
-
-func TestInsByInsMixNegativeMultichannel(t *testing.T) {
-	ctx := GetContextForTest()
-
-	tb, dstp := getTransferBlock3Component(ctx)
-
-	rbt := getTestRobot(ctx, dstp, "DWST12_riser40")
-
-	pol, err := wtype.GetLHPolicyForTest()
-	if err != nil {
-		t.Error(err)
-	}
-
-	// allow multi
-	pol.Policies["water"]["CAN_MULTI"] = false
-
-	ris, err := tb.Generate(ctx, pol, rbt)
-
-	if err != nil {
-		t.Error(err)
-	}
-
-	// atomic mixes now come through all split up... in future this should revert to the
-	// older case of 8 x 3 transfers either by merging or something else
-
-	if len(ris) != 1 {
-		t.Errorf("Error: Expected 1 transfers got %d", len(ris))
-	}
-
-	tf := ris[0].(*TransferInstruction)
-
-	if len(tf.Transfers) != 24 {
-		t.Errorf("Error: Expected 24 transfers got %d", len(tf.Transfers))
-	}
-
-	testNegative(ctx, ris, pol, rbt, t)
-}
-
 // TODO --> Create new version of the below
 /*
 func TestTransferMerge(t *testing.T) {
@@ -604,11 +521,12 @@ func testPositive(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPoli
 	multi := 0
 	single := 0
 	for _, ri := range ri2 {
-		if ri.Type() == MCB {
+		switch ri.Type() {
+		case MCB:
 			multi += 1
-		} else if ri.Type() == SCB {
+		case SCB:
 			single += 1
-		} else if ri.Type() == TFR {
+		case TFR:
 			t.Error("ERROR: Transfer generated from Transfer")
 		}
 	}

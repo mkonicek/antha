@@ -36,6 +36,16 @@ func TestPlateSerializeDeserialize(t *testing.T) {
 
 }
 
+func TestVolumeSerializeDeserialize(t *testing.T) {
+	a := wunit.NewVolume(500.0, "ul")
+
+	encodedV := EncodeVolume(a)
+
+	b := DecodeVolume(encodedV)
+
+	assert.Equal(t, a, b)
+}
+
 func TestTipboxSerializeDeserialize(t *testing.T) {
 	tb := makeTipboxForTest()
 
@@ -163,6 +173,18 @@ func MakeGilsonForTest() *liquidhandling.LHProperties {
 	ha.AddPosition(wtype.Coordinates{0, 0, 0})
 	ha.LoadHead(hvhead)
 	ha.LoadHead(lvhead)
+	ha.VelocityLimits = &wtype.VelocityRange{
+		Min: &wunit.Velocity3D{
+			X: wunit.NewVelocity(1.0, "mm/s"),
+			Y: wunit.NewVelocity(1.0, "mm/s"),
+			Z: wunit.NewVelocity(1.0, "mm/s"),
+		},
+		Max: &wunit.Velocity3D{
+			X: wunit.NewVelocity(550.0, "mm/s"),
+			Y: wunit.NewVelocity(550.0, "mm/s"),
+			Z: wunit.NewVelocity(140.0, "mm/s"),
+		},
+	}
 	lhp.Heads = append(lhp.Heads, hvhead, lvhead)
 	lhp.Adaptors = append(lhp.Adaptors, hvadaptor, lvadaptor)
 	lhp.HeadAssemblies = append(lhp.HeadAssemblies, ha)

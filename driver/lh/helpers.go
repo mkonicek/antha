@@ -221,8 +221,9 @@ func EncodePtrToLHHeadAssembly(assembly *wtype.LHHeadAssembly, headMap map[*wtyp
 }
 func EncodeLHHeadAssemblyMessage(assembly *wtype.LHHeadAssembly, headMap map[*wtype.LHHead]int) *pb.LHHeadAssemblyMessage {
 	ret := pb.LHHeadAssemblyMessage{
-		Positions:    EncodeArrayOfPtrToLHHeadAssemblyPosition(assembly.Positions, headMap),
-		MotionLimits: EncodePtrToBBox(assembly.MotionLimits),
+		Positions:      EncodeArrayOfPtrToLHHeadAssemblyPosition(assembly.Positions, headMap),
+		MotionLimits:   EncodePtrToBBox(assembly.MotionLimits),
+		VelocityLimits: EncodePtrToVelocityRange(assembly.VelocityLimits),
 	}
 	return &ret
 }
@@ -272,8 +273,9 @@ func DecodePtrToLHHeadAssembly(arg *pb.PtrToLHHeadAssemblyMessage, heads []*wtyp
 }
 func DecodeLHHeadAssembly(arg *pb.LHHeadAssemblyMessage, heads []*wtype.LHHead) *wtype.LHHeadAssembly {
 	ret := wtype.LHHeadAssembly{
-		Positions:    DecodeArrayOfPtrToLHHeadAssemblyPositions(arg.Positions, heads),
-		MotionLimits: DecodePtrToBBox(arg.MotionLimits),
+		Positions:      DecodeArrayOfPtrToLHHeadAssemblyPositions(arg.Positions, heads),
+		MotionLimits:   DecodePtrToBBox(arg.MotionLimits),
+		VelocityLimits: DecodePtrToVelocityRange(arg.VelocityLimits),
 	}
 	return &ret
 }
@@ -1209,15 +1211,19 @@ func DecodeShape(arg *pb.ShapeMessage) wtype.Shape {
 	return ret
 }
 func EncodeConcreteMeasurement(arg wunit.ConcreteMeasurement) *pb.ConcreteMeasurementMessage {
-	ret := pb.ConcreteMeasurementMessage{(float64)(arg.Mvalue), EncodePtrToGenericPrefixedUnit(arg.Munit)}
-	return &ret
+	return &pb.ConcreteMeasurementMessage{
+		Arg_1: (float64)(arg.Mvalue),
+		Arg_2: EncodePtrToUnit(arg.Munit),
+	}
 }
 func DecodeConcreteMeasurement(arg *pb.ConcreteMeasurementMessage) wunit.ConcreteMeasurement {
 	if arg == nil {
 		return wunit.ConcreteMeasurement{}
 	}
-	ret := wunit.ConcreteMeasurement{Mvalue: (float64)(arg.Arg_1), Munit: (*wunit.GenericPrefixedUnit)(DecodePtrToGenericPrefixedUnit(arg.Arg_2))}
-	return ret
+	return wunit.ConcreteMeasurement{
+		Mvalue: (float64)(arg.Arg_1),
+		Munit:  DecodePtrToUnit(arg.Arg_2),
+	}
 }
 func EncodePtrToShape(arg *wtype.Shape) *pb.PtrToShapeMessage {
 	var ret pb.PtrToShapeMessage
@@ -1301,51 +1307,23 @@ func DecodeBlockID(arg *pb.BlockIDMessage) wtype.BlockID {
 	ret := wtype.BlockID{Value: (string)(arg.Arg_1)}
 	return ret
 }
-func EncodePtrToGenericPrefixedUnit(arg *wunit.GenericPrefixedUnit) *pb.PtrToGenericPrefixedUnitMessage {
-	var ret pb.PtrToGenericPrefixedUnitMessage
-	if arg == nil {
-		ret = pb.PtrToGenericPrefixedUnitMessage{
-			nil,
-		}
+func EncodePtrToUnit(arg *wunit.Unit) *pb.PtrToUnitMessage {
+	if bytes, err := json.Marshal(arg); err != nil {
+		panic(err)
 	} else {
-		ret = pb.PtrToGenericPrefixedUnitMessage{
-			EncodeGenericPrefixedUnit(*arg),
+		return &pb.PtrToUnitMessage{
+			&pb.UnitMessage{
+				JSONUnit: bytes,
+			},
 		}
 	}
-	return &ret
 }
-func DecodePtrToGenericPrefixedUnit(arg *pb.PtrToGenericPrefixedUnitMessage) *wunit.GenericPrefixedUnit {
-	if arg == nil {
-		log.Println("Arg for PtrToGenericPrefixedUnit was nil")
-		return nil
+func DecodePtrToUnit(arg *pb.PtrToUnitMessage) *wunit.Unit {
+	var ret wunit.Unit
+	if err := json.Unmarshal(arg.Arg_1.JSONUnit, &ret); err != nil {
+		panic(err)
 	}
-
-	ret := DecodeGenericPrefixedUnit(arg.Arg_1)
 	return &ret
-}
-func EncodeGenericPrefixedUnit(arg wunit.GenericPrefixedUnit) *pb.GenericPrefixedUnitMessage {
-	ret := pb.GenericPrefixedUnitMessage{EncodeGenericUnit(arg.GenericUnit), EncodeSIPrefix(arg.SPrefix)}
-	return &ret
-}
-func DecodeGenericPrefixedUnit(arg *pb.GenericPrefixedUnitMessage) wunit.GenericPrefixedUnit {
-	ret := wunit.GenericPrefixedUnit{GenericUnit: (wunit.GenericUnit)(DecodeGenericUnit(arg.Arg_1)), SPrefix: (wunit.SIPrefix)(DecodeSIPrefix(arg.Arg_2))}
-	return ret
-}
-func EncodeGenericUnit(arg wunit.GenericUnit) *pb.GenericUnitMessage {
-	ret := pb.GenericUnitMessage{(string)(arg.StrName), (string)(arg.StrSymbol), (float64)(arg.FltConversionfactor), (string)(arg.StrBaseUnit)}
-	return &ret
-}
-func DecodeGenericUnit(arg *pb.GenericUnitMessage) wunit.GenericUnit {
-	ret := wunit.GenericUnit{StrName: (string)(arg.Arg_1), StrSymbol: (string)(arg.Arg_2), FltConversionfactor: (float64)(arg.Arg_3), StrBaseUnit: (string)(arg.Arg_4)}
-	return ret
-}
-func EncodeSIPrefix(arg wunit.SIPrefix) *pb.SIPrefixMessage {
-	ret := pb.SIPrefixMessage{(string)(arg.Name), (float64)(arg.Value)}
-	return &ret
-}
-func DecodeSIPrefix(arg *pb.SIPrefixMessage) wunit.SIPrefix {
-	ret := wunit.SIPrefix{Name: (string)(arg.Arg_1), Value: (float64)(arg.Arg_2)}
-	return ret
 }
 
 func EncodeSubComponentMessage(arg wtype.ComponentList) *pb.SubComponentMessage {
@@ -1375,4 +1353,76 @@ func DecodeSubComponentMessage(arg *pb.SubComponentMessage) wtype.ComponentList 
 	}
 
 	return cl
+}
+
+func DecodePtrToVelocityRange(arg *pb.PtrToVelocityRangeMessage) *wtype.VelocityRange {
+	if arg == nil || arg.Val == nil {
+		return nil
+	}
+	ret := DecodeVelocityRange(arg.Val)
+	return &ret
+}
+
+func EncodePtrToVelocityRange(arg *wtype.VelocityRange) *pb.PtrToVelocityRangeMessage {
+	return &pb.PtrToVelocityRangeMessage{
+		Val: EncodeVelocityRange(arg),
+	}
+}
+
+func DecodeVelocityRange(arg *pb.VelocityRangeMessage) wtype.VelocityRange {
+	return wtype.VelocityRange{
+		Min: DecodePtrToVelocity3D(arg.Min),
+		Max: DecodePtrToVelocity3D(arg.Max),
+	}
+}
+
+func EncodeVelocityRange(arg *wtype.VelocityRange) *pb.VelocityRangeMessage {
+	if arg == nil {
+		return nil
+	}
+	return &pb.VelocityRangeMessage{
+		Min: EncodePtrToVelocity3D(arg.Min),
+		Max: EncodePtrToVelocity3D(arg.Max),
+	}
+}
+
+func EncodePtrToVelocity3D(arg *wunit.Velocity3D) *pb.PtrToVelocity3DMessage {
+	return &pb.PtrToVelocity3DMessage{
+		Val: EncodeVelocity3D(arg),
+	}
+}
+
+func DecodePtrToVelocity3D(arg *pb.PtrToVelocity3DMessage) *wunit.Velocity3D {
+	if arg == nil || arg.Val == nil {
+		return nil
+	}
+	r := DecodeVelocity3D(arg.Val)
+	return &r
+}
+
+func EncodeVelocity3D(arg *wunit.Velocity3D) *pb.Velocity3DMessage {
+	if arg == nil {
+		return nil
+	}
+	return &pb.Velocity3DMessage{
+		X: EncodeVelocity(arg.X),
+		Y: EncodeVelocity(arg.Y),
+		Z: EncodeVelocity(arg.Z),
+	}
+}
+
+func DecodeVelocity3D(arg *pb.Velocity3DMessage) wunit.Velocity3D {
+	return wunit.Velocity3D{
+		X: DecodeVelocity(arg.X),
+		Y: DecodeVelocity(arg.Y),
+		Z: DecodeVelocity(arg.Z),
+	}
+}
+
+func EncodeVelocity(arg wunit.Velocity) *pb.VelocityMessage {
+	return &pb.VelocityMessage{ConcreteMeasurement: EncodePtrToConcreteMeasurement(arg.ConcreteMeasurement)}
+}
+
+func DecodeVelocity(arg *pb.VelocityMessage) wunit.Velocity {
+	return wunit.Velocity{ConcreteMeasurement: (*wunit.ConcreteMeasurement)(DecodePtrToConcreteMeasurement(arg.ConcreteMeasurement))}
 }

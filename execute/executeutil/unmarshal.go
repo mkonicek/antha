@@ -42,13 +42,17 @@ func UnmarshalAll(paths ...string) (map[string]*Bundle, map[string]*workflow.Des
 				workflows[path] = &bundle.Desc
 			} else if bundle.Parameters != nil { // it's a params
 				params[path] = &bundle.RawParams
-			} else { // shrug
-				errs = append(errs, fmt.Errorf("Unable to identify content of %s", path))
 			}
 		}
 	}
 	return bundles, workflows, params, errs
 }
+
+var (
+	ErrNotABundle   = errors.New("Path is not parsable as a valid bundle.")
+	ErrNotAWorkflow = errors.New("Path is not parsable as a valid workflows.")
+	ErrNotAParams   = errors.New("Path is not parsable as a valid params.")
+)
 
 // UnmarshalSingle can either be supplied with a single bundlePath, or
 // with both a workflowPath and a paramsPath. This slightly unusual
@@ -62,7 +66,7 @@ func UnmarshalSingle(bundlePath, workflowPath, paramsPath string) (*Bundle, erro
 		if bundles, _, _, err := UnmarshalAll(bundlePath); err != nil {
 			return nil, err
 		} else if len(bundles) != 1 {
-			return nil, fmt.Errorf("Passed %s as a bundle file, but I don't think that is a bundle file, sorry.", bundlePath)
+			return nil, ErrNotABundle
 		} else {
 			for _, b := range bundles {
 				return b, nil
@@ -74,9 +78,9 @@ func UnmarshalSingle(bundlePath, workflowPath, paramsPath string) (*Bundle, erro
 		if _, workflows, params, err := UnmarshalAll(workflowPath, paramsPath); err != nil {
 			return nil, err
 		} else if len(workflows) != 1 {
-			return nil, fmt.Errorf("Passed %s as a workflow file, but I don't think that is a workflow file, sorry.", workflowPath)
+			return nil, ErrNotAWorkflow
 		} else if len(params) != 1 {
-			return nil, fmt.Errorf("Passed %s as a params file, but I don't think that is a params file, sorry.", paramsPath)
+			return nil, ErrNotAParams
 		} else {
 			b := &Bundle{}
 			for _, workflow := range workflows {

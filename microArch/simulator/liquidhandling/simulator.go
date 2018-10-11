@@ -1578,18 +1578,19 @@ func (self *VirtualLiquidHandler) Mix(head int, volume []float64, platetype []st
 
 	//check wells exist and their contents is ok
 	no_well := []int{}
+	volumesByWell := make(map[*wtype.LHWell]wunit.Volume, len(arg.channels))
 	for _, i := range arg.channels {
 		v := wunit.NewVolume(volume[i], "ul")
 
 		if wells[i] == nil {
 			no_well = append(no_well, i)
 		} else {
-			if wells[i].Contents().GetType() != what[i] && self.settings.IsLiquidTypeWarningEnabled() {
-				self.AddWarningf("%s: well contains %s not %s", describe(), wells[i].Contents().GetType(), what[i])
+			if _, ok := volumesByWell[wells[i]]; !ok {
+				volumesByWell[wells[i]] = v
+			} else {
+				volumesByWell[wells[i]].IncrBy(v) //nolint -- volumes are always compatible
 			}
-			if wells[i].CurrentVolume().LessThan(v) {
-				self.AddWarningf("%s: well only contains %s", describe(), wells[i].CurrentVolume())
-			}
+
 			if wtype.TypeOf(wells[i].Plate) != platetype[i] {
 				self.AddWarningf("%s: plate \"%s\" is of type \"%s\", not \"%s\"",
 					describe(), wtype.NameOf(wells[i].Plate), wtype.TypeOf(wells[i].Plate), platetype[i])
@@ -1599,6 +1600,26 @@ func (self *VirtualLiquidHandler) Mix(head int, volume []float64, platetype []st
 	if len(no_well) > 0 {
 		self.addLHError(NewTipsNotInWellError(self, describe(), no_well))
 		return ret
+	}
+	for well, vol := range volumesByWell {
+		if delta := wunit.SubtractVolumes(well.CurrentWorkingVolume(), vol); delta.IsNegative() {
+			wellVolumes := make([]float64, 0, len(arg.channels))
+			wellCoords := make([]wtype.WellCoords, 0, len(arg.channels))
+			seenWell := make(map[*wtype.LHWell]bool, len(arg.channels))
+			for _, i := range arg.channels {
+				if !seenWell[wells[i]] {
+					seenWell[wells[i]] = true
+					wellVolumes = append(wellVolumes, wells[i].CurrentWorkingVolume().MustInStringUnit("ul").RawValue())
+					wellCoords = append(wellCoords, wells[i].Crds)
+				}
+			}
+			if len(wellCoords) == 1 {
+				self.AddErrorf("%s: not enough volume in well: well %s only contains %s", describe(), wellCoords[0].FormatA1(), wunit.NewVolume(wellVolumes[0], "ul"))
+			} else {
+				self.AddErrorf("%s: not enough volume in wells: wells %s only contain %s", describe(), wtype.HumanizeWellCoords(wellCoords), summariseVolumes(wellVolumes))
+			}
+			break
+		}
 	}
 
 	//independece

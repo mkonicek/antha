@@ -2346,7 +2346,7 @@ func Test_Aspirate(t *testing.T) {
 				},
 			},
 			ExpectedErrors: []string{
-				"(warn) Aspirate[1]: 100 ul of water to head 0 channels 0-7: well A1@trough1 only contains 400 ul working volume, reducing aspirated volume by 50 ul",
+				"(warn) Aspirate[1]: 8x100 ul of water to head 0 channels 0-7: well A1@trough1 only contains 400 ul working volume, reducing aspirated volume by 50 ul",
 			},
 			Assertions: []*AssertionFn{
 				tipboxAssertion("tipbox_1", []string{}),
@@ -2393,7 +2393,7 @@ func Test_Aspirate(t *testing.T) {
 				},
 			},
 			ExpectedErrors: []string{
-				"(err) Aspirate[1]: 100 ul of water to head 0 channels 0-1: missing tip on channel 1",
+				"(err) Aspirate[1]: 2x100 ul of water to head 0 channels 0-1: missing tip on channel 1",
 			},
 		},
 		{
@@ -3100,7 +3100,7 @@ func Test_Dispense(t *testing.T) {
 				},
 			},
 			ExpectedErrors: []string{
-				"(err) Dispense[1]: {50,60,50,50,50,50,50,50} ul of water from head 0 channels 0-7 to A1-H1@plate1: channels cannot dispense different volumes in non-independent head",
+				"(err) Dispense[1]: {50,60,6x50} ul of water from head 0 channels 0-7 to A1-H1@plate1: channels cannot dispense different volumes in non-independent head",
 			},
 		},
 	}.Run(t)
@@ -3199,7 +3199,7 @@ func Test_Mix(t *testing.T) {
 			},
 		},
 		{
-			Name: "Fail - independece problems",
+			Name: "Fail - independence problems",
 			Setup: []*SetupFn{
 				testLayout(),
 				preloadAdaptorTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
@@ -3227,8 +3227,8 @@ func Test_Mix(t *testing.T) {
 				},
 			},
 			ExpectedErrors: []string{
-				"(err) Mix[1]: {50,60,50,50,50,50,50,50} ul {5,5,5,5,5,2,2,2} times in wells A1,B1,C1,D1,E1,F1,G1,H1 of plate \"plate1\": cannot manipulate different volumes with non-independent head",
-				"(err) Mix[1]: {50,60,50,50,50,50,50,50} ul {5,5,5,5,5,2,2,2} times in wells A1,B1,C1,D1,E1,F1,G1,H1 of plate \"plate1\": cannot vary number of mix cycles with non-independent head",
+				"(err) Mix[1]: {50,60,6x50} ul {5,5,5,5,5,2,2,2} times in wells A1-H1 of plate \"plate1\": cannot manipulate different volumes with non-independent head",
+				"(err) Mix[1]: {50,60,6x50} ul {5,5,5,5,5,2,2,2} times in wells A1-H1 of plate \"plate1\": cannot vary number of mix cycles with non-independent head",
 			},
 		},
 		{
@@ -3268,6 +3268,102 @@ func Test_Mix(t *testing.T) {
 				plateAssertion("input_1", []wellDesc{{"A1", "water", 200.}}),
 				adaptorAssertion(0, []tipDesc{{0, "water", 0.}}),
 				tipwasteAssertion("tipwaste", 0),
+			},
+		},
+		{
+			Name: "fail: can't mix with more than working volume",
+			Setup: []*SetupFn{
+				testLayout(),
+				preloadAdaptorTips(0, "tipbox_1", []int{0}),
+				prefillWells("input_1", []string{"A1"}, "water", 50.),
+			},
+			Instructions: []TestRobotInstruction{
+				&Move{
+					deckposition: []string{"input_1", "", "", "", "", "", "", ""},
+					wellcoords:   []string{"A1", "", "", "", "", "", "", ""},
+					reference:    []int{0, 0, 0, 0, 0, 0, 0, 0},
+					offsetX:      []float64{0., 0., 0., 0., 0., 0., 0., 0.},
+					offsetY:      []float64{0., 0., 0., 0., 0., 0., 0., 0.},
+					offsetZ:      []float64{1., 1., 1., 1., 1., 1., 1., 1.},
+					plate_type:   []string{"plate", "", "", "", "", "", "", ""},
+					head:         0,
+				},
+				&Mix{
+					head:      0,
+					volume:    []float64{50., 0., 0., 0., 0., 0., 0., 0.},
+					platetype: []string{"plate", "", "", "", "", "", "", ""},
+					cycles:    []int{5, 0, 0, 0, 0, 0, 0, 0},
+					multi:     1,
+					what:      []string{"water", "", "", "", "", "", "", ""},
+					blowout:   []bool{false, false, false, false, false, false, false, false},
+				},
+			},
+			ExpectedErrors: []string{
+				"(err) Mix[1]: 50 ul 5 times in well A1 of plate \"plate1\": not enough volume in well: well A1 only contains 45 ul",
+			},
+		},
+		{
+			Name: "fail: 8 channel mix with more than working volume",
+			Setup: []*SetupFn{
+				testLayout(),
+				preloadAdaptorTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
+				prefillWells("input_1", []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}, "water", 50.),
+			},
+			Instructions: []TestRobotInstruction{
+				&Move{
+					deckposition: []string{"input_1", "input_1", "input_1", "input_1", "input_1", "input_1", "input_1", "input_1"},
+					wellcoords:   []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"},
+					reference:    []int{0, 0, 0, 0, 0, 0, 0, 0},
+					offsetX:      []float64{0., 0., 0., 0., 0., 0., 0., 0.},
+					offsetY:      []float64{0., 0., 0., 0., 0., 0., 0., 0.},
+					offsetZ:      []float64{1., 1., 1., 1., 1., 1., 1., 1.},
+					plate_type:   []string{"plate", "plate", "plate", "plate", "plate", "plate", "plate", "plate"},
+					head:         0,
+				},
+				&Mix{
+					head:      0,
+					volume:    []float64{50., 50., 50., 50., 50., 50., 50., 50.},
+					platetype: []string{"plate", "plate", "plate", "plate", "plate", "plate", "plate", "plate"},
+					cycles:    []int{5, 5, 5, 5, 5, 5, 5, 5},
+					multi:     8,
+					what:      []string{"water", "water", "water", "water", "water", "water", "water", "water"},
+					blowout:   []bool{false, false, false, false, false, false, false, false},
+				},
+			},
+			ExpectedErrors: []string{
+				"(err) Mix[1]: 8x50 ul 5 times in wells A1-H1 of plate \"plate1\": not enough volume in wells: wells A1-H1 only contain 8x45 ul",
+			},
+		},
+		{
+			Name: "fail: 8 channel trough: mix with more than working volume",
+			Setup: []*SetupFn{
+				testTroughLayout(),
+				preloadAdaptorTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
+				prefillWells("input_1", []string{"A1"}, "water", 5200.),
+			},
+			Instructions: []TestRobotInstruction{
+				&Move{
+					deckposition: []string{"input_1", "input_1", "input_1", "input_1", "input_1", "input_1", "input_1", "input_1"},
+					wellcoords:   []string{"A1", "A1", "A1", "A1", "A1", "A1", "A1", "A1"},
+					reference:    []int{0, 0, 0, 0, 0, 0, 0, 0},
+					offsetX:      []float64{0., 0., 0., 0., 0., 0., 0., 0.},
+					offsetY:      []float64{0., 0., 0., 0., 0., 0., 0., 0.},
+					offsetZ:      []float64{1., 1., 1., 1., 1., 1., 1., 1.},
+					plate_type:   []string{"trough", "trough", "trough", "trough", "trough", "trough", "trough", "trough"},
+					head:         0,
+				},
+				&Mix{
+					head:      0,
+					volume:    []float64{50., 50., 50., 50., 50., 50., 50., 50.},
+					platetype: []string{"trough", "trough", "trough", "trough", "trough", "trough", "trough", "trough"},
+					cycles:    []int{5, 5, 5, 5, 5, 5, 5, 5},
+					multi:     8,
+					what:      []string{"water", "water", "water", "water", "water", "water", "water", "water"},
+					blowout:   []bool{false, false, false, false, false, false, false, false},
+				},
+			},
+			ExpectedErrors: []string{
+				"(err) Mix[1]: 8x50 ul 5 times in well A1 of plate \"trough1\": not enough volume in well: well A1 only contains 200 ul",
 			},
 		},
 	}.Run(t)

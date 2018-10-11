@@ -1330,7 +1330,7 @@ func (self *SimulatorTest) compareErrors(t *testing.T, actual []simulator.Simula
 		errs = append(errs, fmt.Sprintf("++\"%v\"", s))
 	}
 	if len(missing) > 0 || len(extra) > 0 {
-		t.Errorf("errors didn't match:\n\t%s", strings.Join(errs, "\t\n"))
+		t.Errorf("errors didn't match:\n%s", strings.Join(errs, "\n"))
 	}
 }
 

@@ -342,7 +342,8 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 	return nil
 }
 
-func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
+// shrinkVolumes reduce the autoallocated input volumes to match what was actually used
+func (this *Liquidhandler) shrinkVolumes(rq *LHRequest) error {
 	// XXX -- HARD CODE 8 here
 	lastPlate := make([]string, 8)
 	lastWell := make([]string, 8)
@@ -459,8 +460,8 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 	// now go through and set the plates up appropriately
 
 	for plateID, wellmap := range vols {
-		plate, ok := this.FinalProperties.Plates[this.Properties.PlateIDLookup[plateID]]
-		plate2 := this.Properties.Plates[this.Properties.PlateIDLookup[plateID]]
+		finalPlate, ok := this.FinalProperties.Plates[this.Properties.PlateIDLookup[plateID]]
+		initialPlate := this.Properties.Plates[this.Properties.PlateIDLookup[plateID]]
 
 		if !ok {
 			err := wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("NO SUCH PLATE: ", plateID))
@@ -472,29 +473,28 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 		for crd, unroundedvol := range wellmap {
 			rv, _ := wutil.Roundto(unroundedvol.RawValue(), 1)
 			vol := wunit.NewVolume(rv, unroundedvol.Unit().PrefixedSymbol())
-			well := plate.Wellcoords[crd]
-			well2 := plate2.Wellcoords[crd]
+			finalWell := finalPlate.Wellcoords[crd]
+			initialWell := initialPlate.Wellcoords[crd]
 
-			if well.IsAutoallocated() {
-				vol.Add(well.ResidualVolume())
+			if finalWell.IsAutoallocated() {
+				vol.IncrBy(finalWell.ResidualVolume()) // nolint - volumes are always compatible
+				vol.DecrBy(rq.CarryVolume)             // nolint - final carry volume from well comes from residual
 
-				well2Contents := well2.Contents().Dup()
-				well2Contents.SetVolume(vol)
-				err := well2.SetContents(well2Contents)
-				if err != nil {
+				initialContents := initialWell.Contents().Dup()
+				initialContents.SetVolume(vol)
+				if err := initialWell.SetContents(initialContents); err != nil {
 					return err
 				}
 
-				wellContents := well.Contents().Dup()
-				wellContents.SetVolume(well.ResidualVolume())
-				wellContents.ID = wtype.GetUUID()
-				err = well.SetContents(wellContents)
-				if err != nil {
+				finalContents := finalWell.Contents().Dup()
+				finalContents.SetVolume(wunit.SubtractVolumes(finalWell.ResidualVolume(), rq.CarryVolume))
+				finalContents.ID = wtype.GetUUID()
+				if err := finalWell.SetContents(finalContents); err != nil {
 					return err
 				}
 
-				well.DeclareNotTemporary()
-				well2.DeclareNotTemporary()
+				finalWell.DeclareNotTemporary()
+				initialWell.DeclareNotTemporary()
 			}
 		}
 	}
@@ -993,7 +993,7 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	// Ensures tip boxes and wastes are correct for initial and final robot states
 	this.Refresh_tipboxes_tipwastes(request)
 	// revise the volumes - this makes sure the volumes requested are correct
-	if err := this.revise_volumes(request); err != nil {
+	if err := this.shrinkVolumes(request); err != nil {
 		return err
 	}
 	// now make instructions with the updated volumes
@@ -1001,7 +1001,7 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	if err != nil {
 		return errors.WithMessage(err, "in second round of execution planning")
 	}
-	if err := this.revise_volumes(request); err != nil {
+	if err := this.shrinkVolumes(request); err != nil {
 		return err
 	}
 

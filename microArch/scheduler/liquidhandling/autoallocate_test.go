@@ -52,8 +52,8 @@ func TestInputSampleAutoAllocate(t *testing.T) {
 
 	expected := make(map[string]float64)
 
-	expected["dna_part"] = 30.5
-	expected["water"] = 55.5
+	expected["dna_part"] = 30.0
+	expected["water"] = 55.0
 
 	testSetup(rbt, expected, t)
 }
@@ -124,7 +124,7 @@ func TestInPlaceAutoAllocate(t *testing.T) {
 
 	expected := make(map[string]float64)
 
-	expected["dna_part"] = 55.5
+	expected["dna_part"] = 55.0
 	expected["water"] = 100.0
 
 	testSetup(rbt, expected, t)

@@ -134,7 +134,8 @@ func (req *LHRequest) GetSolutionsFromInputPlates() (map[string][]*wtype.Liquid,
 				// identified using just CName
 				c := w.Contents().Dup()
 				//get the amount available
-				c.SetVolume(w.CurrentWorkingVolume())
+				//n.b. final carry volume can be taken from residual
+				c.SetVolume(wunit.AddVolumes(w.CurrentWorkingVolume(), req.CarryVolume))
 				inputs[c.CName] = append(inputs[c.CName], c)
 			}
 		}

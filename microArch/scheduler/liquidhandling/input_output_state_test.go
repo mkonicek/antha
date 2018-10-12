@@ -354,8 +354,8 @@ func TestBeforeVsAfterAutoAllocateDest(t *testing.T) {
 
 	expected := make(map[string][]initFinalCmp)
 
-	expected["dna_part"] = []initFinalCmp{{CNameI: "dna_part", CNameF: "dna_part", VolI: 30.5, VolF: 5.0}}
-	expected["water"] = []initFinalCmp{{CNameI: "water", CNameF: "water", VolI: 55.5, VolF: 5.0}}
+	expected["dna_part"] = []initFinalCmp{{CNameI: "dna_part", CNameF: "dna_part", VolI: 30.0, VolF: 4.5}}
+	expected["water"] = []initFinalCmp{{CNameI: "water", CNameF: "water", VolI: 55.0, VolF: 4.5}}
 
 	expected["0.333 v/v dna_part+0.667 v/v water"] = []initFinalCmp{{CNameI: "", CNameF: "0.333 v/v dna_part+0.667 v/v water", VolI: 0.0, VolF: 75.0}}
 
@@ -394,8 +394,8 @@ func TestBeforeVsAfterAutoAllocate(t *testing.T) {
 
 	expected := make(map[string][]initFinalCmp)
 
-	expected["dna_part"] = []initFinalCmp{{CNameI: "dna_part", CNameF: "dna_part", VolI: 30.5, VolF: 5.0}}
-	expected["water"] = []initFinalCmp{{CNameI: "water", CNameF: "water", VolI: 55.5, VolF: 5.0}}
+	expected["dna_part"] = []initFinalCmp{{CNameI: "dna_part", CNameF: "dna_part", VolI: 30.0, VolF: 4.5}}
+	expected["water"] = []initFinalCmp{{CNameI: "water", CNameF: "water", VolI: 55.0, VolF: 4.5}}
 
 	expected["0.333 v/v dna_part+0.667 v/v water"] = []initFinalCmp{{CNameI: "", CNameF: "0.333 v/v dna_part+0.667 v/v water", VolI: 0.0, VolF: 75.0}}
 

@@ -149,7 +149,7 @@ func distributeVolumes(requested wtype.ComponentVector, available wtype.Componen
 			newChannels := make([]int, 0, len(channels))
 			for _, ch := range channels {
 				if retVol, requestVol := ret[ch].Volume(), requested[ch].Volume(); retVol.GreaterThan(requestVol) {
-					extra.IncrBy(wunit.SubtractVolumes(retVol, requestVol))
+					extra.IncrBy(wunit.SubtractVolumes(retVol, requestVol)) //nolint - volumes are compatible
 					ret[ch].Vol = requestVol.RawValue()
 				} else {
 					newChannels = append(newChannels, ch)

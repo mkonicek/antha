@@ -52,6 +52,8 @@ func hasSplit(inss []*wtype.LHInstruction) bool {
 func ExecutionPlanner3(ctx context.Context, request *LHRequest, robot *liquidhandling.LHProperties) (*LHRequest, error) {
 	ch := request.InstructionChain
 
+	request.InstructionSet = liquidhandling.NewRobotInstructionSet(nil)
+
 	for {
 		if ch == nil {
 			break

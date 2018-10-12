@@ -237,9 +237,7 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 	if request.Options.PrintInstructions {
 		fmt.Printf("Simulating %d instructions\n", len(instructions))
 		for i, ins := range instructions {
-			if (*request).Options.PrintInstructions {
-				fmt.Printf("%d: %s\n", i, liquidhandling.InsToString(ins))
-			}
+			fmt.Printf("%d: %s\n", i, liquidhandling.InsToString(ins))
 		}
 	}
 
@@ -953,6 +951,9 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		return err
 	} else {
 		request.InputSolutions = inputSolutions
+		if request.Options.PrintInstructions {
+			fmt.Println(inputSolutions)
+		}
 	}
 
 	// define the input plates
@@ -989,6 +990,21 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		return err
 	}
 
+	// Ensures tip boxes and wastes are correct for initial and final robot states
+	this.Refresh_tipboxes_tipwastes(request)
+	// revise the volumes - this makes sure the volumes requested are correct
+	if err := this.revise_volumes(request); err != nil {
+		return err
+	}
+	// now make instructions with the updated volumes
+	request, err = this.ExecutionPlan(ctx, request)
+	if err != nil {
+		return errors.WithMessage(err, "in second round of execution planning")
+	}
+	if err := this.revise_volumes(request); err != nil {
+		return err
+	}
+
 	// counts tips used in this run -- reads instructions generated above so must happen
 	// after execution planning
 	request, err = this.countTipsUsed(request)
@@ -999,12 +1015,6 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	// Ensures tip boxes and wastes are correct for initial and final robot states
 	this.Refresh_tipboxes_tipwastes(request)
 
-	// revise the volumes - this makes sure the volumes requested are correct
-	err = this.revise_volumes(request)
-
-	if err != nil {
-		return err
-	}
 	// ensure the after state is correct
 	this.fix_post_ids()
 	err = this.fix_post_names(request)
@@ -1063,8 +1073,6 @@ func (this *Liquidhandler) Layout(ctx context.Context, request *LHRequest) (*LHR
 
 // make the instructions for executing this request
 func (this *Liquidhandler) ExecutionPlan(ctx context.Context, request *LHRequest) (*LHRequest, error) {
-	// necessary??
-	this.FinalProperties = this.Properties.Dup()
 	temprobot := this.Properties.Dup()
 	//saved_plates := this.Properties.SaveUserPlates()
 
@@ -1185,8 +1193,6 @@ func removeDummyInstructions(rq *LHRequest) *LHRequest {
 		//no dummies
 		return rq
 	}
-
-	fmt.Println("Pruning dummy instructions")
 
 	oo := make([]string, 0, len(rq.OutputOrder)-len(toRemove))
 

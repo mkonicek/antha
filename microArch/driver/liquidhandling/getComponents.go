@@ -100,26 +100,16 @@ func getPlateIterator(lhp *wtype.Plate, ori wtype.ChannelOrientation, multi int)
 	}
 }
 
-func (lhp *LHProperties) GetSourcesFor(cmps wtype.ComponentVector, ori wtype.ChannelOrientation, multi int, minPossibleVolume wunit.Volume, ignoreInstances bool) []wtype.ComponentVector {
+func (lhp *LHProperties) GetSourcesFor(requestedComponents wtype.ComponentVector, ori wtype.ChannelOrientation, multi int, minPossibleVolume wunit.Volume, ignoreInstances bool) []wtype.ComponentVector {
 	ret := make([]wtype.ComponentVector, 0, 1)
 
 	for _, ipref := range lhp.OrderedMergedPlatePrefs() {
-		p, ok := lhp.Plates[ipref]
-
-		if ok {
+		if p, ok := lhp.Plates[ipref]; ok {
 			it := getPlateIterator(p, ori, multi)
 			for wv := it.Curr(); it.Valid(); wv = it.Next() {
-				// cmps needs duping here
-				mycmps := p.GetVolumeFilteredContentVector(wv, cmps, minPossibleVolume, ignoreInstances) // dups components
-				if mycmps.Empty() {
-					continue
+				if foundComponents := p.GetVolumeFilteredContentVector(wv, requestedComponents, minPossibleVolume, ignoreInstances); !foundComponents.Empty() {
+					ret = append(ret, distributeVolumes(requestedComponents, foundComponents))
 				}
-
-				// mycmps has incorrect volumes, try correcting them here
-
-				correct_volumes(mycmps)
-
-				ret = append(ret, mycmps)
 			}
 		}
 	}
@@ -127,27 +117,68 @@ func (lhp *LHProperties) GetSourcesFor(cmps wtype.ComponentVector, ori wtype.Cha
 	return ret
 }
 
-func correct_volumes(cmps wtype.ComponentVector) {
-	nW := make(map[string]int)
-	for _, c := range cmps {
-		if c == nil {
-			continue
-		}
+// distributeVolumes in the case where we're fetching differing volumes from the
+// same well, share the available volume according to requested volume
+func distributeVolumes(requested wtype.ComponentVector, available wtype.ComponentVector) wtype.ComponentVector {
+	channelsPerWell := make(map[string][]int)
+	availablePerWell := make(map[string]wunit.Volume)
 
-		_, ok := nW[c.Loc]
-		if !ok {
-			nW[c.Loc] = 0
+	for channel, component := range available {
+		if component != nil {
+			availablePerWell[component.Loc] = component.Volume()
+			channelsPerWell[component.Loc] = append(channelsPerWell[component.Loc], channel)
 		}
-		nW[c.Loc] += 1
 	}
 
-	for _, c := range cmps {
-		if c == nil {
-			continue
+	ret := available.Dup()
+
+	//distribute the volume available in each well between the channels that requested it
+	for loc, channels := range channelsPerWell {
+		a := availablePerWell[loc]
+
+		v := a.MustInStringUnit("ul")
+		v.DivideBy(float64(len(channels)))
+		for _, ch := range channels {
+			ret[ch].Vol = v.RawValue()
 		}
 
-		c.Vol /= float64(nW[c.Loc])
+		extra := wunit.NewVolume(0.0, "ul")
+		for len(channels) > 0 {
+			//find out which channels are satisfied and collect any leftover
+			extra = wunit.NewVolume(0.0, "ul")
+			newChannels := make([]int, 0, len(channels))
+			for _, ch := range channels {
+				if retVol, requestVol := ret[ch].Volume(), requested[ch].Volume(); retVol.GreaterThan(requestVol) {
+					extra.IncrBy(wunit.SubtractVolumes(retVol, requestVol))
+					ret[ch].Vol = requestVol.RawValue()
+				} else {
+					newChannels = append(newChannels, ch)
+				}
+			}
+
+			//divide the leftover between the remaining channels
+			if len(newChannels) > 0 {
+				extra.DivideBy(float64(len(newChannels)))
+				for _, ch := range newChannels {
+					ret[ch].Vol += extra.RawValue()
+				}
+			} else if len(newChannels) == 0 { // any final excess gets distributed evenly
+				extra.DivideBy(float64(len(channelsPerWell[loc])))
+				for _, ch := range channelsPerWell[loc] {
+					ret[ch].Vol += extra.RawValue()
+				}
+			}
+
+			// we aren't able to satisfy all of the requested volumes
+			if len(newChannels) >= len(channels) {
+				break
+			}
+
+			channels = newChannels
+		}
 	}
+
+	return ret
 }
 
 func cullZeroes(m map[string]wunit.Volume) map[string]wunit.Volume {

@@ -38,6 +38,7 @@ import (
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/auto"
 	"github.com/antha-lang/antha/target/mixer"
+	"github.com/antha-lang/antha/workflow"
 	"github.com/antha-lang/antha/workflowtest"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -45,6 +46,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"strings"
 )
 
 var runCmd = &cobra.Command{
@@ -206,6 +208,13 @@ func (a *runOpt) Run() error {
 		expected := workflowtest.SaveTestOutputs(rout, "")
 		bundleWithOutputs := *bundle
 		bundleWithOutputs.TestOpt = expected
+
+		if bundleWithOutputs.Version == "" {
+			bundleWithOutputs.Version = "1.2.0"
+		}
+
+		bundleWithOutputs = addRun1s(bundleWithOutputs)
+
 		serializedOutputs, err := json.MarshalIndent(bundleWithOutputs, "", "  ")
 		if err != nil {
 			return err
@@ -323,4 +332,33 @@ func init() {
 	flags.Bool("runTest", false, "run tests")
 	flags.Bool("fixVolumes", true, "Make all volumes sufficient for later uses")
 	flags.String("policyFile", "", "Design file of custom liquid policies in format of .xlsx JMP file")
+}
+
+// the workflow editor refuses to recognise any element without _run1 at the end
+// this adds _run1 iff it is not already present as a suffix to the name of an element
+func addRun1s(bin executeutil.Bundle) executeutil.Bundle {
+	mmmm := make(map[string]map[string]json.RawMessage)
+
+	for name, value := range bin.Parameters {
+		if !strings.HasSuffix(name, "_run1") {
+			name = name + "_run1"
+		}
+
+		mmmm[name] = value
+	}
+
+	nnnn := make(map[string]workflow.Process)
+
+	for name, value := range bin.Processes {
+		if !strings.HasSuffix(name, "_run1") {
+			name = name + "_run1"
+		}
+
+		nnnn[name] = value
+	}
+
+	bin.Parameters = mmmm
+	bin.Processes = nnnn
+
+	return bin
 }

@@ -49,13 +49,13 @@ type Opt struct {
 	DriverSpecificTipWastePreferences []string `json:"driverSpecificTipWastePreferences,omitempty"`
 	DriverSpecificWashPreferences     []string `json:"driverSpecificWashPreferences,omitempty"`
 
-	ModelEvaporation         bool `json:"modelEvaporation,omitempty"`
-	OutputSort               bool `json:"outputSort,omitempty"`
-	PrintInstructions        bool `json:"printInstructions,omitempty"`
-	UseDriverTipTracking     bool `json:"useDriverTipTracking,omitempty"`
-	LegacyVolume             bool `json:"legacyVolume,omitempty"`             // Don't track volumes for intermediates
-	FixVolumes               bool `json:"fixVolumes,omitempty"`               // Aim to revise requested volumes to service requirements
-	IgnorePhysicalSimulation bool `json:"ignorePhysicalSimulation,omitempty"` //ignore errors in physical simulation
+	ModelEvaporation         bool `json:"modelEvaporation"`
+	OutputSort               bool `json:"outputSort"`
+	PrintInstructions        bool `json:"printInstructions"`
+	UseDriverTipTracking     bool `json:"useDriverTipTracking"`
+	LegacyVolume             bool `json:"legacyVolume"`             // Don't track volumes for intermediates
+	FixVolumes               bool `json:"fixVolumes"`               // Aim to revise requested volumes to service requirements
+	IgnorePhysicalSimulation bool `json:"ignorePhysicalSimulation"` //ignore errors in physical simulation
 
 	// Two ways to set user liquid policies rule set
 	CustomPolicyData    map[string]wtype.LHPolicy `json:"customPolicyData,omitempty"`    // Set rule set from policies

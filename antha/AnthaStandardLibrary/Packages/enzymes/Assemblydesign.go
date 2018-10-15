@@ -626,11 +626,11 @@ var customStandard = AssemblyStandard{
 		"Level0": {
 			Enzyme: BsaI,
 			PartOverhangs: map[string]StandardOverhangs{
-				"L1Uadaptor":                  {"GTCG", "GGAG"}, // adaptor to add SapI sites to clone into level 1 vector
-				"L1Uadaptor + Pro":            {"GTCG", "TTTT"}, // adaptor to add SapI sites to clone into level 1 vector
-				"L1Uadaptor + Pro(MoClo)":     {"GTCG", "TACT"}, // original MoClo overhang of TACT
-				"L1Uadaptor + Pro + 5U":       {"GTCG", "CCAT"}, // adaptor to add SapI sites to clone into level 1 vector
-				"L1Uadaptor + Pro + 5U + NT1": {"GTCG", "TATG"}, // adaptor to add SapI sites to clone into level 1 vector
+				"L1Uadaptor":                        {"GTCG", "GGAG"}, // adaptor to add SapI sites to clone into level 1 vector
+				"L1Uadaptor + Pro":                  {"GTCG", "TTTT"}, // adaptor to add SapI sites to clone into level 1 vector
+				"L1Uadaptor + Pro(MoClo)":           {"GTCG", "TACT"}, // original MoClo overhang of TACT
+				"L1Uadaptor + Pro + 5U":             {"GTCG", "CCAT"}, // adaptor to add SapI sites to clone into level 1 vector
+				"L1Uadaptor + Pro + 5U + NT1":       {"GTCG", "TATG"}, // adaptor to add SapI sites to clone into level 1 vector
 				"Pro":                               {"GGAG", "TTTT"}, //changed from MoClo TACT to TTTT to conform with Protein Paintbox
 				"5U":                                {"TTTT", "CCAT"}, //changed from MoClo TACT to TTTT to conform with Protein Paintbox
 				"5U(f)":                             {"TTTT", "CCAT"}, //changed from MoClo TACT to TTTT to conform with Protein Paintbox
@@ -647,19 +647,19 @@ var customStandard = AssemblyStandard{
 				"CDS1 + 3U(MoClo)":                  {"TATG", "GGTA"}, //original MoClo overhang of GGTA
 				"CDS1 ns":                           {"TATG", "TTCG"}, //changed AATG to TATG to work with Kosuri paper RBSs
 				"CDS1 + CT + 3U + Ter + L1Dadaptor": {"TATG", "TAAT"}, //changed AATG to TATG to work with Kosuri paper RBSs
-				"NT2":                        {"TATG", "AGGT"}, //changed AATG to TATG to work with Kosuri paper RBSs
-				"SP":                         {"TATG", "AGGT"}, //changed AATG to TATG to work with Kosuri paper RBSs
-				"CDS2 ns":                    {"AGGT", "TTCG"},
-				"CDS2":                       {"AGGT", "GCTT"},
-				"CT":                         {"TTCG", "GCTT"},
-				"3U":                         {"GCTT", "CCCC"}, //changed GGTA to CCCC to conform with Protein Paintbox
-				"Ter":                        {"CCCC", "CGCT"},
-				"3U + Ter":                   {"GCTT", "CGCT"},
-				"3U + Ter + L1Dadaptor":      {"GCTT", "TAAT"},
-				"CT + 3U + Ter + L1Dadaptor": {"TTCG", "TAAT"},
-				"L1Dadaptor":                 {"CGCT", "TAAT"},
-				"Ter + L1Dadaptor":           {"CCCC", "TAAT"},
-				"Ter(MoClo) + L1Dadaptor":    {"GGTA", "TAAT"},
+				"NT2":                               {"TATG", "AGGT"}, //changed AATG to TATG to work with Kosuri paper RBSs
+				"SP":                                {"TATG", "AGGT"}, //changed AATG to TATG to work with Kosuri paper RBSs
+				"CDS2 ns":                           {"AGGT", "TTCG"},
+				"CDS2":                              {"AGGT", "GCTT"},
+				"CT":                                {"TTCG", "GCTT"},
+				"3U":                                {"GCTT", "CCCC"}, //changed GGTA to CCCC to conform with Protein Paintbox
+				"Ter":                               {"CCCC", "CGCT"},
+				"3U + Ter":                          {"GCTT", "CGCT"},
+				"3U + Ter + L1Dadaptor":             {"GCTT", "TAAT"},
+				"CT + 3U + Ter + L1Dadaptor":        {"TTCG", "TAAT"},
+				"L1Dadaptor":                        {"CGCT", "TAAT"},
+				"Ter + L1Dadaptor":                  {"CCCC", "TAAT"},
+				"Ter(MoClo) + L1Dadaptor":           {"GGTA", "TAAT"},
 			},
 			EntryVectorEnds: StandardOverhangs{"TAAT", "GTCG"},
 		},

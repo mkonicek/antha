@@ -146,6 +146,7 @@ func (a *runOpt) Run() error {
 	}
 
 	mixerOpt := mixer.DefaultOpt.Merge(bundle.RawParams.Config).Merge(&a.MixerOpt)
+
 	opt := auto.Opt{
 		MaybeArgs: []interface{}{mixerOpt},
 	}

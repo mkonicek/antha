@@ -132,7 +132,7 @@ func (test *PlanningTest) checkPositionConsistency(t *testing.T) {
 				if w1, w2 := pp1.Wellcoords[it.Curr().FormatA1()], pp2.Wellcoords[it.Curr().FormatA1()]; w1.IsEmpty() && w2.IsEmpty() {
 					continue
 				} else if w1.WContents.ID == w2.WContents.ID {
-					t.Fatal("IDs before and after must differ")
+					t.Fatalf("Component IDs before and after must differ:\nb: %v\na: %v", w1, w2)
 				}
 			}
 		case *wtype.LHTipbox:

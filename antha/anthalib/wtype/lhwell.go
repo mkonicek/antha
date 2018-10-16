@@ -824,21 +824,12 @@ func (well *LHWell) DeclareNotAutoallocated() {
 }
 
 func (well *LHWell) IsAutoallocated() bool {
-	if well != nil {
-		if well.Extra == nil {
-			return false
-		}
-
-		t, ok := well.Extra["autoallocated"]
-
-		if !ok || !t.(bool) {
-			return false
-		}
-		return true
-	} else {
-		logger.Debug("Warning: Attempt to access nil well in IsAutoallocated()")
+	if well == nil || well.Extra == nil {
+		return false
 	}
-	return false
+
+	t, ok := well.Extra["autoallocated"]
+	return ok && t.(bool)
 }
 
 func (well *LHWell) Evaporate(time time.Duration, env Environment) VolumeCorrection {

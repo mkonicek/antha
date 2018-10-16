@@ -334,29 +334,40 @@ func init() {
 	flags.String("policyFile", "", "Design file of custom liquid policies in format of .xlsx JMP file")
 }
 
+func idempotentRun1Addition(name string) string {
+	if !strings.HasSuffix(name, "_run1") {
+		name = name + "_run1"
+	}
+
+	return name
+}
+
 // the workflow editor refuses to recognise any element without _run1 at the end
 // this adds _run1 iff it is not already present as a suffix to the name of an element
 func addRun1s(bin executeutil.Bundle) executeutil.Bundle {
 	mmmm := make(map[string]map[string]json.RawMessage)
 
 	for name, value := range bin.Parameters {
-		if !strings.HasSuffix(name, "_run1") {
-			name = name + "_run1"
-		}
-
+		name = idempotentRun1Addition(name)
 		mmmm[name] = value
 	}
 
 	nnnn := make(map[string]workflow.Process)
 
 	for name, value := range bin.Processes {
-		if !strings.HasSuffix(name, "_run1") {
-			name = name + "_run1"
-		}
-
+		name = idempotentRun1Addition(name)
 		nnnn[name] = value
 	}
 
+	newConnections := make([]workflow.Connection, len(bin.Connections))
+
+	for i, conn := range bin.Connections {
+		conn.Src.Process = idempotentRun1Addition(conn.Src.Process)
+		conn.Tgt.Process = idempotentRun1Addition(conn.Tgt.Process)
+		newConnections[i] = conn
+	}
+
+	bin.Connections = newConnections
 	bin.Parameters = mmmm
 	bin.Processes = nnnn
 

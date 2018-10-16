@@ -52,15 +52,15 @@ func ParseConcentration(s string) (bool, Concentration, string) {
 
 	reg := GetGlobalUnitRegistry()
 
-	// unit location indicated by parentheses - e.g. "Glucose (6M)"
-	if l, r := strings.Index(s, "("), strings.LastIndex(s, ")"); l >= 0 && l < r {
+	// unit location indicated by parentheses after component Name - e.g. "Glucose (6M)"
+	if l, r := strings.LastIndex(s, "("), strings.LastIndex(s, ")"); l >= 0 && l < r && strings.HasSuffix(s, ")") {
 		value, unit := extractFloat(strings.TrimSpace(s[l+1 : r]))
-		if trimUnit := strings.TrimSpace(unit); !reg.ValidUnitForType("Concentration", trimUnit) {
-			return false, NewConcentration(0, "g/l"), s
-		} else if componentName := strings.TrimSpace(s[:l] + s[r+1:]); componentName != "" {
-			return true, NewConcentration(value, trimUnit), componentName
-		} else {
-			return true, NewConcentration(value, trimUnit), s
+		if trimUnit := strings.TrimSpace(unit); reg.ValidUnitForType("Concentration", trimUnit) {
+			if componentName := strings.TrimSpace(s[:l] + s[r+1:]); componentName != "" {
+				return true, NewConcentration(value, trimUnit), componentName
+			} else {
+				return true, NewConcentration(value, trimUnit), s
+			}
 		}
 	}
 

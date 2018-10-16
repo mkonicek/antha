@@ -212,6 +212,25 @@ func TestParseConcentration(t *testing.T) {
 			ContainsConc:      false,
 			ComponentNameOnly: "Magnesium Acetate",
 		},
+		{
+			ComponentName:     "0.515 v/v (S)-Styrene",
+			ContainsConc:      true,
+			ComponentNameOnly: "(S)-Styrene",
+			Conc:              NewConcentration(0.515, "v/v"),
+		},
+		{
+			ComponentName:     "(D)Glucose (6M)",
+			ContainsConc:      true,
+			ComponentNameOnly: "(D)Glucose",
+			Conc:              NewConcentration(6.0, "M"),
+		},
+
+		{
+			ComponentName:     "1X Antigen X",
+			ContainsConc:      true,
+			ComponentNameOnly: "Antigen X",
+			Conc:              NewConcentration(1.0, "X"),
+		},
 	}.Run(t)
 }
 

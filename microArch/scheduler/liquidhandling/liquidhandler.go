@@ -366,7 +366,6 @@ func (this *Liquidhandler) shrinkVolumes(rq *LHRequest) error {
 			HandleAspirate: func(ins *liquidhandling.AspirateInstruction) {
 				for i, lastWell := range lastWells {
 					if lastWell.IsAutoallocated() && i < len(ins.Volume) {
-						fmt.Printf("aspirating from well: %s\n", lastWell.ID)
 						v, ok := vols[lastWell]
 						if !ok {
 							v = wunit.NewVolume(0.0, "ul")

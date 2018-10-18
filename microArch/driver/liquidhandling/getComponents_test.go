@@ -11,7 +11,7 @@ import (
 type DistributeVolumesTest struct {
 	Name            string
 	Requested       []float64   // Volumes to request per channel
-	AvailableByWell [][]float64 // Volumes available by well then channel - total number of floats should match requested
+	AvailableByWell [][]float64 // Volumes available by well then channel - total number of volumes should match requested
 	Expected        []float64   // Expected volumes supplied to each channel
 }
 
@@ -37,6 +37,19 @@ func (test *DistributeVolumesTest) Run(t *testing.T) {
 	gotVols := make([]float64, 0, len(got))
 	for _, v := range got {
 		gotVols = append(gotVols, v.Vol)
+	}
+
+	totalAvailable := 0.0
+	for _, w := range test.AvailableByWell {
+		totalAvailable += w[0]
+	}
+	totalGot := 0.0
+	for _, v := range gotVols {
+		totalGot += v
+	}
+
+	if totalAvailable != totalGot {
+		t.Errorf("didn't return all available volume: available %f ul, got %f ul\n", totalAvailable, totalGot)
 	}
 
 	if !reflect.DeepEqual(gotVols, test.Expected) {
@@ -107,6 +120,12 @@ func TestDistrubuteVolumes(t *testing.T) {
 			Requested:       []float64{20, 100, 0, 70},
 			AvailableByWell: [][]float64{{50, 50}, {50, 50}},
 			Expected:        []float64{20, 30, 0, 50},
+		},
+		{
+			Name:            "unexpected",
+			Requested:       []float64{21.099999999999998, 31.049999999999996, 21.099999999999998, 21.4, 21., 21.449999999999996, 24.449999999999995, 21.299999999999996},
+			AvailableByWell: [][]float64{{10000.0, 10000.0, 10000.0, 10000.0, 10000.0, 10000.0, 10000.0, 10000.0}},
+			Expected:        []float64{1227.1437711, 1227.1437810500001, 1227.1437711, 1227.1437714, 1227.1437710000002, 1227.1437714500003, 1227.1437744500001, 1227.1437713000003},
 		},
 	}.Run(t)
 }

@@ -139,7 +139,7 @@ func distributeVolumes(requested wtype.ComponentVector, available wtype.Componen
 		v := a.MustInStringUnit("ul")
 		v.DivideBy(float64(len(channels)))
 		for _, ch := range channels {
-			ret[ch].Vol = v.RawValue()
+			ret[ch].Vol = v.MustInStringUnit(ret[ch].Vunit).RawValue()
 		}
 
 		extra := wunit.NewVolume(0.0, "ul")
@@ -150,7 +150,7 @@ func distributeVolumes(requested wtype.ComponentVector, available wtype.Componen
 			for _, ch := range channels {
 				if retVol, requestVol := ret[ch].Volume(), requested[ch].Volume(); retVol.GreaterThan(requestVol) {
 					extra.IncrBy(wunit.SubtractVolumes(retVol, requestVol)) //nolint - volumes are compatible
-					ret[ch].Vol = requestVol.RawValue()
+					ret[ch].Vol = requestVol.MustInStringUnit(ret[ch].Vunit).RawValue()
 				} else {
 					newChannels = append(newChannels, ch)
 				}
@@ -160,12 +160,12 @@ func distributeVolumes(requested wtype.ComponentVector, available wtype.Componen
 			if len(newChannels) > 0 {
 				extra.DivideBy(float64(len(newChannels)))
 				for _, ch := range newChannels {
-					ret[ch].Vol += extra.RawValue()
+					ret[ch].Vol += extra.MustInStringUnit(ret[ch].Vunit).RawValue()
 				}
 			} else if len(newChannels) == 0 { // any final excess gets distributed evenly
 				extra.DivideBy(float64(len(channelsPerWell[loc])))
 				for _, ch := range channelsPerWell[loc] {
-					ret[ch].Vol += extra.RawValue()
+					ret[ch].Vol += extra.MustInStringUnit(ret[ch].Vunit).RawValue()
 				}
 			}
 

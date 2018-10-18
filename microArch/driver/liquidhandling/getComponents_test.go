@@ -6,26 +6,27 @@ import (
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
 type DistributeVolumesTest struct {
 	Name            string
-	Requested       []float64   // Volumes to request per channel
-	AvailableByWell [][]float64 // Volumes available by well then channel - total number of volumes should match requested
-	Expected        []float64   // Expected volumes supplied to each channel
+	Requested       []wunit.Volume   // Volumes to request per channel
+	AvailableByWell [][]wunit.Volume // Volumes available by well then channel - total number of volumes should match requested
+	ExpectedUl      []float64        // Expected volumes supplied to each channel
 }
 
 func (test *DistributeVolumesTest) Run(t *testing.T) {
 	requested := make(wtype.ComponentVector, 0, len(test.Requested))
 	for _, v := range test.Requested {
-		requested = append(requested, &wtype.Liquid{Vol: v, Vunit: "ul"})
+		requested = append(requested, &wtype.Liquid{Vol: v.RawValue(), Vunit: v.Unit().PrefixedSymbol()})
 	}
 
 	available := make(wtype.ComponentVector, 0, len(test.Requested))
 	for w, wv := range test.AvailableByWell {
 		loc := fmt.Sprintf("well_%d", w)
 		for _, v := range wv {
-			available = append(available, &wtype.Liquid{Vol: v, Vunit: "ul", Loc: loc})
+			available = append(available, &wtype.Liquid{Vol: v.RawValue(), Vunit: v.Unit().PrefixedSymbol(), Loc: loc})
 		}
 	}
 
@@ -36,24 +37,25 @@ func (test *DistributeVolumesTest) Run(t *testing.T) {
 	got := distributeVolumes(requested, available)
 	gotVols := make([]float64, 0, len(got))
 	for _, v := range got {
-		gotVols = append(gotVols, v.Vol)
+		vol := wunit.NewVolume(v.Vol, v.Vunit)
+		gotVols = append(gotVols, vol.MustInStringUnit("ul").RawValue())
 	}
 
 	totalAvailable := 0.0
 	for _, w := range test.AvailableByWell {
-		totalAvailable += w[0]
+		totalAvailable += w[0].MustInStringUnit("ul").RawValue()
 	}
 	totalGot := 0.0
 	for _, v := range gotVols {
 		totalGot += v
 	}
 
-	if totalAvailable != totalGot {
-		t.Errorf("didn't return all available volume: available %f ul, got %f ul\n", totalAvailable, totalGot)
+	if ta, tg := fmt.Sprintf("%.4g", totalAvailable), fmt.Sprintf("%.4g", totalGot); ta != tg {
+		t.Errorf("didn't return all available volume: available %s ul, got %s ul\n", ta, tg)
 	}
 
-	if !reflect.DeepEqual(gotVols, test.Expected) {
-		t.Errorf("return didn't match expected:\ne: %v\ng: %v", test.Expected, gotVols)
+	if !reflect.DeepEqual(gotVols, test.ExpectedUl) {
+		t.Errorf("return didn't match expected:\ne: %v\ng: %v", test.ExpectedUl, gotVols)
 	}
 }
 
@@ -69,63 +71,83 @@ func TestDistrubuteVolumes(t *testing.T) {
 	DistributeVolumesTests{
 		{
 			Name:            "all equal with excess",
-			Requested:       []float64{100, 100, 100, 100},
-			AvailableByWell: [][]float64{{500, 500, 500, 500}},
-			Expected:        []float64{100 + 25, 100 + 25, 100 + 25, 100 + 25}, // value allocate by need + evenly distributed excess
+			Requested:       []wunit.Volume{wunit.NewVolume(100, "ul"), wunit.NewVolume(100, "ul"), wunit.NewVolume(100, "ul"), wunit.NewVolume(100, "ul")},
+			AvailableByWell: [][]wunit.Volume{{wunit.NewVolume(500, "ul"), wunit.NewVolume(500, "ul"), wunit.NewVolume(500, "ul"), wunit.NewVolume(500, "ul")}},
+			ExpectedUl:      []float64{100 + 25, 100 + 25, 100 + 25, 100 + 25}, // value allocate by need + evenly distributed excess
 		},
 		{
 			Name:            "all equal exact match",
-			Requested:       []float64{100, 100, 100, 100},
-			AvailableByWell: [][]float64{{400, 400, 400, 400}},
-			Expected:        []float64{100, 100, 100, 100},
+			Requested:       []wunit.Volume{wunit.NewVolume(100, "ul"), wunit.NewVolume(100, "ul"), wunit.NewVolume(100, "ul"), wunit.NewVolume(100, "ul")},
+			AvailableByWell: [][]wunit.Volume{{wunit.NewVolume(400, "ul"), wunit.NewVolume(400, "ul"), wunit.NewVolume(400, "ul"), wunit.NewVolume(400, "ul")}},
+			ExpectedUl:      []float64{100, 100, 100, 100},
 		},
 		{
 			Name:            "all equal with shortfall",
-			Requested:       []float64{100, 100, 100, 100},
-			AvailableByWell: [][]float64{{200, 200, 200, 200}},
-			Expected:        []float64{50, 50, 50, 50},
+			Requested:       []wunit.Volume{wunit.NewVolume(100, "ul"), wunit.NewVolume(100, "ul"), wunit.NewVolume(100, "ul"), wunit.NewVolume(100, "ul")},
+			AvailableByWell: [][]wunit.Volume{{wunit.NewVolume(200, "ul"), wunit.NewVolume(200, "ul"), wunit.NewVolume(200, "ul"), wunit.NewVolume(200, "ul")}},
+			ExpectedUl:      []float64{50, 50, 50, 50},
 		},
 		{
 			Name:            "mixed with excess",
-			Requested:       []float64{20, 100, 0, 70},
-			AvailableByWell: [][]float64{{500, 500, 500, 500}},
-			Expected:        []float64{20 + 77.5, 100 + 77.5, 0 + 77.5, 70 + 77.5},
+			Requested:       []wunit.Volume{wunit.NewVolume(20, "ul"), wunit.NewVolume(100, "ul"), wunit.NewVolume(0, "ul"), wunit.NewVolume(70, "ul")},
+			AvailableByWell: [][]wunit.Volume{{wunit.NewVolume(500, "ul"), wunit.NewVolume(500, "ul"), wunit.NewVolume(500, "ul"), wunit.NewVolume(500, "ul")}},
+			ExpectedUl:      []float64{20 + 77.5, 100 + 77.5, 0 + 77.5, 70 + 77.5},
 		},
 		{
 			Name:            "mixed exact match",
-			Requested:       []float64{20, 100, 0, 70},
-			AvailableByWell: [][]float64{{190, 190, 190, 190}},
-			Expected:        []float64{20, 100, 0, 70},
+			Requested:       []wunit.Volume{wunit.NewVolume(20, "ul"), wunit.NewVolume(100, "ul"), wunit.NewVolume(0, "ul"), wunit.NewVolume(70, "ul")},
+			AvailableByWell: [][]wunit.Volume{{wunit.NewVolume(190, "ul"), wunit.NewVolume(190, "ul"), wunit.NewVolume(190, "ul"), wunit.NewVolume(190, "ul")}},
+			ExpectedUl:      []float64{20, 100, 0, 70},
 		},
 		{
 			Name:            "mixed with shortfall",
-			Requested:       []float64{20, 100, 0, 70},
-			AvailableByWell: [][]float64{{100, 100, 100, 100}},
-			Expected:        []float64{20, 40, 0, 40},
+			Requested:       []wunit.Volume{wunit.NewVolume(20, "ul"), wunit.NewVolume(100, "ul"), wunit.NewVolume(0, "ul"), wunit.NewVolume(70, "ul")},
+			AvailableByWell: [][]wunit.Volume{{wunit.NewVolume(100, "ul"), wunit.NewVolume(100, "ul"), wunit.NewVolume(100, "ul"), wunit.NewVolume(100, "ul")}},
+			ExpectedUl:      []float64{20, 40, 0, 40},
 		},
 		{
 			Name:            "mixed with excess multiwell",
-			Requested:       []float64{20, 100, 0, 70},
-			AvailableByWell: [][]float64{{500, 500}, {500, 500}},
-			Expected:        []float64{20 + (500-120)/2.0, 100 + (500-120)/2.0, 0 + (500-70)/2.0, 70 + (500-70)/2.0},
+			Requested:       []wunit.Volume{wunit.NewVolume(20, "ul"), wunit.NewVolume(100, "ul"), wunit.NewVolume(0, "ul"), wunit.NewVolume(70, "ul")},
+			AvailableByWell: [][]wunit.Volume{{wunit.NewVolume(500, "ul"), wunit.NewVolume(500, "ul")}, {wunit.NewVolume(500, "ul"), wunit.NewVolume(500, "ul")}},
+			ExpectedUl:      []float64{20 + (500-120)/2.0, 100 + (500-120)/2.0, 0 + (500-70)/2.0, 70 + (500-70)/2.0},
 		},
 		{
 			Name:            "mixed exact match multiwell",
-			Requested:       []float64{20, 100, 0, 70},
-			AvailableByWell: [][]float64{{120, 120}, {70, 70}},
-			Expected:        []float64{20, 100, 0, 70},
+			Requested:       []wunit.Volume{wunit.NewVolume(20, "ul"), wunit.NewVolume(100, "ul"), wunit.NewVolume(0, "ul"), wunit.NewVolume(70, "ul")},
+			AvailableByWell: [][]wunit.Volume{{wunit.NewVolume(120, "ul"), wunit.NewVolume(120, "ul")}, {wunit.NewVolume(70, "ul"), wunit.NewVolume(70, "ul")}},
+			ExpectedUl:      []float64{20, 100, 0, 70},
 		},
 		{
 			Name:            "mixed with shortfall multiwell",
-			Requested:       []float64{20, 100, 0, 70},
-			AvailableByWell: [][]float64{{50, 50}, {50, 50}},
-			Expected:        []float64{20, 30, 0, 50},
+			Requested:       []wunit.Volume{wunit.NewVolume(20, "ul"), wunit.NewVolume(100, "ul"), wunit.NewVolume(0, "ul"), wunit.NewVolume(70, "ul")},
+			AvailableByWell: [][]wunit.Volume{{wunit.NewVolume(50, "ul"), wunit.NewVolume(50, "ul")}, {wunit.NewVolume(50, "ul"), wunit.NewVolume(50, "ul")}},
+			ExpectedUl:      []float64{20, 30, 0, 50},
 		},
 		{
-			Name:            "unexpected",
-			Requested:       []float64{21.099999999999998, 31.049999999999996, 21.099999999999998, 21.4, 21., 21.449999999999996, 24.449999999999995, 21.299999999999996},
-			AvailableByWell: [][]float64{{10000.0, 10000.0, 10000.0, 10000.0, 10000.0, 10000.0, 10000.0, 10000.0}},
-			Expected:        []float64{1227.1437711, 1227.1437810500001, 1227.1437711, 1227.1437714, 1227.1437710000002, 1227.1437714500003, 1227.1437744500001, 1227.1437713000003},
+			Name: "requested in litres",
+			Requested: []wunit.Volume{
+				wunit.NewVolume(2.1099999999999998e-05, "l"),
+				wunit.NewVolume(3.1049999999999996e-05, "l"),
+				wunit.NewVolume(2.1099999999999998e-05, "l"),
+				wunit.NewVolume(2.14e-05, "l"),
+				wunit.NewVolume(2.1e-05, "l"),
+				wunit.NewVolume(2.1449999999999996e-05, "l"),
+				wunit.NewVolume(2.4449999999999995e-05, "l"),
+				wunit.NewVolume(2.1299999999999996e-05, "l"),
+			},
+			AvailableByWell: [][]wunit.Volume{
+				{
+					wunit.NewVolume(10000.0, "ul"),
+					wunit.NewVolume(10000.0, "ul"),
+					wunit.NewVolume(10000.0, "ul"),
+					wunit.NewVolume(10000.0, "ul"),
+					wunit.NewVolume(10000.0, "ul"),
+					wunit.NewVolume(10000.0, "ul"),
+					wunit.NewVolume(10000.0, "ul"),
+					wunit.NewVolume(10000.0, "ul"),
+				},
+			},
+			ExpectedUl: []float64{1248.24375, 1258.1937500000001, 1248.24375, 1248.5437500000003, 1248.1437500000002, 1248.5937500000002, 1251.5937500000002, 1248.4437500000001},
 		},
 	}.Run(t)
 }

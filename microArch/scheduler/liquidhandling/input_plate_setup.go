@@ -185,7 +185,6 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 					platename := getSafeInputPlateName(request, curplaten)
 					curr_plate.PlateName = platename
 					curplaten += 1
-					curr_plate.DeclareTemporary()
 					//curr_plate.DeclareAutoallocated()
 				}
 

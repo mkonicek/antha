@@ -182,7 +182,7 @@ func (s Assertions) Assert(t *testing.T, lh *Liquidhandler, request *LHRequest) 
 }
 
 // DebugPrintInstructions assertion that just prints all the generated instructions
-func DebugPrintInstructions() Assertion {
+func DebugPrintInstructions() Assertion { // nolint
 	return func(t *testing.T, lh *Liquidhandler, rq *LHRequest) {
 		for _, ins := range rq.Instructions {
 			fmt.Println(liquidhandling.InsToString(ins))

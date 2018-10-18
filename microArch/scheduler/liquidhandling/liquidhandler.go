@@ -420,8 +420,6 @@ func (this *Liquidhandler) shrinkVolumes(rq *LHRequest) error {
 			if err := initialWell.SetContents(initialContents); err != nil {
 				return err
 			}
-
-			initialWell.DeclareNotTemporary()
 		}
 	}
 

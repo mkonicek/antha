@@ -433,14 +433,12 @@ func (this *Liquidhandler) shrinkVolumes(rq *LHRequest) error {
 		} else {
 			for _, well := range plate.Wellcoords {
 				if _, used := vols[well]; !used && well.IsAutoallocated() {
-					fmt.Printf("Removing: %v\n", well)
 					well.Clear()
 				}
 			}
 		}
 	}
 	for _, id := range toRemove {
-		fmt.Printf("Removing unused plate with ID %q\n", id)
 		this.Properties.RemovePlateWithID(id)
 	}
 
@@ -851,11 +849,6 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		this.FinalProperties = finalProps
 	}
 
-	fmt.Println("First generated instructions")
-	for i, ins := range request.Instructions {
-		fmt.Printf("  %d: %s\n", i, liquidhandling.InsToString(ins))
-	}
-
 	// revise the volumes - this makes sure the autoallocated volumes are correct
 	if err := this.shrinkVolumes(request); err != nil {
 		return err
@@ -868,11 +861,6 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		request = rq
 		// duplicate this time so that final IDs are different
 		this.FinalProperties = finalProps.Dup()
-	}
-
-	fmt.Println("second generated instructions")
-	for i, ins := range request.Instructions {
-		fmt.Printf("  %d: %s\n", i, liquidhandling.InsToString(ins))
 	}
 
 	// Ensures tip boxes and wastes are correct for initial and final robot states

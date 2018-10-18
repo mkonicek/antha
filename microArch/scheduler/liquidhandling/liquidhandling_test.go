@@ -708,7 +708,6 @@ func TestPlateReuse(t *testing.T) {
 	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
 	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
 
-	rq.Options.PrintInstructions = true
 	err := lh.Plan(ctx, rq)
 
 	if err != nil {
@@ -742,7 +741,6 @@ func TestPlateReuse(t *testing.T) {
 	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
 
 	lh = GetLiquidHandlerForTest(ctx)
-	rq.Options.PrintInstructions = true
 	err = lh.Plan(ctx, rq)
 
 	if err != nil {

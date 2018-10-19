@@ -93,7 +93,7 @@ func (self *setOutputOrderTest) Run(t *testing.T) {
 	sorted := ichain.GetOrderedLHInstructions()
 	outputOrder := make([]string, 0, len(sorted))
 	for _, ins := range sorted {
-		//for promts check the message as the ID is overwritten
+		//for prompts check the message as the ID is overwritten
 		if ins.Type == wtype.LHIPRM { //LHIPRM == prompt instruction
 			outputOrder = append(outputOrder, ins.Message)
 		} else {

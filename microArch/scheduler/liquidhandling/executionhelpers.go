@@ -49,9 +49,9 @@ func convertToInstructionChain(sortedNodes []graph.Node, tg graph.Graph) *IChain
 		addToIChain(ic, n, tg)
 	}
 
-	// we need to ensure that splits and mixes are kept separate by fissioning nodes
+	// we need to ensure that splits, prompts and mixes are kept separate by fissioning nodes
 
-	ic.SplitMixedNodes()
+	ic = ic.SplitMixedNodes()
 
 	return ic
 }
@@ -210,7 +210,6 @@ func aggregatePromptsWithSameMessage(inss []*wtype.LHInstruction, topolGraph gra
 //buildInstructionChain guarantee all nodes are dependency-ordered
 //in order to aggregate without introducing cycles
 func buildInstructionChain(unsorted map[string]*wtype.LHInstruction) (*IChain, error) {
-
 	unsortedSlice := make([]*wtype.LHInstruction, 0, len(unsorted))
 	for _, instruction := range unsorted {
 		unsortedSlice = append(unsortedSlice, instruction)

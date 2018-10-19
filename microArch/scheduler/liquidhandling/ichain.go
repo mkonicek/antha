@@ -182,47 +182,103 @@ func (it *IChain) getOrderedLHInstructions(acc []*wtype.LHInstruction) []*wtype.
 	}
 }
 
-func (it *IChain) SplitMixedNodes() {
-	if it.hasMixAndSplitOnly() {
-		it.splitMixedNode()
+func (it *IChain) SplitMixedNodes() *IChain {
+	var ret *IChain
+
+	if len(it.getInstructionTypes()) != 1 {
+		ret = it.splitMixedNode()
 	}
 
-	// stop if we reach the end
-	if it.Child == nil {
-		return
+	if it.Child != nil {
+		// carry on
+		it.Child.SplitMixedNodes()
 	}
 
-	// carry on
-	it.Child.SplitMixedNodes()
+	if ret != nil {
+		return ret
+	}
+
+	return it
 }
 
-func (it *IChain) splitMixedNode() {
-	// put mixes first, then splits
+func (it *IChain) FindEnd() *IChain {
+	if it.Child == nil {
+		return it
+	}
+
+	return it.Child.FindEnd()
+}
+
+func (it *IChain) splitMixedNode() *IChain {
+	// put mixes first, then splits, then prompts
 
 	mixValues := make([]*wtype.LHInstruction, 0, len(it.Values))
 	splitValues := make([]*wtype.LHInstruction, 0, len(it.Values))
+	promptValues := make([]*wtype.LHInstruction, 0, len(it.Values))
 
 	for _, v := range it.Values {
 		if v.Type == wtype.LHIMIX {
 			mixValues = append(mixValues, v)
 		} else if v.Type == wtype.LHISPL {
 			splitValues = append(splitValues, v)
+		} else if v.Type == wtype.LHIPRM {
+			promptValues = append(promptValues, v)
 		} else {
 			panic("Wrong instruction type passed through to instruction chain split")
 		}
 	}
 
-	// it == Mix level
-	it.Values = mixValues
-	// ch == Split level
-	ch := NewIChain(it)
-	ch.Values = splitValues
-	ch.Child = it.Child
+	// make new chain
 
-	if ch.Child != nil {
-		ch.Child.Parent = ch
+	newch := makeNewIChain(mixValues, splitValues, promptValues)
+
+	// swap it in
+
+	r := it.SwapForChain(newch)
+
+	return r
+}
+
+// return a chain containing one node for each argument, linked in sequence
+// skip any empty sets
+func makeNewIChain(vals ...[]*wtype.LHInstruction) *IChain {
+	ch := NewIChain(nil)
+	top := ch
+
+	for _, v := range vals {
+		if len(v) == 0 {
+			continue
+		}
+
+		ch.Values = v
+
+		if ch.Parent != nil {
+			ch.Parent.Child = ch
+		}
+
+		ch = NewIChain(ch)
 	}
-	it.Child = ch
+
+	return top
+}
+
+// remove the current node and replace with newch
+// return newch as the new head if necessary
+func (ch *IChain) SwapForChain(newch *IChain) *IChain {
+	if ch.Child != nil {
+		end := newch.FindEnd()
+		ch.Child.Parent = end
+		end.Child = ch.Child
+	}
+
+	if ch.Parent != nil {
+		ch.Parent.Child = newch
+		newch.Parent = ch.Parent
+	} else {
+		return newch
+	}
+
+	return nil
 }
 
 type icGraph struct {
@@ -297,7 +353,7 @@ func (self *IChain) assertInstructionsSeparate() error {
 	types := self.getInstructionTypes()
 
 	if len(types) != 1 {
-		return fmt.Errorf("Only one instruction type per stage is allowed, found %v at stage %d", len(types), self.Depth)
+		return fmt.Errorf("Only one instruction type per stage is allowed, found %v at stage %d, %v", len(types), self.Depth, types)
 	}
 
 	return self.Child.assertInstructionsSeparate()

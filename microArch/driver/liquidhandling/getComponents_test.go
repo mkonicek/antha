@@ -28,9 +28,9 @@ func TestUpdateDests(t *testing.T) {
 	testCases := []testCase{
 		{
 			Name:     "Regression1 - Don't lose relatively small transfers",
-			Cmps:     wtype.ComponentVector{&wtype.Liquid{Vol: 0.01, Vunit: "l"}},
-			Match:    wtype.Match{M: []int{0}, Vols: []wunit.Volume{wunit.NewVolume(0.00999, "l")}},
-			Expected: wtype.ComponentVector{&wtype.Liquid{Vol: 0.00001, Vunit: "l"}},
+			Cmps:     wtype.ComponentVector{&wtype.Liquid{Vol: 0.01, Vunit: "El"}},
+			Match:    wtype.Match{M: []int{0}, Vols: []wunit.Volume{wunit.NewVolume(0.00999, "El")}},
+			Expected: wtype.ComponentVector{&wtype.Liquid{Vol: 0.00001, Vunit: "El"}},
 		},
 		{
 			Name:     "Positive - round very small volumes down to zero",

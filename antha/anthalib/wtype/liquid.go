@@ -1134,14 +1134,14 @@ func (cmp Liquid) FullyQualifiedName() string {
 	}
 }
 
-func (l *Liquid) EqualTypeVolume(l2 *Liquid) bool {
-	return l.CName == l2.CName && l.Volume().EqualTo(l2.Volume())
+func (l1 *Liquid) EqualTypeVolume(l2 *Liquid) bool {
+	return l1.CName == l2.CName && l1.Volume().EqualTo(l2.Volume())
 }
 
-func (l *Liquid) EqualTypeVolumeID(l2 *Liquid) bool {
-	if !l.EqualTypeVolume(l2) {
+func (l1 *Liquid) EqualTypeVolumeID(l2 *Liquid) bool {
+	if !l1.EqualTypeVolume(l2) {
 		return false
 	}
 
-	return l.ID == l2.ID
+	return l1.ID == l2.ID
 }

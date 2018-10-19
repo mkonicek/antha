@@ -166,3 +166,60 @@ func TestDeepCopySubComponents(t *testing.T) {
 	}
 
 }
+
+func TestEqualTypeVolume(t *testing.T) {
+	l := &Liquid{}
+
+	if !l.EqualTypeVolume(l) {
+		t.Errorf("Liquid must equal itself")
+	}
+
+	l2 := &Liquid{
+		CName: "which",
+	}
+
+	if l2.EqualTypeVolume(l) {
+		t.Errorf("Liquids with non-equal types must not report equal types")
+	}
+
+	l3 := &Liquid{
+		Vol:   50.0,
+		Vunit: "ul",
+	}
+
+	if l3.EqualTypeVolume(l) {
+		t.Errorf("Liquids with non-equal volumes must not report equal volumes")
+	}
+
+	l4 := &Liquid{
+		CName: "a",
+		Vol:   50.0,
+		Vunit: "ul",
+	}
+
+	l5 := l4.Dup()
+
+	if !l5.EqualTypeVolume(l4) {
+		t.Errorf("Liquids must be of equal type and volume after Dup()")
+	}
+
+	l6 := &Liquid{
+		CName: "b",
+		Vol:   50.0,
+		Vunit: "ul",
+		ID:    "thisismyID",
+	}
+
+	l7 := l6.Dup()
+
+	if !l7.EqualTypeVolumeID(l6) {
+		t.Errorf("Liquids must preserve IDs after Dup()")
+	}
+
+	l8 := l7.Cp()
+
+	if l8.EqualTypeVolumeID(l7) {
+		t.Errorf("Liquids must not preserve IDs after Cp()")
+	}
+
+}

@@ -369,7 +369,8 @@ func updateDests(dst wtype.ComponentVector, match wtype.Match) wtype.ComponentVe
 	for i := 0; i < len(match.M); i++ {
 		if match.M[i] != -1 {
 			dst[i].Vol -= match.Vols[i].ConvertToString(dst[i].Vunit)
-			if dst[i].Vol < 0.0001 {
+
+			if dst[i].Volume().MustInStringUnit("ul").RawValue() < 0.0001 {
 				dst[i].Vol = 0.0
 			}
 		}

@@ -123,3 +123,21 @@ func (cv ComponentVector) getLocTok(x int) []string {
 
 	return ret
 }
+
+func (cv1 ComponentVector) Equal(cv2 ComponentVector) bool {
+	if len(cv1) != len(cv2) {
+		return false
+	}
+
+	for i := 0; i < len(cv1); i++ {
+		if cv1[i] != nil && cv2[i] != nil {
+			if !cv1[i].EqualTypeVolumeID(cv2[i]) {
+				return false
+			}
+		} else if !(cv1[i] == nil && cv2[i] == nil) {
+			return false
+		}
+	}
+
+	return true
+}

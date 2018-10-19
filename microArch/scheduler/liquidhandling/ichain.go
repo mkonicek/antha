@@ -22,6 +22,7 @@ func NewIChain(parent *IChain) *IChain {
 	it.Values = make([]*wtype.LHInstruction, 0, 1)
 	if parent != nil {
 		it.Depth = parent.Depth + 1
+		parent.Child = &it
 	}
 	return &it
 }
@@ -183,21 +184,13 @@ func (it *IChain) getOrderedLHInstructions(acc []*wtype.LHInstruction) []*wtype.
 }
 
 func (it *IChain) SplitMixedNodes() *IChain {
-	var ret *IChain
-
-	if len(it.getInstructionTypes()) != 1 {
-		ret = it.splitMixedNode()
-	}
-
 	if it.Child != nil {
-		// carry on
 		it.Child.SplitMixedNodes()
 	}
 
-	if ret != nil {
-		return ret
+	if len(it.getInstructionTypes()) > 1 {
+		return it.splitMixedNode()
 	}
-
 	return it
 }
 
@@ -242,28 +235,28 @@ func (it *IChain) splitMixedNode() *IChain {
 // return a chain containing one node for each argument, linked in sequence
 // skip any empty sets
 func makeNewIChain(vals ...[]*wtype.LHInstruction) *IChain {
-	ch := NewIChain(nil)
-	top := ch
+	var top, cur *IChain
 
 	for _, v := range vals {
 		if len(v) == 0 {
 			continue
 		}
 
-		ch.Values = v
+		cur = NewIChain(cur)
 
-		if ch.Parent != nil {
-			ch.Parent.Child = ch
+		if top == nil {
+			top = cur
 		}
 
-		ch = NewIChain(ch)
+		cur.Values = v
 	}
 
 	return top
 }
 
-// remove the current node and replace with newch
-// return newch as the new head if necessary
+//SwapForChain replace node ch with the node chain starting with newch
+//             if ch is the head of the chain, return newch as the new head
+//             otherwise return nil
 func (ch *IChain) SwapForChain(newch *IChain) *IChain {
 	if ch.Child != nil {
 		end := newch.FindEnd()

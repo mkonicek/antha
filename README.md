@@ -48,8 +48,8 @@ brew update
 brew install mercurial pkg-config glpk
 
 # Install antha
-mkdir -p $GOPATH/src/github.com/antha-lang
-cd $GOPATH/src/github.com/antha-lang
+mkdir -p ${GOPATH:-$HOME/go}/src/github.com/antha-lang
+cd ${GOPATH:-$HOME/go}/src/github.com/antha-lang
 git clone https://github.com/antha-lang/elements
 cd elements
 git submodule update --init

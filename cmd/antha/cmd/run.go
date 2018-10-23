@@ -45,6 +45,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"strings"
 )
 
 var runCmd = &cobra.Command{
@@ -146,6 +147,7 @@ func (a *runOpt) Run() error {
 	}
 
 	mixerOpt := mixer.DefaultOpt.Merge(bundle.RawParams.Config).Merge(&a.MixerOpt)
+
 	opt := auto.Opt{
 		MaybeArgs: []interface{}{mixerOpt},
 	}
@@ -205,6 +207,13 @@ func (a *runOpt) Run() error {
 		expected := workflowtest.SaveTestOutputs(rout, "")
 		bundleWithOutputs := *bundle
 		bundleWithOutputs.TestOpt = expected
+
+		if bundleWithOutputs.Version == "" {
+			bundleWithOutputs.Version = "1.2.0"
+		}
+
+		bundleWithOutputs = addRun1s(bundleWithOutputs)
+
 		serializedOutputs, err := json.MarshalIndent(bundleWithOutputs, "", "  ")
 		if err != nil {
 			return err
@@ -298,7 +307,6 @@ func runWorkflow(cmd *cobra.Command, args []string) error {
 func init() {
 	c := runCmd
 	flags := c.Flags()
-
 	RootCmd.AddCommand(c)
 	flags.Bool("legacyVolumeTracking", false, "Do not track volumes for intermediate components")
 	flags.Bool("outputSort", false, "Sort execution by output - improves tip usage")
@@ -323,4 +331,36 @@ func init() {
 	flags.Bool("runTest", false, "run tests")
 	flags.Bool("fixVolumes", true, "Make all volumes sufficient for later uses")
 	flags.String("policyFile", "", "Design file of custom liquid policies in format of .xlsx JMP file")
+}
+
+func idempotentRun1Addition(name string) string {
+	if !strings.HasSuffix(name, "_run1") {
+		name = name + "_run1"
+	}
+
+	return name
+}
+
+// the workflow editor refuses to recognise any element without _run1 at the end
+// this adds _run1 iff it is not already present as a suffix to the name of an element
+func addRun1s(bin executeutil.Bundle) executeutil.Bundle {
+	for name, value := range bin.Parameters {
+		delete(bin.Parameters, name)
+		name = idempotentRun1Addition(name)
+		bin.Parameters[name] = value
+	}
+
+	for name, value := range bin.Processes {
+		delete(bin.Processes, name)
+		name = idempotentRun1Addition(name)
+		bin.Processes[name] = value
+	}
+
+	for i, conn := range bin.Connections {
+		conn.Src.Process = idempotentRun1Addition(conn.Src.Process)
+		conn.Tgt.Process = idempotentRun1Addition(conn.Tgt.Process)
+		bin.Connections[i] = conn
+	}
+
+	return bin
 }

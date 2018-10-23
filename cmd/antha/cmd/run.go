@@ -38,7 +38,6 @@ import (
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/auto"
 	"github.com/antha-lang/antha/target/mixer"
-	"github.com/antha-lang/antha/workflow"
 	"github.com/antha-lang/antha/workflowtest"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -345,31 +344,21 @@ func idempotentRun1Addition(name string) string {
 // the workflow editor refuses to recognise any element without _run1 at the end
 // this adds _run1 iff it is not already present as a suffix to the name of an element
 func addRun1s(bin executeutil.Bundle) executeutil.Bundle {
-	mmmm := make(map[string]map[string]json.RawMessage)
-
 	for name, value := range bin.Parameters {
 		name = idempotentRun1Addition(name)
-		mmmm[name] = value
+		bin.Parameters[name] = value
 	}
-
-	nnnn := make(map[string]workflow.Process)
 
 	for name, value := range bin.Processes {
 		name = idempotentRun1Addition(name)
-		nnnn[name] = value
+		bin.Processes[name] = value
 	}
-
-	newConnections := make([]workflow.Connection, len(bin.Connections))
 
 	for i, conn := range bin.Connections {
 		conn.Src.Process = idempotentRun1Addition(conn.Src.Process)
 		conn.Tgt.Process = idempotentRun1Addition(conn.Tgt.Process)
-		newConnections[i] = conn
+		bin.Connections[i] = conn
 	}
-
-	bin.Connections = newConnections
-	bin.Parameters = mmmm
-	bin.Processes = nnnn
 
 	return bin
 }

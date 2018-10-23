@@ -23,43 +23,43 @@ var (
 
 // Opt are options for a Mixer
 type Opt struct {
-	MaxPlates            *float64
-	MaxWells             *float64
-	ResidualVolumeWeight *float64
-	InputPlateTypes      []string
-	OutputPlateTypes     []string
-	TipTypes             []string
-	PlanningVersion      string
+	MaxPlates            *float64 `json:"maxPlates,omitempty"`
+	MaxWells             *float64 `json:"maxWells,omitempty"`
+	ResidualVolumeWeight *float64 `json:"residualVolumeWeight,omitempty"`
+	InputPlateTypes      []string `json:"inputPlateTypes,omitempty"`
+	OutputPlateTypes     []string `json:"outputPlateTypes,omitempty"`
+	TipTypes             []string `json:"tipTypes,omitempty"`
+	PlanningVersion      string   `json:"executionPlannerVersion,omitempty"`
 
 	// Two methods of populating input plates
-	InputPlateData [][]byte       // From contents of files
-	InputPlates    []*wtype.Plate // Directly
+	InputPlateData [][]byte       `json:"inputPlateData,omitempty"` // From contents of files
+	InputPlates    []*wtype.Plate `json:"inputPlates,omitempty"`    // Directly
 
 	// Direct specification of output plates
-	OutputPlates []*wtype.Plate
+	OutputPlates []*wtype.Plate `json:"outputPlates,omitempty"`
 
 	// Specify file name in the instruction stream of any driver generated file
-	DriverOutputFileName string
+	DriverOutputFileName string `json:"driverOutputFileName,omitempty"`
 
 	// Driver specific options. Semantics are not stable. Will need to be
 	// revised when multi device execution is supported.
-	DriverSpecificInputPreferences    []string
-	DriverSpecificOutputPreferences   []string
-	DriverSpecificTipPreferences      []string // Driver specific position names (e.g., position_1 or A2)
-	DriverSpecificTipWastePreferences []string
-	DriverSpecificWashPreferences     []string
+	DriverSpecificInputPreferences    []string `json:"driverSpecificInputPreferences,omitempty"`
+	DriverSpecificOutputPreferences   []string `json:"driverSpecificOutputPreferences,omitempty"`
+	DriverSpecificTipPreferences      []string `json:"driverSpecificTipPreferences,omitempty"` // Driver specific position names (e.g., position_1 or A2)
+	DriverSpecificTipWastePreferences []string `json:"driverSpecificTipWastePreferences,omitempty"`
+	DriverSpecificWashPreferences     []string `json:"driverSpecificWashPreferences,omitempty"`
 
-	ModelEvaporation         bool
-	OutputSort               bool
-	PrintInstructions        bool
-	UseDriverTipTracking     bool
-	LegacyVolume             bool // Don't track volumes for intermediates
-	FixVolumes               bool // Aim to revise requested volumes to service requirements
-	IgnorePhysicalSimulation bool //ignore errors in physical simulation
+	ModelEvaporation         bool `json:"modelEvaporation"`
+	OutputSort               bool `json:"outputSort"`
+	PrintInstructions        bool `json:"printInstructions"`
+	UseDriverTipTracking     bool `json:"useDriverTipTracking"`
+	LegacyVolume             bool `json:"legacyVolume"`             // Don't track volumes for intermediates
+	FixVolumes               bool `json:"fixVolumes"`               // Aim to revise requested volumes to service requirements
+	IgnorePhysicalSimulation bool `json:"ignorePhysicalSimulation"` //ignore errors in physical simulation
 
 	// Two ways to set user liquid policies rule set
-	CustomPolicyData    map[string]wtype.LHPolicy // Set rule set from policies
-	CustomPolicyRuleSet *wtype.LHPolicyRuleSet    // Directly
+	CustomPolicyData    map[string]wtype.LHPolicy `json:"customPolicyData,omitempty"`    // Set rule set from policies
+	CustomPolicyRuleSet *wtype.LHPolicyRuleSet    `json:"customPolicyRuleSet,omitempty"` // Directly
 }
 
 // Merge two configs together and return the result. Values in the argument

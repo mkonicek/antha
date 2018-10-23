@@ -345,11 +345,13 @@ func idempotentRun1Addition(name string) string {
 // this adds _run1 iff it is not already present as a suffix to the name of an element
 func addRun1s(bin executeutil.Bundle) executeutil.Bundle {
 	for name, value := range bin.Parameters {
+		delete(bin.Parameters, name)
 		name = idempotentRun1Addition(name)
 		bin.Parameters[name] = value
 	}
 
 	for name, value := range bin.Processes {
+		delete(bin.Processes, name)
 		name = idempotentRun1Addition(name)
 		bin.Processes[name] = value
 	}

@@ -15,21 +15,21 @@ type protocolDir struct {
 	Dir          string
 }
 
-// An AnthaRoot collects data from multiple Antha passes
-type AnthaRoot struct {
+// An ElementRoot collects data from multiple Element passes
+type ElementRoot struct {
 	outputPackageBase string
 	// Map from protocol name to directory path
 	protocolDirs []protocolDir
 }
 
-// NewAnthaRoot creates a new AnthaRoot
-func NewAnthaRoot(basePackage string) *AnthaRoot {
-	return &AnthaRoot{
+// NewElementRoot creates a new ElementRoot
+func NewElementRoot(basePackage string) *ElementRoot {
+	return &ElementRoot{
 		outputPackageBase: basePackage,
 	}
 }
 
-func (r *AnthaRoot) addProtocolDirectory(protocolName, dir string) {
+func (r *ElementRoot) addProtocolDirectory(protocolName, dir string) {
 	r.protocolDirs = append(r.protocolDirs, protocolDir{
 		ProtocolName: protocolName,
 		Dir:          dir,
@@ -37,7 +37,7 @@ func (r *AnthaRoot) addProtocolDirectory(protocolName, dir string) {
 }
 
 // copyGoFiles copies go files from protocol directory to output directory
-func (r *AnthaRoot) copyGoFiles(files *AnthaFiles) error {
+func (r *ElementRoot) copyGoFiles(files *ElementFiles) error {
 	seen := make(map[string]bool)
 
 	for _, pdir := range r.protocolDirs {
@@ -70,7 +70,7 @@ func (r *AnthaRoot) copyGoFiles(files *AnthaFiles) error {
 	return nil
 }
 
-func (r *AnthaRoot) generateLib() ([]byte, error) {
+func (r *ElementRoot) generateLib() ([]byte, error) {
 	const tmpl = `
 package _lib
 
@@ -128,8 +128,8 @@ func GetComponents() (comps []component.Component, err error) {
 }
 
 // Generate generates additional files not stric
-func (r *AnthaRoot) Generate() (*AnthaFiles, error) {
-	files := NewAnthaFiles()
+func (r *ElementRoot) Generate() (*ElementFiles, error) {
+	files := NewElementFiles()
 
 	if err := r.copyGoFiles(files); err != nil {
 		return nil, err

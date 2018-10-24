@@ -50,7 +50,7 @@ const (
 )
 
 var (
-	errNotAnthaFile = errors.New("not antha file")
+	errNotElementFile = errors.New("not element file")
 )
 
 var compileCmd = &cobra.Command{
@@ -72,7 +72,7 @@ func runCompile(cmd *cobra.Command, args []string) error {
 	}
 
 	// parse every filename or directory passed in as input
-	root := compile.NewAnthaRoot(outPackage)
+	root := compile.NewElementRoot(outPackage)
 
 	var errs []error
 
@@ -86,15 +86,17 @@ func runCompile(cmd *cobra.Command, args []string) error {
 				return nil
 			}
 
-			if !isAnthaFile(f.Name()) {
+			if !isElementFile(f.Name()) {
 				return nil
 			}
 
 			// Collect errors processing errors
-			if err := processFile(root, path, outdir); err != nil {
+			elem, err := processFile(root, path)
+			if err != nil {
+				errs = append(errs, err)
+			} else if err := writeElementFiles(elem.Files, outdir); err != nil {
 				errs = append(errs, err)
 			}
-
 			return nil
 		}); err != nil {
 			return err
@@ -114,19 +116,19 @@ func runCompile(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if err := writeAnthaFiles(files, outdir); err != nil {
+	if err := writeElementFiles(files, outdir); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-// isAnthaFile returns if file matches antha file naming convention
-func isAnthaFile(name string) bool {
+// isElementFile returns if file matches antha element file naming convention
+func isElementFile(name string) bool {
 	return strings.HasSuffix(name, ".an")
 }
 
-func writeAnthaFile(outFile string, file *compile.AnthaFile) error {
+func writeElementFile(outFile string, file *compile.ElementFile) error {
 	dst, err := os.OpenFile(outFile, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
 	if err != nil {
 		return err
@@ -140,14 +142,14 @@ func writeAnthaFile(outFile string, file *compile.AnthaFile) error {
 	return err
 }
 
-func writeAnthaFiles(files *compile.AnthaFiles, outDir string) error {
+func writeElementFiles(files *compile.ElementFiles, outDir string) error {
 	for _, file := range files.Files() {
 		outFile := filepath.Join(outDir, filepath.FromSlash(file.Name))
 		if err := os.MkdirAll(filepath.Dir(outFile), 0700); err != nil {
 			return err
 		}
 
-		if err := writeAnthaFile(outFile, file); err != nil {
+		if err := writeElementFile(outFile, file); err != nil {
 			return err
 		}
 	}
@@ -155,43 +157,38 @@ func writeAnthaFiles(files *compile.AnthaFiles, outDir string) error {
 	return nil
 }
 
-// processFile generates the corresponding go code for an antha file.
-func processFile(root *compile.AnthaRoot, filename, outdir string) error {
-	src, err := ioutil.ReadFile(filename)
+// processFile generates the corresponding go code for an antha element file.
+func processFile(root *compile.ElementRoot, filename string) (*compile.Element, error) {
+	src, err := ioutil.ReadFile(filename) // nolint
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	fileSet := token.NewFileSet() // per process FileSet
 	file, adjust, err := parse(fileSet, filename, src, false)
 	if err != nil {
-		return err
+		return nil, err
 	} else if adjust != nil {
-		return errNotAnthaFile
+		return nil, errNotElementFile
 	}
 
 	h := sha256.New()
 	if _, err := io.Copy(h, bytes.NewReader(src)); err != nil {
-		return err
+		return nil, err
 	}
 
-	antha := compile.NewAntha(root)
-	antha.SourceSHA256 = h.Sum(nil)
+	elem := compile.NewElement(root)
+	elem.SourceSHA256 = h.Sum(nil)
 
-	if err := antha.Transform(fileSet, file); err != nil {
-		return err
+	if err := elem.Process(fileSet, file); err != nil {
+		return nil, err
 	}
 
-	files, err := antha.Generate(fileSet, file)
-	if err != nil {
-		return err
-	}
-
-	return writeAnthaFiles(files, outdir)
+	return elem, nil
 }
 
 // parse parses src, which was read from filename,
-// as an Antha source file or statement list.
+// as an Antha element source file or statement list.
 func parse(fset *token.FileSet, filename string, src []byte, stdin bool) (*ast.File, func(orig, src []byte) []byte, error) {
 	// Try as whole source file.
 	file, err := parser.ParseFile(fset, filename, src, parserMode)
@@ -282,7 +279,7 @@ func matchSpace(orig []byte, src []byte) []byte {
 	_, src, _ = cutSpace(src)
 
 	var b bytes.Buffer
-	b.Write(before)
+	b.Write(before) // nolint
 	for len(src) > 0 {
 		line := src
 		if i := bytes.IndexByte(line, '\n'); i >= 0 {
@@ -291,11 +288,11 @@ func matchSpace(orig []byte, src []byte) []byte {
 			src = nil
 		}
 		if len(line) > 0 && line[0] != '\n' { // not blank
-			b.Write(indent) // nolint: errcheck
+			b.Write(indent) // nolint
 		}
-		b.Write(line)
+		b.Write(line) // nolint
 	}
-	b.Write(after) // nolint: errcheck
+	b.Write(after) // nolint
 
 	return b.Bytes()
 }

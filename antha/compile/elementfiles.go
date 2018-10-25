@@ -17,25 +17,3 @@ type ElementFile struct {
 func (f *ElementFile) NewReader() io.ReadCloser {
 	return ioutil.NopCloser(bytes.NewReader(f.Data))
 }
-
-// ElementFiles is a collection of ElementFiles
-type ElementFiles struct {
-	files []*ElementFile
-}
-
-// NewElementFiles returns a new collection of ElementFiles
-func NewElementFiles() *ElementFiles {
-	return &ElementFiles{}
-}
-
-// Files returns the files in the collection
-func (f *ElementFiles) Files() []*ElementFile {
-	return f.files
-}
-
-func (f *ElementFiles) addFile(name string, data []byte) {
-	f.files = append(f.files, &ElementFile{
-		Name: name,
-		Data: data,
-	})
-}

@@ -36,10 +36,10 @@ func (r *ElementRoot) addProtocolDirectory(protocolName, dir string) {
 	})
 }
 
-// copyGoFiles copies go files from protocol directory to output directory
-func (r *ElementRoot) copyGoFiles(files *ElementFiles) error {
+// copyGoFiles returns the files to copy to output directory
+func (r *ElementRoot) copyGoFiles() ([]*ElementFile, error) {
 	seen := make(map[string]bool)
-
+	var files []*ElementFile
 	for _, pdir := range r.protocolDirs {
 		if seen[pdir.Dir] {
 			continue
@@ -48,7 +48,7 @@ func (r *ElementRoot) copyGoFiles(files *ElementFiles) error {
 
 		fis, err := ioutil.ReadDir(pdir.Dir)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		for _, fi := range fis {
 			if fi.IsDir() {
@@ -60,14 +60,17 @@ func (r *ElementRoot) copyGoFiles(files *ElementFiles) error {
 
 			bs, err := ioutil.ReadFile(filepath.Join(pdir.Dir, fi.Name()))
 			if err != nil {
-				return err
+				return nil, err
 			}
 			filename := path.Join(pdir.ProtocolName, fi.Name())
-			files.addFile(filename, bs)
+			files = append(files, &ElementFile{
+				Name: filename,
+				Data: bs,
+			})
 		}
 	}
 
-	return nil
+	return files, nil
 }
 
 func (r *ElementRoot) generateLib() ([]byte, error) {
@@ -128,10 +131,9 @@ func GetComponents() (comps []component.Component, err error) {
 }
 
 // Generate generates additional files not stric
-func (r *ElementRoot) Generate() (*ElementFiles, error) {
-	files := NewElementFiles()
-
-	if err := r.copyGoFiles(files); err != nil {
+func (r *ElementRoot) Generate() ([]*ElementFile, error) {
+	files, err := r.copyGoFiles()
+	if err != nil {
 		return nil, err
 	}
 
@@ -140,7 +142,10 @@ func (r *ElementRoot) Generate() (*ElementFiles, error) {
 		return nil, err
 	}
 
-	files.addFile("_lib/lib.go", libBs)
+	files = append(files, &ElementFile{
+		Name: "_lib/lib.go",
+		Data: libBs,
+	})
 
 	return files, nil
 }

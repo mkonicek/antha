@@ -80,23 +80,18 @@ func runCompile(cmd *cobra.Command, args []string) error {
 		if err := filepath.Walk(path, func(path string, f os.FileInfo, err error) error {
 			if err != nil {
 				return err
-			}
-
-			if f.IsDir() {
+			} else if f.IsDir() {
 				return nil
-			}
-
-			if !isElementFile(f.Name()) {
+			} else if !isElementFile(f.Name()) {
 				return nil
-			}
-
-			// Collect errors processing errors
-			elem, err := processFile(root, path)
-			if err != nil {
+			} else if elem, err := processFile(root, path); err != nil {
+				// Collect errors processing errors
 				errs = append(errs, err)
 			} else if err := writeElementFiles(elem.Files, outdir); err != nil {
+				// Collect errors processing errors
 				errs = append(errs, err)
 			}
+
 			return nil
 		}); err != nil {
 			return err
@@ -142,8 +137,8 @@ func writeElementFile(outFile string, file *compile.ElementFile) error {
 	return err
 }
 
-func writeElementFiles(files *compile.ElementFiles, outDir string) error {
-	for _, file := range files.Files() {
+func writeElementFiles(files []*compile.ElementFile, outDir string) error {
+	for _, file := range files {
 		outFile := filepath.Join(outDir, filepath.FromSlash(file.Name))
 		if err := os.MkdirAll(filepath.Dir(outFile), 0700); err != nil {
 			return err

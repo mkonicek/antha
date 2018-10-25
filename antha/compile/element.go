@@ -214,7 +214,7 @@ type Element struct {
 	lineMap       map[int]int
 	transformedGo []byte
 
-	Files *ElementFiles
+	Files []*ElementFile
 }
 
 // NewElement creates a new antha pass
@@ -1122,7 +1122,7 @@ service Element {
 
 // generate returns files with slash names to complete antha element to go
 // transformation
-func (p *Element) generate() (*ElementFiles, error) {
+func (p *Element) generate() ([]*ElementFile, error) {
 	elementBs, err := p.generateElement()
 	if err != nil {
 		return nil, err
@@ -1143,11 +1143,16 @@ func (p *Element) generate() (*ElementFiles, error) {
 	modelName := path.Join(p.protocolName, modelPackage, modelFilename)
 	elementName := path.Join(p.protocolName, elementPackage, elementFilename)
 
-	files := NewElementFiles()
-	files.addFile(modelName, modelBs)
-	files.addFile(elementName, elementBs)
-
-	return files, nil
+	return []*ElementFile{
+		&ElementFile{
+			Name: modelName,
+			Data: modelBs,
+		},
+		&ElementFile{
+			Name: elementName,
+			Data: elementBs,
+		},
+	}, nil
 }
 
 func (p *Element) addUses(src *ast.File) {

@@ -18,7 +18,19 @@ import (
 var listElementDependencies = &cobra.Command{
 	Use:   "elementDependencies <files or directories>",
 	Short: "List antha element dependencies",
-	RunE:  runListElementDependencies,
+	Long: `List antha element dependencies
+
+To generate correct results, the value of outputPackage should match
+that used in "antha compile".
+
+By default, this command will show dependencies between import paths.  If you
+want to see how elements in one directory depend on elements in a different
+directory, use the "--byPath" option.
+
+If you want to see how elements are related in an arbitrary projected space,
+use the "--pathMatch" and "--pathReplace" options.
+`,
+	RunE: runListElementDependencies,
 }
 
 func runListElementDependencies(cmd *cobra.Command, args []string) error {
@@ -39,24 +51,16 @@ func runListElementDependencies(cmd *cobra.Command, args []string) error {
 		if err := filepath.Walk(path, func(path string, f os.FileInfo, err error) error {
 			if err != nil {
 				return err
-			}
-
-			if f.IsDir() {
+			} else if f.IsDir() {
 				return nil
-			}
-
-			if !isElementFile(f.Name()) {
+			} else if !isElementFile(f.Name()) {
 				return nil
-			}
-
-			elem, err := processFile(root, path)
-			if err != nil {
+			} else if elem, err := processFile(root, path); err != nil {
 				return err
+			} else {
+				elements = append(elements, elem)
+				return nil
 			}
-
-			elements = append(elements, elem)
-
-			return nil
 		}); err != nil {
 			return err
 		}
@@ -76,9 +80,8 @@ func runListElementDependencies(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	var convertTo map[string]string
+	convertTo := make(map[string]string)
 	if viper.GetBool("byPath") {
-		convertTo = make(map[string]string)
 		for _, elem := range elements {
 			info := elem.Info()
 			convertTo[info.ImportPath] = info.Path

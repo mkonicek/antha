@@ -1144,11 +1144,11 @@ func (p *Element) generate() ([]*ElementFile, error) {
 	elementName := path.Join(p.protocolName, elementPackage, elementFilename)
 
 	return []*ElementFile{
-		&ElementFile{
+		{
 			Name: modelName,
 			Data: modelBs,
 		},
-		&ElementFile{
+		{
 			Name: elementName,
 			Data: elementBs,
 		},

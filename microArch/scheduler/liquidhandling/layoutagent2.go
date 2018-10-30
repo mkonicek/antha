@@ -152,7 +152,7 @@ func getNameForID(pc []PlateChoice, id string) string {
 	return fmt.Sprintf("Output_plate_%s", id[0:6])
 }
 
-func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling.LHProperties, chain *IChain, plate_choices []PlateChoice, mapchoices map[string]string) (*LHRequest, []PlateChoice, map[string]string, error) {
+func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling.LHProperties, chain *wtype.IChain, plate_choices []PlateChoice, mapchoices map[string]string) (*LHRequest, []PlateChoice, map[string]string, error) {
 	// considering only plate assignments,
 	// we have three kinds of solution
 	// 1- ones going to a specific plate

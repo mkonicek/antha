@@ -56,7 +56,7 @@ type LHRequest struct {
 	PolicyManager         *LHPolicyManager
 	OutputOrder           []string
 	OutputIteratorFactory func(wtype.Addressable) wtype.AddressIterator `json:"-"`
-	InstructionChain      *IChain
+	InstructionChain      *wtype.IChain
 	TimeEstimate          float64
 	CarryVolume           wunit.Volume
 	InstructionSets       [][]*wtype.LHInstruction

@@ -836,7 +836,7 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		return err
 	} else {
 		//sort the instructions within each link of the instruction chain
-		ichain.sortInstructions(request.Options.OutputSort)
+		ichain.SortInstructions(request.Options.OutputSort)
 		request.InstructionChain = ichain
 		request.updateWithNewLHInstructions(ichain.GetOrderedLHInstructions())
 		request.OutputOrder = ichain.FlattenInstructionIDs()
@@ -857,7 +857,7 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	}
 
 	// assert that we must keep prompts and splits separate from mixes
-	if err := request.InstructionChain.assertInstructionsSeparate(); err != nil {
+	if err := request.InstructionChain.AssertInstructionsSeparate(); err != nil {
 		return err
 	}
 

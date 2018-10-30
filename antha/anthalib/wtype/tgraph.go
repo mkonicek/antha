@@ -1,14 +1,12 @@
-package liquidhandling
+package wtype
 
 import (
-	"github.com/pkg/errors"
-
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/graph"
+	"github.com/pkg/errors"
 )
 
-func MakeTGraph(inss []*wtype.LHInstruction) (tGraph, error) {
-	edges := make(map[*wtype.LHInstruction][]*wtype.LHInstruction, len(inss))
+func MakeTGraph(inss []*LHInstruction) (tGraph, error) {
+	edges := make(map[*LHInstruction][]*LHInstruction, len(inss))
 	rcm := resultCmpMap(inss)
 	ccm := cmpInsMap(inss)
 
@@ -24,8 +22,8 @@ func MakeTGraph(inss []*wtype.LHInstruction) (tGraph, error) {
 }
 
 type tGraph struct {
-	Nodes []*wtype.LHInstruction
-	Edges map[*wtype.LHInstruction][]*wtype.LHInstruction
+	Nodes []*LHInstruction
+	Edges map[*LHInstruction][]*LHInstruction
 }
 
 func (tg tGraph) NumNodes() int {
@@ -37,14 +35,14 @@ func (tg tGraph) Node(i int) graph.Node {
 }
 
 func (tg tGraph) NumOuts(n graph.Node) int {
-	return len(tg.Edges[n.(*wtype.LHInstruction)])
+	return len(tg.Edges[n.(*LHInstruction)])
 }
 
 func (tg tGraph) Out(n graph.Node, i int) graph.Node {
-	return graph.Node(tg.Edges[n.(*wtype.LHInstruction)][i])
+	return graph.Node(tg.Edges[n.(*LHInstruction)][i])
 }
 
-func (tg *tGraph) Add(n *wtype.LHInstruction, edges []*wtype.LHInstruction) {
+func (tg *tGraph) Add(n *LHInstruction, edges []*LHInstruction) {
 	// enforce uniqueness
 
 	if !uniqueIn(n, tg.Nodes) {
@@ -58,17 +56,17 @@ func (tg *tGraph) Add(n *wtype.LHInstruction, edges []*wtype.LHInstruction) {
 // for mixes this is 1:1
 // but prompts may be aggregated first
 // splits are more complex
-func resultCmpMap(inss []*wtype.LHInstruction) map[string]*wtype.LHInstruction {
-	res := make(map[string]*wtype.LHInstruction, len(inss))
+func resultCmpMap(inss []*LHInstruction) map[string]*LHInstruction {
+	res := make(map[string]*LHInstruction, len(inss))
 	for _, ins := range inss {
-		if ins.Type == wtype.LHIMIX {
+		if ins.Type == LHIMIX {
 			res[ins.Outputs[0].ID] = ins
-		} else if ins.Type == wtype.LHIPRM {
+		} else if ins.Type == LHIPRM {
 			// we use passthrough instead
 			for _, cmp := range ins.PassThrough {
 				res[cmp.ID] = ins
 			}
-		} else if ins.Type == wtype.LHISPL {
+		} else if ins.Type == LHISPL {
 			// Splits need to go after the use of result 0
 			// and before the use of result 1
 			res[ins.Outputs[1].ID] = ins
@@ -78,14 +76,14 @@ func resultCmpMap(inss []*wtype.LHInstruction) map[string]*wtype.LHInstruction {
 	return res
 }
 
-func cmpInsMap(inss []*wtype.LHInstruction) map[string]*wtype.LHInstruction {
-	res := make(map[string]*wtype.LHInstruction, len(inss))
+func cmpInsMap(inss []*LHInstruction) map[string]*LHInstruction {
+	res := make(map[string]*LHInstruction, len(inss))
 	for _, ins := range inss {
-		if ins.Type == wtype.LHIMIX {
+		if ins.Type == LHIMIX {
 			for _, c := range ins.Inputs {
 				res[c.ID] = ins
 			}
-		} else if ins.Type == wtype.LHIPRM {
+		} else if ins.Type == LHIPRM {
 			// we use passthrough instead
 			for ID := range ins.PassThrough {
 				res[ID] = ins
@@ -98,16 +96,16 @@ func cmpInsMap(inss []*wtype.LHInstruction) map[string]*wtype.LHInstruction {
 }
 
 // inss maps result (i.e. component) IDs to instructions
-func getEdges(n *wtype.LHInstruction, resultMap, cmpMap map[string]*wtype.LHInstruction) ([]*wtype.LHInstruction, error) {
-	ret := make([]*wtype.LHInstruction, 0, 1)
+func getEdges(n *LHInstruction, resultMap, cmpMap map[string]*LHInstruction) ([]*LHInstruction, error) {
+	ret := make([]*LHInstruction, 0, 1)
 
 	// don't make cycles containing split instructions
 
-	if n.Type == wtype.LHISPL {
+	if n.Type == LHISPL {
 		// cmpMap answers the question "which instruction *uses* this?"
 		cmp := n.Outputs[0]
 
-		var lhi *wtype.LHInstruction
+		var lhi *LHInstruction
 		var ok bool
 
 		lhi, ok = cmpMap[cmp.ID]
@@ -126,7 +124,7 @@ func getEdges(n *wtype.LHInstruction, resultMap, cmpMap map[string]*wtype.LHInst
 	for _, cmp := range n.Inputs {
 		// resultMap answers the question "which instruction *makes* this?"
 		// for samples we need to ask for the parent component
-		var lhi *wtype.LHInstruction
+		var lhi *LHInstruction
 		var ok bool
 		if cmp.IsSample() {
 			lhi, ok = resultMap[cmp.ParentID]
@@ -141,7 +139,7 @@ func getEdges(n *wtype.LHInstruction, resultMap, cmpMap map[string]*wtype.LHInst
 	return ret, nil
 }
 
-func uniqueIn(n *wtype.LHInstruction, s []*wtype.LHInstruction) bool {
+func uniqueIn(n *LHInstruction, s []*LHInstruction) bool {
 	for _, n2 := range s {
 		if n == n2 {
 			return false

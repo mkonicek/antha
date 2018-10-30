@@ -1,21 +1,52 @@
-package liquidhandling
+package wtype
 
 import (
-	"testing"
-
-	"github.com/antha-lang/antha/antha/anthalib/mixer"
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"testing"
 )
 
-func TestTGraph(t *testing.T) {
-	tIns := make([]*wtype.LHInstruction, 0, 10)
+func splitSample(l *Liquid, v wunit.Volume) (moving, remaining *Liquid) {
+	remaining = l.Dup()
 
-	cmpIn := wtype.NewLHComponent()
+	moving = sample(remaining, v)
+
+	remaining.Vol -= v.ConvertToString(remaining.Vunit)
+	remaining.ID = GetUUID()
+
+	return
+}
+
+// sample takes a sample of volume v from this liquid
+func sample(l *Liquid, v wunit.Volume) *Liquid {
+	ret := NewLHComponent()
+	//      ret.ID = l.ID
+	l.AddDaughterComponent(ret)
+	ret.ParentID = l.ID
+	ret.CName = l.Name()
+	ret.Type = l.Type
+	ret.Vol = v.RawValue()
+	ret.Vunit = v.Unit().PrefixedSymbol()
+	ret.Extra = l.GetExtra()
+	ret.SubComponents = l.SubComponents
+	ret.Smax = l.GetSmax()
+	ret.Visc = l.GetVisc()
+	if l.Conc > 0 && len(l.Cunit) > 0 {
+		ret.SetConcentration(wunit.NewConcentration(l.Conc, l.Cunit))
+	}
+
+	ret.SetSample(true)
+
+	return ret
+}
+
+func TestTGraph(t *testing.T) {
+	tIns := make([]*LHInstruction, 0, 10)
+
+	cmpIn := NewLHComponent()
 
 	for k := 0; k < 10; k++ {
-		ins := wtype.NewLHMixInstruction()
-		cmpOut := wtype.NewLHComponent()
+		ins := NewLHMixInstruction()
+		cmpOut := NewLHComponent()
 		ins.AddInput(cmpIn)
 		ins.AddOutput(cmpOut)
 		tIns = append(tIns, ins)
@@ -27,7 +58,7 @@ func TestTGraph(t *testing.T) {
 		t.Error(err)
 	}
 
-	arrEq := func(ar1 []*wtype.LHInstruction, ar2 []*wtype.LHInstruction) bool {
+	arrEq := func(ar1 []*LHInstruction, ar2 []*LHInstruction) bool {
 		if len(ar1) != len(ar2) {
 			return false
 		}
@@ -66,22 +97,22 @@ func TestTGraph(t *testing.T) {
 // before the use of their second - this is because they update the ID of their
 // input component
 func TestTGraphSplit(t *testing.T) {
-	tIns := make([]*wtype.LHInstruction, 0, 3)
+	tIns := make([]*LHInstruction, 0, 3)
 
-	cmpIn := wtype.NewLHComponent()
-	moving, remaining := mixer.SplitSample(cmpIn, wunit.NewVolume(100.0, "ul"))
+	cmpIn := NewLHComponent()
+	moving, remaining := splitSample(cmpIn, wunit.NewVolume(100.0, "ul"))
 
-	cmpOut := wtype.NewLHComponent()
+	cmpOut := NewLHComponent()
 
 	// mix
-	ins := wtype.NewLHMixInstruction()
+	ins := NewLHMixInstruction()
 
 	ins.AddInput(moving)
 	ins.AddOutput(cmpOut)
 	tIns = append(tIns, ins)
 
 	// split
-	ins = wtype.NewLHSplitInstruction()
+	ins = NewLHSplitInstruction()
 	ins.AddInput(cmpOut)
 
 	ins.AddOutput(moving)
@@ -91,10 +122,10 @@ func TestTGraphSplit(t *testing.T) {
 
 	// mix again
 
-	ins = wtype.NewLHMixInstruction()
+	ins = NewLHMixInstruction()
 
 	ins.AddInput(remaining)
-	ins.AddOutput(wtype.NewLHComponent())
+	ins.AddOutput(NewLHComponent())
 	tIns = append(tIns, ins)
 
 	tgraph, err := MakeTGraph(tIns)
@@ -102,7 +133,7 @@ func TestTGraphSplit(t *testing.T) {
 		t.Error(err)
 	}
 
-	arrEq := func(ar1 []*wtype.LHInstruction, ar2 []*wtype.LHInstruction) bool {
+	arrEq := func(ar1 []*LHInstruction, ar2 []*LHInstruction) bool {
 		if len(ar1) != len(ar2) {
 			return false
 		}

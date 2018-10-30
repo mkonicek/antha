@@ -53,7 +53,7 @@ type Connection struct {
 
 // Desc is the description of a workflow.
 type Desc struct {
-	Processes   map[string]Process `json:"processes"`
+	Processes   map[string]Process `json:"Processes"`
 	Connections []Connection       `json:"connections"`
 }
 

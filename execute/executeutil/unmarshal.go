@@ -4,12 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
-
 	"github.com/antha-lang/antha/execute"
 	"github.com/antha-lang/antha/utils"
 	"github.com/antha-lang/antha/workflow"
 	"github.com/antha-lang/antha/workflowtest"
+	"io/ioutil"
 )
 
 // A Bundle is a workflow with its inputs
@@ -17,6 +16,13 @@ type Bundle struct {
 	workflow.Desc
 	execute.RawParams
 	workflowtest.TestOpt
+	Version    string             `json:"version"`
+	Properties workflowProperties `json:"Properties"`
+}
+
+type workflowProperties struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }
 
 // UnmarshalAll attempts to read and parse all the file paths

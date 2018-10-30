@@ -26,16 +26,16 @@ var (
 //
 // Deprecated for github.com/antha-lang/antha/api/v1/WorkflowParameters.
 type RawParams struct {
-	Parameters map[string]map[string]json.RawMessage `json:"parameters"`
-	Config     *mixer.Opt                            `json:"config"`
+	Parameters map[string]map[string]json.RawMessage `json:"Parameters"`
+	Config     *mixer.Opt                            `json:"Config"`
 }
 
 // Params is the structure of parameter data for marshalling.
 //
 // Deprecated for github.com/antha-lang/antha/api/v1/WorkflowParameters.
 type Params struct {
-	Parameters map[string]map[string]interface{} `json:"parameters"`
-	Config     *mixer.Opt                        `json:"config"`
+	Parameters map[string]map[string]interface{} `json:"Parameters"`
+	Config     *mixer.Opt                        `json:"Config"`
 }
 
 func tryString(data []byte) string {

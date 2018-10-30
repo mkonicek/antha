@@ -1,9 +1,7 @@
-package liquidhandling
+package wtype
 
 import (
 	"testing"
-
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
 func TestIChain(t *testing.T) {
@@ -12,14 +10,14 @@ func TestIChain(t *testing.T) {
 	s := []string{"A", "B", "C", "D", "E", "F"}
 
 	for _, k := range s {
-		ins := wtype.NewLHMixInstruction()
+		ins := NewLHMixInstruction()
 
-		cmp := wtype.NewLHComponent()
+		cmp := NewLHComponent()
 
 		cmp.ID = k
 
 		ins.AddInput(cmp)
-		ins.AddOutput(wtype.NewLHComponent())
+		ins.AddOutput(NewLHComponent())
 		chain.Add(ins)
 	}
 }
@@ -28,11 +26,11 @@ func TestIChain2(t *testing.T) {
 
 	s := []string{"A", "B", "C", "D", "E", "F"}
 
-	cmps := make([]*wtype.Liquid, 0, 1)
+	cmps := make([]*Liquid, 0, 1)
 
 	for _, k := range s {
 
-		cmp := wtype.NewLHComponent()
+		cmp := NewLHComponent()
 
 		cmp.ID = k
 		cmps = append(cmps, cmp)
@@ -47,12 +45,12 @@ func TestIChain2(t *testing.T) {
 	}
 
 	for i, k := range cmps {
-		ins := wtype.NewLHMixInstruction()
+		ins := NewLHMixInstruction()
 		ins.AddInput(k)
 		if i != len(s)-1 {
 			ins.AddOutput(cmps[i+1])
 		} else {
-			ins.AddOutput(wtype.NewLHComponent())
+			ins.AddOutput(NewLHComponent())
 		}
 		chain.Add(ins)
 	}
@@ -63,11 +61,11 @@ func TestIChain3(t *testing.T) {
 
 	s := []string{"A", "B", "C", "D", "E", "F"}
 
-	cmps := make([]*wtype.Liquid, 0, 1)
+	cmps := make([]*Liquid, 0, 1)
 
 	for _, k := range s {
 
-		cmp := wtype.NewLHComponent()
+		cmp := NewLHComponent()
 
 		cmp.ID = k
 		cmps = append(cmps, cmp)
@@ -81,22 +79,22 @@ func TestIChain3(t *testing.T) {
 		}
 	}
 
-	cmp := wtype.NewLHComponent()
+	cmp := NewLHComponent()
 	cmp.ID = "Z"
 	cmp.AddParentComponent(cmps[2])
 	cmps = append(cmps, cmp)
 
-	cmp = wtype.NewLHComponent()
+	cmp = NewLHComponent()
 	cmp.ID = "Y"
 	cmps = append(cmps, cmp)
 
 	for i, k := range cmps {
-		ins := wtype.NewLHMixInstruction()
+		ins := NewLHMixInstruction()
 		ins.AddInput(k)
 		if i != len(s)-1 && cmp.ID != "Z" && cmp.ID != "Y" {
 			ins.AddOutput(cmps[i+1])
 		} else {
-			ins.AddOutput(wtype.NewLHComponent())
+			ins.AddOutput(NewLHComponent())
 		}
 		chain.Add(ins)
 	}

@@ -20,15 +20,17 @@ var listElementDependencies = &cobra.Command{
 	Short: "List antha element dependencies",
 	Long: `List antha element dependencies
 
+This command shows dependencies between elements. By default, elements will be
+named by their import path. However, if you want to see how elements in one
+directory depend on elements in a different directory, use the "--byPath"
+option, which will name elements according to their path within the filesystem.
+
 To generate correct results, the value of outputPackage should match
 that used in "antha compile".
 
-By default, this command will show dependencies between import paths.  If you
-want to see how elements in one directory depend on elements in a different
-directory, use the "--byPath" option.
-
-If you want to see how elements are related in an arbitrary projected space,
-use the "--pathMatch" and "--pathReplace" options.
+To have more control over how elements are shown, you can use the "--nameMatch"
+and "--nameReplace" options to apply a regular expression match and replace to
+the element name.
 `,
 	RunE: runListElementDependencies,
 }
@@ -67,11 +69,11 @@ func runListElementDependencies(cmd *cobra.Command, args []string) error {
 	}
 
 	var pat *regexp.Regexp
-	match := viper.GetString("pathMatch")
-	replace := viper.GetString("pathReplace")
+	match := viper.GetString("nameMatch")
+	replace := viper.GetString("nameReplace")
 	if len(match) > 0 || len(replace) > 0 {
 		if len(match) == 0 || len(replace) == 0 {
-			return errors.New("both pathMatch and pathReplace must be set")
+			return errors.New("both nameMatch and nameReplace must be set")
 		}
 		var err error
 		pat, err = regexp.Compile(match)
@@ -153,7 +155,7 @@ func init() {
 	listCmd.AddCommand(c)
 	flags := c.Flags()
 	flags.String("outputPackage", "", "base package name for generated files")
-	flags.Bool("byPath", false, "if set, show dependencies on file paths instead of import paths")
-	flags.String("pathMatch", "", "regex substitution to apply to paths, e.g., prefix(\\w+)")
-	flags.String("pathReplace", "", "regex substitution to apply to paths, e.g., $1")
+	flags.Bool("byPath", false, "if set, show element names as filesystem paths instead of import paths")
+	flags.String("nameMatch", "", "regex substitution to apply to element names, e.g., prefix(\\w+)")
+	flags.String("nameReplace", "", "regex substitution to apply to element names, e.g., $1")
 }

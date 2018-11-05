@@ -39,8 +39,8 @@ type PlateForSerializing struct {
 }
 
 // LHPlate returns an initialized, empty, LHPlate of the type corresponding to this PlateForSerializing
-func (pt PlateForSerializing) LHPlate() *wtype.LHPlate {
-	newWellShape := wtype.NewShape(pt.WellShape, lunit, pt.WellH, pt.WellW, pt.WellD)
+func (pt PlateForSerializing) LHPlate() *wtype.Plate {
+	newWellShape := wtype.NewShape(wtype.ShapeTypeID(pt.WellShape), lunit, pt.WellH, pt.WellW, pt.WellD)
 
 	newWelltype := wtype.NewLHWell(vunit, pt.MaxVol, pt.MinVol, newWellShape, pt.BottomType, pt.WellX, pt.WellY, pt.WellZ, pt.BottomH, lunit)
 

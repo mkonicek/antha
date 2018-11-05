@@ -244,22 +244,31 @@ func (self *LHTipbox) GetSize() Coordinates {
 }
 
 func (self *LHTipbox) GetTipBounds() BBox {
-	return BBox{
-		self.Bounds.GetPosition().Add(Coordinates{self.TipXStart, self.TipYStart, self.TipZStart}),
-		Coordinates{self.TipXOffset * float64(self.NCols()), self.TipYOffset * float64(self.NRows()), self.Tiptype.GetSize().Z},
+	tipSize := self.Tiptype.GetSize()
+
+	pos := self.Bounds.GetPosition().Add(Coordinates{
+		X: self.TipXStart - 0.5*tipSize.X,
+		Y: self.TipYStart - 0.5*tipSize.Y,
+		Z: self.TipZStart})
+
+	size := Coordinates{
+		X: self.TipXOffset*float64(self.NCols()-1) + tipSize.X,
+		Y: self.TipYOffset*float64(self.NRows()-1) + tipSize.Y,
+		Z: tipSize.Z,
 	}
+	return BBox{pos, size}
 }
 
 func (self *LHTipbox) GetBoxIntersections(box BBox) []LHObject {
 	//relative box
-	box.SetPosition(box.GetPosition().Subtract(OriginOf(self)))
+	relBox := NewBBox(box.GetPosition().Subtract(OriginOf(self)), box.GetSize())
 	ret := []LHObject{}
-	if self.Bounds.IntersectsBox(box) {
+	if self.Bounds.IntersectsBox(*relBox) {
 		ret = append(ret, self)
 	}
 
 	//if it's possible the this box might intersect with some tips
-	if self.GetTipBounds().IntersectsBox(box) {
+	if self.GetTipBounds().IntersectsBox(*relBox) {
 		for _, tiprow := range self.Tips {
 			for _, tip := range tiprow {
 				if tip != nil {
@@ -322,22 +331,17 @@ func trimToMask(wells []string, mask []bool) []string {
 
 func (self *LHTipbox) GetPointIntersections(point Coordinates) []LHObject {
 	//relative point
-	point = point.Subtract(OriginOf(self))
+	relPoint := point.Subtract(OriginOf(self))
 	ret := []LHObject{}
-	if self.Bounds.IntersectsPoint(point) {
+	if self.Bounds.IntersectsPoint(relPoint) {
 		ret = append(ret, self)
 	}
 
 	//if it's possible the this point might intersect with some tips
-	if self.GetTipBounds().IntersectsPoint(point) {
+	if self.GetTipBounds().IntersectsPoint(relPoint) {
 		for _, tiprow := range self.Tips {
 			for _, tip := range tiprow {
-				if tip != nil {
-					c := tip.GetPointIntersections(point)
-					if c != nil {
-						ret = append(ret, c...)
-					}
-				}
+				ret = append(ret, tip.GetPointIntersections(point)...)
 			}
 		}
 	}
@@ -413,9 +417,10 @@ func (tb *LHTipbox) GetChildByAddress(c WellCoords) LHObject {
 func (tb *LHTipbox) CoordsToWellCoords(r Coordinates) (WellCoords, Coordinates) {
 	//get relative Coordinates
 	rel := r.Subtract(tb.GetPosition())
+	tipSize := tb.Tiptype.GetSize()
 	wc := WellCoords{
-		int(math.Floor(((rel.X - tb.TipXStart) / tb.TipXOffset))), // + 0.5)), Don't have to add .5 because
-		int(math.Floor(((rel.Y - tb.TipYStart) / tb.TipYOffset))), // + 0.5)), TipX/YStart is to TL corner, not center
+		int(math.Floor(((rel.X - tb.TipXStart + 0.5*tipSize.X) / tb.TipXOffset))),
+		int(math.Floor(((rel.Y - tb.TipYStart + 0.5*tipSize.Y) / tb.TipYOffset))),
 	}
 	if wc.X < 0 {
 		wc.X = 0
@@ -448,8 +453,8 @@ func (tb *LHTipbox) WellCoordsToCoords(wc WellCoords, r WellReference) (Coordina
 	}
 
 	return tb.GetPosition().Add(Coordinates{
-		tb.TipXStart + (float64(wc.X)+0.5)*tb.TipXOffset,
-		tb.TipYStart + (float64(wc.Y)+0.5)*tb.TipYOffset,
+		tb.TipXStart + float64(wc.X)*tb.TipXOffset,
+		tb.TipYStart + float64(wc.Y)*tb.TipYOffset,
 		z}), true
 }
 
@@ -499,7 +504,7 @@ func (tb *LHTipbox) PutTip(c WellCoords, tip *LHTip) bool {
 */
 
 // find tips that fit the pattern and return in the same format
-func (tb *LHTipbox) GetTipsMasked(mask []bool, ori int, canTrim bool) ([]string, error) {
+func (tb *LHTipbox) GetTipsMasked(mask []bool, ori ChannelOrientation, canTrim bool) ([]string, error) {
 	possiblyTrimmedMask := mask
 
 	if canTrim {
@@ -533,7 +538,7 @@ func (tb *LHTipbox) GetTipsMasked(mask []bool, ori int, canTrim bool) ([]string,
 	return []string{}, fmt.Errorf("Not found or unknown orientation")
 }
 
-func checkLen(mask []bool, ori int, tb *LHTipbox) error {
+func checkLen(mask []bool, ori ChannelOrientation, tb *LHTipbox) error {
 	if ori == LHHChannel {
 		if len(mask) != tb.NCols() {
 			return fmt.Errorf("Error: CanTrim=false only applies if mask length is identical to tipbox block size")
@@ -578,7 +583,7 @@ func inflateMask(mask []bool, offset, size int) []bool {
 	return r
 }
 
-func maskToWellCoords(mask []bool, offset, ori int) []string {
+func maskToWellCoords(mask []bool, offset int, ori ChannelOrientation) []string {
 	wc := make([]WellCoords, len(mask))
 
 	for i := 0; i < len(mask); i++ {
@@ -608,7 +613,7 @@ func maskToWellCoords(mask []bool, offset, ori int) []string {
 	return r
 }
 
-func (tb *LHTipbox) searchCleanTips(offset int, mask []bool, ori int) []string {
+func (tb *LHTipbox) searchCleanTips(offset int, mask []bool, ori ChannelOrientation) []string {
 	r := make([]string, 0, 1)
 
 	if ori == LHVChannel {
@@ -634,7 +639,7 @@ func (tb *LHTipbox) searchCleanTips(offset int, mask []bool, ori int) []string {
 }
 
 // fails iff for true mask[i] there is no corresponding clean tip
-func (tb *LHTipbox) hasCleanTips(offset int, mask []bool, ori int) bool {
+func (tb *LHTipbox) hasCleanTips(offset int, mask []bool, ori ChannelOrientation) bool {
 	if ori == LHVChannel {
 		for i := 0; i < len(mask); i++ {
 			if mask[i] && (tb.Tips[offset][i] == nil || tb.Tips[offset][i].Dirty) {
@@ -657,7 +662,7 @@ func (tb *LHTipbox) hasCleanTips(offset int, mask []bool, ori int) bool {
 }
 
 // deprecated shortly
-func (tb *LHTipbox) GetTips(mirror bool, multi, orient int) []string {
+func (tb *LHTipbox) GetTips(mirror bool, multi int, orient ChannelOrientation) []string {
 	// this removes the tips as well
 	var ret []string = nil
 	if orient == LHHChannel {
@@ -749,8 +754,8 @@ func initialize_tips(tipbox *LHTipbox, tiptype *LHTip) *LHTipbox {
 	nr := tipbox.Nrows
 	nc := tipbox.Ncols
 	//make sure tips are in the center of the address
-	x_off := (tipbox.TipXOffset - tiptype.GetSize().X) / 2.
-	y_off := (tipbox.TipYOffset - tiptype.GetSize().Y) / 2.
+	x_off := -tiptype.GetSize().X / 2.
+	y_off := -tiptype.GetSize().Y / 2.
 	for i := 0; i < nc; i++ {
 		for j := 0; j < nr; j++ {
 			tipbox.Tips[i][j] = tiptype.Dup()

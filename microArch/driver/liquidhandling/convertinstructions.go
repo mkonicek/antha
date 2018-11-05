@@ -40,70 +40,44 @@ import (
 //	etc.
 //
 
-func ConvertInstructions(ctx context.Context, inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool, policy *wtype.LHPolicyRuleSet) (insOut []*TransferInstruction, robotOut *LHProperties, err error) {
-	// again again again we dup the robot
-
-	if multi != 1 {
-		rbt := robot.DupKeepIDs()
-
-		tfrs, err := convertInstructions(inssIn, rbt, carryvol, channelprms, multi, legacyVolume)
-
-		if err != nil {
-			return []*TransferInstruction{}, robot, err
-		}
-
-		// check if we actually generate any multichannel stuff here
-
-		mcHere, err := hasMCB(ctx, tfrs, rbt, policy)
-
-		if err != nil {
-			return []*TransferInstruction{}, robot, err
-		}
-
-		// if there's no multichannel here require only single channeling
-		// this is to make behaviour in regard of sources, atomic mixes
-		// correct
-		if !mcHere {
-			multi = 1
-		}
+func ConvertInstructions(ctx context.Context, inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool, policy *wtype.LHPolicyRuleSet) ([]*TransferInstruction, error) {
+	// we call convertInstructions twice because
+	// 1) calling convertInstructions with multi = 8 when there are no actual multichannel instructions causes
+	//    undesirable source volume selection, see tests "TestExecutionPlanning/single_channel_well_use", and
+	//    "TestExecutionPlanning/single_channel_auto_allocation"
+	// 2) convertInstructions makes changes to robot, meaning that it must be called exactly once with the the copy of robot passed to the function
+	if transfers, err := convertInstructions(inssIn, robot.DupKeepIDs(), carryvol, channelprms, multi, legacyVolume); err != nil {
+		return nil, err
+	} else if hasMCB, err := hasMultiChannelBlock(ctx, transfers, robot, policy); err != nil {
+		return nil, err
+	} else if hasMCB {
+		return convertInstructions(inssIn, robot, carryvol, channelprms, multi, legacyVolume)
+	} else {
+		return convertInstructions(inssIn, robot, carryvol, channelprms, 1, legacyVolume)
 	}
-
-	tfrs, err := convertInstructions(inssIn, robot, carryvol, channelprms, multi, legacyVolume)
-
-	if err != nil {
-		return []*TransferInstruction{}, robot, err
-	}
-
-	return tfrs, robot, nil
 }
 
-func hasMCB(ctx context.Context, tfrs []*TransferInstruction, rbt *LHProperties, policy *wtype.LHPolicyRuleSet) (bool, error) {
-	hasMulti := false
-
+func hasMultiChannelBlock(ctx context.Context, tfrs []*TransferInstruction, rbt *LHProperties, policy *wtype.LHPolicyRuleSet) (bool, error) {
 	for _, tfr := range tfrs {
-		instrx, err := tfr.Generate(ctx, policy, rbt)
+		instrx, err := tfr.Dup().Generate(ctx, policy, rbt)
 
 		if err != nil {
 			return false, err
 		}
 
 		for _, ins := range instrx {
-			if ins.InstructionType() == MCB {
-				hasMulti = true
-				break
+			if ins.Type() == MCB {
+				return true, nil
 			}
-		}
-
-		if hasMulti {
-			break
 		}
 	}
 
-	return hasMulti, nil
+	return false, nil
 }
 
-func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool) (insOut []*TransferInstruction, err error) {
-	insOut = make([]*TransferInstruction, 0, 1)
+func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool) ([]*TransferInstruction, error) {
+
+	insOut := make([]*TransferInstruction, 0, 1)
 
 	// TODO --> iterator?
 	var horiz bool
@@ -118,9 +92,12 @@ func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 		l = inssIn.MaxLen()
 	}
 
+	//make lists of components to attempt to transfer simultaneously
+	var componentsToMove [][]*wtype.Liquid
+	var instructionsToUse []LHIVector
 	for i := 0; i < l; i++ {
 		var inssToUse LHIVector
-		var cmps []*wtype.LHComponent
+		var cmps []*wtype.Liquid
 		if horiz {
 			if inssIn[i] == nil {
 				continue
@@ -150,22 +127,36 @@ func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 			continue
 		}
 
-		orientation := wtype.LHVChannel
-		independent := false
+		componentsToMove = append(componentsToMove, cmps)
+		instructionsToUse = append(instructionsToUse, inssToUse)
+	}
 
-		if channelprms != nil {
-			orientation = channelprms.Orientation
-			independent = channelprms.Independent
-		}
+	orientation := wtype.LHVChannel
+	independent := false
 
-		parallelTransfers, err := robot.GetComponents(GetComponentsOptions{Cmps: cmps, Carryvol: carryvol, Ori: orientation, Multi: multi, Independent: independent, LegacyVolume: legacyVolume})
+	if channelprms != nil {
+		orientation = channelprms.Orientation
+		independent = channelprms.Independent
+	}
+
+	for i := 0; i < len(componentsToMove); i++ {
+
+		parallelTransfers, err := robot.GetComponents(
+			GetComponentsOptions{
+				Cmps:         componentsToMove[i],
+				Carryvol:     carryvol,
+				Ori:          orientation,
+				Multi:        multi,
+				Independent:  independent,
+				LegacyVolume: legacyVolume,
+			})
 
 		if err != nil {
 			return nil, err
 		}
 
 		for _, t := range parallelTransfers.Transfers {
-			transfers, err := makeTransfers(t, cmps, robot, inssToUse, carryvol)
+			transfers, err := makeTransfers(t, componentsToMove[i], robot, instructionsToUse[i], carryvol)
 
 			if err != nil {
 				return nil, err
@@ -179,7 +170,7 @@ func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 	return insOut, nil
 }
 
-func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent, robot *LHProperties, inssIn []*wtype.LHInstruction, carryvol wunit.Volume) ([]*TransferInstruction, error) {
+func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.Liquid, robot *LHProperties, inssIn []*wtype.LHInstruction, carryvol wunit.Volume) ([]*TransferInstruction, error) {
 	fromPlateIDs := parallelTransfer.PlateIDs
 	fromWells := parallelTransfer.WellCoords
 	vols := parallelTransfer.Vols
@@ -312,8 +303,8 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 		wellTo.WContents.Loc = wtype.IDOf(wellTo.Plate) + ":" + wellTo.Crds.FormatA1()
 
 		// make sure the wellTo gets the right ID (ultimately)
-		cmpFrom.ReplaceDaughterID(wellTo.WContents.ID, inssIn[ci].Results[0].ID)
-		wellTo.WContents.ID = inssIn[ci].Results[0].ID
+		cmpFrom.ReplaceDaughterID(wellTo.WContents.ID, inssIn[ci].Outputs[0].ID)
+		wellTo.WContents.ID = inssIn[ci].Outputs[0].ID
 		wellTo.WContents.DeclareInstance()
 		//fmt.Println("ADDED :", cmpFrom.CName, " ", cmpFrom.Vol, " TO ", dstPlate.ID, " ", wt[ci])
 	}

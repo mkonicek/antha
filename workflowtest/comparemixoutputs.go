@@ -63,7 +63,7 @@ type ComparisonResult struct {
 type outputMap map[string][]componentInfo
 
 // CompareMixOutputs compares mix outputs
-func CompareMixOutputs(want, got map[string]*wtype.LHPlate, opts ComparisonMode) ComparisonResult {
+func CompareMixOutputs(want, got map[string]*wtype.Plate, opts ComparisonMode) ComparisonResult {
 	// do we have the same number of things coming out at the
 	// same volumes or whatever
 
@@ -127,7 +127,7 @@ func compareOutputMaps(outputMapWant, outputMapGot outputMap) ComparisonResult {
 		}
 	}
 
-	for _, key := range filterOutSeen(gotKeys, wantKeys) {
+	for _, key := range filterOutSeen(wantKeys, gotKeys) {
 		errors = append(errors, fmt.Errorf("Extra output components: %s %v", key, outputMapGot[key]))
 	}
 
@@ -136,13 +136,6 @@ func compareOutputMaps(outputMapWant, outputMapGot outputMap) ComparisonResult {
 
 func compareComponentInfo(cname string, cpWant, cpGot []componentInfo) []error {
 	errs := make([]error, 0, len(cpWant))
-
-	fmt.Println("WANT WANT WANT ")
-	fmt.Println(cpWant)
-	fmt.Println("---- ---- ---- ")
-	fmt.Println("GOT GOT GOT GOT")
-	fmt.Println(cpGot)
-	fmt.Println("--- --- --- ---")
 
 	missing, extra := missingExtra(cpWant, cpGot)
 
@@ -167,8 +160,6 @@ func match(cp componentInfo, cpArr []componentInfo) bool {
 }
 
 func missingExtra(cpWant, cpGot []componentInfo) (missing, extra []componentInfo) {
-	fmt.Println("TRY WANT: ", len(cpWant))
-	fmt.Println("TRY GOTT: ", len(cpGot))
 	for _, cp := range cpWant {
 		if !match(cp, cpGot) {
 			missing = append(missing, cp)
@@ -184,7 +175,7 @@ func missingExtra(cpWant, cpGot []componentInfo) (missing, extra []componentInfo
 	return
 }
 
-func getOutputMap(res map[string]*wtype.LHPlate, opts ComparisonMode) outputMap {
+func getOutputMap(res map[string]*wtype.Plate, opts ComparisonMode) outputMap {
 	outputMap := make(map[string][]componentInfo)
 	instM := make(map[string]int)
 
@@ -236,7 +227,11 @@ func getComponentInfo(wellIn *wtype.LHWell, positionIn, plateNameIn string, opts
 	}
 
 	if opts&CompareVolumes != 0 {
-		volume = wellIn.CurrentVolume().ToString()
+		if volumeInUl, err := wellIn.CurrentVolume().InStringUnit("ul"); err != nil {
+			panic(err) //this should never happen with volumes as all units are compatible
+		} else {
+			volume = volumeInUl.ToString()
+		}
 	}
 
 	if opts&ComparePlateNames != 0 {

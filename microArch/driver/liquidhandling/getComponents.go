@@ -1,6 +1,6 @@
 package liquidhandling
 
-// func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit.Volume, ori, multi int, independent, legacyVolume bool) (plateIDs, wellCoords [][]string, vols [][]wunit.Volume, err error)
+// func (lhp *LHProperties) GetComponents(cmps []*wtype.Liquid, carryvol wunit.Volume, ori, multi int, independent, legacyVolume bool) (plateIDs, wellCoords [][]string, vols [][]wunit.Volume, err error)
 
 import (
 	"fmt"
@@ -32,7 +32,7 @@ func (h ComponentVolumeHash) Dup() ComponentVolumeHash {
 type GetComponentsOptions struct {
 	Cmps            wtype.ComponentVector
 	Carryvol        wunit.Volume
-	Ori             int
+	Ori             wtype.ChannelOrientation
 	Multi           int
 	Independent     bool
 	LegacyVolume    bool
@@ -68,7 +68,7 @@ func matchToParallelTransfer(m wtype.Match) ParallelTransfer {
 }
 
 // returns a vector iterator for a plate given the multichannel capabilites of the head (ori, multi)
-func getPlateIterator(lhp *wtype.LHPlate, ori, multi int) wtype.AddressSliceIterator {
+func getPlateIterator(lhp *wtype.Plate, ori wtype.ChannelOrientation, multi int) wtype.AddressSliceIterator {
 	if ori == wtype.LHVChannel {
 		//it = NewColVectorIterator(lhp, multi)
 
@@ -100,7 +100,7 @@ func getPlateIterator(lhp *wtype.LHPlate, ori, multi int) wtype.AddressSliceIter
 	}
 }
 
-func (lhp *LHProperties) GetSourcesFor(cmps wtype.ComponentVector, ori, multi int, minPossibleVolume wunit.Volume, ignoreInstances bool) []wtype.ComponentVector {
+func (lhp *LHProperties) GetSourcesFor(cmps wtype.ComponentVector, ori wtype.ChannelOrientation, multi int, minPossibleVolume wunit.Volume, ignoreInstances bool) []wtype.ComponentVector {
 	ret := make([]wtype.ComponentVector, 0, 1)
 
 	for _, ipref := range lhp.OrderedMergedPlatePrefs() {
@@ -197,8 +197,8 @@ func collateDifference(a, b, c map[string]wunit.Volume) string {
 
 		v := c[k]
 
-		if v.LessThanFloat(0.0) {
-			v.M(-1.0)
+		if v.RawValue() < 0.0 {
+			v.MultiplyBy(-1.0)
 			s += fmt.Sprintf("%s - missing %s; ", k, v.ToString())
 		}
 	}
@@ -251,7 +251,7 @@ func cmpVecsEqual(v1, v2 wtype.ComponentVector) bool {
 	return true
 }
 
-func cmpsEqual(c1, c2 *wtype.LHComponent) bool {
+func cmpsEqual(c1, c2 *wtype.Liquid) bool {
 	return c1.ID == c2.ID && c1.Vol == c2.Vol
 }
 
@@ -355,7 +355,7 @@ func makeMatchSafe(dst wtype.ComponentVector, match wtype.Match, mpv wunit.Volum
 				mpv.Subtract(wunit.NewVolume(checkVol, dst[i].Vunit))
 				match.Vols[i].Subtract(mpv)
 
-				if match.Vols[i].LessThanFloat(0.0) {
+				if match.Vols[i].RawValue() < 0.0 {
 					panic(fmt.Sprintf("Serious volume issue -- try a manual plate layout with some additional volume for %s", dst[i].CName))
 				}
 			}
@@ -369,7 +369,8 @@ func updateDests(dst wtype.ComponentVector, match wtype.Match) wtype.ComponentVe
 	for i := 0; i < len(match.M); i++ {
 		if match.M[i] != -1 {
 			dst[i].Vol -= match.Vols[i].ConvertToString(dst[i].Vunit)
-			if dst[i].Vol < 0.0001 {
+
+			if dst[i].Volume().MustInStringUnit("ul").RawValue() < 0.0001 {
 				dst[i].Vol = 0.0
 			}
 		}

@@ -9,7 +9,19 @@ import (
 )
 
 func GetLiquidHandlerForTest(ctx context.Context) *Liquidhandler {
+	return Init(makeGilson(ctx))
+}
+
+func GetIndependentLiquidHandlerForTest(ctx context.Context) *Liquidhandler {
 	gilson := makeGilson(ctx)
+	for _, head := range gilson.Heads {
+		head.Params.Independent = true
+	}
+
+	for _, adaptor := range gilson.Adaptors {
+		adaptor.Params.Independent = true
+	}
+
 	return Init(gilson)
 }
 
@@ -65,7 +77,7 @@ func TestDeckSpace2(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if err := lh.Properties.AddPlate(lh.Properties.Input_preferences[i], plate); err != nil {
+		if err := lh.Properties.AddPlateTo(lh.Properties.Input_preferences[i], plate); err != nil {
 			t.Fatalf("position %s is full, should be empty", lh.Properties.Input_preferences[i])
 		}
 	}
@@ -75,7 +87,7 @@ func TestDeckSpace2(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = lh.Properties.AddPlate(lh.Properties.Input_preferences[0], plate)
+	err = lh.Properties.AddPlateTo(lh.Properties.Input_preferences[0], plate)
 	if e, f := "1 (LH_ERR_NO_DECK_SPACE) : insufficient deck space to fit all required items; this may be due to constraints : Trying to add plate to full position position_4", err.Error(); e != f {
 		t.Fatalf("Expected error %q found %q", e, f)
 	}

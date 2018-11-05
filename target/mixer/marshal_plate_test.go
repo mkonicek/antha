@@ -10,7 +10,7 @@ import (
 	"github.com/antha-lang/antha/inventory/testinventory"
 )
 
-func makeTestPlate(ctx context.Context, in *wtype.LHPlate) *wtype.LHPlate {
+func makeTestPlate(ctx context.Context, in *wtype.Plate) *wtype.Plate {
 	out, err := inventory.NewPlate(ctx, in.Type)
 	if err != nil {
 		panic(err)
@@ -34,7 +34,7 @@ func TestMarshalPlateCSV(t *testing.T) {
 	ctx := testinventory.NewContext(context.Background())
 
 	type testCase struct {
-		Plate    *wtype.LHPlate
+		Plate    *wtype.Plate
 		Expected []byte
 	}
 
@@ -44,15 +44,15 @@ func TestMarshalPlateCSV(t *testing.T) {
 				`
 pcrplate_with_cooler,Input_plate_1,LiquidType,Vol,Vol Unit,Conc,Conc Unit
 A1,water,water,50,ul,0,g/l
-A4,tea,water,50,ul,10,mM/l
+A4,tea,water,50,ul,10,mMol/l
 A5,milk,water,100,ul,10,g/l
 `),
-			Plate: makeTestPlate(ctx, &wtype.LHPlate{
+			Plate: makeTestPlate(ctx, &wtype.Plate{
 				PlateName: "Input_plate_1",
 				Type:      "pcrplate_with_cooler",
 				Wellcoords: map[string]*wtype.LHWell{
 					"A1": {
-						WContents: &wtype.LHComponent{
+						WContents: &wtype.Liquid{
 							CName: "water",
 							Type:  wtype.LTWater,
 							Vol:   50.0,
@@ -62,17 +62,17 @@ A5,milk,water,100,ul,10,g/l
 						},
 					},
 					"A4": {
-						WContents: &wtype.LHComponent{
+						WContents: &wtype.Liquid{
 							CName: "tea",
 							Type:  wtype.LTWater,
 							Vol:   50.0,
 							Vunit: "ul",
 							Conc:  10,
-							Cunit: "mM/l",
+							Cunit: "mMol/l",
 						},
 					},
 					"A5": {
-						WContents: &wtype.LHComponent{
+						WContents: &wtype.Liquid{
 							CName: "milk",
 							Type:  wtype.LTWater,
 							Vol:   100.0,
@@ -91,12 +91,12 @@ pcrplate_skirted_riser40,Input_plate_1,LiquidType,Vol,Vol Unit,Conc,Conc Unit
 A1,water,water,140.5,ul,0,g/l
 C1,neb5compcells,culture,20.5,ul,0,g/l
 `),
-			Plate: makeTestPlate(ctx, &wtype.LHPlate{
+			Plate: makeTestPlate(ctx, &wtype.Plate{
 				PlateName: "Input_plate_1",
 				Type:      "pcrplate_skirted_riser40",
 				Wellcoords: map[string]*wtype.LHWell{
 					"A1": {
-						WContents: &wtype.LHComponent{
+						WContents: &wtype.Liquid{
 							CName: "water",
 							Type:  wtype.LTWater,
 							Vol:   140.5,
@@ -106,7 +106,7 @@ C1,neb5compcells,culture,20.5,ul,0,g/l
 						},
 					},
 					"C1": {
-						WContents: &wtype.LHComponent{
+						WContents: &wtype.Liquid{
 							CName: "neb5compcells",
 							Type:  wtype.LTCulture,
 							Vol:   20.5,

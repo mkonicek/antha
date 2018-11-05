@@ -9,7 +9,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
-func getComponentWithNameVolume(name string, volume float64) *wtype.LHComponent {
+func getComponentWithNameVolume(name string, volume float64) *wtype.Liquid {
 	c := wtype.NewLHComponent()
 	c.CName = name
 	c.Vol = volume
@@ -28,12 +28,12 @@ func TestFixVolumes(t *testing.T) {
 	c3.DeclareInstance()
 
 	ins := wtype.NewLHMixInstruction()
-	ins.Components = []*wtype.LHComponent{c1, c2}
-	ins.AddResult(c3)
+	ins.Inputs = []*wtype.Liquid{c1, c2}
+	ins.AddOutput(c3)
 
 	req.LHInstructions[ins.ID] = ins
 
-	ic := &IChain{
+	ic := &wtype.IChain{
 		Parent: nil,
 		Child:  nil,
 		Values: []*wtype.LHInstruction{ins},
@@ -55,16 +55,16 @@ func TestFixVolumes(t *testing.T) {
 			t.Errorf(err.Error())
 		}
 		c3.Vol = 100.0
-		ins.Components = []*wtype.LHComponent{smp}
+		ins.Inputs = []*wtype.Liquid{smp}
 		res := getComponentWithNameVolume("water+milk", 15.0)
-		res.ParentID = ins.Components[0].ID
+		res.ParentID = ins.Inputs[0].ID
 		res.DeclareInstance()
-		ins.AddResult(res)
+		ins.AddOutput(res)
 		req.LHInstructions[ins.ID] = ins
 		inss = append(inss, ins)
 	}
 
-	ic.Child = &IChain{Parent: ic, Child: nil, Values: inss, Depth: 1}
+	ic.Child = &wtype.IChain{Parent: ic, Child: nil, Values: inss, Depth: 1}
 
 	// try fixing the volumes
 
@@ -78,8 +78,8 @@ func TestFixVolumes(t *testing.T) {
 
 	mix1 := req.InstructionChain.Values[0]
 
-	if mix1.Results[0].Vol != 155.0 {
-		t.Errorf(fmt.Sprintf("Expected 155.0 got volume %s", mix1.Results[0].Volume()))
+	if mix1.Outputs[0].Vol != 155.0 {
+		t.Errorf(fmt.Sprintf("Expected 155.0 got volume %s", mix1.Outputs[0].Volume()))
 	}
 }
 
@@ -93,18 +93,18 @@ func TestFixVolumes2(t *testing.T) {
 	c3.DeclareInstance()
 
 	ins := wtype.NewLHMixInstruction()
-	ins.Components = []*wtype.LHComponent{c1, c2}
-	ins.AddResult(c3)
+	ins.Inputs = []*wtype.Liquid{c1, c2}
+	ins.AddOutput(c3)
 
 	inss := []*wtype.LHInstruction{ins}
 
-	ch := &IChain{Parent: nil, Child: nil, Values: inss, Depth: 0}
+	ch := &wtype.IChain{Parent: nil, Child: nil, Values: inss, Depth: 0}
 
 	want := make(map[string]wunit.Volume, 1)
 
 	want[c3.FullyQualifiedName()] = wunit.NewVolume(150.0, "ul")
 
-	newWant, _ := findUpdateInstructionVolumes(ch, want, make(map[string]*wtype.LHPlate), wunit.NewVolume(0.5, "ul"))
+	newWant, _ := findUpdateInstructionVolumes(ch, want, make(map[string]*wtype.Plate), wunit.NewVolume(0.5, "ul"))
 
 	v := newWant["water"+wtype.InPlaceMarker]
 	if !v.EqualTo(wunit.NewVolume(75.0, "ul")) {
@@ -127,12 +127,12 @@ func TestFixVolumes3(t *testing.T) {
 	c3.DeclareInstance()
 
 	ins := wtype.NewLHMixInstruction()
-	ins.Components = []*wtype.LHComponent{c1}
+	ins.Inputs = []*wtype.Liquid{c1}
 
-	ins.AddResult(c3)
+	ins.AddOutput(c3)
 	req.LHInstructions[ins.ID] = ins
 
-	ic := &IChain{
+	ic := &wtype.IChain{
 		Parent: nil,
 		Child:  nil,
 		Values: []*wtype.LHInstruction{ins},
@@ -145,13 +145,13 @@ func TestFixVolumes3(t *testing.T) {
 
 	c2 := getComponentWithNameVolume("milk", 50.0)
 	ins = wtype.NewLHMixInstruction()
-	ins.Components = []*wtype.LHComponent{c3, c2}
+	ins.Inputs = []*wtype.Liquid{c3, c2}
 	c4 := c3.Dup()
 	c3.Mix(c2)
-	ins.AddResult(c4)
+	ins.AddOutput(c4)
 	req.LHInstructions[ins.ID] = ins
 
-	ic = &IChain{
+	ic = &wtype.IChain{
 		Parent: req.InstructionChain,
 		Child:  nil,
 		Values: []*wtype.LHInstruction{ins},
@@ -173,16 +173,16 @@ func TestFixVolumes3(t *testing.T) {
 			t.Errorf(err.Error())
 		}
 		c4.Vol = 100.0
-		ins.Components = []*wtype.LHComponent{smp}
+		ins.Inputs = []*wtype.Liquid{smp}
 		res := getComponentWithNameVolume("water+milk", 15.0)
-		res.ParentID = ins.Components[0].ID
+		res.ParentID = ins.Inputs[0].ID
 		res.DeclareInstance()
-		ins.AddResult(res)
+		ins.AddOutput(res)
 		req.LHInstructions[ins.ID] = ins
 		inss = append(inss, ins)
 	}
 
-	ic.Child = &IChain{Parent: ic, Child: nil, Values: inss, Depth: 2}
+	ic.Child = &wtype.IChain{Parent: ic, Child: nil, Values: inss, Depth: 2}
 
 	// try fixing the volumes
 
@@ -196,8 +196,8 @@ func TestFixVolumes3(t *testing.T) {
 
 	mix1 := req.InstructionChain.Values[0]
 
-	if mix1.Results[0].Vol != 155.0 {
-		t.Errorf(fmt.Sprintf("Expected 155.0 got volume %s", mix1.Results[0].Volume()))
+	if mix1.Outputs[0].Vol != 155.0 {
+		t.Errorf(fmt.Sprintf("Expected 155.0 got volume %s", mix1.Outputs[0].Volume()))
 	}
 }
 
@@ -210,12 +210,12 @@ func TestFixVolumes4(t *testing.T) {
 	c3.DeclareInstance()
 
 	ins := wtype.NewLHMixInstruction()
-	ins.Components = []*wtype.LHComponent{c1}
+	ins.Inputs = []*wtype.Liquid{c1}
 
-	ins.AddResult(c3)
+	ins.AddOutput(c3)
 	req.LHInstructions[ins.ID] = ins
 
-	ic := &IChain{
+	ic := &wtype.IChain{
 		Parent: nil,
 		Child:  nil,
 		Values: []*wtype.LHInstruction{ins},
@@ -230,7 +230,7 @@ func TestFixVolumes4(t *testing.T) {
 
 	ins.PassThrough[c3.ID] = c4
 
-	ic.Child = &IChain{
+	ic.Child = &wtype.IChain{
 		Parent: ic,
 		Child:  nil,
 		Values: []*wtype.LHInstruction{ins},
@@ -242,10 +242,10 @@ func TestFixVolumes4(t *testing.T) {
 	c5 := c4.Cp()
 	c5.Vol = 200.0
 
-	ins.Components = []*wtype.LHComponent{c4}
-	ins.AddResult(c5)
+	ins.Inputs = []*wtype.Liquid{c4}
+	ins.AddOutput(c5)
 
-	ic.Child.Child = &IChain{
+	ic.Child.Child = &wtype.IChain{
 		Parent: ic.Child,
 		Child:  nil,
 		Values: []*wtype.LHInstruction{ins},
@@ -271,12 +271,12 @@ func TestFixVolumesSplitSample(t *testing.T) {
 	c3.DeclareInstance()
 
 	ins := wtype.NewLHMixInstruction()
-	ins.Components = []*wtype.LHComponent{c1, c2}
-	ins.AddResult(c3)
+	ins.Inputs = []*wtype.Liquid{c1, c2}
+	ins.AddOutput(c3)
 
 	req.LHInstructions[ins.ID] = ins
 
-	ic := &IChain{
+	ic := &wtype.IChain{
 		Parent: nil,
 		Child:  nil,
 		Values: []*wtype.LHInstruction{ins},
@@ -298,18 +298,18 @@ func TestFixVolumesSplitSample(t *testing.T) {
 
 		smp, newC3 := mixer.SplitSample(c3, wunit.NewVolume(15.0, "ul"))
 
-		ins.Components = []*wtype.LHComponent{smp}
+		ins.Inputs = []*wtype.Liquid{smp}
 		res := getComponentWithNameVolume("water+milk", 15.0)
-		res.ParentID = ins.Components[0].ID
+		res.ParentID = ins.Inputs[0].ID
 		res.DeclareInstance()
-		ins.AddResult(res)
+		ins.AddOutput(res)
 		req.LHInstructions[ins.ID] = ins
 
 		// make the split instruction
 		splitIns := wtype.NewLHSplitInstruction()
-		splitIns.AddComponent(c3)
-		splitIns.AddProduct(smp)
-		splitIns.AddProduct(newC3)
+		splitIns.AddInput(c3)
+		splitIns.AddOutput(smp)
+		splitIns.AddOutput(newC3)
 		c3.Vol = 100.0
 		c3 = newC3
 
@@ -317,8 +317,8 @@ func TestFixVolumesSplitSample(t *testing.T) {
 		splInss = append(splInss, splitIns)
 	}
 
-	ic.Child = &IChain{Parent: ic, Child: nil, Values: splInss, Depth: 1}
-	ic.Child.Child = &IChain{Parent: ic.Child, Child: nil, Values: mixInss, Depth: 2}
+	ic.Child = &wtype.IChain{Parent: ic, Child: nil, Values: splInss, Depth: 1}
+	ic.Child.Child = &wtype.IChain{Parent: ic.Child, Child: nil, Values: mixInss, Depth: 2}
 
 	// try fixing the volumes
 
@@ -332,7 +332,7 @@ func TestFixVolumesSplitSample(t *testing.T) {
 
 	mix1 := req.InstructionChain.Values[0]
 
-	if mix1.Results[0].Vol != 155.0 {
-		t.Errorf(fmt.Sprintf("Expected 155.0 got volume %s", mix1.Results[0].Volume()))
+	if mix1.Outputs[0].Vol != 155.0 {
+		t.Errorf(fmt.Sprintf("Expected 155.0 got volume %s", mix1.Outputs[0].Volume()))
 	}
 }

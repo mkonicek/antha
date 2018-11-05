@@ -29,17 +29,18 @@ import (
 
 //  TODO remove BBox once shape implements LHObject
 type LHTip struct {
-	ID       string
-	Type     string
-	Mnfr     string
-	Dirty    bool
-	MaxVol   wunit.Volume
-	MinVol   wunit.Volume
-	Shape    *Shape
-	Bounds   BBox
-	parent   LHObject `gotopb:"-"`
-	contents *LHComponent
-	Filtered bool
+	ID              string
+	Type            string
+	Mnfr            string
+	Dirty           bool
+	MaxVol          wunit.Volume
+	MinVol          wunit.Volume
+	Shape           *Shape
+	Bounds          BBox
+	EffectiveHeight float64
+	parent          LHObject `gotopb:"-"`
+	contents        *Liquid
+	Filtered        bool
 }
 
 //@implement Named
@@ -82,6 +83,14 @@ func (self *LHTip) GetSize() Coordinates {
 	return self.Bounds.GetSize()
 }
 
+//GetEffectiveHeight get the height of the tip when actually loaded onto a channel
+func (self *LHTip) GetEffectiveHeight() float64 {
+	if self == nil {
+		return 0.0
+	}
+	return self.EffectiveHeight
+}
+
 //@implement LHObject
 func (self *LHTip) GetBoxIntersections(box BBox) []LHObject {
 	box.SetPosition(box.GetPosition().Subtract(OriginOf(self)))
@@ -93,7 +102,10 @@ func (self *LHTip) GetBoxIntersections(box BBox) []LHObject {
 
 //@implement LHObject
 func (self *LHTip) GetPointIntersections(point Coordinates) []LHObject {
-	point = point.Subtract(point)
+	if self == nil {
+		return nil
+	}
+	point = point.Subtract(OriginOf(self))
 	//TODO more accurate intersection detection with Shape
 	if self.Bounds.IntersectsPoint(point) {
 		return []LHObject{self}
@@ -160,7 +172,10 @@ func (tip *LHTip) DupKeepID() *LHTip {
 }
 
 func (tip *LHTip) dup(keepIDs bool) *LHTip {
-	t := NewLHTip(tip.Mnfr, tip.Type, tip.MinVol.RawValue(), tip.MaxVol.RawValue(), tip.MinVol.Unit().PrefixedSymbol(), tip.Filtered, tip.Shape.Dup())
+	if tip == nil {
+		return nil
+	}
+	t := NewLHTip(tip.Mnfr, tip.Type, tip.MinVol.RawValue(), tip.MaxVol.RawValue(), tip.MinVol.Unit().PrefixedSymbol(), tip.Filtered, tip.Shape.Dup(), tip.GetEffectiveHeight())
 	t.Dirty = tip.Dirty
 	t.contents = tip.Contents().Dup()
 	t.Bounds = tip.Bounds
@@ -172,23 +187,27 @@ func (tip *LHTip) dup(keepIDs bool) *LHTip {
 	return t
 }
 
-func NewLHTip(mfr, ttype string, minvol, maxvol float64, volunit string, filtered bool, shape *Shape) *LHTip {
+func NewLHTip(mfr, ttype string, minvol, maxvol float64, volunit string, filtered bool, shape *Shape, effectiveHeightMM float64) *LHTip {
+	if effectiveHeightMM <= 0.0 {
+		effectiveHeightMM = shape.Depth().ConvertToString("mm")
+	}
 	lht := LHTip{
-		GetUUID(),
-		ttype,
-		mfr,
-		false, //dirty
-		wunit.NewVolume(maxvol, volunit),
-		wunit.NewVolume(minvol, volunit),
-		shape,
-		BBox{Coordinates{}, Coordinates{
+		ID:     GetUUID(),
+		Type:   ttype,
+		Mnfr:   mfr,
+		Dirty:  false, //dirty
+		MaxVol: wunit.NewVolume(maxvol, volunit),
+		MinVol: wunit.NewVolume(minvol, volunit),
+		Shape:  shape,
+		Bounds: BBox{Coordinates{}, Coordinates{
 			shape.Height().ConvertToString("mm"), //not a mistake, Shape currently has height&width as
 			shape.Width().ConvertToString("mm"),  // XY coordinates and Depth as Z
 			shape.Depth().ConvertToString("mm"),
 		}},
-		nil,
-		NewLHComponent(),
-		filtered,
+		EffectiveHeight: effectiveHeightMM,
+		parent:          nil,
+		contents:        NewLHComponent(),
+		Filtered:        filtered,
 	}
 
 	return &lht
@@ -207,7 +226,10 @@ func (self *LHTip) DimensionsString() string {
 }
 
 //@implement LHContainer
-func (self *LHTip) Contents() *LHComponent {
+func (self *LHTip) Contents() *Liquid {
+	if self == nil {
+		return nil
+	}
 	//Only happens with dodgy tip initialization
 	if self.contents == nil {
 		self.contents = NewLHComponent()
@@ -232,7 +254,7 @@ func (self *LHTip) CurrentWorkingVolume() wunit.Volume {
 }
 
 //@implement LHContainer
-func (self *LHTip) AddComponent(v *LHComponent) error {
+func (self *LHTip) AddComponent(v *Liquid) error {
 	fv := self.CurrentVolume()
 	fv.Add(v.Volume())
 
@@ -248,7 +270,7 @@ func (self *LHTip) AddComponent(v *LHComponent) error {
 }
 
 //SetContents set the contents of the tip, returns an error if the tip is overfilled
-func (self *LHTip) SetContents(v *LHComponent) error {
+func (self *LHTip) SetContents(v *Liquid) error {
 	if v.Volume().GreaterThan(self.MaxVol) {
 		return fmt.Errorf("Tip %s overfull, contains %v and maximum is %v", self.GetName(), v.Volume(), self.MaxVol)
 	}
@@ -261,7 +283,7 @@ func (self *LHTip) SetContents(v *LHComponent) error {
 }
 
 //@implement LHContainer
-func (self *LHTip) RemoveVolume(v wunit.Volume) (*LHComponent, error) {
+func (self *LHTip) RemoveVolume(v wunit.Volume) (*Liquid, error) {
 	if v.GreaterThan(self.CurrentWorkingVolume()) {
 		return nil, fmt.Errorf("Requested removal of %v from tip %s which only has %v working volume", v, self.GetName(), self.CurrentWorkingVolume())
 	}

@@ -1,10 +1,11 @@
 package wtype
 
 import (
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
 
 func A1ArrayFromWells(wells []*LHWell) []string {
@@ -269,11 +270,24 @@ func (wc WellCoords) FormatA1() string {
 	return wutil.NumToAlpha(wc.Y+1) + strconv.Itoa(wc.X+1)
 }
 
-func (wc WellCoords) WellNumber() int {
+// WellNumber returns the index of the well coordinates on a platetype based on
+// looking up the number of wells in the X, Y directions of the platetype.
+// Setting byRow to true will count along each sequential row rather down each sequential column.
+// e.g.
+// if byRow == true: A1 = 0, A2 = 1, A12 = 11
+// if byRow == false: A1 = 0, B1 = 1, E1 = 4
+func (wc WellCoords) WellNumber(platetype *Plate, byRow bool) int {
+	return wc.wellNumber(platetype.WlsX, platetype.WlsY, byRow)
+}
+
+func (wc WellCoords) wellNumber(xLength, yLength int, byRow bool) int {
 	if wc.X < 0 || wc.Y < 0 {
 		return -1
 	}
-	return (8*(wc.X-1) + wc.Y)
+	if byRow {
+		return (yLength*(wc.Y) + wc.X)
+	}
+	return (xLength*(wc.X) + wc.Y)
 }
 
 func (wc WellCoords) ColNumString() string {
@@ -294,7 +308,7 @@ func (wc WellCoords) RowLettString() string {
 
 func (wc WellCoords) RowLessThan(wc2 WellCoords) bool {
 	if wc.Y == wc2.Y {
-		return wc.X < wc2.Y
+		return wc.X < wc2.X
 	}
 	return wc.Y < wc2.Y
 }
@@ -319,13 +333,61 @@ func (wca WellCoordArrayRow) Len() int           { return len(wca) }
 func (wca WellCoordArrayRow) Swap(i, j int)      { t := wca[i]; wca[i] = wca[j]; wca[j] = t }
 func (wca WellCoordArrayRow) Less(i, j int) bool { return wca[i].ColLessThan(wca[j]) }
 
+func canAdd(coords []WellCoords, c WellCoords) bool {
+	if len(coords) == 0 {
+		return true
+	}
+	if len(coords) == 1 {
+		return (c.Y == coords[0].Y && c.X-coords[0].X == 1) || (c.X == coords[0].X && c.Y-coords[0].Y == 1)
+	}
+	//if vertical run
+	if coords[0].X == coords[len(coords)-1].X {
+		return c.X == coords[0].X && c.Y == coords[len(coords)-1].Y+1
+	}
+	//if horizontal run
+	return c.Y == coords[0].Y && c.X == coords[len(coords)-1].X+1
+}
+
+func runToString(coords []WellCoords) string {
+	if len(coords) == 0 {
+		return ""
+	}
+	if len(coords) == 1 {
+		return coords[0].FormatA1()
+	}
+	return coords[0].FormatA1() + "-" + coords[len(coords)-1].FormatA1()
+}
+
 //HumanizeWellCoords convenience function to make displaying a slice of WellCoords more human readable
 func HumanizeWellCoords(coords []WellCoords) string {
-	s := []string{}
-	for i := range coords {
-		if !coords[i].IsZero() {
-			s = append(s, coords[i].FormatA1())
+	s := make([]string, 0, len(coords))
+	run := make([]WellCoords, 0, len(coords))
+	for _, coord := range coords {
+		if coord.IsZero() {
+			continue
+		}
+		if !canAdd(run, coord) {
+			s = append(s, runToString(run))
+			run = make([]WellCoords, 0, len(coords))
+		}
+		run = append(run, coord)
+	}
+	s = append(s, runToString(run))
+	return strings.Join(s, ",")
+}
+
+type WellCoordSlice []WellCoords
+
+//Trim remove nil well coords from begining and end of the slice
+func (self WellCoordSlice) Trim() WellCoordSlice {
+	var start, end int
+	for i, wc := range self {
+		if !wc.IsZero() {
+			if start == end { //only true if we've not seen a nil
+				start = i
+			}
+			end = i + 1
 		}
 	}
-	return strings.Join(s, ",")
+	return self[start:end]
 }

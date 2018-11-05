@@ -40,63 +40,64 @@ func makeNullTimer() LHTimer {
 
 func makeGilsonPipetmaxTimer() LHTimer {
 	t := NewTimer()
-	t.Times[7], _ = time.ParseDuration("8s")  // LDT
-	t.Times[8], _ = time.ParseDuration("6s")  // UDT
-	t.Times[19], _ = time.ParseDuration("4s") // SUK
-	t.Times[20], _ = time.ParseDuration("4s") // BLW
+	t.Times[INI], _ = time.ParseDuration("5s") // INI
+	t.Times[LDT], _ = time.ParseDuration("7s") // LDT
+	t.Times[UDT], _ = time.ParseDuration("7s") // UDT
+	t.Times[SUK], _ = time.ParseDuration("4s") // SUK
+	t.Times[BLW], _ = time.ParseDuration("4s") // BLW
 
 	// lower level instructions
 
-	t.Times[11], _ = time.ParseDuration("4s")   // ASP
-	t.Times[12], _ = time.ParseDuration("4s")   // DSP
-	t.Times[13], _ = time.ParseDuration("4s")   // BLO
-	t.Times[14], _ = time.ParseDuration("0.5s") // PTZ
-	t.Times[15], _ = time.ParseDuration("2s")   // MOV
-	t.Times[17], _ = time.ParseDuration("6s")   // LOAD
-	t.Times[18], _ = time.ParseDuration("8s")   // UNLOAD
-	t.Times[32], _ = time.ParseDuration("6s")   // MIX
+	t.Times[ASP], _ = time.ParseDuration("0.8s") // ASP
+	t.Times[DSP], _ = time.ParseDuration("0.8s") // DSP
+	t.Times[BLO], _ = time.ParseDuration("0.7s") // BLO
+	t.Times[PTZ], _ = time.ParseDuration("0s")   // PTZ
+	t.Times[MOV], _ = time.ParseDuration("2.3s") // MOV	-- using mean figures for horizontal (0.94) and 2x vertical (1.36)
+	t.Times[LOD], _ = time.ParseDuration("5.6s") // LOAD
+	t.Times[ULD], _ = time.ParseDuration("5.4s") // UNLOAD
+	t.Times[MIX], _ = time.ParseDuration("1.5s") // MIX
 
 	return t
 }
 
 func makeCyBioFelixTimer() LHTimer {
 	t := NewTimer()
-	t.Times[7], _ = time.ParseDuration("8s")  // LDT
-	t.Times[8], _ = time.ParseDuration("6s")  // UDT
-	t.Times[19], _ = time.ParseDuration("4s") // SUK
-	t.Times[20], _ = time.ParseDuration("4s") // BLW
+	t.Times[LDT], _ = time.ParseDuration("8s") // LDT
+	t.Times[UDT], _ = time.ParseDuration("6s") // UDT
+	t.Times[SUK], _ = time.ParseDuration("4s") // SUK
+	t.Times[BLW], _ = time.ParseDuration("4s") // BLW
 
 	// lower level instructions
 
-	t.Times[11], _ = time.ParseDuration("12s")  // ASP
-	t.Times[12], _ = time.ParseDuration("10s")  // DSP
-	t.Times[13], _ = time.ParseDuration("10s")  // BLO
-	t.Times[14], _ = time.ParseDuration("0.5s") // PTZ
-	t.Times[15], _ = time.ParseDuration("0s")   // MOV
-	t.Times[17], _ = time.ParseDuration("10s")  // LOAD
-	t.Times[18], _ = time.ParseDuration("12s")  // UNLOAD
-	t.Times[32], _ = time.ParseDuration("28s")  // MIX
+	t.Times[ASP], _ = time.ParseDuration("12s")  // ASP
+	t.Times[DSP], _ = time.ParseDuration("10s")  // DSP
+	t.Times[BLO], _ = time.ParseDuration("10s")  // BLO
+	t.Times[PTZ], _ = time.ParseDuration("0.5s") // PTZ
+	t.Times[MOV], _ = time.ParseDuration("0s")   // MOV
+	t.Times[LOD], _ = time.ParseDuration("10s")  // LOAD
+	t.Times[ULD], _ = time.ParseDuration("12s")  // UNLOAD
+	t.Times[MIX], _ = time.ParseDuration("28s")  // MIX
 
 	return t
 }
 
 func makeCyBioGeneTheatreTimer() LHTimer {
 	t := NewTimer()
-	t.Times[7], _ = time.ParseDuration("8s")  // LDT
-	t.Times[8], _ = time.ParseDuration("6s")  // UDT
-	t.Times[19], _ = time.ParseDuration("4s") // SUK
-	t.Times[20], _ = time.ParseDuration("4s") // BLW
+	t.Times[LDT], _ = time.ParseDuration("8s") // LDT
+	t.Times[UDT], _ = time.ParseDuration("6s") // UDT
+	t.Times[SUK], _ = time.ParseDuration("4s") // SUK
+	t.Times[BLW], _ = time.ParseDuration("4s") // BLW
 
 	// lower level instructions
 
-	t.Times[11], _ = time.ParseDuration("9s")   // ASP
-	t.Times[12], _ = time.ParseDuration("10s")  // DSP
-	t.Times[13], _ = time.ParseDuration("10s")  // BLO
-	t.Times[14], _ = time.ParseDuration("0.5s") // PTZ
-	t.Times[15], _ = time.ParseDuration("0s")   // MOV
-	t.Times[17], _ = time.ParseDuration("10s")  // LOAD
-	t.Times[18], _ = time.ParseDuration("12s")  // UNLOAD
-	t.Times[32], _ = time.ParseDuration("13s")  // MIX
+	t.Times[ASP], _ = time.ParseDuration("9s")   // ASP
+	t.Times[DSP], _ = time.ParseDuration("10s")  // DSP
+	t.Times[BLO], _ = time.ParseDuration("10s")  // BLO
+	t.Times[PTZ], _ = time.ParseDuration("0.5s") // PTZ
+	t.Times[MOV], _ = time.ParseDuration("0s")   // MOV
+	t.Times[LOD], _ = time.ParseDuration("10s")  // LOAD
+	t.Times[ULD], _ = time.ParseDuration("12s")  // UNLOAD
+	t.Times[MIX], _ = time.ParseDuration("13s")  // MIX
 
 	return t
 }

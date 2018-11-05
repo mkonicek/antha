@@ -11,19 +11,22 @@ import (
 )
 
 type TransferBlockInstruction struct {
-	GenericRobotInstruction
+	BaseRobotInstruction
+	*InstructionType
 	Inss []*wtype.LHInstruction
 }
 
-func NewTransferBlockInstruction(inss []*wtype.LHInstruction) TransferBlockInstruction {
-	tb := TransferBlockInstruction{}
-	tb.Inss = inss
-	tb.GenericRobotInstruction.Ins = RobotInstruction(&tb)
+func NewTransferBlockInstruction(inss []*wtype.LHInstruction) *TransferBlockInstruction {
+	tb := &TransferBlockInstruction{
+		InstructionType: TFB,
+		Inss:            inss,
+	}
+	tb.BaseRobotInstruction = NewBaseRobotInstruction(tb)
 	return tb
 }
 
-func (ti TransferBlockInstruction) InstructionType() int {
-	return TFB
+func (ins *TransferBlockInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.TransferBlock(ins)
 }
 
 // this attempts to find arrays of destinations which can potentially be done simultaneously
@@ -70,11 +73,8 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 		// aggregates across components
 		//TODO --> allow setting legacy volume if necessary
 
-		// in fact we do not return a different robot now... but we might
-		tfr, robot, err = ConvertInstructions(ctx, insset, robot, wunit.NewVolume(0.5, "ul"), prm, prm.Multi, false, policy)
-
+		tfr, err = ConvertInstructions(ctx, insset, robot, wunit.NewVolume(0.5, "ul"), prm, prm.Multi, false, policy)
 		if err != nil {
-			//panic(err)
 			return inss, err
 		}
 
@@ -120,7 +120,7 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 
 		insset := []*wtype.LHInstruction{ins}
 
-		tfr, robot, err = ConvertInstructions(ctx, insset, robot, wunit.NewVolume(0.5, "ul"), prm, 1, false, policy)
+		tfr, err = ConvertInstructions(ctx, insset, robot, wunit.NewVolume(0.5, "ul"), prm, 1, false, policy)
 
 		if err != nil {
 			return inss, err
@@ -151,10 +151,11 @@ func get_parallel_sets_robot(ctx context.Context, ins []*wtype.LHInstruction, ro
 	// part of the model here is just to make things possible, so that later
 	// on we can at least make this choice
 
-	possible_sets := make([]SetOfIDSets, 0, len(robot.HeadsLoaded))
+	headsLoaded := robot.GetLoadedHeads()
+	possible_sets := make([]SetOfIDSets, 0, len(headsLoaded))
 	corresponding_params := make([]*wtype.LHChannelParameter, 0, 1)
 
-	for _, head := range robot.HeadsLoaded {
+	for _, head := range headsLoaded {
 		// ignore heads which do not have multi
 
 		if head.GetParams().Multi == 1 {
@@ -187,7 +188,7 @@ type InsByComponent []*wtype.LHInstruction
 func (ibc InsByComponent) Len() int      { return len(ibc) }
 func (ibc InsByComponent) Swap(i, j int) { ibc[i], ibc[j] = ibc[j], ibc[i] }
 func (ibc InsByComponent) Less(i, j int) bool {
-	return strings.Compare(ibc[i].Results[0].CName, ibc[j].Results[0].CName) < 0
+	return strings.Compare(ibc[i].Outputs[0].CName, ibc[j].Outputs[0].CName) < 0
 }
 
 type InsByRow []*wtype.LHInstruction
@@ -237,7 +238,7 @@ func get_parallel_sets_head(ctx context.Context, head *wtype.LHHead, ins []*wtyp
 
 	for _, i := range ins {
 		// ignore empty instructions
-		if len(i.Components) == 0 {
+		if len(i.Inputs) == 0 {
 			continue
 		}
 
@@ -286,8 +287,6 @@ func get_parallel_sets_head(ctx context.Context, head *wtype.LHHead, ins []*wtyp
 			}
 		}
 	}
-
-	// ret here is just splurged straight out
 
 	return ret, nil
 }
@@ -398,19 +397,15 @@ func get_cols(pdm wtype.Platedestmap, multi, wells int, contiguous, full bool) S
 }
 
 func colDup(in [][]*wtype.LHInstruction) [][]*wtype.LHInstruction {
-	dup := func(inss []*wtype.LHInstruction) []*wtype.LHInstruction {
-		r := make([]*wtype.LHInstruction, len(inss))
-
-		for i := 0; i < len(inss); i++ {
-			r[i] = inss[i]
-		}
-
-		return r
-	}
 	out := make([][]*wtype.LHInstruction, len(in))
 
 	for i, v := range in {
-		out[i] = dup(v)
+		r := make([]*wtype.LHInstruction, len(v))
+
+		for i := 0; i < len(v); i++ {
+			r[i] = v[i]
+		}
+		out[i] = r
 	}
 
 	return out
@@ -500,8 +495,8 @@ func choose_parallel_sets(sets []SetOfIDSets, params []*wtype.LHChannelParameter
 	return ret, retp, nil
 }
 
-func (ti TransferBlockInstruction) GetParameter(p string) interface{} {
-	return nil
+func (ti TransferBlockInstruction) GetParameter(name InstructionParameter) interface{} {
+	return ti.BaseRobotInstruction.GetParameter(name)
 }
 
 func mergeTransfers(tfrs []*TransferInstruction, policy *wtype.LHPolicyRuleSet) []*TransferInstruction {

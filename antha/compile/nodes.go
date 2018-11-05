@@ -1457,7 +1457,7 @@ func (p *compiler) nodeSize(n ast.Node, maxSize int) (size int) {
 	// in RawFormat
 	cfg := Config{Mode: RawFormat}
 	var buf bytes.Buffer
-	if err := cfg.fprint(&buf, p.fset, n, p.nodeSizes); err != nil {
+	if _, err := cfg.fprint(&buf, p.fset, n, p.nodeSizes); err != nil {
 		return
 	}
 	if buf.Len() <= maxSize {

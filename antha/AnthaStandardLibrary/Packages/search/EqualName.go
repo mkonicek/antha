@@ -43,7 +43,7 @@ func EqualName(entry, target Named, options ...Option) bool {
 	ignore := containsIgnoreCase(options...)
 
 	if ignore {
-		if equalFold(entry.Name(), target.Name()) {
+		if EqualFold(entry.Name(), target.Name()) {
 			return true
 		}
 	} else {

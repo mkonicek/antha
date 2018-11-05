@@ -412,7 +412,7 @@ func (run Run) EqualTo(run2 Run) (bool, error) {
 func (run Run) AddResponseValue(responsedescriptor string, responsevalue interface{}) {
 
 	for i, descriptor := range run.Responsedescriptors {
-		if strings.ToUpper(descriptor) == strings.ToUpper(responsedescriptor) {
+		if search.EqualFold(descriptor, responsedescriptor) {
 			run.ResponseValues[i] = responsevalue
 		}
 	}
@@ -445,15 +445,15 @@ func (run Run) GetResponseValue(responsedescriptor string) (responsevalue interf
 	errstr := fmt.Sprint("response descriptor", responsedescriptor, "not found in ", headers)
 	errs = append(errs, errstr)
 	for i, descriptor := range run.Responsedescriptors {
-		if strings.TrimSpace(strings.ToUpper(descriptor)) == strings.TrimSpace(strings.ToUpper(responsedescriptor)) {
+		if search.EqualFold(descriptor, responsedescriptor) {
 			responsevalue = run.ResponseValues[i]
 			return responsevalue, nil
-		} else if strings.Contains(strings.TrimSpace(strings.ToUpper(descriptor)), strings.TrimSpace(strings.ToUpper(responsedescriptor))) {
+		} else if search.ContainsEqualFold(descriptor, responsedescriptor) {
 
 			errstr := fmt.Sprint("response descriptor", responsedescriptor, "found within ", descriptor, "but no exact match")
 			errs = append(errs, errstr)
 			tempresponsevalue = run.ResponseValues[i]
-		} else if strings.Contains(strings.TrimSpace(strings.ToUpper(responsedescriptor)), strings.TrimSpace(strings.ToUpper(descriptor))) {
+		} else if search.ContainsEqualFold(responsedescriptor, descriptor) {
 
 			errstr := fmt.Sprint("response descriptors of ", descriptor, "found within ", responsedescriptor, "but not exact match")
 			errs = append(errs, errstr)
@@ -477,17 +477,17 @@ func (run Run) GetFactorValue(factordescriptor string) (factorvalue interface{},
 	errstr := fmt.Sprint("factor descriptor ", factordescriptor, " not found in ", headers, values)
 	errs = append(errs, errstr)
 	for i, descriptor := range run.Factordescriptors {
-		if strings.TrimSpace(strings.ToUpper(descriptor)) == strings.TrimSpace(strings.ToUpper(factordescriptor)) {
+		if search.EqualFold(descriptor, factordescriptor) {
 			factorvalue = run.Setpoints[i]
 			return factorvalue, nil
-		} else if factor, _ := splitFactorFromUnit(factordescriptor); strings.TrimSpace(strings.ToUpper(descriptor)) == strings.TrimSpace(strings.ToUpper(factor)) {
+		} else if factor, _ := splitFactorFromUnit(factordescriptor); search.EqualFold(descriptor, factor) {
 			factorvalue = run.Setpoints[i]
 			return factorvalue, nil
-		} else if strings.Contains(strings.TrimSpace(strings.ToUpper(descriptor)), strings.TrimSpace(strings.ToUpper(factordescriptor))) {
+		} else if search.ContainsEqualFold(descriptor, factordescriptor) {
 			errstr := fmt.Sprint("factor descriptor ", factordescriptor, "found within ", descriptor, " but no exact match")
 			errs = append(errs, errstr)
 			tempresponsevalue = run.Setpoints[i]
-		} else if strings.Contains(strings.TrimSpace(strings.ToUpper(factordescriptor)), strings.TrimSpace(strings.ToUpper(descriptor))) {
+		} else if search.ContainsEqualFold(factordescriptor, descriptor) {
 			errstr := fmt.Sprint("factor descriptors of ", descriptor, "found within ", factordescriptor, "but not exact match")
 			errs = append(errs, errstr)
 			tempresponsevalue = run.Setpoints[i]
@@ -536,7 +536,7 @@ func AddNewResponseField(run Run, responsedescriptor string) (newrun Run) {
 	var skip bool
 
 	for i, descriptor := range run.Responsedescriptors {
-		if strings.ToUpper(descriptor) == strings.ToUpper(responsedescriptor) {
+		if search.EqualFold(descriptor, responsedescriptor) {
 			skip = true
 		}
 		responsedescriptors[i] = run.Responsedescriptors[i]
@@ -565,7 +565,7 @@ func DeleteResponseField(run Run, responsedescriptor string) (newrun Run) {
 	responsevalues := make([]interface{}, 0)
 
 	for i, descriptor := range run.Responsedescriptors {
-		if strings.ToUpper(descriptor) != strings.ToUpper(responsedescriptor) {
+		if !search.EqualFold(descriptor, responsedescriptor) {
 			responsedescriptors = append(responsedescriptors, descriptor)
 			responsevalues = append(responsevalues, run.ResponseValues[i])
 		}
@@ -585,10 +585,10 @@ func ReplaceResponseValue(run Run, responsedescriptor string, responsevalue inte
 	responsevalues := make([]interface{}, 0)
 
 	for i, descriptor := range run.Responsedescriptors {
-		if strings.ToUpper(descriptor) != strings.ToUpper(responsedescriptor) {
+		if !search.EqualFold(descriptor, responsedescriptor) {
 			responsedescriptors = append(responsedescriptors, descriptor)
 			responsevalues = append(responsevalues, run.ResponseValues[i])
-		} else if strings.ToUpper(descriptor) == strings.ToUpper(responsedescriptor) {
+		} else {
 			responsedescriptors = append(responsedescriptors, descriptor)
 			responsevalues = append(responsevalues, responsevalue)
 		}
@@ -634,9 +634,33 @@ func DeleteFactorField(run Run, factorDescriptor string) (newrun Run) {
 	factorValues := make([]interface{}, 0)
 
 	for i, descriptor := range run.Factordescriptors {
-		if strings.ToUpper(descriptor) != strings.ToUpper(factorDescriptor) {
+		if !search.EqualFold(descriptor, factorDescriptor) {
 			factorDescriptors = append(factorDescriptors, descriptor)
 			factorValues = append(factorValues, run.Setpoints[i])
+		}
+	}
+
+	newrun.Factordescriptors = factorDescriptors
+	newrun.Setpoints = factorValues
+
+	return
+}
+
+// ReplaceFactorField will replace the factorToReplace with factorToReplaceWith with Set point setPointToReplaceWith.
+// The index of the factor to replace will be the same as the replaced factor.
+func ReplaceFactorField(run Run, factorToReplace, factorToReplaceWith string, setPointToReplaceWith interface{}) (newrun Run) {
+	newrun = run
+
+	factorDescriptors := make([]string, 0)
+	factorValues := make([]interface{}, 0)
+
+	for i, descriptor := range run.Factordescriptors {
+		if !search.EqualFold(descriptor, factorToReplace) {
+			factorDescriptors = append(factorDescriptors, descriptor)
+			factorValues = append(factorValues, run.Setpoints[i])
+		} else {
+			factorDescriptors = append(factorDescriptors, factorToReplaceWith)
+			factorValues = append(factorValues, setPointToReplaceWith)
 		}
 	}
 
@@ -654,7 +678,7 @@ func AddAdditionalValue(run Run, additionalsubheader string, additionalvalue int
 	values = append(values, run.AdditionalValues...)
 
 	for _, descriptor := range run.AdditionalSubheaders {
-		if strings.ToUpper(descriptor) == strings.ToUpper(additionalsubheader) {
+		if search.EqualFold(descriptor, additionalsubheader) {
 			values = append(values, additionalvalue)
 		}
 	}
@@ -671,7 +695,7 @@ func ReplaceAdditionalValue(run Run, additionalsubheader string, additionalvalue
 	values := make([]interface{}, len(run.AdditionalSubheaders))
 
 	for i, descriptor := range run.AdditionalSubheaders {
-		if strings.ToUpper(descriptor) == strings.ToUpper(additionalsubheader) {
+		if search.EqualFold(descriptor, additionalsubheader) {
 			values[i] = additionalvalue
 		} else {
 			values[i] = run.AdditionalValues[i]
@@ -716,7 +740,7 @@ func AddAdditionalHeaderandValue(run Run, additionalheader string, additionalsub
 func (run Run) CheckAdditionalInfo(subheader string, value interface{}) bool {
 
 	for i, header := range run.AdditionalSubheaders {
-		if strings.ToUpper(header) == strings.ToUpper(subheader) && run.AdditionalValues[i] == value {
+		if search.EqualFold(header, subheader) && run.AdditionalValues[i] == value {
 			return true
 		}
 	}
@@ -726,7 +750,7 @@ func (run Run) CheckAdditionalInfo(subheader string, value interface{}) bool {
 func (run Run) GetAdditionalInfo(subheader string) (value interface{}, err error) {
 
 	for i, header := range run.AdditionalSubheaders {
-		if strings.ToUpper(header) == strings.ToUpper(subheader) {
+		if search.EqualFold(header, subheader) {
 			value = run.AdditionalValues[i]
 			return value, err
 
@@ -838,27 +862,88 @@ func sameFactorLevels(run1 Run, run2 Run, factor string) (same bool, err error) 
 	return false, fmt.Errorf("Different values found for factor %s: %s and %s", factor, value1, value2)
 }
 
+// MergeOption is an option to control the position in the factors of a run at which the merged factor will be added.
+// Valid options are MoveToFront, MoveToBack and UsePositionOfLastFactorInFactorList.
+// The default if no option is set is UsePositionOfLastFactorInFactorList.
+type MergeOption string
+
+var (
+	// MoveToFront specifies that the merged factor should be moved to the front of the factor list
+	MoveToFront MergeOption = "MoveToFront"
+
+	// MoveToBack specifies that the merged factor should be moved to the back of the factor list
+	MoveToBack MergeOption = "MoveToBack"
+
+	// UsePositionOfLastFactorInFactorList specifies that the merged factor should be moved to the position of the last factor in the merged list.
+	UsePositionOfLastFactorInFactorList MergeOption = "UsePositionOfLastFactorInFactorList"
+
+	// Default will use UsePositionOfLastFactorInFactorList.
+	DefaultMergeOption MergeOption = UsePositionOfLastFactorInFactorList
+)
+
 // intended to be used in conjunction with AllCombinations to merge levels of a series of runs
 // run1 will be used as the master run whose properties will be preferentially inherited in run3
-func mergeFactorLevels(run1 Run, run2 Run, factors []string, newLevel interface{}) (run3 Run, newfactorName string, err error) {
+// MergeOptions can be specified to control the position in the factors of a run at which the merged factor will be added.
+// Valid options are MoveToFront, MoveToBack and UsePositionOfLastFactorInFactorList.
+// The default if no option is set is UsePositionOfLastFactorInFactorList.
+func mergeFactorLevels(run1 Run, run2 Run, factors []string, newLevel interface{}, options ...MergeOption) (run3 Run, newfactorName string, err error) {
+
+	var usePosition int
+
+	const (
+		front int = iota
+		back
+		positionOfLastFactor
+	)
+
+	if len(options) > 1 {
+		err = fmt.Errorf("only one merge option can be specified at a time. Valid Options %s, %s and default %s. Found %v", MoveToFront, MoveToBack, UsePositionOfLastFactorInFactorList, options)
+		return
+	}
+	if len(options) == 0 {
+		usePosition = positionOfLastFactor
+	} else {
+		if options[0] == MoveToBack {
+			usePosition = back
+		} else if options[0] == MoveToFront {
+			usePosition = front
+		} else if options[0] == DefaultMergeOption {
+			usePosition = positionOfLastFactor
+		} else {
+			err = fmt.Errorf("invalid merge option specified. Valid Options %s, %s and default %s. Found %v", MoveToFront, MoveToBack, UsePositionOfLastFactorInFactorList, options)
+			return
+		}
+	}
 
 	var factornames []string
 	var deadrun Run
 	run3 = Copy(run1)
-	for _, factor := range factors {
+	for i, factor := range factors {
 		if same, err := sameFactorLevels(run1, run2, factor); !same || err != nil {
 			return deadrun, "", err
 		}
 		// preserve order of factor names from original design
 		factornames = append(factornames, factor)
-		run3 = DeleteFactorField(run3, factor)
+
+		// if last in list replace factor rather than delete
+		if i == len(factors)-1 && usePosition == positionOfLastFactor {
+			newfactorName = MergeFactorNames(factornames)
+			// make new set of runs
+			run3 = ReplaceFactorField(run3, factor, newfactorName, newLevel)
+		} else {
+			run3 = DeleteFactorField(run3, factor)
+		}
+
 	}
 
-	newfactorName = MergeFactorNames(factornames)
-
-	// make new set of runs
-
-	run3 = AddNewFactorFieldandValue(run3, newfactorName, newLevel)
+	if usePosition == back {
+		newfactorName = MergeFactorNames(factornames)
+		run3 = AddNewFactorFieldandValue(run3, newfactorName, newLevel)
+	} else if usePosition == front {
+		newfactorName = MergeFactorNames(factornames)
+		run3.Factordescriptors = append([]string{newfactorName}, run3.Factordescriptors...)
+		run3.Setpoints = append([]interface{}{newLevel}, run3.Setpoints...)
+	}
 
 	return
 }
@@ -995,7 +1080,7 @@ func ToMergedLevel(level interface{}) (m MergedLevel, err error) {
 	return
 }
 
-func findMatchingLevels(run Run, allcombos []Run, factors []string) (matchedrun Run, err error) {
+func findMatchingLevels(run Run, allcombos []Run, factors []string, options ...MergeOption) (matchedrun Run, err error) {
 	var levels []interface{}
 	for _, factor := range factors {
 
@@ -1008,19 +1093,23 @@ func findMatchingLevels(run Run, allcombos []Run, factors []string) (matchedrun 
 	m, mergErr := MakeMergedLevel(factors, levels)
 	for _, combo := range allcombos {
 
-		if newrun, _, err := mergeFactorLevels(run, combo, factors, m); err == nil && mergErr == nil {
+		if newrun, _, err := mergeFactorLevels(run, combo, factors, m, options...); err == nil && mergErr == nil {
 			return newrun, nil
 		}
 	}
-	return matchedrun, fmt.Errorf("No matching combination of levels %s found for run %v in %v: last errors: %s and %s", factors, run, allcombos, mergErr.Error(), err.Error())
+	return matchedrun, fmt.Errorf("No matching combination of levels %s found for run %v in %v: last errors: %v and %v", factors, run, allcombos, mergErr, err)
 }
 
-func MergeRunsFromAllCombos(originalRuns []Run, allcombos []Run, factors []string) (mergedRuns []Run, err error) {
+// MergeRunsFromAllCombos will make a set of runs based on the original runs which merges all factors specified in factors and finds a valid merged run from all combos to inject in as the set point.
+// MergeOptions can be specified to control the position in the factors of a run at which the merged factor will be added.
+// Valid options are MoveToFront, MoveToBack and UsePositionOfLastFactorInFactorList.
+// The default if no option is set is UsePositionOfLastFactorInFactorList.
+func MergeRunsFromAllCombos(originalRuns []Run, allcombos []Run, factors []string, options ...MergeOption) (mergedRuns []Run, err error) {
 
 	mergedRuns = make([]Run, len(originalRuns))
 
 	for i, original := range originalRuns {
-		newRun, err := findMatchingLevels(original, allcombos, factors)
+		newRun, err := findMatchingLevels(original, allcombos, factors, options...)
 		if err == nil {
 			mergedRuns[i] = newRun
 		} else {

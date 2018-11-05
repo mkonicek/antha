@@ -24,6 +24,8 @@
 package liquidhandling
 
 import (
+	"github.com/pkg/errors"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
@@ -35,55 +37,51 @@ type LHRequest struct {
 	BlockID               wtype.BlockID
 	BlockName             string
 	LHInstructions        map[string]*wtype.LHInstruction
-	Input_solutions       map[string][]*wtype.LHComponent
-	Plates                map[string]*wtype.LHPlate
+	Plates                map[string]*wtype.Plate
 	Tips                  []*wtype.LHTipbox
 	InstructionSet        *liquidhandling.RobotInstructionSet
 	Instructions          []liquidhandling.TerminalRobotInstruction
 	InstructionText       string
-	Input_assignments     map[string][]string
-	Output_assignments    map[string][]string
-	Input_plates          map[string]*wtype.LHPlate
-	Output_plates         map[string]*wtype.LHPlate
-	Input_platetypes      []*wtype.LHPlate
-	Input_plate_order     []string
-	Input_setup_weights   map[string]float64
-	Output_platetypes     []*wtype.LHPlate
-	Output_plate_order    []string
-	Plate_lookup          map[string]string
+	InputAssignments      map[string][]string
+	OutputAssignments     map[string][]string
+	InputPlates           map[string]*wtype.Plate
+	OutputPlates          map[string]*wtype.Plate
+	InputPlatetypes       []*wtype.Plate
+	InputPlateOrder       []string
+	InputSetupWeights     map[string]float64
+	OutputPlatetypes      []*wtype.Plate
+	OutputPlateOrder      []string
+	PlateLookup           map[string]string
 	Stockconcs            map[string]wunit.Concentration
 	PolicyManager         *LHPolicyManager
-	Input_order           []string
-	Output_order          []string
+	OutputOrder           []string
 	OutputIteratorFactory func(wtype.Addressable) wtype.AddressIterator `json:"-"`
-	InstructionChain      *IChain
-	Input_vols_supplied   map[string]wunit.Volume
-	Input_vols_required   map[string]wunit.Volume
-	Input_vols_wanting    map[string]wunit.Volume
+	InstructionChain      *wtype.IChain
 	TimeEstimate          float64
 	CarryVolume           wunit.Volume
 	InstructionSets       [][]*wtype.LHInstruction
 	Evaps                 []wtype.VolumeCorrection
 	Options               LHOptions
 	NUserPlates           int
-	Output_sort           bool
+	OutputSort            bool
 	TipsUsed              []wtype.TipEstimate
+	InputSolutions        *InputSolutions //store properties related to the Liquids for the request
 }
 
-func (req *LHRequest) GetPlate(id string) (*wtype.LHPlate, bool) {
+func (req *LHRequest) GetPlate(id string) (*wtype.Plate, bool) {
 	p, ok := req.Plates[id]
 
 	if ok {
 		return p, true
 	}
 
-	p, ok = req.Input_plates[id]
+	p, ok = req.InputPlates[id]
 
 	if ok {
 		return p, true
 	}
 
-	p, ok = req.Output_plates[id]
+	p, ok = req.OutputPlates[id]
 
 	if ok {
 		return p, true
@@ -92,29 +90,25 @@ func (req *LHRequest) GetPlate(id string) (*wtype.LHPlate, bool) {
 	return nil, false
 }
 
-func (req *LHRequest) ConfigureYourself() error {
-	// ensures input solutions is populated
-	// once input plates are specified
-	// more to happen later
-	inputs := req.Input_solutions
+//GetSolutionsFromInputPlates get all the solutions available to the mix task
+//in the input plates
+func (req *LHRequest) GetSolutionsFromInputPlates() (map[string][]*wtype.Liquid, error) {
 
-	if inputs == nil {
-		inputs = make(map[string][]*wtype.LHComponent)
-	}
+	inputs := make(map[string][]*wtype.Liquid)
 
 	// we need to make an exception of components which are used literally
 	// i.e. anything used in a mix-in-place; these don't add to the general
 	// store of anonymous components to be sampled from
 
-	uniques := make(map[wtype.PlateLocation]*wtype.LHComponent, len(req.LHInstructions))
+	uniques := make(map[wtype.PlateLocation]*wtype.Liquid, len(req.LHInstructions))
 
 	for _, ins := range req.LHInstructions {
 		if ins.InsType() != "MIX" {
 			continue
 		}
 		if ins.IsMixInPlace() {
-			if !ins.Components[0].PlateLocation().IsZero() {
-				uniques[ins.Components[0].PlateLocation()] = ins.Components[0]
+			if !ins.Inputs[0].PlateLocation().IsZero() {
+				uniques[ins.Inputs[0].PlateLocation()] = ins.Inputs[0]
 			}
 			//else {
 			// this will be autoallocated
@@ -122,14 +116,13 @@ func (req *LHRequest) ConfigureYourself() error {
 		}
 	}
 
-	for _, v := range req.Input_plates {
+	for _, v := range req.InputPlates {
 		for _, w := range v.Wellcoords {
 			if w.IsEmpty() {
 				continue
 			}
 
 			// special case for components treated literally
-
 			cmp, ok := uniques[w.PlateLocation()]
 
 			if ok {
@@ -140,28 +133,24 @@ func (req *LHRequest) ConfigureYourself() error {
 				// bulk components (where instances don't matter) are
 				// identified using just CName
 				c := w.Contents().Dup()
-				vvvvvv := c.Volume()
-				vvvvvv.Subtract(w.ResidualVolume())
-				c.SetVolume(vvvvvv)
-				ar := inputs[c.CName]
-				ar = append(ar, c)
-				inputs[c.CName] = ar
+				//get the amount available
+				c.SetVolume(w.CurrentWorkingVolume())
+				inputs[c.CName] = append(inputs[c.CName], c)
 			}
 		}
 	}
 
-	req.Input_solutions = inputs
-	return nil
+	return inputs, nil
 }
 
 // this function checks requests so we can see early on whether or not they
 // are going to cause problems
 func ValidateLHRequest(rq *LHRequest) (bool, string) {
-	if rq.Output_platetypes == nil || len(rq.Output_platetypes) == 0 {
+	if rq.OutputPlatetypes == nil || len(rq.OutputPlatetypes) == 0 {
 		return false, "No output plate type specified"
 	}
 
-	if len(rq.Input_platetypes) == 0 {
+	if len(rq.InputPlatetypes) == 0 {
 		return false, "No input plate types specified"
 	}
 
@@ -177,39 +166,29 @@ func columnWiseIterator(a wtype.Addressable) wtype.AddressIterator {
 }
 
 func NewLHRequest() *LHRequest {
-	var lhr LHRequest
-	lhr.ID = wtype.GetUUID()
-	lhr.LHInstructions = make(map[string]*wtype.LHInstruction)
-	lhr.Input_solutions = make(map[string][]*wtype.LHComponent)
-	lhr.Plates = make(map[string]*wtype.LHPlate)
-	lhr.Tips = make([]*wtype.LHTipbox, 0, 1)
-	lhr.Input_plates = make(map[string]*wtype.LHPlate)
-	lhr.Input_platetypes = make([]*wtype.LHPlate, 0, 2)
-	lhr.Input_setup_weights = make(map[string]float64)
-	lhr.Output_plates = make(map[string]*wtype.LHPlate)
-	lhr.Output_plate_order = make([]string, 0, 1)
-	lhr.Input_plate_order = make([]string, 0, 1)
-	lhr.Plate_lookup = make(map[string]string)
-	lhr.Stockconcs = make(map[string]wunit.Concentration)
-	lhr.Input_order = make([]string, 0)
-	lhr.Output_order = make([]string, 0)
-	lhr.OutputIteratorFactory = columnWiseIterator
-	lhr.Output_assignments = make(map[string][]string)
-	lhr.Input_assignments = make(map[string][]string)
-	lhr.InstructionSet = liquidhandling.NewRobotInstructionSet(nil)
-	lhr.InstructionText = ""
-	lhr.Input_vols_required = make(map[string]wunit.Volume)
-	lhr.Input_vols_supplied = make(map[string]wunit.Volume)
-	lhr.Input_vols_wanting = make(map[string]wunit.Volume)
-	lhr.CarryVolume = wunit.NewVolume(0.5, "ul")
-	lhr.Input_setup_weights["MAX_N_PLATES"] = 2
-	lhr.Input_setup_weights["MAX_N_WELLS"] = 96
-	lhr.Input_setup_weights["RESIDUAL_VOLUME_WEIGHT"] = 1.0
-	lhr.Options = NewLHOptions()
-	lhr.TipsUsed = make([]wtype.TipEstimate, 0)
-	systemPolicies, _ := wtype.GetLHPolicyForTest()
+	lhr := &LHRequest{
+		ID:                wtype.GetUUID(),
+		LHInstructions:    make(map[string]*wtype.LHInstruction),
+		Plates:            make(map[string]*wtype.Plate),
+		InstructionSet:    liquidhandling.NewRobotInstructionSet(nil),
+		InputAssignments:  make(map[string][]string),
+		OutputAssignments: make(map[string][]string),
+		InputPlates:       make(map[string]*wtype.Plate),
+		OutputPlates:      make(map[string]*wtype.Plate),
+		InputSetupWeights: map[string]float64{
+			"MAX_N_PLATES":           2,
+			"MAX_N_WELLS":            96,
+			"RESIDUAL_VOLUME_WEIGHT": 1.0,
+		},
+		PlateLookup:           make(map[string]string),
+		Stockconcs:            make(map[string]wunit.Concentration),
+		OutputIteratorFactory: columnWiseIterator,
+		CarryVolume:           wunit.NewVolume(0.5, "ul"),
+		Options:               NewLHOptions(),
+	}
+	systemPolicies, _ := wtype.GetSystemLHPolicies()
 	lhr.SetPolicies(systemPolicies)
-	return &lhr
+	return lhr
 }
 
 func (lhr *LHRequest) Policies() *wtype.LHPolicyRuleSet {
@@ -229,22 +208,25 @@ func (lhr *LHRequest) SetPolicies(systemPolicies *wtype.LHPolicyRuleSet) {
 
 // AddUserPolicies allows policies specified in elements to be added to the PolicyManager.
 func (lhr *LHRequest) AddUserPolicies(userPolicies *wtype.LHPolicyRuleSet) {
-
-	lhr.PolicyManager.UserPolicies = userPolicies
+	// things coming in take precedence over things already there
+	if lhr.PolicyManager.UserPolicies == nil {
+		lhr.PolicyManager.UserPolicies = userPolicies
+	} else {
+		lhr.PolicyManager.UserPolicies.MergeWith(userPolicies)
+	}
 }
 
 func (lhr *LHRequest) Add_instruction(ins *wtype.LHInstruction) {
 	lhr.LHInstructions[ins.ID] = ins
 }
 
+//NewComponentsAdded run this after Plan to determine if anything
+// new was added to the inputs
 func (lhr *LHRequest) NewComponentsAdded() bool {
-	// run this after Plan to determine if anything
-	// new was added to the inputs
-
-	return len(lhr.Input_vols_wanting) != 0
+	return len(lhr.InputSolutions.VolumesWanting) != 0
 }
 
-func (lhr *LHRequest) AddUserPlate(p *wtype.LHPlate) {
+func (lhr *LHRequest) AddUserPlate(p *wtype.Plate) {
 	// impose sanity
 
 	if p.PlateName == "" {
@@ -254,7 +236,7 @@ func (lhr *LHRequest) AddUserPlate(p *wtype.LHPlate) {
 
 	p.MarkNonEmptyWellsUserAllocated()
 
-	lhr.Input_plates[p.ID] = p
+	lhr.InputPlates[p.ID] = p
 }
 
 func (lhr *LHRequest) UseLegacyVolume() bool {
@@ -307,7 +289,7 @@ func (mgr *LHPolicyManager) MergePolicies(protocolpolicies *wtype.LHPolicyRuleSe
 
 // HasPlateNamed checks if the request already contains a plate with the specified name
 func (request *LHRequest) HasPlateNamed(name string) bool {
-	checkForPlateNamed := func(query string, subject map[string]*wtype.LHPlate) bool {
+	checkForPlateNamed := func(query string, subject map[string]*wtype.Plate) bool {
 		for _, plate := range subject {
 			if plate.PlateName == query {
 				return true
@@ -316,10 +298,10 @@ func (request *LHRequest) HasPlateNamed(name string) bool {
 		return false
 	}
 
-	if checkForPlateNamed(name, request.Input_plates) {
+	if checkForPlateNamed(name, request.InputPlates) {
 		return true
 	}
-	if checkForPlateNamed(name, request.Output_plates) {
+	if checkForPlateNamed(name, request.OutputPlates) {
 		return true
 	}
 
@@ -327,20 +309,20 @@ func (request *LHRequest) HasPlateNamed(name string) bool {
 }
 
 // OrderedInputPlates returns the list of input plates in order
-func (request *LHRequest) OrderedInputPlates() []*wtype.LHPlate {
-	ret := make([]*wtype.LHPlate, 0, len(request.Input_plates))
-	for _, id := range request.Input_plate_order {
-		ret = append(ret, request.Input_plates[id])
+func (request *LHRequest) OrderedInputPlates() []*wtype.Plate {
+	ret := make([]*wtype.Plate, 0, len(request.InputPlates))
+	for _, id := range request.InputPlateOrder {
+		ret = append(ret, request.InputPlates[id])
 	}
 
 	return ret
 }
 
 // OrderedOutputPlates returns the list of input plates in order
-func (request *LHRequest) OrderedOutputPlates() []*wtype.LHPlate {
-	ret := make([]*wtype.LHPlate, 0, len(request.Output_plates))
-	for _, id := range request.Output_plate_order {
-		ret = append(ret, request.Output_plates[id])
+func (request *LHRequest) OrderedOutputPlates() []*wtype.Plate {
+	ret := make([]*wtype.Plate, 0, len(request.OutputPlates))
+	for _, id := range request.OutputPlateOrder {
+		ret = append(ret, request.OutputPlates[id])
 	}
 
 	return ret
@@ -348,11 +330,40 @@ func (request *LHRequest) OrderedOutputPlates() []*wtype.LHPlate {
 
 // AllPlates returns a list of all known plates, in the order input plates, output plates
 // ordering will be as within the stated orders of each
-func (request *LHRequest) AllPlates() []*wtype.LHPlate {
-	r := make([]*wtype.LHPlate, 0, len(request.Input_plates)+len(request.Output_plates))
+func (request *LHRequest) AllPlates() []*wtype.Plate {
+	r := make([]*wtype.Plate, 0, len(request.InputPlates)+len(request.OutputPlates))
 
 	r = append(r, request.OrderedInputPlates()...)
 	r = append(r, request.OrderedOutputPlates()...)
 
 	return r
+}
+
+//GetOrderedLHInstructions get the LHInstructions in the order which should have
+//previously been detrmined
+func (self *LHRequest) GetOrderedLHInstructions() ([]*wtype.LHInstruction, error) {
+	//len(OutputOrder) can be less than len(self.LHInstructions) due to aggregation
+	if len(self.OutputOrder) > len(self.LHInstructions) {
+		return nil, errors.Errorf("self OutputOrder has length %d but %d LHInstructions", len(self.OutputOrder), len(self.LHInstructions))
+	}
+
+	ret := make([]*wtype.LHInstruction, 0, len(self.OutputOrder))
+	for _, instructionID := range self.OutputOrder {
+		instruction, ok := self.LHInstructions[instructionID]
+		if !ok {
+			return ret, errors.Errorf("request has invalid OutputOrder, no instruction with id %s", instructionID)
+		}
+		ret = append(ret, instruction)
+	}
+	return ret, nil
+}
+
+//updateWithNewLHInstructions make sure the request contains the new instructions if aggregation has occurred
+func (rq *LHRequest) updateWithNewLHInstructions(sorted []*wtype.LHInstruction) {
+	for _, ins := range sorted {
+		_, ok := rq.LHInstructions[ins.ID]
+		if !ok {
+			rq.LHInstructions[ins.ID] = ins
+		}
+	}
 }

@@ -45,11 +45,11 @@ xcode-select --install
 
 # Install some external dependencies
 brew update
-brew install mercurial pkg-config glpk sqlite3 opencv
+brew install mercurial pkg-config glpk
 
 # Install antha
-mkdir -p $GOPATH/src/github.com/antha-lang
-cd $GOPATH/src/github.com/antha-lang
+mkdir -p ${GOPATH:-$HOME/go}/src/github.com/antha-lang
+cd ${GOPATH:-$HOME/go}/src/github.com/antha-lang
 git clone https://github.com/antha-lang/elements
 cd elements
 git submodule update --init
@@ -67,16 +67,20 @@ instructions follow. If you do not use a Debian based system or if you are not
 using an x86_64 machine, you will have to modify these instructions by
 replacing the go binary with one that corresponds to your platform and
 replacing ``apt-get`` with your package manager.
+
+Head to https://golang.org/dl/ to download the latest version of go.
+
+The example below assumes this is version go1.10
+
 ```bash
-# Install go
-curl -O https://storage.googleapis.com/golang/go1.7.3.linux-amd64.tar.gz
-sudo tar -C /usr/local -xzf go1.7.3.linux-amd64.tar.gz
+# Install your downloaded version of go
+sudo tar -C /usr/local -xzf go1.10.3.linux-amd64.tar.gz
 
 # Add /usr/local/go/bin to the path
 export PATH=$PATH:/usr/local/go/bin
 
 # Install antha external dependencies
-sudo apt-get install -y libglpk-dev libopencv-dev libsqlite3-dev git
+sudo apt-get install -y libglpk-dev git
 
 # Install antha
 mkdir -p $GOPATH/src/github.com/antha-lang

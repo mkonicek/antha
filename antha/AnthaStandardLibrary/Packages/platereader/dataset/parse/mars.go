@@ -253,13 +253,6 @@ func parseWellData(xlsxBinary []byte, sheet int, headerrows int) (welldatamap ma
 
 			for k := 3; k < sheet1.MaxCol; k++ {
 				if k != tempcolumn && k != injectionvoumecolumn {
-
-					readingtype, err := spreadsheet.GetDataFromRowCol(sheet1, headerrow, k)
-					if err != nil {
-						return welldatamap, err
-					}
-					welldata.ReadingType = readingtype.String()
-
 					if wavelengthrow != 0 {
 						wavelength, err := spreadsheet.GetDataFromRowCol(sheet1, wavelengthrow, k)
 						if err != nil {
@@ -303,6 +296,12 @@ func parseWellData(xlsxBinary []byte, sheet int, headerrows int) (welldatamap ma
 
 			for m := 3; m < maxcol; m++ {
 
+				readingtype, err := spreadsheet.GetDataFromRowCol(sheet1, headerrow, m)
+				if err != nil {
+					return welldatamap, err
+				}
+				measurement.ReadingType = readingtype.String()
+
 				//check header
 				header, err := spreadsheet.GetDataFromRowCol(sheet1, headerrow, m)
 				if err != nil {
@@ -317,7 +316,11 @@ func parseWellData(xlsxBinary []byte, sheet int, headerrows int) (welldatamap ma
 					}
 					measurement.Reading, err = reading.Float()
 					if err != nil {
-						return welldatamap, err
+						if reading.String() == "" {
+							measurement.Reading = 0.0
+						} else {
+							return welldatamap, err
+						}
 					}
 				}
 
@@ -379,16 +382,16 @@ func parseWellData(xlsxBinary []byte, sheet int, headerrows int) (welldatamap ma
 					if err != nil {
 						return welldatamap, err
 					}
-					welldata.ReadingType = readingType.String()
+					measurement.ReadingType = readingType.String()
 
-					parsedatatype := strings.Split(welldata.ReadingType, `(`)
+					parsedatatype := strings.Split(measurement.ReadingType, `(`)
 
 					parsedatatype = strings.Split(parsedatatype[1], `)`)
 
 					if !strings.Contains(header.String(), "Temperature") && !strings.Contains(header.String(), "Volume") {
 
 						// handle case of absorbance (may need to add others.. if contains Ex, Ex else number = abs
-						ex, exband, em, emband, scriptposition, err := parseBracketedColumnHeader(welldata.ReadingType)
+						ex, exband, em, emband, scriptposition, err := parseBracketedColumnHeader(measurement.ReadingType)
 
 						if err == nil {
 							measurement.RWavelength = em
@@ -407,7 +410,7 @@ func parseWellData(xlsxBinary []byte, sheet int, headerrows int) (welldatamap ma
 							}
 							measurement.RWavelength = wavelength
 							measurement.EWavelength = wavelength
-						} else if strings.Contains(welldata.ReadingType, "Em Spectrum") {
+						} else if strings.Contains(measurement.ReadingType, "Em Spectrum") {
 							if wavelengthrow != 0 {
 								emWavelength, err := spreadsheet.GetDataFromRowCol(sheet1, wavelengthrow, m)
 								if err != nil {
@@ -418,7 +421,7 @@ func parseWellData(xlsxBinary []byte, sheet int, headerrows int) (welldatamap ma
 									return welldatamap, err
 								}
 							}
-						} else if strings.Contains(welldata.ReadingType, "Ex Spectrum") {
+						} else if strings.Contains(measurement.ReadingType, "Ex Spectrum") {
 							if wavelengthrow != 0 {
 								exWavelength, err := spreadsheet.GetDataFromRowCol(sheet1, wavelengthrow, m)
 								if err != nil {
@@ -429,7 +432,7 @@ func parseWellData(xlsxBinary []byte, sheet int, headerrows int) (welldatamap ma
 									return welldatamap, err
 								}
 							}
-						} else if strings.Contains(welldata.ReadingType, "Abs Spectrum") {
+						} else if strings.Contains(measurement.ReadingType, "Abs Spectrum") {
 							if wavelengthrow == 0 {
 								wavelengthstring = parsedatatype[0]
 

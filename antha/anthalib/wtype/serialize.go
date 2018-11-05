@@ -27,13 +27,13 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
-func (lhp *LHPlate) MarshalJSON() ([]byte, error) {
+func (lhp *Plate) MarshalJSON() ([]byte, error) {
 	slhp := lhp.ToSLHPLate()
 
 	return json.Marshal(slhp)
 }
 
-func (lhp *LHPlate) UnmarshalJSON(b []byte) error {
+func (lhp *Plate) UnmarshalJSON(b []byte) error {
 	var slhp SLHPlate
 
 	err := json.Unmarshal(b, &slhp)
@@ -68,7 +68,7 @@ type SLHPlate struct {
 	WellZStart  float64 // offset (mm) to bottom of well in Z direction
 }
 
-func (p *LHPlate) ToSLHPLate() SLHPlate {
+func (p *Plate) ToSLHPLate() SLHPlate {
 	return SLHPlate{
 		ID:          p.ID,
 		Inst:        p.Inst,
@@ -90,7 +90,7 @@ func (p *LHPlate) ToSLHPLate() SLHPlate {
 	}
 }
 
-func (slhp SLHPlate) FillPlate(plate *LHPlate) {
+func (slhp SLHPlate) FillPlate(plate *Plate) {
 	plate.ID = slhp.ID
 	plate.Inst = slhp.Inst
 	plate.Loc = slhp.Loc
@@ -122,7 +122,7 @@ func (slhp SLHPlate) FillPlate(plate *LHPlate) {
 	plate.Welltype.Plate = plate
 }
 
-func makeRows(p *LHPlate) {
+func makeRows(p *Plate) {
 	p.Rows = make([][]*LHWell, p.WlsY)
 	for i := 0; i < p.WlsY; i++ {
 		p.Rows[i] = make([]*LHWell, p.WlsX)
@@ -132,7 +132,7 @@ func makeRows(p *LHPlate) {
 		}
 	}
 }
-func makeCols(p *LHPlate) {
+func makeCols(p *Plate) {
 	p.Cols = make([][]*LHWell, p.WlsX)
 	for i := 0; i < p.WlsX; i++ {
 		p.Cols[i] = make([]*LHWell, p.WlsY)
@@ -161,7 +161,7 @@ type LHWellType struct {
 func (w *LHWell) AddDimensions(lhwt *LHWellType) {
 	w.MaxVol = wunit.NewVolume(lhwt.Vol, lhwt.Vunit).ConvertToString("ul")
 	w.Rvol = wunit.NewVolume(lhwt.Rvol, lhwt.Vunit).ConvertToString("ul")
-	w.WShape = NewShape(lhwt.ShapeName, lhwt.Dunit, lhwt.Xdim, lhwt.Ydim, lhwt.Zdim)
+	w.WShape = NewShape(ShapeTypeID(lhwt.ShapeName), lhwt.Dunit, lhwt.Xdim, lhwt.Ydim, lhwt.Zdim)
 	w.Bottom = lhwt.Bottom
 	w.Bounds.SetSize(Coordinates{
 		wunit.NewLength(lhwt.Xdim, lhwt.Dunit).ConvertToString("mm"),
@@ -171,9 +171,9 @@ func (w *LHWell) AddDimensions(lhwt *LHWellType) {
 	w.Bottomh = wunit.NewLength(lhwt.Bottomh, lhwt.Dunit).ConvertToString("mm")
 }
 
-func (plate *LHPlate) Welldimensions() *LHWellType {
+func (plate *Plate) Welldimensions() *LHWellType {
 	t := plate.Welltype
-	lhwt := LHWellType{t.MaxVol, "ul", t.Rvol, t.WShape.ShapeName, t.Bottom, t.GetSize().X, t.GetSize().Y, t.GetSize().Z, t.Bottomh, "mm"}
+	lhwt := LHWellType{t.MaxVol, "ul", t.Rvol, string(t.WShape.ShapeName), t.Bottom, t.GetSize().X, t.GetSize().Y, t.GetSize().Z, t.Bottomh, "mm"}
 	return &lhwt
 }
 
@@ -181,7 +181,7 @@ type SLHWell struct {
 	ID       string
 	Inst     string
 	Coords   WellCoords
-	Contents *LHComponent
+	Contents *Liquid
 }
 
 func (slw SLHWell) FillWell(lw *LHWell) {

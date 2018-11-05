@@ -10,37 +10,37 @@ import (
 func (lh Liquidhandler) countTipsUsed(rq *LHRequest) (*LHRequest, error) {
 	teHash := make(map[string]wtype.TipEstimate)
 
+	var err error
 	for _, ins := range rq.Instructions {
-		if ins.InstructionType() == driver.LOD {
-			ldt, ok := ins.(*driver.LoadTipsInstruction)
+		ins.Visit(driver.RobotInstructionBaseVisitor{
+			HandleLoadTips: func(ins *driver.LoadTipsInstruction) {
+				for i := 0; i < len(ins.Pos); i++ {
+					if ins.Pos[i] == "" {
+						continue
+					}
+					bx, ok := lh.Properties.Tipboxes[ins.Pos[i]]
 
-			if !ok {
-				return nil, fmt.Errorf("Instruction declared wrong type (LOD) but is %T", ins)
-			}
+					if !ok {
+						err = fmt.Errorf("Instruction %s requests tips from an empty position", driver.InsToString(ins))
+						return
+					}
 
-			for i := 0; i < len(ldt.Pos); i++ {
-				if ldt.Pos[i] == "" {
-					continue
+					tt := bx.Type
+					te, ok := teHash[tt]
+
+					if !ok {
+						te = wtype.TipEstimate{TipType: tt, NTipBoxes: bx.NTips}
+					}
+
+					te.NTips += 1
+
+					teHash[te.TipType] = te
 				}
-				bx, ok := lh.Properties.Tipboxes[ldt.Pos[i]]
-
-				if !ok {
-					return nil, fmt.Errorf("Instruction %s requests tips from an empty position", driver.InsToString(ldt))
-				}
-
-				tt := bx.Type
-				te, ok := teHash[tt]
-
-				if !ok {
-					te = wtype.TipEstimate{TipType: tt, NTipBoxes: bx.NTips}
-				}
-
-				te.NTips += 1
-
-				teHash[te.TipType] = te
-			}
-
-		}
+			},
+		})
+	}
+	if err != nil {
+		return nil, err
 	}
 
 	// output to the request

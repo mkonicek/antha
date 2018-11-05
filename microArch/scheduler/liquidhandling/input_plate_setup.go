@@ -25,10 +25,12 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
-	"github.com/dustinkirkland/golang-petname"
 	"sort"
 	"strings"
 
+	"github.com/dustinkirkland/golang-petname"
+
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/inventory"
@@ -77,30 +79,30 @@ func (is InputSorter) Less(i, j int) bool {
 //OUTPUT: 	"input_plates"      -- these each have components in wells
 //		"input_assignments" -- map with arrays of assignment strings, i.e. {tea: [plate1:A:1, plate1:A:2...] }etc.
 func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, error) {
-	st := sampletracker.GetSampleTracker()
+	st := sampletracker.FromContext(ctx)
 	// I think this might need moving too
-	input_platetypes := (*request).Input_platetypes
+	input_platetypes := request.InputPlatetypes
 
 	// we assume that input_plates is set if any locs are set
-	input_plates := (*request).Input_plates
+	input_plates := request.InputPlates
 
 	if len(input_plates) == 0 {
-		input_plates = make(map[string]*wtype.LHPlate, 3)
+		input_plates = make(map[string]*wtype.Plate, 3)
 	}
 
 	// need to fill each plate type
 
-	var curr_plate *wtype.LHPlate
+	var curr_plate *wtype.Plate
 
-	inputs := (*request).Input_solutions
+	inputs := request.InputSolutions.Solutions
 
-	input_order := make([]string, len((*request).Input_order))
-	copy(input_order, (*request).Input_order)
+	input_order := make([]string, len(request.InputSolutions.Order))
+	copy(input_order, request.InputSolutions.Order)
 
 	// this needs to be passed in via the request... must specify how much of inputs cannot
 	// be satisfied by what's already passed in
 
-	input_volumes := request.Input_vols_wanting
+	input_volumes := request.InputSolutions.VolumesWanting
 
 	// sort to make deterministic
 	// we sort by a) volume (descending) b) name (alphabetically)
@@ -111,11 +113,11 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 
 	input_order = isrt.Ordered
 
-	weights_constraints := request.Input_setup_weights
+	weights_constraints := request.InputSetupWeights
 
 	// get the assignment
 
-	var well_count_assignments map[string]map[*wtype.LHPlate]int
+	var well_count_assignments map[string]map[*wtype.Plate]int
 
 	if len(input_volumes) != 0 {
 		// If any input solutions need to be set up then we now check if there any input plate types set.
@@ -132,7 +134,7 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 
 	input_assignments := make(map[string][]string, len(well_count_assignments))
 
-	plates_in_play := make(map[string]*wtype.LHPlate)
+	plates_in_play := make(map[string]*wtype.Plate)
 
 	curplaten := 1
 	for _, cname := range input_order {
@@ -209,7 +211,7 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 				location := curr_plate.ID + ":" + curr_well.Crds.FormatA1()
 				assignments = append(assignments, location)
 
-				var newcomponent *wtype.LHComponent
+				var newcomponent *wtype.Liquid
 
 				if isInstance(cname) {
 					newcomponent = component
@@ -248,15 +250,15 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 		for _, vv := range v {
 			// this now means input assignments is always set...
 			// previously this was empty
-			if vv.Loc != "" && vv.Volume().GreaterThanFloat(0.0) {
+			if vv.Loc != "" && !vv.Volume().IsZero() {
 				// append it
 				input_assignments[vv.CName] = append(input_assignments[vv.CName], vv.Loc)
 			}
 		}
 	}
 
-	(*request).Input_plates = input_plates
-	(*request).Input_assignments = input_assignments
+	request.InputPlates = input_plates
+	request.InputAssignments = input_assignments
 
 	//return input_plates, input_assignments
 	return request, nil
@@ -292,6 +294,13 @@ func getSafePlateName(request *LHRequest, prefix, sep string, curplaten int) str
 }
 
 func randomPlateName(prefix, sep string, order int) string {
-	tox := []string{prefix, fmt.Sprintf("%d", order), petname.Generate(1, "")}
+
+	blackListed := []string{"crappie", "titmouse", "stinkbug"}
+
+	randomName := petname.Generate(1, "")
+	for search.InStrings(blackListed, randomName) {
+		randomName = petname.Generate(1, "")
+	}
+	tox := []string{prefix, fmt.Sprintf("%d", order), randomName}
 	return strings.Join(tox, sep)
 }

@@ -32,8 +32,20 @@ import (
 	"math"
 )
 
+type ShapeTypeID string
+
+const (
+	CylinderShape  ShapeTypeID = "cylinder"
+	CircleShape    ShapeTypeID = "circle"
+	RoundShape     ShapeTypeID = "round"
+	SphereShape    ShapeTypeID = "sphere"
+	SquareShape    ShapeTypeID = "square"
+	BoxShape       ShapeTypeID = "box"
+	RectangleShape ShapeTypeID = "rectangle"
+)
+
 type Shape struct {
-	ShapeName  string
+	ShapeName  ShapeTypeID
 	LengthUnit string
 	H          float64
 	W          float64
@@ -61,12 +73,12 @@ func (sh *Shape) Dup() *Shape {
 }
 
 func (sh *Shape) String() string {
-	return fmt.Sprintf("Generic Shape [%fx%fx%f]", sh.H, sh.W, sh.D)
+	return fmt.Sprintf("%s [%fx%fx%f]", sh.ShapeName, sh.H, sh.W, sh.D)
 }
 
 func (sh *Shape) MaxCrossSectionalArea() (area wunit.Area, err error) {
 
-	shapename := strings.ToLower(sh.ShapeName)
+	shapename := strings.ToLower(string(sh.ShapeName))
 	var areaunit string
 	if sh.LengthUnit == "mm" {
 		areaunit = "mm^2" //sh.LengthUnit + `^` + strconv.Itoa(2)
@@ -95,7 +107,7 @@ func (sh *Shape) MaxCrossSectionalArea() (area wunit.Area, err error) {
 
 func (sh *Shape) Volume() (volume wunit.Volume, err error) {
 
-	shapename := strings.ToLower(sh.ShapeName)
+	shapename := strings.ToLower(string(sh.ShapeName))
 	var volumeunit string
 	if sh.LengthUnit == "mm" {
 		volumeunit = "ul"
@@ -122,7 +134,7 @@ func (sh *Shape) Volume() (volume wunit.Volume, err error) {
 	return
 }
 
-func NewShape(name, lengthunit string, h, w, d float64) *Shape {
+func NewShape(name ShapeTypeID, lengthunit string, h, w, d float64) *Shape {
 	sh := Shape{name, lengthunit, h, w, d}
 	return &sh
 }

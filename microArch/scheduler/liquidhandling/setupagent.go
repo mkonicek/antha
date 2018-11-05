@@ -57,8 +57,8 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 	// instructions; ditto input or output plates until we've done layout
 
 	// input plates
-	input_plates := request.Input_plates
-	input_plate_order := request.Input_plate_order
+	input_plates := request.InputPlates
+	input_plate_order := request.InputPlateOrder
 
 	if len(input_plate_order) < len(input_plates) {
 		input_plate_order = make([]string, 0, len(input_plates))
@@ -72,7 +72,7 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 			sort.Strings(input_plate_order)
 		*/
 
-		for _, ass := range request.Input_assignments {
+		for _, ass := range request.InputAssignments {
 			for _, a := range ass {
 				tx := strings.Split(a, ":")
 				if !isInStrArr(tx[0], input_plate_order) {
@@ -91,12 +91,12 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 			return nil, wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("Plate number inconsistency: %d != %d (here: %d)", len(input_plate_order), len(input_plates), 89))
 		}
 
-		request.Input_plate_order = input_plate_order
+		request.InputPlateOrder = input_plate_order
 	}
 
 	// output plates
-	output_plates := request.Output_plates
-	output_plate_order := request.Output_plate_order
+	output_plates := request.OutputPlates
+	output_plate_order := request.OutputPlateOrder
 
 	if len(output_plate_order) < len(output_plates) {
 		output_plate_order = make([]string, 0, len(output_plates))
@@ -108,14 +108,14 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 				sort.Strings(output_plate_order)
 		*/
 		// order them according to when they are first used
-		for _, insID := range request.Output_order {
+		for _, insID := range request.OutputOrder {
 
 			ins := request.LHInstructions[insID]
 			// ignore non-mixes
 			if ins.Type != wtype.LHIMIX {
 				continue
 			}
-			tx := strings.Split(ins.Results[0].Loc, ":")
+			tx := strings.Split(ins.Outputs[0].Loc, ":")
 
 			if len(tx) == 2 {
 				pa := tx[0]
@@ -131,7 +131,7 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 			return nil, wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("Plate number inconsistency: %d != %d (here: %d)", len(output_plate_order), len(output_plates), 127))
 		}
 
-		request.Output_plate_order = output_plate_order
+		request.OutputPlateOrder = output_plate_order
 
 	}
 
@@ -204,7 +204,7 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 		setup[position] = p
 		plate_lookup[p.ID] = position
 
-		err := params.AddPlate(position, p)
+		err := params.AddPlateTo(position, p)
 		if err != nil {
 			return request, err
 		}
@@ -232,7 +232,7 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 
 		setup[position] = p
 		plate_lookup[p.ID] = position
-		err := params.AddPlate(position, p)
+		err := params.AddPlateTo(position, p)
 		if err != nil {
 			return request, err
 		}
@@ -250,7 +250,7 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 			// representation of the liquid handler
 			switch params.Model {
 			case "Pipetmax":
-				waste, err = inventory.NewTipwaste(ctx, "Gilsontipwaste")
+				waste, err = inventory.NewTipwaste(ctx, "GilsonTipChute")
 			case "GeneTheatre":
 				fallthrough
 			case "Felix":
@@ -277,7 +277,7 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 	// TODO -- similar logic here to add / check for wash station if tips are fixed or mixed
 
 	//request.Setup = setup
-	request.Plate_lookup = plate_lookup
+	request.PlateLookup = plate_lookup
 	return request, nil
 }
 

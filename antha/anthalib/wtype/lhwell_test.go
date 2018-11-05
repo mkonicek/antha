@@ -11,7 +11,7 @@ func getTestWell(volUL, residualUL float64) *LHWell {
 	return well
 }
 
-func getTestComponent(volUL float64) *LHComponent {
+func getTestComponent(volUL float64) *Liquid {
 	cmp := NewLHComponent()
 	cmp.Vol = volUL
 	return cmp
@@ -158,6 +158,42 @@ func TestWellValidation(t *testing.T) {
 
 	if err := well.ValidateVolume(); err == nil {
 		t.Errorf("well.ValidateVolume() returned no error : CurrentVolume(), MaxVolume() = %v, %v", well.CurrentVolume(), well.MaxVolume())
+	}
+
+}
+
+func TestGetNextWellOk(t *testing.T) {
+	trough := maketroughfortest()
+	var well *LHWell
+
+	//half working vol - carry vol approximation
+	//will fit 2 components in each well since they're the same type
+	testVol := 4990.0
+
+	for i := 0; i < 24; i++ {
+		cmp := getTestComponent(testVol)
+		well, ok := Get_Next_Well(trough, cmp, well)
+		if !ok {
+			t.Fatal("got no well when trough wasn't full")
+		}
+
+		if g, e := well.GetWellCoords(), (WellCoords{X: i / 2, Y: 0}); !e.Equals(g) {
+			t.Errorf("wellcoords don't match: expected %s, got %s", e.FormatA1(), g.FormatA1())
+		}
+
+		well.AddComponent(cmp)
+	}
+
+	//now that the plate's full, should only return nil, false
+	cmp := getTestComponent(testVol)
+	well, ok := Get_Next_Well(trough, cmp, well)
+	if well != nil || ok {
+		t.Errorf("plate full: expected output (nil, false), got (%s, %t)", NameOf(trough), ok)
+	}
+
+	well, ok = Get_Next_Well(trough, cmp, nil)
+	if well != nil || ok {
+		t.Errorf("plate full: expected output (nil, false), got (%s, %t)", NameOf(trough), ok)
 	}
 
 }

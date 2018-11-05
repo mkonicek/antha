@@ -6,6 +6,13 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/inventory/testinventory"
 	"sort"
+	"strings"
+)
+
+const (
+	xStartOffset = 14.28
+	yStartOffset = 11.24
+	zStartOffset = 0.7
 )
 
 func main() {
@@ -15,7 +22,7 @@ func main() {
 
 	plateNames := make([]string, 0, len(thePlates))
 
-	thePlateMap := make(map[string]*wtype.LHPlate)
+	thePlateMap := make(map[string]*wtype.Plate)
 
 	for _, p := range thePlates {
 		plateNames = append(plateNames, p.Type)
@@ -29,7 +36,7 @@ func main() {
 		sPlate := testinventory.PlateForSerializing{
 			PlateType:    p,
 			Manufacturer: plate.Mnfr,
-			WellShape:    plate.Welltype.Shape().ShapeName,
+			WellShape:    string(plate.Welltype.Shape().ShapeName),
 			WellH:        plate.Welltype.Shape().H,
 			WellW:        plate.Welltype.Shape().W,
 			WellD:        plate.Welltype.Shape().D,
@@ -50,6 +57,11 @@ func main() {
 			WellZStart:   plate.WellZStart,
 			Extra:        plate.Welltype.Extra,
 		}
+
+		if !strings.Contains(sPlate.PlateType, "FromSpec") {
+			// add offset values to WellX,Y,ZStart
+			sPlate = reviseWellStarts(sPlate, xStartOffset, yStartOffset, zStartOffset)
+		}
 		platesForSerializing = append(platesForSerializing, sPlate)
 	}
 
@@ -64,4 +76,13 @@ func main() {
 	fmt.Println("var plateBytes = []byte(`")
 	fmt.Println(string(s))
 	fmt.Println("`)")
+}
+
+//		sPlate = reviseWellStarts(sPlate, xStartOffset, yStartOffset, zStartOffset)
+func reviseWellStarts(sPlate testinventory.PlateForSerializing, xStartOffset, yStartOffset, zStartOffset float64) testinventory.PlateForSerializing {
+	sPlate.WellXStart += xStartOffset
+	sPlate.WellYStart += yStartOffset
+	sPlate.WellZStart += zStartOffset
+
+	return sPlate
 }

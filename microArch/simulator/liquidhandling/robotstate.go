@@ -23,7 +23,10 @@
 package liquidhandling
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
+	"sort"
+	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -36,17 +39,19 @@ import (
 //ChannelState Represent the physical state of a single channel
 type ChannelState struct {
 	number   int
-	tip      *wtype.LHTip       //Nil if no tip loaded, otherwise the tip that's loaded
-	contents *wtype.LHComponent //What's in the tip?
-	position wtype.Coordinates  //position relative to the adaptor
-	adaptor  *AdaptorState      //the channel's adaptor
+	tip      *wtype.LHTip      //Nil if no tip loaded, otherwise the tip that's loaded
+	contents *wtype.Liquid     //What's in the tip?
+	position wtype.Coordinates //position relative to the adaptor
+	adaptor  *AdaptorState     //the channel's adaptor
+	radius   float64
 }
 
-func NewChannelState(number int, adaptor *AdaptorState, position wtype.Coordinates) *ChannelState {
+func NewChannelState(number int, adaptor *AdaptorState, position wtype.Coordinates, radius float64) *ChannelState {
 	r := ChannelState{}
 	r.number = number
 	r.position = position
 	r.adaptor = adaptor
+	r.radius = radius
 
 	return &r
 }
@@ -70,8 +75,26 @@ func (self *ChannelState) IsEmpty() bool {
 }
 
 //GetContents get the contents of the loaded tip, retuns nil if no contents or no tip
-func (self *ChannelState) GetContents() *wtype.LHComponent {
+func (self *ChannelState) GetContents() *wtype.Liquid {
 	return self.contents
+}
+
+func (self *ChannelState) GetRadius() float64 {
+	return self.radius
+}
+
+func (self *ChannelState) GetBounds(channelClearance float64) wtype.BBox {
+	var r float64
+	h := self.tip.GetEffectiveHeight() + channelClearance
+	if !self.HasTip() {
+		r = self.radius
+	}
+
+	ret := wtype.NewBBox(
+		self.GetAbsolutePosition().Subtract(wtype.Coordinates{X: r, Y: r, Z: h}),
+		wtype.Coordinates{X: 2.0 * r, Y: 2.0 * r, Z: h})
+
+	return *ret
 }
 
 //GetRelativePosition get the channel's position relative to the head
@@ -91,7 +114,7 @@ func (self *ChannelState) GetAbsolutePosition() wtype.Coordinates {
 
 //GetTarget get the LHObject below the adaptor
 func (self *ChannelState) GetTarget() wtype.LHObject {
-	return self.adaptor.GetRobot().GetDeck().GetChildBelow(self.GetAbsolutePosition())
+	return self.adaptor.GetGroup().GetRobot().GetDeck().GetChildBelow(self.GetAbsolutePosition())
 }
 
 //                            Actions
@@ -121,6 +144,65 @@ func (self *ChannelState) UnloadTip() *wtype.LHTip {
 	return tip
 }
 
+//GetCollisions get collisions with this channel. channelClearance defined a height below the channel/tip to include
+func (self *ChannelState) GetCollisions(settings *SimulatorSettings, channelClearance float64) []wtype.LHObject {
+	deck := self.adaptor.GetGroup().GetRobot().GetDeck()
+
+	var ret []wtype.LHObject
+
+	box := self.GetBounds(channelClearance)
+	objects := deck.GetBoxIntersections(box)
+
+	//tips are allowed in wells
+	ret = make([]wtype.LHObject, 0, len(objects))
+	if self.HasTip() {
+		tipBottom := box.GetPosition()
+		for _, obj := range objects {
+			//ignore tipboxes if told to
+			if _, ok := obj.(*wtype.LHTipbox); !settings.IsTipboxCollisionEnabled() && ok {
+				continue
+			}
+			//don't add wells, instead add the plate if the tip bottom has hit the plate
+			if well, ok := obj.(*wtype.LHWell); ok {
+				if len(well.GetPointIntersections(tipBottom)) == 0 {
+					ret = append(ret, well.GetParent())
+				}
+			} else if _, ok := obj.(*wtype.Plate); !ok {
+				ret = append(ret, obj)
+			}
+		}
+	} else {
+		for _, obj := range objects {
+			if well, ok := obj.(*wtype.LHWell); ok {
+				//wells are empty space, so we can't collide with them, but we could collide with the parent
+				//if we aren't fully in the well
+				if !coneInWell(box, well) {
+					ret = append(ret, well.GetParent())
+				}
+			} else {
+				ret = append(ret, obj)
+			}
+		}
+	}
+
+	return ret
+}
+
+//coneInWell is the cone contained in the well
+func coneInWell(cone wtype.BBox, well *wtype.LHWell) bool {
+	wellStart := well.GetPosition()
+	wellEnd := wellStart.Add(well.GetSize())
+
+	coneStart := cone.GetPosition()
+	coneEnd := cone.GetPosition().Add(cone.GetSize())
+
+	if coneStart.X < wellStart.X || coneEnd.X > wellEnd.X || coneStart.Y < wellStart.Y || coneEnd.Y > wellEnd.Y {
+		return false
+	}
+
+	return !(coneStart.Z < (wellStart.Z + well.Bottomh))
+}
+
 // -------------------------------------------------------------------------------
 //                            AdaptorState
 // -------------------------------------------------------------------------------
@@ -129,17 +211,19 @@ func (self *ChannelState) UnloadTip() *wtype.LHTip {
 type AdaptorState struct {
 	name         string
 	channels     []*ChannelState
-	position     wtype.Coordinates
+	offset       wtype.Coordinates
 	independent  bool
 	params       *wtype.LHChannelParameter
-	robot        *RobotState
+	group        *AdaptorGroup
 	tipBehaviour wtype.TipLoadingBehaviour
+	index        int
 }
 
 func NewAdaptorState(name string,
 	independent bool,
 	channels int,
 	channel_offset wtype.Coordinates,
+	coneRadius float64,
 	params *wtype.LHChannelParameter,
 	tipBehaviour wtype.TipLoadingBehaviour) *AdaptorState {
 	as := AdaptorState{
@@ -150,13 +234,112 @@ func NewAdaptorState(name string,
 		params.Dup(),
 		nil,
 		tipBehaviour,
+		-1,
 	}
 
 	for i := 0; i < channels; i++ {
-		as.channels = append(as.channels, NewChannelState(i, &as, channel_offset.Multiply(float64(i))))
+		as.channels = append(as.channels, NewChannelState(i, &as, channel_offset.Multiply(float64(i)), coneRadius))
 	}
 
 	return &as
+}
+
+//String summarize the state of the adaptor
+func (self *AdaptorState) SummariseTips() string {
+	tipTypes := make([]string, 0, len(self.channels))
+	tipLengths := make([]string, 0, len(self.channels))
+	loaded := make([]int, 0, len(self.channels))
+
+	for i, channel := range self.channels {
+		if channel.HasTip() {
+			loaded = append(loaded, i)
+			tipTypes = append(tipTypes, channel.GetTip().GetType())
+			tipLengths = append(tipLengths, wunit.NewLength(channel.GetTip().GetEffectiveHeight(), "mm").String())
+		}
+	}
+
+	tipTypes = getUnique(tipTypes, true)
+	tipLengths = getUnique(tipLengths, true)
+
+	if len(loaded) > 0 {
+		return fmt.Sprintf("%s: %s %s (effective %s %s) loaded on %s",
+			self.name,
+			pTips(len(loaded)),
+			strings.Join(tipTypes, ","),
+			pLengths(len(tipLengths)),
+			strings.Join(tipLengths, ","),
+			summariseChannels(loaded))
+	}
+	return fmt.Sprintf("%s: <no tips>", self.name)
+}
+
+//SummarisePositions get a human readable description of the X,Y,Z position of
+//the adaptor, as well as which type of tips are loaded on which channels.
+//channelsColliding provides an optional list of channel indexes which
+//have been detected as being involved in a collision, which will also be
+//displayed in the output.
+func (self *AdaptorState) SummarisePositions(channelsColliding []int) string {
+
+	positions := make([]wtype.Coordinates, len(self.channels))
+	for i, channel := range self.channels {
+		positions[i] = channel.GetAbsolutePosition()
+		positions[i].Z -= channel.GetTip().GetEffectiveHeight()
+	}
+
+	collisions := make([]bool, len(self.channels))
+	for _, ch := range channelsColliding {
+		collisions[ch] = true
+	}
+
+	var places int
+	for _, pos := range positions {
+		if p := fmt.Sprintf("%.1f", pos.X); len(p) > places {
+			places = len(p)
+		}
+		if p := fmt.Sprintf("%.1f", pos.Y); len(p) > places {
+			places = len(p)
+		}
+		if p := fmt.Sprintf("%.1f", pos.Z); len(p) > places {
+			places = len(p)
+		}
+	}
+
+	floatTemplate := fmt.Sprintf("%%%d.1f", places)
+	intTemplate := fmt.Sprintf("%%%dd", places)
+
+	var head, lineX, lineY, lineZ []string
+	head = append(head, "channel:")
+	lineX = append(lineX, "      X:")
+	lineY = append(lineY, "      Y:")
+	lineZ = append(lineZ, "      Z:")
+	lineState := make([]string, len(positions)+1)
+	lineState[0] = "  state:"
+	for i, pos := range positions {
+		head = append(head, fmt.Sprintf(intTemplate, i))
+		lineX = append(lineX, fmt.Sprintf(floatTemplate, pos.X))
+		lineY = append(lineY, fmt.Sprintf(floatTemplate, pos.Y))
+		lineZ = append(lineZ, fmt.Sprintf(floatTemplate, pos.Z))
+
+		if collisions[i] {
+			lineState[i+1] += "C"
+		}
+		if self.channels[i].HasTip() {
+			lineState[i+1] += "T"
+		}
+	}
+
+	for i := 1; i < len(lineState); i++ {
+		lineState[i] = strings.Repeat(" ", places-len(lineState[i])) + lineState[i]
+	}
+
+	return strings.Join(
+		[]string{
+			strings.Join(head, " "),
+			strings.Join(lineX, " "),
+			strings.Join(lineY, " "),
+			strings.Join(lineZ, " "),
+			strings.Join(lineState, " "),
+		}, "\n")
 }
 
 //                            Accessors
@@ -169,7 +352,7 @@ func (self *AdaptorState) GetName() string {
 
 //GetPosition
 func (self *AdaptorState) GetPosition() wtype.Coordinates {
-	return self.position
+	return self.offset.Add(self.group.GetPosition())
 }
 
 //GetChannelCount
@@ -206,18 +389,30 @@ func (self *AdaptorState) IsIndependent() bool {
 	return self.independent
 }
 
-//GetRobot
-func (self *AdaptorState) GetRobot() *RobotState {
-	return self.robot
+func (self *AdaptorState) GetIndex() int {
+	return self.index
 }
 
-//SetRobot
-func (self *AdaptorState) SetRobot(r *RobotState) {
-	self.robot = r
+func (self *AdaptorState) setIndex(i int) {
+	self.index = i
 }
 
-func (self *AdaptorState) SetPosition(p wtype.Coordinates) {
-	self.position = p
+//GetGroup
+func (self *AdaptorState) GetGroup() *AdaptorGroup {
+	return self.group
+}
+
+//SetGroup
+func (self *AdaptorState) SetGroup(g *AdaptorGroup) {
+	self.group = g
+}
+
+func (self *AdaptorState) SetPosition(p wtype.Coordinates) error {
+	return self.group.SetPosition(p.Subtract(self.offset))
+}
+
+func (self *AdaptorState) SetOffset(p wtype.Coordinates) {
+	self.offset = p
 }
 
 func (self *AdaptorState) OverridesLoadTipsCommand() bool {
@@ -310,44 +505,288 @@ func (self *AdaptorState) GetTipCoordsToLoad(tb *wtype.LHTipbox, num int) ([][]w
 }
 
 // -------------------------------------------------------------------------------
+//                            AdaptorGroup
+// -------------------------------------------------------------------------------
+
+// AdaptorGroup simulate a set of adaptors which are physically attached
+type AdaptorGroup struct {
+	adaptors      []*AdaptorState
+	offsets       []wtype.Coordinates
+	motionLimits  *wtype.BBox
+	velocity      *wunit.Velocity3D
+	velocityRange *wtype.VelocityRange
+	position      wtype.Coordinates
+	robot         *RobotState
+}
+
+// NewAdaptorGroup convert a HeadAssembly into an AdaptorGroup for simulation
+func NewAdaptorGroup(assembly *wtype.LHHeadAssembly) *AdaptorGroup {
+
+	offsets := make([]wtype.Coordinates, len(assembly.Positions))
+	for i, pos := range assembly.Positions {
+		offsets[i] = pos.Offset
+	}
+
+	group := &AdaptorGroup{
+		adaptors:      make([]*AdaptorState, len(offsets)),
+		offsets:       offsets,
+		motionLimits:  assembly.MotionLimits.Dup(),
+		velocity:      &wunit.Velocity3D{},
+		velocityRange: assembly.VelocityLimits.Dup(),
+	}
+
+	for i, pos := range assembly.Positions {
+		if pos.Head == nil { //ignore assembly position which have nothing loaded
+			continue
+		}
+		p := pos.Head.Adaptor.Params
+		//9mm spacing currently hardcoded.
+		//At some point we'll either need to fetch this from the driver or
+		//infer it from the type of tipboxes/plates accepted
+		spacing := wtype.Coordinates{X: 0, Y: 0, Z: 0}
+		if p.Orientation == wtype.LHVChannel {
+			spacing.Y = 9.
+		} else if p.Orientation == wtype.LHHChannel {
+			spacing.X = 9.
+		}
+		adaptor := NewAdaptorState(pos.Head.Adaptor.Name, p.Independent, p.Multi, spacing, coneRadius, p, pos.Head.TipLoading)
+		group.LoadAdaptor(i, adaptor)
+	}
+
+	return group
+}
+
+//GetAdaptor get an adaptor state
+func (self *AdaptorGroup) GetAdaptor(i int) (*AdaptorState, error) {
+	if i < 0 || i >= len(self.adaptors) {
+		return nil, errors.Errorf("unknown head %d", i)
+	}
+	return self.adaptors[i], nil
+}
+
+func (self *AdaptorGroup) GetAdaptors() []*AdaptorState {
+	return self.adaptors
+}
+
+//CountAdaptors count the adaptors
+func (self *AdaptorGroup) NumAdaptors() int {
+	return len(self.adaptors)
+}
+
+func (self *AdaptorGroup) LoadAdaptor(pos int, adaptor *AdaptorState) {
+	self.adaptors[pos] = adaptor
+	adaptor.SetGroup(self)
+	adaptor.SetOffset(self.offsets[pos])
+	if self.robot != nil {
+		self.robot.updateAdaptorIndexes()
+	}
+}
+
+func (self *AdaptorGroup) GetPosition() wtype.Coordinates {
+	return self.position
+}
+
+func oneDP(v float64) string {
+	ret := fmt.Sprintf("%.1f", v)
+	if ret[len(ret)-2:] == ".0" {
+		return ret[:len(ret)-2]
+	}
+	return ret
+}
+
+func (self *AdaptorGroup) SetPosition(p wtype.Coordinates) error {
+	self.position = p
+	if self.motionLimits != nil && !self.motionLimits.Contains(p) {
+		template := "%smm too %s"
+		rearranging := "rearranging the deck"
+		var failures []string
+		var advice []string
+
+		start := self.motionLimits.GetPosition()
+		extent := self.motionLimits.GetPosition().Add(self.motionLimits.GetSize())
+
+		if p.X < start.X {
+			failures = append(failures, fmt.Sprintf(template, oneDP(start.X-p.X), "far left"))
+			advice = append(advice, rearranging)
+		} else if p.X > extent.X {
+			failures = append(failures, fmt.Sprintf(template, oneDP(p.X-extent.X), "far right"))
+			advice = append(advice, rearranging)
+		}
+
+		if p.Y < start.Y {
+			failures = append(failures, fmt.Sprintf(template, oneDP(start.Y-p.Y), "far backwards"))
+			advice = append(advice, rearranging)
+		} else if p.Y > extent.Y {
+			failures = append(failures, fmt.Sprintf(template, oneDP(p.Y-extent.Y), "far forwards"))
+			advice = append(advice, rearranging)
+		}
+
+		if p.Z < start.Z {
+			failures = append(failures, fmt.Sprintf(template, oneDP(start.Z-p.Z), "low"))
+			advice = append(advice, "adding a riser to the object on the deck")
+		} else if p.Z > extent.Z {
+			failures = append(failures, fmt.Sprintf(template, oneDP(p.Z-extent.Z), "high"))
+			advice = append(advice, "lowering the object on the deck")
+		}
+
+		return errors.Errorf("head cannot reach position: position is %s, please try %s",
+			strings.Join(failures, " and "),
+			strings.Join(getUnique(advice, true), " and "))
+	}
+	return nil
+}
+
+func (self *AdaptorGroup) GetRobot() *RobotState {
+	return self.robot
+}
+
+func (self *AdaptorGroup) SetRobot(r *RobotState) {
+	self.robot = r
+}
+
+func (self *AdaptorGroup) SetDriveSpeed(a wunit.Axis, v wunit.Velocity) error {
+	if self.velocityRange != nil {
+		if min, max := self.velocityRange.Min.GetAxis(a), self.velocityRange.Max.GetAxis(a); v.LessThan(min) || v.GreaterThan(max) {
+			return errors.Errorf("%v is outside allowable range [%v - %v]", v, min, max)
+		}
+	} else {
+		if !v.IsPositive() {
+			return errors.Errorf("speed must be positive")
+		}
+	}
+	self.velocity.SetAxis(a, v)
+	return nil
+}
+
+// -------------------------------------------------------------------------------
 //                            RobotState
 // -------------------------------------------------------------------------------
 
 //RobotState Represent the physical state of a liquidhandling robot
 type RobotState struct {
-	deck        *wtype.LHDeck
-	adaptors    []*AdaptorState
-	initialized bool
-	finalized   bool
+	deck          *wtype.LHDeck
+	adaptorGroups []*AdaptorGroup
+	initialized   bool
+	finalized     bool
 }
 
 func NewRobotState() *RobotState {
 	rs := RobotState{
 		nil,
-		make([]*AdaptorState, 0),
+		make([]*AdaptorGroup, 0),
 		false,
 		false,
 	}
 	return &rs
 }
 
+func (self *RobotState) SummariseState(channelsColliding map[int][]int) string {
+	return fmt.Sprintf("Adaptors: key = {T: Tip loaded, C: involved in Collision}\n\t%s\nDeck:\n\t%s",
+		strings.Replace(self.SummariseAdaptors(channelsColliding), "\n", "\n\t", -1),
+		strings.Replace(self.SummariseDeck(), "\n", "\n\t", -1))
+}
+
+func (self *RobotState) SummariseAdaptors(channelsColliding map[int][]int) string {
+	var lines []string
+	for i, group := range self.adaptorGroups {
+		lines = append(lines, fmt.Sprintf("AdaptorGroup %d: position %v", i, group.GetPosition()))
+	}
+
+	for i, adaptor := range self.GetAdaptors() {
+		lines = append(lines, fmt.Sprintf("Head %d: %s\n\t%s", i, adaptor.SummariseTips(), strings.Replace(adaptor.SummarisePositions(channelsColliding[i]), "\n", "\n\t", -1)))
+	}
+
+	return strings.Join(lines, "\n")
+}
+
+func (self *RobotState) SummariseDeck() string {
+	slotNames := self.deck.GetSlotNames()
+	sort.Strings(slotNames)
+
+	var nameLen int
+	for _, name := range slotNames {
+		if len(name) > nameLen {
+			nameLen = len(name)
+		}
+	}
+
+	var ret []string
+	for _, name := range slotNames {
+		object, _ := self.deck.GetChild(name)
+		paddedName := strings.Repeat(" ", nameLen-len(name)) + name
+		if object != nil {
+			ret = append(ret, fmt.Sprintf("%s: %s \"%s\" of type %s with size %v",
+				paddedName, wtype.ClassOf(object), wtype.NameOf(object), wtype.TypeOf(object), object.GetSize()))
+			ret = append(ret, fmt.Sprintf("%s  bounds: [%v - %v]",
+				strings.Repeat(" ", nameLen), object.GetPosition(), object.GetPosition().Add(object.GetSize())))
+			if plate, ok := object.(*wtype.LHPlate); ok {
+				ret = append(ret, fmt.Sprintf("%s  well geometry: (zStart, bottomH, height, radius) = (%f, %f, %f, %f)\n",
+					strings.Repeat(" ", nameLen), plate.WellZStart, plate.Welltype.Bottomh, plate.Welltype.GetSize().Z, plate.Welltype.GetSize().X))
+			}
+		} else {
+			ret = append(ret, fmt.Sprintf("%s: <empty>", paddedName))
+		}
+	}
+
+	return strings.Join(ret, "\n")
+}
+
 //                            Accessors
 //                            ---------
 
-//GetAdaptor
-func (self *RobotState) GetAdaptor(num int) *AdaptorState {
-	return self.adaptors[num]
+//GetAdaptorGroup
+func (self *RobotState) GetAdaptorGroup(num int) (*AdaptorGroup, error) {
+	if num < 0 || num >= len(self.adaptorGroups) {
+		return nil, errors.Errorf("unknown head assembly %d", num)
+	}
+	return self.adaptorGroups[num], nil
 }
 
-//GetNumberOfAdaptors
-func (self *RobotState) GetNumberOfAdaptors() int {
-	return len(self.adaptors)
+func (self *RobotState) GetAdaptor(groupIndex int, adaptorIndex int) (*AdaptorState, error) {
+	group, err := self.GetAdaptorGroup(groupIndex)
+	if err != nil {
+		return nil, err
+	}
+	adaptor, err := group.GetAdaptor(adaptorIndex)
+	if err != nil {
+		return nil, errors.Wrapf(err, "head assembly %d", groupIndex)
+	}
+	return adaptor, nil
 }
 
-//AddAdaptor
-func (self *RobotState) AddAdaptor(a *AdaptorState) {
+func (self *RobotState) NumAdaptors() int {
+	r := 0
+	for _, ag := range self.adaptorGroups {
+		r += ag.NumAdaptors()
+	}
+	return r
+}
+
+func (self *RobotState) GetAdaptors() []*AdaptorState {
+	r := make([]*AdaptorState, 0, self.NumAdaptors())
+	for _, ag := range self.adaptorGroups {
+		r = append(r, ag.GetAdaptors()...)
+	}
+
+	return r
+}
+
+//GetNumberOfAdaptorGroups
+func (self *RobotState) NumAdaptorGroups() int {
+	return len(self.adaptorGroups)
+}
+
+//AddAdaptorGroup
+func (self *RobotState) AddAdaptorGroup(a *AdaptorGroup) {
 	a.SetRobot(self)
-	self.adaptors = append(self.adaptors, a)
+	self.adaptorGroups = append(self.adaptorGroups, a)
+	self.updateAdaptorIndexes()
+}
+
+func (self *RobotState) updateAdaptorIndexes() {
+	for i, ad := range self.GetAdaptors() {
+		ad.setIndex(i)
+	}
 }
 
 //GetDeck

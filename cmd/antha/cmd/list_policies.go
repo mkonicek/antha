@@ -23,6 +23,7 @@
 package cmd
 
 import (
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -30,6 +31,7 @@ import (
 	"github.com/mgutz/ansi"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"os"
 	"sort"
 	"strings"
 )
@@ -112,19 +114,67 @@ func listPolicies(cmd *cobra.Command, args []string) error {
 		_, err := fmt.Println(strings.Join(lines, "\n"))
 		return err
 	case csvOutput:
-		var lines []string
-		lines = append(lines, "PolicyName,Properties")
+		var lines [][]string
+		policyItemMap := wtype.MakePolicyItems()
 
-		for _, p := range ps {
-			var kvs []string
-			for k, v := range p.Properties {
-				kvs = append(kvs, fmt.Sprintf("%s: %v", k, v))
+		var headers []string
+
+		for key := range policyItemMap {
+			if key != wtype.PolicyNameField && key != wtype.PolicyDescriptionField {
+				headers = append(headers, key)
 			}
-			sort.Strings(kvs)
-
-			lines = append(lines, p.Name+","+strings.Join(kvs, ","))
 		}
-		_, err := fmt.Println(strings.Join(lines, "\n"))
+
+		sort.Strings(headers)
+
+		headers = append([]string{wtype.PolicyNameField, wtype.PolicyDescriptionField}, headers...)
+		lines = append(lines, headers)
+
+		for _, policy := range ps {
+			var policyValues []string
+			for _, policyParameter := range headers {
+
+				policyValue, found := policy.Properties[policyParameter]
+
+				if !found {
+					policyValue = ""
+				}
+
+				policyValues = append(policyValues, fmt.Sprint(policyValue))
+			}
+			lines = append(lines, policyValues)
+		}
+
+		w := csv.NewWriter(os.Stdout)
+
+		err := w.WriteAll(lines) // calls Flush internally
+		if err != nil {
+			return err
+		}
+		err = w.Error()
+
+		return err
+	case descriptionsOutput:
+		type descriptionOnly struct {
+			Description string `json:"description"`
+			Id          string `json:"id"`
+			Name        string `json:"name"`
+		}
+		var uiJson []descriptionOnly
+		for _, p := range ps {
+
+			uiJson = append(uiJson, descriptionOnly{
+				Description: p.Properties["DESCRIPTION"].(string),
+				Id:          p.Name,
+				Name:        p.Name,
+			})
+		}
+
+		bs, err := json.MarshalIndent(uiJson, "", "  ")
+		if err != nil {
+			return err
+		}
+		_, err = fmt.Println(string(bs))
 		return err
 	default:
 		return fmt.Errorf("unknown output format %q", output)

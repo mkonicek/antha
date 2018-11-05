@@ -26,16 +26,16 @@ var (
 //
 // Deprecated for github.com/antha-lang/antha/api/v1/WorkflowParameters.
 type RawParams struct {
-	Parameters map[string]map[string]json.RawMessage `json:"parameters"`
-	Config     *mixer.Opt                            `json:"config"`
+	Parameters map[string]map[string]json.RawMessage `json:"Parameters"`
+	Config     *mixer.Opt                            `json:"Config"`
 }
 
 // Params is the structure of parameter data for marshalling.
 //
 // Deprecated for github.com/antha-lang/antha/api/v1/WorkflowParameters.
 type Params struct {
-	Parameters map[string]map[string]interface{} `json:"parameters"`
-	Config     *mixer.Opt                        `json:"config"`
+	Parameters map[string]map[string]interface{} `json:"Parameters"`
+	Config     *mixer.Opt                        `json:"Config"`
 }
 
 func tryString(data []byte) string {
@@ -63,7 +63,7 @@ func (a *unmarshaler) unmarshalLHTipbox(ctx context.Context, data []byte, obj *w
 	return nil
 }
 
-func (a *unmarshaler) unmarshalLHPlate(ctx context.Context, data []byte, obj *wtype.LHPlate) error {
+func (a *unmarshaler) unmarshalLHPlate(ctx context.Context, data []byte, obj *wtype.Plate) error {
 	s := tryString(data)
 	if len(s) == 0 {
 		return json.Unmarshal(data, obj)
@@ -76,7 +76,7 @@ func (a *unmarshaler) unmarshalLHPlate(ctx context.Context, data []byte, obj *wt
 	return nil
 }
 
-func (a *unmarshaler) unmarshalLHComponent(ctx context.Context, data []byte, obj *wtype.LHComponent) error {
+func (a *unmarshaler) unmarshalLHComponent(ctx context.Context, data []byte, obj *wtype.Liquid) error {
 	s := tryString(data)
 	if len(s) == 0 {
 		return json.Unmarshal(data, obj)
@@ -124,9 +124,9 @@ func (a *unmarshaler) unmarshalStruct(ctx context.Context, data []byte, obj inte
 	switch obj := obj.(type) {
 	case *wtype.LHTipbox:
 		err = a.unmarshalLHTipbox(ctx, data, obj)
-	case *wtype.LHPlate:
+	case *wtype.Plate:
 		err = a.unmarshalLHPlate(ctx, data, obj)
-	case *wtype.LHComponent:
+	case *wtype.Liquid:
 		err = a.unmarshalLHComponent(ctx, data, obj)
 	case *wtype.File:
 		err = a.unmarshalFile(data, obj)

@@ -6,106 +6,69 @@ import (
 	"reflect"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/utils"
 )
-
-type ComparisonOpt struct {
-	InstructionParameters map[string][]string // which instruction parameters for each instruction type
-}
-
-type ComparisonResult struct {
-	Errors []error
-}
 
 func mergeMovs(ris []RobotInstruction) []RobotInstruction {
 	insOut := make([]RobotInstruction, 0, len(ris))
 	for i := 0; i < len(ris); i++ {
-		ins := ris[i]
-		if InstructionTypeName(ins) == "MOV" && (i != len(ris)-1) {
-			next := ris[i+1]
-			if InstructionTypeName(next) == "ASP" {
-				insOut = append(insOut, MovAsp{Asp: next.(*AspirateInstruction), Mov: ins.(*MoveInstruction)})
-				i += 1 // skip
-			} else if InstructionTypeName(next) == "DSP" {
-				insOut = append(insOut, MovDsp{Dsp: next.(*DispenseInstruction), Mov: ins.(*MoveInstruction)})
-				i += 1 // skip
-			} else if InstructionTypeName(next) == "MIX" {
-				insOut = append(insOut, MovMix{Mix: next.(*MixInstruction), Mov: ins.(*MoveInstruction)})
-				i += 1 // skip
-			} else if InstructionTypeName(next) == "BLO" {
-				insOut = append(insOut, MovBlo{Blo: next.(*BlowoutInstruction), Mov: ins.(*MoveInstruction)})
-				i += 1 // skip
-			} else {
-				insOut = append(insOut, ins)
-			}
+		cur := ris[i]
+		if i+1 == len(ris) { // last instruction so can't merge
+			insOut = append(insOut, cur)
 		} else {
-			insOut = append(insOut, ins)
+			next := ris[i+1]
+			merged := cur.MaybeMerge(next)
+			if merged == cur { // it didn't merge
+				insOut = append(insOut, cur)
+			} else { // merged, so only append the merged instruction and skip over next
+				insOut = append(insOut, merged)
+				i++
+			}
 		}
 	}
 
 	return insOut
 }
 
-func CompareTestInstructionSets(setA, setB []interface{}, opt ComparisonOpt) ComparisonResult {
-	// convert
-	cnv := func(s []interface{}) []RobotInstruction {
-		r := make([]RobotInstruction, len(s))
-		for i, n := range s {
-			r[i] = n.(RobotInstruction)
-		}
-		return r
-	}
-
-	return CompareInstructionSets(cnv(setA), cnv(setB), opt)
-}
-
-func CompareInstructionSets(setA, setB []RobotInstruction, opt ComparisonOpt) ComparisonResult {
-
+// CompareInstructionSets will use the comparators to detect
+// differences between setA and setB. This allows you to compare,
+// using any arbitrary property, instructions of the same type. The
+// comparison is between the minimum length of setA and setB - an
+// unmatched suffix will cause an error but will not be passed to any
+// comparator.
+func CompareInstructionSets(setA, setB []RobotInstruction, comparators ...RobotInstructionComparatorFunc) utils.ErrorSlice {
 	setAMerged := mergeMovs(setA)
 	setBMerged := mergeMovs(setB)
-	return orderedInstructionComparison(setAMerged, setBMerged, opt)
+	return orderedInstructionComparison(setAMerged, setBMerged, comparators)
 }
 
-func orderedInstructionComparison(setA, setB []RobotInstruction, opt ComparisonOpt) ComparisonResult {
-	errors := make([]error, 0, len(setA))
-	// v0 is just barrel through
-	// v1 is aligning the instruction sets
-	lenToCompare := len(setA)
+func orderedInstructionComparison(setA, setB []RobotInstruction, comparators []RobotInstructionComparatorFunc) utils.ErrorSlice {
+	var errs utils.ErrorSlice
 
-	if len(setB) != len(setA) {
-		errors = append(errors, fmt.Errorf("Instruction set lengths differ (%d %d)", len(setA), len(setB)))
+	lenA, lenB := len(setA), len(setB)
+	lenToCompare := lenA
+	if lenA != lenB {
+		errs = append(errs, fmt.Errorf("Instruction set lengths differ (%d %d)", lenA, lenB))
 
-		if len(setB) < len(setA) {
-			lenToCompare = len(setB)
+		if lenB < lenA {
+			lenToCompare = lenB
 		}
 	}
 
 	for i := 0; i < lenToCompare; i++ {
-		errs := compareInstructions(i, setA[i], setB[i], opt.InstructionParameters[InstructionTypeName(setA[i])])
-		errors = append(errors, errs...)
+		if err := compareRobotInstructions(setA[i], setB[i], comparators); len(err) != 0 {
+			errs = append(errs, err...)
+		}
 	}
 
-	return ComparisonResult{Errors: errors}
+	return errs
 }
 
 // merge move and asp / move and dsp / mov and mix
 
-/*
+var moveParams = []InstructionParameter{POSTO, WELLTO, REFERENCE, OFFSETX, OFFSETY, OFFSETZ}
 
-   InstructionType() int
-   GetParameter(name string) interface{}
-   Generate(ctx context.Context,policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error)
-   Check(lhpr wtype.LHPolicyRule) bool
-
-*/
-
-type MovAsp struct {
-	Mov *MoveInstruction
-	Asp *AspirateInstruction
-}
-
-var moveParams = []string{"POSTO", "WELLTO", "REFERENCE", "OFFSETX", "OFFSETY", "OFFSETZ"}
-
-func isIn(s string, ar []string) bool {
+func isIn(s InstructionParameter, ar []InstructionParameter) bool {
 	for _, s2 := range ar {
 		if s2 == s {
 			return true
@@ -115,7 +78,7 @@ func isIn(s string, ar []string) bool {
 	return false
 }
 
-func getParameter(name string, movIns *MoveInstruction, otherIns RobotInstruction) interface{} {
+func getParameter(name InstructionParameter, movIns *MoveInstruction, otherIns RobotInstruction) interface{} {
 	// indirect calls appropriately
 	if isIn(name, moveParams) {
 		return movIns.GetParameter(name)
@@ -124,11 +87,28 @@ func getParameter(name string, movIns *MoveInstruction, otherIns RobotInstructio
 	}
 }
 
-func (ma MovAsp) InstructionType() int {
-	return MAS
+type MovAsp struct {
+	*InstructionType
+	BaseRobotInstruction
+	Mov *MoveInstruction
+	Asp *AspirateInstruction
 }
 
-func (ma MovAsp) GetParameter(name string) interface{} {
+func NewMovAsp(mov *MoveInstruction, asp *AspirateInstruction) *MovAsp {
+	ma := &MovAsp{
+		InstructionType: MAS,
+		Mov:             mov,
+		Asp:             asp,
+	}
+	ma.BaseRobotInstruction = NewBaseRobotInstruction(ma)
+	return ma
+}
+
+func (ma *MovAsp) Visit(visitor RobotInstructionVisitor) {
+	visitor.MovAsp(ma)
+}
+
+func (ma MovAsp) GetParameter(name InstructionParameter) interface{} {
 	return getParameter(name, ma.Mov, ma.Asp)
 }
 
@@ -141,15 +121,27 @@ func (ma MovAsp) Check(lhpr wtype.LHPolicyRule) bool {
 }
 
 type MovDsp struct {
+	*InstructionType
+	BaseRobotInstruction
 	Mov *MoveInstruction
 	Dsp *DispenseInstruction
 }
 
-func (md MovDsp) InstructionType() int {
-	return MDS
+func NewMovDsp(mov *MoveInstruction, dsp *DispenseInstruction) *MovDsp {
+	md := &MovDsp{
+		InstructionType: MDS,
+		Mov:             mov,
+		Dsp:             dsp,
+	}
+	md.BaseRobotInstruction = NewBaseRobotInstruction(md)
+	return md
 }
 
-func (md MovDsp) GetParameter(name string) interface{} {
+func (md *MovDsp) Visit(visitor RobotInstructionVisitor) {
+	visitor.MovDsp(md)
+}
+
+func (md MovDsp) GetParameter(name InstructionParameter) interface{} {
 	return getParameter(name, md.Mov, md.Dsp)
 }
 
@@ -162,15 +154,27 @@ func (md MovDsp) Check(lhpr wtype.LHPolicyRule) bool {
 }
 
 type MovBlo struct {
+	*InstructionType
+	BaseRobotInstruction
 	Mov *MoveInstruction
 	Blo *BlowoutInstruction
 }
 
-func (mb MovBlo) InstructionType() int {
-	return MBL
+func NewMovBlo(mov *MoveInstruction, blo *BlowoutInstruction) *MovBlo {
+	mb := &MovBlo{
+		InstructionType: MBL,
+		Mov:             mov,
+		Blo:             blo,
+	}
+	mb.BaseRobotInstruction = NewBaseRobotInstruction(mb)
+	return mb
 }
 
-func (mb MovBlo) GetParameter(name string) interface{} {
+func (mb *MovBlo) Visit(visitor RobotInstructionVisitor) {
+	visitor.MovBlo(mb)
+}
+
+func (mb MovBlo) GetParameter(name InstructionParameter) interface{} {
 	return getParameter(name, mb.Mov, mb.Blo)
 }
 
@@ -183,15 +187,27 @@ func (mb MovBlo) Check(lhpr wtype.LHPolicyRule) bool {
 }
 
 type MovMix struct {
+	*InstructionType
+	BaseRobotInstruction
 	Mov *MoveInstruction
 	Mix *MixInstruction
 }
 
-func (mm MovMix) InstructionType() int {
-	return MVM
+func NewMovMix(mov *MoveInstruction, mix *MixInstruction) *MovMix {
+	mm := &MovMix{
+		InstructionType: MVM,
+		Mov:             mov,
+		Mix:             mix,
+	}
+	mm.BaseRobotInstruction = NewBaseRobotInstruction(mm)
+	return mm
 }
 
-func (mm MovMix) GetParameter(name string) interface{} {
+func (mm *MovMix) Visit(visitor RobotInstructionVisitor) {
+	visitor.MovMix(mm)
+}
+
+func (mm MovMix) GetParameter(name InstructionParameter) interface{} {
 	return getParameter(name, mm.Mov, mm.Mix)
 }
 
@@ -203,205 +219,166 @@ func (mm MovMix) Check(lhpr wtype.LHPolicyRule) bool {
 	return false
 }
 
-func compareInstructions(index int, ins1, ins2 RobotInstruction, paramsToCompare []string) []error {
-	// if instructions are not the same type we just return that error
+type robotInstructionComparator struct {
+	// a and b are the two RobotInstructions we are comparing. Cur is
+	// the "current" instruction so that our visitors know what they're
+	// looking at.
+	a, b, cur RobotInstruction
+	// aFields and bFields contain the fields we extract from the
+	// instructions. Ultimately, they will be compared with
+	// reflect.DeepEqual
+	aFields, bFields []interface{}
+}
 
-	if ins1.InstructionType() != ins2.InstructionType() {
-		return []error{fmt.Errorf("Instructions at %d different types (%s %s)", index, InstructionTypeName(ins1), InstructionTypeName(ins2))}
+type RobotInstructionComparatorFunc func(*robotInstructionComparator) *RobotInstructionBaseVisitor
+
+// we deliberately return the ground type errorSlice so that the
+// caller can flatten together multiple errorSlices.
+func compareRobotInstructions(a, b RobotInstruction, comparators []RobotInstructionComparatorFunc) utils.ErrorSlice {
+	if a == nil || b == nil {
+		return utils.ErrorSlice{fmt.Errorf("Cannot compare with nil RobotInstructions: %#v %#v", a, b)}
+	} else if a.Type() != b.Type() {
+		return utils.ErrorSlice{fmt.Errorf("Instructions of different types (%s != %s)", a.Type(), b.Type())}
 	}
 
-	errors := make([]error, 0, 1)
-
-	for _, prm := range paramsToCompare {
-		p1 := ins1.GetParameter(prm)
-		p2 := ins2.GetParameter(prm)
-
-		if !reflect.DeepEqual(p1, p2) {
-			errors = append(errors, fmt.Errorf("Instructions at index %d type %s parameter %s differ (%v %v)", index, InstructionTypeName(ins1), prm, p1, p2))
+	var errs utils.ErrorSlice
+	ric := &robotInstructionComparator{a: a, b: b}
+	for _, comp := range comparators {
+		ric.aFields = ric.aFields[:0]
+		ric.bFields = ric.bFields[:0]
+		ric.cur = ric.a
+		ric.cur.Visit(comp(ric))
+		ric.cur = ric.b
+		ric.cur.Visit(comp(ric))
+		if !reflect.DeepEqual(ric.aFields, ric.bFields) {
+			errs = append(errs, fmt.Errorf("Instructions of type %v differ in fields: %#v %#v", ric.cur.Type(), ric.a, ric.b))
 		}
 	}
 
-	return errors
+	return errs
 }
 
-func dupV(a []string) []string {
-	r := make([]string, 0, len(a))
-	r = append(r, a...)
-
-	return r
-}
-
-func mergeStringSets(a, b []string) []string {
-	r := dupV(a)
-
-	for _, s := range b {
-		if !isIn(s, r) {
-			r = append(r, s)
-		}
+func (ric *robotInstructionComparator) appendFieldValues(vs ...interface{}) {
+	if ric.cur == ric.a {
+		ric.aFields = append(ric.aFields, vs...)
+	} else {
+		ric.bFields = append(ric.bFields, vs...)
 	}
-
-	return r
 }
 
-func mergeSets(s1, s2 map[string][]string) map[string][]string {
-	r := make(map[string][]string, len(s1))
-
-	for k, v := range s1 {
-		r[k] = dupV(v)
+func CompareAspReference(ric *robotInstructionComparator) *RobotInstructionBaseVisitor {
+	return &RobotInstructionBaseVisitor{
+		HandleMovAsp: func(ins *MovAsp) { ric.appendFieldValues(ins.Mov.Reference, ins.Asp.What) },
 	}
+}
 
-	for k, v := range s2 {
-		v2, ok := r[k]
-
-		if ok {
-			r[k] = mergeStringSets(v, v2)
-		} else {
-			r[k] = v
-		}
+func CompareDspReference(ric *robotInstructionComparator) *RobotInstructionBaseVisitor {
+	return &RobotInstructionBaseVisitor{
+		HandleMovDsp: func(ins *MovDsp) { ric.appendFieldValues(ins.Mov.Reference, ins.Dsp.What) },
+		HandleMovBlo: func(ins *MovBlo) { ric.appendFieldValues(ins.Mov.Reference, ins.Blo.What) },
 	}
-	return r
 }
 
-// convenience sets of parameters to compare
-
-func CompareAllParameters() map[string][]string {
-	r := make(map[string][]string, 3)
-	r = mergeSets(r, CompareVolumes())
-	r = mergeSets(r, ComparePositions())
-	r = mergeSets(r, CompareWells())
-	r = mergeSets(r, CompareOffsets())
-	r = mergeSets(r, CompareReferences())
-	r = mergeSets(r, ComparePlateTypes())
-	return r
+func CompareMixReference(ric *robotInstructionComparator) *RobotInstructionBaseVisitor {
+	return &RobotInstructionBaseVisitor{
+		HandleMovMix: func(ins *MovMix) { ric.appendFieldValues(ins.Mov.Reference, ins.Mix.What) },
+	}
 }
 
-func CompareReferences() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret = mergeSets(ret, CompareAspReference())
-	ret = mergeSets(ret, CompareDspReference())
-	ret = mergeSets(ret, CompareMixReference())
-	return ret
+func CompareSourceOffsets(ric *robotInstructionComparator) *RobotInstructionBaseVisitor {
+	return &RobotInstructionBaseVisitor{
+		HandleMovAsp: func(ins *MovAsp) {
+			ric.appendFieldValues(ins.Mov.OffsetX, ins.Mov.OffsetY, ins.Mov.OffsetZ, ins.Asp.What)
+		},
+	}
+}
+func CompareDestOffsets(ric *robotInstructionComparator) *RobotInstructionBaseVisitor {
+	return &RobotInstructionBaseVisitor{
+		HandleMovDsp: func(ins *MovDsp) {
+			ric.appendFieldValues(ins.Mov.OffsetX, ins.Mov.OffsetY, ins.Mov.OffsetZ, ins.Dsp.What)
+		},
+		HandleMovBlo: func(ins *MovBlo) {
+			ric.appendFieldValues(ins.Mov.OffsetX, ins.Mov.OffsetY, ins.Mov.OffsetZ, ins.Blo.What)
+		},
+	}
+}
+func CompareMixOffsets(ric *robotInstructionComparator) *RobotInstructionBaseVisitor {
+	return &RobotInstructionBaseVisitor{
+		HandleMovMix: func(ins *MovMix) {
+			ric.appendFieldValues(ins.Mov.OffsetX, ins.Mov.OffsetY, ins.Mov.OffsetZ, ins.Mix.What)
+		},
+	}
+}
+func CompareVolumes(ric *robotInstructionComparator) *RobotInstructionBaseVisitor {
+	return &RobotInstructionBaseVisitor{
+		HandleAspirate: func(ins *AspirateInstruction) { ric.appendFieldValues(ins.Volume, ins.What) },
+		HandleMovAsp:   func(ins *MovAsp) { ric.appendFieldValues(ins.Asp.Volume, ins.Asp.What) },
+		HandleDispense: func(ins *DispenseInstruction) { ric.appendFieldValues(ins.Volume, ins.What) },
+		HandleMovDsp:   func(ins *MovDsp) { ric.appendFieldValues(ins.Dsp.Volume, ins.Dsp.What) },
+		HandleBlowout:  func(ins *BlowoutInstruction) { ric.appendFieldValues(ins.Volume, ins.What) },
+		HandleMovBlo:   func(ins *MovBlo) { ric.appendFieldValues(ins.Blo.Volume, ins.Blo.What) },
+		HandleMix:      func(ins *MixInstruction) { ric.appendFieldValues(ins.Volume, ins.What) },
+		HandleMovMix:   func(ins *MovMix) { ric.appendFieldValues(ins.Mix.Volume, ins.Mix.What) },
+	}
 }
 
-func CompareAspReference() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret["MOVASP"] = []string{"REFERENCE", "WHAT"}
-	return ret
+func CompareSourcePosition(ric *robotInstructionComparator) *RobotInstructionBaseVisitor {
+	return &RobotInstructionBaseVisitor{
+		HandleMovAsp: func(ins *MovAsp) { ric.appendFieldValues(ins.Mov.Pos, ins.Asp.What) },
+	}
 }
 
-func CompareDspReference() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret["MOVDSP"] = []string{"REFERENCE", "WHAT"}
-	ret["MOVBLO"] = []string{"REFERENCE", "WHAT"}
-	return ret
+func CompareDestPosition(ric *robotInstructionComparator) *RobotInstructionBaseVisitor {
+	return &RobotInstructionBaseVisitor{
+		HandleMovDsp: func(ins *MovDsp) { ric.appendFieldValues(ins.Mov.Pos, ins.Dsp.What) },
+		HandleMovBlo: func(ins *MovBlo) { ric.appendFieldValues(ins.Mov.Pos, ins.Blo.What) },
+	}
 }
 
-func CompareMixReference() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret["MOVMIX"] = []string{"REFERENCE", "WHAT"}
-	return ret
+func CompareMixPosition(ric *robotInstructionComparator) *RobotInstructionBaseVisitor {
+	return &RobotInstructionBaseVisitor{
+		HandleMovMix: func(ins *MovMix) { ric.appendFieldValues(ins.Mov.Pos, ins.Mix.What) },
+	}
 }
 
-func CompareOffsets() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret = mergeSets(ret, CompareSourceOffsets())
-	ret = mergeSets(ret, CompareDestOffsets())
-	ret = mergeSets(ret, CompareMixOffsets())
-	return ret
+func CompareSourceWell(ric *robotInstructionComparator) *RobotInstructionBaseVisitor {
+	return &RobotInstructionBaseVisitor{
+		HandleMovAsp: func(ins *MovAsp) { ric.appendFieldValues(ins.Mov.Well, ins.Asp.What) },
+	}
 }
 
-func CompareSourceOffsets() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret["MOVASP"] = []string{"OFFSETX", "OFFSETY", "OFFSETZ", "WHAT"}
-	return ret
-}
-func CompareDestOffsets() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret["MOVDSP"] = []string{"OFFSETX", "OFFSETY", "OFFSETZ", "WHAT"}
-	ret["MOVBLO"] = []string{"OFFSETX", "OFFSETY", "OFFSETZ", "WHAT"}
-	return ret
-}
-func CompareMixOffsets() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret["MOVMIX"] = []string{"OFFSETX", "OFFSETY", "OFFSETZ", "WHAT"}
-	return ret
-}
-func CompareVolumes() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret["ASP"] = []string{"VOLUME", "WHAT"}
-	ret["MOVASP"] = []string{"VOLUME", "WHAT"}
-	ret["DSP"] = []string{"VOLUME", "WHAT"}
-	ret["MOVDSP"] = []string{"VOLUME", "WHAT"}
-	ret["BLO"] = []string{"VOLUME", "WHAT"}
-	ret["MOVBLO"] = []string{"VOLUME", "WHAT"}
-	ret["MIX"] = []string{"VOLUME", "WHAT"}
-	ret["MOVMIX"] = []string{"VOLUME", "WHAT"}
-	return ret
+func CompareDestWell(ric *robotInstructionComparator) *RobotInstructionBaseVisitor {
+	return &RobotInstructionBaseVisitor{
+		HandleMovDsp: func(ins *MovDsp) { ric.appendFieldValues(ins.Mov.Well, ins.Dsp.What) },
+		HandleMovBlo: func(ins *MovBlo) { ric.appendFieldValues(ins.Mov.Well, ins.Blo.What) },
+	}
 }
 
-func ComparePositions() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret = mergeSets(ret, CompareSourcePosition())
-	ret = mergeSets(ret, CompareDestPosition())
-	ret = mergeSets(ret, CompareMixPosition())
-	return ret
+func CompareSourcePlateType(ric *robotInstructionComparator) *RobotInstructionBaseVisitor {
+	return &RobotInstructionBaseVisitor{
+		HandleMovAsp: func(ins *MovAsp) { ric.appendFieldValues(ins.Asp.Plt, ins.Asp.What) },
+	}
 }
 
-func CompareSourcePosition() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret["MOVASP"] = []string{"POSTO", "WHAT"}
-	return ret
+func CompareDestPlateType(ric *robotInstructionComparator) *RobotInstructionBaseVisitor {
+	return &RobotInstructionBaseVisitor{
+		HandleMovDsp: func(ins *MovDsp) { ric.appendFieldValues(ins.Dsp.Plt, ins.Dsp.What) },
+		HandleMovBlo: func(ins *MovBlo) { ric.appendFieldValues(ins.Blo.Plt, ins.Blo.What) },
+	}
 }
 
-func CompareDestPosition() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret["MOVDSP"] = []string{"POSTO", "WHAT"}
-	ret["MOVBLO"] = []string{"POSTO", "WHAT"}
-	return ret
-}
+var (
+	ComparePlateTypes = []RobotInstructionComparatorFunc{CompareSourcePlateType, CompareDestPlateType}
+	CompareWells      = []RobotInstructionComparatorFunc{CompareSourceWell, CompareDestWell}
+	ComparePositions  = []RobotInstructionComparatorFunc{CompareSourcePosition, CompareDestPosition, CompareMixPosition}
+	CompareOffsets    = []RobotInstructionComparatorFunc{CompareSourceOffsets, CompareDestOffsets, CompareMixOffsets}
+	CompareReferences = []RobotInstructionComparatorFunc{CompareAspReference, CompareDspReference, CompareMixReference}
 
-func CompareMixPosition() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret["MOVMIX"] = []string{"POSTO", "WHAT"}
-	return ret
-}
-
-func CompareWells() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret = mergeSets(ret, CompareSourceWell())
-	ret = mergeSets(ret, CompareDestWell())
-	return ret
-}
-
-func CompareSourceWell() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret["MOVASP"] = []string{"WELLTO", "WHAT"}
-	return ret
-}
-
-func CompareDestWell() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret["MOVDSP"] = []string{"WELLTO", "WHAT"}
-	ret["MOVBLO"] = []string{"WELLTO", "WHAT"}
-	return ret
-}
-
-func ComparePlateTypes() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret = mergeSets(ret, CompareSourcePlateType())
-	ret = mergeSets(ret, CompareDestPlateType())
-	return ret
-}
-
-func CompareSourcePlateType() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret["MOVASP"] = []string{"PLATE", "WHAT"}
-	return ret
-}
-
-func CompareDestPlateType() map[string][]string {
-	ret := make(map[string][]string, 2)
-	ret["MOVDSP"] = []string{"PLATE", "WHAT"}
-	ret["MOVBLO"] = []string{"PLATE", "WHAT"}
-	return ret
-}
+	CompareAllParameters = []RobotInstructionComparatorFunc{
+		CompareSourcePlateType, CompareDestPlateType,
+		CompareSourceWell, CompareDestWell,
+		CompareSourcePosition, CompareDestPosition, CompareMixPosition,
+		CompareVolumes,
+		CompareSourceOffsets, CompareDestOffsets, CompareMixOffsets,
+		CompareAspReference, CompareDspReference, CompareMixReference}
+)

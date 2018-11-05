@@ -36,14 +36,14 @@ import (
 )
 
 type TransferInstruction struct {
-	GenericRobotInstruction
-	Type      int
+	BaseRobotInstruction
+	*InstructionType
 	Platform  string
 	Transfers []MultiTransferParams
 }
 
 func (ti *TransferInstruction) ToString() string {
-	s := fmt.Sprintf("%s ", Robotinstructionnames[ti.Type])
+	s := ti.Type().Name
 	for i := 0; i < len(ti.Transfers); i++ {
 		s += ti.ParamSet(i).ToString()
 		s += "\n"
@@ -57,9 +57,10 @@ func (ti *TransferInstruction) ParamSet(n int) MultiTransferParams {
 }
 
 func NewTransferInstruction(what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype []string, volume, fvolume, tvolume []wunit.Volume, FPlateWX, FPlateWY, TPlateWX, TPlateWY []int, Components []string, policies []wtype.LHPolicy) *TransferInstruction {
-	var tfri TransferInstruction
-	tfri.Type = TFR
-	tfri.Transfers = make([]MultiTransferParams, 0, 1)
+	tfri := &TransferInstruction{
+		InstructionType: TFR,
+		Transfers:       make([]MultiTransferParams, 0, 1),
+	}
 
 	/*
 		v := MultiTransferParams{
@@ -84,8 +85,12 @@ func NewTransferInstruction(what, pltfrom, pltto, wellfrom, wellto, fplatetype, 
 	v := MTPFromArrays(what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype, volume, fvolume, tvolume, FPlateWX, FPlateWY, TPlateWX, TPlateWY, Components, policies)
 
 	tfri.Add(v)
-	tfri.GenericRobotInstruction.Ins = RobotInstruction(&tfri)
-	return &tfri
+	tfri.BaseRobotInstruction = NewBaseRobotInstruction(tfri)
+	return tfri
+}
+
+func (ins *TransferInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.Transfer(ins)
 }
 
 func (ins *TransferInstruction) OutputTo(drv LiquidhandlingDriver) error {
@@ -96,11 +101,11 @@ func (ins *TransferInstruction) OutputTo(drv LiquidhandlingDriver) error {
 	}
 
 	// make sure we disable the RobotInstruction pointer
-	ins.GenericRobotInstruction = GenericRobotInstruction{}
+	ins.BaseRobotInstruction = BaseRobotInstruction{}
 
 	volumes := make([]float64, len(SetOfMultiTransferParams(ins.Transfers).Volume()))
 	for i, vol := range SetOfMultiTransferParams(ins.Transfers).Volume() {
-		volumes[i] = vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
+		volumes[i] = vol.ConvertToString("ul")
 	}
 
 	reply := hlld.Transfer(SetOfMultiTransferParams(ins.Transfers).What(), SetOfMultiTransferParams(ins.Transfers).PltFrom(), SetOfMultiTransferParams(ins.Transfers).WellFrom(), SetOfMultiTransferParams(ins.Transfers).PltTo(), SetOfMultiTransferParams(ins.Transfers).WellTo(), volumes)
@@ -116,23 +121,20 @@ func (tfri *TransferInstruction) Add(tp MultiTransferParams) {
 	tfri.Transfers = append(tfri.Transfers, tp)
 }
 
-func (ins *TransferInstruction) InstructionType() int {
-	return ins.Type
-}
-
 //what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype []string, volume, fvolume, tvolume []wunit.Volume, FPlateWX, FPlateWY, TPlateWX, TPlateWY []int, Components []string
 func (ins *TransferInstruction) Dup() *TransferInstruction {
-	var tfri TransferInstruction
-	tfri.Type = TFR
-	tfri.Transfers = make([]MultiTransferParams, 0, 1)
-	tfri.Platform = ins.Platform
+	tfri := &TransferInstruction{
+		InstructionType: TFR,
+		Transfers:       make([]MultiTransferParams, 0, 1),
+		Platform:        ins.Platform,
+	}
+	tfri.BaseRobotInstruction = NewBaseRobotInstruction(tfri)
 
-	for i := 0; i < len(ins.Transfers); i++ {
-		tfri.Add(ins.Transfers[i].Dup())
+	for _, tfr := range ins.Transfers {
+		tfri.Add(tfr.Dup())
 	}
 
-	tfri.GenericRobotInstruction.Ins = RobotInstruction(&tfri)
-	return &tfri
+	return tfri
 }
 
 func (ins *TransferInstruction) MergeWith(ins2 *TransferInstruction) *TransferInstruction {
@@ -145,72 +147,43 @@ func (ins *TransferInstruction) MergeWith(ins2 *TransferInstruction) *TransferIn
 	return ret
 }
 
-func (ins *TransferInstruction) GetParameter(name string) interface{} {
+func (ins *TransferInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
-	case "LIQUIDCLASS":
+	case LIQUIDCLASS:
 		return SetOfMultiTransferParams(ins.Transfers).What()
-	case "VOLUME":
+	case VOLUME:
 		return SetOfMultiTransferParams(ins.Transfers).Volume()
-	case "FROMPLATETYPE":
+	case FROMPLATETYPE:
 		return SetOfMultiTransferParams(ins.Transfers).FPlateType()
-	case "WELLFROMVOLUME":
+	case WELLFROMVOLUME:
 		return SetOfMultiTransferParams(ins.Transfers).FVolume()
-	case "POSFROM":
+	case POSFROM:
 		return SetOfMultiTransferParams(ins.Transfers).PltFrom()
-	case "POSTO":
+	case POSTO:
 		return SetOfMultiTransferParams(ins.Transfers).PltTo()
-	case "WELLFROM":
+	case WELLFROM:
 		return SetOfMultiTransferParams(ins.Transfers).WellFrom()
-	case "WELLTO":
+	case WELLTO:
 		return SetOfMultiTransferParams(ins.Transfers).WellTo()
-	case "WELLTOVOLUME":
+	case WELLTOVOLUME:
 		return SetOfMultiTransferParams(ins.Transfers).TVolume()
-	case "TOPLATETYPE":
+	case TOPLATETYPE:
 		return SetOfMultiTransferParams(ins.Transfers).TPlateType()
-	case "FPLATEWX":
+	case FPLATEWX:
 		return SetOfMultiTransferParams(ins.Transfers).FPlateWX()
-	case "FPLATEWY":
+	case FPLATEWY:
 		return SetOfMultiTransferParams(ins.Transfers).FPlateWY()
-	case "TPLATEWX":
+	case TPLATEWX:
 		return SetOfMultiTransferParams(ins.Transfers).TPlateWX()
-	case "TPLATEWY":
+	case TPLATEWY:
 		return SetOfMultiTransferParams(ins.Transfers).TPlateWY()
-	case "INSTRUCTIONTYPE":
-		return ins.InstructionType()
-	case "PLATFORM":
+	case PLATFORM:
 		return ins.Platform
-	case "COMPONENT":
+	case COMPONENT:
 		return SetOfMultiTransferParams(ins.Transfers).Component()
+	default:
+		return ins.BaseRobotInstruction.GetParameter(name)
 	}
-	return nil
-}
-
-func (vs VolumeSet) MaxMultiTransferVolume(minLeave wunit.Volume) wunit.Volume {
-	// the minimum volume in the set... ensuring that we what we leave is
-	// either 0 or minLeave or greater
-
-	ret := vs[0].Dup()
-
-	for _, v := range vs {
-		if v.LessThan(ret) && !v.IsZero() {
-			ret = v.Dup()
-		}
-	}
-
-	vs2 := vs.Dup().Sub(ret)
-
-	if !vs2.NonZeros().Min().IsZero() && vs2.NonZeros().Min().LessThan(minLeave) {
-		//slightly inefficient but we refuse to leave less than minleave
-		ret.Subtract(minLeave)
-	}
-
-	// fail if ret is now < 0 or < the min possible
-
-	if ret.LessThan(wunit.ZeroVolume()) || ret.LessThan(minLeave) {
-		ret = wunit.ZeroVolume()
-	}
-
-	return ret
 }
 
 /*
@@ -220,7 +193,6 @@ func (ins *TransferInstruction) getPoliciesForTransfer(which int, ruleSet wtype.
 func (ins *TransferInstruction) CheckMultiPolicies(which int) bool {
 	// first iteration: ensure all the WHAT prms are the same
 	// later	  : actually check the policies per channel
-	// is it later yet?
 
 	nwhat := wutil.NUniqueStringsInArray(ins.Transfers[which].What(), true)
 
@@ -244,7 +216,7 @@ func (ins *TransferInstruction) GetParallelSetsFor(ctx context.Context, robot *L
 	for i := 0; i < len(ins.Transfers); i++ {
 		// a parallel transfer is valid if any robot head can do it
 		// TODO --> support head/adaptor changes. Maybe.
-		for _, head := range robot.HeadsLoaded {
+		for _, head := range robot.GetLoadedHeads() {
 			if ins.validateParallelSet(ctx, robot, head, i, policy) {
 				r = append(r, i)
 			}
@@ -293,7 +265,7 @@ func (ins *TransferInstruction) validateParallelSet(ctx context.Context, robot *
 	}
 
 	// check source / tip alignment
-	if !TipsWellsAligned(robot, head, fromPlate, ins.Transfers[which].WellFrom()) {
+	if !head.CanReach(fromPlate, wtype.WCArrayFromStrings(ins.Transfers[which].WellFrom())) {
 		// fall back to single-channel
 		// TODO -- find a subset we CAN do
 		return false
@@ -314,7 +286,7 @@ func (ins *TransferInstruction) validateParallelSet(ctx context.Context, robot *
 	}
 
 	// for safety, check dest / tip alignment
-	if !TipsWellsAligned(robot, head, toPlate, ins.Transfers[which].WellTo()) {
+	if !head.CanReach(toPlate, wtype.WCArrayFromStrings(ins.Transfers[which].WellTo())) {
 		// fall back to single-channel
 		// TODO -- find a subset we CAN do
 		return false
@@ -476,13 +448,15 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 
 	ret := make([]RobotInstruction, 0)
 
+	headsLoaded := prms.GetLoadedHeads()
+
 	// if we can multi we do this first
 	if pol["CAN_MULTI"].(bool) {
 		// add policies as argument to GetParallelSetsFor to check multichannelability
 		parallelsets := ins.GetParallelSetsFor(ctx, prms, pol)
 
 		mci := NewMultiChannelBlockInstruction()
-		mci.Prms = prms.HeadsLoaded[0].Params // TODO Remove Hard code here
+		mci.Prms = headsLoaded[0].Params // TODO Remove Hard code here
 
 		// to do below
 		//
@@ -495,30 +469,28 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 		for _, set := range parallelsets {
 			vols := VolumeSet(ins.Transfers[set].Volume())
 
-			maxvol := vols.MaxMultiTransferVolume(prms.MinPossibleVolume())
-
-			// if we can't do it, we can't do it
-			if maxvol.IsZero() {
-				continue
+			// non independent heads must have all volumes the same
+			if !mci.Prms.Independent {
+				if maxvol := vols.MaxMultiTransferVolume(prms.MinPossibleVolume()); !maxvol.IsZero() {
+					for i := range vols {
+						vols[i] = wunit.CopyVolume(maxvol)
+					}
+				} else {
+					// we can't transfer any volumes with the non-independent head so move on to the next parallelset
+					continue
+				}
 			}
 
 			tp := ins.Transfers[set].Dup()
-
 			for i := 0; i < len(tp.Transfers); i++ {
-				tp.Transfers[i].Volume = maxvol.Dup()
+				tp.Transfers[i].Volume = vols[i].Dup()
 			}
 
-			// now set the vols for the transfer and remove this from the instruction's volume
-
-			for i := range vols {
-				vols[i] = wunit.CopyVolume(maxvol)
-			}
-
-			ins.Transfers[set].RemoveVolume(maxvol)
+			ins.Transfers[set].RemoveVolumes(vols)
 
 			// set the from and to volumes for the relevant part of the instruction
-			ins.Transfers[set].RemoveFVolume(maxvol)
-			ins.Transfers[set].AddTVolume(maxvol)
+			ins.Transfers[set].RemoveFVolumes(vols)
+			ins.Transfers[set].AddTVolumes(vols)
 
 			mci.Multi = len(vols)
 			mci.AddTransferParams(tp)
@@ -531,12 +503,12 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 
 	// mop up all the single instructions which are left
 	sci := NewSingleChannelBlockInstruction()
-	sci.Prms = prms.HeadsLoaded[0].Params // TODO Fix Hard Code Here
+	sci.Prms = headsLoaded[0].Params // TODO Fix Hard Code Here
 
 	lastWhat := ""
 	for _, t := range ins.Transfers {
 		for _, tp := range t.Transfers {
-			if tp.Volume.LessThanFloat(0.001) {
+			if !tp.Volume.IsPositive() {
 				continue
 			}
 
@@ -546,7 +518,7 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 					ret = append(ret, sci)
 				}
 				sci = NewSingleChannelBlockInstruction()
-				sci.Prms = prms.HeadsLoaded[0].Params
+				sci.Prms = headsLoaded[0].Params
 			}
 
 			sci.AddTransferParams(tp)
@@ -593,7 +565,9 @@ func safeTransfers(tp TransferParams, prms *LHProperties) ([]TransferParams, err
 		return []TransferParams{tp}, nil
 	}
 
-	tvs, err := TransferVolumes(tp.Volume, prms.HeadsLoaded[0].Params.Minvol, prms.HeadsLoaded[0].Params.Maxvol)
+	headsLoaded := prms.GetLoadedHeads()
+
+	tvs, err := TransferVolumes(tp.Volume, headsLoaded[0].Params.Minvol, headsLoaded[0].Params.Maxvol)
 
 	ret := []TransferParams{}
 

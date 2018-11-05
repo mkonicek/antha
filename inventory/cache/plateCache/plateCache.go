@@ -3,17 +3,18 @@ package plateCache
 import (
 	"context"
 	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/cache"
 )
 
 type plateCache struct {
-	platesByType    map[string][]*wtype.LHPlate
+	platesByType    map[string][]*wtype.Plate
 	platesFromCache map[string]bool
 }
 
-func (p *plateCache) NewComponent(ctx context.Context, name string) (*wtype.LHComponent, error) {
+func (p *plateCache) NewComponent(ctx context.Context, name string) (*wtype.Liquid, error) {
 	return inventory.NewComponent(ctx, name)
 }
 
@@ -25,11 +26,10 @@ func (p *plateCache) NewTipwaste(ctx context.Context, typ string) (*wtype.LHTipw
 	return inventory.NewTipwaste(ctx, typ)
 }
 
-func (p *plateCache) NewPlate(ctx context.Context, typ string) (*wtype.LHPlate, error) {
-
+func (p *plateCache) NewPlate(ctx context.Context, typ string) (*wtype.Plate, error) {
 	plateList, ok := p.platesByType[typ]
 	if !ok {
-		plateList = make([]*wtype.LHPlate, 0)
+		plateList = make([]*wtype.Plate, 0)
 		p.platesByType[typ] = plateList
 	}
 
@@ -52,7 +52,7 @@ func (p *plateCache) ReturnObject(ctx context.Context, obj interface{}) error {
 	if !p.IsFromCache(ctx, obj) {
 		return fmt.Errorf("cannont return non cache object %s", wtype.NameOf(obj))
 	}
-	plate, ok := obj.(*wtype.LHPlate)
+	plate, ok := obj.(*wtype.Plate)
 	if !ok {
 		return fmt.Errorf("cannot return object class %s to plate cache", wtype.ClassOf(obj))
 	}
@@ -62,7 +62,7 @@ func (p *plateCache) ReturnObject(ctx context.Context, obj interface{}) error {
 
 	_, ok = p.platesByType[typ]
 	if !ok {
-		p.platesByType[typ] = make([]*wtype.LHPlate, 0, 1)
+		p.platesByType[typ] = make([]*wtype.Plate, 0, 1)
 	}
 
 	p.platesByType[typ] = append(p.platesByType[typ], plate)
@@ -78,7 +78,7 @@ func (p *plateCache) IsFromCache(ctx context.Context, obj interface{}) bool {
 // NewContext creates a new plateCache context
 func NewContext(ctx context.Context) context.Context {
 	pc := &plateCache{
-		platesByType:    make(map[string][]*wtype.LHPlate),
+		platesByType:    make(map[string][]*wtype.Plate),
 		platesFromCache: make(map[string]bool),
 	}
 

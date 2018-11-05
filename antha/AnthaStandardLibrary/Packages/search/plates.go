@@ -36,7 +36,7 @@ import (
 // NextFreeWell checks for the next well which is empty in a plate.
 // The user can also specify wells to avoid, preffered wells and
 // whether to search through the well positions by row. The default is by column.
-func NextFreeWell(plate *wtype.LHPlate, avoidWells []string, preferredWells []string, byRow bool) (well string, err error) {
+func NextFreeWell(plate *wtype.Plate, avoidWells []string, preferredWells []string, byRow bool) (well string, err error) {
 
 	if plate == nil {
 		return "", fmt.Errorf("no plate specified as argument to NextFreeWell function")
@@ -64,17 +64,37 @@ func NextFreeWell(plate *wtype.LHPlate, avoidWells []string, preferredWells []st
 	return "", fmt.Errorf("no empty wells on plate %s of type %s", plate.Name(), plate.Type)
 }
 
-func checkWellValidity(plate *wtype.LHPlate, well string) error {
+// InvalidWell is an error type for when an well is requested from a plate which is invalid.
+type InvalidWell string
+
+// Error returns an error message.
+func (err InvalidWell) Error() string {
+	return string(err)
+}
+
+func checkWellValidity(plate *wtype.Plate, well string) error {
 
 	if well != "" {
 		wc := wtype.MakeWellCoords(well)
 		if wc.X >= len(plate.Cols) {
-			return fmt.Errorf("well (%s) specified is out of range of available wells for plate type %s", well, plate.Type)
+			return InvalidWell(fmt.Sprintf("well (%s) specified is out of range of available wells for plate type %s", well, plate.Type))
 		}
 		if wc.Y >= len(plate.Cols[wc.X]) {
-			return fmt.Errorf("well (%s) specified is out of range of available wells for plate type %s", well, plate.Type)
+			return InvalidWell(fmt.Sprintf("well (%s) specified is out of range of available wells for plate type %s", well, plate.Type))
 		}
 
 	}
 	return nil
+}
+
+// IsFreeWell checks for whether a well on a plate is free.
+// An error is returned if the well is not found on the plate or is occupied.
+func IsFreeWell(plate *wtype.Plate, well string) error {
+	if err := checkWellValidity(plate, well); err != nil {
+		return err
+	}
+	if plate.WellMap()[well].IsEmpty() {
+		return nil
+	}
+	return fmt.Errorf("well %s not free on plate %s %s. Contains %s", well, plate.Name(), plate.Type, plate.WellMap()[well].WContents.Name())
 }

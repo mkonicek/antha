@@ -1,73 +1,104 @@
 package executeutil
 
 import (
+	"encoding/json"
 	"errors"
-
+	"fmt"
 	"github.com/antha-lang/antha/execute"
+	"github.com/antha-lang/antha/utils"
 	"github.com/antha-lang/antha/workflow"
 	"github.com/antha-lang/antha/workflowtest"
-	"github.com/ghodss/yaml"
+	"io/ioutil"
 )
-
-var (
-	errNoElements       = errors.New("no elements found")
-	errNoParameters     = errors.New("no parameters found")
-	errBundleWithParams = errors.New("cannot use bundle with parameters and workflows")
-)
-
-func unmarshal(data []byte, v interface{}) error {
-	return yaml.Unmarshal(data, v)
-}
-
-// UnmarshalOpt are options for Unmarshal
-type UnmarshalOpt struct {
-	BundleData   []byte
-	ParamsData   []byte
-	WorkflowData []byte
-}
 
 // A Bundle is a workflow with its inputs
 type Bundle struct {
 	workflow.Desc
 	execute.RawParams
 	workflowtest.TestOpt
+	Version    string             `json:"version"`
+	Properties workflowProperties `json:"Properties"`
 }
 
-// Unmarshal parses parameters and workflow.
-func Unmarshal(opt UnmarshalOpt) (*Bundle, error) {
-	if len(opt.BundleData) != 0 && (len(opt.ParamsData) != 0 || len(opt.WorkflowData) != 0) {
-		return nil, errBundleWithParams
-	}
+type workflowProperties struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
 
-	var desc workflow.Desc
-	var param execute.RawParams
-	var bundle Bundle
-	var expected workflowtest.TestOpt
+// UnmarshalAll attempts to read and parse all the file paths
+// supplied, categorising the content into Bundles, Workflows and
+// Params. Resulting maps have the path as the key.
+func UnmarshalAll(paths ...string) (map[string]*Bundle, map[string]*workflow.Desc, map[string]*execute.RawParams, utils.ErrorSlice) {
+	var errs utils.ErrorSlice
 
-	if len(opt.BundleData) != 0 {
-		if err := unmarshal(opt.BundleData, &bundle); err != nil {
-			return nil, err
+	bundles := make(map[string]*Bundle, len(paths))
+	params := make(map[string]*execute.RawParams, len(paths))
+	workflows := make(map[string]*workflow.Desc, len(paths))
+
+	for _, path := range paths {
+		if bytes, err := ioutil.ReadFile(path); err != nil {
+			errs = append(errs, fmt.Errorf("Error when reading file %s: %v", path, err))
+		} else {
+			bundle := &Bundle{}
+			if err := json.Unmarshal(bytes, bundle); err != nil {
+				errs = append(errs, fmt.Errorf("Error when parsing content of %s: %v", path, err))
+			} else if bundle.Processes != nil && bundle.Parameters != nil { // it's a bundle
+				bundles[path] = bundle
+			} else if bundle.Processes != nil { // it's a workflow
+				workflows[path] = &bundle.Desc
+			} else if bundle.Parameters != nil { // it's a params
+				params[path] = &bundle.RawParams
+			}
 		}
-		desc.Connections = bundle.Connections
-		desc.Processes = bundle.Processes
-		param.Config = bundle.Config
-		param.Parameters = bundle.Parameters
-		expected = bundle.TestOpt
+	}
+	return bundles, workflows, params, errs
+}
+
+var (
+	ErrNotABundle   = errors.New("Path is not parsable as a valid bundle.")
+	ErrNotAWorkflow = errors.New("Path is not parsable as a valid workflows.")
+	ErrNotAParams   = errors.New("Path is not parsable as a valid params.")
+)
+
+// UnmarshalSingle can either be supplied with a single bundlePath, or
+// with both a workflowPath and a paramsPath. This slightly unusual
+// API exists because there are a few places where due to flags or
+// other sources of input, it is simplest to provide all possible
+// inputs here. The bundle returned will either be constructed from
+// the bundlePath alone, or from both the workflowPath and
+// paramsPath. Any other combination will error.
+func UnmarshalSingle(bundlePath, workflowPath, paramsPath string) (*Bundle, error) {
+	if bundlePath != "" && workflowPath == "" && paramsPath == "" {
+		if bundles, _, _, err := UnmarshalAll(bundlePath); err != nil {
+			return nil, err
+		} else if len(bundles) != 1 {
+			return nil, ErrNotABundle
+		} else {
+			for _, b := range bundles {
+				return b, nil
+			}
+			panic("Unreachable")
+		}
+
+	} else if bundlePath == "" && workflowPath != "" && paramsPath != "" {
+		if _, workflows, params, err := UnmarshalAll(workflowPath, paramsPath); err != nil {
+			return nil, err
+		} else if len(workflows) != 1 {
+			return nil, ErrNotAWorkflow
+		} else if len(params) != 1 {
+			return nil, ErrNotAParams
+		} else {
+			b := &Bundle{}
+			for _, workflow := range workflows {
+				b.Desc = *workflow
+			}
+			for _, param := range params {
+				b.RawParams = *param
+			}
+			return b, nil
+		}
+
 	} else {
-		if err := unmarshal(opt.WorkflowData, &desc); err != nil {
-			return nil, err
-		}
-		if err := unmarshal(opt.ParamsData, &param); err != nil {
-			return nil, err
-		}
+		return nil, errors.New("Either bundle must be provided, or both parameters and workflow must be provided.")
 	}
-
-	if len(desc.Processes) == 0 {
-		return nil, errNoElements
-	} else if len(param.Parameters) == 0 {
-		return nil, errNoParameters
-	}
-
-	bdl := Bundle{desc, param, expected}
-	return &bdl, nil
 }

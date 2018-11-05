@@ -56,7 +56,7 @@ func guessAddPlateToPlateType(plate interface{}) (wtype.LHObject, error) {
 		//Classy.GetClass in the JSON and switch on that in case these random
 		//attributes change
 		if _, ok := temp["Welltype"]; ok { //wtype.LHPlate
-			var ret wtype.LHPlate
+			var ret wtype.Plate
 			if err := json.Unmarshal([]byte(p), &ret); err != nil {
 				return nil, err
 			}
@@ -122,12 +122,186 @@ func DecodePtrToLHProperties(arg *pb.PtrToLHPropertiesMessage) *liquidhandling.L
 	return &ret
 }
 func EncodeLHProperties(arg liquidhandling.LHProperties) *pb.LHPropertiesMessage {
-	ret := pb.LHPropertiesMessage{(string)(arg.ID), int64(arg.Nposns), EncodeMapstringPtrToLHPositionMessage(arg.Positions), EncodeMapstringinterfaceMessage(arg.PlateLookup), EncodeMapstringstringMessage(arg.PosLookup), EncodeMapstringstringMessage(arg.PlateIDLookup), EncodeMapstringPtrToLHPlateMessage(arg.Plates), EncodeMapstringPtrToLHTipboxMessage(arg.Tipboxes), EncodeMapstringPtrToLHTipwasteMessage(arg.Tipwastes), EncodeMapstringPtrToLHPlateMessage(arg.Wastes), EncodeMapstringPtrToLHPlateMessage(arg.Washes), EncodeMapstringstringMessage(arg.Devices), (string)(arg.Model), (string)(arg.Mnfr), (string)(arg.LHType), (string)(arg.TipType), EncodeArrayOfPtrToLHHead(arg.Heads), EncodeArrayOfPtrToLHHead(arg.HeadsLoaded), EncodeArrayOfPtrToLHAdaptor(arg.Adaptors), EncodeArrayOfPtrToLHTip(arg.Tips), EncodeArrayOfstring(arg.Tip_preferences), EncodeArrayOfstring(arg.Input_preferences), EncodeArrayOfstring(arg.Output_preferences), EncodeArrayOfstring(arg.Tipwaste_preferences), EncodeArrayOfstring(arg.Waste_preferences), EncodeArrayOfstring(arg.Wash_preferences), EncodePtrToLHChannelParameter(arg.CurrConf), EncodeArrayOfPtrToLHChannelParameter(arg.Cnfvol), EncodeMapstringCoordinatesMessage(arg.Layout), int64(arg.MaterialType)}
+	ret := pb.LHPropertiesMessage{
+		(string)(arg.ID),
+		int64(arg.Nposns),
+		EncodeMapstringPtrToLHPositionMessage(arg.Positions),
+		EncodeMapstringinterfaceMessage(arg.PlateLookup),
+		EncodeMapstringstringMessage(arg.PosLookup),
+		EncodeMapstringstringMessage(arg.PlateIDLookup),
+		EncodeMapstringPtrToLHPlateMessage(arg.Plates),
+		EncodeMapstringPtrToLHTipboxMessage(arg.Tipboxes),
+		EncodeMapstringPtrToLHTipwasteMessage(arg.Tipwastes),
+		EncodeMapstringPtrToLHPlateMessage(arg.Wastes),
+		EncodeMapstringPtrToLHPlateMessage(arg.Washes),
+		EncodeMapstringstringMessage(arg.Devices),
+		(string)(arg.Model),
+		(string)(arg.Mnfr),
+		(string)(arg.LHType),
+		(string)(arg.TipType),
+		EncodeArrayOfPtrToLHHead(arg.Heads, arg.Adaptors),
+		EncodeArrayOfPtrToLHAdaptor(arg.Adaptors),
+		EncodeArrayOfPtrToLHTip(arg.Tips),
+		EncodeArrayOfstring(arg.Tip_preferences),
+		EncodeArrayOfstring(arg.Input_preferences),
+		EncodeArrayOfstring(arg.Output_preferences),
+		EncodeArrayOfstring(arg.Tipwaste_preferences),
+		EncodeArrayOfstring(arg.Waste_preferences),
+		EncodeArrayOfstring(arg.Wash_preferences),
+		EncodePtrToLHChannelParameter(arg.CurrConf),
+		EncodeArrayOfPtrToLHChannelParameter(arg.Cnfvol),
+		EncodeMapstringCoordinatesMessage(arg.Layout),
+		int64(arg.MaterialType),
+		EncodeArrayOfPtrToLHHeadAssemblies(arg.HeadAssemblies, arg.Heads),
+	}
 	return &ret
 }
 func DecodeLHProperties(arg *pb.LHPropertiesMessage) liquidhandling.LHProperties {
-	ret := liquidhandling.LHProperties{ID: (string)(arg.Arg_1), Nposns: (int)(arg.Arg_2), Positions: (map[string]*wtype.LHPosition)(DecodeMapstringPtrToLHPositionMessage(arg.Arg_3)), PlateLookup: (map[string]interface{})(DecodeMapstringinterfaceMessage(arg.Arg_4)), PosLookup: (map[string]string)(DecodeMapstringstringMessage(arg.Arg_5)), PlateIDLookup: (map[string]string)(DecodeMapstringstringMessage(arg.Arg_6)), Plates: (map[string]*wtype.LHPlate)(DecodeMapstringPtrToLHPlateMessage(arg.Arg_7)), Tipboxes: (map[string]*wtype.LHTipbox)(DecodeMapstringPtrToLHTipboxMessage(arg.Arg_8)), Tipwastes: (map[string]*wtype.LHTipwaste)(DecodeMapstringPtrToLHTipwasteMessage(arg.Arg_9)), Wastes: (map[string]*wtype.LHPlate)(DecodeMapstringPtrToLHPlateMessage(arg.Arg_10)), Washes: (map[string]*wtype.LHPlate)(DecodeMapstringPtrToLHPlateMessage(arg.Arg_11)), Devices: (map[string]string)(DecodeMapstringstringMessage(arg.Arg_12)), Model: (string)(arg.Arg_13), Mnfr: (string)(arg.Arg_14), LHType: (string)(arg.Arg_15), TipType: (string)(arg.Arg_16), Heads: ([]*wtype.LHHead)(DecodeArrayOfPtrToLHHead(arg.Arg_17)), HeadsLoaded: ([]*wtype.LHHead)(DecodeArrayOfPtrToLHHead(arg.Arg_18)), Adaptors: ([]*wtype.LHAdaptor)(DecodeArrayOfPtrToLHAdaptor(arg.Arg_19)), Tips: ([]*wtype.LHTip)(DecodeArrayOfPtrToLHTip(arg.Arg_20)), Tip_preferences: ([]string)(DecodeArrayOfstring(arg.Arg_21)), Input_preferences: ([]string)(DecodeArrayOfstring(arg.Arg_22)), Output_preferences: ([]string)(DecodeArrayOfstring(arg.Arg_23)), Tipwaste_preferences: ([]string)(DecodeArrayOfstring(arg.Arg_24)), Waste_preferences: ([]string)(DecodeArrayOfstring(arg.Arg_25)), Wash_preferences: ([]string)(DecodeArrayOfstring(arg.Arg_26)), Driver: nil, CurrConf: (*wtype.LHChannelParameter)(DecodePtrToLHChannelParameter(arg.Arg_27)), Cnfvol: ([]*wtype.LHChannelParameter)(DecodeArrayOfPtrToLHChannelParameter(arg.Arg_28)), Layout: (map[string]wtype.Coordinates)(DecodeMapstringCoordinatesMessage(arg.Arg_29)), MaterialType: (material.MaterialType)(arg.Arg_30)}
+	adaptors := DecodeArrayOfPtrToLHAdaptor(arg.GetArg_19())
+	heads := DecodeArrayOfPtrToLHHead(arg.GetArg_17(), adaptors)
+	headAssemblies := DecodeArrayOfPtrToLHHeadAssemblies(arg.GetArg_31(), heads)
+
+	ret := liquidhandling.LHProperties{
+		ID:                   (string)(arg.Arg_1),
+		Nposns:               (int)(arg.Arg_2),
+		Positions:            (map[string]*wtype.LHPosition)(DecodeMapstringPtrToLHPositionMessage(arg.Arg_3)),
+		PlateLookup:          (map[string]interface{})(DecodeMapstringinterfaceMessage(arg.Arg_4)),
+		PosLookup:            (map[string]string)(DecodeMapstringstringMessage(arg.Arg_5)),
+		PlateIDLookup:        (map[string]string)(DecodeMapstringstringMessage(arg.Arg_6)),
+		Plates:               (map[string]*wtype.Plate)(DecodeMapstringPtrToLHPlateMessage(arg.Arg_7)),
+		Tipboxes:             (map[string]*wtype.LHTipbox)(DecodeMapstringPtrToLHTipboxMessage(arg.Arg_8)),
+		Tipwastes:            (map[string]*wtype.LHTipwaste)(DecodeMapstringPtrToLHTipwasteMessage(arg.Arg_9)),
+		Wastes:               (map[string]*wtype.Plate)(DecodeMapstringPtrToLHPlateMessage(arg.Arg_10)),
+		Washes:               (map[string]*wtype.Plate)(DecodeMapstringPtrToLHPlateMessage(arg.Arg_11)),
+		Devices:              (map[string]string)(DecodeMapstringstringMessage(arg.Arg_12)),
+		Model:                (string)(arg.Arg_13),
+		Mnfr:                 (string)(arg.Arg_14),
+		LHType:               (string)(arg.Arg_15),
+		TipType:              (string)(arg.Arg_16),
+		Heads:                heads,
+		Adaptors:             adaptors,
+		HeadAssemblies:       headAssemblies,
+		Tips:                 ([]*wtype.LHTip)(DecodeArrayOfPtrToLHTip(arg.Arg_20)),
+		Tip_preferences:      ([]string)(DecodeArrayOfstring(arg.Arg_21)),
+		Input_preferences:    ([]string)(DecodeArrayOfstring(arg.Arg_22)),
+		Output_preferences:   ([]string)(DecodeArrayOfstring(arg.Arg_23)),
+		Tipwaste_preferences: ([]string)(DecodeArrayOfstring(arg.Arg_24)),
+		Waste_preferences:    ([]string)(DecodeArrayOfstring(arg.Arg_25)),
+		Wash_preferences:     ([]string)(DecodeArrayOfstring(arg.Arg_26)),
+		Driver:               nil,
+		CurrConf:             (*wtype.LHChannelParameter)(DecodePtrToLHChannelParameter(arg.Arg_27)),
+		Cnfvol:               ([]*wtype.LHChannelParameter)(DecodeArrayOfPtrToLHChannelParameter(arg.Arg_28)),
+		Layout:               (map[string]wtype.Coordinates)(DecodeMapstringCoordinatesMessage(arg.Arg_29)),
+		MaterialType:         (material.MaterialType)(arg.Arg_30),
+	}
 	return ret
+}
+func EncodeArrayOfPtrToLHHeadAssemblies(assemblies []*wtype.LHHeadAssembly, heads []*wtype.LHHead) *pb.ArrayOfPtrToLHHeadAssembliesMessage {
+	headMap := make(map[*wtype.LHHead]int, len(heads))
+	for i, h := range heads {
+		headMap[h] = i
+	}
+
+	a := make([]*pb.PtrToLHHeadAssemblyMessage, len(assemblies))
+	for i, v := range assemblies {
+		a[i] = EncodePtrToLHHeadAssembly(v, headMap)
+	}
+	ret := pb.ArrayOfPtrToLHHeadAssembliesMessage{
+		a,
+	}
+	return &ret
+}
+func EncodePtrToLHHeadAssembly(assembly *wtype.LHHeadAssembly, headMap map[*wtype.LHHead]int) *pb.PtrToLHHeadAssemblyMessage {
+	ret := pb.PtrToLHHeadAssemblyMessage{}
+	if assembly != nil {
+		ret.Val = EncodeLHHeadAssemblyMessage(assembly, headMap)
+	}
+
+	return &ret
+}
+func EncodeLHHeadAssemblyMessage(assembly *wtype.LHHeadAssembly, headMap map[*wtype.LHHead]int) *pb.LHHeadAssemblyMessage {
+	ret := pb.LHHeadAssemblyMessage{
+		Positions:      EncodeArrayOfPtrToLHHeadAssemblyPosition(assembly.Positions, headMap),
+		MotionLimits:   EncodePtrToBBox(assembly.MotionLimits),
+		VelocityLimits: EncodePtrToVelocityRange(assembly.VelocityLimits),
+	}
+	return &ret
+}
+func EncodeArrayOfPtrToLHHeadAssemblyPosition(ap []*wtype.LHHeadAssemblyPosition, headMap map[*wtype.LHHead]int) *pb.ArrayOfPtrToLHHeadAssemblyPositionMessage {
+	a := make([]*pb.PtrToLHHeadAssemblyPositionMessage, len(ap))
+	for i, v := range ap {
+		a[i] = EncodePtrToLHHeadAssemblyPosition(v, headMap)
+	}
+	ret := pb.ArrayOfPtrToLHHeadAssemblyPositionMessage{
+		a,
+	}
+	return &ret
+}
+func EncodePtrToLHHeadAssemblyPosition(pos *wtype.LHHeadAssemblyPosition, headMap map[*wtype.LHHead]int) *pb.PtrToLHHeadAssemblyPositionMessage {
+	ret := pb.PtrToLHHeadAssemblyPositionMessage{}
+	if pos != nil {
+		ret.Val = EncodeLHHeadAssemblyPosition(pos, headMap)
+	}
+	return &ret
+}
+func EncodeLHHeadAssemblyPosition(pos *wtype.LHHeadAssemblyPosition, headMap map[*wtype.LHHead]int) *pb.LHHeadAssemblyPositionMessage {
+	index := -1
+	if pos.Head != nil {
+		index = headMap[pos.Head]
+	}
+	ret := pb.LHHeadAssemblyPositionMessage{
+		Offset: EncodeCoordinates(pos.Offset),
+		//Store the head as an index in LHProperties.Heads
+		HeadIndex: int64(index),
+	}
+	return &ret
+}
+func DecodeArrayOfPtrToLHHeadAssemblies(arg *pb.ArrayOfPtrToLHHeadAssembliesMessage, heads []*wtype.LHHead) []*wtype.LHHeadAssembly {
+	ret := make([]*wtype.LHHeadAssembly, len(arg.Val))
+	for i, v := range arg.Val {
+		if v != nil {
+			ret[i] = DecodePtrToLHHeadAssembly(v, heads)
+		}
+	}
+	return ret
+}
+func DecodePtrToLHHeadAssembly(arg *pb.PtrToLHHeadAssemblyMessage, heads []*wtype.LHHead) *wtype.LHHeadAssembly {
+	if arg.Val == nil {
+		return nil
+	}
+	return DecodeLHHeadAssembly(arg.Val, heads)
+}
+func DecodeLHHeadAssembly(arg *pb.LHHeadAssemblyMessage, heads []*wtype.LHHead) *wtype.LHHeadAssembly {
+	ret := wtype.LHHeadAssembly{
+		Positions:      DecodeArrayOfPtrToLHHeadAssemblyPositions(arg.Positions, heads),
+		MotionLimits:   DecodePtrToBBox(arg.MotionLimits),
+		VelocityLimits: DecodePtrToVelocityRange(arg.VelocityLimits),
+	}
+	return &ret
+}
+func DecodeArrayOfPtrToLHHeadAssemblyPositions(arg *pb.ArrayOfPtrToLHHeadAssemblyPositionMessage, heads []*wtype.LHHead) []*wtype.LHHeadAssemblyPosition {
+	ret := make([]*wtype.LHHeadAssemblyPosition, len(arg.Val))
+	for i, v := range arg.Val {
+		ret[i] = DecodePtrToLHHeadAssemblyPosition(v, heads)
+	}
+	return ret
+}
+func DecodePtrToLHHeadAssemblyPosition(arg *pb.PtrToLHHeadAssemblyPositionMessage, heads []*wtype.LHHead) *wtype.LHHeadAssemblyPosition {
+	if arg.Val == nil {
+		return nil
+	}
+	return DecodeLHHeadAssemblyPosition(arg.Val, heads)
+}
+func DecodeLHHeadAssemblyPosition(arg *pb.LHHeadAssemblyPositionMessage, heads []*wtype.LHHead) *wtype.LHHeadAssemblyPosition {
+	var head *wtype.LHHead
+	if arg.HeadIndex >= 0 {
+		head = heads[arg.HeadIndex]
+	}
+	ret := wtype.LHHeadAssemblyPosition{
+		Offset: DecodeCoordinates(arg.Offset),
+		Head:   head,
+	}
+	return &ret
 }
 func EncodeMapstringinterfaceMessage(arg map[string]interface{}) *pb.MapstringAnyMessageMessage {
 	a := make([]*pb.MapstringAnyMessageMessageFieldEntry, 0, len(arg))
@@ -219,7 +393,7 @@ func DecodeArrayOfbool(arg *pb.ArrayOfbool) []bool {
 	}
 	return ret
 }
-func EncodePtrToLHPlate(arg *wtype.LHPlate) *pb.PtrToLHPlateMessage {
+func EncodePtrToLHPlate(arg *wtype.Plate) *pb.PtrToLHPlateMessage {
 	var ret pb.PtrToLHPlateMessage
 	if arg == nil {
 		ret = pb.PtrToLHPlateMessage{
@@ -232,7 +406,7 @@ func EncodePtrToLHPlate(arg *wtype.LHPlate) *pb.PtrToLHPlateMessage {
 	}
 	return &ret
 }
-func DecodePtrToLHPlate(arg *pb.PtrToLHPlateMessage) *wtype.LHPlate {
+func DecodePtrToLHPlate(arg *pb.PtrToLHPlateMessage) *wtype.Plate {
 	if arg == nil {
 		log.Println("Arg for PtrToLHPlate was nil")
 		return nil
@@ -258,14 +432,36 @@ func DecodeLHAdaptor(arg *pb.LHAdaptorMessage) wtype.LHAdaptor {
 	return ret
 }
 func EncodeLHTip(arg wtype.LHTip) *pb.LHTipMessage {
-	ret := pb.LHTipMessage{(string)(arg.ID), (string)(arg.Type), (string)(arg.Mnfr), (bool)(arg.Dirty), EncodeVolume(arg.MaxVol), EncodeVolume(arg.MinVol), (bool)(arg.Filtered), EncodePtrToShape(arg.Shape), EncodeBBox(arg.Bounds)}
+	ret := pb.LHTipMessage{
+		(string)(arg.ID),
+		(string)(arg.Type),
+		(string)(arg.Mnfr),
+		(bool)(arg.Dirty),
+		EncodeVolume(arg.MaxVol),
+		EncodeVolume(arg.MinVol),
+		(bool)(arg.Filtered),
+		EncodePtrToShape(arg.Shape),
+		EncodeBBox(arg.Bounds),
+		arg.GetEffectiveHeight(),
+	}
 	return &ret
 }
 func DecodeLHTip(arg *pb.LHTipMessage) wtype.LHTip {
 	if arg == nil {
 		return wtype.LHTip{}
 	}
-	ret := wtype.LHTip{ID: (string)(arg.Arg_1), Type: (string)(arg.Arg_2), Mnfr: (string)(arg.Arg_3), Dirty: (bool)(arg.Arg_4), MaxVol: (wunit.Volume)(DecodeVolume(arg.Arg_5)), MinVol: (wunit.Volume)(DecodeVolume(arg.Arg_6)), Filtered: (bool)(arg.Arg_7), Shape: (*wtype.Shape)(DecodePtrToShape(arg.Arg_8)), Bounds: (wtype.BBox)(DecodeBBox(arg.Arg_9))}
+	ret := wtype.LHTip{
+		ID:              (string)(arg.Arg_1),
+		Type:            (string)(arg.Arg_2),
+		Mnfr:            (string)(arg.Arg_3),
+		Dirty:           (bool)(arg.Arg_4),
+		MaxVol:          (wunit.Volume)(DecodeVolume(arg.Arg_5)),
+		MinVol:          (wunit.Volume)(DecodeVolume(arg.Arg_6)),
+		Filtered:        (bool)(arg.Arg_7),
+		Shape:           (*wtype.Shape)(DecodePtrToShape(arg.Arg_8)),
+		Bounds:          (wtype.BBox)(DecodeBBox(arg.Arg_9)),
+		EffectiveHeight: arg.GetEffectiveHeight(),
+	}
 	return ret
 }
 func EncodeMapstringPtrToLHPositionMessage(arg map[string]*wtype.LHPosition) *pb.MapstringPtrToLHPositionMessageMessage {
@@ -330,7 +526,7 @@ func DecodeMapstringPtrToLHTipwasteMessageFieldEntry(arg *pb.MapstringPtrToLHTip
 	v := DecodePtrToLHTipwaste(arg.Value)
 	return k, v
 }
-func EncodePtrToLHHead(arg *wtype.LHHead) *pb.PtrToLHHeadMessage {
+func EncodePtrToLHHead(arg *wtype.LHHead, adaptorMap map[*wtype.LHAdaptor]int) *pb.PtrToLHHeadMessage {
 	var ret pb.PtrToLHHeadMessage
 	if arg == nil {
 		ret = pb.PtrToLHHeadMessage{
@@ -338,18 +534,18 @@ func EncodePtrToLHHead(arg *wtype.LHHead) *pb.PtrToLHHeadMessage {
 		}
 	} else {
 		ret = pb.PtrToLHHeadMessage{
-			EncodeLHHead(*arg),
+			EncodeLHHead(*arg, adaptorMap),
 		}
 	}
 	return &ret
 }
-func DecodePtrToLHHead(arg *pb.PtrToLHHeadMessage) *wtype.LHHead {
+func DecodePtrToLHHead(arg *pb.PtrToLHHeadMessage, adaptors []*wtype.LHAdaptor) *wtype.LHHead {
 	if arg == nil {
 		log.Println("Arg for PtrToLHHead was nil")
 		return nil
 	}
 
-	ret := DecodeLHHead(arg.Arg_1)
+	ret := DecodeLHHead(arg.Arg_1, adaptors)
 	return &ret
 }
 func EncodeArrayOfPtrToLHAdaptor(arg []*wtype.LHAdaptor) *pb.ArrayOfPtrToLHAdaptorMessage {
@@ -394,32 +590,37 @@ func DecodeLHPosition(arg *pb.LHPositionMessage) wtype.LHPosition {
 	ret := wtype.LHPosition{ID: (string)(arg.Arg_1), Name: (string)(arg.Arg_2), Num: (int)(arg.Arg_3), Extra: ([]wtype.LHDevice)(DecodeArrayOfLHDevice(arg.Arg_4)), Maxh: (float64)(arg.Arg_5)}
 	return ret
 }
-func EncodeLHPlate(arg wtype.LHPlate) *pb.LHPlateMessage {
+func EncodeLHPlate(arg wtype.Plate) *pb.LHPlateMessage {
 	ret := pb.LHPlateMessage{(string)(arg.ID), (string)(arg.Inst), (string)(arg.Loc), (string)(arg.PlateName), (string)(arg.Type), (string)(arg.Mnfr), int64(arg.WlsX), int64(arg.WlsY), int64(arg.Nwells), EncodeMapstringPtrToLHWellMessage(arg.HWells), EncodeArrayOfArrayOfPtrToLHWell(arg.Rows), EncodeArrayOfArrayOfPtrToLHWell(arg.Cols), EncodePtrToLHWell(arg.Welltype), EncodeMapstringPtrToLHWellMessage(arg.Wellcoords), (float64)(arg.WellXOffset), (float64)(arg.WellYOffset), (float64)(arg.WellXStart), (float64)(arg.WellYStart), (float64)(arg.WellZStart), EncodeBBox(arg.Bounds)}
 	return &ret
 }
-func DecodeLHPlate(arg *pb.LHPlateMessage) wtype.LHPlate {
-	ret := wtype.LHPlate{ID: (string)(arg.Arg_1), Inst: (string)(arg.Arg_2), Loc: (string)(arg.Arg_3), PlateName: (string)(arg.Arg_4), Type: (string)(arg.Arg_5), Mnfr: (string)(arg.Arg_6), WlsX: (int)(arg.Arg_7), WlsY: (int)(arg.Arg_8), Nwells: (int)(arg.Arg_9), HWells: (map[string]*wtype.LHWell)(DecodeMapstringPtrToLHWellMessage(arg.Arg_10)), Rows: ([][]*wtype.LHWell)(DecodeArrayOfArrayOfPtrToLHWell(arg.Arg_11)), Cols: ([][]*wtype.LHWell)(DecodeArrayOfArrayOfPtrToLHWell(arg.Arg_12)), Welltype: (*wtype.LHWell)(DecodePtrToLHWell(arg.Arg_13)), Wellcoords: (map[string]*wtype.LHWell)(DecodeMapstringPtrToLHWellMessage(arg.Arg_14)), WellXOffset: (float64)(arg.Arg_15), WellYOffset: (float64)(arg.Arg_16), WellXStart: (float64)(arg.Arg_17), WellYStart: (float64)(arg.Arg_18), WellZStart: (float64)(arg.Arg_19), Bounds: (wtype.BBox)(DecodeBBox(arg.Arg_20))}
+func DecodeLHPlate(arg *pb.LHPlateMessage) wtype.Plate {
+	ret := wtype.Plate{ID: (string)(arg.Arg_1), Inst: (string)(arg.Arg_2), Loc: (string)(arg.Arg_3), PlateName: (string)(arg.Arg_4), Type: (string)(arg.Arg_5), Mnfr: (string)(arg.Arg_6), WlsX: (int)(arg.Arg_7), WlsY: (int)(arg.Arg_8), Nwells: (int)(arg.Arg_9), HWells: (map[string]*wtype.LHWell)(DecodeMapstringPtrToLHWellMessage(arg.Arg_10)), Rows: ([][]*wtype.LHWell)(DecodeArrayOfArrayOfPtrToLHWell(arg.Arg_11)), Cols: ([][]*wtype.LHWell)(DecodeArrayOfArrayOfPtrToLHWell(arg.Arg_12)), Welltype: (*wtype.LHWell)(DecodePtrToLHWell(arg.Arg_13)), Wellcoords: (map[string]*wtype.LHWell)(DecodeMapstringPtrToLHWellMessage(arg.Arg_14)), WellXOffset: (float64)(arg.Arg_15), WellYOffset: (float64)(arg.Arg_16), WellXStart: (float64)(arg.Arg_17), WellYStart: (float64)(arg.Arg_18), WellZStart: (float64)(arg.Arg_19), Bounds: (wtype.BBox)(DecodeBBox(arg.Arg_20))}
 	return ret
 }
-func EncodeArrayOfPtrToLHHead(arg []*wtype.LHHead) *pb.ArrayOfPtrToLHHeadMessage {
+func EncodeArrayOfPtrToLHHead(arg []*wtype.LHHead, adaptors []*wtype.LHAdaptor) *pb.ArrayOfPtrToLHHeadMessage {
+	adaptorMap := make(map[*wtype.LHAdaptor]int, len(adaptors))
+	for i, a := range adaptors {
+		adaptorMap[a] = i
+	}
+
 	a := make([]*pb.PtrToLHHeadMessage, len(arg))
 	for i, v := range arg {
-		a[i] = EncodePtrToLHHead(v)
+		a[i] = EncodePtrToLHHead(v, adaptorMap)
 	}
 	ret := pb.ArrayOfPtrToLHHeadMessage{
 		a,
 	}
 	return &ret
 }
-func DecodeArrayOfPtrToLHHead(arg *pb.ArrayOfPtrToLHHeadMessage) []*wtype.LHHead {
+func DecodeArrayOfPtrToLHHead(arg *pb.ArrayOfPtrToLHHeadMessage, adaptors []*wtype.LHAdaptor) []*wtype.LHHead {
 	ret := make(([]*wtype.LHHead), len(arg.Arg_1))
 	for i, v := range arg.Arg_1 {
-		ret[i] = DecodePtrToLHHead(v)
+		ret[i] = DecodePtrToLHHead(v, adaptors)
 	}
 	return ret
 }
-func EncodeMapstringPtrToLHPlateMessage(arg map[string]*wtype.LHPlate) *pb.MapstringPtrToLHPlateMessageMessage {
+func EncodeMapstringPtrToLHPlateMessage(arg map[string]*wtype.Plate) *pb.MapstringPtrToLHPlateMessageMessage {
 	a := make([]*pb.MapstringPtrToLHPlateMessageMessageFieldEntry, 0, len(arg))
 	for k, v := range arg {
 		fe := EncodeMapstringPtrToLHPlateMessageFieldEntry(k, v)
@@ -430,22 +631,22 @@ func EncodeMapstringPtrToLHPlateMessage(arg map[string]*wtype.LHPlate) *pb.Mapst
 	}
 	return &ret
 }
-func EncodeMapstringPtrToLHPlateMessageFieldEntry(k string, v *wtype.LHPlate) pb.MapstringPtrToLHPlateMessageMessageFieldEntry {
+func EncodeMapstringPtrToLHPlateMessageFieldEntry(k string, v *wtype.Plate) pb.MapstringPtrToLHPlateMessageMessageFieldEntry {
 	ret := pb.MapstringPtrToLHPlateMessageMessageFieldEntry{
 		(string)(k),
 		EncodePtrToLHPlate(v),
 	}
 	return ret
 }
-func DecodeMapstringPtrToLHPlateMessage(arg *pb.MapstringPtrToLHPlateMessageMessage) map[string]*wtype.LHPlate {
-	a := make(map[(string)](*wtype.LHPlate), len(arg.MapField))
+func DecodeMapstringPtrToLHPlateMessage(arg *pb.MapstringPtrToLHPlateMessageMessage) map[string]*wtype.Plate {
+	a := make(map[(string)](*wtype.Plate), len(arg.MapField))
 	for _, fe := range arg.MapField {
 		k, v := DecodeMapstringPtrToLHPlateMessageFieldEntry(fe)
 		a[k] = v
 	}
 	return a
 }
-func DecodeMapstringPtrToLHPlateMessageFieldEntry(arg *pb.MapstringPtrToLHPlateMessageMessageFieldEntry) (string, *wtype.LHPlate) {
+func DecodeMapstringPtrToLHPlateMessageFieldEntry(arg *pb.MapstringPtrToLHPlateMessageMessageFieldEntry) (string, *wtype.Plate) {
 	k := (string)(arg.Key)
 	v := DecodePtrToLHPlate(arg.Value)
 	return k, v
@@ -527,15 +728,51 @@ func DecodePtrToLHTip(arg *pb.PtrToLHTipMessage) *wtype.LHTip {
 	ret := DecodeLHTip(arg.Arg_1)
 	return &ret
 }
+func EncodeChannelOrientation(arg wtype.ChannelOrientation) int64 {
+	if arg == wtype.LHVChannel {
+		return 0
+	}
+	return 1
+}
+func DecodeChannelOrientation(arg int64) wtype.ChannelOrientation {
+	if arg == 0 {
+		return wtype.LHVChannel
+	}
+	return wtype.LHHChannel
+}
 func EncodeLHChannelParameter(arg wtype.LHChannelParameter) *pb.LHChannelParameterMessage {
-	ret := pb.LHChannelParameterMessage{(string)(arg.ID), (string)(arg.Platform), (string)(arg.Name), EncodeVolume(arg.Minvol), EncodeVolume(arg.Maxvol), EncodeFlowRate(arg.Minspd), EncodeFlowRate(arg.Maxspd), int64(arg.Multi), (bool)(arg.Independent), int64(arg.Orientation), int64(arg.Head)}
+	ret := pb.LHChannelParameterMessage{
+		Arg_1:  arg.ID,
+		Arg_2:  arg.Platform,
+		Arg_3:  arg.Name,
+		Arg_4:  EncodeVolume(arg.Minvol),
+		Arg_5:  EncodeVolume(arg.Maxvol),
+		Arg_6:  EncodeFlowRate(arg.Minspd),
+		Arg_7:  EncodeFlowRate(arg.Maxspd),
+		Arg_8:  int64(arg.Multi),
+		Arg_9:  arg.Independent,
+		Arg_10: EncodeChannelOrientation(arg.Orientation),
+		Arg_11: int64(arg.Head),
+	}
 	return &ret
 }
 func DecodeLHChannelParameter(arg *pb.LHChannelParameterMessage) wtype.LHChannelParameter {
 	if arg == nil {
 		return wtype.LHChannelParameter{}
 	}
-	ret := wtype.LHChannelParameter{ID: (string)(arg.Arg_1), Platform: (string)(arg.Arg_2), Name: (string)(arg.Arg_3), Minvol: (wunit.Volume)(DecodeVolume(arg.Arg_4)), Maxvol: (wunit.Volume)(DecodeVolume(arg.Arg_5)), Minspd: (wunit.FlowRate)(DecodeFlowRate(arg.Arg_6)), Maxspd: (wunit.FlowRate)(DecodeFlowRate(arg.Arg_7)), Multi: (int)(arg.Arg_8), Independent: (bool)(arg.Arg_9), Orientation: (int)(arg.Arg_10), Head: (int)(arg.Arg_11)}
+	ret := wtype.LHChannelParameter{
+		ID:          arg.Arg_1,
+		Platform:    arg.Arg_2,
+		Name:        arg.Arg_3,
+		Minvol:      DecodeVolume(arg.Arg_4),
+		Maxvol:      DecodeVolume(arg.Arg_5),
+		Minspd:      DecodeFlowRate(arg.Arg_6),
+		Maxspd:      DecodeFlowRate(arg.Arg_7),
+		Multi:       (int)(arg.Arg_8),
+		Independent: arg.Arg_9,
+		Orientation: DecodeChannelOrientation(arg.Arg_10),
+		Head:        (int)(arg.Arg_11),
+	}
 	return ret
 }
 func EncodePtrToLHChannelParameter(arg *wtype.LHChannelParameter) *pb.PtrToLHChannelParameterMessage {
@@ -556,7 +793,9 @@ func DecodePtrToLHChannelParameter(arg *pb.PtrToLHChannelParameterMessage) *wtyp
 		log.Println("Arg for PtrToLHChannelParameter was nil")
 		return nil
 	}
-
+	if arg.Arg_1 == nil {
+		return nil
+	}
 	ret := DecodeLHChannelParameter(arg.Arg_1)
 	return &ret
 }
@@ -652,12 +891,40 @@ func DecodeArrayOfPtrToLHTip(arg *pb.ArrayOfPtrToLHTipMessage) []*wtype.LHTip {
 	}
 	return ret
 }
-func EncodeLHHead(arg wtype.LHHead) *pb.LHHeadMessage {
-	ret := pb.LHHeadMessage{(string)(arg.Name), (string)(arg.Manufacturer), (string)(arg.ID), EncodePtrToLHAdaptor(arg.Adaptor), EncodePtrToLHChannelParameter(arg.Params), EncodeTipLoadingBehaviour(arg.TipLoading)}
+func EncodeLHHead(arg wtype.LHHead, adaptorMap map[*wtype.LHAdaptor]int) *pb.LHHeadMessage {
+	adaptorIndex := -1
+	if i, ok := adaptorMap[arg.Adaptor]; ok {
+		adaptorIndex = i
+	} else {
+		if arg.Adaptor != nil {
+			panic("cannot serialise head with unknown adaptor loaded")
+		}
+	}
+
+	ret := pb.LHHeadMessage{
+		(string)(arg.Name),
+		(string)(arg.Manufacturer),
+		(string)(arg.ID),
+		EncodePtrToLHChannelParameter(arg.Params),
+		EncodeTipLoadingBehaviour(arg.TipLoading),
+		int64(adaptorIndex),
+	}
 	return &ret
 }
-func DecodeLHHead(arg *pb.LHHeadMessage) wtype.LHHead {
-	ret := wtype.LHHead{Name: (string)(arg.Arg_1), Manufacturer: (string)(arg.Arg_2), ID: (string)(arg.Arg_3), Adaptor: (*wtype.LHAdaptor)(DecodePtrToLHAdaptor(arg.Arg_4)), Params: (*wtype.LHChannelParameter)(DecodePtrToLHChannelParameter(arg.Arg_5)), TipLoading: DecodeTipLoadingBehaviour(arg.Arg_6)}
+func DecodeLHHead(arg *pb.LHHeadMessage, adaptors []*wtype.LHAdaptor) wtype.LHHead {
+	var adaptor *wtype.LHAdaptor
+	if arg.Arg_7 >= 0 && int(arg.Arg_7) < len(adaptors) {
+		adaptor = adaptors[int(arg.Arg_7)]
+	}
+
+	ret := wtype.LHHead{
+		Name:         (string)(arg.Arg_1),
+		Manufacturer: (string)(arg.Arg_2),
+		ID:           (string)(arg.Arg_3),
+		Adaptor:      adaptor,
+		Params:       (*wtype.LHChannelParameter)(DecodePtrToLHChannelParameter(arg.Arg_5)),
+		TipLoading:   DecodeTipLoadingBehaviour(arg.Arg_6),
+	}
 	return ret
 }
 func EncodeTipLoadingBehaviour(arg wtype.TipLoadingBehaviour) *pb.TipLoadingBehaviourMessage {
@@ -752,8 +1019,22 @@ func DecodeMapstringPtrToLHTipboxMessageFieldEntry(arg *pb.MapstringPtrToLHTipbo
 	v := DecodePtrToLHTipbox(arg.Value)
 	return k, v
 }
+func EncodePtrToBBox(arg *wtype.BBox) *pb.PtrToBBoxMessage {
+	ret := pb.PtrToBBoxMessage{}
+	if arg != nil {
+		ret.Val = EncodeBBox(*arg)
+	}
+	return &ret
+}
 func EncodeBBox(arg wtype.BBox) *pb.BBoxMessage {
 	ret := pb.BBoxMessage{EncodeCoordinates(arg.Position), EncodeCoordinates(arg.Size)}
+	return &ret
+}
+func DecodePtrToBBox(arg *pb.PtrToBBoxMessage) *wtype.BBox {
+	if arg.Val == nil {
+		return nil
+	}
+	ret := DecodeBBox(arg.Val)
 	return &ret
 }
 func DecodeBBox(arg *pb.BBoxMessage) wtype.BBox {
@@ -885,7 +1166,7 @@ func EncodeLHWell(arg wtype.LHWell) *pb.LHWellMessage {
 	return &ret
 }
 func DecodeLHWell(arg *pb.LHWellMessage) wtype.LHWell {
-	ret := wtype.LHWell{ID: (string)(arg.Arg_1), Inst: (string)(arg.Arg_2), Crds: (wtype.WellCoords)(DecodeWellCoords(arg.Arg_3)), MaxVol: (float64)(arg.Arg_4), WContents: (*wtype.LHComponent)(DecodePtrToLHComponent(arg.Arg_5)), Rvol: (float64)(arg.Arg_6), WShape: (*wtype.Shape)(DecodePtrToShape(arg.Arg_7)), Bottom: (wtype.WellBottomType)(arg.Arg_8), Bounds: (wtype.BBox)(DecodeBBox(arg.Arg_9)), Bottomh: (float64)(arg.Arg_10), Extra: (map[string]interface{})(DecodeMapstringinterfaceMessage(arg.Arg_11)), Plate: nil}
+	ret := wtype.LHWell{ID: (string)(arg.Arg_1), Inst: (string)(arg.Arg_2), Crds: (wtype.WellCoords)(DecodeWellCoords(arg.Arg_3)), MaxVol: (float64)(arg.Arg_4), WContents: (*wtype.Liquid)(DecodePtrToLHComponent(arg.Arg_5)), Rvol: (float64)(arg.Arg_6), WShape: (*wtype.Shape)(DecodePtrToShape(arg.Arg_7)), Bottom: (wtype.WellBottomType)(arg.Arg_8), Bounds: (wtype.BBox)(DecodeBBox(arg.Arg_9)), Bottomh: (float64)(arg.Arg_10), Extra: (map[string]interface{})(DecodeMapstringinterfaceMessage(arg.Arg_11)), Plate: nil}
 	return ret
 }
 func EncodeArrayOfPtrToLHWell(arg []*wtype.LHWell) *pb.ArrayOfPtrToLHWellMessage {
@@ -913,12 +1194,12 @@ func DecodeLHDevice(arg *pb.LHDeviceMessage) wtype.LHDevice {
 	ret := wtype.LHDevice{ID: (string)(arg.Arg_1), Name: (string)(arg.Arg_2), Mnfr: (string)(arg.Arg_3)}
 	return ret
 }
-func EncodeLHComponent(arg wtype.LHComponent) *pb.LHComponentMessage {
-	ret := pb.LHComponentMessage{(string)(arg.ID), EncodeBlockID(arg.BlockID), (string)(arg.DaughterID), (string)(arg.ParentID), (string)(arg.Inst), int64(arg.Order), (string)(arg.CName), string(arg.Type), (float64)(arg.Vol), (float64)(arg.Conc), (string)(arg.Vunit), (string)(arg.Cunit), (float64)(arg.Tvol), (float64)(arg.Smax), (float64)(arg.Visc), (float64)(arg.StockConcentration), EncodeMapstringinterfaceMessage(arg.Extra), (string)(arg.Loc), (string)(arg.Destination), EncodeMapstringinterfaceMessage(arg.Policy)}
+func EncodeLHComponent(arg wtype.Liquid) *pb.LHComponentMessage {
+	ret := pb.LHComponentMessage{(string)(arg.ID), EncodeBlockID(arg.BlockID), (string)(arg.DaughterID), (string)(arg.ParentID), (string)(arg.Inst), int64(arg.Order), (string)(arg.CName), string(arg.Type), (float64)(arg.Vol), (float64)(arg.Conc), (string)(arg.Vunit), (string)(arg.Cunit), (float64)(arg.Tvol), (float64)(arg.Smax), (float64)(arg.Visc), (float64)(arg.StockConcentration), EncodeMapstringinterfaceMessage(arg.Extra), (string)(arg.Loc), (string)(arg.Destination), EncodeMapstringinterfaceMessage(arg.Policy), EncodeSubComponentMessage(arg.SubComponents)}
 	return &ret
 }
-func DecodeLHComponent(arg *pb.LHComponentMessage) wtype.LHComponent {
-	ret := wtype.LHComponent{ID: (string)(arg.Arg_1), BlockID: (wtype.BlockID)(DecodeBlockID(arg.Arg_2)), DaughterID: (string)(arg.Arg_3), ParentID: (string)(arg.Arg_4), Inst: (string)(arg.Arg_5), Order: (int)(arg.Arg_6), CName: (string)(arg.Arg_7), Type: (wtype.LiquidType)(arg.Arg_8), Vol: (float64)(arg.Arg_9), Conc: (float64)(arg.Arg_10), Vunit: (string)(arg.Arg_11), Cunit: (string)(arg.Arg_12), Tvol: (float64)(arg.Arg_13), Smax: (float64)(arg.Arg_14), Visc: (float64)(arg.Arg_15), StockConcentration: (float64)(arg.Arg_16), Extra: (map[string]interface{})(DecodeMapstringinterfaceMessage(arg.Arg_17)), Loc: (string)(arg.Arg_18), Destination: (string)(arg.Arg_19), Policy: DecodeMapstringinterfaceMessage(arg.Arg_20)}
+func DecodeLHComponent(arg *pb.LHComponentMessage) wtype.Liquid {
+	ret := wtype.Liquid{ID: (string)(arg.Arg_1), BlockID: (wtype.BlockID)(DecodeBlockID(arg.Arg_2)), DaughterID: (string)(arg.Arg_3), ParentID: (string)(arg.Arg_4), Inst: (string)(arg.Arg_5), Order: (int)(arg.Arg_6), CName: (string)(arg.Arg_7), Type: (wtype.LiquidType)(arg.Arg_8), Vol: (float64)(arg.Arg_9), Conc: (float64)(arg.Arg_10), Vunit: (string)(arg.Arg_11), Cunit: (string)(arg.Arg_12), Tvol: (float64)(arg.Arg_13), Smax: (float64)(arg.Arg_14), Visc: (float64)(arg.Arg_15), StockConcentration: (float64)(arg.Arg_16), Extra: (map[string]interface{})(DecodeMapstringinterfaceMessage(arg.Arg_17)), Loc: (string)(arg.Arg_18), Destination: (string)(arg.Arg_19), Policy: DecodeMapstringinterfaceMessage(arg.Arg_20), SubComponents: DecodeSubComponentMessage(arg.Arg_21)}
 	return ret
 }
 func EncodeShape(arg wtype.Shape) *pb.ShapeMessage {
@@ -926,19 +1207,23 @@ func EncodeShape(arg wtype.Shape) *pb.ShapeMessage {
 	return &ret
 }
 func DecodeShape(arg *pb.ShapeMessage) wtype.Shape {
-	ret := wtype.Shape{ShapeName: (string)(arg.Arg_1), LengthUnit: (string)(arg.Arg_2), H: (float64)(arg.Arg_3), W: (float64)(arg.Arg_4), D: (float64)(arg.Arg_5)}
+	ret := wtype.Shape{ShapeName: (wtype.ShapeTypeID)(arg.Arg_1), LengthUnit: (string)(arg.Arg_2), H: (float64)(arg.Arg_3), W: (float64)(arg.Arg_4), D: (float64)(arg.Arg_5)}
 	return ret
 }
 func EncodeConcreteMeasurement(arg wunit.ConcreteMeasurement) *pb.ConcreteMeasurementMessage {
-	ret := pb.ConcreteMeasurementMessage{(float64)(arg.Mvalue), EncodePtrToGenericPrefixedUnit(arg.Munit)}
-	return &ret
+	return &pb.ConcreteMeasurementMessage{
+		Arg_1: (float64)(arg.Mvalue),
+		Arg_2: EncodePtrToUnit(arg.Munit),
+	}
 }
 func DecodeConcreteMeasurement(arg *pb.ConcreteMeasurementMessage) wunit.ConcreteMeasurement {
 	if arg == nil {
 		return wunit.ConcreteMeasurement{}
 	}
-	ret := wunit.ConcreteMeasurement{Mvalue: (float64)(arg.Arg_1), Munit: (*wunit.GenericPrefixedUnit)(DecodePtrToGenericPrefixedUnit(arg.Arg_2))}
-	return ret
+	return wunit.ConcreteMeasurement{
+		Mvalue: (float64)(arg.Arg_1),
+		Munit:  DecodePtrToUnit(arg.Arg_2),
+	}
 }
 func EncodePtrToShape(arg *wtype.Shape) *pb.PtrToShapeMessage {
 	var ret pb.PtrToShapeMessage
@@ -984,7 +1269,7 @@ func DecodePtrToConcreteMeasurement(arg *pb.PtrToConcreteMeasurementMessage) *wu
 	ret := DecodeConcreteMeasurement(arg.Arg_1)
 	return &ret
 }
-func EncodePtrToLHComponent(arg *wtype.LHComponent) *pb.PtrToLHComponentMessage {
+func EncodePtrToLHComponent(arg *wtype.Liquid) *pb.PtrToLHComponentMessage {
 	var ret pb.PtrToLHComponentMessage
 	if arg == nil {
 		ret = pb.PtrToLHComponentMessage{
@@ -997,7 +1282,7 @@ func EncodePtrToLHComponent(arg *wtype.LHComponent) *pb.PtrToLHComponentMessage 
 	}
 	return &ret
 }
-func DecodePtrToLHComponent(arg *pb.PtrToLHComponentMessage) *wtype.LHComponent {
+func DecodePtrToLHComponent(arg *pb.PtrToLHComponentMessage) *wtype.Liquid {
 	if arg == nil {
 		log.Println("Arg for PtrToLHComponent was nil")
 		return nil
@@ -1022,49 +1307,122 @@ func DecodeBlockID(arg *pb.BlockIDMessage) wtype.BlockID {
 	ret := wtype.BlockID{Value: (string)(arg.Arg_1)}
 	return ret
 }
-func EncodePtrToGenericPrefixedUnit(arg *wunit.GenericPrefixedUnit) *pb.PtrToGenericPrefixedUnitMessage {
-	var ret pb.PtrToGenericPrefixedUnitMessage
-	if arg == nil {
-		ret = pb.PtrToGenericPrefixedUnitMessage{
-			nil,
-		}
+func EncodePtrToUnit(arg *wunit.Unit) *pb.PtrToUnitMessage {
+	if bytes, err := json.Marshal(arg); err != nil {
+		panic(err)
 	} else {
-		ret = pb.PtrToGenericPrefixedUnitMessage{
-			EncodeGenericPrefixedUnit(*arg),
+		return &pb.PtrToUnitMessage{
+			&pb.UnitMessage{
+				JSONUnit: bytes,
+			},
 		}
+	}
+}
+func DecodePtrToUnit(arg *pb.PtrToUnitMessage) *wunit.Unit {
+	var ret wunit.Unit
+	if err := json.Unmarshal(arg.Arg_1.JSONUnit, &ret); err != nil {
+		panic(err)
 	}
 	return &ret
 }
-func DecodePtrToGenericPrefixedUnit(arg *pb.PtrToGenericPrefixedUnitMessage) *wunit.GenericPrefixedUnit {
-	if arg == nil {
-		log.Println("Arg for PtrToGenericPrefixedUnit was nil")
-		return nil
+
+func EncodeSubComponentMessage(arg wtype.ComponentList) *pb.SubComponentMessage {
+	bytes, err := json.Marshal(arg)
+
+	if err != nil {
+		panic(err)
 	}
 
-	ret := DecodeGenericPrefixedUnit(arg.Arg_1)
+	return &pb.SubComponentMessage{
+		Arg_1: &pb.AnyMessage{Arg_1: string(bytes)},
+	}
+}
+
+func DecodeSubComponentMessage(arg *pb.SubComponentMessage) wtype.ComponentList {
+	ifc := Decodeinterface(arg.Arg_1)
+
+	cl, ok := ifc.(wtype.ComponentList)
+
+	if !ok {
+		// if Components field is nil return empty ComponentList
+		if cl.Components == nil {
+			return wtype.ComponentList{}
+		} else {
+			panic(fmt.Errorf("Cannot decode %v into componentlist", ifc))
+		}
+	}
+
+	return cl
+}
+
+func DecodePtrToVelocityRange(arg *pb.PtrToVelocityRangeMessage) *wtype.VelocityRange {
+	if arg == nil || arg.Val == nil {
+		return nil
+	}
+	ret := DecodeVelocityRange(arg.Val)
 	return &ret
 }
-func EncodeGenericPrefixedUnit(arg wunit.GenericPrefixedUnit) *pb.GenericPrefixedUnitMessage {
-	ret := pb.GenericPrefixedUnitMessage{EncodeGenericUnit(arg.GenericUnit), EncodeSIPrefix(arg.SPrefix)}
-	return &ret
+
+func EncodePtrToVelocityRange(arg *wtype.VelocityRange) *pb.PtrToVelocityRangeMessage {
+	return &pb.PtrToVelocityRangeMessage{
+		Val: EncodeVelocityRange(arg),
+	}
 }
-func DecodeGenericPrefixedUnit(arg *pb.GenericPrefixedUnitMessage) wunit.GenericPrefixedUnit {
-	ret := wunit.GenericPrefixedUnit{GenericUnit: (wunit.GenericUnit)(DecodeGenericUnit(arg.Arg_1)), SPrefix: (wunit.SIPrefix)(DecodeSIPrefix(arg.Arg_2))}
-	return ret
+
+func DecodeVelocityRange(arg *pb.VelocityRangeMessage) wtype.VelocityRange {
+	return wtype.VelocityRange{
+		Min: DecodePtrToVelocity3D(arg.Min),
+		Max: DecodePtrToVelocity3D(arg.Max),
+	}
 }
-func EncodeGenericUnit(arg wunit.GenericUnit) *pb.GenericUnitMessage {
-	ret := pb.GenericUnitMessage{(string)(arg.StrName), (string)(arg.StrSymbol), (float64)(arg.FltConversionfactor), (string)(arg.StrBaseUnit)}
-	return &ret
+
+func EncodeVelocityRange(arg *wtype.VelocityRange) *pb.VelocityRangeMessage {
+	if arg == nil {
+		return nil
+	}
+	return &pb.VelocityRangeMessage{
+		Min: EncodePtrToVelocity3D(arg.Min),
+		Max: EncodePtrToVelocity3D(arg.Max),
+	}
 }
-func DecodeGenericUnit(arg *pb.GenericUnitMessage) wunit.GenericUnit {
-	ret := wunit.GenericUnit{StrName: (string)(arg.Arg_1), StrSymbol: (string)(arg.Arg_2), FltConversionfactor: (float64)(arg.Arg_3), StrBaseUnit: (string)(arg.Arg_4)}
-	return ret
+
+func EncodePtrToVelocity3D(arg *wunit.Velocity3D) *pb.PtrToVelocity3DMessage {
+	return &pb.PtrToVelocity3DMessage{
+		Val: EncodeVelocity3D(arg),
+	}
 }
-func EncodeSIPrefix(arg wunit.SIPrefix) *pb.SIPrefixMessage {
-	ret := pb.SIPrefixMessage{(string)(arg.Name), (float64)(arg.Value)}
-	return &ret
+
+func DecodePtrToVelocity3D(arg *pb.PtrToVelocity3DMessage) *wunit.Velocity3D {
+	if arg == nil || arg.Val == nil {
+		return nil
+	}
+	r := DecodeVelocity3D(arg.Val)
+	return &r
 }
-func DecodeSIPrefix(arg *pb.SIPrefixMessage) wunit.SIPrefix {
-	ret := wunit.SIPrefix{Name: (string)(arg.Arg_1), Value: (float64)(arg.Arg_2)}
-	return ret
+
+func EncodeVelocity3D(arg *wunit.Velocity3D) *pb.Velocity3DMessage {
+	if arg == nil {
+		return nil
+	}
+	return &pb.Velocity3DMessage{
+		X: EncodeVelocity(arg.X),
+		Y: EncodeVelocity(arg.Y),
+		Z: EncodeVelocity(arg.Z),
+	}
+}
+
+func DecodeVelocity3D(arg *pb.Velocity3DMessage) wunit.Velocity3D {
+	return wunit.Velocity3D{
+		X: DecodeVelocity(arg.X),
+		Y: DecodeVelocity(arg.Y),
+		Z: DecodeVelocity(arg.Z),
+	}
+}
+
+func EncodeVelocity(arg wunit.Velocity) *pb.VelocityMessage {
+	return &pb.VelocityMessage{ConcreteMeasurement: EncodePtrToConcreteMeasurement(arg.ConcreteMeasurement)}
+}
+
+func DecodeVelocity(arg *pb.VelocityMessage) wunit.Velocity {
+	return wunit.Velocity{ConcreteMeasurement: (*wunit.ConcreteMeasurement)(DecodePtrToConcreteMeasurement(arg.ConcreteMeasurement))}
 }

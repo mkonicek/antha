@@ -107,7 +107,7 @@ func TransitiveReduction(graph Graph) (Graph, error) {
 			dist := ShortestPath(ShortestPathOpt{
 				Graph:   graph,
 				Sources: []Node{root},
-				Weight: func(x, y Node) int {
+				Weight: func(x, y Node) int64 {
 					return -1
 				},
 			})

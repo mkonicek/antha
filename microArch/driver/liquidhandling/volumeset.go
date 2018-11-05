@@ -87,6 +87,18 @@ func (vs VolumeSet) NonZeros() VolumeSet {
 	return vols
 }
 
+// Positive return a filtered VolumeSet containing only volumes that are positive
+func (vs VolumeSet) Positive() VolumeSet {
+	ret := make(VolumeSet, 0, len(vs))
+
+	for _, v := range vs {
+		if v.IsPositive() {
+			ret = append(ret, v)
+		}
+	}
+	return ret
+}
+
 func (vs VolumeSet) IsZero() bool {
 	return len(vs.NonZeros()) == 0
 }
@@ -104,4 +116,32 @@ func (vs VolumeSet) Min() wunit.Volume {
 	}
 
 	return v
+}
+
+func (vs VolumeSet) MaxMultiTransferVolume(minLeave wunit.Volume) wunit.Volume {
+	// the minimum volume in the set... ensuring that we what we leave is
+	// either 0 or minLeave or greater
+
+	ret := vs[0].Dup()
+
+	for _, v := range vs {
+		if v.LessThan(ret) && !v.IsZero() {
+			ret = v.Dup()
+		}
+	}
+
+	vs2 := vs.Dup().Sub(ret)
+
+	if len(vs2.Positive()) > 0 && vs2.Positive().Min().LessThan(minLeave) {
+		//slightly inefficient but we refuse to leave less than minleave
+		ret.Subtract(minLeave)
+	}
+
+	// fail if ret is now < 0 or < the min possible
+
+	if ret.LessThan(wunit.ZeroVolume()) || ret.LessThan(minLeave) {
+		ret = wunit.ZeroVolume()
+	}
+
+	return ret
 }

@@ -48,14 +48,15 @@ func TestIPL1(t *testing.T) {
 	if err != nil {
 		t.Errorf("Can't get DSW96")
 	}
+	SRWFB96, err := inventory.NewPlate(ctx, "SRWFB96")
+	if err != nil {
+		t.Errorf("Can't get SRWFB96")
+	}
 
-	/*
-
-		reservoir, err := inventory.NewPlate(ctx, "reservoir")
-		if err != nil {
-			t.Errorf("Can't get reservoir")
-		}
-	*/
+	reservoir, err := inventory.NewPlate(ctx, "reservoir")
+	if err != nil {
+		t.Errorf("Can't get reservoir")
+	}
 
 	weightConstraint := map[string]float64{"MAX_N_WELLS": 98, "RESIDUAL_VOLUME_WEIGHT": 1.0}
 
@@ -104,17 +105,44 @@ func TestIPL1(t *testing.T) {
 			Expected:          map[string]map[string]int{"water": {"DWST12": 1}},
 		},
 		{
+			Name:              "simplechoiceforaverybigwell",
+			Component_volumes: map[string]wunit.Volume{"water": wunit.NewVolume(151680, "ul")}, // 96 DSW96 worth
+			Plate_types:       []*wtype.LHPlate{DSW96, reservoir},
+			Weight_constraint: weightConstraint,
+			Expected:          map[string]map[string]int{"water": {"reservoir": 1}},
+		},
+		{
+			Name:              "simpleverybigwell",
+			Component_volumes: map[string]wunit.Volume{"water": wunit.NewVolume(151680, "ul")}, // 96 DSW96 worth
+			Plate_types:       []*wtype.LHPlate{reservoir},
+			Weight_constraint: weightConstraint,
+			Expected:          map[string]map[string]int{"water": {"reservoir": 1}},
+		},
+		{
 			Name:              "2things2plates",
 			Component_volumes: map[string]wunit.Volume{"water": wunit.NewVolume(25155, "ul"), "milk": wunit.NewVolume(300, "ul")},
 			Plate_types:       []*wtype.LHPlate{pcrplateSkirted, DWST12},
 			Weight_constraint: weightConstraint,
 			Expected:          map[string]map[string]int{"water": {"DWST12": 3}, "milk": {"pcrplate_skirted": 2}},
 		},
+		{
+			Name:              "2things2platesIrrelevantChoices",
+			Component_volumes: map[string]wunit.Volume{"water": wunit.NewVolume(25155, "ul"), "milk": wunit.NewVolume(300, "ul")},
+			Plate_types:       []*wtype.LHPlate{pcrplateSkirted, DWST12, SRWFB96},
+			Weight_constraint: weightConstraint,
+			Expected:          map[string]map[string]int{"water": {"DWST12": 3}, "milk": {"pcrplate_skirted": 2}},
+		},
+		{
+			Name:              "3things1plate",
+			Component_volumes: map[string]wunit.Volume{"water": wunit.NewVolume(100, "ul"), "milk": wunit.NewVolume(300, "ul"), "soap": wunit.NewVolume(100, "ul")},
+			Plate_types:       []*wtype.LHPlate{pcrplateSkirted},
+			Weight_constraint: weightConstraint,
+			Expected:          map[string]map[string]int{"water": {"pcrplate_skirted": 1}, "milk": {"pcrplate_skirted": 2}, "soap": {"pcrplate_skirted": 1}},
+		},
 	}
 
 	for _, testCase := range testCases {
 		doTheTest := func(t *testing.T) {
-			fmt.Println("AHMA DOIN MA TEST ", testCase.Name)
 			results, err := choose_plate_assignments(testCase.Component_volumes, testCase.Plate_types, testCase.Weight_constraint)
 
 			_, fail := testCase.Expected["FAIL"]
@@ -139,6 +167,7 @@ func TestIPL1(t *testing.T) {
 			}
 		}
 
+		fmt.Println("TEST: ", testCase.Name)
 		t.Run(testCase.Name, doTheTest)
 	}
 
@@ -201,4 +230,12 @@ func fmtIt(rest interface{}) string {
 	}
 
 	return ret
+}
+
+// setRowFor(mtx []float64, rowN, n_cols int, plate_types []*wtype.LHPlate)
+func TestSetRowFor(t *testing.T) {
+	type testCase struct {
+		R int
+		C int
+	}
 }

@@ -31,7 +31,7 @@ import (
 	"math"
 )
 
-func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_types []*wtype.Plate, weight_constraint map[string]float64) map[string]map[*wtype.Plate]int {
+func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_types []*wtype.Plate, weight_constraint map[string]float64) (map[string]map[*wtype.Plate]int, error) {
 
 	// 	v2.0: modified to use gonum/optimize/convex/lp
 	//
@@ -96,12 +96,14 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 
 	for cmp, vol := range component_volumes {
 		component_order[cur] = cmp
-		v := vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
+		//v := vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
+		v := vol.MustInStringUnit("ul").RawValue()
 		constraintBoundsB[cur] = -1.0 * v
 		for pindex, plate := range plate_types {
 			// set up objective coefficient, column name and lower bound
-			rv := plate.Welltype.ResidualVolume()
-			coef := rv.ConvertTo(wunit.ParsePrefixedUnit("ul"))*float64(weight_constraint["RESIDUAL_VOLUME_WEIGHT"]) + 1.0
+			rVol := plate.Welltype.ResidualVolume()
+			rv := rVol.MustInStringUnit("ul").RawValue()
+			coef := rv*float64(weight_constraint["RESIDUAL_VOLUME_WEIGHT"]) + 1.0
 			//objectiveCoefs = append(objectiveCoefs, coef)
 			objectiveCoefs[cur*len(plate_types)+pindex] = coef
 		}
@@ -113,7 +115,7 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 
 	// make constraint rows
 	for row := range component_order {
-		setRowFor(constraintMatrixA, row, n_cols, component_order, plate_types)
+		setRowFor(constraintMatrixA, row, n_cols, plate_types)
 		cur += 1
 	}
 	/*
@@ -135,6 +137,9 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 
 	*/
 
+	fmt.Println("CONSTRAINT MATRIX")
+	fmt.Println(constraintMatrixA)
+
 	cur = 0
 	// well constraint
 	constraintBoundsH[cur] = 1.0 * weight_constraint["MAX_N_WELLS"]
@@ -147,25 +152,15 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 	matConstraintMatrixG := mat.NewDense(n_constraint_rows, n_cols, constraintMatrixG)
 	matConstraintMatrixA := mat.NewDense(n_rows, n_cols, constraintMatrixA)
 
-	fmt.Println("C: ", objectiveCoefs)
-	fmt.Println(mat.Formatted(matConstraintMatrixG))
-	fmt.Println("H: ", constraintBoundsH)
-	fmt.Println(mat.Formatted(matConstraintMatrixA))
-	fmt.Println("B: ", constraintBoundsB)
-
 	//	cNew, aNew, bNew := lp.Convert(objectiveCoefs, matConstraintMatrix, constraintBounds, aOld, bOld)
 	cNew, aNew, bNew := lp.Convert(objectiveCoefs, matConstraintMatrixG, constraintBoundsH, matConstraintMatrixA, constraintBoundsB)
 
-	fmt.Println("C NEW: ", cNew)
-
-	tolerance := 0.0
-	optF, optX, err := lp.Simplex(cNew, aNew, bNew, tolerance, nil)
+	tolerance := 100.0
+	_, optX, err := lp.Simplex(cNew, aNew, bNew, tolerance, nil)
 
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println("OPTF: ", optF)
 
 	// now create the assignment outputs
 
@@ -175,7 +170,6 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 		for _, p := range plate_types {
 			if optX[cur] > 0.0 {
 				pmap[p.Dup()] = int(math.Ceil(optX[cur]))
-				fmt.Println("COMPONENT ", c, " WANT ", component_volumes[c], " HAS ", optX[cur], " ABS: ", int(math.Ceil(optX[cur])), " WELLS IN PLATE TYPE ", p.Type, " WHICH GIVES US ", p.Welltype.MaxWorkingVolume().RawValue()*(math.Ceil(optX[cur])), " TOTAL")
 			}
 			cur += 1
 		}
@@ -185,13 +179,14 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 	return assignments, nil
 }
 
-func setRowFor(mtx []float64, rowN, n_cols int, component_order []string, plate_types []*wtype.LHPlate) {
+// given matrix mtx, set row rowN to -1 x the working volume of each plate in plate types
+func setRowFor(mtx []float64, rowN, n_cols int, plate_types []*wtype.LHPlate) {
 	row := make([]float64, n_cols)
 
 	for j := range plate_types {
 		// pick out a set of columns according to which row we're on
 		// volume constraints are the working volumes of the wells
-		row[rowN*len(plate_types)+j] = -1.0 * plate_types[j].Welltype.MaxWorkingVolume().ConvertTo(wunit.ParsePrefixedUnit("ul"))
+		row[rowN*len(plate_types)+j] = -1.0 * plate_types[j].Welltype.MaxWorkingVolume().MustInStringUnit("ul").RawValue()
 	}
 
 	for c, v := range row {

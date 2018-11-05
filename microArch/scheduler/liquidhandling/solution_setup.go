@@ -159,9 +159,6 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 
 	//	fmt.Println("PRMS: ", prms)
 
-	if prms.CurrConf != nil && !prms.CurrConf.Minvol.IsZero() {
-		vmin = prms.CurrConf.Minvol
-	}
 	if len(mconcs) > 0 {
 		fmt.Println(text.Green(fmt.Sprintf("mconcs: %+v", mconcs)))
 	}

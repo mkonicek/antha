@@ -24,6 +24,7 @@ package liquidhandling
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strconv"
@@ -76,6 +77,14 @@ type LHProperties struct {
 	Cnfvol               []*wtype.LHChannelParameter
 	Layout               map[string]wtype.Coordinates
 	MaterialType         material.MaterialType
+}
+
+func (lhp *LHProperties) MarshalJSON() ([]byte, error) {
+	panic("unimplmented")
+}
+
+func (lhp *LHProperties) UnmarshalJSON(data []byte) error {
+	panic("unimplemented")
 }
 
 // utility print function

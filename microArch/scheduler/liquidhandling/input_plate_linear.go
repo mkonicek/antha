@@ -79,7 +79,7 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 
 	plate_types = ppt
 
-	assignments := make(map[string]map[*wtype.LHPlate]int, len(component_volumes))
+	assignments := make(map[string]map[*wtype.Plate]int, len(component_volumes))
 
 	n_cols := len(component_volumes) * len(plate_types)
 	n_rows := len(component_volumes)
@@ -103,6 +103,7 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 			// set up objective coefficient, column name and lower bound
 			rVol := plate.Welltype.ResidualVolume()
 			rv := rVol.MustInStringUnit("ul").RawValue()
+			//rv = math.Log(rv)
 			coef := rv*float64(weight_constraint["RESIDUAL_VOLUME_WEIGHT"]) + 1.0
 			//objectiveCoefs = append(objectiveCoefs, coef)
 			objectiveCoefs[cur*len(plate_types)+pindex] = coef
@@ -137,9 +138,6 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 
 	*/
 
-	fmt.Println("CONSTRAINT MATRIX")
-	fmt.Println(constraintMatrixA)
-
 	cur = 0
 	// well constraint
 	constraintBoundsH[cur] = 1.0 * weight_constraint["MAX_N_WELLS"]
@@ -155,18 +153,31 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 	//	cNew, aNew, bNew := lp.Convert(objectiveCoefs, matConstraintMatrix, constraintBounds, aOld, bOld)
 	cNew, aNew, bNew := lp.Convert(objectiveCoefs, matConstraintMatrixG, constraintBoundsH, matConstraintMatrixA, constraintBoundsB)
 
-	tolerance := 100.0
-	_, optX, err := lp.Simplex(cNew, aNew, bNew, tolerance, nil)
+	tolerance := 1e-10
+	optF, optX, err := lp.Simplex(cNew, aNew, bNew, tolerance, nil)
+
+	if err != nil || optF < 1e-10 {
+		for i := 0; i < 20; i++ {
+			tolerance *= 10.0
+			optF, optX, err = lp.Simplex(cNew, aNew, bNew, tolerance, nil)
+
+			if err == nil && optF > 1e-10 {
+				break
+			}
+		}
+	}
 
 	if err != nil {
 		return nil, err
 	}
 
+	fmt.Println("FINAL OPTF: ", optF, " TOLERANCE: ", tolerance)
+
 	// now create the assignment outputs
 
 	cur = 0
 	for _, c := range component_order {
-		pmap := make(map[*wtype.LHPlate]int)
+		pmap := make(map[*wtype.Plate]int)
 		for _, p := range plate_types {
 			if optX[cur] > 0.0 {
 				pmap[p.Dup()] = int(math.Ceil(optX[cur]))
@@ -180,7 +191,7 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 }
 
 // given matrix mtx, set row rowN to -1 x the working volume of each plate in plate types
-func setRowFor(mtx []float64, rowN, n_cols int, plate_types []*wtype.LHPlate) {
+func setRowFor(mtx []float64, rowN, n_cols int, plate_types []*wtype.Plate) {
 	row := make([]float64, n_cols)
 
 	for j := range plate_types {

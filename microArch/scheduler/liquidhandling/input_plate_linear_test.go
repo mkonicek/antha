@@ -58,7 +58,7 @@ func TestIPL1(t *testing.T) {
 		t.Errorf("Can't get reservoir")
 	}
 
-	weightConstraint := map[string]float64{"MAX_N_WELLS": 98, "RESIDUAL_VOLUME_WEIGHT": 1.0}
+	weightConstraint := map[string]float64{"MAX_N_WELLS": 98, "RESIDUAL_VOLUME_WEIGHT": 1.0, "MAX_N_PLATES": 4.5}
 
 	type testCase struct {
 		Name              string
@@ -66,6 +66,7 @@ func TestIPL1(t *testing.T) {
 		Plate_types       []*wtype.LHPlate
 		Weight_constraint map[string]float64
 		Expected          map[string]map[string]int
+		Skip              bool
 	}
 
 	testCases := []testCase{
@@ -82,13 +83,15 @@ func TestIPL1(t *testing.T) {
 			Plate_types:       []*wtype.LHPlate{pcrplateSkirted, DWST12},
 			Weight_constraint: weightConstraint,
 			Expected:          map[string]map[string]int{"water": {"pcrplate_skirted": 1}},
+			Skip:              true,
 		},
 		{
 			Name:              "1thing1well2choicespart2",
 			Component_volumes: map[string]wunit.Volume{"water": wunit.NewVolume(50, "ul")},
 			Plate_types:       []*wtype.LHPlate{pcrplateSkirted, SRWFB96},
 			Weight_constraint: weightConstraint,
-			Expected:          map[string]map[string]int{"water": {"SRWFB96": 1}},
+			Expected:          map[string]map[string]int{"water": {"pcrplate_skirted": 1}},
+			Skip:              true,
 		},
 		{
 			Name:              "1thing1well3choices",
@@ -96,6 +99,7 @@ func TestIPL1(t *testing.T) {
 			Plate_types:       []*wtype.LHPlate{pcrplateSkirted, DWST12, reservoir},
 			Weight_constraint: weightConstraint,
 			Expected:          map[string]map[string]int{"water": {"pcrplate_skirted": 1}},
+			Skip:              true,
 		},
 		{
 			Name:              "1thing1well4choices",
@@ -103,6 +107,7 @@ func TestIPL1(t *testing.T) {
 			Plate_types:       []*wtype.LHPlate{pcrplateSkirted, DWST12, reservoir, SRWFB96},
 			Weight_constraint: weightConstraint,
 			Expected:          map[string]map[string]int{"water": {"pcrplate_skirted": 1}},
+			Skip:              true,
 		},
 		{
 			Name:              "1thing3wells",
@@ -128,7 +133,7 @@ func TestIPL1(t *testing.T) {
 		{
 			Name:              "simplechoiceforabigwell",
 			Component_volumes: map[string]wunit.Volume{"water": wunit.NewVolume(7000, "ul")},
-			Plate_types:       []*wtype.LHPlate{DSW96, DWST12},
+			Plate_types:       []*wtype.LHPlate{SRWFB96, DWST12},
 			Weight_constraint: weightConstraint,
 			Expected:          map[string]map[string]int{"water": {"DWST12": 1}},
 		},
@@ -152,13 +157,23 @@ func TestIPL1(t *testing.T) {
 			Plate_types:       []*wtype.LHPlate{pcrplateSkirted, DWST12},
 			Weight_constraint: weightConstraint,
 			Expected:          map[string]map[string]int{"water": {"DWST12": 3}, "milk": {"pcrplate_skirted": 2}},
+			Skip:              true,
 		},
 		{
 			Name:              "2things2platesIrrelevantChoices",
 			Component_volumes: map[string]wunit.Volume{"water": wunit.NewVolume(25155, "ul"), "milk": wunit.NewVolume(300, "ul")},
 			Plate_types:       []*wtype.LHPlate{pcrplateSkirted, DWST12, SRWFB96},
 			Weight_constraint: weightConstraint,
-			Expected:          map[string]map[string]int{"water": {"DWST12": 3}, "milk": {"pcrplate_skirted": 2}},
+			Expected:          map[string]map[string]int{"water": {"DWST12": 3}, "milk": {"SRWFB96": 1}},
+			Skip:              true,
+		},
+		{
+			Name:              "2things2platesIrrelevantChoices2",
+			Component_volumes: map[string]wunit.Volume{"water": wunit.NewVolume(255, "ul"), "milk": wunit.NewVolume(300, "ul")},
+			Plate_types:       []*wtype.LHPlate{pcrplateSkirted, DWST12, SRWFB96},
+			Weight_constraint: weightConstraint,
+			Expected:          map[string]map[string]int{"water": {"SRWFB96": 1}, "milk": {"SRWFB96": 1}},
+			Skip:              true,
 		},
 		{
 			Name:              "3things1plate",
@@ -171,6 +186,9 @@ func TestIPL1(t *testing.T) {
 
 	for _, testCase := range testCases {
 		doTheTest := func(t *testing.T) {
+			if testCase.Skip {
+				t.Skip()
+			}
 			results, err := choose_plate_assignments(testCase.Component_volumes, testCase.Plate_types, testCase.Weight_constraint)
 
 			_, fail := testCase.Expected["FAIL"]

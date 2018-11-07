@@ -81,7 +81,7 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 
 	assignments := make(map[string]map[*wtype.Plate]int, len(component_volumes))
 
-	n_cols := len(component_volumes) * len(plate_types)
+	n_cols := len(plate_types) * len(component_volumes)
 	n_rows := len(component_volumes)
 	n_constraint_rows := 1
 
@@ -98,12 +98,13 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 		component_order[cur] = cmp
 		//v := vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
 		v := vol.MustInStringUnit("ul").RawValue()
-		constraintBoundsB[cur] = -1.0 * v
+		//constraintBoundsB[cur] = -1.0 * v
+		constraintBoundsB[cur] = v
 		for pindex, plate := range plate_types {
 			// set up objective coefficient, column name and lower bound
 			rVol := plate.Welltype.ResidualVolume()
 			rv := rVol.MustInStringUnit("ul").RawValue()
-			//rv = math.Log(rv)
+			rv = math.Sqrt(rv) // works well in ILP case
 			coef := rv*float64(weight_constraint["RESIDUAL_VOLUME_WEIGHT"]) + 1.0
 			//objectiveCoefs = append(objectiveCoefs, coef)
 			objectiveCoefs[cur*len(plate_types)+pindex] = coef
@@ -119,32 +120,13 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 		setRowFor(constraintMatrixA, row, n_cols, plate_types)
 		cur += 1
 	}
-	/*
-		// plate constraint
-		// -- requires MIP to work... deprecated to start off with
-		constraintBounds[cur] = 1.0 * (weight_constraint["MAX_N_PLATES"] - 1.0)
 
-		for i := range component_order {
-			for j := 0; j < len(plate_types); j++ {
-				// the coefficient here is 1/the number of this well type per plate
-				coef := 1.0 / float64(plate_types[j].Nwells)
-				//constraintMatrix[cur+(i*len(plate_types)+j)] = coef
-
-				constraintMatrix[cur*n_cols+(i*len(plate_types))+j] = coef
-			}
-		}
-
-		cur += 1
-
-	*/
-
-	cur = 0
 	// well constraint
-	constraintBoundsH[cur] = 1.0 * weight_constraint["MAX_N_WELLS"]
+	constraintBoundsH[0] = 1.0 * weight_constraint["MAX_N_WELLS"]
 
 	// for the matrix we just add a row of 1s
 	for i := 0; i < n_cols; i++ {
-		constraintMatrixG[cur*n_cols+i] = 1.0
+		constraintMatrixG[i] = 1.0
 	}
 
 	matConstraintMatrixG := mat.NewDense(n_constraint_rows, n_cols, constraintMatrixG)
@@ -171,8 +153,6 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 		return nil, err
 	}
 
-	fmt.Println("FINAL OPTF: ", optF, " TOLERANCE: ", tolerance)
-
 	// now create the assignment outputs
 
 	cur = 0
@@ -190,14 +170,14 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 	return assignments, nil
 }
 
-// given matrix mtx, set row rowN to -1 x the working volume of each plate in plate types
+// given matrix mtx, set row rowN to the working volume of each plate in plate types
 func setRowFor(mtx []float64, rowN, n_cols int, plate_types []*wtype.Plate) {
 	row := make([]float64, n_cols)
 
 	for j := range plate_types {
 		// pick out a set of columns according to which row we're on
 		// volume constraints are the working volumes of the wells
-		row[rowN*len(plate_types)+j] = -1.0 * plate_types[j].Welltype.MaxWorkingVolume().MustInStringUnit("ul").RawValue()
+		row[rowN*len(plate_types)+j] = plate_types[j].Welltype.MaxWorkingVolume().MustInStringUnit("ul").RawValue()
 	}
 
 	for c, v := range row {

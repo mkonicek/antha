@@ -277,11 +277,3 @@ func fmtIt(rest interface{}) string {
 
 	return ret
 }
-
-// setRowFor(mtx []float64, rowN, n_cols int, plate_types []*wtype.LHPlate)
-func TestSetRowFor(t *testing.T) {
-	type testCase struct {
-		R int
-		C int
-	}
-}

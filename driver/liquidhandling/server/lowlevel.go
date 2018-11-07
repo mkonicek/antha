@@ -1,16 +1,23 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	grpc "google.golang.org/grpc"
 	"net"
 
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/driver/liquidhandling/pb"
-	"github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
+
+func toInt(s []int32) []int {
+	r := make([]int, 0, len(s))
+	for _, v := range s {
+		r = append(r, int(v))
+	}
+	return r
+}
 
 // LowLevelLiquidHandlingServer a server object to listen to RPC calls to a low
 // level liquid handler instruction generator
@@ -20,13 +27,13 @@ type LowLevelServer struct {
 }
 
 // NewLowLevelServer create a new low level server wrapping the given driver
-func NewLowLevelServer(driver liquidhandling.LowLevelLiquidHandlingDriver) (*LowLevelServer, error) {
+func NewLowLevelServer(driver liquidhandling.LowLevelLiquidhandlingDriver) (*LowLevelServer, error) {
 	return &LowLevelServer{
-		liquidHandlingServer: &liquidHandlingServer{
+		liquidHandlingServer: liquidHandlingServer{
 			driver: driver,
 		},
 		driver: driver,
-	}
+	}, nil
 }
 
 // Listen begin listening for gRPC calls on the given port. returns only in error
@@ -38,32 +45,32 @@ func (lhs *LowLevelServer) Listen(port int) error {
 
 		s := grpc.NewServer()
 		pb.RegisterLowLevelLiquidhandlingDriverServer(s, lhs)
-		s.Serve(lis)
+		return s.Serve(lis)
 	}
 }
 
 func (lls *LowLevelServer) Aspirate(_ context.Context, req *pb.AspirateRequest) (*pb.CommandReply, error) {
-	return makeCommandReply(lls.driver.Aspirate(req.Volume, req.Overstroke, req.Head, req.Multi, req.Platetype, req.What, req.Llf)), nil
+	return makeCommandReply(lls.driver.Aspirate(req.Volume, req.Overstroke, int(req.Head), int(req.Multi), req.Platetype, req.What, req.Llf)), nil
 }
 
 func (lls *LowLevelServer) Dispense(_ context.Context, req *pb.DispenseRequest) (*pb.CommandReply, error) {
-	return makeCommandReply(lls.driver.Dispense(req.Volume, req.Blowout, req.Head, req.Multi, req.Platetype, req.What, req.Llf)), nil
+	return makeCommandReply(lls.driver.Dispense(req.Volume, req.Blowout, int(req.Head), int(req.Multi), req.Platetype, req.What, req.Llf)), nil
 }
 
 func (lls *LowLevelServer) LoadTips(_ context.Context, req *pb.LoadTipsRequest) (*pb.CommandReply, error) {
-	return makeCommandReply(lls.driver.LoadTips(req.Channels, req.Head, req.Multi, req.Platetype, req.Position, req.Well)), nil
+	return makeCommandReply(lls.driver.LoadTips(toInt(req.Channels), int(req.Head), int(req.Multi), req.Platetype, req.Position, req.Well)), nil
 }
 
 func (lls *LowLevelServer) Mix(_ context.Context, req *pb.MixRequest) (*pb.CommandReply, error) {
-	return makeCommandReply(lls.driver.Mix(req.Head, req.Volume, req.Platetype, req.Cycles, req.Multi, req.What, req.Blowout)), nil
+	return makeCommandReply(lls.driver.Mix(int(req.Head), req.Volume, req.Platetype, toInt(req.Cycles), int(req.Multi), req.What, req.Blowout)), nil
 }
 
 func (lls *LowLevelServer) Move(_ context.Context, req *pb.MoveRequest) (*pb.CommandReply, error) {
-	return makeCommandReply(lls.driver.Move(req.Deckposition, req.Wellcoords, req.Reference, req.OffsetX, req.OffsetY, req.OffsetZ, req.Platetype, req.Head)), nil
+	return makeCommandReply(lls.driver.Move(req.Deckposition, req.Wellcoords, toInt(req.Reference), req.OffsetX, req.OffsetY, req.OffsetZ, req.PlateType, int(req.Head))), nil
 }
 
 func (lls *LowLevelServer) ResetPistons(_ context.Context, req *pb.ResetPistonsRequest) (*pb.CommandReply, error) {
-	return makeCommandReply(lls.driver.ResetPistons(req.Head, req.Channels)), nil
+	return makeCommandReply(lls.driver.ResetPistons(int(req.Head), int(req.Channel))), nil
 }
 
 func (lls *LowLevelServer) SetDriveSpeed(_ context.Context, req *pb.SetDriveSpeedRequest) (*pb.CommandReply, error) {
@@ -71,11 +78,20 @@ func (lls *LowLevelServer) SetDriveSpeed(_ context.Context, req *pb.SetDriveSpee
 }
 
 func (lls *LowLevelServer) SetPipetteSpeed(_ context.Context, req *pb.SetPipetteSpeedRequest) (*pb.CommandReply, error) {
-	return makeCommandReply(lls.driver.SetPipetteSpeed(req.Head, req.Channel, req.Rate)), nil
+	return makeCommandReply(lls.driver.SetPipetteSpeed(int(req.Head), int(req.Channel), req.Rate)), nil
 }
 
 func (lls *LowLevelServer) UnloadTips(_ context.Context, req *pb.UnloadTipsRequest) (*pb.CommandReply, error) {
-	return makeCommandReply(lls.driver.LoadTips(req.Channels, req.Head, req.Multi, req.Platetype, req.Position, req.Well)), nil
+	return makeCommandReply(lls.driver.LoadTips(toInt(req.Channels), int(req.Head), int(req.Multi), req.Platetype, req.Position, req.Well)), nil
+}
+
+func (lls *LowLevelServer) UpdateMetaData(_ context.Context, req *pb.UpdateMetaDataRequest) (*pb.CommandReply, error) {
+	var props liquidhandling.LHProperties
+	if err := json.Unmarshal([]byte(req.LHProperties_JSON), &props); err != nil {
+		return &pb.CommandReply{Msg: err.Error()}, err
+	} else {
+		return makeCommandReply(lls.driver.UpdateMetaData(&props)), nil
+	}
 }
 
 func (lls *LowLevelServer) Wait(_ context.Context, req *pb.WaitRequest) (*pb.CommandReply, error) {

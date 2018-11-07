@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -13,7 +14,7 @@ func makeCommandReply(cs driver.CommandStatus) *pb.CommandReply {
 	return &pb.CommandReply{
 		OK:        cs.OK,
 		Msg:       cs.Msg,
-		Errorcode: cs.Errorcode,
+		Errorcode: int32(cs.Errorcode),
 	}
 }
 
@@ -42,32 +43,32 @@ func (lhs *liquidHandlingServer) GetCapabilities(context.Context, *pb.GetCapabil
 		}, err
 	} else {
 		return &pb.GetCapabilitiesReply{
-			LHProperties_JSON: propsJSON,
+			LHProperties_JSON: string(propsJSON),
 			Status:            makeCommandReply(cs),
-		}
+		}, nil
 	}
 }
 
 func (lhs *liquidHandlingServer) GetOutputFile(context.Context, *pb.GetOutputFileRequest) (*pb.GetOutputFileReply, error) {
 	b, cs := lhs.driver.GetOutputFile()
-	return &ph.GetOutputFileReply{
+	return &pb.GetOutputFileReply{
 		OutputFile: b,
 		Status:     makeCommandReply(cs),
-	}
+	}, nil
 }
 
 func (lhs *liquidHandlingServer) Initialize(context.Context, *pb.InitializeRequest) (*pb.CommandReply, error) {
-	return makeCommandReply(lhs.driver.Initialize())
+	return makeCommandReply(lhs.driver.Initialize()), nil
 }
 
 func (lhs *liquidHandlingServer) Message(_ context.Context, req *pb.MessageRequest) (*pb.CommandReply, error) {
-	return makeCommandReply(lhs.driver.Message(req.Level, req.Title, req.Text, req.ShowCancel))
+	return makeCommandReply(lhs.driver.Message(int(req.Level), req.Title, req.Text, req.ShowCancel)), nil
 }
 
 func (lhs *liquidHandlingServer) RemoveAllPlates(context.Context, *pb.RemoveAllPlatesRequest) (*pb.CommandReply, error) {
-	return makeCommandReply(lhs.driver.RemoveAllPlates())
+	return makeCommandReply(lhs.driver.RemoveAllPlates()), nil
 }
 
 func (lhs *liquidHandlingServer) RemovePlateAt(_ context.Context, req *pb.RemovePlateAtRequest) (*pb.CommandReply, error) {
-	return makeCommandReply(lhs.driver.RemovePlateAt(req.Position))
+	return makeCommandReply(lhs.driver.RemovePlateAt(req.Position)), nil
 }

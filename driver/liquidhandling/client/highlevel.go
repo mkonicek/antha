@@ -23,7 +23,7 @@ func NewHighLevelClient(address string) (*HighLevelClient, error) {
 	} else {
 		return &HighLevelClient{
 			client: pb.NewHighLevelLiquidhandlingDriverClient(conn),
-		}
+		}, nil
 	}
 }
 
@@ -34,16 +34,16 @@ func (hlc *HighLevelClient) AddPlateTo(position string, plate interface{}, name 
 			Errorcode: driver.ERR,
 		}
 	} else if r, err := hlc.client.AddPlateTo(context.Background(), &pb.AddPlateToRequest{
-		Position: position,
-		Plate:    string(plateJSON),
-		Name:     name,
+		Position:   position,
+		Plate_JSON: string(plateJSON),
+		Name:       name,
 	}); err != nil {
 		return driver.CommandStatus{
 			Msg:       err.Error(),
 			Errorcode: driver.ERR,
 		}
 	} else {
-		return driver.CommandStatus{OK: r.OK, Errorcode: r.Errorcode, Msg: r.Msg}
+		return driver.CommandStatus{OK: r.OK, Errorcode: int(r.Errorcode), Msg: r.Msg}
 	}
 }
 
@@ -54,7 +54,7 @@ func (hlc *HighLevelClient) RemoveAllPlates() driver.CommandStatus {
 			Errorcode: driver.ERR,
 		}
 	} else {
-		return driver.CommandStatus{OK: r.OK, Errorcode: r.Errorcode, Msg: r.Msg}
+		return driver.CommandStatus{OK: r.OK, Errorcode: int(r.Errorcode), Msg: r.Msg}
 	}
 }
 
@@ -65,7 +65,7 @@ func (hlc *HighLevelClient) RemovePlateAt(position string) driver.CommandStatus 
 			Errorcode: driver.ERR,
 		}
 	} else {
-		return driver.CommandStatus{OK: r.OK, Errorcode: r.Errorcode, Msg: r.Msg}
+		return driver.CommandStatus{OK: r.OK, Errorcode: int(r.Errorcode), Msg: r.Msg}
 	}
 }
 
@@ -76,7 +76,7 @@ func (hlc *HighLevelClient) Initialize() driver.CommandStatus {
 			Errorcode: driver.ERR,
 		}
 	} else {
-		return driver.CommandStatus{OK: r.OK, Errorcode: r.Errorcode, Msg: r.Msg}
+		return driver.CommandStatus{OK: r.OK, Errorcode: int(r.Errorcode), Msg: r.Msg}
 	}
 }
 
@@ -87,13 +87,13 @@ func (hlc *HighLevelClient) Finalize() driver.CommandStatus {
 			Errorcode: driver.ERR,
 		}
 	} else {
-		return driver.CommandStatus{OK: r.OK, Errorcode: r.Errorcode, Msg: r.Msg}
+		return driver.CommandStatus{OK: r.OK, Errorcode: int(r.Errorcode), Msg: r.Msg}
 	}
 }
 
 func (hlc *HighLevelClient) Message(level int, title, text string, showcancel bool) driver.CommandStatus {
 	if r, err := hlc.client.Message(context.Background(), &pb.MessageRequest{
-		Level:      level,
+		Level:      int32(level),
 		Title:      title,
 		Text:       text,
 		ShowCancel: showcancel,
@@ -103,7 +103,7 @@ func (hlc *HighLevelClient) Message(level int, title, text string, showcancel bo
 			Errorcode: driver.ERR,
 		}
 	} else {
-		return driver.CommandStatus{OK: r.OK, Errorcode: r.Errorcode, Msg: r.Msg}
+		return driver.CommandStatus{OK: r.OK, Errorcode: int(r.Errorcode), Msg: r.Msg}
 	}
 }
 
@@ -114,13 +114,13 @@ func (hlc *HighLevelClient) GetOutputFile() ([]byte, driver.CommandStatus) {
 			Errorcode: driver.ERR,
 		}
 	} else {
-		return r.OutputFile, driver.CommandStatus{OK: r.Status.OK, Errorcode: r.Status.Errorcode, Msg: r.Status.Msg}
+		return r.OutputFile, driver.CommandStatus{OK: r.Status.OK, Errorcode: int(r.Status.Errorcode), Msg: r.Status.Msg}
 	}
 }
 
 func (hlc *HighLevelClient) GetCapabilities() (liquidhandling.LHProperties, driver.CommandStatus) {
 	if r, err := hlc.client.GetCapabilities(context.Background(), &pb.GetCapabilitiesRequest{}); err != nil {
-		return nil, driver.CommandStatus{
+		return liquidhandling.LHProperties{}, driver.CommandStatus{
 			Msg:       err.Error(),
 			Errorcode: driver.ERR,
 		}
@@ -129,7 +129,7 @@ func (hlc *HighLevelClient) GetCapabilities() (liquidhandling.LHProperties, driv
 		if err := json.Unmarshal([]byte(r.LHProperties_JSON), &ret); err != nil {
 			return ret, driver.CommandStatus{Errorcode: driver.ERR, Msg: err.Error()}
 		}
-		return ret, driver.CommandStatus{OK: r.Status.OK, Errorcode: r.Status.Errorcode, Msg: r.Status.Msg}
+		return ret, driver.CommandStatus{OK: r.Status.OK, Errorcode: int(r.Status.Errorcode), Msg: r.Status.Msg}
 	}
 }
 
@@ -147,6 +147,6 @@ func (hlc *HighLevelClient) Transfer(what, platefrom, wellfrom, plateto, wellto 
 			Errorcode: driver.ERR,
 		}
 	} else {
-		return driver.CommandStatus{OK: r.OK, Errorcode: r.Errorcode, Msg: r.Msg}
+		return driver.CommandStatus{OK: r.OK, Errorcode: int(r.Errorcode), Msg: r.Msg}
 	}
 }

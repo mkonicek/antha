@@ -11,6 +11,14 @@ import (
 	liquidhandling "github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
+func toInt32(i []int) []int32 {
+	r := make([]int32, 0, len(i))
+	for _, v := range i {
+		r = append(r, int32(v))
+	}
+	return r
+}
+
 type LowLevelClient struct {
 	client pb.LowLevelLiquidhandlingDriverClient
 }
@@ -23,7 +31,7 @@ func NewLowLevelClient(address string) (*LowLevelClient, error) {
 	} else {
 		return &LowLevelClient{
 			client: pb.NewLowLevelLiquidhandlingDriverClient(conn),
-		}
+		}, nil
 	}
 }
 
@@ -34,7 +42,7 @@ func (llc *LowLevelClient) handleCommandReply(reply *pb.CommandReply, err error)
 			Errorcode: driver.ERR,
 		}
 	} else {
-		return driver.CommandStatus{OK: r.OK, Errorcode: r.Errorcode, Msg: r.Msg}
+		return driver.CommandStatus{OK: reply.OK, Errorcode: int(reply.Errorcode), Msg: reply.Msg}
 	}
 }
 
@@ -46,9 +54,9 @@ func (llc *LowLevelClient) AddPlateTo(position string, plate interface{}, name s
 		}
 	} else {
 		r, err := llc.client.AddPlateTo(context.Background(), &pb.AddPlateToRequest{
-			Position: position,
-			Plate:    string(plateJSON),
-			Name:     name,
+			Position:   position,
+			Plate_JSON: string(plateJSON),
+			Name:       name,
 		})
 		return llc.handleCommandReply(r, err)
 	}
@@ -76,7 +84,7 @@ func (llc *LowLevelClient) Finalize() driver.CommandStatus {
 
 func (llc *LowLevelClient) Message(level int, title, text string, showcancel bool) driver.CommandStatus {
 	r, err := llc.client.Message(context.Background(), &pb.MessageRequest{
-		Level:      level,
+		Level:      int32(level),
 		Title:      title,
 		Text:       text,
 		ShowCancel: showcancel,
@@ -91,13 +99,13 @@ func (llc *LowLevelClient) GetOutputFile() ([]byte, driver.CommandStatus) {
 			Errorcode: driver.ERR,
 		}
 	} else {
-		return r.OutputFile, driver.CommandStatus{OK: r.Status.OK, Errorcode: r.Status.Errorcode, Msg: r.Status.Msg}
+		return r.OutputFile, driver.CommandStatus{OK: r.Status.OK, Errorcode: int(r.Status.Errorcode), Msg: r.Status.Msg}
 	}
 }
 
 func (llc *LowLevelClient) GetCapabilities() (liquidhandling.LHProperties, driver.CommandStatus) {
-	if r, err := llc.client.GetCapabilities(context.Background(), &pb.GetCapabilities{}); err != nil {
-		return nil, driver.CommandStatus{
+	if r, err := llc.client.GetCapabilities(context.Background(), &pb.GetCapabilitiesRequest{}); err != nil {
+		return liquidhandling.LHProperties{}, driver.CommandStatus{
 			Msg:       err.Error(),
 			Errorcode: driver.ERR,
 		}
@@ -106,7 +114,7 @@ func (llc *LowLevelClient) GetCapabilities() (liquidhandling.LHProperties, drive
 		if err := json.Unmarshal([]byte(r.LHProperties_JSON), &ret); err != nil {
 			return ret, driver.CommandStatus{Errorcode: driver.ERR, Msg: err.Error()}
 		}
-		return ret, driver.CommandStatus{OK: r.Status.OK, Errorcode: r.Status.Errorcode, Msg: r.Status.Msg}
+		return ret, driver.CommandStatus{OK: r.Status.OK, Errorcode: int(r.Status.Errorcode), Msg: r.Status.Msg}
 	}
 }
 
@@ -114,12 +122,12 @@ func (llc *LowLevelClient) Move(deckposition []string, wellcoords []string, refe
 	r, err := llc.client.Move(context.Background(), &pb.MoveRequest{
 		Deckposition: deckposition,
 		Wellcoords:   wellcoords,
-		Reference:    reference,
+		Reference:    toInt32(reference),
 		OffsetX:      offsetX,
 		OffsetY:      offsetY,
 		OffsetZ:      offsetZ,
 		PlateType:    plate_type,
-		Head:         head,
+		Head:         int32(head),
 	})
 	return llc.handleCommandReply(r, err)
 }
@@ -128,11 +136,11 @@ func (llc *LowLevelClient) Aspirate(volume []float64, overstroke []bool, head in
 	r, err := llc.client.Aspirate(context.Background(), &pb.AspirateRequest{
 		Volume:     volume,
 		Overstroke: overstroke,
-		Head:       head,
-		Multi:      multi,
+		Head:       int32(head),
+		Multi:      int32(multi),
 		Platetype:  platetype,
 		What:       what,
-		LLF:        llf,
+		Llf:        llf,
 	})
 	return llc.handleCommandReply(r, err)
 }
@@ -141,20 +149,20 @@ func (llc *LowLevelClient) Dispense(volume []float64, blowout []bool, head int, 
 	r, err := llc.client.Dispense(context.Background(), &pb.DispenseRequest{
 		Volume:    volume,
 		Blowout:   blowout,
-		Head:      head,
-		Multi:     multi,
+		Head:      int32(head),
+		Multi:     int32(multi),
 		Platetype: platetype,
 		What:      what,
-		LLF:       llf,
+		Llf:       llf,
 	})
 	return llc.handleCommandReply(r, err)
 }
 
 func (llc *LowLevelClient) LoadTips(channels []int, head, multi int, platetype, position, well []string) driver.CommandStatus {
 	r, err := llc.client.LoadTips(context.Background(), &pb.LoadTipsRequest{
-		Channels:  channels,
-		Head:      head,
-		Multi:     multi,
+		Channels:  toInt32(channels),
+		Head:      int32(head),
+		Multi:     int32(multi),
 		Platetype: platetype,
 		Position:  position,
 		Well:      well,
@@ -164,9 +172,9 @@ func (llc *LowLevelClient) LoadTips(channels []int, head, multi int, platetype, 
 
 func (llc *LowLevelClient) UnloadTips(channels []int, head, multi int, platetype, position, well []string) driver.CommandStatus {
 	r, err := llc.client.UnloadTips(context.Background(), &pb.UnloadTipsRequest{
-		Channels:  channels,
-		Head:      head,
-		Multi:     multi,
+		Channels:  toInt32(channels),
+		Head:      int32(head),
+		Multi:     int32(multi),
 		Platetype: platetype,
 		Position:  position,
 		Well:      well,
@@ -176,15 +184,15 @@ func (llc *LowLevelClient) UnloadTips(channels []int, head, multi int, platetype
 
 func (llc *LowLevelClient) SetPipetteSpeed(head, channel int, rate float64) driver.CommandStatus {
 	r, err := llc.client.SetPipetteSpeed(context.Background(), &pb.SetPipetteSpeedRequest{
-		Head:    head,
-		Channel: channel,
+		Head:    int32(head),
+		Channel: int32(channel),
 		Rate:    rate,
 	})
 	return llc.handleCommandReply(r, err)
 }
 
 func (llc *LowLevelClient) SetDriveSpeed(drive string, rate float64) driver.CommandStatus {
-	r, err := llc.client.SetDriveSpeed(context.Background(), &pb.SetDriveSpeed{
+	r, err := llc.client.SetDriveSpeed(context.Background(), &pb.SetDriveSpeedRequest{
 		Drive: drive,
 		Rate:  rate,
 	})
@@ -200,11 +208,11 @@ func (llc *LowLevelClient) Wait(time float64) driver.CommandStatus {
 
 func (llc *LowLevelClient) Mix(head int, volume []float64, platetype []string, cycles []int, multi int, what []string, blowout []bool) driver.CommandStatus {
 	r, err := llc.client.Mix(context.Background(), &pb.MixRequest{
-		Head:      head,
+		Head:      int32(head),
 		Volume:    volume,
 		Platetype: platetype,
-		Cycle:     cycle,
-		Multi:     multi,
+		Cycles:    toInt32(cycles),
+		Multi:     int32(multi),
 		What:      what,
 		Blowout:   blowout,
 	})
@@ -213,18 +221,18 @@ func (llc *LowLevelClient) Mix(head int, volume []float64, platetype []string, c
 
 func (llc *LowLevelClient) ResetPistons(head, channel int) driver.CommandStatus {
 	r, err := llc.client.ResetPistons(context.Background(), &pb.ResetPistonsRequest{
-		Head:    head,
-		Channel: channel,
+		Head:    int32(head),
+		Channel: int32(channel),
 	})
 	return llc.handleCommandReply(r, err)
 }
 
-func (llc *LowLevelClient) UpdateMetaData(props *LHProperties) driver.CommandStatus {
+func (llc *LowLevelClient) UpdateMetaData(props *liquidhandling.LHProperties) driver.CommandStatus {
 	if propsJSON, err := json.Marshal(props); err != nil {
 		return driver.CommandStatus{Errorcode: driver.ERR, Msg: err.Error()}
 	} else {
 		r, err := llc.client.UpdateMetaData(context.Background(), &pb.UpdateMetaDataRequest{
-			LHProperties_JSON: propsJSON,
+			LHProperties_JSON: string(propsJSON),
 		})
 		return llc.handleCommandReply(r, err)
 	}

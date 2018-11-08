@@ -320,3 +320,52 @@ func (stb *sTipbox) Fill(tb *LHTipbox) {
 		}
 	}
 }
+
+type sTipwaste struct {
+	Name       string
+	ID         string
+	Type       string
+	Mnfr       string
+	Capacity   int
+	Contents   int
+	Height     float64
+	WellXStart float64
+	WellYStart float64
+	WellZStart float64
+	AsWell     *LHWell
+	Bounds     BBox
+}
+
+func newSTipwaste(tw *LHTipwaste) *sTipwaste {
+	return &sTipwaste{
+		Name:       tw.Name,
+		ID:         tw.ID,
+		Type:       tw.Type,
+		Mnfr:       tw.Mnfr,
+		Capacity:   tw.Capacity,
+		Contents:   tw.Contents,
+		Height:     tw.Height,
+		WellXStart: tw.WellXStart,
+		WellYStart: tw.WellYStart,
+		WellZStart: tw.WellZStart,
+		AsWell:     tw.AsWell,
+		Bounds:     tw.Bounds,
+	}
+}
+
+func (stw *sTipwaste) Fill(tw *LHTipwaste) {
+	tw.Name = stw.Name
+	tw.ID = stw.ID
+	tw.Type = stw.Type
+	tw.Mnfr = stw.Mnfr
+	tw.Capacity = stw.Capacity
+	tw.Contents = stw.Contents
+	tw.Height = stw.Height
+	tw.WellXStart = stw.WellXStart
+	tw.WellYStart = stw.WellYStart
+	tw.WellZStart = stw.WellZStart
+	tw.AsWell = stw.AsWell
+	tw.Bounds = stw.Bounds
+
+	tw.AsWell.SetParent(tw)
+}

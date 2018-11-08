@@ -208,3 +208,115 @@ func (f *FromFactory) UnmarshalJSON(b []byte) error {
 	f.String = s
 	return nil
 }
+
+type sTip struct {
+	ID              string
+	Type            string
+	Mnfr            string
+	Dirty           bool
+	MaxVol          wunit.Volume
+	MinVol          wunit.Volume
+	Shape           *Shape
+	Bounds          BBox
+	EffectiveHeight float64
+	Contents        *Liquid
+	Filtered        bool
+}
+
+func NewSTip(tip *LHTip) *sTip {
+	return &sTip{
+		ID:              tip.ID,
+		Type:            tip.Type,
+		Mnfr:            tip.Mnfr,
+		Dirty:           tip.Dirty,
+		MaxVol:          tip.MaxVol,
+		MinVol:          tip.MinVol,
+		Shape:           tip.Shape,
+		Bounds:          tip.Bounds,
+		EffectiveHeight: tip.EffectiveHeight,
+		Contents:        tip.contents,
+		Filtered:        tip.Filtered,
+	}
+}
+
+func (s *sTip) Fill(t *LHTip) {
+	t.ID = s.ID
+	t.Type = s.Type
+	t.Mnfr = s.Mnfr
+	t.Dirty = s.Dirty
+	t.MaxVol = s.MaxVol
+	t.MinVol = s.MinVol
+	t.Shape = s.Shape
+	t.Bounds = s.Bounds
+	t.EffectiveHeight = s.EffectiveHeight
+	t.contents = s.Contents
+	t.Filtered = s.Filtered
+}
+
+type sTipbox struct {
+	ID         string
+	Boxname    string
+	Type       string
+	Mnfr       string
+	Nrows      int
+	Ncols      int
+	Height     float64
+	Tiptype    *LHTip
+	AsWell     *LHWell
+	NTips      int
+	Tips       [][]*LHTip
+	TipXOffset float64
+	TipYOffset float64
+	TipXStart  float64
+	TipYStart  float64
+	TipZStart  float64
+	Bounds     BBox
+}
+
+func newSTipbox(tb *LHTipbox) *sTipbox {
+	return &sTipbox{
+		ID:         tb.ID,
+		Boxname:    tb.Boxname,
+		Type:       tb.Type,
+		Mnfr:       tb.Mnfr,
+		Nrows:      tb.Nrows,
+		Ncols:      tb.Ncols,
+		Height:     tb.Height,
+		Tiptype:    tb.Tiptype,
+		AsWell:     tb.AsWell,
+		NTips:      tb.NTips,
+		Tips:       tb.Tips,
+		TipXOffset: tb.TipXOffset,
+		TipYOffset: tb.TipYOffset,
+		TipXStart:  tb.TipXStart,
+		TipYStart:  tb.TipYStart,
+		TipZStart:  tb.TipZStart,
+		Bounds:     tb.Bounds,
+	}
+}
+
+func (stb *sTipbox) Fill(tb *LHTipbox) {
+	tb.ID = stb.ID
+	tb.Boxname = stb.Boxname
+	tb.Type = stb.Type
+	tb.Mnfr = stb.Mnfr
+	tb.Nrows = stb.Nrows
+	tb.Ncols = stb.Ncols
+	tb.Height = stb.Height
+	tb.Tiptype = stb.Tiptype
+	tb.AsWell = stb.AsWell
+	tb.NTips = stb.NTips
+	tb.Tips = stb.Tips
+	tb.TipXOffset = stb.TipXOffset
+	tb.TipYOffset = stb.TipYOffset
+	tb.TipXStart = stb.TipXStart
+	tb.TipYStart = stb.TipYStart
+	tb.TipZStart = stb.TipZStart
+	tb.Bounds = stb.Bounds
+
+	for _, row := range tb.Tips {
+		for _, tip := range row {
+			tip.SetParent(tb)
+		}
+	}
+}

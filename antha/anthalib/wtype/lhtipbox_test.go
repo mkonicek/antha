@@ -1,14 +1,10 @@
 package wtype
 
 import (
+	"encoding/json"
 	"reflect"
 	"testing"
 )
-
-func makeTipForTest() *LHTip {
-	shp := NewShape("cylinder", "mm", 7.3, 7.3, 51.2)
-	return NewLHTip("me", "mytype", 0.5, 1000.0, "ul", false, shp, 44.7)
-}
 
 func makeTipboxForTest() *LHTipbox {
 	shp := NewShape("cylinder", "mm", 7.3, 7.3, 51.2)
@@ -189,4 +185,28 @@ func TestTipboxGetWellBounds(t *testing.T) {
 	if e, g := eBounds.String(), bounds.String(); e != g {
 		t.Errorf("GetWellBounds incorrect: expected %v, got %v", eBounds, bounds)
 	}
+}
+
+func TestTipboxSerialization(t *testing.T) {
+	before := makeTipboxForTest()
+
+	var after LHTipbox
+	if bs, err := json.Marshal(before); err != nil {
+		t.Fatal(err)
+	} else if err := json.Unmarshal(bs, &after); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, row := range after.Tips {
+		for _, tip := range row {
+			if tip.parent != &after {
+				t.Fatal("parent not set correctly")
+			}
+		}
+	}
+
+	if !reflect.DeepEqual(before, &after) {
+		t.Errorf("serialization changed the tipbox:\nbefore: %+v\n after: %+v", before, &after)
+	}
+
 }

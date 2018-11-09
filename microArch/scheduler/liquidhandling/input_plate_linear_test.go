@@ -27,7 +27,7 @@ func summarize(m map[string]map[*wtype.LHPlate]int) map[string]map[string]int {
 	return r
 }
 
-// choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_types []*wtype.LHPlate, weight_constraint map[string]float64) (map[string]map[*wtype.LHPlate]int, error)
+// choosePlateAssignments(component_volumes map[string]wunit.Volume, plate_types []*wtype.LHPlate, weight_constraint map[string]float64) (map[string]map[*wtype.LHPlate]int, error)
 func TestIPL1(t *testing.T) {
 	// a few plates
 
@@ -59,6 +59,19 @@ func TestIPL1(t *testing.T) {
 	}
 
 	weightConstraint := map[string]float64{"MAX_N_WELLS": 98, "RESIDUAL_VOLUME_WEIGHT": 1.0, "MAX_N_PLATES": 4.5}
+
+	// some tests below are skipped because the system is not performing correctly here.
+	// Despite a bit of trying it's not been possible to fix this, I believe it's intrinsic
+	// to using a continuous approximation, which is a poor fit to this use case, which is
+	// an integer problem more or less by definition
+	// What is happening here is the need to set a high tolerance essentially results in
+	// the first feasible solution being chosen. This is caused by an attempted move being
+	// unbounded when certain plates are used. I've not quite proved it but I
+	// think it's the consequence of multicollinearity between the constraints in certain
+	// cases. If this code makes it in and lives more than a few days this really needs
+	// to be revised and resurrecting these tests will be the first necessary step
+	// however given the intentionally short-term nature of this move it's reasonable to do this
+	// since it does always return some solution, even a poor one.
 
 	type testCase struct {
 		Name              string
@@ -157,7 +170,7 @@ func TestIPL1(t *testing.T) {
 			Plate_types:       []*wtype.LHPlate{pcrplateSkirted, DWST12},
 			Weight_constraint: weightConstraint,
 			Expected:          map[string]map[string]int{"water": {"DWST12": 3}, "milk": {"pcrplate_skirted": 2}},
-			Skip:              true,
+			Skip:              true, // this implementation makes a bad choice, not ideal but tolerable
 		},
 		{
 			Name:              "2things2platesIrrelevantChoices",
@@ -165,7 +178,7 @@ func TestIPL1(t *testing.T) {
 			Plate_types:       []*wtype.LHPlate{pcrplateSkirted, DWST12, SRWFB96},
 			Weight_constraint: weightConstraint,
 			Expected:          map[string]map[string]int{"water": {"DWST12": 3}, "milk": {"SRWFB96": 1}},
-			Skip:              true,
+			Skip:              true, // this implementation makes a bad choice here as well
 		},
 		{
 			Name:              "2things2platesIrrelevantChoices2",
@@ -173,7 +186,7 @@ func TestIPL1(t *testing.T) {
 			Plate_types:       []*wtype.LHPlate{pcrplateSkirted, DWST12, SRWFB96},
 			Weight_constraint: weightConstraint,
 			Expected:          map[string]map[string]int{"water": {"SRWFB96": 1}, "milk": {"SRWFB96": 1}},
-			Skip:              true,
+			Skip:              true, // this implementation makes another bad choice here
 		},
 		{
 			Name:              "3things1plate",
@@ -189,7 +202,7 @@ func TestIPL1(t *testing.T) {
 			if testCase.Skip {
 				t.Skip()
 			}
-			results, err := choose_plate_assignments(testCase.Component_volumes, testCase.Plate_types, testCase.Weight_constraint)
+			results, err := choosePlateAssignments(testCase.Component_volumes, testCase.Plate_types, testCase.Weight_constraint)
 
 			_, fail := testCase.Expected["FAIL"]
 
@@ -213,7 +226,6 @@ func TestIPL1(t *testing.T) {
 			}
 		}
 
-		fmt.Println("TEST: ", testCase.Name)
 		t.Run(testCase.Name, doTheTest)
 	}
 

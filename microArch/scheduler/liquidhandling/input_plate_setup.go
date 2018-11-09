@@ -125,7 +125,7 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 			return nil, fmt.Errorf("no input plate set: \n  - Please upload plate file or select at least one input plate type in Configuration > Preferences > inputPlateTypes. \n - Important: Please add a riser to the plate choice for low profile plates such as PCR plates, 96 and 384 well plates. ")
 		}
 		var err error
-		well_count_assignments, err = choose_plate_assignments(input_volumes, input_platetypes, weights_constraints)
+		well_count_assignments, err = choosePlateAssignments(input_volumes, input_platetypes, weights_constraints)
 
 		if err != nil {
 			return nil, err

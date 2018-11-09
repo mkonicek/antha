@@ -31,7 +31,7 @@ import (
 	"math"
 )
 
-func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_types []*wtype.Plate, weight_constraint map[string]float64) (map[string]map[*wtype.Plate]int, error) {
+func choosePlateAssignments(component_volumes map[string]wunit.Volume, plate_types []*wtype.Plate, weight_constraint map[string]float64) (map[string]map[*wtype.Plate]int, error) {
 
 	// 	v2.0: modified to use gonum/optimize/convex/lp
 	//
@@ -45,18 +45,24 @@ func choose_plate_assignments(component_volumes map[string]wunit.Volume, plate_t
 	//			WRy	=	Rate of wells of type y in their plate
 	//			PMax	=	Maximum number of plates
 	//			WMax	= 	Maximum number of wells
+	//			Brv	= 	Residual volume weight
+	//
 	//
 	//	Minimise:
-	//			sum of Xk WRy RVy
+	//			sum of Xk WRy (Brv RVy + 1)
 	//
 	//	Subject to:
 	//			sum of Xk Vy 	>= TVz	for each component Z
 	//				- which we express as -XkVy <= -TVz
 	//
-	//			sum of WRy Xk 	<= PMax
 	//			sum of Xk	<= WMax
 	//
 	//
+
+	// weight_constraint defines
+	// 	RESIDUAL_VOLUME_WEIGHT	- Brv above
+	//	MAX_N_WELLS		- WMax above
+	// 	both are strings mapping to floats
 
 	// defense
 	//

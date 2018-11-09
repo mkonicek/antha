@@ -81,33 +81,6 @@ func GetTroughForTest() *wtype.Plate {
 	return plate
 }
 
-/*
-func TestStockConcs(*testing.T) {
-	rand := wutil.GetRandom()
-	names := []string{"tea", "milk", "sugar"}
-
-	minrequired := make(map[string]float64, len(names))
-	maxrequired := make(map[string]float64, len(names))
-	Smax := make(map[string]float64, len(names))
-	T := make(map[string]wunit.Volume, len(names))
-	vmin := 10.0
-
-	for _, name := range names {
-		r := rand.Float64() + 1.0
-		r2 := rand.Float64() + 1.0
-		r3 := rand.Float64() + 1.0
-
-		minrequired[name] = r * r2 * 20.0
-		maxrequired[name] = r * r2 * 30.0
-		Smax[name] = r * r2 * r3 * 70.0
-		T[name] = wunit.NewVolume(100.0, "ul")
-	}
-
-	choose_stock_concentrations(minrequired, maxrequired, Smax, vmin, T)
-
-}
-*/
-
 func configure_request_simple(ctx context.Context, rq *LHRequest) {
 	water := GetComponentForTest(ctx, "water", wunit.NewVolume(100.0, "ul"))
 	water.Type = wtype.LTSingleChannel

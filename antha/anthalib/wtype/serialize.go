@@ -413,3 +413,95 @@ func (stw *sTipwaste) Fill(tw *LHTipwaste) {
 
 	tw.AsWell.SetParent(tw)
 }
+
+type sHeadAssemblyPosition struct {
+	Offset    Coordinates
+	HeadIndex int
+}
+
+func newSHeadAssemblyPosition(hap *LHHeadAssemblyPosition, heads map[*LHHead]int) *sHeadAssemblyPosition {
+	if headIndex, ok := heads[hap.Head]; !ok {
+		// caller error, should not happen
+		panic(errors.New("head not in head map"))
+	} else {
+		return &sHeadAssemblyPosition{
+			Offset:    hap.Offset,
+			HeadIndex: headIndex,
+		}
+	}
+}
+
+func (shap *sHeadAssemblyPosition) Fill(hap *LHHeadAssemblyPosition, heads []*LHHead) {
+	hap.Offset = shap.Offset
+	hap.Head = heads[shap.HeadIndex]
+}
+
+// SerializableHeadAssembly an easily serialisable representation of LHHEadAssembly referring to heads
+// by index in some array
+type SerializableHeadAssembly struct {
+	Positions      []*sHeadAssemblyPosition
+	MotionLimits   *BBox
+	VelocityLimits *VelocityRange
+}
+
+// NewSerializableHeadAssembly convert to an easily serialisable representation of a head assembly
+// heads is a map of heads to list index
+func NewSerializableHeadAssembly(ha *LHHeadAssembly, heads map[*LHHead]int) *SerializableHeadAssembly {
+	positions := make([]*sHeadAssemblyPosition, 0, len(ha.Positions))
+	for _, pos := range ha.Positions {
+		positions = append(positions, newSHeadAssemblyPosition(pos, heads))
+	}
+
+	return &SerializableHeadAssembly{
+		Positions:      positions,
+		MotionLimits:   ha.MotionLimits,
+		VelocityLimits: ha.VelocityLimits,
+	}
+}
+
+func (sha *SerializableHeadAssembly) Fill(ha *LHHeadAssembly, heads []*LHHead) {
+	positions := make([]*LHHeadAssemblyPosition, 0, len(sha.Positions))
+	for _, spos := range sha.Positions {
+		pos := LHHeadAssemblyPosition{}
+		spos.Fill(&pos, heads)
+		positions = append(positions, &pos)
+	}
+
+	ha.Positions = positions
+	ha.MotionLimits = sha.MotionLimits
+	ha.VelocityLimits = sha.VelocityLimits
+}
+
+type SerializableHead struct {
+	Name         string
+	Manufacturer string
+	ID           string
+	AdaptorIndex int
+	Params       *LHChannelParameter
+	TipLoading   TipLoadingBehaviour
+}
+
+func NewSerializableHead(head *LHHead, adaptors map[*LHAdaptor]int) *SerializableHead {
+	if adaptorIndex, ok := adaptors[head.Adaptor]; !ok {
+		// unknown adaptor loaded, caller error
+		panic(errors.New("unknown adaptor found in head"))
+	} else {
+		return &SerializableHead{
+			Name:         head.Name,
+			Manufacturer: head.Manufacturer,
+			ID:           head.ID,
+			AdaptorIndex: adaptorIndex,
+			Params:       head.Params,
+			TipLoading:   head.TipLoading,
+		}
+	}
+}
+
+func (sh *SerializableHead) Fill(head *LHHead, adaptors []*LHAdaptor) {
+	head.Name = sh.Name
+	head.Manufacturer = sh.Manufacturer
+	head.ID = sh.ID
+	head.Adaptor = adaptors[sh.AdaptorIndex]
+	head.Params = sh.Params
+	head.TipLoading = sh.TipLoading
+}

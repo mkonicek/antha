@@ -7,8 +7,7 @@ type LHHead struct {
 	ID           string
 	Adaptor      *LHAdaptor
 	Params       *LHChannelParameter
-	//TipLoading defined the behaviour of the head when loading tips
-	TipLoading TipLoadingBehaviour
+	TipLoading   TipLoadingBehaviour
 }
 
 //NewLHHead constructor for liquid handling heads

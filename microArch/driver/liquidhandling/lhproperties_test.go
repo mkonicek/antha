@@ -2,7 +2,9 @@ package liquidhandling
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -185,4 +187,47 @@ func AssertLHPropertiesEqual(t *testing.T, e, g *LHProperties, msg string) {
 	assert.Equalf(t, e.Heads, g.Heads, "%s: Heads", msg)
 	assert.Equalf(t, e.Adaptors, g.Adaptors, "%s: Adaptors", msg)
 	assert.Equalf(t, e.HeadAssemblies, g.HeadAssemblies, "%s: HeadAssemblies", msg)
+}
+
+func TestLHPropertiesSerialisation(t *testing.T) {
+	before := MakeGilsonWithPlatesAndTipboxesForTest("")
+
+	// we don't need to preserve this
+	for _, tip := range before.Tips {
+		tip.ClearParent()
+	}
+
+	var after LHProperties
+	if data, err := json.Marshal(before); err != nil {
+		t.Error(err)
+	} else if err := json.Unmarshal(data, &after); err != nil {
+		t.Error(err)
+	}
+
+	if !reflect.DeepEqual(before.Tips, after.Tips) {
+		t.Errorf("serialization changed LHProperties\ne: %+v\ng: %+v", before.Tips, after.Tips)
+	}
+
+	heads := make(map[*wtype.LHHead]bool)
+	for _, h := range after.Heads {
+		heads[h] = true
+	}
+	for _, ha := range after.HeadAssemblies {
+		for _, hap := range ha.Positions {
+			if hap.Head != nil && !heads[hap.Head] {
+				t.Error("HeadAssemblyPosition.Head doesn't point to anything in LHProperties.Heads")
+			}
+		}
+	}
+
+	adaptors := make(map[*wtype.LHAdaptor]bool)
+	for _, a := range after.Adaptors {
+		adaptors[a] = true
+	}
+	for _, head := range after.Heads {
+		if head.Adaptor != nil && !adaptors[head.Adaptor] {
+			t.Error("Head.Adaptor doesn't point to anything in LHProperties.Adaptors")
+		}
+	}
+
 }

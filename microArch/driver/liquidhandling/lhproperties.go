@@ -24,6 +24,7 @@ package liquidhandling
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strconv"
@@ -76,11 +77,17 @@ type LHProperties struct {
 }
 
 func (lhp *LHProperties) MarshalJSON() ([]byte, error) {
-	panic("unimplmented")
+	return json.Marshal(newSProperties(lhp))
 }
 
 func (lhp *LHProperties) UnmarshalJSON(data []byte) error {
-	panic("unimplemented")
+	var slhp sProperties
+	if err := json.Unmarshal(data, &slhp); err != nil {
+		return err
+	}
+
+	slhp.Fill(lhp)
+	return nil
 }
 
 // utility print function

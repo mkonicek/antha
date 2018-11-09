@@ -25,7 +25,51 @@ package wtype
 import (
 	"encoding/json"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/pkg/errors"
 )
+
+// MarshalDeckObject marshals any object which can be placed on a deck into valid JSON
+// in a way such that it can be unmarshalled by UnMarshalDeckObject
+func MarshalDeckObject(object LHObject) ([]byte, error) {
+	if class := ClassOf(object); class == "" {
+		// shouldn't happen since all current LHObjects implement Classy
+		return nil, errors.Errorf("cannot serialise object of type %T", object)
+	} else {
+		return json.Marshal(struct {
+			Class  string
+			Object LHObject
+		}{
+			Class:  ClassOf(object),
+			Object: object,
+		})
+	}
+}
+
+// UnmarshalDeckObject unmarshal an on-deck object serialised with MarshalDeckObject
+// retaining the correcy underlying type
+func UnmarshalDeckObject(data []byte) (LHObject, error) {
+	obj := struct {
+		Class  string
+		Object *json.RawMessage
+	}{}
+	if err := json.Unmarshal(data, &obj); err != nil {
+		return nil, err
+	}
+
+	switch obj.Class {
+	case "plate":
+		var p Plate
+		return &p, json.Unmarshal(*obj.Object, &p)
+	case "tipwaste":
+		var tw LHTipwaste
+		return &tw, json.Unmarshal(*obj.Object, &tw)
+	case "tipbox":
+		var tb LHTipbox
+		return &tb, json.Unmarshal(*obj.Object, &tb)
+	default:
+		return nil, errors.Errorf("cannot unmarshal object with class %q", obj.Class)
+	}
+}
 
 func (lhp *Plate) MarshalJSON() ([]byte, error) {
 	slhp := lhp.ToSLHPLate()

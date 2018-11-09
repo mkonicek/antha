@@ -59,7 +59,7 @@ type HighLevelTestDriver struct {
 }
 
 func (hltd *HighLevelTestDriver) Transfer(what, platefrom, wellfrom, plateto, wellto []string, volume []float64) driver.CommandStatus {
-	return hltd.testDriver.call(fmt.Sprintf("Trasfer(%v, %v, %v, %v, %v, %v)", what, platefrom, wellfrom, plateto, wellto, volume))
+	return hltd.testDriver.call(fmt.Sprintf("Transfer(%v, %v, %v, %v, %v, %v)", what, platefrom, wellfrom, plateto, wellto, volume))
 }
 
 type LowLevelTestDriver struct {
@@ -137,7 +137,7 @@ func (test *HighLevelConnectionTest) Run(t *testing.T) {
 	got := strings.Split(string(b), "\n")
 
 	if !reflect.DeepEqual(test.Expected, got) {
-		t.Errorf("output 'file' doesn't match.\nexpected: %v\ngot: %v", test.Expected, got)
+		t.Errorf("output 'file' doesn't match.\ne: %v\ng: %v", test.Expected, got)
 	}
 }
 
@@ -165,11 +165,12 @@ func TestHighLevelConnection(t *testing.T) {
 			Expected: []string{
 				"Initialize()",
 				"GetCapabilities()",
-				"AddPlateTo(\"position_1\", *wtype.LHPlate, \"firstPlate\")",
-				"AddPlateTo(\"position_2\", *wtype.LHPlate, \"secondPlate\")",
-				"Transfer([]string{the crown jewels}, []string{london}, []string{tower of}, []string{me}, []string{head}, []float64{100.0})",
+				"AddPlateTo(\"position_1\", *wtype.Plate, \"firstPlate\")",
+				"AddPlateTo(\"position_2\", *wtype.Plate, \"secondPlate\")",
+				"Transfer([the crown jewels], [london], [tower of], [me], [head], [100])",
 				"Message(100, \"all your joules\", \"are belong to me\", false)",
 				"Finalize()",
+				"GetOutputFile()",
 			},
 		},
 	}.Run(t)
@@ -187,11 +188,11 @@ func (test *LowLevelConnectionTest) Run(t *testing.T) {
 		if srv, err := server.NewLowLevelServer(&LowLevelTestDriver{}); err != nil {
 			t.Error(err)
 		} else {
-			srv.Listen(3000)
+			srv.Listen(3001)
 		}
 	}()
 
-	c, err := client.NewLowLevelClient(":3000")
+	c, err := client.NewLowLevelClient(":3001")
 	if err != nil {
 		t.Error(err)
 	}
@@ -202,7 +203,7 @@ func (test *LowLevelConnectionTest) Run(t *testing.T) {
 	got := strings.Split(string(b), "\n")
 
 	if !reflect.DeepEqual(test.Expected, got) {
-		t.Errorf("output 'file' doesn't match.\nexpected: %v\ngot: %v", test.Expected, got)
+		t.Errorf("output 'file' doesn't match.\ne: %v\ng: %v", test.Expected, got)
 	}
 }
 
@@ -239,11 +240,21 @@ func TestLowLevelConnection(t *testing.T) {
 			Expected: []string{
 				"Initialize()",
 				"GetCapabilities()",
-				"AddPlateTo(\"position_1\", *wtype.LHPlate, \"firstPlate\")",
-				"AddPlateTo(\"position_2\", *wtype.LHPlate, \"secondPlate\")",
-				"Transfer([]string{the crown jewels}, []string{london}, []string{tower of}, []string{me}, []string{head}, []float64{100.0})",
-				"Message(100, \"all your joules\", \"are belong to me\", false)",
+				"AddPlateTo(\"position_1\", *wtype.LHTipwaste, \"tipwaste\")",
+				"AddPlateTo(\"position_2\", *wtype.LHTipbox, \"tipbox\")",
+				"AddPlateTo(\"position_3\", *wtype.Plate, \"firstPlate\")",
+				"AddPlateTo(\"position_4\", *wtype.Plate, \"secondPlate\")",
+				"Move([position_2], [A1], [1], [0], [0], [5], [tipbox], 0)",
+				"LoadTips([0], 0, 1, [tipbox], [position_2], [A1])",
+				"Move([position_3], [A1], [1], [0], [0], [5], [tipbox], 0)",
+				"Aspirate([100], [false], 0, 1, [plate], [water], [false])",
+				"Move([position_4], [A1], [1], [0], [0], [5], [tipbox], 0)",
+				"Dispense([100], [false], 0, 1, [plate], [wine], [false])",
+				"Move([position_1], [A1], [1], [0], [0], [5], [tipbox], 0)",
+				"LoadTips([0], 0, 1, [tipbox], [position_2], [A1])",
+				"Message(100, \"from water\", \"into wine\", false)",
 				"Finalize()",
+				"GetOutputFile()",
 			},
 		},
 	}.Run(t)

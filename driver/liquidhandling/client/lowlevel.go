@@ -25,15 +25,20 @@ type LowLevelClient struct {
 	client pb.LowLevelLiquidhandlingDriverClient
 }
 
-// NewLowLevelClient create a client for connecting with a remote high level
+// NewLowLevelClient create a client for connecting with a remote low level
 // server
 func NewLowLevelClient(address string) (*LowLevelClient, error) {
 	if conn, err := grpc.Dial(address, grpc.WithInsecure()); err != nil {
 		return nil, errors.WithMessage(err, "Cannot initialize driver")
 	} else {
-		return &LowLevelClient{
-			client: pb.NewLowLevelLiquidhandlingDriverClient(conn),
-		}, nil
+		return NewLowLevelClientFromConn(conn), nil
+	}
+}
+
+// NewLowLevelClientFromConn create a client for connecting with a remove low level server from a grpc Conn object
+func NewLowLevelClientFromConn(conn *grpc.ClientConn) *LowLevelClient {
+	return &LowLevelClient{
+		client: pb.NewLowLevelLiquidhandlingDriverClient(conn),
 	}
 }
 

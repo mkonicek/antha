@@ -23,9 +23,14 @@ func NewHighLevelClient(address string) (*HighLevelClient, error) {
 	if conn, err := grpc.Dial(address, grpc.WithInsecure()); err != nil {
 		return nil, errors.WithMessage(err, "Cannot initialize driver")
 	} else {
-		return &HighLevelClient{
-			client: pb.NewHighLevelLiquidhandlingDriverClient(conn),
-		}, nil
+		return NewHighLevelClientFromConn(conn), nil
+	}
+}
+
+// NewHighLevelClientFromConn create a client for connecting with a remote high level server from a grpc Conn object
+func NewHighLevelClientFromConn(conn *grpc.ClientConn) *HighLevelClient {
+	return &HighLevelClient{
+		client: pb.NewHighLevelLiquidhandlingDriverClient(conn),
 	}
 }
 

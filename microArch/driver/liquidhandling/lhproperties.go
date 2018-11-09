@@ -42,28 +42,25 @@ import (
 // probably needs splitting up to separate out the state information
 // from the properties information
 type LHProperties struct {
-	ID            string
-	Nposns        int
-	Positions     map[string]*wtype.LHPosition
-	PlateLookup   map[string]interface{}
-	PosLookup     map[string]string
-	PlateIDLookup map[string]string
-	Plates        map[string]*wtype.Plate
-	Tipboxes      map[string]*wtype.LHTipbox
-	Tipwastes     map[string]*wtype.LHTipwaste
-	Wastes        map[string]*wtype.Plate
-	Washes        map[string]*wtype.Plate
-	Devices       map[string]string
-	Model         string
-	Mnfr          string
-	LHType        string
-	TipType       string
-	//Heads lists every head (whether loaded or not) that is available for the machine
-	Heads []*wtype.LHHead
-	//Adaptors lists every adaptor (whether loaded or not) that is available for the machine
-	Adaptors []*wtype.LHAdaptor
-	//HeadAssemblies describes how each loaded head and adaptor is loaded into the machine
-	HeadAssemblies       []*wtype.LHHeadAssembly
+	ID                   string
+	Nposns               int
+	Positions            map[string]*wtype.LHPosition // position descriptions by position name
+	PlateLookup          map[string]interface{}       // deck object (plate, tipbox, etc) by object ID
+	PosLookup            map[string]string            // object ID by position name
+	PlateIDLookup        map[string]string            // position name by object ID
+	Plates               map[string]*wtype.Plate      // plates by position name
+	Tipboxes             map[string]*wtype.LHTipbox   // tipboxes by position name
+	Tipwastes            map[string]*wtype.LHTipwaste // tipwastes by position name
+	Wastes               map[string]*wtype.Plate      // waste plates by position name
+	Washes               map[string]*wtype.Plate      // wash plates by position name
+	Devices              map[string]string
+	Model                string
+	Mnfr                 string
+	LHType               string
+	TipType              string
+	Heads                []*wtype.LHHead         // lists every head (whether loaded or not) that is available for the machine
+	Adaptors             []*wtype.LHAdaptor      // lists every adaptor (whether loaded or not) that is available for the machine
+	HeadAssemblies       []*wtype.LHHeadAssembly // describes how each loaded head and adaptor is loaded into the machine
 	Tips                 []*wtype.LHTip
 	Tip_preferences      []string
 	Input_preferences    []string
@@ -74,7 +71,7 @@ type LHProperties struct {
 	Driver               LiquidhandlingDriver `gotopb:"-"`
 	CurrConf             *wtype.LHChannelParameter
 	Cnfvol               []*wtype.LHChannelParameter
-	Layout               map[string]wtype.Coordinates
+	Layout               map[string]wtype.Coordinates // position location by position name
 	MaterialType         material.MaterialType
 }
 

@@ -24,7 +24,7 @@ type liquidHandlingServer struct {
 }
 
 func (lhs *liquidHandlingServer) AddPlateTo(ctx context.Context, req *pb.AddPlateToRequest) (*pb.CommandReply, error) {
-	if plt, err := wtype.UnmarshalLHObject([]byte(req.Plate_JSON)); err != nil {
+	if plt, err := wtype.UnmarshalDeckObject([]byte(req.Plate_JSON)); err != nil {
 		return nil, err
 	} else {
 		return makeCommandReply(lhs.driver.AddPlateTo(req.Position, plt, req.Name)), nil

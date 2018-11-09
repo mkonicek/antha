@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -21,7 +22,7 @@ func (td *testDriver) call(s string) driver.CommandStatus {
 }
 
 func (td *testDriver) AddPlateTo(position string, plate interface{}, name string) driver.CommandStatus {
-	return td.call(fmt.Sprintf("AddPlateTo(%q, %v, %q)", position, plate, name))
+	return td.call(fmt.Sprintf("AddPlateTo(%q, %T, %q)", position, plate, name))
 }
 
 func (td *testDriver) RemoveAllPlates() driver.CommandStatus {
@@ -82,7 +83,7 @@ func (lltd *LowLevelTestDriver) LoadTips(channels []int, head, multi int, platet
 }
 
 func (lltd *LowLevelTestDriver) UnloadTips(channels []int, head, multi int, platetype, position, well []string) driver.CommandStatus {
-	return lltd.testDriver.call(fmt.Sprintf("UnloadTips(%v, %d, %d, %v, %v, %v)"))
+	return lltd.testDriver.call(fmt.Sprintf("UnloadTips(%v, %d, %d, %v, %v, %v)", channels, head, multi, platetype, position, well))
 }
 
 func (lltd *LowLevelTestDriver) SetPipetteSpeed(head, channel int, rate float64) driver.CommandStatus {
@@ -110,15 +111,19 @@ func (lltd *LowLevelTestDriver) UpdateMetaData(props *liquidhandling.LHPropertie
 }
 
 type HighLevelConnectionTest struct {
-	calls    func(liquidhandling.HighLevelLiquidhandlingDriver)
-	expected []string
+	Name     string
+	Calls    func(liquidhandling.HighLevelLiquidhandlingDriver)
+	Expected []string
 }
 
-func (test *HighLevelConnectionTest) Run(t testing.T) {
+func (test *HighLevelConnectionTest) Run(t *testing.T) {
 
 	go func() {
-		srv := server.NewHighLevelServer(HighLevelTestDriver{})
-		srv.Listen(3000)
+		if srv, err := server.NewHighLevelServer(&HighLevelTestDriver{}); err != nil {
+			t.Error(err)
+		} else {
+			srv.Listen(3000)
+		}
 	}()
 
 	c, err := client.NewHighLevelClient(":3000")
@@ -126,7 +131,7 @@ func (test *HighLevelConnectionTest) Run(t testing.T) {
 		t.Error(err)
 	}
 
-	test.calls(c)
+	test.Calls(c)
 
 	b, _ := c.GetOutputFile()
 	got := strings.Split(string(b), "\n")
@@ -134,4 +139,112 @@ func (test *HighLevelConnectionTest) Run(t testing.T) {
 	if !reflect.DeepEqual(test.Expected, got) {
 		t.Errorf("output 'file' doesn't match.\nexpected: %v\ngot: %v", test.Expected, got)
 	}
+}
+
+type HighLevelConnectionTests []HighLevelConnectionTest
+
+func (tests HighLevelConnectionTests) Run(t *testing.T) {
+	for _, test := range tests {
+		t.Run(test.Name, test.Run)
+	}
+}
+
+func TestHighLevelConnection(t *testing.T) {
+	HighLevelConnectionTests{
+		{
+			Name: "simple",
+			Calls: func(drv liquidhandling.HighLevelLiquidhandlingDriver) {
+				drv.Initialize()
+				drv.GetCapabilities()
+				drv.AddPlateTo("position_1", makePlateForTest(), "firstPlate")
+				drv.AddPlateTo("position_2", makePlateForTest(), "secondPlate")
+				drv.Transfer([]string{"the crown jewels"}, []string{"london"}, []string{"tower of"}, []string{"me"}, []string{"head"}, []float64{100.0})
+				drv.Message(100, "all your joules", "are belong to me", false)
+				drv.Finalize()
+			},
+			Expected: []string{
+				"Initialize()",
+				"GetCapabilities()",
+				"AddPlateTo(\"position_1\", *wtype.LHPlate, \"firstPlate\")",
+				"AddPlateTo(\"position_2\", *wtype.LHPlate, \"secondPlate\")",
+				"Transfer([]string{the crown jewels}, []string{london}, []string{tower of}, []string{me}, []string{head}, []float64{100.0})",
+				"Message(100, \"all your joules\", \"are belong to me\", false)",
+				"Finalize()",
+			},
+		},
+	}.Run(t)
+}
+
+type LowLevelConnectionTest struct {
+	Name     string
+	Calls    func(liquidhandling.LowLevelLiquidhandlingDriver)
+	Expected []string
+}
+
+func (test *LowLevelConnectionTest) Run(t *testing.T) {
+
+	go func() {
+		if srv, err := server.NewLowLevelServer(&LowLevelTestDriver{}); err != nil {
+			t.Error(err)
+		} else {
+			srv.Listen(3000)
+		}
+	}()
+
+	c, err := client.NewLowLevelClient(":3000")
+	if err != nil {
+		t.Error(err)
+	}
+
+	test.Calls(c)
+
+	b, _ := c.GetOutputFile()
+	got := strings.Split(string(b), "\n")
+
+	if !reflect.DeepEqual(test.Expected, got) {
+		t.Errorf("output 'file' doesn't match.\nexpected: %v\ngot: %v", test.Expected, got)
+	}
+}
+
+type LowLevelConnectionTests []LowLevelConnectionTest
+
+func (tests LowLevelConnectionTests) Run(t *testing.T) {
+	for _, test := range tests {
+		t.Run(test.Name, test.Run)
+	}
+}
+
+func TestLowLevelConnection(t *testing.T) {
+	LowLevelConnectionTests{
+		{
+			Name: "simple",
+			Calls: func(drv liquidhandling.LowLevelLiquidhandlingDriver) {
+				drv.Initialize()
+				drv.GetCapabilities()
+				drv.AddPlateTo("position_1", makeTipwasteForTest(), "tipwaste")
+				drv.AddPlateTo("position_2", makeTipboxForTest(), "tipbox")
+				drv.AddPlateTo("position_3", makePlateForTest(), "firstPlate")
+				drv.AddPlateTo("position_4", makePlateForTest(), "secondPlate")
+				drv.Move([]string{"position_2"}, []string{"A1"}, []int{1}, []float64{0.0}, []float64{0.0}, []float64{5.0}, []string{"tipbox"}, 0)
+				drv.LoadTips([]int{0}, 0, 1, []string{"tipbox"}, []string{"position_2"}, []string{"A1"})
+				drv.Move([]string{"position_3"}, []string{"A1"}, []int{1}, []float64{0.0}, []float64{0.0}, []float64{5.0}, []string{"tipbox"}, 0)
+				drv.Aspirate([]float64{100.0}, []bool{false}, 0, 1, []string{"plate"}, []string{"water"}, []bool{false})
+				drv.Move([]string{"position_4"}, []string{"A1"}, []int{1}, []float64{0.0}, []float64{0.0}, []float64{5.0}, []string{"tipbox"}, 0)
+				drv.Dispense([]float64{100.0}, []bool{false}, 0, 1, []string{"plate"}, []string{"wine"}, []bool{false})
+				drv.Move([]string{"position_1"}, []string{"A1"}, []int{1}, []float64{0.0}, []float64{0.0}, []float64{5.0}, []string{"tipbox"}, 0)
+				drv.UnloadTips([]int{0}, 0, 1, []string{"tipbox"}, []string{"position_2"}, []string{"A1"})
+				drv.Message(100, "from water", "into wine", false)
+				drv.Finalize()
+			},
+			Expected: []string{
+				"Initialize()",
+				"GetCapabilities()",
+				"AddPlateTo(\"position_1\", *wtype.LHPlate, \"firstPlate\")",
+				"AddPlateTo(\"position_2\", *wtype.LHPlate, \"secondPlate\")",
+				"Transfer([]string{the crown jewels}, []string{london}, []string{tower of}, []string{me}, []string{head}, []float64{100.0})",
+				"Message(100, \"all your joules\", \"are belong to me\", false)",
+				"Finalize()",
+			},
+		},
+	}.Run(t)
 }

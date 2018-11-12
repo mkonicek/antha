@@ -204,8 +204,8 @@ func TestLHPropertiesSerialisation(t *testing.T) {
 		t.Error(err)
 	}
 
-	if !reflect.DeepEqual(before.Tips, after.Tips) {
-		t.Errorf("serialization changed LHProperties\ne: %+v\ng: %+v", before.Tips, after.Tips)
+	if !reflect.DeepEqual(before, &after) {
+		t.Errorf("serialization changed LHProperties PlateLookup\ne: %+v\ng: %+v", before, &after)
 	}
 
 	heads := make(map[*wtype.LHHead]bool)
@@ -227,6 +227,16 @@ func TestLHPropertiesSerialisation(t *testing.T) {
 	for _, head := range after.Heads {
 		if head.Adaptor != nil && !adaptors[head.Adaptor] {
 			t.Error("Head.Adaptor doesn't point to anything in LHProperties.Adaptors")
+		}
+	}
+
+	if e, g := before.GetLoadedHeads(), after.GetLoadedHeads(); len(e) != len(g) {
+		t.Errorf("number of loaded heads doesn't match: e: %d, g: %d", len(e), len(g))
+	} else {
+		for i, eHead := range e {
+			if gHead := g[i]; !reflect.DeepEqual(eHead, gHead) {
+				t.Errorf("%dth head is mismatched\ne: %+v\ng: %+v", i, eHead, gHead)
+			}
 		}
 	}
 

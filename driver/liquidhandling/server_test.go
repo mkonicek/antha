@@ -259,3 +259,38 @@ func TestLowLevelConnection(t *testing.T) {
 		},
 	}.Run(t)
 }
+
+type LLGetCapabilities struct {
+	LowLevelTestDriver
+	Props *liquidhandling.LHProperties
+}
+
+func (gc *LLGetCapabilities) GetCapabilities() (liquidhandling.LHProperties, driver.CommandStatus) {
+	return *gc.Props, driver.CommandStatus{OK: true}
+}
+
+func TestGetCapabilities(t *testing.T) {
+	expected := MakeGilsonWithPlatesAndTipboxesForTest("")
+	for _, tip := range expected.Tips { //tip parents not preserved
+		tip.ClearParent()
+	}
+
+	go func() {
+		if srv, err := server.NewLowLevelServer(&LLGetCapabilities{Props: expected}); err != nil {
+			t.Error(err)
+		} else {
+			srv.Listen(3002)
+		}
+	}()
+
+	c, err := client.NewLowLevelClient(":3002")
+	if err != nil {
+		t.Error(err)
+	}
+
+	if got, status := c.GetCapabilities(); !status.OK {
+		t.Errorf("got bad status: %v", status)
+	} else if !reflect.DeepEqual(expected, &got) {
+		t.Errorf("Proerties changed:\ne: %+v\ng:%+v", expected, got)
+	}
+}

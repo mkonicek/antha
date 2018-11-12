@@ -37,7 +37,8 @@ func (lhs *liquidHandlingServer) Finalize(context.Context, *pb.FinalizeRequest) 
 
 func (lhs *liquidHandlingServer) GetCapabilities(context.Context, *pb.GetCapabilitiesRequest) (*pb.GetCapabilitiesReply, error) {
 	props, cs := lhs.driver.GetCapabilities()
-	if propsJSON, err := json.Marshal(props); err != nil {
+
+	if propsJSON, err := json.Marshal(&props); err != nil {
 		return &pb.GetCapabilitiesReply{
 			Status: makeCommandReply(cs),
 		}, err

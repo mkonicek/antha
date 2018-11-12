@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/antha-lang/antha/driver/liquidhandling/client"
 	"github.com/antha-lang/antha/driver/liquidhandling/server"
@@ -126,6 +127,9 @@ func (test *HighLevelConnectionTest) Run(t *testing.T) {
 		}
 	}()
 
+	// give the server a moment to get set up in the thread
+	time.Sleep(500 * time.Millisecond)
+
 	c, err := client.NewHighLevelClient(":3000")
 	if err != nil {
 		t.Error(err)
@@ -191,6 +195,9 @@ func (test *LowLevelConnectionTest) Run(t *testing.T) {
 			srv.Listen(3001)
 		}
 	}()
+
+	// give the server a moment to get set up in the thread
+	time.Sleep(500 * time.Millisecond)
 
 	c, err := client.NewLowLevelClient(":3001")
 	if err != nil {
@@ -282,6 +289,9 @@ func TestGetCapabilities(t *testing.T) {
 			srv.Listen(3002)
 		}
 	}()
+
+	// give the server a moment to get set up in the thread
+	time.Sleep(500 * time.Millisecond)
 
 	c, err := client.NewLowLevelClient(":3002")
 	if err != nil {

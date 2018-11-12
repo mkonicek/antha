@@ -176,7 +176,7 @@ func PolicyMakerfromRuns(basepolicy string, runs []doe.Run, nameprepend string, 
 				} else {
 					policy[desc] = run.Setpoints[j]
 				}
-			} else if i == 0 {
+			} else if i == 0 && desc != BasePolicyHeader {
 				warnings = append(warnings, "Invalid PolicyCommand specified in design file: "+desc)
 			}
 		}

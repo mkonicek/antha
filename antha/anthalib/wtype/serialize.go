@@ -360,7 +360,10 @@ func (stb *sTipbox) Fill(tb *LHTipbox) {
 
 	for _, row := range tb.Tips {
 		for _, tip := range row {
-			tip.SetParent(tb)
+			if err := tip.SetParent(tb); err != nil {
+				//Tip must accept tipbox as parent, so this should never happen
+				panic(err)
+			}
 		}
 	}
 }
@@ -411,7 +414,10 @@ func (stw *sTipwaste) Fill(tw *LHTipwaste) {
 	tw.AsWell = stw.AsWell
 	tw.Bounds = stw.Bounds
 
-	tw.AsWell.SetParent(tw)
+	if err := tw.AsWell.SetParent(tw); err != nil {
+		//well should accept any tipwaste as parent, so this should never happen
+		panic(err)
+	}
 }
 
 type sHeadAssemblyPosition struct {

@@ -23,7 +23,6 @@
 package wtype
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
 
@@ -141,32 +140,6 @@ func (lhcp LHChannelParameter) GetConstraint(n int) LHMultiChannelConstraint {
 	}
 
 	return LHMultiChannelConstraint{x, y, max}
-}
-
-func (lhcp LHChannelParameter) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
-		ID          string
-		Name        string
-		Minvol      wunit.Volume
-		Maxvol      wunit.Volume
-		Minspd      wunit.FlowRate
-		Maxspd      wunit.FlowRate
-		Multi       int
-		Independent bool
-		Orientation ChannelOrientation
-		Head        int
-	}{
-		lhcp.ID,
-		lhcp.Name,
-		lhcp.Minvol,
-		lhcp.Maxvol,
-		lhcp.Minspd,
-		lhcp.Maxspd,
-		lhcp.Multi,
-		lhcp.Independent,
-		lhcp.Orientation,
-		lhcp.Head,
-	})
 }
 
 func (lhcp *LHChannelParameter) Dup() *LHChannelParameter {

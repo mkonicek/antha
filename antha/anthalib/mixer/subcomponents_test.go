@@ -191,7 +191,7 @@ var serialTests []serialComponentlistTest = []serialComponentlistTest{
 		},
 		mixedList: wtype.ComponentList{
 			Components: map[string]wunit.Concentration{
-				"LB": wunit.NewConcentration(0, "g/L"),
+				"LB":                   wunit.NewConcentration(0, "g/L"),
 				"Ferric Chloride (uM)": wunit.NewConcentration(10, "mM"),
 				"Glucose (g/L)":        wunit.NewConcentration(5.01, "g/L"),
 			},

@@ -34,7 +34,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/antha/anthalib/wutil/text"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/testinventory"
@@ -80,31 +79,6 @@ func GetTroughForTest() *wtype.Plate {
 	trough12 := wtype.NewLHWell("ul", 1500, 500, stshp, wtype.VWellBottom, 8.2, 72, 41.3, 4.7, "mm")
 	plate := wtype.NewLHPlate("DWST12", "Unknown", 1, 12, wtype.Coordinates{X: 127.76, Y: 85.48, Z: 44.1}, trough12, 9, 9, 0, 30.0, 4.5)
 	return plate
-}
-
-func TestStockConcs(*testing.T) {
-	rand := wutil.GetRandom()
-	names := []string{"tea", "milk", "sugar"}
-
-	minrequired := make(map[string]float64, len(names))
-	maxrequired := make(map[string]float64, len(names))
-	Smax := make(map[string]float64, len(names))
-	T := make(map[string]wunit.Volume, len(names))
-	vmin := 10.0
-
-	for _, name := range names {
-		r := rand.Float64() + 1.0
-		r2 := rand.Float64() + 1.0
-		r3 := rand.Float64() + 1.0
-
-		minrequired[name] = r * r2 * 20.0
-		maxrequired[name] = r * r2 * 30.0
-		Smax[name] = r * r2 * r3 * 70.0
-		T[name] = wunit.NewVolume(100.0, "ul")
-	}
-
-	choose_stock_concentrations(minrequired, maxrequired, Smax, vmin, T)
-
 }
 
 func configure_request_simple(ctx context.Context, rq *LHRequest) {

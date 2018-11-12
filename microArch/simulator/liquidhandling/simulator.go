@@ -1659,67 +1659,63 @@ const (
 )
 
 //AddPlateTo - used
-func (self *VirtualLiquidHandler) AddPlateTo(position string, plate interface{}, name string) driver.CommandStatus {
+func (self *VirtualLiquidHandler) AddPlateTo(position string, obj wtype.LHObject, name string) driver.CommandStatus {
 
 	ret := driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "ADDPLATETO ACK"}
 
-	if original, ok := plate.(wtype.LHObject); ok {
-		obj := original.Duplicate(true)
-		if n, nok := obj.(wtype.Named); nok && n.GetName() != name {
-			self.AddWarningf("Object name(=%s) doesn't match argument name(=%s)", n.GetName(), name)
+	obj = obj.Duplicate(true)
+
+	if n, nok := obj.(wtype.Named); nok && n.GetName() != name {
+		self.AddWarningf("Object name(=%s) doesn't match argument name(=%s)", n.GetName(), name)
+	}
+
+	if tb, ok := obj.(*wtype.LHTipbox); ok {
+		//check that the height of the tips is greater than the height of the tipbox
+		if tb.GetSize().Z >= (tb.TipZStart+tb.Tiptype.GetSize().Z) && self.settings.IsTipboxCheckEnabled() {
+			self.AddWarningf(
+				"Tipbox \"%s\" is taller than the tips it holds (%.2fmm > %.2fmm), disabling tipbox collision detection",
+				tb.GetName(), tb.GetSize().Z, tb.TipZStart+tb.Tiptype.GetSize().Z)
+			self.settings.EnableTipboxCollision(false)
+		}
+	}
+
+	//check that the wells are within the bounds of the plate
+	if plate, ok := obj.(*wtype.Plate); ok {
+		plateSize := plate.GetSize()
+		wellOff := plate.GetWellOffset()
+		wellLim := wellOff.Add(plate.GetWellSize())
+
+		if wellOff.X < 0.0 || wellOff.Y < 0.0 || wellOff.Z < 0.0 {
+			self.AddWarningf("position \"%s\": invalid plate type \"%s\" has negative well offsets %v",
+				position, wtype.TypeOf(plate), wellOff)
 		}
 
-		if tb, ok := obj.(*wtype.LHTipbox); ok {
-			//check that the height of the tips is greater than the height of the tipbox
-			if tb.GetSize().Z >= (tb.TipZStart+tb.Tiptype.GetSize().Z) && self.settings.IsTipboxCheckEnabled() {
-				self.AddWarningf(
-					"Tipbox \"%s\" is taller than the tips it holds (%.2fmm > %.2fmm), disabling tipbox collision detection",
-					tb.GetName(), tb.GetSize().Z, tb.TipZStart+tb.Tiptype.GetSize().Z)
-				self.settings.EnableTipboxCollision(false)
-			}
+		overSpill := wtype.Coordinates{
+			X: math.Max(wellLim.X-plateSize.X, 0.0),
+			Y: math.Max(wellLim.Y-plateSize.Y, 0.0),
+			Z: math.Max(wellLim.Z-plateSize.Z, 0.0),
 		}
 
-		//check that the wells are within the bounds of the plate
-		if plate, ok := obj.(*wtype.Plate); ok {
-			plateSize := plate.GetSize()
-			wellOff := plate.GetWellOffset()
-			wellLim := wellOff.Add(plate.GetWellSize())
-
-			if wellOff.X < 0.0 || wellOff.Y < 0.0 || wellOff.Z < 0.0 {
-				self.AddWarningf("position \"%s\": invalid plate type \"%s\" has negative well offsets %v",
-					position, wtype.TypeOf(plate), wellOff)
-			}
-
-			overSpill := wtype.Coordinates{
-				X: math.Max(wellLim.X-plateSize.X, 0.0),
-				Y: math.Max(wellLim.Y-plateSize.Y, 0.0),
-				Z: math.Max(wellLim.Z-plateSize.Z, 0.0),
-			}
-
-			if overSpill.Z > 0.0 {
-				self.AddWarningf("position \"%s\": invalid plate type \"%s\": wells extend above plate, reducing well height by %0.1f mm",
-					position, wtype.TypeOf(plate), overSpill.Z)
-				wellSize := plate.Welltype.GetSize()
-				wellSize.Z -= overSpill.Z
-				plate.Welltype.Bounds.Size = wellSize
-				for _, well := range plate.Wellcoords {
-					well.Bounds.Size = wellSize
-				}
-			}
-
-			if overSpill.X > 0.0 || overSpill.Y > 0.0 {
-				self.AddWarningf("position \"%s\": invalid plate type \"%s\" wells extend beyond plate bounds by %s",
-					position, wtype.TypeOf(plate), overSpill.StringXY())
+		if overSpill.Z > 0.0 {
+			self.AddWarningf("position \"%s\": invalid plate type \"%s\": wells extend above plate, reducing well height by %0.1f mm",
+				position, wtype.TypeOf(plate), overSpill.Z)
+			wellSize := plate.Welltype.GetSize()
+			wellSize.Z -= overSpill.Z
+			plate.Welltype.Bounds.Size = wellSize
+			for _, well := range plate.Wellcoords {
+				well.Bounds.Size = wellSize
 			}
 		}
 
-		if err := self.state.GetDeck().SetChild(position, obj); err != nil {
-			self.AddError(err.Error())
-			return ret
+		if overSpill.X > 0.0 || overSpill.Y > 0.0 {
+			self.AddWarningf("position \"%s\": invalid plate type \"%s\" wells extend beyond plate bounds by %s",
+				position, wtype.TypeOf(plate), overSpill.StringXY())
 		}
+	}
 
-	} else {
-		self.AddErrorf("Couldn't add object of type %T to %s", plate, position)
+	if err := self.state.GetDeck().SetChild(position, obj); err != nil {
+		self.AddError(err.Error())
+		return ret
 	}
 
 	return ret

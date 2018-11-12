@@ -863,7 +863,7 @@ func (self *SetDriveSpeed) Convert() liquidhandling.TerminalRobotInstruction {
 //AddPlateTo
 type AddPlateTo struct {
 	position string
-	plate    interface{}
+	plate    wtype.LHObject
 	name     string
 }
 

@@ -46,7 +46,7 @@ type LHProperties struct {
 	ID                   string
 	Nposns               int
 	Positions            map[string]*wtype.LHPosition // position descriptions by position name
-	PlateLookup          map[string]interface{}       // deck object (plate, tipbox, etc) by object ID
+	PlateLookup          map[string]wtype.LHObject    // deck object (plate, tipbox, etc) by object ID
 	PosLookup            map[string]string            // object ID by position name
 	PlateIDLookup        map[string]string            // position name by object ID
 	Plates               map[string]*wtype.Plate      // plates by position name
@@ -331,7 +331,7 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 	// plate lookup can contain anything
 
 	for name, pt := range lhp.PlateLookup {
-		var pt2 interface{}
+		var pt2 wtype.LHObject
 		var newid string
 		var pos string
 		switch pt.(type) {
@@ -460,7 +460,7 @@ func NewLHProperties(num_positions int, model, manufacturer, lhtype, tiptype str
 
 	lhp.Positions = positions
 	lhp.PosLookup = make(map[string]string, lhp.Nposns)
-	lhp.PlateLookup = make(map[string]interface{}, lhp.Nposns)
+	lhp.PlateLookup = make(map[string]wtype.LHObject, lhp.Nposns)
 	lhp.PlateIDLookup = make(map[string]string, lhp.Nposns)
 	lhp.Plates = make(map[string]*wtype.Plate, lhp.Nposns)
 	lhp.Tipboxes = make(map[string]*wtype.LHTipbox, lhp.Nposns)

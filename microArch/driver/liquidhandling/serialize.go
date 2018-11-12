@@ -127,7 +127,7 @@ func (slhp *sProperties) Fill(lhp *LHProperties) {
 	}
 
 	nItems := len(lhp.Plates) + len(lhp.Tipboxes) + len(lhp.Tipwastes) + len(lhp.Wastes) + len(lhp.Washes)
-	lhp.PlateLookup = make(map[string]interface{}, nItems)
+	lhp.PlateLookup = make(map[string]wtype.LHObject, nItems)
 	lhp.PosLookup = make(map[string]string, nItems)
 	lhp.PlateIDLookup = make(map[string]string, nItems)
 

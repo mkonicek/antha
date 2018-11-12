@@ -82,14 +82,6 @@ func TestVLH_AddPlateTo(t *testing.T) {
 			},
 		},
 		{
-			Name: "non plate type",
-			Instructions: []TestRobotInstruction{
-				&Initialize{},
-				&AddPlateTo{"tipbox_1", "my plate's gone stringy", "not_a_plate"},
-			},
-			ExpectedErrors: []string{"(err) AddPlateTo[1]: Couldn't add object of type string to tipbox_1"},
-		},
-		{
 			Name: "location full",
 			Instructions: []TestRobotInstruction{
 				&Initialize{},

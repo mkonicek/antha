@@ -52,10 +52,10 @@ type AddPlateToInstruction struct {
 	*InstructionType
 	Position string
 	Name     string
-	Plate    interface{}
+	Plate    wtype.LHObject
 }
 
-func NewAddPlateToInstruction(position, name string, plate interface{}) *AddPlateToInstruction {
+func NewAddPlateToInstruction(position, name string, plate wtype.LHObject) *AddPlateToInstruction {
 	v := &AddPlateToInstruction{
 		InstructionType: APT,
 		Position:        position,

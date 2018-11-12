@@ -3,7 +3,6 @@ package client
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 
@@ -53,13 +52,8 @@ func (llc *LowLevelClient) handleCommandReply(reply *pb.CommandReply, err error)
 	}
 }
 
-func (llc *LowLevelClient) AddPlateTo(position string, plate interface{}, name string) driver.CommandStatus {
-	if obj, ok := plate.(wtype.LHObject); !ok {
-		return driver.CommandStatus{
-			Errorcode: driver.ERR,
-			Msg:       fmt.Sprintf("unable to serialize object of type %T", plate),
-		}
-	} else if plateJSON, err := wtype.MarshalDeckObject(obj); err != nil {
+func (llc *LowLevelClient) AddPlateTo(position string, obj wtype.LHObject, name string) driver.CommandStatus {
+	if plateJSON, err := wtype.MarshalDeckObject(obj); err != nil {
 		return driver.CommandStatus{
 			Msg:       err.Error(),
 			Errorcode: driver.ERR,

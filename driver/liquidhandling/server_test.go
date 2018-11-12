@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/driver/liquidhandling/client"
 	"github.com/antha-lang/antha/driver/liquidhandling/server"
 	"github.com/antha-lang/antha/microArch/driver"
@@ -22,7 +23,7 @@ func (td *testDriver) call(s string) driver.CommandStatus {
 	return driver.CommandStatus{OK: true, Msg: s}
 }
 
-func (td *testDriver) AddPlateTo(position string, plate interface{}, name string) driver.CommandStatus {
+func (td *testDriver) AddPlateTo(position string, plate wtype.LHObject, name string) driver.CommandStatus {
 	return td.call(fmt.Sprintf("AddPlateTo(%q, %T, %q)", position, plate, name))
 }
 

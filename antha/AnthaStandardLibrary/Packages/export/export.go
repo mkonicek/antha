@@ -35,7 +35,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/AnthaPath"
+	anthapath "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/AnthaPath"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes/lookup"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
@@ -307,8 +307,7 @@ func FastaSerialfromMultipleAssemblies(dirname string, multipleassemblyparameter
 
 // TextFile exports data in the format of a set of strings to a file.
 // Each entry in the set of strings represents a line.
-func TextFile(filename string, line []string) (wtype.File, error) {
-
+func TextFile(filename string, lines []string) (wtype.File, error) {
 	var anthafile wtype.File
 
 	f, err := os.Create(filename)
@@ -317,18 +316,12 @@ func TextFile(filename string, line []string) (wtype.File, error) {
 	}
 	defer closeReader(f)
 
-	for _, str := range line {
-
-		if _, err = fmt.Fprintln(f, str); err != nil {
-			return anthafile, err
-		}
+	bs := []byte(strings.Join(lines, "\n"))
+	if _, err = f.Write(bs); err != nil {
+		return anthafile, err
 	}
-	alldata := stringsToBytes(line)
 	anthafile.Name = filename
-
-	err = anthafile.WriteAll(alldata)
-
-	return anthafile, err
+	return anthafile, anthafile.WriteAll(bs)
 }
 
 // JSON exports any data as a json object in  a file.
@@ -416,18 +409,6 @@ func Reader(reader io.Reader, filename string) (wtype.File, error) {
 		return wtype.File{}, err
 	}
 	return Binary(bytes, filename)
-}
-
-func stringsToBytes(data []string) []byte {
-	var alldata []byte
-
-	for _, str := range data {
-		bts := []byte(str)
-		for i := range bts {
-			alldata = append(alldata, bts[i])
-		}
-	}
-	return alldata
 }
 
 func streamToByte(stream io.Reader) ([]byte, error) {

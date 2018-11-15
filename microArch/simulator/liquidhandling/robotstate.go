@@ -438,70 +438,7 @@ func isHAligned(lhs wtype.WellCoords, rhs wtype.WellCoords) bool {
 //GetTipsToLoad get which tips would be loaded by the adaptor given the tiploading behaviour
 //returns an error if OverridesLoadTipsCommand is false or there aren't enough tips
 func (self *AdaptorState) GetTipCoordsToLoad(tb *wtype.LHTipbox, num int) ([][]wtype.WellCoords, error) {
-	var ret [][]wtype.WellCoords
-	if !self.tipBehaviour.OverrideLoadTipsCommand {
-		return ret, errors.New("Tried to get tips when override is false")
-	}
-
-	it := wtype.NewAddressIterator(tb,
-		self.tipBehaviour.LoadingOrder,
-		self.tipBehaviour.VerticalLoadingDirection,
-		self.tipBehaviour.HorizontalLoadingDirection,
-		false)
-
-	isInline := isVAligned
-	if self.params.Orientation == wtype.LHHChannel {
-		isInline = isHAligned
-	}
-
-	tipsRemaining := num
-	var lastTipCoord wtype.WellCoords
-	currChunk := make([]wtype.WellCoords, 0, num)
-	for wc := it.Curr(); it.Valid(); wc = it.Next() {
-		//start a new chunk if this chunk has something in it AND (we found an empty position OR we changed row/column)
-		if len(currChunk) > 0 && (!tb.HasTipAt(wc) || !isInline(lastTipCoord, wc)) {
-			//keep the chunk if either this chunk provides all the tips we need or we can load it sequentially
-			if !(self.tipBehaviour.ChunkingBehaviour == wtype.NoSequentialTipLoading && len(currChunk) < tipsRemaining) {
-				ret = append(ret, currChunk)
-				tipsRemaining -= len(currChunk)
-			}
-			currChunk = make([]wtype.WellCoords, 0, tipsRemaining)
-		}
-		//if we have all the chunks we need
-		if len(currChunk) >= tipsRemaining {
-			break
-		}
-		//add the next tip
-		if tb.HasTipAt(wc) {
-			currChunk = append(currChunk, wc)
-			lastTipCoord = wc
-		}
-	}
-	if len(currChunk) > 0 {
-		ret = append(ret, currChunk)
-		tipsRemaining -= len(currChunk)
-	}
-
-	if self.tipBehaviour.ChunkingBehaviour == wtype.ReverseSequentialTipLoading {
-		//apparently this is actually the recommended way to reverse a list in place
-		for i := len(ret)/2 - 1; i >= 0; i-- {
-			opp := len(ret) - 1 - i
-			ret[i], ret[opp] = ret[opp], ret[i]
-		}
-
-		for _, chunk := range ret {
-			for i := len(chunk)/2 - 1; i >= 0; i-- {
-				opp := len(chunk) - 1 - i
-				chunk[i], chunk[opp] = chunk[opp], chunk[i]
-			}
-		}
-	}
-
-	if tipsRemaining > 0 {
-		return ret, errors.New("not enough tips in tipbox")
-	}
-
-	return ret, nil
+	return self.tipBehaviour.GetTipCoordsToLoad(tb, num)
 }
 
 // -------------------------------------------------------------------------------

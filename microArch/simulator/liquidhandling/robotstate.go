@@ -427,10 +427,9 @@ func (self *AdaptorState) AutoRefillsTipboxes() bool {
 	return self.tipBehaviour.AutoRefillTipboxes
 }
 
-//GetTipsToLoad get which tips would be loaded by the adaptor given the tiploading behaviour
-//returns an error if OverridesLoadTipsCommand is false or there aren't enough tips
-func (self *AdaptorState) GetTipCoordsToLoad(tb *wtype.LHTipbox, num int) ([][]wtype.WellCoords, error) {
-	return self.tipBehaviour.GetTipCoordsToLoad(tb, num)
+//GetTipLoadBehaviour get which tips would be loaded by the adaptor given the tiploading behaviour
+func (self *AdaptorState) GetTipLoadBehaviour(tb *wtype.LHTipbox, num int) ([][]wtype.WellCoords, error) {
+	return self.tipBehaviour.GetBehaviour(tb, num)
 }
 
 // -------------------------------------------------------------------------------

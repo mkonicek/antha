@@ -222,12 +222,21 @@ func (s TipLoadingBehaviour) String() string {
 	return fmt.Sprintf("%sauto-refilling, loading order: %v, %v, %v, %v", autoRefill, s.LoadingOrder, s.VerticalLoadingDirection, s.HorizontalLoadingDirection, s.ChunkingBehaviour)
 }
 
-//GetTipsToLoad get which tips would be loaded given the tiploading behaviour
-//returns an error if OverridesLoadTipsCommand is false or there aren't enough tips
-func (self *TipLoadingBehaviour) GetTipCoordsToLoad(tb *LHTipbox, num int) ([][]WellCoords, error) {
+// GetBehaviour get the coordinates of the tips which would be loaded by the tiploading behaviour
+// when asked to load num tips from the given tipbox.
+// Returns slices of wellcoords, e.g. [[G1, H1], [A2, B2]], where in this case [G1, H1] would be loaded
+// simultaneously followed by [A2, B2].
+// if num is greater than the tips remaining, the tipbox will be refilled if
+// AutoRefillTipboxes is true, otherwise returns an error if there aren't enough tips
+func (self *TipLoadingBehaviour) GetBehaviour(tb *LHTipbox, num int) ([][]WellCoords, error) {
 	var ret [][]WellCoords
-	if !self.OverrideLoadTipsCommand {
-		return ret, errors.New("Tried to get tips when override is false")
+
+	if !tb.HasEnoughTips(num) {
+		if self.AutoRefillTipboxes {
+			tb.Refill()
+		} else {
+			return nil, errors.Errorf("not enough tips in tipbox: require %d, remaining %d", num, tb.N_clean_tips())
+		}
 	}
 
 	it := NewAddressIterator(tb,

@@ -1117,7 +1117,7 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 	//if the adaptor might override what we tell it
 	if adaptor.OverridesLoadTipsCommand() && self.settings.IsTipLoadingOverrideEnabled() {
 		//a list of tip locations that will be loaded
-		tipChunks, err := adaptor.GetTipCoordsToLoad(tipbox, multi)
+		tipChunks, err := adaptor.GetTipLoadBehaviour(tipbox, multi)
 		if err != nil {
 			self.AddErrorf("%s: unexpected error: %s", describe(), err.Error())
 			return ret

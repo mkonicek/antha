@@ -427,14 +427,6 @@ func (self *AdaptorState) AutoRefillsTipboxes() bool {
 	return self.tipBehaviour.AutoRefillTipboxes
 }
 
-func isVAligned(lhs wtype.WellCoords, rhs wtype.WellCoords) bool {
-	return lhs.X == rhs.X
-}
-
-func isHAligned(lhs wtype.WellCoords, rhs wtype.WellCoords) bool {
-	return lhs.Y == rhs.Y
-}
-
 //GetTipsToLoad get which tips would be loaded by the adaptor given the tiploading behaviour
 //returns an error if OverridesLoadTipsCommand is false or there aren't enough tips
 func (self *AdaptorState) GetTipCoordsToLoad(tb *wtype.LHTipbox, num int) ([][]wtype.WellCoords, error) {

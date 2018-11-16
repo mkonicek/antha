@@ -36,6 +36,8 @@ import (
 // NextFreeWell checks for the next well which is empty in a plate.
 // The user can also specify wells to avoid, preffered wells and
 // whether to search through the well positions by row. The default is by column.
+// If the plate has 16 rows (i.e. 384 well plate)
+// we'll skip every other row in order to optimise multichanneling.
 func NextFreeWell(plate *wtype.Plate, avoidWells []string, preferredWells []string, byRow bool) (well string, err error) {
 
 	if plate == nil {
@@ -54,6 +56,25 @@ func NextFreeWell(plate *wtype.Plate, avoidWells []string, preferredWells []stri
 	}
 
 	allWellPositions := plate.AllWellPositions(byRow)
+
+	// if the plate has 16 rows, i.e. a 384 well plate,
+	// we'll skip every other row in order to optimise multichanneling.
+	if plate.WellsY() == 16 && !byRow {
+		newWellPositions := make([]string, 0)
+		// odd numbers first
+		for index := range allWellPositions {
+			if index%2 == 0 {
+				newWellPositions = append(newWellPositions, allWellPositions[index])
+			}
+		}
+		// then even numbers
+		for index := range allWellPositions {
+			if index%2 != 0 {
+				newWellPositions = append(newWellPositions, allWellPositions[index])
+			}
+		}
+		allWellPositions = newWellPositions
+	}
 
 	for _, well := range allWellPositions {
 		// If a well position is found to already have been used then add one to our counter that specifies the next well to use. See step 2 of the following comments.

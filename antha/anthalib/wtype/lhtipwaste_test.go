@@ -1,6 +1,10 @@
 package wtype
 
-import "testing"
+import (
+	"encoding/json"
+	"reflect"
+	"testing"
+)
 
 func makeTipwasteForTest() *LHTipwaste {
 	shp := NewShape("box", "mm", 123.0, 80.0, 92.0)
@@ -48,4 +52,28 @@ func TestTipwasteCoordsToWellCoords(t *testing.T) {
 		t.Errorf("Delta incorrect: expected (%f, %f), got (%f, %f)", eDelta.X, eDelta.Y, delta.X, delta.Y)
 	}
 
+}
+
+func TestTipwasteSerialisation(t *testing.T) {
+	partFull := makeTipwasteForTest()
+	partFull.SetOffset(Coordinates{X: 1.0, Y: 2.0, Z: 3.0})
+	partFull.Contents = 300
+
+	tipwastes := []*LHTipwaste{
+		makeTipwasteForTest(),
+		partFull,
+	}
+
+	for _, before := range tipwastes {
+		var after LHTipwaste
+		if data, err := json.Marshal(before); err != nil {
+			t.Fatal(err)
+		} else if err := json.Unmarshal(data, &after); err != nil {
+			t.Fatal(err)
+		}
+
+		if !reflect.DeepEqual(before.AsWell, after.AsWell) {
+			t.Errorf("serialisation changed the tipwaste:\nbefore: %#v\nafter : %#v", before.AsWell, after.AsWell)
+		}
+	}
 }

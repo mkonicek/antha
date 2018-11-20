@@ -486,7 +486,18 @@ func (assemblyParameters Assemblyparameters) Insert(result wtype.DNASequence) (i
 	return insert, fmt.Errorf("no insert sequences found which are present in assembled sequence %s. ", result.Name())
 }
 
-// Assemblysimulator simulate assembly of Assemblyparameters: returns status, number of correct assemblies, any restriction sites found, new DNA Sequences and an error.
+const thresholdForOnlyTestingPartsInSpecifiedOrder int = 4
+
+/*
+Assemblysimulator simulates assembly of Assemblyparameters: returns status, number of correct assemblies, any restriction sites found, new DNA Sequences and an error.
+
+Currently the more comprehensive assembly validation function (FindAllAssemblyProducts) tests all part order combinations;
+this is thorough and more powerful at detecting potential mis assemblies but is very computationally expensive hence
+there exists a threshold number of parts above which the simpler assembly validation (JoinXNumberOfParts)
+will occur which will only test the validity of the assembly in the part order specified.
+
+The threshold is currently set to 5 part assemblies (4 parts + vector) which is 5! (120) part order combinations.
+*/
 func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, successfulassemblies int, sites []RestrictionSites, newDNASequences []wtype.DNASequence, err error) {
 
 	// fetch enzyme properties
@@ -506,7 +517,7 @@ func Assemblysimulator(assemblyparameters Assemblyparameters) (s string, success
 	var failedAssemblies []DigestedFragment
 	var plasmidProducts []wtype.DNASequence
 
-	if len(assemblyparameters.Partsinorder) > 6 {
+	if len(assemblyparameters.Partsinorder) > thresholdForOnlyTestingPartsInSpecifiedOrder {
 		failedAssemblies, plasmidProducts, _, err = JoinXNumberOfParts(assemblyparameters.Vector, assemblyparameters.Partsinorder, enzyme)
 	} else {
 		failedAssemblies, plasmidProducts, err = FindAllAssemblyProducts(assemblyparameters.Vector, assemblyparameters.Partsinorder, enzyme)

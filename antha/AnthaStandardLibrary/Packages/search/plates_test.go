@@ -51,6 +51,7 @@ func TestNextFreeWell(t *testing.T) {
 		byRow          bool
 		expectedResult string
 		expectedError  error
+		options        []Option
 	}
 
 	// create a test plate
@@ -171,6 +172,7 @@ func TestNextFreeWell(t *testing.T) {
 			byRow:          false,
 			expectedResult: "C1",
 			expectedError:  nil,
+			options:        []Option{SkipAlternateWells},
 		},
 		{
 			avoidWells:     []string{},
@@ -183,7 +185,7 @@ func TestNextFreeWell(t *testing.T) {
 	}
 
 	for _, test := range nextwellTests {
-		well, err := NextFreeWell(test.plateType, test.avoidWells, test.preferredWells, test.byRow)
+		well, err := NextFreeWell(test.plateType, test.avoidWells, test.preferredWells, test.byRow, test.options...)
 
 		if well != test.expectedResult {
 			t.Error(

@@ -23,6 +23,7 @@
 package wtype
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"strings"
@@ -748,6 +749,19 @@ func (tb *LHTipbox) Refresh() {
 
 func (tb *LHTipbox) Refill() {
 	tb.Refresh()
+}
+
+func (tb *LHTipbox) MarshalJSON() ([]byte, error) {
+	return json.Marshal(newSTipbox(tb))
+}
+
+func (tb *LHTipbox) UnmarshalJSON(data []byte) error {
+	var stb sTipbox
+	if err := json.Unmarshal(data, &stb); err != nil {
+		return err
+	}
+	stb.Fill(tb)
+	return nil
 }
 
 func initialize_tips(tipbox *LHTipbox, tiptype *LHTip) *LHTipbox {

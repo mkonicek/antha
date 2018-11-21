@@ -2,63 +2,21 @@ package cmd
 
 import (
 	"encoding/json"
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/execute/executeutil"
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var convertAllBundlesCmd = &cobra.Command{
 	Use:   "all-bundle-parameters",
 	Short: "update all bundle parameters according to the map of old parameter names to new found in metadata",
 	RunE:  convertAllBundles,
-}
-
-type bundle struct {
-	Dir      string
-	Path     string
-	FileName string
-}
-
-type bundles struct {
-	Bundles []*bundle
-	seen    map[string]bool
-}
-
-func newBundles() *bundles {
-	return &bundles{
-		seen: make(map[string]bool),
-	}
-}
-
-func (b *bundles) Walk(path string, fi os.FileInfo, err error) error {
-	if err != nil {
-		return err
-	}
-
-	if fi.IsDir() {
-		return nil
-	}
-	if !strings.HasSuffix(path, ".bundle.json") {
-		return nil
-	}
-
-	dir, fileName := filepath.Split(path)
-	if b.seen[dir] {
-		return nil
-	}
-
-	b.seen[dir] = true
-
-	b.Bundles = append(b.Bundles, &bundle{
-		Dir:      dir,
-		Path:     path,
-		FileName: fileName,
-	})
-
-	return nil
 }
 
 //
@@ -69,12 +27,22 @@ func convertAllBundles(cmd *cobra.Command, args []string) error {
 
 	// find metadata files
 	elements := newElements()
-	if err := filepath.Walk(viper.GetString("rootDir"), elements.Walk); err != nil {
+	if err := filepath.Walk(viper.GetString("elementsDir"), elements.Walk); err != nil {
 		return err
 	}
 
-	bundles := newBundles()
-	if err := filepath.Walk(viper.GetString("rootDir"), bundles.Walk); err != nil {
+	var allBundles []*executeutil.TestInput
+	var err error
+
+	if path := viper.GetString("specificFile"); path != "" {
+
+		dir, _ := filepath.Split(path)
+
+		allBundles = append(allBundles, &executeutil.TestInput{
+			BundlePath: path,
+			Dir:        dir,
+		})
+	} else if allBundles, err = executeutil.FindTestInputs(viper.GetString("bundlesDir")); err != nil {
 		return err
 	}
 
@@ -82,12 +50,11 @@ func convertAllBundles(cmd *cobra.Command, args []string) error {
 
 	for _, elem := range elements.Elements {
 
-		metadataFileName := filepath.Join(elem.Dir, "metadata.json")
+		metadataFileName := elem.MetadataPath()
 
 		cFile, err := os.Open(metadataFileName)
 
 		if err != nil {
-			errs = append(errs, metadataFileName+": ", err.Error())
 			cFile.Close() //nolint
 		} else {
 			var c NewElementMappingDetails
@@ -98,10 +65,27 @@ func convertAllBundles(cmd *cobra.Command, args []string) error {
 			cFile.Close() //nolint
 
 			if !c.Empty() {
-				for _, bundle := range bundles.Bundles {
-					err := convertBundleWithArgs(metadataFileName, bundle.Path, filepath.Join(bundle.Dir, viper.GetString("addPrefix")+bundle.FileName))
+				for _, bundle := range allBundles {
+
+					dir, fileName := filepath.Split(bundle.BundlePath)
+
+					if !strings.HasPrefix(fileName, viper.GetString("addPrefix")) {
+						fileName = viper.GetString("addPrefix") + fileName
+					}
+					newPath := filepath.Join(dir, fileName)
+
+					err := convertBundleWithArgs(metadataFileName, bundle.BundlePath, newPath)
+
 					if err != nil {
-						errs = append(errs, metadataFileName+" + "+bundle.Path+": "+err.Error())
+						switch err.(type) {
+						case wtype.Warning:
+							errs = append(errs, metadataFileName+" + "+bundle.BundlePath+": "+err.Error())
+						default:
+							// ignore
+						}
+					} else {
+						// update bundle name, in the case it will be re-modified
+						bundle.BundlePath = newPath
 					}
 				}
 			}
@@ -120,6 +104,8 @@ func init() {
 	convertCmd.AddCommand(c)
 
 	flags := c.Flags()
-	flags.String("rootDir", ".", "root directory to search for metadata files with new element mapping and test bundles to update")
+	flags.String("elementsDir", ".", "root directory to search for metadata files with new element mapping")
+	flags.String("bundlesDir", ".", "root directory to search for test bundles to update if specificFile is not specified")
 	flags.String("addPrefix", "", "adds a common prefix to the start of all updated bundle files")
+	flags.String("specificFile", "", "specify a single bundle file to convert with all metadata files found in rootDir")
 }

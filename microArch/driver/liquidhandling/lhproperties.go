@@ -24,13 +24,13 @@ package liquidhandling
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/antha-lang/antha/antha/anthalib/material"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
@@ -42,29 +42,25 @@ import (
 // probably needs splitting up to separate out the state information
 // from the properties information
 type LHProperties struct {
-	ID            string
-	Nposns        int
-	Positions     map[string]*wtype.LHPosition
-	PlateLookup   map[string]interface{}
-	PosLookup     map[string]string
-	PlateIDLookup map[string]string
-	Plates        map[string]*wtype.Plate
-	Tipboxes      map[string]*wtype.LHTipbox
-	Tipwastes     map[string]*wtype.LHTipwaste
-	Wastes        map[string]*wtype.Plate
-	Washes        map[string]*wtype.Plate
-	Devices       map[string]string
-	Model         string
-	Mnfr          string
-	LHType        string
-	TipType       string
-	//Heads lists every head (whether loaded or not) that is available for the machine
-	Heads []*wtype.LHHead
-	//Adaptors lists every adaptor (whether loaded or not) that is available for the machine
-	Adaptors []*wtype.LHAdaptor
-	//HeadAssemblies describes how each loaded head and adaptor is loaded into the machine
-	HeadAssemblies       []*wtype.LHHeadAssembly
-	Tips                 []*wtype.LHTip
+	ID                   string
+	Nposns               int
+	Positions            map[string]*wtype.LHPosition // position descriptions by position name
+	PlateLookup          map[string]interface{}       // deck object (plate, tipbox, etc) by object ID
+	PosLookup            map[string]string            // object ID by position name
+	PlateIDLookup        map[string]string            // position name by object ID
+	Plates               map[string]*wtype.Plate      // plates by position name
+	Tipboxes             map[string]*wtype.LHTipbox   // tipboxes by position name
+	Tipwastes            map[string]*wtype.LHTipwaste // tipwastes by position name
+	Wastes               map[string]*wtype.Plate      // waste plates by position name
+	Washes               map[string]*wtype.Plate      // wash plates by position name
+	Model                string
+	Mnfr                 string
+	LHType               LiquidHandlerLevel      // describes which liquidhandling API should be used to communicate with the device
+	TipType              TipType                 // defines the type of tips used by the liquidhandler
+	Heads                []*wtype.LHHead         // lists every head (whether loaded or not) that is available for the machine
+	Adaptors             []*wtype.LHAdaptor      // lists every adaptor (whether loaded or not) that is available for the machine
+	HeadAssemblies       []*wtype.LHHeadAssembly // describes how each loaded head and adaptor is loaded into the machine
+	Tips                 []*wtype.LHTip          // lists each type of tip available in the current configuration
 	Tip_preferences      []string
 	Input_preferences    []string
 	Output_preferences   []string
@@ -74,8 +70,21 @@ type LHProperties struct {
 	Driver               LiquidhandlingDriver `gotopb:"-"`
 	CurrConf             *wtype.LHChannelParameter
 	Cnfvol               []*wtype.LHChannelParameter
-	Layout               map[string]wtype.Coordinates
-	MaterialType         material.MaterialType
+	Layout               map[string]wtype.Coordinates // position location by position name
+}
+
+func (lhp *LHProperties) MarshalJSON() ([]byte, error) {
+	return json.Marshal(newSProperties(lhp))
+}
+
+func (lhp *LHProperties) UnmarshalJSON(data []byte) error {
+	var slhp sProperties
+	if err := json.Unmarshal(data, &slhp); err != nil {
+		return err
+	}
+
+	slhp.Fill(lhp)
+	return nil
 }
 
 // utility print function
@@ -372,10 +381,6 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 		r.PosLookup[pos] = newid
 	}
 
-	for name, dev := range lhp.Devices {
-		r.Devices[name] = dev
-	}
-
 	for _, tip := range lhp.Tips {
 		newtip := tip.Dup()
 		if keepIDs {
@@ -402,23 +407,20 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 		r.Layout[i] = v
 	}
 
-	r.MaterialType = lhp.MaterialType
-
 	// copy the driver
-
 	r.Driver = lhp.Driver
 
 	return r
 }
 
 // constructor for the above
-func NewLHProperties(num_positions int, model, manufacturer, lhtype, tiptype string, layout map[string]wtype.Coordinates) *LHProperties {
+func NewLHProperties(num_positions int, model, manufacturer string, lhtype LiquidHandlerLevel, tiptype TipType, layout map[string]wtype.Coordinates) *LHProperties {
 	// assert validity of lh and tip types
 
-	if !IsValidLiquidHandlerType(lhtype) {
+	if !lhtype.IsValid() {
 		panic(fmt.Sprintf("Invalid liquid handling type requested: %s", lhtype))
 	}
-	if !IsValidTipType(tiptype) {
+	if !tiptype.IsValid() {
 		panic(fmt.Sprintf("Invalid tip usage type requested: %s", tiptype))
 	}
 
@@ -455,7 +457,6 @@ func NewLHProperties(num_positions int, model, manufacturer, lhtype, tiptype str
 	lhp.Tipwastes = make(map[string]*wtype.LHTipwaste, lhp.Nposns)
 	lhp.Wastes = make(map[string]*wtype.Plate, lhp.Nposns)
 	lhp.Washes = make(map[string]*wtype.Plate, lhp.Nposns)
-	lhp.Devices = make(map[string]string, lhp.Nposns)
 	lhp.Heads = make([]*wtype.LHHead, 0, 2)
 	lhp.Tips = make([]*wtype.LHTip, 0, 3)
 
@@ -463,22 +464,20 @@ func NewLHProperties(num_positions int, model, manufacturer, lhtype, tiptype str
 
 	// lhp.Curcnf, lhp.Cmnvol etc. intentionally left blank
 
-	lhp.MaterialType = material.DEVICE
-
 	return &lhp
 }
 
 // GetLHType returns the declared type of liquid handler for driver selection purposes
 // e.g. High-Level (HLLiquidHandler) or Low-Level (LLLiquidHandler)
 // see lhtype.go in this directory
-func (lhp *LHProperties) GetLHType() string {
+func (lhp *LHProperties) GetLHType() LiquidHandlerLevel {
 	return lhp.LHType
 }
 
 // GetTipType returns the tip requirements of the liquid handler
 // options are None, Disposable, Fixed, Mixed
 // see lhtype.go in this directory
-func (lhp *LHProperties) GetTipType() string {
+func (lhp *LHProperties) GetTipType() TipType {
 	return lhp.TipType
 }
 
@@ -928,10 +927,6 @@ func (lhp *LHProperties) DropDirtyTips(channels []*wtype.LHChannelParameter) (we
 	return
 }
 
-//GetMaterialType implement stockableMaterial
-func (lhp *LHProperties) GetMaterialType() material.MaterialType {
-	return lhp.MaterialType
-}
 func (lhp *LHProperties) GetTimer() LHTimer {
 	return GetTimerFor(lhp.Mnfr, lhp.Model)
 }

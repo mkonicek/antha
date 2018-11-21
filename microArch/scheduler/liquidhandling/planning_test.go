@@ -181,6 +181,15 @@ func (s Assertions) Assert(t *testing.T, lh *Liquidhandler, request *LHRequest) 
 	}
 }
 
+// DebugPrintInstructions assertion that just prints all the generated instructions
+func DebugPrintInstructions() Assertion {
+	return func(t *testing.T, lh *Liquidhandler, rq *LHRequest) {
+		for _, ins := range rq.Instructions {
+			fmt.Println(liquidhandling.InsToString(ins))
+		}
+	}
+}
+
 // NumberOfAssertion check that the number of instructions of the given type is
 // equal to count
 func NumberOfAssertion(iType *liquidhandling.InstructionType, count int) Assertion {
@@ -206,21 +215,46 @@ func TipsUsedAssertion(expected []wtype.TipEstimate) Assertion {
 	}
 }
 
+// InitialComponentAssertion check that the initial components are present in
+// the given quantities.
+// Currently only supports the case where each component name exists only once
+func InitialComponentAssertion(expected map[string]float64) Assertion {
+	return func(t *testing.T, lh *Liquidhandler, request *LHRequest) {
+		for _, p := range lh.Properties.Plates {
+			for _, w := range p.Wellcoords {
+				if !w.IsEmpty() {
+					if v, ok := expected[w.WContents.CName]; !ok {
+						t.Errorf("unexpected component in plating area: %s", w.WContents.CName)
+					} else if v != w.WContents.Vol {
+						t.Errorf("volume of component %s was %v should be %v", w.WContents.CName, w.WContents.Vol, v)
+					} else {
+						delete(expected, w.WContents.CName)
+					}
+				}
+			}
+		}
+
+		if len(expected) != 0 {
+			t.Errorf("unexpected components remaining: %v", expected)
+		}
+	}
+}
+
 // InputLayoutAssertion check that the input layout is as expected
 // expected is a map of well location (in A1 format) to liquid name for each input plate
 func InputLayoutAssertion(expected ...map[string]string) Assertion {
 	return func(t *testing.T, lh *Liquidhandler, request *LHRequest) {
 		if len(request.InputPlateOrder) != len(expected) {
-			t.Errorf("expected %d input plates, got %d", len(expected), len(request.InputPlateOrder))
+			t.Errorf("input layout: expected %d input plates, got %d", len(expected), len(request.InputPlateOrder))
 			return
 		}
 
 		for plateNum, plateID := range request.InputPlateOrder {
 			got := make(map[string]string)
 			if plate, ok := request.InputPlates[plateID]; !ok {
-				t.Errorf("while asserting input layout: inconsistent InputPlateOrder in request: no id %q in liquidhandler", plateID)
+				t.Errorf("input layout: inconsistent InputPlateOrder in request: no id %q in liquidhandler", plateID)
 			} else if plate == nil {
-				t.Errorf("nil input plate in request")
+				t.Errorf("input layout: nil input plate in request")
 			} else {
 				for address, well := range plate.Wellcoords {
 					if !well.IsEmpty() {
@@ -228,7 +262,7 @@ func InputLayoutAssertion(expected ...map[string]string) Assertion {
 					}
 				}
 				if !reflect.DeepEqual(expected[plateNum], got) {
-					t.Errorf("input plate %d doesn't match:\ne: %v\ng: %v", plateNum, expected[plateNum], got)
+					t.Errorf("input layout: input plate %d doesn't match:\ne: %v\ng: %v", plateNum, expected[plateNum], got)
 				}
 			}
 		}
@@ -285,11 +319,11 @@ func InitialInputVolumesAssertion(tol float64, expected ...map[string]float64) A
 	return func(t *testing.T, lh *Liquidhandler, request *LHRequest) {
 
 		if got, err := describePlateVolumes(request.InputPlateOrder, request.InputPlates); err != nil {
-			t.Error(errors.WithMessage(err, "while asserting initial input volumes"))
+			t.Error(errors.WithMessage(err, "initial input volumes"))
 		} else {
 			for i, g := range got {
 				if !volumesMatch(tol, expected[i], g) {
-					t.Errorf("input plate %d doesn't match:\ne: %v\ng: %v", i, expected[i], g)
+					t.Errorf("initial input volumes: input plate %d doesn't match:\ne: %v\ng: %v", i, expected[i], g)
 				}
 			}
 		}
@@ -308,11 +342,11 @@ func FinalInputVolumesAssertion(tol float64, expected ...map[string]float64) Ass
 		}
 
 		if got, err := describePlateVolumes(pos, lh.FinalProperties.Plates); err != nil {
-			t.Error(errors.WithMessage(err, "while asserting final input volumes"))
+			t.Error(errors.WithMessage(err, "final input volumes"))
 		} else {
 			for i, g := range got {
 				if !volumesMatch(tol, expected[i], g) {
-					t.Errorf("input plate %d doesn't match:\ne: %v\ng: %v", i, expected[i], g)
+					t.Errorf("final input volumes: input plate %d doesn't match:\ne: %v\ng: %v", i, expected[i], g)
 				}
 			}
 		}

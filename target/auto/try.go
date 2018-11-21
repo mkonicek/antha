@@ -6,8 +6,7 @@ import (
 	"github.com/antha-lang/antha/ast"
 	driver "github.com/antha-lang/antha/driver/antha_driver_v1"
 	runner "github.com/antha-lang/antha/driver/antha_runner_v1"
-	lhclient "github.com/antha-lang/antha/driver/lh"
-	lh "github.com/antha-lang/antha/driver/pb/lh"
+	lhclient "github.com/antha-lang/antha/driver/liquidhandling/client"
 	"github.com/antha-lang/antha/target/handler"
 	"github.com/antha-lang/antha/target/human"
 	"github.com/antha-lang/antha/target/mixer"
@@ -88,13 +87,11 @@ func (a *tryer) AddMixer(ctx context.Context, conn *grpc.ClientConn, arg interfa
 }
 
 func (a *tryer) addHighLevelMixer(ctx context.Context, conn *grpc.ClientConn, arg interface{}) error {
-	c := lh.NewHighLevelLiquidhandlingDriverClient(conn)
-
 	var candidates []interface{}
 	candidates = append(candidates, arg)
 	candidates = append(candidates, a.MaybeArgs...)
 
-	d, err := mixer.New(getMixerOpt(candidates), &lhclient.HLLHDriver{C: c})
+	d, err := mixer.New(getMixerOpt(candidates), lhclient.NewHighLevelClientFromConn(conn))
 	if err != nil {
 		return err
 	}
@@ -104,13 +101,12 @@ func (a *tryer) addHighLevelMixer(ctx context.Context, conn *grpc.ClientConn, ar
 	return nil
 }
 func (a *tryer) addLowLevelMixer(ctx context.Context, conn *grpc.ClientConn, arg interface{}) error {
-	c := lh.NewLowLevelLiquidhandlingDriverClient(conn)
 
 	var candidates []interface{}
 	candidates = append(candidates, arg)
 	candidates = append(candidates, a.MaybeArgs...)
 
-	d, err := mixer.New(getMixerOpt(candidates), &lhclient.LLLHDriver{C: c})
+	d, err := mixer.New(getMixerOpt(candidates), lhclient.NewLowLevelClientFromConn(conn))
 	if err != nil {
 		return err
 	}

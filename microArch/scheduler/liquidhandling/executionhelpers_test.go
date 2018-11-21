@@ -81,7 +81,7 @@ func (self *setOutputOrderTest) Run(t *testing.T) {
 	}
 
 	//sort the instructions within each link of the chain
-	ichain.sortInstructions(self.OutputSort)
+	ichain.SortInstructions(self.OutputSort)
 
 	if e, g := self.ChainHeight, ichain.Height(); e != g {
 		t.Fatalf("Instruction chain length mismatch, e: %d, g: %d", e, g)

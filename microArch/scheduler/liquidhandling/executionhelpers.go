@@ -37,8 +37,8 @@ const (
 	RANDOM
 )
 
-func convertToInstructionChain(sortedNodes []graph.Node, tg graph.Graph) *IChain {
-	ic := NewIChain(nil)
+func convertToInstructionChain(sortedNodes []graph.Node, tg graph.Graph) *wtype.IChain {
+	ic := wtype.NewIChain(nil)
 
 	// the nodes are now ordered according to dependency relations
 	// *IN REVERSE ORDER*
@@ -56,7 +56,7 @@ func convertToInstructionChain(sortedNodes []graph.Node, tg graph.Graph) *IChain
 	return ic
 }
 
-func addToIChain(ic *IChain, n graph.Node, tg graph.Graph) {
+func addToIChain(ic *wtype.IChain, n graph.Node, tg graph.Graph) {
 	deps := make(map[graph.Node]bool)
 
 	for i := 0; i < tg.NumOuts(n); i++ {
@@ -67,19 +67,19 @@ func addToIChain(ic *IChain, n graph.Node, tg graph.Graph) {
 	cur.Values = append(cur.Values, n.(*wtype.LHInstruction))
 }
 
-func findNode(ic *IChain, n graph.Node, tg graph.Graph, deps map[graph.Node]bool) *IChain {
+func findNode(ic *wtype.IChain, n graph.Node, tg graph.Graph, deps map[graph.Node]bool) *wtype.IChain {
 	if thisNode(ic, n, tg, deps) {
 		return ic
 	} else if ic.Child != nil {
 		return findNode(ic.Child, n, tg, deps)
 	} else {
-		newNode := NewIChain(ic)
+		newNode := wtype.NewIChain(ic)
 		ic.Child = newNode
 		return newNode
 	}
 }
 
-func thisNode(ic *IChain, n graph.Node, tg graph.Graph, deps map[graph.Node]bool) bool {
+func thisNode(ic *wtype.IChain, n graph.Node, tg graph.Graph, deps map[graph.Node]bool) bool {
 	// if this looks weird it's because "output" below really means "input"
 	// since we have reversed dependency order
 
@@ -209,13 +209,14 @@ func aggregatePromptsWithSameMessage(inss []*wtype.LHInstruction, topolGraph gra
 
 //buildInstructionChain guarantee all nodes are dependency-ordered
 //in order to aggregate without introducing cycles
-func buildInstructionChain(unsorted map[string]*wtype.LHInstruction) (*IChain, error) {
+func buildInstructionChain(unsorted map[string]*wtype.LHInstruction) (*wtype.IChain, error) {
+
 	unsortedSlice := make([]*wtype.LHInstruction, 0, len(unsorted))
 	for _, instruction := range unsorted {
 		unsortedSlice = append(unsortedSlice, instruction)
 	}
 
-	tg, err := MakeTGraph(unsortedSlice)
+	tg, err := wtype.MakeTGraph(unsortedSlice)
 	if err != nil {
 		return nil, err
 	}
@@ -239,7 +240,7 @@ func buildInstructionChain(unsorted map[string]*wtype.LHInstruction) (*IChain, e
 	}
 
 	// sort again post aggregation
-	tg, err = MakeTGraph(sortedAsIns)
+	tg, err = wtype.MakeTGraph(sortedAsIns)
 	if err != nil {
 		return nil, err
 	}

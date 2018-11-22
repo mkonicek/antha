@@ -74,7 +74,6 @@ func findNode(ic *wtype.IChain, n graph.Node, tg graph.Graph, deps map[graph.Nod
 		return findNode(ic.Child, n, tg, deps)
 	} else {
 		newNode := wtype.NewIChain(ic)
-		ic.Child = newNode
 		return newNode
 	}
 }

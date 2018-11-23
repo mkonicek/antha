@@ -108,8 +108,8 @@ func Concentration(pathlengthcorrected wtype.Absorbance, molarabsorbtivityatwave
 
 	A := pathlengthcorrected
 	l := 1                                         // 1cm if pathlengthcorrected add logic to use pathlength of absorbance reading input
-	ε := molarabsorbtivityatwavelengthLpermolpercm // L/Mol/cm
+	ε := molarabsorbtivityatwavelengthLpermolpercm // l/Mol/cm
 
-	concfloat := A.Reading / (float64(l) * ε) // Mol/L
+	concfloat := A.Reading / (float64(l) * ε)
 	return wunit.NewConcentration(concfloat, "Mol/l"), nil
 }

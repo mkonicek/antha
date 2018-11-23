@@ -61,12 +61,12 @@ type AbsorbanceCorrection struct {
 
 // Absorbance stores the key properties of an absorbance reading.
 type Absorbance struct {
-	WellLocation WellCoords             `json:"WellLocation"`
-	Reading      float64                `json:"Reading"`
-	Wavelength   wunit.Length           `json:"Wavelength"`
-	Pathlength   wunit.Length           `json:"Pathlength"`
-	Corrections  []AbsorbanceCorrection `json:"Corrections"`
-	Reader       string                 `json:"Reader"`
+	WellLocation WellCoords                              `json:"WellLocation"`
+	Reading      float64                                 `json:"Reading"`
+	Wavelength   wunit.Length                            `json:"Wavelength"`
+	Pathlength   wunit.Length                            `json:"Pathlength"`
+	Corrections  map[CorrectionType]AbsorbanceCorrection `json:"Corrections"`
+	Reader       string                                  `json:"Reader"`
 	// Source is the Liquid the absorbance reading was carried out on.
 	Source *Liquid `json:"Source"`
 	// Annotations is a field to add custom user labels
@@ -92,7 +92,7 @@ func (a Absorbance) WavelengthToNearestNm() int {
 
 // IsBlankCorrected returns true if the absorbance reading has been blank corrected
 func (a Absorbance) IsBlankCorrected() bool {
-	for _, correction := range a.Corrections {
+	if correction, found := a.Corrections[BlankCorrected]; found {
 		if correction.Type == BlankCorrected {
 			return true
 		}
@@ -102,7 +102,7 @@ func (a Absorbance) IsBlankCorrected() bool {
 
 // IsPathLengthCorrected returns true if the absorbance reading has been pathlength corrected
 func (a Absorbance) IsPathLengthCorrected() bool {
-	for _, correction := range a.Corrections {
+	if correction, found := a.Corrections[PathLengthCorrected]; found {
 		if correction.Type == PathLengthCorrected {
 			return true
 		}
@@ -126,13 +126,20 @@ func toNM(l wunit.Length) float64 {
 }
 
 // Dup creates a duplicate of the absorbance reading, with exact equality for all values.
-func (sample *Absorbance) Dup() Absorbance {
-	return Absorbance{
+func (sample *Absorbance) Dup() *Absorbance {
+
+	var corrections = make(map[CorrectionType]AbsorbanceCorrection, len(sample.Corrections))
+
+	for key, value := range sample.Corrections {
+		corrections[key] = value
+	}
+
+	return &Absorbance{
 		WellLocation: sample.WellLocation,
 		Reading:      sample.Reading,
 		Wavelength:   sample.Wavelength,
 		Pathlength:   sample.Pathlength,
-		Corrections:  append([]AbsorbanceCorrection{}, sample.Corrections...),
+		Corrections:  corrections,
 		Reader:       sample.Reader,
 		Source:       sample.Source,
 		Annotations:  append([]string{}, sample.Annotations...),
@@ -146,12 +153,10 @@ func (sample *Absorbance) BlankCorrect(blanks ...Absorbance) error {
 	for _, blank := range blanks {
 		if sample.Wavelength.EqualToRounded(blank.Wavelength, 9); sample.Pathlength.EqualToRounded(blank.Pathlength, 4) && sample.Reader == blank.Reader {
 			sample.Reading = sample.Reading - blank.Reading
-			sample.Corrections = append(sample.Corrections,
-				AbsorbanceCorrection{
-					Type:              BlankCorrected,
-					CorrectionReading: &blank,
-				},
-			)
+			sample.Corrections[BlankCorrected] = AbsorbanceCorrection{
+				Type:              BlankCorrected,
+				CorrectionReading: &blank,
+			}
 		} else {
 			errs = append(errs,
 				fmt.Sprintf(
@@ -182,6 +187,6 @@ func (sample *Absorbance) PathLengthCorrect(pathlength wunit.Length) error {
 
 	sample.Reading = sample.Reading * ReferencePathlength.RawValue() / pathlength.RawValue()
 
-	sample.Corrections = append(sample.Corrections, AbsorbanceCorrection{Type: PathLengthCorrected, CorrectionReading: nil})
+	sample.Corrections[PathLengthCorrected] = AbsorbanceCorrection{Type: PathLengthCorrected, CorrectionReading: nil}
 	return nil
 }

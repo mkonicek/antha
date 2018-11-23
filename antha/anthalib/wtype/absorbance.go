@@ -84,7 +84,8 @@ type Absorbance struct {
 // where the wavelenWavelengthToNearestNm be represented by a decimal.
 //
 func (a Absorbance) WavelengthToNearestNm() int {
-	if uint64(toNM(a.Wavelength)) > math.MaxUint64 {
+	// necessary to use int64 here in order to conveniently evaluate size.
+	if int64(toNM(a.Wavelength)) > math.MaxInt64 {
 		panic(errors.Errorf("the value for wavelength %v cannot be safely converted to an integer value", a.Wavelength))
 	}
 	return int(toNM(a.Wavelength))
@@ -151,7 +152,12 @@ func (sample *Absorbance) Dup() *Absorbance {
 func (sample *Absorbance) BlankCorrect(blanks ...Absorbance) error {
 	var errs []string
 	for _, blank := range blanks {
-		if sample.Wavelength.EqualToRounded(blank.Wavelength, 9); sample.Pathlength.EqualToRounded(blank.Pathlength, 4) && sample.Reader == blank.Reader {
+
+		// decimal places for relevant SI scale precision
+		nano := 9
+		milli := 3
+
+		if sample.Wavelength.EqualToRounded(blank.Wavelength, nano); sample.Pathlength.EqualToRounded(blank.Pathlength, milli-1) && sample.Reader == blank.Reader {
 			sample.Reading = sample.Reading - blank.Reading
 			sample.Corrections[BlankCorrected] = AbsorbanceCorrection{
 				Type:              BlankCorrected,

@@ -344,7 +344,8 @@ func (cm *ConcreteMeasurement) EqualTo(m Measurement) bool {
 	if isNil(cm) {
 		return false
 	} else if rhs, err := m.InUnit(cm.Unit()); err != nil {
-		panic(err)
+		// the units are incompatible, so the values cannot be equal
+		return false
 	} else {
 		dif := math.Abs(rhs.RawValue() - cm.RawValue())
 		epsilon := math.Nextafter(1, 2) - 1

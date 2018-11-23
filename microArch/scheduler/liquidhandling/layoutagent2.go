@@ -152,7 +152,7 @@ func getNameForID(pc []PlateChoice, id string) string {
 	return fmt.Sprintf("Output_plate_%s", id[0:6])
 }
 
-func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling.LHProperties, chain *IChain, plate_choices []PlateChoice, mapchoices map[string]string) (*LHRequest, []PlateChoice, map[string]string, error) {
+func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling.LHProperties, chain *wtype.IChain, plate_choices []PlateChoice, mapchoices map[string]string) (*LHRequest, []PlateChoice, map[string]string, error) {
 	// considering only plate assignments,
 	// we have three kinds of solution
 	// 1- ones going to a specific plate
@@ -161,7 +161,8 @@ func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling
 
 	// find existing assignments and copy into the plate_choices structure
 	// this may be because 1) the user has set the assignment 2) the assignment derives from a component
-	plate_choices, mapchoices, err := get_and_complete_assignments(request, chain.ValueIDs(), plate_choices, mapchoices)
+	st := sampletracker.FromContext(ctx)
+	plate_choices, mapchoices, err := getAndCompleteAssignments(st, request, chain.ValueIDs(), plate_choices, mapchoices)
 
 	// map choices maps layout groups to (temp)plate IDs
 
@@ -256,8 +257,6 @@ func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling
 		lkp[v.ID] = append(lkp[v.ID], v.Outputs[0])
 	}
 
-	sampletracker := sampletracker.GetSampleTracker()
-
 	// now map the output assignments in
 	for k, v := range request.OutputAssignments {
 		for _, id := range v {
@@ -270,10 +269,10 @@ func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling
 
 				if ok {
 					x.Loc = remap[tx[0]] + ":" + tx[1]
-					sampletracker.SetLocationOf(x.ID, x.Loc)
+					st.SetLocationOf(x.ID, x.Loc)
 				} else {
 					x.Loc = tx[0] + ":" + tx[1]
-					sampletracker.SetLocationOf(x.ID, x.Loc)
+					st.SetLocationOf(x.ID, x.Loc)
 				}
 			}
 		}
@@ -300,11 +299,9 @@ type PlateChoice struct {
 	Output    []bool
 }
 
-func get_and_complete_assignments(request *LHRequest, order []string, s []PlateChoice, m map[string]string) ([]PlateChoice, map[string]string, error) {
+func getAndCompleteAssignments(st *sampletracker.SampleTracker, request *LHRequest, order []string, s []PlateChoice, m map[string]string) ([]PlateChoice, map[string]string, error) {
 	//s := make([]PlateChoice, 0, 3)
 	//m := make(map[int]string)
-
-	st := sampletracker.GetSampleTracker()
 
 	// inconsistent plate types will be assigned randomly!
 	x := 0
@@ -673,7 +670,6 @@ func make_plates(ctx context.Context, request *LHRequest, order []string) (map[s
 }
 
 func make_layouts(ctx context.Context, request *LHRequest, pc []PlateChoice) error {
-	//sampletracker := sampletracker.GetSampleTracker()
 	// we need to fill in the platechoice structure then
 	// transfer the info across to the solutions
 	//opa := request.OutputAssignments

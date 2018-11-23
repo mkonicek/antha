@@ -32,6 +32,27 @@ import (
 	"github.com/go-test/deep"
 )
 
+func TestMarshalDeckObject(t *testing.T) {
+	objects := []LHObject{
+		makeplatefortest(),
+		maketroughfortest(),
+		makeTipboxForTest(),
+		makeTipwasteForTest(),
+	}
+
+	for _, obj := range objects {
+		t.Run(fmt.Sprintf("%T called %s", obj, NameOf(obj)), func(t *testing.T) {
+			if data, err := MarshalDeckObject(obj); err != nil {
+				t.Error(err)
+			} else if after, err := UnmarshalDeckObject(data); err != nil {
+				t.Error(err)
+			} else if !reflect.DeepEqual(obj, after) {
+				t.Errorf("serialisation changed object: \ne: %#v,\ng: %#v", obj, after)
+			}
+		})
+	}
+}
+
 func TestDeserializeLHSolution(t *testing.T) {
 	str := `{"ID":"","BlockID":{"ThreadID":"","OutputCount":0},"Inst":"","SName":"","Order":0,"Components":null,"ContainerType":"","Welladdress":"","Plateaddress":"","PlateID":"","Platetype":"","Vol":0,"Type":"","Conc":0,"Tvol":0,"Majorlayoutgroup":0,"Minorlayoutgroup":0}`
 	var sol LHSolution

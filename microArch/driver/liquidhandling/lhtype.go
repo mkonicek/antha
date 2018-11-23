@@ -1,41 +1,55 @@
 package liquidhandling
 
 // consts for generic liquid handling types
+type LiquidHandlerLevel int
+
 const (
-	LLLiquidHandler string = "LLLiquidHandler" // requires detailed programming e.g. move, aspirate, move dispense etc.
-	HLLiquidHandler string = "HLLiquidHandler" // can orchestrate liquid transfers itself
+	LLLiquidHandler LiquidHandlerLevel = iota // requires detailed programming e.g. move, aspirate, move dispense etc.
+	HLLiquidHandler                           // can orchestrate liquid transfers itself
 )
 
-func IsValidLiquidHandlerType(s string) bool {
-	switch s {
-	case LLLiquidHandler:
-		fallthrough
-	case HLLiquidHandler:
-		return true
-	default:
-		return false
-	}
+var lhLevels = map[LiquidHandlerLevel]string{
+	LLLiquidHandler: "low level",
+	HLLiquidHandler: "high level",
 }
 
-// consts for tip requirements of liquid handlers
+func (lhl LiquidHandlerLevel) String() string {
+	if r, ok := lhLevels[lhl]; ok {
+		return r
+	}
+	panic("unknown liquid handler level")
+}
+
+func (lhl LiquidHandlerLevel) IsValid() bool {
+	_, ok := lhLevels[lhl]
+	return ok
+}
+
+// TipType types of tips used by liquid handlers
+type TipType int
+
 const (
-	DisposableTips              string = "Disposable" // disposable system	-- needs tip boxes & waste
-	FixedTips                   string = "Fixed"      // fixed tip system	-- needs tip wash
-	MixedDisposableAndFixedTips string = "Mixed"      // both disposable and mixed	-- needs all of the above
-	NoTips                      string = "None"       // does not use tips
+	DisposableTips              TipType = iota // disposable system	-- needs tip boxes & waste
+	FixedTips                                  // fixed tip system	-- needs tip wash
+	MixedDisposableAndFixedTips                // both disposable and mixed	-- needs all of the above
+	NoTips                                     // does not use tips
 )
 
-func IsValidTipType(s string) bool {
-	switch s {
-	case DisposableTips:
-		fallthrough
-	case FixedTips:
-		fallthrough
-	case MixedDisposableAndFixedTips:
-		fallthrough
-	case NoTips:
-		return true
-	default:
-		return false
+var tipNames = map[TipType]string{
+	DisposableTips:              "Disposable",
+	FixedTips:                   "Fixed",
+	MixedDisposableAndFixedTips: "Mixed",
+	NoTips:                      "None",
+}
+
+func (tt TipType) String() string {
+	if r, ok := tipNames[tt]; ok {
+		return r
 	}
+	panic("unknown tip type")
+}
+
+func (tt TipType) IsValid() bool {
+	_, ok := tipNames[tt]
+	return ok
 }

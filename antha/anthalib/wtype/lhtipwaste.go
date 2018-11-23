@@ -1,7 +1,9 @@
 package wtype
 
-// defines a tip waste
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 // tip waste
 
@@ -307,4 +309,17 @@ func (self *LHTipwaste) GetTargetOffset(adaptorName string, channel int) Coordin
 //GetTargets return all the defined targets for the named adaptor
 func (self *LHTipwaste) GetTargets(adaptorName string) []Coordinates {
 	return self.AsWell.GetWellTargets(adaptorName)
+}
+
+func (tw *LHTipwaste) MarshalJSON() ([]byte, error) {
+	return json.Marshal(newSTipwaste(tw))
+}
+
+func (tw *LHTipwaste) UnmarshalJSON(data []byte) error {
+	var stw sTipwaste
+	if err := json.Unmarshal(data, &stw); err != nil {
+		return err
+	}
+	stw.Fill(tw)
+	return nil
 }

@@ -1,27 +1,27 @@
-package liquidhandling
+package wtype
 
 import (
 	"fmt"
 	"sort"
 	"strings"
 
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/graph"
 )
 
 type IChain struct {
 	Parent *IChain
 	Child  *IChain
-	Values []*wtype.LHInstruction
+	Values []*LHInstruction
 	Depth  int
 }
 
 func NewIChain(parent *IChain) *IChain {
 	var it IChain
 	it.Parent = parent
-	it.Values = make([]*wtype.LHInstruction, 0, 1)
+	it.Values = make([]*LHInstruction, 0, 1)
 	if parent != nil {
 		it.Depth = parent.Depth + 1
+		parent.Child = &it
 	}
 	return &it
 }
@@ -42,7 +42,7 @@ func (it *IChain) PruneOut(Remove map[string]bool) *IChain {
 
 	it.Child = it.Child.PruneOut(Remove)
 
-	newValues := make([]*wtype.LHInstruction, 0, len(it.Values))
+	newValues := make([]*LHInstruction, 0, len(it.Values))
 
 	for _, v := range it.Values {
 		if Remove[v.ID] {
@@ -102,7 +102,7 @@ func (it *IChain) ValueIDs() []string {
 	return r
 }
 
-func (it *IChain) Add(ins *wtype.LHInstruction) {
+func (it *IChain) Add(ins *LHInstruction) {
 	if it.Depth < ins.Generation() {
 		it.GetChild().Add(ins)
 	} else {
@@ -122,26 +122,26 @@ func (it *IChain) Print() {
 	fmt.Println("\tPARENT NIL: ", it.Parent == nil)
 	if len(it.Values) > 0 {
 		for j := 0; j < len(it.Values); j++ {
-			if it.Values[j].Type == wtype.LHIMIX {
+			if it.Values[j].Type == LHIMIX {
 				fmt.Printf("MIX    %2d: %s \n", j, it.Values[j].ID)
 				for i := 0; i < len(it.Values[j].Inputs); i++ {
 					fmt.Print(" ", it.Values[j].Inputs[i].ID, ":", it.Values[j].Inputs[i].FullyQualifiedName(), "@", it.Values[j].Inputs[i].Volume().ToString(), " \n")
 				}
 				fmt.Println(":", it.Values[j].Outputs[0].ID, ":", it.Values[j].Platetype, " ", it.Values[j].PlateName, " ", it.Values[j].Welladdress)
 				fmt.Printf("-- ")
-			} else if it.Values[j].Type == wtype.LHIPRM {
+			} else if it.Values[j].Type == LHIPRM {
 				fmt.Println("PROMPT ", it.Values[j].Message, "-- ")
 				for in, out := range it.Values[j].PassThrough {
 					fmt.Println(in, ":::", out.ID, " --")
 				}
-			} else if it.Values[j].Type == wtype.LHISPL {
+			} else if it.Values[j].Type == LHISPL {
 				fmt.Printf("SPLIT %2d: %s ", j, it.Values[j].ID)
 				fmt.Println(" ", it.Values[j].Inputs[0].ID, ":", it.Values[j].Inputs[0].FullyQualifiedName(), " : ", it.Values[j].PlateName, " ", it.Values[j].Welladdress)
 				fmt.Println(" MOVE:", it.Values[j].Outputs[0].ID, ":", it.Values[j].Outputs[0].FullyQualifiedName(), "@", it.Values[j].Outputs[0].Volume().ToString())
 				fmt.Println(" STAY:", it.Values[j].Outputs[1].ID, ":", it.Values[j].Outputs[1].FullyQualifiedName(), "@", it.Values[j].Outputs[1].Volume().ToString())
 				fmt.Printf("-- \n")
 			} else {
-				fmt.Println("WTF?   ", wtype.InsType(it.Values[j].Type), "-- ")
+				fmt.Println("WTF?   ", InsType(it.Values[j].Type), "-- ")
 			}
 		}
 		fmt.Println()
@@ -169,11 +169,11 @@ func (it *IChain) flattenInstructionIDs(acc []string) []string {
 }
 
 //GetOrderedLHInstructions get the instructions in order
-func (it *IChain) GetOrderedLHInstructions() []*wtype.LHInstruction {
+func (it *IChain) GetOrderedLHInstructions() []*LHInstruction {
 	return it.getOrderedLHInstructions(nil)
 }
 
-func (it *IChain) getOrderedLHInstructions(acc []*wtype.LHInstruction) []*wtype.LHInstruction {
+func (it *IChain) getOrderedLHInstructions(acc []*LHInstruction) []*LHInstruction {
 	if it == nil {
 		return acc
 	} else {
@@ -182,47 +182,94 @@ func (it *IChain) getOrderedLHInstructions(acc []*wtype.LHInstruction) []*wtype.
 	}
 }
 
-func (it *IChain) SplitMixedNodes() {
-	if it.hasMixAndSplitOnly() {
-		it.splitMixedNode()
+func (it *IChain) SplitMixedNodes() *IChain {
+	if it.Child != nil {
+		it.Child.SplitMixedNodes()
 	}
 
-	// stop if we reach the end
-	if it.Child == nil {
-		return
+	if len(it.getInstructionTypes()) > 1 {
+		return it.splitMixedNode()
 	}
-
-	// carry on
-	it.Child.SplitMixedNodes()
+	return it
 }
 
-func (it *IChain) splitMixedNode() {
-	// put mixes first, then splits
+func (it *IChain) FindEnd() *IChain {
+	if it.Child == nil {
+		return it
+	}
 
-	mixValues := make([]*wtype.LHInstruction, 0, len(it.Values))
-	splitValues := make([]*wtype.LHInstruction, 0, len(it.Values))
+	return it.Child.FindEnd()
+}
+
+func (it *IChain) splitMixedNode() *IChain {
+	// put mixes first, then splits, then prompts
+	mixValues := make([]*LHInstruction, 0, len(it.Values))
+	splitValues := make([]*LHInstruction, 0, len(it.Values))
+	promptValues := make([]*LHInstruction, 0, len(it.Values))
 
 	for _, v := range it.Values {
-		if v.Type == wtype.LHIMIX {
+		if v.Type == LHIMIX {
 			mixValues = append(mixValues, v)
-		} else if v.Type == wtype.LHISPL {
+		} else if v.Type == LHISPL {
 			splitValues = append(splitValues, v)
+		} else if v.Type == LHIPRM {
+			promptValues = append(promptValues, v)
 		} else {
 			panic("Wrong instruction type passed through to instruction chain split")
 		}
 	}
 
-	// it == Mix level
-	it.Values = mixValues
-	// ch == Split level
-	ch := NewIChain(it)
-	ch.Values = splitValues
-	ch.Child = it.Child
+	// make new chain
 
-	if ch.Child != nil {
-		ch.Child.Parent = ch
+	newch := makeNewIChain(mixValues, splitValues, promptValues)
+
+	// swap it in
+
+	r := it.SwapForChain(newch)
+
+	return r
+}
+
+// return a chain containing one node for each argument, linked in sequence
+// skip any empty sets
+func makeNewIChain(vals ...[]*LHInstruction) *IChain {
+	var top, cur *IChain
+
+	for _, v := range vals {
+		if len(v) == 0 {
+			continue
+		}
+
+		cur = NewIChain(cur)
+
+		if top == nil {
+			top = cur
+		}
+
+		cur.Values = v
 	}
-	it.Child = ch
+
+	return top
+}
+
+//SwapForChain replace node ch with the node chain starting with newch
+//             if ch is the head of the chain, return newch as the new head
+//             otherwise return nil
+func (ch *IChain) SwapForChain(newch *IChain) *IChain {
+	if ch.Child != nil {
+		end := newch.FindEnd()
+		ch.Child.Parent = end
+		end.Child = ch.Child
+	}
+
+	if ch.Parent != nil {
+		ch.Parent.Child = newch
+		newch.Parent = ch.Parent
+	} else {
+		return newch
+	}
+
+	return nil
 }
 
 type icGraph struct {
@@ -275,7 +322,7 @@ func (ic *IChain) hasMixAndSplitOnly() bool {
 	/// true iff we have exactly two types of node: split and mix
 	insTypes := ic.getInstructionTypes()
 
-	return len(insTypes) == 2 && insTypes[wtype.InsNames[wtype.LHIMIX]] && insTypes[wtype.InsNames[wtype.LHISPL]]
+	return len(insTypes) == 2 && insTypes[InsNames[LHIMIX]] && insTypes[InsNames[LHISPL]]
 }
 
 func (self *IChain) getInstructionTypes() map[string]bool {
@@ -287,9 +334,9 @@ func (self *IChain) getInstructionTypes() map[string]bool {
 	return types
 }
 
-//assertInstructionsSeparate check that there's only one type of instruction
+//AssertInstructionsSeparate check that there's only one type of instruction
 //in each link of the chain
-func (self *IChain) assertInstructionsSeparate() error {
+func (self *IChain) AssertInstructionsSeparate() error {
 	if self == nil {
 		return nil
 	}
@@ -297,13 +344,13 @@ func (self *IChain) assertInstructionsSeparate() error {
 	types := self.getInstructionTypes()
 
 	if len(types) != 1 {
-		return fmt.Errorf("Only one instruction type per stage is allowed, found %v at stage %d", len(types), self.Depth)
+		return fmt.Errorf("Only one instruction type per stage is allowed, found %v at stage %d, %v", len(types), self.Depth, types)
 	}
 
-	return self.Child.assertInstructionsSeparate()
+	return self.Child.AssertInstructionsSeparate()
 }
 
-type ByColumn []*wtype.LHInstruction
+type ByColumn []*LHInstruction
 
 func (bg ByColumn) Len() int      { return len(bg) }
 func (bg ByColumn) Swap(i, j int) { bg[i], bg[j] = bg[j], bg[i] }
@@ -326,11 +373,11 @@ func (bg ByColumn) Less(i, j int) bool {
 
 	// Go Down Columns
 
-	return wtype.CompareStringWellCoordsCol(bg[i].Welladdress, bg[j].Welladdress) < 0
+	return CompareStringWellCoordsCol(bg[i].Welladdress, bg[j].Welladdress) < 0
 }
 
 // Optimally - order by component.
-type ByResultComponent []*wtype.LHInstruction
+type ByResultComponent []*LHInstruction
 
 func (bg ByResultComponent) Len() int      { return len(bg) }
 func (bg ByResultComponent) Swap(i, j int) { bg[i], bg[j] = bg[j], bg[i] }
@@ -359,11 +406,11 @@ func (bg ByResultComponent) Less(i, j int) bool {
 
 	// finally go down columns (nb need to add option)
 
-	return wtype.CompareStringWellCoordsCol(bg[i].Welladdress, bg[j].Welladdress) < 0
+	return CompareStringWellCoordsCol(bg[i].Welladdress, bg[j].Welladdress) < 0
 }
 
-//sortInstructions sort the instructions within each link of the chain
-func (ic *IChain) sortInstructions(byComponent bool) {
+//SortInstructions sort the instructions within each link of the chain
+func (ic *IChain) SortInstructions(byComponent bool) {
 	if ic == nil {
 		return
 	}
@@ -374,5 +421,5 @@ func (ic *IChain) sortInstructions(byComponent bool) {
 		sort.Sort(ByColumn(ic.Values))
 	}
 
-	ic.Child.sortInstructions(byComponent)
+	ic.Child.SortInstructions(byComponent)
 }

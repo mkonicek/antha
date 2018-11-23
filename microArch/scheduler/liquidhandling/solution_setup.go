@@ -154,15 +154,6 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 	minrequired := make(map[string]wunit.Concentration, len(mconcs))
 	maxrequired := make(map[string]wunit.Concentration, len(mconcs))
 
-	//TODO this needs to be migrated elsewhere
-	var vmin wunit.Volume = wunit.NewVolume(1.0, "ul")
-
-	//	fmt.Println("PRMS: ", prms)
-
-	if prms.CurrConf != nil && !prms.CurrConf.Minvol.IsZero() {
-		vmin = prms.CurrConf.Minvol
-	}
-
 	if len(mconcs) > 0 {
 		fmt.Println(text.Green(fmt.Sprintf("mconcs: %+v", mconcs)))
 	}
@@ -189,13 +180,13 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 
 	}
 
-	minSIRequired, minUnit, err := convertToSIValues(minrequired)
+	_, minUnit, err := convertToSIValues(minrequired)
 
 	if err != nil && len(minrequired) > 0 {
 		return nil, nil, err
 	}
 
-	maxSIRequired, maxUnit, err := convertToSIValues(maxrequired)
+	_, maxUnit, err := convertToSIValues(maxrequired)
 
 	if err != nil && len(maxrequired) > 0 {
 		return nil, nil, err
@@ -205,7 +196,7 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 		return nil, nil, fmt.Errorf("min unit %s not equal to max unit %s ", minUnit, maxUnit)
 	}
 
-	stockconcs := choose_stock_concentrations(minSIRequired, maxSIRequired, Smax, vmin.RawValue(), hshTVol)
+	stockconcs := make(map[string]float64)
 
 	// handle any errors here
 

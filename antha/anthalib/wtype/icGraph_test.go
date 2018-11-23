@@ -1,13 +1,12 @@
-package liquidhandling
+package wtype
 
 import (
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/graph"
 	"testing"
 )
 
 func TestCullDeadNodes(t *testing.T) {
-	icA := []*IChain{{Values: []*wtype.LHInstruction{wtype.NewLHMixInstruction()}}, {Values: []*wtype.LHInstruction{}}}
+	icA := []*IChain{{Values: []*LHInstruction{NewLHMixInstruction()}}, {Values: []*LHInstruction{}}}
 
 	icB := cullDeadNodes(icA)
 
@@ -17,10 +16,10 @@ func TestCullDeadNodes(t *testing.T) {
 }
 
 func TestNodesMixedOK(t *testing.T) {
-	tests := [][]*wtype.LHInstruction{{{Type: wtype.LHIMIX}, {Type: wtype.LHISPL}},
-		{{Type: wtype.LHIMIX}, {Type: wtype.LHIMIX}},
-		{{Type: wtype.LHIPRM}, {Type: wtype.LHISPL}},
-		{{Type: wtype.LHIMIX}, {Type: wtype.LHIPRM}}}
+	tests := [][]*LHInstruction{{{Type: LHIMIX}, {Type: LHISPL}},
+		{{Type: LHIMIX}, {Type: LHIMIX}},
+		{{Type: LHIPRM}, {Type: LHISPL}},
+		{{Type: LHIMIX}, {Type: LHIPRM}}}
 	wants := []bool{true, false, false, false}
 	names := []string{"MixSplit", "MixMix", "PromptSplit", "MixPrompt"}
 

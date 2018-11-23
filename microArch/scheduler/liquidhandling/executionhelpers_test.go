@@ -81,7 +81,7 @@ func (self *setOutputOrderTest) Run(t *testing.T) {
 	}
 
 	//sort the instructions within each link of the chain
-	ichain.sortInstructions(self.OutputSort)
+	ichain.SortInstructions(self.OutputSort)
 
 	if e, g := self.ChainHeight, ichain.Height(); e != g {
 		t.Fatalf("Instruction chain length mismatch, e: %d, g: %d", e, g)
@@ -93,7 +93,7 @@ func (self *setOutputOrderTest) Run(t *testing.T) {
 	sorted := ichain.GetOrderedLHInstructions()
 	outputOrder := make([]string, 0, len(sorted))
 	for _, ins := range sorted {
-		//for promts check the message as the ID is overwritten
+		//for prompts check the message as the ID is overwritten
 		if ins.Type == wtype.LHIPRM { //LHIPRM == prompt instruction
 			outputOrder = append(outputOrder, ins.Message)
 		} else {

@@ -23,6 +23,7 @@
 package wtype
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
@@ -291,4 +292,17 @@ func (self *LHTip) RemoveVolume(v wunit.Volume) (*Liquid, error) {
 	ret.Vol = v.ConvertToString("ul")
 	self.contents.Remove(v)
 	return ret, nil
+}
+
+func (self *LHTip) MarshalJSON() ([]byte, error) {
+	return json.Marshal(NewSTip(self))
+}
+
+func (self *LHTip) UnmarshalJSON(data []byte) error {
+	var s sTip
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	s.Fill(self)
+	return nil
 }

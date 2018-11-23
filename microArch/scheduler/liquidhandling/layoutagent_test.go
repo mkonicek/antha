@@ -5,7 +5,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/inventory"
-	"github.com/antha-lang/antha/inventory/testinventory"
 	"testing"
 )
 
@@ -19,7 +18,7 @@ func (self layoutAgentTest) Run(ctx context.Context, t *testing.T) {
 	if ichain, err := buildInstructionChain(self.Request.LHInstructions); err != nil {
 		t.Fatal(err)
 	} else {
-		ichain.sortInstructions(self.Request.Options.OutputSort)
+		ichain.SortInstructions(self.Request.Options.OutputSort)
 		self.Request.updateWithNewLHInstructions(ichain.GetOrderedLHInstructions())
 		self.Request.InstructionChain = ichain
 		self.Request.OutputOrder = ichain.FlattenInstructionIDs()
@@ -52,7 +51,7 @@ func (self layoutAgentTest) Run(ctx context.Context, t *testing.T) {
 }
 
 func TestLayoutAgent1(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	req := GetLHRequestForTest()
 	configure_request_simple(ctx, req)
@@ -67,7 +66,7 @@ func TestLayoutAgent1(t *testing.T) {
 }
 
 func TestLayoutAgent2(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	req := GetLHRequestForTest()
 	configure_request_simple(ctx, req)
@@ -89,7 +88,7 @@ func TestLayoutAgent2(t *testing.T) {
 
 // a mix of specific dests and no dest
 func TestLayoutAgent3(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	req := GetLHRequestForTest()
 	configure_request_simple(ctx, req)
@@ -119,7 +118,7 @@ func TestLayoutAgent3(t *testing.T) {
 }
 
 func TestLayoutAgent4(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	req := GetLHRequestForTest()
 	configure_request_simple(ctx, req)
@@ -152,7 +151,7 @@ func TestLayoutAgent4(t *testing.T) {
 
 // bigger tests
 func TestLayoutAgent5(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	req := GetLHRequestForTest()
 	configure_request_bigger(ctx, req)
@@ -176,7 +175,7 @@ func TestLayoutAgent5(t *testing.T) {
 }
 
 func TestLayoutAgent6(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	req := GetLHRequestForTest()
 	configure_request_bigger(ctx, req)
@@ -201,7 +200,7 @@ func TestLayoutAgent6(t *testing.T) {
 }
 
 func TestLayoutAgent7(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	req := GetLHRequestForTest()
 	configure_request_simple(ctx, req)

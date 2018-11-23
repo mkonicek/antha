@@ -132,7 +132,7 @@ func updateIDAfterSplit(ins *wtype.LHInstruction, in, out map[string]wunit.Volum
 
 }
 
-func findUpdateInstructionVolumes(ch *IChain, wanted map[string]wunit.Volume, plates map[string]*wtype.Plate, carryVol wunit.Volume) (map[string]wunit.Volume, error) {
+func findUpdateInstructionVolumes(ch *wtype.IChain, wanted map[string]wunit.Volume, plates map[string]*wtype.Plate, carryVol wunit.Volume) (map[string]wunit.Volume, error) {
 
 	newWanted := make(map[string]wunit.Volume)
 	for _, ins := range ch.Values {
@@ -223,7 +223,7 @@ func mapAdd(m1, m2 map[string]wunit.Volume) map[string]wunit.Volume {
 	return r
 }
 
-func findChainEnd(ch *IChain) *IChain {
+func findChainEnd(ch *wtype.IChain) *wtype.IChain {
 	if ch.Child == nil {
 		return ch
 	}

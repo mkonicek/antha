@@ -51,6 +51,7 @@ func TestNextFreeWell(t *testing.T) {
 		byRow          bool
 		expectedResult string
 		expectedError  error
+		options        []Option
 	}
 
 	// create a test plate
@@ -89,6 +90,15 @@ func TestNextFreeWell(t *testing.T) {
 			err.Error(),
 		)
 	}
+
+	// create a 384 well test plate
+	griener384, err := inventory.NewPlate(defaultContext(), "greiner384_riser18")
+
+	if err != nil {
+		t.Error(err.Error())
+	}
+
+	griener384.SetName("384 well plate")
 
 	var nextwellTests = []nextWellTest{
 		{
@@ -156,6 +166,15 @@ func TestNextFreeWell(t *testing.T) {
 			expectedError:  errors.New("no empty wells on plate Agar plate of type falcon6wellAgar"),
 		},
 		{
+			avoidWells:     []string{"A1"},
+			preferredWells: []string{},
+			plateType:      griener384,
+			byRow:          false,
+			expectedResult: "C1",
+			expectedError:  nil,
+			options:        []Option{SkipAlternateWells},
+		},
+		{
 			avoidWells:     []string{},
 			preferredWells: []string{},
 			plateType:      nil,
@@ -166,7 +185,7 @@ func TestNextFreeWell(t *testing.T) {
 	}
 
 	for _, test := range nextwellTests {
-		well, err := NextFreeWell(test.plateType, test.avoidWells, test.preferredWells, test.byRow)
+		well, err := NextFreeWell(test.plateType, test.avoidWells, test.preferredWells, test.byRow, test.options...)
 
 		if well != test.expectedResult {
 			t.Error(

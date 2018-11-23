@@ -79,7 +79,7 @@ func (is InputSorter) Less(i, j int) bool {
 //OUTPUT: 	"input_plates"      -- these each have components in wells
 //		"input_assignments" -- map with arrays of assignment strings, i.e. {tea: [plate1:A:1, plate1:A:2...] }etc.
 func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, error) {
-	st := sampletracker.GetSampleTracker()
+	st := sampletracker.FromContext(ctx)
 	// I think this might need moving too
 	input_platetypes := request.InputPlatetypes
 
@@ -124,7 +124,12 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 		if len(input_platetypes) == 0 {
 			return nil, fmt.Errorf("no input plate set: \n  - Please upload plate file or select at least one input plate type in Configuration > Preferences > inputPlateTypes. \n - Important: Please add a riser to the plate choice for low profile plates such as PCR plates, 96 and 384 well plates. ")
 		}
-		well_count_assignments = choose_plate_assignments(input_volumes, input_platetypes, weights_constraints)
+		var err error
+		well_count_assignments, err = choosePlateAssignments(input_volumes, input_platetypes, weights_constraints)
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	input_assignments := make(map[string][]string, len(well_count_assignments))

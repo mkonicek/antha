@@ -2,7 +2,9 @@ package liquidhandling
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -167,7 +169,6 @@ func AssertLHPropertiesEqual(t *testing.T, e, g *LHProperties, msg string) {
 	assert.Equalf(t, e.Positions, g.Positions, "%s: Positions", msg)
 	assert.Equalf(t, e.PosLookup, g.PosLookup, "%s: PosLookup", msg)
 	assert.Equalf(t, e.PlateIDLookup, g.PlateIDLookup, "%s: PlateIDLookup", msg)
-	assert.Equalf(t, e.Devices, g.Devices, "%s: Devices", msg)
 	assert.Equalf(t, e.Model, g.Model, "%s: Model", msg)
 	assert.Equalf(t, e.Mnfr, g.Mnfr, "%s: Mnfr", msg)
 	assert.Equalf(t, e.LHType, g.LHType, "%s: LHType", msg)
@@ -181,8 +182,60 @@ func AssertLHPropertiesEqual(t *testing.T, e, g *LHProperties, msg string) {
 	assert.Equalf(t, e.CurrConf, g.CurrConf, "%s: CurrConf", msg)
 	assert.Equalf(t, e.Cnfvol, g.Cnfvol, "%s: Cnfvol", msg)
 	assert.Equalf(t, e.Layout, g.Layout, "%s: Layout", msg)
-	assert.Equalf(t, e.MaterialType, g.MaterialType, "%s: MaterialType", msg)
 	assert.Equalf(t, e.Heads, g.Heads, "%s: Heads", msg)
 	assert.Equalf(t, e.Adaptors, g.Adaptors, "%s: Adaptors", msg)
 	assert.Equalf(t, e.HeadAssemblies, g.HeadAssemblies, "%s: HeadAssemblies", msg)
+}
+
+func TestLHPropertiesSerialisation(t *testing.T) {
+	before := MakeGilsonWithPlatesAndTipboxesForTest("")
+
+	// we don't need to preserve this
+	for _, tip := range before.Tips {
+		tip.ClearParent()
+	}
+
+	var after LHProperties
+	if data, err := json.Marshal(before); err != nil {
+		t.Error(err)
+	} else if err := json.Unmarshal(data, &after); err != nil {
+		t.Error(err)
+	}
+
+	if !reflect.DeepEqual(before, &after) {
+		t.Errorf("serialization changed LHProperties PlateLookup\nbefore: %+v\nafter : %+v", before, &after)
+	}
+
+	heads := make(map[*wtype.LHHead]bool)
+	for _, h := range after.Heads {
+		heads[h] = true
+	}
+	for _, ha := range after.HeadAssemblies {
+		for _, hap := range ha.Positions {
+			if hap.Head != nil && !heads[hap.Head] {
+				t.Error("HeadAssemblyPosition.Head doesn't point to anything in LHProperties.Heads")
+			}
+		}
+	}
+
+	adaptors := make(map[*wtype.LHAdaptor]bool)
+	for _, a := range after.Adaptors {
+		adaptors[a] = true
+	}
+	for _, head := range after.Heads {
+		if head.Adaptor != nil && !adaptors[head.Adaptor] {
+			t.Error("Head.Adaptor doesn't point to anything in LHProperties.Adaptors")
+		}
+	}
+
+	if b, a := before.GetLoadedHeads(), after.GetLoadedHeads(); len(b) != len(a) {
+		t.Errorf("number of loaded heads doesn't match: before = %d, after = %d", len(b), len(a))
+	} else {
+		for i, beforeHead := range b {
+			if afterHead := a[i]; !reflect.DeepEqual(beforeHead, afterHead) {
+				t.Errorf("%dth head is mismatched\nbefore: %+v\nafter : %+v", i, beforeHead, afterHead)
+			}
+		}
+	}
+
 }

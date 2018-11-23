@@ -33,10 +33,22 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
+// SkipAlternateWells is an option which can be used in the NextFreeWell function
+// to skip each other well and once the end of the plate is reached go back to the
+// beginning and fill the skipped wells.
+// This is designed to facilitate multichannel when using a 384 well plate and
+// a fixed 8 channel pipette head.
+//
+const SkipAlternateWells Option = "SkipAlternateWells"
+
 // NextFreeWell checks for the next well which is empty in a plate.
 // The user can also specify wells to avoid, preffered wells and
 // whether to search through the well positions by row. The default is by column.
-func NextFreeWell(plate *wtype.Plate, avoidWells []string, preferredWells []string, byRow bool) (well string, err error) {
+// If the SkipAlternateWells option is used we'll skip every other well.
+// This is designed to support multichannelling when a plate has 16 rows (i.e. 384 well plate)
+// when using a fixed 8 channel pipette head.
+//
+func NextFreeWell(plate *wtype.Plate, avoidWells []string, preferredWells []string, byRow bool, options ...Option) (well string, err error) {
 
 	if plate == nil {
 		return "", fmt.Errorf("no plate specified as argument to NextFreeWell function")
@@ -54,6 +66,23 @@ func NextFreeWell(plate *wtype.Plate, avoidWells []string, preferredWells []stri
 	}
 
 	allWellPositions := plate.AllWellPositions(byRow)
+
+	if containsOption(options, SkipAlternateWells) {
+		newWellPositions := make([]string, 0)
+		// odd numbers first
+		for index := range allWellPositions {
+			if index%2 == 0 {
+				newWellPositions = append(newWellPositions, allWellPositions[index])
+			}
+		}
+		// then even numbers
+		for index := range allWellPositions {
+			if index%2 != 0 {
+				newWellPositions = append(newWellPositions, allWellPositions[index])
+			}
+		}
+		allWellPositions = newWellPositions
+	}
 
 	for _, well := range allWellPositions {
 		// If a well position is found to already have been used then add one to our counter that specifies the next well to use. See step 2 of the following comments.

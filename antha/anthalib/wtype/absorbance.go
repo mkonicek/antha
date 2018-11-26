@@ -149,7 +149,7 @@ func (sample *Absorbance) Dup() *Absorbance {
 
 // BlankCorrect subtracts the blank reading from the sample absorbance.
 // If the blank sample is not equivalent to the sample, based on wavelength and pathlength, an error is returned.
-func (sample *Absorbance) BlankCorrect(blanks ...Absorbance) error {
+func (sample *Absorbance) BlankCorrect(blanks ...*Absorbance) error {
 	var errs []string
 	for _, blank := range blanks {
 
@@ -161,7 +161,7 @@ func (sample *Absorbance) BlankCorrect(blanks ...Absorbance) error {
 			sample.Reading = sample.Reading - blank.Reading
 			sample.Corrections[BlankCorrected] = AbsorbanceCorrection{
 				Type:              BlankCorrected,
-				CorrectionReading: &blank,
+				CorrectionReading: blank,
 			}
 		} else {
 			errs = append(errs,

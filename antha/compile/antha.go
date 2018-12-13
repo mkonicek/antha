@@ -30,7 +30,6 @@ import (
 	"io"
 	"path"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -42,8 +41,7 @@ import (
 )
 
 const (
-	lineNumberConstName = "_lineNumber"
-	elementFilename     = "element.go"
+	elementFilename = "element.go"
 )
 
 const (
@@ -265,10 +263,6 @@ func NewAntha(root *AnthaRoot) *Antha {
 		Name:         "api",
 		UseExpr:      "api.State_CREATED",
 		ProtoPackage: "org.antha_lang.antha.v1",
-	})
-	p.addImportReq(&importReq{
-		Path:    "github.com/antha-lang/antha/inject",
-		UseExpr: "inject.RegisterLineMap",
 	})
 
 	return p
@@ -637,18 +631,11 @@ func (p *Antha) generateElement(fileSet *token.FileSet, file *ast.File) ([]byte,
 		return nil, err
 	}
 
-	pat := regexp.MustCompile(fmt.Sprintf(`const %s = "([^"\n\r]+)"`, lineNumberConstName))
-	main := pat.ReplaceAll(buf.Bytes(), []byte(`//line $1`))
-	var out bytes.Buffer
-	if _, err := io.Copy(&out, bytes.NewReader(main)); err != nil {
+	if err := p.printFunctions(&buf, lineMap); err != nil {
 		return nil, err
 	}
 
-	if err := p.printFunctions(&out, lineMap); err != nil {
-		return nil, err
-	}
-
-	return out.Bytes(), nil
+	return buf.Bytes(), nil
 }
 
 // Generate returns files with slash names to complete antha to go
@@ -724,42 +711,19 @@ func New{{.ElementTypeName}}(lab *laboratory.Laboratory) *{{.ElementTypeName}} {
 	lab.InstallElement(element)
 	return element
 }
-`
-	type Param struct {
-		Name     string
-		BareName string
-		Desc     string
-		Kind     string
-		BareKind string
-	}
 
+var LineMap = map[int]int{
+	{{range $key, $value := .LineMap}}{{$key}}: {{$value}}, {{end}}
+}
+`
 	type TVars struct {
 		ElementTypeName string
-		Desc            string
-		Params          []Param
-		HasSteps        bool
-		HasValidation   bool
-		HasSetup        bool
-		HasAnalysis     bool
 		LineMap         map[int]int
 	}
 
 	tv := TVars{
 		ElementTypeName: p.protocolName,
-		Desc:            strconv.Quote(p.description),
 		LineMap:         lineMap,
-	}
-
-	for _, msg := range p.messages {
-		for _, field := range msg.Fields {
-			tv.Params = append(tv.Params, Param{
-				Name:     strconv.Quote(field.Name),
-				BareName: field.Name,
-				Desc:     strconv.Quote(field.Doc),
-				Kind:     strconv.Quote(msg.Name),
-				BareKind: msg.Name,
-			})
-		}
 	}
 
 	return template.Must(template.New("").Parse(tmpl)).Execute(out, tv)
@@ -841,32 +805,6 @@ func (p *Antha) desugarAnthaDecl(fileSet *token.FileSet, src *ast.File, d *ast.A
 			},
 		},
 	}
-
-	// HACK: all the ast rewriting invalidates positions, so we insert a dummy
-	// decl to hang comment on and turn it into a comment in the adjustment
-	// function.
-	if len(d.Body.List) > 0 {
-		pos := fileSet.Position(d.Body.Lbrace)
-
-		line := fmt.Sprintf("%s:%d", pos.Filename, pos.Line)
-
-		dummy := &ast.DeclStmt{
-			Decl: &ast.GenDecl{
-				Tok: token.CONST,
-				Specs: []ast.Spec{
-					&ast.ValueSpec{
-						Names:  identList(lineNumberConstName),
-						Values: []ast.Expr{mustParseExpr(strconv.Quote(line))},
-					},
-				},
-			},
-		}
-		d.Body.List = append([]ast.Stmt{dummy}, d.Body.List...)
-	}
-
-	// HACK: unanchored comments can interrupt regexp replacement of HACK nodes
-	// above, remove all unanchored comments to fix.
-	src.Comments = nil
 
 	return f
 }

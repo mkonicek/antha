@@ -1,0 +1,80 @@
+{
+    "Processes": {
+        "Prompt User From Liquid Set 1_run1": {
+            "Component": "repos.antha.com/antha-ninja/elements-westeros/master/Elements/New-MVL/Prompt_User_From_Liquid_Set",
+            "Metadata": {
+                "x": 442,
+                "y": 256
+            }
+        },
+        "Aliquot Liquid 1_run1": {
+            "Component": "repos.antha.com/antha-ninja/elements-westeros/master/Elements/New-MVL/Aliquot_Liquid",
+            "Metadata": {
+                "x": 164,
+                "y": 170
+            }
+        },
+        "Aliquot Liquid Set 1_run1": {
+            "Component": "repos.antha.com/antha-ninja/elements-westeros/master/Elements/New-MVL/Aliquot_Liquid_Set",
+            "Metadata": {
+                "x": 706,
+                "y": 134
+            }
+        }
+    },
+    "Connections": [
+        {
+            "Source": {
+                "Process": "Aliquot Liquid 1_run1",
+                "Port": "OutputLiquidSet"
+            },
+            "Target": {
+                "Process": "Prompt User From Liquid Set 1_run1",
+                "Port": "PromptingLiquidSet"
+            }
+        },
+        {
+            "Source": {
+                "Process": "Aliquot Liquid 1_run1",
+                "Port": "WellsUsed"
+            },
+            "Target": {
+                "Process": "Aliquot Liquid Set 1_run1",
+                "Port": "AvoidWells"
+            }
+        },
+        {
+            "Source": {
+                "Process": "Prompt User From Liquid Set 1_run1",
+                "Port": "OutputLiquidSet"
+            },
+            "Target": {
+                "Process": "Aliquot Liquid Set 1_run1",
+                "Port": "LiquidSetToAliquot"
+            }
+        }
+    ],
+    "Parameters": {
+        "Prompt User From Liquid Set 1_run1": {
+            "PromptMessage": "What's up at 37ºC? !\"#$%&/()=?»«'+´*`º~ª^çÇ,.-_:;",
+            "PromptInLiquidHandler": false,
+            "PromptInAnthaTimeline": true
+        },
+        "Aliquot Liquid 1_run1": {
+            "ByRow": false,
+            "LiquidToAliquot": "water",
+            "OutPlate": "SRWFB96_riser18",
+            "Replicates": 8,
+            "VolumePerAliquot": "200ul"
+        },
+        "Aliquot Liquid Set 1_run1": {
+            "ByRow": false,
+            "OutPlate": "pcrplate_skirted_riser18",
+            "Replicates": 2,
+            "VolumePerAliquot": {
+                "default": "10ul"
+            },
+            "KeepReplicatesTogether": false
+        }
+    }
+}

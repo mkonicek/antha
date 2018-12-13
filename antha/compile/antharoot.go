@@ -112,7 +112,7 @@ func GetComponents() (comps []component.Component, err error) {
 	tv := TVars{}
 
 	for _, pdir := range r.protocolDirs {
-		pkg := path.Join(r.outputPackageBase, pdir.ProtocolName, elementPackage)
+		pkg := path.Join(r.outputPackageBase, pdir.ProtocolName)
 		pkgName := manglePackageName(pkg)
 		tv.Packages = append(tv.Packages, Package{
 			Name: pkgName,

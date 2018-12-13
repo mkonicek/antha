@@ -28,7 +28,6 @@ package cmd
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"errors"
 	"fmt"
 	"io"
@@ -170,13 +169,7 @@ func processFile(root *compile.AnthaRoot, filename, outdir string) error {
 		return errNotAnthaFile
 	}
 
-	h := sha256.New()
-	if _, err := io.Copy(h, bytes.NewReader(src)); err != nil {
-		return err
-	}
-
 	antha := compile.NewAntha(root)
-	antha.SourceSHA256 = h.Sum(nil)
 
 	if err := antha.Transform(fileSet, file); err != nil {
 		return err

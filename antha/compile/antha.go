@@ -28,8 +28,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
-	"os/user"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -44,14 +42,8 @@ import (
 )
 
 const (
-	runStepsIntrinsic   = "RunSteps"
-	awaitDataIntrinsic  = "AwaitData"
 	lineNumberConstName = "_lineNumber"
-	elementProto        = "element.proto"
-	elementPackage      = "element"
 	elementFilename     = "element.go"
-	modelPackage        = "model"
-	modelFilename       = "model.go"
 )
 
 const (
@@ -156,8 +148,6 @@ func (r *importReq) ImportName() string {
 
 // Antha is a preprocessing pass from antha file to go file
 type Antha struct {
-	SourceSHA256 []byte
-
 	// Description of this element
 	description string
 	// Path to element file
@@ -179,7 +169,6 @@ type Antha struct {
 	// Imports in protocol and imports to add
 	importReqs   []*importReq
 	importByName map[string]*importReq
-	importProtos []string
 }
 
 // NewAntha creates a new antha pass
@@ -189,25 +178,10 @@ func NewAntha(root *AnthaRoot) *Antha {
 		importByName: make(map[string]*importReq),
 	}
 
-	p.importProtos = []string{
-		"github.com/antha-lang/antha/api/v1/blob.proto",
-		"github.com/antha-lang/antha/api/v1/coord.proto",
-		"github.com/antha-lang/antha/api/v1/element.proto",
-		"github.com/antha-lang/antha/api/v1/empty.proto",
-		"github.com/antha-lang/antha/api/v1/inventory.proto",
-		"github.com/antha-lang/antha/api/v1/measurement.proto",
-		"github.com/antha-lang/antha/api/v1/message.proto",
-		"github.com/antha-lang/antha/api/v1/polynomial.proto",
-		"github.com/antha-lang/antha/api/v1/state.proto",
-		"github.com/antha-lang/antha/api/v1/task.proto",
-		"github.com/antha-lang/antha/api/v1/workflow.proto",
-	}
-
 	p.intrinsics = map[string]string{
 		"Centrifuge":    "execute.Centrifuge",
 		"Electroshock":  "execute.Electroshock",
 		"ExecuteMixes":  "execute.ExecuteMixes",
-		"Errorf":        "execute.Errorf",
 		"Handle":        "execute.Handle",
 		"Incubate":      "execute.Incubate",
 		"Mix":           "execute.Mix",
@@ -268,10 +242,7 @@ func NewAntha(root *AnthaRoot) *Antha {
 
 	// TODO: add usage tracking to replace UseExpr
 	p.addImportReq(&importReq{
-		Path: "context",
-	})
-	p.addImportReq(&importReq{
-		Path: "encoding/json",
+		Path: "github.com/antha-lang/antha/laboratory",
 	})
 	p.addImportReq(&importReq{
 		Path:    "github.com/antha-lang/antha/antha/anthalib/wtype",
@@ -296,16 +267,8 @@ func NewAntha(root *AnthaRoot) *Antha {
 		ProtoPackage: "org.antha_lang.antha.v1",
 	})
 	p.addImportReq(&importReq{
-		Path: "github.com/antha-lang/antha/component",
-	})
-	p.addImportReq(&importReq{
 		Path:    "github.com/antha-lang/antha/inject",
 		UseExpr: "inject.RegisterLineMap",
-	})
-
-	p.addImportReq(&importReq{
-		Path:    "encoding/json",
-		UseExpr: "json.Unmarshal",
 	})
 
 	return p
@@ -356,15 +319,6 @@ func getImportInsertPos(decls []ast.Decl) token.Pos {
 		return token.NoPos
 	}
 	return lastNode.Pos()
-}
-
-func (p *Antha) addExternalPackage(pkgPath string) *importReq {
-	req := &importReq{
-		Path: pkgPath,
-		Name: manglePackageName(pkgPath),
-	}
-	p.importReqs = append(p.importReqs, req)
-	return req
 }
 
 // addImports merges multiple import blocks and then adds paths; returns
@@ -461,79 +415,13 @@ func (p *Antha) getTypeString(e ast.Expr, used map[string]bool) string {
 	return ""
 }
 
-func unwrapRecover(res interface{}, fileSet *token.FileSet, pos token.Pos) error {
-	perr, ok := res.(posError)
-	msg := res.(error).Error()
-	if ok {
-		pos = perr.Pos()
-	}
-	p := fileSet.Position(pos)
-
-	if ok {
-		return fmt.Errorf("%s:%d: %s", p.Filename, p.Line, msg)
-	}
-	return fmt.Errorf("%s: %s", p.Filename, msg)
-}
-
-// normalizePath takes a filepath and returns a slash path relative to GOPATH
-func normalizePath(filename string) string {
-	filename, _ = relativeTo(getGoPath(), filename)
-	dir := filepath.ToSlash(filename)
-	if strings.HasPrefix(dir, "src/") {
-		return dir[len("src/"):]
-	}
-	return dir
-}
-
-func reverse(xs []string) (ret []string) {
-	for idx := len(xs) - 1; idx >= 0; idx-- {
-		ret = append(ret, xs[idx])
-	}
-	return
-}
-
-func getProtobufPackage(goPackage string) string {
-	var parts []string
-	idx := strings.Index(goPackage, "/")
-	if idx >= 0 {
-		parts = append(parts, reverse(strings.Split(goPackage[:idx], "."))...)
-		goPackage = goPackage[idx+1:]
-	}
-	parts = append(parts, strings.Split(goPackage, "/")...)
-
-	var ret []string
-	for _, part := range parts {
-		if len(part) == 0 {
-			continue
-		}
-		r := strings.Map(func(r rune) rune {
-			switch r {
-			case '-', '.':
-				return '_'
-			default:
-				return r
-			}
-		}, part)
-		ret = append(ret, r)
-	}
-
-	return strings.Join(ret, ".")
-}
-
 // Transform rewrites AST to go standard primitives
 func (p *Antha) Transform(fileSet *token.FileSet, src *ast.File) (err error) {
-	defer func() {
-		if res := recover(); res != nil {
-			err = unwrapRecover(res, fileSet, src.Package)
-		}
-	}()
-
 	if src.Tok != token.PROTOCOL {
 		return errNotAnthaFile
 	}
 
 	p.protocolName = src.Name.Name
-	src.Name.Name = elementPackage
 
 	src.Tok = token.PACKAGE
 
@@ -543,10 +431,6 @@ func (p *Antha) Transform(fileSet *token.FileSet, src *ast.File) (err error) {
 	p.elementPath = file.Name()
 	p.root.addProtocolDirectory(p.protocolName, filepath.Dir(p.elementPath))
 
-	p.addImportReq(&importReq{
-		Path: path.Join(p.root.outputPackageBase, p.protocolName, modelPackage),
-	})
-
 	// Case-insensitive comparison because some filesystems are
 	// case-insensitive
 	packagePath := filepath.Base(filepath.Dir(p.elementPath))
@@ -555,7 +439,6 @@ func (p *Antha) Transform(fileSet *token.FileSet, src *ast.File) (err error) {
 	}
 
 	p.recordImports(src.Decls)
-	p.recordBlocks(src.Decls)
 	p.recordMessages(src.Decls)
 	if err := p.validateMessages(p.messages); err != nil {
 		return err
@@ -576,19 +459,6 @@ func (p *Antha) addImportReq(req *importReq) {
 
 	p.importReqs = append(p.importReqs, req)
 	p.importByName[name] = req
-}
-
-// Usually $GOPATH but if not set, future versions of go will assume $HOME/go
-func getGoPath() []string {
-	ps := filepath.SplitList(os.Getenv("GOPATH"))
-	if len(ps) == 0 {
-		usr, err := user.Current()
-		if err == nil {
-			ps = append(ps, filepath.Join(usr.HomeDir, "go"))
-		}
-	}
-
-	return ps
 }
 
 // Return name relative to a base if possible
@@ -638,19 +508,6 @@ func (p *Antha) recordImports(decls []ast.Decl) {
 
 			p.addImportReq(req)
 		}
-	}
-}
-
-// recordBlocks records all blocks used
-func (p *Antha) recordBlocks(decls []ast.Decl) {
-	p.blocksUsed = make(map[token.Token]bool)
-
-	for _, decl := range decls {
-		decl, ok := decl.(*ast.AnthaDecl)
-		if !ok {
-			continue
-		}
-		p.blocksUsed[decl.Tok] = true
 	}
 }
 
@@ -794,285 +651,6 @@ func (p *Antha) generateElement(fileSet *token.FileSet, file *ast.File) ([]byte,
 	return out.Bytes(), nil
 }
 
-// generateModel generates json structures that implement parsed messages
-func (p *Antha) generateModel() ([]byte, error) {
-	const tmpl = `package model 
-
-import (
-{{ range .Imports}}{{.Name}} {{.Value}}
-{{ end }}
-)
-
-type Input struct {
-	{{ range .Inputs }}{{ .Name }} {{ .Value }}
-	{{ end }}
-}
-
-type Output struct {
-	{{ range .MergedOutputs }}{{ .Name }} {{ .Value }}
-	{{ end }}
-}
-
-type RunStepsOutput struct {
-	Data struct {
-		{{ range .Data }}{{ .Name }} {{ .Value }}
-		{{ end }}
-	}
-	Outputs struct {
-		{{ range .Outputs }}{{ .Name }} {{ .Value }}
-		{{ end }}
-	}
-}
-`
-	type Field struct {
-		Name  string
-		Value string
-	}
-
-	usedSelectors := make(map[string]bool)
-
-	makeFields := func(tok token.Token) (ret []Field) {
-		for _, msg := range p.getMessage(tok).getFields() {
-			ret = append(ret, Field{
-				Name:  msg.Name,
-				Value: p.getTypeString(msg.Type, usedSelectors),
-			})
-		}
-		return
-	}
-
-	type TVars struct {
-		Imports       []Field
-		Inputs        []Field
-		Outputs       []Field
-		Data          []Field
-		MergedOutputs []Field
-	}
-
-	tv := TVars{}
-
-	tv.Inputs = append(tv.Inputs, makeFields(token.INPUTS)...)
-	tv.Inputs = append(tv.Inputs, makeFields(token.PARAMETERS)...)
-
-	tv.Outputs = makeFields(token.OUTPUTS)
-	tv.Data = makeFields(token.DATA)
-	tv.MergedOutputs = append(tv.MergedOutputs, tv.Outputs...)
-	tv.MergedOutputs = append(tv.MergedOutputs, tv.Data...)
-
-	seen := make(map[string]bool)
-	for _, req := range p.importReqs {
-		iname := req.ImportName()
-		if !usedSelectors[iname] {
-			continue
-		}
-
-		if seen[iname] {
-			continue
-		}
-
-		seen[iname] = true
-
-		tv.Imports = append(tv.Imports, Field{
-			Name:  req.Name,
-			Value: strconv.Quote(req.Path),
-		})
-	}
-
-	var out bytes.Buffer
-	if err := template.Must(template.New("").Parse(tmpl)).Execute(&out, tv); err != nil {
-		return nil, err
-	}
-
-	return out.Bytes(), nil
-}
-
-func (p *Antha) getProtobufType(e ast.Expr, used map[*importReq]bool) string {
-	switch t := e.(type) {
-
-	case nil:
-		return ""
-
-	case *ast.Ident:
-		switch t.Name {
-		case "int", "int32":
-			return "int32"
-		case "int64":
-			return "int64"
-		case "float":
-			return "float"
-		case "float64":
-			return "double"
-		}
-		return t.Name
-
-	case *ast.SelectorExpr:
-		if lhs, ok := t.X.(*ast.Ident); ok {
-			importReq, ok := p.importByName[lhs.Name]
-			if !ok {
-				throwErrorf(e.Pos(), "unknown package in protobuf: %s", lhs.Name)
-			}
-			pkg := importReq.ProtoPackage
-			if len(pkg) == 0 {
-				pkg = getProtobufPackage(importReq.Path)
-			}
-			used[importReq] = true
-			return pkg + "." + t.Sel.Name
-		}
-
-	case *ast.BasicLit:
-		return t.Value
-
-	case *ast.ArrayType:
-		return fmt.Sprintf("repeated %s", p.getProtobufType(t.Elt, used))
-
-	case *ast.StarExpr:
-		return p.getProtobufType(t.X, used)
-
-	case *ast.MapType:
-		return fmt.Sprintf("map<%s,%s>", p.getProtobufType(t.Key, used), p.getProtobufType(t.Value, used))
-
-	}
-
-	throwErrorf(e.Pos(), "invalid type in protobuf: %T", e)
-
-	return ""
-}
-
-func (p *Antha) getMessage(tok token.Token) *Message {
-	for _, msg := range p.messages {
-		if msg.Name == tok.String() {
-			return msg
-		}
-	}
-	return nil
-}
-
-// generateProto generates protobuf file that implements parsed
-// messages
-func (p *Antha) generateProto() ([]byte, error) {
-	const tmpl = `syntax = "proto3";
-package {{ .PackageName }};
-option go_package = "protobuf";
-
-{{ range .Imports }}import "{{ . }}";
-{{ end }}
-{{ range .Messages }}{{ if .Desc }}{{ .Desc }}{{ end }}
-message {{ .Name }} {
-{{ range .Fields }}{{ if .Desc }}{{ .Desc }}{{ end }}
-  {{ .Type }} {{ .Name }} = {{ .Tag }};
-{{ end }}
-}
-{{ end }}
-service Element {
-  rpc Run(Request) returns (Response);
-  rpc Run(org.antha_lang.antha.v1.Empty) returns (org.antha_lang.antha.v1.ElementMetadata);
-}
-`
-	fmtDoc := func(indent, s string) string {
-		if len(s) == 0 {
-			return s
-		}
-
-		comment := indent + "// "
-		s = strings.TrimSpace(s)
-		s = strings.Replace(s, "\n", "\n"+comment, -1)
-		return comment + s
-	}
-
-	merge := func(messages []*Message, merged string, aTok, bTok token.Token) (ret []*Message) {
-		a := p.getMessage(aTok)
-		b := p.getMessage(bTok)
-
-		for _, msg := range messages {
-			if msg == a || msg == b {
-				continue
-			}
-			ret = append(ret, msg)
-		}
-
-		newMsg := &Message{
-			Name: merged,
-		}
-
-		if a != nil {
-			newMsg.Doc += a.Doc
-			newMsg.Fields = append(newMsg.Fields, a.Fields...)
-		}
-
-		if b != nil {
-			newMsg.Doc += b.Doc
-			newMsg.Fields = append(newMsg.Fields, b.Fields...)
-		}
-
-		ret = append(ret, newMsg)
-
-		return
-	}
-
-	type Field struct {
-		Desc string
-		Type string
-		Name string
-		Tag  int
-	}
-
-	type Message struct {
-		Name   string
-		Desc   string
-		Fields []Field
-	}
-
-	type TVars struct {
-		PackageName string
-		Imports     []string
-		Messages    []Message
-	}
-
-	tv := TVars{
-		PackageName: getProtobufPackage(normalizePath(filepath.Dir(p.elementPath))),
-	}
-
-	messages := p.messages
-	messages = merge(messages, "Request", token.PARAMETERS, token.INPUTS)
-	messages = merge(messages, "Response", token.DATA, token.OUTPUTS)
-
-	used := make(map[*importReq]bool)
-	for _, msg := range messages {
-		m := Message{
-			Name: msg.Name,
-			Desc: fmtDoc("", msg.Doc),
-		}
-		for idx, f := range msg.Fields {
-			m.Fields = append(m.Fields, Field{
-				Desc: fmtDoc("  ", f.Doc),
-				Type: p.getProtobufType(f.Type, used),
-				Name: f.Name,
-				Tag:  idx + 1,
-			})
-		}
-		tv.Messages = append(tv.Messages, m)
-	}
-
-	tv.Imports = append(tv.Imports, p.importProtos...)
-	for req := range used {
-		// TODO: we assume that only system packages have this field set
-		if len(req.ProtoPackage) != 0 {
-			continue
-		}
-
-		tv.Imports = append(tv.Imports, path.Join(req.Path, elementProto))
-	}
-
-	sort.Strings(tv.Imports)
-
-	var out bytes.Buffer
-	if err := template.Must(template.New("").Parse(tmpl)).Execute(&out, tv); err != nil {
-		return nil, err
-	}
-
-	return out.Bytes(), nil
-}
-
 // Generate returns files with slash names to complete antha to go
 // transformation
 func (p *Antha) Generate(fileSet *token.FileSet, file *ast.File) (*AnthaFiles, error) {
@@ -1081,23 +659,9 @@ func (p *Antha) Generate(fileSet *token.FileSet, file *ast.File) (*AnthaFiles, e
 		return nil, err
 	}
 
-	var modelBs []byte
-
-	if true {
-		modelBs, err = p.generateModel()
-	} else {
-		modelBs, err = p.generateProto()
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	modelName := path.Join(p.protocolName, modelPackage, modelFilename)
-	elementName := path.Join(p.protocolName, elementPackage, elementFilename)
+	elementName := path.Join(p.protocolName, elementFilename)
 
 	files := NewAnthaFiles()
-	files.addFile(modelName, modelBs)
 	files.addFile(elementName, elementBs)
 
 	return files, nil
@@ -1147,145 +711,18 @@ func encodeByteArray(bs []byte) string {
 
 // printFunctions generates synthetic antha functions and data stuctures
 func (p *Antha) printFunctions(out io.Writer, lineMap map[int]int) error {
-	// TODO: put the recover handler here when we get to multi-address space
-	// execution. In single-address space, the caller assumes that execeptions
-	// will bubble up through Run.
-
-	// NB: serialize in Run to enforce serialization barrier between element
-	// calls
 	var tmpl = `
-type Element struct {
+type {{.ElementTypeName}} struct {
+	Inputs     Inputs
+	Outputs    Outputs
+	Parameters Parameters
+	Data       Data
 }
 
-func (Element) Run(_ctx context.Context, request *{{ .ModelPackage }}.Input) (response *{{ .ModelPackage }}.Output, err error) {
-	_ctx = execute.WithElementName(_ctx, {{ .ElementName }})
-	bs, err := json.Marshal(request)
-	if err != nil {
-		return nil, err
-	}
-
-	var in *{{ .ModelPackage }}.Input
-	if err := json.Unmarshal(bs, &in); err != nil {
-		return nil, err
-	}
-
-	response = &{{ .ModelPackage }}.Output{}
-	{{if .HasSetup}}_Setup(_ctx, in, response){{end}}
-	{{if .HasSteps}}_Steps(_ctx, in, response){{end}}
-	{{if .HasAnalysis}}_Analysis(_ctx, in, response){{end}}
-	{{if .HasValidation}}_Validation(_ctx, in, response){{end}}
-	return
-}
-
-func (Element) RunAnalysisValidation(_ctx context.Context, request *{{ .ModelPackage }}.Input) (response *{{ .ModelPackage }}.Output, err error) {
-	response = &{{ .ModelPackage }}.Output{}
-	{{if .HasAnalysis}}_Analysis(_ctx, request, response){{end}}
-	{{if .HasValidation}}_Validation(_ctx, request, response){{end}}
-	return
-}
-
-func (Element) Metadata(_ctx context.Context, request *api.Empty) (*api.ElementMetadata, error) {
-	return _metadata, nil
-}
-
-func _newAVRunner() interface{} {
-	elem := &Element{}
-	return &inject.CheckedRunner {
-		RunFunc: func(_ctx context.Context, value inject.Value) (inject.Value, error) {
-			request := &{{ .ModelPackage }}.Input{}
-			if err := inject.Assign(value, request); err != nil {
-				return nil, err
-			}
-			resp, err := elem.RunAnalysisValidation(_ctx, request)
-			if err != nil {
-				return nil, err
-			}
-			return inject.MakeValue(resp), nil
-		},
-		In: &{{ .ModelPackage }}.Input{},
-		Out: &{{ .ModelPackage }}.Output{},
-	}
-}
-func _newRunner() interface{} {
-	elem := &Element{}
-	return &inject.CheckedRunner {
-		RunFunc: func(_ctx context.Context, value inject.Value) (inject.Value, error) {
-			request := &{{ .ModelPackage }}.Input{}
-			if err := inject.Assign(value, request); err != nil {
-				return nil, err
-			}
-			resp, err := elem.Run(_ctx, request)
-			if err != nil {
-				return nil, err
-			}
-			return inject.MakeValue(resp), nil
-		},
-		In: &{{ .ModelPackage }}.Input{},
-		Out: &{{ .ModelPackage }}.Output{},
-	}
-}
-
-func RunSteps(_ctx context.Context, request *{{ .ModelPackage }}.Input) (*{{ .ModelPackage }}.RunStepsOutput) {
-	elem := &Element{}
-	resp, err := elem.Run(_ctx, request)
-	if err != nil {
-		panic(err)
-	}
-
-	var output {{ .ModelPackage }}.RunStepsOutput
-	if err := inject.AssignSome(resp, &output.Data); err != nil {
-		panic(err)
-	}
-	if err := inject.AssignSome(resp, &output.Outputs); err != nil {
-		panic(err)
-	}
-	return &output
-}
-
-func GetComponent() []*component.Component{
-	return []*component.Component{ 
-			&component.Component{
-			Name: {{ .ElementName }},
-			Stage: api.ElementStage_STEPS,
-			Constructor: _newRunner,
-			Description: component.Description{
-				Desc: {{ .Desc }},
-				Path: {{ .Path }},
-				Params: []component.ParamDesc{
-					{{range .Params}}component.ParamDesc{
-						Name: {{ .Name }},
-						Desc: {{ .Desc }},
-						Kind: {{ .Kind }},
-					},
-					{{end}}
-				},
-			},
-		},
-			&component.Component{
-			Name: {{ .ElementName }},
-			Stage: api.ElementStage_ANALYSIS,
-			Constructor: _newAVRunner,
-			Description: component.Description{
-				Desc: {{ .Desc }},
-				Path: {{ .Path }},
-			},
-		},
-	}
-}
-
-var (
-	_metadata *api.ElementMetadata
-)
-
-func init() {
-	_metadata = &api.ElementMetadata {
-		SourceSha256: {{.SHA256}},
-	}
-	inject.RegisterLineMap(
-		"{{ .GeneratedPath }}", {{ .Path }}, {{ .ElementName }},
-		map[int]int{
-			{{range $key, $value := .LineMap}}{{ $key }}: {{ $value }},
-		{{end}} })
+func New{{.ElementTypeName}}(lab *laboratory.Laboratory) *{{.ElementTypeName}} {
+	element := &{{.ElementTypeName}}{}
+	lab.InstallElement(element)
+	return element
 }
 `
 	type Param struct {
@@ -1297,34 +734,20 @@ func init() {
 	}
 
 	type TVars struct {
-		GeneratedPath string
-		ModelPackage  string
-		ElementName   string
-		SHA256        string
-		Desc          string
-		Path          string
-		Params        []Param
-		HasSteps      bool
-		HasValidation bool
-		HasSetup      bool
-		HasAnalysis   bool
-		LineMap       map[int]int
+		ElementTypeName string
+		Desc            string
+		Params          []Param
+		HasSteps        bool
+		HasValidation   bool
+		HasSetup        bool
+		HasAnalysis     bool
+		LineMap         map[int]int
 	}
 
-	elementPath := normalizePath(p.elementPath)
-
 	tv := TVars{
-		GeneratedPath: path.Join(p.protocolName, elementPackage, elementFilename),
-		ModelPackage:  modelPackage,
-		ElementName:   strconv.Quote(p.protocolName),
-		SHA256:        encodeByteArray(p.SourceSHA256),
-		Desc:          strconv.Quote(p.description),
-		Path:          strconv.Quote(elementPath),
-		HasSteps:      p.blocksUsed[token.STEPS],
-		HasValidation: p.blocksUsed[token.VALIDATION],
-		HasSetup:      p.blocksUsed[token.SETUP],
-		HasAnalysis:   p.blocksUsed[token.ANALYSIS],
-		LineMap:       lineMap,
+		ElementTypeName: p.protocolName,
+		Desc:            strconv.Quote(p.description),
+		LineMap:         lineMap,
 	}
 
 	for _, msg := range p.messages {
@@ -1389,11 +812,20 @@ func (p *Antha) desugarGenDecl(d *ast.GenDecl) {
 // E.g.,
 //   Validation
 // to
-//   _Validation(_ctx context.Context, _input *protobuf.Request, _output *protobuf.Response)
+//  func (element *ElementTypeName) Validation(lab *laboratory.Laboratory)
 func (p *Antha) desugarAnthaDecl(fileSet *token.FileSet, src *ast.File, d *ast.AnthaDecl) ast.Decl {
 	f := &ast.FuncDecl{
-		Doc:  d.Doc,
-		Name: ast.NewIdent("_" + d.Tok.String()),
+		Doc: d.Doc,
+		Recv: &ast.FieldList{
+			Opening: d.Pos(),
+			List: []*ast.Field{
+				{
+					Names: identList("element"),
+					Type:  mustParseExpr("*" + p.protocolName),
+				},
+			},
+		},
+		Name: ast.NewIdent(d.Tok.String()),
 		Body: d.Body,
 	}
 
@@ -1403,16 +835,8 @@ func (p *Antha) desugarAnthaDecl(fileSet *token.FileSet, src *ast.File, d *ast.A
 			Opening: d.Pos(),
 			List: []*ast.Field{
 				{
-					Names: identList("_ctx"),
-					Type:  mustParseExpr("context.Context"),
-				},
-				{
-					Names: identList("_input"),
-					Type:  mustParseExpr("*" + modelPackage + ".Input"),
-				},
-				{
-					Names: identList("_output"),
-					Type:  mustParseExpr("*" + modelPackage + ".Output"),
+					Names: identList("lab"),
+					Type:  mustParseExpr("*laboratory.Laboratory"),
 				},
 			},
 		},
@@ -1564,11 +988,7 @@ func (p *Antha) inspectParamUses(node ast.Node) bool {
 			return
 		}
 
-		if isOutput(tok) {
-			node.Name = "_output." + node.Name
-		} else if isInput(tok) {
-			node.Name = "_input." + node.Name
-		}
+		node.Name = "element." + tok.String() + "." + node.Name
 	}
 
 	rewriteAssignLHS := func(node *ast.AssignStmt) {
@@ -1578,12 +998,12 @@ func (p *Antha) inspectParamUses(node ast.Node) bool {
 				continue
 			}
 
-			param, ok := p.tokenByParamName[ident.Name]
-			if !ok || !isOutput(param) {
+			tok, found := p.tokenByParamName[ident.Name]
+			if !found || !isOutput(tok) {
 				continue
 			}
 
-			ident.Name = "_output." + ident.Name
+			ident.Name = "element." + tok.String() + "." + ident.Name
 		}
 	}
 
@@ -1612,200 +1032,6 @@ func (p *Antha) inspectParamUses(node ast.Node) bool {
 	return true
 }
 
-type awaitDataPrototype struct {
-	Annotatee     *ast.Ident
-	Metadata      ast.Expr
-	NextElement   *ast.Ident
-	ReplacedParam *ast.Ident
-	Params        *ast.CompositeLit
-	Inputs        *ast.CompositeLit
-}
-
-func parseAwaitData(call *ast.CallExpr) *awaitDataPrototype {
-	if len(call.Args) != 6 {
-		return nil
-	}
-
-	annotatee, ok := call.Args[0].(*ast.Ident)
-	if !ok {
-		return nil
-	}
-
-	metadata := call.Args[1]
-
-	nextElement, ok := call.Args[2].(*ast.Ident)
-	if !ok {
-		return nil
-	}
-
-	replacedParam, ok := call.Args[3].(*ast.Ident)
-	if !ok {
-		return nil
-	}
-
-	params, ok := call.Args[4].(*ast.CompositeLit)
-	if !ok {
-		return nil
-	}
-
-	inputs, ok := call.Args[5].(*ast.CompositeLit)
-	if !ok {
-		return nil
-	}
-
-	return &awaitDataPrototype{
-		Annotatee:     annotatee,
-		Metadata:      metadata,
-		NextElement:   nextElement,
-		ReplacedParam: replacedParam,
-		Params:        params,
-		Inputs:        inputs,
-	}
-}
-
-// rewriteAwaitData transforms
-//   AwaitData(
-//   	annotatee,
-//      metadata,
-// 		nextElement,
-//      replacedParam,
-// 		nextParameters,
-// 		nextInput)
-// to
-//   execute.AwaitData(
-//		_ctx,
-//		annotatee,
-// 		metadata,
-//		nextElement,
-//      replacedParam,
-// 		inject.MakeValue(nextParams + nextInput),
-//      inject.MakeValue(_output))
-func (p *Antha) rewriteAwaitData(call *ast.CallExpr) {
-	proto := parseAwaitData(call)
-	if proto == nil {
-		var p awaitDataPrototype
-		throwErrorf(call.Pos(),
-			"expecting %s(%s) found %s(%s)",
-			awaitDataIntrinsic,
-			strings.Join(typesToString(p.Annotatee, p.Metadata, p.NextElement, p.ReplacedParam, p.Params, p.Inputs), ","),
-			awaitDataIntrinsic,
-			strings.Join(typesToString(call.Args...), ","),
-		)
-	}
-
-	nextElement := ""
-	nextElementArgs := &ast.CompositeLit{Type: mustParseExpr("model.Input"), Elts: []ast.Expr{}}
-
-	// indirect over next element stuff
-	if proto.NextElement.Name != "nil" {
-		modelPkg := path.Join(p.root.outputPackageBase, proto.NextElement.Name, modelPackage)
-		modelReq := p.addExternalPackage(modelPkg)
-		nextElement = proto.NextElement.Name
-		nextElementArgs = &ast.CompositeLit{
-			Type: mustParseExpr(modelReq.Name + ".Input"),
-			Elts: append(proto.Params.Elts, proto.Inputs.Elts...),
-		}
-	}
-
-	call.Fun = mustParseExpr("execute." + awaitDataIntrinsic)
-
-	call.Args = []ast.Expr{
-		ast.NewIdent("_ctx"),
-		proto.Annotatee,
-		proto.Metadata,
-		&ast.BasicLit{
-			Kind:  token.STRING,
-			Value: strconv.Quote(nextElement),
-		},
-		&ast.BasicLit{
-			Kind:  token.STRING,
-			Value: strconv.Quote(proto.ReplacedParam.Name),
-		},
-		mustParseExpr("inject.MakeValue(_output)"),
-		&ast.CallExpr{
-			Fun: mustParseExpr("inject.MakeValue"),
-			Args: []ast.Expr{
-				nextElementArgs,
-			},
-		},
-	}
-}
-
-type runStepsPrototype struct {
-	Callee *ast.Ident
-	Params *ast.CompositeLit
-	Inputs *ast.CompositeLit
-}
-
-func parseRunSteps(call *ast.CallExpr) *runStepsPrototype {
-	if len(call.Args) != 3 {
-		return nil
-	}
-	ident, ok := call.Args[0].(*ast.Ident)
-	if !ok {
-		return nil
-	}
-
-	params, ok := call.Args[1].(*ast.CompositeLit)
-	if !ok {
-		return nil
-	}
-	inputs, ok := call.Args[2].(*ast.CompositeLit)
-	if !ok {
-		return nil
-	}
-
-	return &runStepsPrototype{
-		Callee: ident,
-		Params: params,
-		Inputs: inputs,
-	}
-}
-
-// typesToString returns the type strings of a set of expressions
-func typesToString(objs ...ast.Expr) (ret []string) {
-	for _, obj := range objs {
-		ret = append(ret, fmt.Sprintf("%T", obj))
-	}
-	return
-}
-
-// rewriteRunSteps transforms
-//  RunSteps(Fun, _{A: v}, _{B: v}
-// to
-//  target.RunSteps(_ctx, &model.Inputs{A: v, B: v})
-func (p *Antha) rewriteRunSteps(call *ast.CallExpr) {
-	proto := parseRunSteps(call)
-	if proto == nil {
-		var p runStepsPrototype
-		throwErrorf(call.Pos(),
-			"expecting %s(%s) found %s(%s)",
-			runStepsIntrinsic,
-			strings.Join(typesToString(p.Callee, p.Params, p.Inputs), ","),
-			runStepsIntrinsic,
-			strings.Join(typesToString(call.Args...), ","),
-		)
-	}
-
-	elementPkg := path.Join(p.root.outputPackageBase, proto.Callee.Name, elementPackage)
-	elementReq := p.addExternalPackage(elementPkg)
-	modelPkg := path.Join(p.root.outputPackageBase, proto.Callee.Name, modelPackage)
-	modelReq := p.addExternalPackage(modelPkg)
-
-	call.Fun = mustParseExpr(elementReq.Name + "." + runStepsIntrinsic)
-
-	call.Args = []ast.Expr{
-		ast.NewIdent("_ctx"),
-		&ast.UnaryExpr{
-			Op: token.AND,
-			X: &ast.CompositeLit{
-				Type: mustParseExpr(modelReq.Name + ".Input"),
-				Elts: append(proto.Params.Elts, proto.Inputs.Elts...),
-			},
-		},
-	}
-}
-
 // inspectIntrinsics replaces bare antha function names with go qualified
 // names
 func (p *Antha) inspectIntrinsics(node ast.Node) bool {
@@ -1816,13 +1042,9 @@ func (p *Antha) inspectIntrinsics(node ast.Node) bool {
 			break
 		}
 
-		if ident.Name == runStepsIntrinsic {
-			p.rewriteRunSteps(n)
-		} else if ident.Name == awaitDataIntrinsic {
-			p.rewriteAwaitData(n)
-		} else if desugar, ok := p.intrinsics[ident.Name]; ok {
+		if desugar, ok := p.intrinsics[ident.Name]; ok {
 			ident.Name = desugar
-			n.Args = append([]ast.Expr{ast.NewIdent("_ctx")}, n.Args...)
+			n.Args = append([]ast.Expr{ast.NewIdent("lab")}, n.Args...) // only for now.
 		}
 	}
 	return true

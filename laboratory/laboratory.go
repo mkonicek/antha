@@ -23,6 +23,8 @@ type Laboratory struct {
 	Errored chan struct{}
 
 	Completed chan struct{}
+
+	*lineMapManager
 }
 
 func NewLaboratory() *Laboratory {
@@ -30,6 +32,8 @@ func NewLaboratory() *Laboratory {
 		elements:  make(map[Element]*ElementBase),
 		Errored:   make(chan struct{}),
 		Completed: make(chan struct{}),
+
+		lineMapManager: NewLineMapManager(),
 	}
 }
 

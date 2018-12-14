@@ -155,12 +155,14 @@ func makeLHProperties(p *LHPropertiesParams) *liquidhandling.LHProperties {
 	}
 	lhp.Heads = lhp.GetLoadedHeads()
 
-	lhp.Tip_preferences = p.TipPreferences
-	lhp.Input_preferences = p.InputPreferences
-	lhp.Output_preferences = p.OutputPreferences
-	lhp.Tipwaste_preferences = p.TipwastePreferences
-	lhp.Wash_preferences = p.WashPreferences
-	lhp.Waste_preferences = p.WastePreferences
+	lhp.Preferences = liquidhandling.LayoutOpt{
+		liquidhandling.Tipboxes:  p.TipPreferences,
+		liquidhandling.Inputs:    p.InputPreferences,
+		liquidhandling.Outputs:   p.OutputPreferences,
+		liquidhandling.Tipwastes: p.TipwastePreferences,
+		liquidhandling.Washes:    p.WashPreferences,
+		liquidhandling.Wastes:    p.WastePreferences,
+	}
 
 	return lhp
 }

@@ -48,9 +48,8 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 	plate_lookup := make(map[string]string, 5)
 	//tip_lookup := make([]*wtype.LHTipbox, 0, 5)
 
-	//	tip_preferences := params.Tip_preferences
-	input_preferences := params.Input_preferences
-	output_preferences := params.Output_preferences
+	input_preferences := params.Preferences[liquidhandling.Inputs]
+	output_preferences := params.Preferences[liquidhandling.Outputs]
 
 	// how do we set the below?
 	// we don't know how many tips we need until we generate

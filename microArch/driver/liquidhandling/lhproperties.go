@@ -28,12 +28,10 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/microArch/logger"
 )
@@ -42,35 +40,30 @@ import (
 // probably needs splitting up to separate out the state information
 // from the properties information
 type LHProperties struct {
-	ID                   string
-	Nposns               int
-	Positions            map[string]*wtype.LHPosition // position descriptions by position name
-	PlateLookup          map[string]interface{}       // deck object (plate, tipbox, etc) by object ID
-	PosLookup            map[string]string            // object ID by position name
-	PlateIDLookup        map[string]string            // position name by object ID
-	Plates               map[string]*wtype.Plate      // plates by position name
-	Tipboxes             map[string]*wtype.LHTipbox   // tipboxes by position name
-	Tipwastes            map[string]*wtype.LHTipwaste // tipwastes by position name
-	Wastes               map[string]*wtype.Plate      // waste plates by position name
-	Washes               map[string]*wtype.Plate      // wash plates by position name
-	Model                string
-	Mnfr                 string
-	LHType               LiquidHandlerLevel      // describes which liquidhandling API should be used to communicate with the device
-	TipType              TipType                 // defines the type of tips used by the liquidhandler
-	Heads                []*wtype.LHHead         // lists every head (whether loaded or not) that is available for the machine
-	Adaptors             []*wtype.LHAdaptor      // lists every adaptor (whether loaded or not) that is available for the machine
-	HeadAssemblies       []*wtype.LHHeadAssembly // describes how each loaded head and adaptor is loaded into the machine
-	Tips                 []*wtype.LHTip          // lists each type of tip available in the current configuration
-	Tip_preferences      []string
-	Input_preferences    []string
-	Output_preferences   []string
-	Tipwaste_preferences []string
-	Waste_preferences    []string
-	Wash_preferences     []string
-	Driver               LiquidhandlingDriver `gotopb:"-"`
-	CurrConf             *wtype.LHChannelParameter
-	Cnfvol               []*wtype.LHChannelParameter
-	Layout               map[string]wtype.Coordinates // position location by position name
+	ID             string
+	Nposns         int
+	Positions      map[string]*wtype.LHPosition // position descriptions by position name
+	PlateLookup    map[string]interface{}       // deck object (plate, tipbox, etc) by object ID
+	PosLookup      map[string]string            // object ID by position name
+	PlateIDLookup  map[string]string            // position name by object ID
+	Plates         map[string]*wtype.Plate      // plates by position name
+	Tipboxes       map[string]*wtype.LHTipbox   // tipboxes by position name
+	Tipwastes      map[string]*wtype.LHTipwaste // tipwastes by position name
+	Wastes         map[string]*wtype.Plate      // waste plates by position name
+	Washes         map[string]*wtype.Plate      // wash plates by position name
+	Model          string
+	Mnfr           string
+	LHType         LiquidHandlerLevel      // describes which liquidhandling API should be used to communicate with the device
+	TipType        TipType                 // defines the type of tips used by the liquidhandler
+	Heads          []*wtype.LHHead         // lists every head (whether loaded or not) that is available for the machine
+	Adaptors       []*wtype.LHAdaptor      // lists every adaptor (whether loaded or not) that is available for the machine
+	HeadAssemblies []*wtype.LHHeadAssembly // describes how each loaded head and adaptor is loaded into the machine
+	Tips           []*wtype.LHTip          // lists each type of tip available in the current configuration
+	Preferences    LayoutOpt               // describes where difference categories of objects are to be placed on the liquid handler
+	Driver         LiquidhandlingDriver    `gotopb:"-"`
+	CurrConf       *wtype.LHChannelParameter
+	Cnfvol         []*wtype.LHChannelParameter
+	Layout         map[string]wtype.Coordinates // position location by position name
 }
 
 func (lhp *LHProperties) MarshalJSON() ([]byte, error) {
@@ -145,86 +138,6 @@ func (p LHProperties) OrderedPositionNames() []string {
 	sort.Strings(s)
 
 	return s
-}
-
-// validator for LHProperties structure
-
-func ValidateLHProperties(props *LHProperties) (bool, string) {
-	bo := true
-	so := "OK"
-
-	be := false
-	se := "LHProperties Error: No position"
-
-	if props.Positions == nil || len(props.Positions) == 0 {
-		return be, se + "s"
-	}
-
-	for k, p := range props.Positions {
-		if p == nil || p.ID == "" {
-			return be, se + " " + k + " not set"
-		}
-	}
-
-	se = "LHProperties error: No position lookup"
-
-	if props.PosLookup == nil || len(props.PosLookup) == 0 {
-		return be, se
-	}
-
-	se = "LHProperties Error: No tip preference information"
-
-	if props.Tip_preferences == nil || len(props.Tip_preferences) == 0 {
-		return be, se
-	}
-
-	se = "LHProperties Error: No input preference information"
-
-	if props.Input_preferences == nil || len(props.Input_preferences) == 0 {
-		return be, se
-	}
-
-	se = "LHProperties Error: No output preference information"
-
-	if props.Output_preferences == nil || len(props.Output_preferences) == 0 {
-		return be, se
-	}
-
-	se = "LHProperties Error: No waste preference information"
-
-	if props.Waste_preferences == nil || len(props.Waste_preferences) == 0 {
-		return be, se
-	}
-
-	se = "LHProperties Error: No tipwaste preference information"
-
-	if props.Tipwaste_preferences == nil || len(props.Tipwaste_preferences) == 0 {
-		return be, se
-	}
-	se = "LHProperties Error: No wash preference information"
-
-	if props.Wash_preferences == nil || len(props.Wash_preferences) == 0 {
-		return be, se
-	}
-	se = "LHProperties Error: No Plate ID lookup information"
-
-	if props.PlateIDLookup == nil {
-		return be, se
-	}
-
-	se = "LHProperties Error: No tip defined"
-
-	if props.Tips == nil {
-		return be, se
-	}
-
-	se = "LHProperties Error: No heads loaded"
-
-	if props.CountHeadsLoaded() == 0 {
-		return be, se
-	}
-
-	return bo, so
 }
 
 //CountHeadsLoaded return the total number of heads loaded into the machine
@@ -390,12 +303,7 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 		r.Tips = append(r.Tips, newtip)
 	}
 
-	r.Tip_preferences = append(r.Tip_preferences, lhp.Tip_preferences...)
-	r.Input_preferences = append(r.Input_preferences, lhp.Input_preferences...)
-	r.Output_preferences = append(r.Output_preferences, lhp.Output_preferences...)
-	r.Waste_preferences = append(r.Waste_preferences, lhp.Waste_preferences...)
-	r.Tipwaste_preferences = append(r.Tipwaste_preferences, lhp.Tipwaste_preferences...)
-	r.Wash_preferences = append(r.Wash_preferences, lhp.Wash_preferences...)
+	r.Preferences = lhp.Preferences.Dup()
 
 	if lhp.CurrConf != nil {
 		r.CurrConf = lhp.CurrConf.Dup()
@@ -481,22 +389,9 @@ func (lhp *LHProperties) GetTipType() TipType {
 	return lhp.TipType
 }
 
-func (lhp *LHProperties) TipsLeftOfType(tiptype string) int {
-	n := 0
-
-	for _, pref := range lhp.Tip_preferences {
-		tb := lhp.Tipboxes[pref]
-		if tb != nil {
-			n += tb.N_clean_tips()
-		}
-	}
-
-	return n
-}
-
 func (lhp *LHProperties) AddTipBox(tipbox *wtype.LHTipbox) error {
-	for _, pref := range lhp.Tip_preferences {
-		if lhp.PosLookup[pref] != "" {
+	for _, pref := range lhp.Preferences[Tipboxes] {
+		if !lhp.IsEmpty(pref) {
 			continue
 		}
 
@@ -507,7 +402,7 @@ func (lhp *LHProperties) AddTipBox(tipbox *wtype.LHTipbox) error {
 	return wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, "Trying to add tip box")
 }
 func (lhp *LHProperties) AddTipBoxTo(pos string, tipbox *wtype.LHTipbox) bool {
-	if lhp.PosLookup[pos] != "" {
+	if !lhp.IsEmpty(pos) {
 		logger.Debug(fmt.Sprintf("Tried to add tipbox to full position: %s", pos))
 		return false
 	}
@@ -531,8 +426,8 @@ func (lhp *LHProperties) RemoveTipBoxes() {
 
 func (lhp *LHProperties) TipWastesMounted() int {
 	r := 0
-	for _, pref := range lhp.Tipwaste_preferences {
-		if lhp.PosLookup[pref] != "" {
+	for _, pref := range lhp.Preferences[Tipwastes] {
+		if !lhp.IsEmpty(pref) {
 			_, ok := lhp.Tipwastes[lhp.PosLookup[pref]]
 
 			if !ok {
@@ -550,8 +445,8 @@ func (lhp *LHProperties) TipWastesMounted() int {
 
 func (lhp *LHProperties) TipSpacesLeft() int {
 	r := 0
-	for _, pref := range lhp.Tipwaste_preferences {
-		if lhp.PosLookup[pref] != "" {
+	for _, pref := range lhp.Preferences[Tipwastes] {
+		if !lhp.IsEmpty(pref) {
 			bx, ok := lhp.Tipwastes[lhp.PosLookup[pref]]
 
 			if !ok {
@@ -566,9 +461,20 @@ func (lhp *LHProperties) TipSpacesLeft() int {
 	return r
 }
 
+// IsEmpty returns true if the given position exists and is unoccupied
+func (lhp *LHProperties) IsEmpty(address string) bool {
+	return lhp.Exists(address) && lhp.PosLookup[address] == ""
+}
+
+// Exists returns true if the given address refers to a known position
+func (lhp *LHProperties) Exists(address string) bool {
+	_, ret := lhp.Positions[address]
+	return ret
+}
+
 func (lhp *LHProperties) AddTipWaste(tipwaste *wtype.LHTipwaste) error {
-	for _, pref := range lhp.Tipwaste_preferences {
-		if lhp.PosLookup[pref] != "" {
+	for _, pref := range lhp.Preferences[Tipwastes] {
+		if !lhp.IsEmpty(pref) {
 			continue
 		}
 
@@ -580,7 +486,7 @@ func (lhp *LHProperties) AddTipWaste(tipwaste *wtype.LHTipwaste) error {
 }
 
 func (lhp *LHProperties) AddTipWasteTo(pos string, tipwaste *wtype.LHTipwaste) error {
-	if lhp.PosLookup[pos] != "" {
+	if !lhp.IsEmpty(pos) {
 		return wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprintf("Trying to add tip waste to full position %s", pos))
 	}
 
@@ -592,8 +498,8 @@ func (lhp *LHProperties) AddTipWasteTo(pos string, tipwaste *wtype.LHTipwaste) e
 }
 
 func (lhp *LHProperties) AddInputPlate(plate *wtype.Plate) error {
-	for _, pref := range lhp.Input_preferences {
-		if lhp.PosLookup[pref] != "" {
+	for _, pref := range lhp.Preferences[Inputs] {
+		if !lhp.IsEmpty(pref) {
 			continue
 		}
 
@@ -604,8 +510,8 @@ func (lhp *LHProperties) AddInputPlate(plate *wtype.Plate) error {
 	return wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprintf("Trying to add input plate %s, type %s", plate.PlateName, plate.Type))
 }
 func (lhp *LHProperties) AddOutputPlate(plate *wtype.Plate) error {
-	for _, pref := range lhp.Output_preferences {
-		if lhp.PosLookup[pref] != "" {
+	for _, pref := range lhp.Preferences[Outputs] {
+		if !lhp.IsEmpty(pref) {
 			continue
 		}
 
@@ -617,7 +523,7 @@ func (lhp *LHProperties) AddOutputPlate(plate *wtype.Plate) error {
 }
 
 func (lhp *LHProperties) AddPlateTo(pos string, plate *wtype.Plate) error {
-	if lhp.PosLookup[pos] != "" {
+	if !lhp.IsEmpty(pos) {
 		return wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprintf("Trying to add plate to full position %s", pos))
 	}
 	lhp.Plates[pos] = plate
@@ -646,7 +552,7 @@ func (lhp *LHProperties) RemovePlateAtPosition(pos string) {
 }
 
 func (lhp *LHProperties) AddWasteTo(pos string, waste *wtype.Plate) bool {
-	if lhp.PosLookup[pos] != "" {
+	if !lhp.IsEmpty(pos) {
 		logger.Debug("CAN'T ADD WASTE TO FULL POSITION")
 		return false
 	}
@@ -658,8 +564,8 @@ func (lhp *LHProperties) AddWasteTo(pos string, waste *wtype.Plate) bool {
 }
 
 func (lhp *LHProperties) AddWash(wash *wtype.Plate) bool {
-	for _, pref := range lhp.Wash_preferences {
-		if lhp.PosLookup[pref] != "" {
+	for _, pref := range lhp.Preferences[Washes] {
+		if !lhp.IsEmpty(pref) {
 			continue
 		}
 
@@ -672,7 +578,7 @@ func (lhp *LHProperties) AddWash(wash *wtype.Plate) bool {
 }
 
 func (lhp *LHProperties) AddWashTo(pos string, wash *wtype.Plate) bool {
-	if lhp.PosLookup[pos] != "" {
+	if !lhp.IsEmpty(pos) {
 
 		logger.Debug("CAN'T ADD WASH TO FULL POSITION")
 		return false
@@ -707,8 +613,8 @@ func (lhp *LHProperties) mergeInputOutputPreferences() []string {
 		return out, seen
 	}
 
-	out, seen = mergeToSet(lhp.Input_preferences, out, seen)
-	out, _ = mergeToSet(lhp.Output_preferences, out, seen)
+	out, seen = mergeToSet(lhp.Preferences[Inputs], out, seen)
+	out, _ = mergeToSet(lhp.Preferences[Outputs], out, seen)
 
 	return out
 }
@@ -833,7 +739,7 @@ func (lhp *LHProperties) getCleanTipSubset(ctx context.Context, tipParams TipSub
 	foundit := false
 	multi := countMultiB(tipParams.Mask)
 
-	for _, pos := range lhp.Tip_preferences {
+	for _, pos := range lhp.Preferences[Tipboxes] {
 		bx, ok := lhp.Tipboxes[pos]
 		if !ok || bx.Tiptype.Type != tipParams.TipType {
 			continue
@@ -1022,71 +928,32 @@ func (lhp *LHProperties) Evaporate(t time.Duration) []wtype.VolumeCorrection {
 	return ret
 }
 
-// TODO -- allow drivers to provide relevant constraint info... not all positions
-// can be used for tip loading
-func (lhp *LHProperties) CheckTipPrefCompatibility(prefs []string) bool {
-	// no new tip preferences allowed for now
-	if lhp.Mnfr == "CyBio" {
-		if lhp.Model == "Felix" {
-			for _, v := range prefs {
-				return wutil.StrInStrArray(v, lhp.Tip_preferences)
+// ApplyUserPreferences merge in the layout preferences given by the user.
+//
+// User preferences for each category should either be list of addresses to place
+// items of that category in order, or empty. If they are empty, then the full list
+// of possible locations as reported by the driver is used.
+//
+// nb.
+// Because of the difficulties surrounding cross-platform addresses, addresses
+// which are don't exist in this liquid handler are silently ignored
+// such that passing a Gilson address e.g. "position_1" to a Hamilton driver has
+// no effect.
+func (lhp *LHProperties) ApplyUserPreferences(p LayoutOpt) error {
+	// filter out addresses that don't exist in this liquidhandler
+	// HJK: If removing, remember to update doc above
+	q := make(LayoutOpt, len(p))
+	for category, addresses := range p {
+		a := make(Addresses, 0, len(addresses))
+		for _, address := range addresses {
+			if lhp.Exists(address) {
+				a = append(a, address)
 			}
-		} else if lhp.Model == "GeneTheatre" {
-			for _, v := range prefs {
-				if !wutil.StrInStrArray(v, lhp.Tip_preferences) {
-					return false
-				}
-			}
-			return true
 		}
-
-	} else if lhp.Mnfr == "Tecan" {
-		// fall through
-		return lhp.CheckPreferenceCompatibility(prefs)
+		q[category] = a
 	}
 
-	return true
-}
-
-// CheckPreferenceCompatibility returns if the device specific configuration
-// positions are compatible with the current device.
-func (lhp *LHProperties) CheckPreferenceCompatibility(prefs []string) bool {
-	// TODO: Not the most portable or extensible way
-
-	var checkFn func(string) bool
-
-	if lhp.Mnfr == "Tecan" {
-		checkFn = func(pos string) bool {
-			return strings.HasPrefix(pos, "TecanPos_")
-		}
-	} else if lhp.Mnfr == "Gilson" || lhp.Mnfr == "CyBio" && lhp.Model == "Felix" {
-		checkFn = func(pos string) bool {
-			return strings.HasPrefix(pos, "position_")
-		}
-	} else if lhp.Mnfr == "CyBio" && lhp.Model == "GeneTheatre" {
-		checkFn = func(pos string) bool {
-			if len(pos) != 2 {
-				return false
-			}
-			return 'A' <= pos[0] && pos[0] <= 'D' && '0' <= pos[1] && pos[1] <= '9'
-		}
-	} else if lhp.Mnfr == "Labcyte" {
-		checkFn = func(pos string) bool {
-			return false
-		}
-	}
-
-	if checkFn == nil {
-		return true
-	}
-
-	for _, p := range prefs {
-		if !checkFn(p) {
-			return false
-		}
-	}
-
-	return true
+	return lhp.Preferences.Merge(q)
 }
 
 type UserPlate struct {
@@ -1170,9 +1037,9 @@ func inStrArr(s string, sa []string) bool {
 }
 
 func (p *LHProperties) OrderedMergedPlatePrefs() []string {
-	r := dupStrArr(p.Input_preferences)
+	r := dupStrArr(p.Preferences[Inputs])
 
-	for _, pr := range p.Output_preferences {
+	for _, pr := range p.Preferences[Outputs] {
 		if !inStrArr(pr, r) {
 			r = append(r, pr)
 		}

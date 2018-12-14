@@ -465,34 +465,21 @@ func (a *Mixer) makeMix(ctx context.Context, mixes []*wtype.LHInstruction) (*tar
 
 // New creates a new Mixer
 func New(opt Opt, d driver.LiquidhandlingDriver) (*Mixer, error) {
-	p, status := d.GetCapabilities()
-	if !status.OK {
+
+	userPreferences := driver.LayoutOpt{
+		driver.Tipboxes:  driver.Addresses(opt.DriverSpecificTipPreferences),
+		driver.Inputs:    driver.Addresses(opt.DriverSpecificInputPreferences),
+		driver.Outputs:   driver.Addresses(opt.DriverSpecificOutputPreferences),
+		driver.Tipwastes: driver.Addresses(opt.DriverSpecificTipWastePreferences),
+		driver.Washes:    driver.Addresses(opt.DriverSpecificWashPreferences),
+	}
+
+	if p, status := d.GetCapabilities(); !status.OK {
 		return nil, fmt.Errorf("cannot get capabilities: %s", status.Msg)
+	} else if err := p.ApplyUserPreferences(userPreferences); err != nil {
+		return nil, err
+	} else {
+		p.Driver = d
+		return &Mixer{driver: d, properties: &p, opt: opt}, nil
 	}
-
-	update := func(addr *[]string, v []string) {
-		if len(v) != 0 {
-			*addr = v
-		}
-	}
-
-	if len(opt.DriverSpecificInputPreferences) != 0 && p.CheckPreferenceCompatibility(opt.DriverSpecificInputPreferences) {
-		update(&p.Input_preferences, opt.DriverSpecificInputPreferences)
-	}
-	if len(opt.DriverSpecificOutputPreferences) != 0 && p.CheckPreferenceCompatibility(opt.DriverSpecificOutputPreferences) {
-		update(&p.Output_preferences, opt.DriverSpecificOutputPreferences)
-	}
-
-	if len(opt.DriverSpecificTipPreferences) != 0 && p.CheckTipPrefCompatibility(opt.DriverSpecificTipPreferences) {
-		update(&p.Tip_preferences, opt.DriverSpecificTipPreferences)
-	}
-
-	if len(opt.DriverSpecificTipWastePreferences) != 0 && p.CheckPreferenceCompatibility(opt.DriverSpecificTipWastePreferences) {
-		update(&p.Tipwaste_preferences, opt.DriverSpecificTipWastePreferences)
-	}
-	if len(opt.DriverSpecificWashPreferences) != 0 && p.CheckPreferenceCompatibility(opt.DriverSpecificWashPreferences) {
-		update(&p.Wash_preferences, opt.DriverSpecificWashPreferences)
-	}
-	p.Driver = d
-	return &Mixer{driver: d, properties: &p, opt: opt}, nil
 }

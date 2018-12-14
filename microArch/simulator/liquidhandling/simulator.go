@@ -83,16 +83,16 @@ func NewVirtualLiquidHandler(props *liquidhandling.LHProperties, settings *Simul
 		//deck.SetSlotAccepts(name, "riser")
 	}
 
-	for _, name := range props.Tip_preferences {
+	for _, name := range props.Preferences[liquidhandling.Tipboxes] {
 		deck.SetSlotAccepts(name, "tipbox")
 	}
-	for _, name := range props.Input_preferences {
+	for _, name := range props.Preferences[liquidhandling.Inputs] {
 		deck.SetSlotAccepts(name, "plate")
 	}
-	for _, name := range props.Output_preferences {
+	for _, name := range props.Preferences[liquidhandling.Outputs] {
 		deck.SetSlotAccepts(name, "plate")
 	}
-	for _, name := range props.Tipwaste_preferences {
+	for _, name := range props.Preferences[liquidhandling.Tipwastes] {
 		deck.SetSlotAccepts(name, "tipwaste")
 	}
 
@@ -250,23 +250,10 @@ func (self *VirtualLiquidHandler) validateProperties(props *liquidhandling.LHPro
 		return nil
 	}
 
-	if err := check_prop(props.Tip_preferences, "tip preferences"); err != nil {
-		return err
-	}
-	if err := check_prop(props.Input_preferences, "input preferences"); err != nil {
-		return err
-	}
-	if err := check_prop(props.Output_preferences, "output preferences"); err != nil {
-		return err
-	}
-	if err := check_prop(props.Tipwaste_preferences, "tipwaste preferences"); err != nil {
-		return err
-	}
-	if err := check_prop(props.Wash_preferences, "wash preferences"); err != nil {
-		return err
-	}
-	if err := check_prop(props.Waste_preferences, "waste preferences"); err != nil {
-		return err
+	for category, addresses := range props.Preferences {
+		if err := check_prop(addresses, fmt.Sprintf("preferences for %s", category)); err != nil {
+			return err
+		}
 	}
 
 	return nil

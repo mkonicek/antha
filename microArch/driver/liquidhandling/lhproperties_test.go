@@ -165,7 +165,6 @@ func TestLHPropertiesDup(t *testing.T) {
 
 func AssertLHPropertiesEqual(t *testing.T, e, g *LHProperties, msg string) {
 	assert.Equalf(t, e.ID, g.ID, "%s: ID", msg)
-	assert.Equalf(t, e.Nposns, g.Nposns, "%s: Nposns", msg)
 	assert.Equalf(t, e.Positions, g.Positions, "%s: Positions", msg)
 	assert.Equalf(t, e.PosLookup, g.PosLookup, "%s: PosLookup", msg)
 	assert.Equalf(t, e.PlateIDLookup, g.PlateIDLookup, "%s: PlateIDLookup", msg)
@@ -176,7 +175,6 @@ func AssertLHPropertiesEqual(t *testing.T, e, g *LHProperties, msg string) {
 	assert.Equalf(t, e.Preferences, g.Preferences, "%s: Peferences", msg)
 	assert.Equalf(t, e.CurrConf, g.CurrConf, "%s: CurrConf", msg)
 	assert.Equalf(t, e.Cnfvol, g.Cnfvol, "%s: Cnfvol", msg)
-	assert.Equalf(t, e.Layout, g.Layout, "%s: Layout", msg)
 	assert.Equalf(t, e.Heads, g.Heads, "%s: Heads", msg)
 	assert.Equalf(t, e.Adaptors, g.Adaptors, "%s: Adaptors", msg)
 	assert.Equalf(t, e.HeadAssemblies, g.HeadAssemblies, "%s: HeadAssemblies", msg)

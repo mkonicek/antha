@@ -89,7 +89,7 @@ func getLVConfig() *wtype.LHChannelParameter {
 func makeGilsonForTest(ctx context.Context, tipList []string) *liquidhandling.LHProperties {
 	// gilson pipetmax
 
-	layout := make(map[string]wtype.Coordinates)
+	layout := make(map[string]*wtype.LHPosition)
 	i := 0
 	x0 := 3.886
 	y0 := 3.513
@@ -103,14 +103,16 @@ func makeGilsonForTest(ctx context.Context, tipList []string) *liquidhandling.LH
 		xp = x0
 		for x := 0; x < 3; x++ {
 			posname := fmt.Sprintf("position_%d", i+1)
-			crds := wtype.Coordinates{X: xp, Y: yp, Z: zp}
-			layout[posname] = crds
+			layout[posname] = &wtype.LHPosition{
+				Name:     posname,
+				Location: wtype.Coordinates{X: xp, Y: yp, Z: zp},
+			}
 			i += 1
 			xp += xi
 		}
 		yp += yi
 	}
-	lhp := liquidhandling.NewLHProperties(9, "Pipetmax", "Gilson", liquidhandling.LLLiquidHandler, liquidhandling.DisposableTips, layout)
+	lhp := liquidhandling.NewLHProperties("Pipetmax", "Gilson", liquidhandling.LLLiquidHandler, liquidhandling.DisposableTips, layout)
 	// get tips permissible from the factory
 	SetUpTipsFor(ctx, lhp, tipList)
 

@@ -25,6 +25,7 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
+	"github.com/pkg/errors"
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -203,9 +204,8 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 		setup[position] = p
 		plate_lookup[p.ID] = position
 
-		err := params.AddPlateTo(position, p)
-		if err != nil {
-			return request, err
+		if err := params.AddPlateTo(position, p); err != nil {
+			return request, errors.WithMessage(err, "while setting up output plates")
 		}
 	}
 
@@ -231,9 +231,8 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 
 		setup[position] = p
 		plate_lookup[p.ID] = position
-		err := params.AddPlateTo(position, p)
-		if err != nil {
-			return request, err
+		if err := params.AddPlateTo(position, p); err != nil {
+			return request, errors.WithMessage(err, "while setting up input plates")
 		}
 		fmt.Println(fmt.Sprintf("Input plate of type %s in position %s", p.Type, position))
 	}

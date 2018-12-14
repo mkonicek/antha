@@ -142,12 +142,15 @@ type LHPropertiesParams struct {
 
 func makeLHProperties(p *LHPropertiesParams) *liquidhandling.LHProperties {
 
-	layout := make(map[string]wtype.Coordinates)
+	layout := make(map[string]*wtype.LHPosition)
 	for _, lp := range p.Layouts {
-		layout[lp.Name] = wtype.Coordinates{X: lp.Xpos, Y: lp.Ypos, Z: lp.Zpos}
+		layout[lp.Name] = &wtype.LHPosition{
+			Name:     lp.Name,
+			Location: wtype.Coordinates{X: lp.Xpos, Y: lp.Ypos, Z: lp.Zpos},
+		}
 	}
 
-	lhp := liquidhandling.NewLHProperties(len(layout), p.Name, p.Mfg, liquidhandling.LLLiquidHandler, liquidhandling.DisposableTips, layout)
+	lhp := liquidhandling.NewLHProperties(p.Name, p.Mfg, liquidhandling.LLLiquidHandler, liquidhandling.DisposableTips, layout)
 
 	lhp.HeadAssemblies = make([]*wtype.LHHeadAssembly, 0, len(p.HeadAssemblies))
 	for _, ha := range p.HeadAssemblies {

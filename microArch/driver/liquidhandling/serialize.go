@@ -6,7 +6,6 @@ import (
 
 type sProperties struct {
 	ID             string
-	Nposns         int
 	Positions      map[string]*wtype.LHPosition // position descriptions by position name
 	Plates         map[string]*wtype.Plate      // plates by position name
 	Tipboxes       map[string]*wtype.LHTipbox   // tipboxes by position name
@@ -21,16 +20,14 @@ type sProperties struct {
 	Adaptors       []*wtype.LHAdaptor                // lists every adaptor (whether loaded or not) that is available for the machine
 	HeadAssemblies []*wtype.SerializableHeadAssembly // describes how each loaded head and adaptor is loaded into the machine
 	Tips           []*wtype.LHTip
-	Preferences    LayoutOpt
 	CurrConf       *wtype.LHChannelParameter
+	Preferences    LayoutOpt
 	Cnfvol         []*wtype.LHChannelParameter
-	Layout         map[string]wtype.Coordinates // position location by position name
 }
 
 func newSProperties(lhp *LHProperties) *sProperties {
 	slhp := &sProperties{
 		ID:          lhp.ID,
-		Nposns:      lhp.Nposns,
 		Positions:   lhp.Positions,
 		Plates:      lhp.Plates,
 		Tipboxes:    lhp.Tipboxes,
@@ -46,7 +43,6 @@ func newSProperties(lhp *LHProperties) *sProperties {
 		Preferences: lhp.Preferences,
 		CurrConf:    lhp.CurrConf,
 		Cnfvol:      lhp.Cnfvol,
-		Layout:      lhp.Layout,
 	}
 
 	headIndices := make(map[*wtype.LHHead]int, len(lhp.Heads))
@@ -72,7 +68,6 @@ func newSProperties(lhp *LHProperties) *sProperties {
 
 func (slhp *sProperties) Fill(lhp *LHProperties) {
 	lhp.ID = slhp.ID
-	lhp.Nposns = slhp.Nposns
 	lhp.Positions = slhp.Positions
 	lhp.Plates = slhp.Plates
 	lhp.Tipboxes = slhp.Tipboxes
@@ -88,7 +83,6 @@ func (slhp *sProperties) Fill(lhp *LHProperties) {
 	lhp.Preferences = slhp.Preferences
 	lhp.CurrConf = slhp.CurrConf
 	lhp.Cnfvol = slhp.Cnfvol
-	lhp.Layout = slhp.Layout
 
 	lhp.Heads = make([]*wtype.LHHead, 0, len(slhp.Heads))
 	for _, shead := range slhp.Heads {

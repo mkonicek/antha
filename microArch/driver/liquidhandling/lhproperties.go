@@ -27,7 +27,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
-	"strconv"
 	"time"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -41,7 +40,6 @@ import (
 // from the properties information
 type LHProperties struct {
 	ID             string
-	Nposns         int
 	Positions      map[string]*wtype.LHPosition // position descriptions by position name
 	PlateLookup    map[string]interface{}       // deck object (plate, tipbox, etc) by object ID
 	PosLookup      map[string]string            // object ID by position name
@@ -63,7 +61,6 @@ type LHProperties struct {
 	Driver         LiquidhandlingDriver    `gotopb:"-"`
 	CurrConf       *wtype.LHChannelParameter
 	Cnfvol         []*wtype.LHChannelParameter
-	Layout         map[string]wtype.Coordinates // position location by position name
 }
 
 func (lhp *LHProperties) MarshalJSON() ([]byte, error) {
@@ -189,17 +186,16 @@ func (lhp *LHProperties) DupKeepIDs() *LHProperties {
 }
 
 func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
-	lo := make(map[string]wtype.Coordinates, len(lhp.Layout))
-	for k, v := range lhp.Layout {
-		lo[k] = v
+	pos := make(map[string]*wtype.LHPosition, len(lhp.Positions))
+	for k, v := range lhp.Positions {
+		// be sure to copy the data
+		w := *v
+		pos[k] = &w
 	}
-	r := NewLHProperties(lhp.Nposns, lhp.Model, lhp.Mnfr, lhp.LHType, lhp.TipType, lo)
+	r := NewLHProperties(lhp.Model, lhp.Mnfr, lhp.LHType, lhp.TipType, pos)
 
 	if keepIDs {
 		r.ID = lhp.ID
-		for name, pos := range lhp.Positions {
-			r.Positions[name].ID = pos.ID
-		}
 	}
 
 	adaptorMap := make(map[*wtype.LHAdaptor]*wtype.LHAdaptor, len(lhp.Adaptors))
@@ -311,10 +307,6 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 
 	copy(r.Cnfvol, lhp.Cnfvol)
 
-	for i, v := range lhp.Layout {
-		r.Layout[i] = v
-	}
-
 	// copy the driver
 	r.Driver = lhp.Driver
 
@@ -322,7 +314,7 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 }
 
 // constructor for the above
-func NewLHProperties(num_positions int, model, manufacturer string, lhtype LiquidHandlerLevel, tiptype TipType, layout map[string]wtype.Coordinates) *LHProperties {
+func NewLHProperties(model, manufacturer string, lhtype LiquidHandlerLevel, tiptype TipType, positions map[string]*wtype.LHPosition) *LHProperties {
 	// assert validity of lh and tip types
 
 	if !lhtype.IsValid() {
@@ -332,47 +324,26 @@ func NewLHProperties(num_positions int, model, manufacturer string, lhtype Liqui
 		panic(fmt.Sprintf("Invalid tip usage type requested: %s", tiptype))
 	}
 
-	var lhp LHProperties
-
-	lhp.ID = wtype.GetUUID()
-
-	lhp.Nposns = num_positions
-
-	lhp.Model = model
-	lhp.Mnfr = manufacturer
-	lhp.LHType = lhtype
-	lhp.TipType = tiptype
-
-	lhp.Heads = make([]*wtype.LHHead, 0, 2)
-	lhp.Adaptors = make([]*wtype.LHAdaptor, 0, 2)
-	lhp.HeadAssemblies = make([]*wtype.LHHeadAssembly, 0, 2)
-
-	positions := make(map[string]*wtype.LHPosition, num_positions)
-
-	for i := 0; i < num_positions; i++ {
-		// not overriding these defaults seems like a
-		// bad idea --- TODO: Fix, e.g., MAXH here
-		posname := fmt.Sprintf("position_%d", i+1)
-		positions[posname] = wtype.NewLHPosition(i+1, "position_"+strconv.Itoa(i+1), 80.0)
+	return &LHProperties{
+		ID:             wtype.GetUUID(),
+		Positions:      positions,
+		Model:          model,
+		Mnfr:           manufacturer,
+		LHType:         lhtype,
+		TipType:        tiptype,
+		Heads:          make([]*wtype.LHHead, 0, 2),
+		Adaptors:       make([]*wtype.LHAdaptor, 0, 2),
+		HeadAssemblies: make([]*wtype.LHHeadAssembly, 0, 2),
+		PosLookup:      make(map[string]string, len(positions)),
+		PlateLookup:    make(map[string]interface{}, len(positions)),
+		PlateIDLookup:  make(map[string]string, len(positions)),
+		Plates:         make(map[string]*wtype.Plate, len(positions)),
+		Tipboxes:       make(map[string]*wtype.LHTipbox, len(positions)),
+		Tipwastes:      make(map[string]*wtype.LHTipwaste, len(positions)),
+		Wastes:         make(map[string]*wtype.Plate, len(positions)),
+		Washes:         make(map[string]*wtype.Plate, len(positions)),
+		Tips:           make([]*wtype.LHTip, 0, 3),
 	}
-
-	lhp.Positions = positions
-	lhp.PosLookup = make(map[string]string, lhp.Nposns)
-	lhp.PlateLookup = make(map[string]interface{}, lhp.Nposns)
-	lhp.PlateIDLookup = make(map[string]string, lhp.Nposns)
-	lhp.Plates = make(map[string]*wtype.Plate, lhp.Nposns)
-	lhp.Tipboxes = make(map[string]*wtype.LHTipbox, lhp.Nposns)
-	lhp.Tipwastes = make(map[string]*wtype.LHTipwaste, lhp.Nposns)
-	lhp.Wastes = make(map[string]*wtype.Plate, lhp.Nposns)
-	lhp.Washes = make(map[string]*wtype.Plate, lhp.Nposns)
-	lhp.Heads = make([]*wtype.LHHead, 0, 2)
-	lhp.Tips = make([]*wtype.LHTip, 0, 3)
-
-	lhp.Layout = layout
-
-	// lhp.Curcnf, lhp.Cmnvol etc. intentionally left blank
-
-	return &lhp
 }
 
 // GetLHType returns the declared type of liquid handler for driver selection purposes
@@ -426,16 +397,12 @@ func (lhp *LHProperties) RemoveTipBoxes() {
 
 func (lhp *LHProperties) TipWastesMounted() int {
 	r := 0
+	// go looking for tipwastes
 	for _, pref := range lhp.Preferences[Tipwastes] {
-		if !lhp.IsEmpty(pref) {
-			_, ok := lhp.Tipwastes[lhp.PosLookup[pref]]
-
-			if !ok {
-				logger.Debug(fmt.Sprintf("Position %s claims to have a tipbox but is empty", pref))
-				continue
-			}
-
+		if _, ok := lhp.Tipwastes[lhp.PosLookup[pref]]; ok {
 			r += 1
+		} else {
+			fmt.Printf("no Tipwaste at %q: PlateLookup has: %v\n", pref, lhp.PlateLookup[pref])
 		}
 	}
 
@@ -445,15 +412,9 @@ func (lhp *LHProperties) TipWastesMounted() int {
 
 func (lhp *LHProperties) TipSpacesLeft() int {
 	r := 0
+	// go looking for tipboxes
 	for _, pref := range lhp.Preferences[Tipwastes] {
-		if !lhp.IsEmpty(pref) {
-			bx, ok := lhp.Tipwastes[lhp.PosLookup[pref]]
-
-			if !ok {
-				logger.Debug(fmt.Sprintf("Position %s claims to have a tipbox but is empty", pref))
-				continue
-			}
-
+		if bx, ok := lhp.Tipwastes[lhp.PosLookup[pref]]; ok {
 			r += bx.SpaceLeft()
 		}
 	}
@@ -486,6 +447,7 @@ func (lhp *LHProperties) AddTipWaste(tipwaste *wtype.LHTipwaste) error {
 }
 
 func (lhp *LHProperties) AddTipWasteTo(pos string, tipwaste *wtype.LHTipwaste) error {
+	fmt.Printf("AddTipWasteTo(%q, %s)\n", pos, tipwaste.Name)
 	if !lhp.IsEmpty(pos) {
 		return wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprintf("Trying to add tip waste to full position %s", pos))
 	}

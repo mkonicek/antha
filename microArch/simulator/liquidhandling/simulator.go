@@ -77,9 +77,9 @@ func NewVirtualLiquidHandler(props *liquidhandling.LHProperties, settings *Simul
 
 	//Make the deck
 	deck := wtype.NewLHDeck("simulated deck", props.Mnfr, props.Model)
-	for name, pos := range props.Layout {
+	for name, pos := range props.Positions {
 		//size not given un LHProperties, assuming standard 96well size
-		deck.AddSlot(name, pos, wtype.Coordinates{X: 127.76, Y: 85.48, Z: 0})
+		deck.AddSlot(name, pos.Location, wtype.Coordinates{X: 127.76, Y: 85.48, Z: 0})
 		//deck.SetSlotAccepts(name, "riser")
 	}
 
@@ -243,7 +243,7 @@ func (self *VirtualLiquidHandler) validateProperties(props *liquidhandling.LHPro
 	check_prop := func(l []string, name string) error {
 		//all locations defined
 		for _, loc := range l {
-			if _, ok := props.Layout[loc]; !ok {
+			if !props.Exists(loc) {
 				return errors.Errorf("undefined location \"%s\" referenced in %s", loc, name)
 			}
 		}

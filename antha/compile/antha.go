@@ -700,17 +700,25 @@ func New{{.ElementTypeName}}(lab *laboratory.Laboratory) *{{.ElementTypeName}} {
 	return element
 }
 
-var LineMap = map[int]int{
-	{{range $key, $value := .LineMap}}{{$key}}: {{$value}}, {{end}}
+func RegisterLineMap(lab *laboratory.Laboratory) {
+	var lineMap = map[int]int{
+		{{range $key, $value := .LineMap}}{{$key}}: {{$value}}, {{end}}
+	}
+	lab.RegisterLineMap({{printf "%q" .GeneratedPath}}, {{printf "%q" .Path}}, {{printf "%q" .ElementTypeName}}, lineMap)
 }
+
 `
 	type TVars struct {
 		ElementTypeName string
+		GeneratedPath   string
+		Path            string
 		LineMap         map[int]int
 	}
 
 	tv := TVars{
 		ElementTypeName: p.protocolName,
+		GeneratedPath:   filepath.Join(p.protocolName, elementFilename),
+		Path:            p.elementPath,
 		LineMap:         lineMap,
 	}
 

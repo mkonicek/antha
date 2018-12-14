@@ -160,6 +160,12 @@ func (eb *ElementBase) Run(lab *Laboratory, funs ...func(*Laboratory)) {
 		}
 	}
 
+	defer func() {
+		if res := recover(); res != nil {
+			lab.Errorf("%s\n%s", res, lab.lineMapManager.ElementStackTrace())
+		}
+	}()
+
 	select {
 	case <-eb.InputsReady:
 		for _, fun := range funs {

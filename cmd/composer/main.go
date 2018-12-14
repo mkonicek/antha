@@ -42,7 +42,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if err := composer.NewComposer(cfg, wf).Render(os.Stdout); err != nil {
+	comp := composer.NewComposer(cfg, wf)
+	if err := comp.LocateElementClasses(); err != nil {
+		log.Fatal(err)
+	} else if err := comp.GenerateMain(os.Stdout); err != nil {
 		log.Fatal(err)
 	}
 }

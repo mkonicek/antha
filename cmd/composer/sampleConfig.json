@@ -5,5 +5,5 @@
             "Path": "/home/matthew/src/Go_external_1.11/src/repos.antha.com/antha-ninja/elements-westeros"
         }
     ],
-    "TmpDir": "/tmp/foobar"
+    "OutDir": "/tmp/foobar"
 }

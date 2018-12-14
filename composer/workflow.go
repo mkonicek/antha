@@ -3,6 +3,7 @@ package composer
 import (
 	"encoding/json"
 	"io"
+	"sort"
 )
 
 type Workflow struct {
@@ -39,9 +40,9 @@ func (wf *Workflow) ElementClasses() []string {
 				ec = append(ec, proc.Component)
 			}
 		}
+		sort.Strings(ec)
 		wf.elementClasses = ec
 	}
-
 	return wf.elementClasses
 }
 

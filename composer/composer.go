@@ -71,6 +71,15 @@ func (c *Composer) LocateElementClasses() error {
 	return nil
 }
 
+func (c *Composer) Transpile() error {
+	for _, locElem := range c.classes {
+		if err := locElem.Transpile(c.Config); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (c *Composer) GenerateMain(w io.Writer) error {
 	mr := &mainRenderer{
 		Composer: c,

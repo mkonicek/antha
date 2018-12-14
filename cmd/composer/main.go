@@ -45,7 +45,9 @@ func main() {
 	comp := composer.NewComposer(cfg, wf)
 	if err := comp.LocateElementClasses(); err != nil {
 		log.Fatal(err)
-	} else if err := comp.GenerateMain(os.Stdout); err != nil {
+	} else if err := comp.Transpile(); err != nil {
 		log.Fatal(err)
+		//} else if err := comp.GenerateMain(os.Stdout); err != nil {
+		//		log.Fatal(err)
 	}
 }

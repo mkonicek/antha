@@ -2,13 +2,10 @@ package composer
 
 import (
 	"fmt"
-	"io"
-	"path"
 	"sort"
 	"strings"
 
 	git "gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/plumbing"
 )
 
 type ElementSource struct {
@@ -51,75 +48,6 @@ func (es ElementSources) Match(element string) (*LocatedElement, error) {
 		}
 	}
 	return nil, nil
-}
-
-type LocatedElement struct {
-	Source *ElementSource
-	// commit shasum or branch name
-	Commit string
-	// remaining path to the element directory
-	Path        string
-	PackageName string
-	ImportPath  string
-	// files fetched from the element directory mapping name to
-	// content. Note that file name (key) is the path relative to the
-	// path field.
-	Files map[string]string
-}
-
-func NewLocatedElement(source *ElementSource, commit, remainingPath string) *LocatedElement {
-	return &LocatedElement{
-		Source:      source,
-		Commit:      commit,
-		Path:        remainingPath,
-		PackageName: path.Base(remainingPath),
-		ImportPath:  path.Join(source.Prefix, commit, remainingPath),
-	}
-}
-
-func (le LocatedElement) FetchFiles() error {
-	if le.Files != nil {
-		return nil
-	}
-	if err := le.Source.ensureRepo(); err != nil {
-		return err
-	}
-
-	var commitHash plumbing.Hash
-	if branch, err := le.Source.repo.Branch(le.Commit); err == git.ErrBranchNotFound {
-		// it's not a branch, so assume it's a commit hash
-		commitHash = plumbing.NewHash(le.Commit)
-	} else if err != nil {
-		return err
-	} else if ch, err := le.Source.repo.ResolveRevision(plumbing.Revision(branch.Merge)); err != nil {
-		return err
-	} else {
-		commitHash = *ch
-	}
-
-	// now follow that commitHash
-	if commit, err := le.Source.repo.CommitObject(commitHash); err != nil {
-		return err
-	} else if tree, err := le.Source.repo.TreeObject(commit.TreeHash); err != nil {
-		return err
-	} else {
-		results := make(map[string]string)
-		iter := tree.Files()
-		for {
-			if f, err := iter.Next(); err == io.EOF {
-				break
-			} else if err != nil {
-				return err
-			} else if !strings.HasPrefix(f.Name, le.Path) {
-				continue
-			} else if c, err := f.Contents(); err != nil {
-				return err
-			} else {
-				results[strings.TrimPrefix(f.Name, le.Path)] = c
-			}
-		}
-		return nil
-	}
 }
 
 func (e *ElementSource) ensureRepo() error {

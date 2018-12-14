@@ -86,7 +86,7 @@ type Message struct {
 	Name   string
 	Doc    string
 	Fields []*Field
-	Kind   token.Token // One of token.{DATA, PARAMETERS, OUTPUTS, INPUTS, MESSAGE}
+	Kind   token.Token // One of token.{DATA, PARAMETERS, OUTPUTS, INPUTS}
 }
 
 func (m *Message) getFields() []*Field {
@@ -116,7 +116,7 @@ func isInput(tok token.Token) bool {
 
 func isAnthaGenDeclToken(tok token.Token) bool {
 	switch tok {
-	case token.OUTPUTS, token.DATA, token.PARAMETERS, token.INPUTS, token.MESSAGE:
+	case token.OUTPUTS, token.DATA, token.PARAMETERS, token.INPUTS:
 		return true
 	default:
 		return false
@@ -583,24 +583,12 @@ func (p *Antha) validateMessages(messages []*Message) error {
 	for _, msg := range messages {
 		name := msg.Name
 
-		switch k := msg.Kind; k {
-
-		case token.MESSAGE:
-			if !ast.IsExported(name) {
-				return fmt.Errorf("%s %s must begin with an upper case letter", k, name)
-			}
-
-		default:
-			for _, field := range msg.Fields {
-
-				if _, seen := p.tokenByParamName[field.Name]; seen {
-					return fmt.Errorf("%s already declared", name)
-				}
-				p.tokenByParamName[field.Name] = msg.Kind
-			}
-		}
-
 		for _, field := range msg.Fields {
+			if _, seen := p.tokenByParamName[field.Name]; seen {
+				return fmt.Errorf("%s already declared", name)
+			}
+			p.tokenByParamName[field.Name] = msg.Kind
+
 			if !ast.IsExported(field.Name) {
 				return fmt.Errorf("field %s must begin with an upper case letter", name)
 			}

@@ -26,14 +26,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/url"
+	"path"
+	"strings"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wtype/liquidtype"
 	"github.com/antha-lang/antha/cmd/antha/frontend"
-	"github.com/antha-lang/antha/cmd/antha/pretty"
 	"github.com/antha-lang/antha/cmd/antha/spawn"
 	"github.com/antha-lang/antha/execute"
 	"github.com/antha-lang/antha/execute/executeutil"
-	"github.com/antha-lang/antha/inject"
 	"github.com/antha-lang/antha/inventory/testinventory"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/auto"
@@ -41,11 +44,6 @@ import (
 	"github.com/antha-lang/antha/workflowtest"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"io/ioutil"
-	"net/url"
-	"os"
-	"path"
-	"strings"
 )
 
 var runCmd = &cobra.Command{
@@ -114,19 +112,22 @@ func makeMixerOpt(ctx context.Context) (mixer.Opt, error) {
 }
 
 func makeContext() (context.Context, error) {
-	ctx := inject.NewContext(context.Background())
-	for _, desc := range library {
-		obj := desc.Constructor()
-		runner, ok := obj.(inject.Runner)
-		if !ok {
-			return nil, fmt.Errorf("component %q has unexpected type %T", desc.Name, obj)
-		}
-		if err := inject.Add(ctx, inject.Name{Repo: desc.Name, Stage: desc.Stage}, runner); err != nil {
-			return nil, fmt.Errorf("adding protocol %q: %s", desc.Name, err)
-		}
-	}
-	ctx = testinventory.NewContext(ctx)
-	return ctx, nil
+	/*
+			ctx := inject.NewContext(context.Background())
+			for _, desc := range library {
+				obj := desc.Constructor()
+				runner, ok := obj.(inject.Runner)
+				if !ok {
+					return nil, fmt.Errorf("component %q has unexpected type %T", desc.Name, obj)
+				}
+				if err := inject.Add(ctx, inject.Name{Repo: desc.Name, Stage: desc.Stage}, runner); err != nil {
+					return nil, fmt.Errorf("adding protocol %q: %s", desc.Name, err)
+				}
+			}
+		ctx = testinventory.NewContext(ctx)
+		return ctx, nil
+	*/
+	return nil, nil
 }
 
 type runOpt struct {
@@ -230,18 +231,6 @@ func (a *runOpt) Run() error {
 			return err
 		}
 		fmt.Println("TEST BUNDLE COMPARISON OK")
-	}
-
-	if err := pretty.SaveFiles(os.Stdout, rout); err != nil {
-		return err
-	}
-
-	if err := pretty.Timeline(os.Stdout, t, rout); err != nil {
-		return err
-	}
-
-	if err := pretty.Run(os.Stdout, os.Stdin, t, rout); err != nil {
-		return err
 	}
 
 	return nil

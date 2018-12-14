@@ -22,16 +22,12 @@
 
 package main
 
-import (
-	"fmt"
-	"os"
-
-	"github.com/antha-lang/antha/cmd/antha/cmd"
-)
-
 func main() {
-	if err := cmd.Execute(nil); err != nil {
-		fmt.Fprintln(os.Stderr, "error:", err) // nolint
-		os.Exit(1)
-	}
+	return
+	/*
+		if err := cmd.Execute(nil); err != nil {
+			fmt.Fprintln(os.Stderr, "error:", err) // nolint
+			os.Exit(1)
+		}
+	*/
 }

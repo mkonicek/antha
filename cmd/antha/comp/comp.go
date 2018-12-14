@@ -1,5 +1,6 @@
 package comp
 
+/*
 import (
 	"fmt"
 
@@ -56,3 +57,4 @@ func New(lib []component.Component) ([]Component, error) {
 	}
 	return cs, nil
 }
+*/

@@ -147,7 +147,6 @@ const (
 	ANALYSIS
 	DATA
 	INPUTS
-	MESSAGE
 	OUTPUTS
 	PARAMETERS
 	PROTOCOL
@@ -269,7 +268,6 @@ var tokens = [...]string{
 	OUTPUTS:      "Outputs",
 	ANALYSIS:     "Analysis",
 	VALIDATION:   "Validation",
-	MESSAGE:      "Message",
 }
 
 // String returns the string corresponding to the token tok.

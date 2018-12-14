@@ -522,7 +522,7 @@ func syncStmt(p *parseLHSList) {
 func syncDecl(p *parseLHSList) {
 	for {
 		switch p.tok {
-		case token.CONST, token.TYPE, token.VAR, token.INPUTS, token.DATA, token.OUTPUTS, token.PARAMETERS, token.MESSAGE:
+		case token.CONST, token.TYPE, token.VAR, token.INPUTS, token.DATA, token.OUTPUTS, token.PARAMETERS:
 			// see comments in syncStmt
 			if p.pos == p.syncPos && p.syncCnt < 10 {
 				p.syncCnt++
@@ -2335,27 +2335,14 @@ func (p *parseLHSList) parseTypeSpec(doc *ast.CommentGroup, _ token.Token, _ int
 	return spec
 }
 
-func (p *parseLHSList) parseUnnamedAnthaSpec(doc *ast.CommentGroup, keyword token.Token, iota int) ast.Spec {
-	return p.parseAnthaSpec(doc, keyword, iota, false)
-}
-
-func (p *parseLHSList) parseNamedAnthaSpec(doc *ast.CommentGroup, keyword token.Token, iota int) ast.Spec {
-	return p.parseAnthaSpec(doc, keyword, iota, true)
-}
-
 // parseAnthaSpec is a specialization of parseTypeSpec that handles the
 // implicit `type` token that is omitted for Antha message types.
-func (p *parseLHSList) parseAnthaSpec(doc *ast.CommentGroup, keyword token.Token, _ int, named bool) ast.Spec {
+func (p *parseLHSList) parseUnnamedAnthaSpec(doc *ast.CommentGroup, keyword token.Token, iota int) ast.Spec {
 	if p.trace {
 		defer un(trace(p, keyword.String()+"Spec"))
 	}
 
-	var ident *ast.Ident
-	if !named {
-		ident = &ast.Ident{NamePos: p.pos, Name: keyword.String()}
-	} else {
-		ident = p.parseIdent()
-	}
+	ident := &ast.Ident{NamePos: p.pos, Name: keyword.String()}
 
 	// Go spec: The scope of a type identifier declared inside a function begins
 	// at the identifier in the TypeSpec and ends at the end of the innermost
@@ -2552,9 +2539,6 @@ func (p *parseLHSList) parseDecl(sync func(*parseLHSList)) ast.Decl {
 
 	case token.INPUTS, token.PARAMETERS, token.DATA, token.OUTPUTS:
 		f = p.parseUnnamedAnthaSpec
-
-	case token.MESSAGE:
-		f = p.parseNamedAnthaSpec
 
 	// Antha extension
 	case token.REQUIREMENTS, token.STEPS, token.SETUP, token.ANALYSIS, token.VALIDATION:

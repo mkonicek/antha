@@ -23,24 +23,10 @@
 package cmd
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-	"reflect"
-	"text/template"
 	"unicode"
 
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/component"
-	"github.com/antha-lang/antha/execute"
-	"github.com/antha-lang/antha/inject"
-	"github.com/antha-lang/antha/workflow"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var newElementCmd = &cobra.Command{
@@ -155,6 +141,7 @@ func validElementName(name string) error {
 	return nil
 }
 
+/*
 func writeAn(outputDir string, steps []string, element *component.Component) error {
 	type parg struct {
 		Name string
@@ -234,109 +221,109 @@ func writeBundle(outputDir string, element *component.Component, params map[stri
 	}
 	return nil
 }
-
+*/
 func newElement(cmd *cobra.Command, args []string) error {
-	if err := viper.BindPFlags(cmd.Flags()); err != nil {
-		return err
-	}
+	return nil
+	/*
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return err
+		}
 
-	var name, outputDir string
+		var name, outputDir string
 
-	switch len(args) {
-	case 0:
-		return fmt.Errorf("missing element name")
-	case 1:
-		name = args[0]
-		outputDir = name
-	default:
-		name = args[0]
-		outputDir = args[1]
-	}
+		switch len(args) {
+		case 0:
+			return fmt.Errorf("missing element name")
+		case 1:
+			name = args[0]
+			outputDir = name
+		default:
+			name = args[0]
+			outputDir = args[1]
+		}
 
-	if err := validElementName(name); err != nil {
-		return fmt.Errorf("element name %q is invalid: %s", name, err)
-	}
+		if err := validElementName(name); err != nil {
+			return fmt.Errorf("element name %q is invalid: %s", name, err)
+		}
 
-	if err := os.MkdirAll(outputDir, 0700); err != nil {
-		return fmt.Errorf("cannot make directory %q: %s", outputDir, err)
-	}
+		if err := os.MkdirAll(outputDir, 0700); err != nil {
+			return fmt.Errorf("cannot make directory %q: %s", outputDir, err)
+		}
 
-	// TODO: link params, input, output, and element
-	type input struct {
-		A           float64
-		B           float64
-		ComponentA  *wtype.Liquid
-		ComponentB  *wtype.Liquid
-		Option      bool
-		String      string
-		StringArray []string
-		VolumeA     wunit.Volume
-		VolumeB     wunit.Volume
-	}
+		// TODO: link params, input, output, and element
+		type input struct {
+			A           float64
+			B           float64
+			ComponentA  *wtype.Liquid
+			ComponentB  *wtype.Liquid
+			Option      bool
+			String      string
+			StringArray []string
+			VolumeA     wunit.Volume
+			VolumeB     wunit.Volume
+		}
 
-	type output struct {
-		MixedComponent *wtype.Liquid
-		Sum            float64
-	}
+		type output struct {
+			MixedComponent *wtype.Liquid
+			Sum            float64
+		}
 
-	params := map[string]interface{}{
-		"A":           2.99,
-		"B":           -1.0,
-		"ComponentA":  "water",
-		"ComponentB":  "dna",
-		"Option":      false,
-		"String":      "Example",
-		"StringArray": []string{"A", "B", "C"},
-		"VolumeA":     "1ul",
-		"VolumeB":     "2ul",
-	}
+		params := map[string]interface{}{
+			"A":           2.99,
+			"B":           -1.0,
+			"ComponentA":  "water",
+			"ComponentB":  "dna",
+			"Option":      false,
+			"String":      "Example",
+			"StringArray": []string{"A", "B", "C"},
+			"VolumeA":     "1ul",
+			"VolumeB":     "2ul",
+		}
 
-	var in input
-	var out output
+		var in input
+		var out output
 
-	typeName := func(i interface{}) string {
-		return fmt.Sprint(reflect.TypeOf(i))
-	}
-	element := &component.Component{
-		Name: name,
-		Constructor: func() interface{} {
-			return &inject.CheckedRunner{
-				In:  &input{},
-				Out: &output{},
-			}
-		},
-		Description: component.Description{
-			Params: []component.ParamDesc{
-				{Name: "A", Kind: "Parameters", Type: typeName(in.A)},
-				{Name: "B", Kind: "Parameters", Type: typeName(in.B)},
-				{Name: "ComponentA", Kind: "Inputs", Type: typeName(in.ComponentA)},
-				{Name: "ComponentB", Kind: "Inputs", Type: typeName(in.ComponentB)},
-				{Name: "MixedComponent", Kind: "Outputs", Type: typeName(out.MixedComponent)},
-				{Name: "Option", Kind: "Parameters", Type: typeName(in.Option)},
-				{Name: "String", Kind: "Parameters", Type: typeName(in.String)},
-				{Name: "StringArray", Kind: "Parameters", Type: typeName(in.StringArray)},
-				{Name: "Sum", Kind: "Data", Type: typeName(out.Sum)},
-				{Name: "VolumeA", Kind: "Parameters", Type: typeName(in.VolumeA)},
-				{Name: "VolumeB", Kind: "Parameters", Type: typeName(in.VolumeB)},
+		typeName := func(i interface{}) string {
+			return fmt.Sprint(reflect.TypeOf(i))
+		}
+		element := &component.Component{
+			Name: name,
+			Constructor: func() interface{} {
+				return &inject.CheckedRunner{
+					In:  &input{},
+					Out: &output{},
+				}
 			},
-		},
-	}
+			Description: component.Description{
+				Params: []component.ParamDesc{
+					{Name: "A", Kind: "Parameters", Type: typeName(in.A)},
+					{Name: "B", Kind: "Parameters", Type: typeName(in.B)},
+					{Name: "ComponentA", Kind: "Inputs", Type: typeName(in.ComponentA)},
+					{Name: "ComponentB", Kind: "Inputs", Type: typeName(in.ComponentB)},
+					{Name: "MixedComponent", Kind: "Outputs", Type: typeName(out.MixedComponent)},
+					{Name: "Option", Kind: "Parameters", Type: typeName(in.Option)},
+					{Name: "String", Kind: "Parameters", Type: typeName(in.String)},
+					{Name: "StringArray", Kind: "Parameters", Type: typeName(in.StringArray)},
+					{Name: "Sum", Kind: "Data", Type: typeName(out.Sum)},
+					{Name: "VolumeA", Kind: "Parameters", Type: typeName(in.VolumeA)},
+					{Name: "VolumeB", Kind: "Parameters", Type: typeName(in.VolumeB)},
+				},
+			},
+		}
+		steps := []string{
+			"\tSum = A + B",
+			"\tsampleA := mixer.Sample(ComponentA, VolumeA)",
+			"\tsampleB := mixer.Sample(ComponentB, VolumeB)",
+			"\tMixedComponent = Mix(sampleA, sampleB)",
+		}
+		if err := writeAn(outputDir, steps, element); err != nil {
+			return err
+		}
 
-	steps := []string{
-		"\tSum = A + B",
-		"\tsampleA := mixer.Sample(ComponentA, VolumeA)",
-		"\tsampleB := mixer.Sample(ComponentB, VolumeB)",
-		"\tMixedComponent = Mix(sampleA, sampleB)",
-	}
-
-	if err := writeAn(outputDir, steps, element); err != nil {
-		return err
-	}
-
-	if err := writeBundle(outputDir, element, params); err != nil {
-		return err
-	}
-
+		if err := writeBundle(outputDir, element, params); err != nil {
+			return err
+		}
+	*/
 	return nil
 }
 

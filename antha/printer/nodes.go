@@ -1351,13 +1351,6 @@ func (p *printer) anthaSpec(tok token.Token, spec ast.Spec, n int, doIndent bool
 
 	case *ast.TypeSpec:
 		p.setComment(s.Doc)
-		if tok == token.MESSAGE {
-			p.print(blank)
-			p.expr(s.Name)
-			if n != 1 {
-				p.print(vtab)
-			}
-		}
 
 		expr := s.Type
 		p.print(expr.Pos())

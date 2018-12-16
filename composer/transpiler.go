@@ -1,9 +1,6 @@
 package composer
 
 import (
-	"bytes"
-	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -11,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/antha-lang/antha/antha/ast"
 	"github.com/antha-lang/antha/antha/compile"
 	"github.com/antha-lang/antha/antha/parser"
 	"github.com/antha-lang/antha/antha/token"
@@ -30,10 +26,11 @@ type LocatedElement struct {
 	// files fetched from the element directory mapping name to
 	// content. Note that file name (key) is the path relative to the
 	// path field.
-	Files map[string]string
+	Files map[string][]byte
 }
 
 func NewLocatedElement(source *ElementSource, commit, remainingPath string) *LocatedElement {
+	remainingPath = strings.Trim(remainingPath, "/") + "/"
 	return &LocatedElement{
 		Source:      source,
 		Commit:      commit,
@@ -69,7 +66,7 @@ func (le *LocatedElement) FetchFiles() error {
 	} else if tree, err := le.Source.repo.TreeObject(commit.TreeHash); err != nil {
 		return err
 	} else {
-		results := make(map[string]string)
+		results := make(map[string][]byte)
 		iter := tree.Files()
 		for {
 			if f, err := iter.Next(); err == io.EOF {
@@ -81,7 +78,7 @@ func (le *LocatedElement) FetchFiles() error {
 			} else if c, err := f.Contents(); err != nil {
 				return err
 			} else {
-				results[strings.TrimPrefix(f.Name, le.Path)] = c
+				results[strings.TrimPrefix(f.Name, le.Path)] = []byte(c)
 			}
 		}
 		le.Files = results
@@ -89,10 +86,11 @@ func (le *LocatedElement) FetchFiles() error {
 	}
 }
 
-func (le *LocatedElement) Transpile(config *Config) error {
-	baseDir := filepath.Join(config.OutDir, le.ImportPath)
+func (le *LocatedElement) Transpile(c *Composer) error {
+	baseDir := filepath.Join(c.Config.OutDir, "src", le.ImportPath)
 
-	root := compile.NewAnthaRoot(le.ImportPath)
+	fSet := token.NewFileSet()
+	anthaFiles := compile.NewAnthaFiles()
 
 	for leaf, content := range le.Files {
 		fullPath := filepath.Join(baseDir, leaf)
@@ -102,23 +100,76 @@ func (le *LocatedElement) Transpile(config *Config) error {
 			return err
 		}
 
-		if filepath.Ext(leaf) == ".an" {
-			if err := processFile(root, dir, fullPath, content); err != nil {
+		if err := ioutil.WriteFile(fullPath, content, 0600); err != nil {
+			return err
+		}
+
+		if filepath.Ext(fullPath) == ".an" {
+			if src, err := parser.ParseFile(fSet, fullPath, content, parser.ParseComments); err != nil {
 				return err
-			}
-		} else {
-			if err := ioutil.WriteFile(fullPath, []byte(content), 0600); err != nil {
+			} else if antha, err := compile.NewAntha(fSet, src); err != nil {
 				return err
+			} else {
+				for _, ipt := range antha.ImportReqs {
+					if err := le.maybeRewriteImport(c, ipt); err != nil {
+						return err
+					}
+				}
+				if err := antha.Transform(anthaFiles); err != nil {
+					return err
+				}
 			}
 		}
 	}
+	return writeAnthaFiles(anthaFiles, baseDir)
+}
+
+func (le *LocatedElement) maybeRewriteImport(c *Composer, ipt *compile.ImportReq) error {
+	// we don't expect imports inside antha files to have revisions
+	// within them. So, the strategy is:
+	// 1. if it already matches a class with our own prefix and commit, then we're done
+	// 2. else if it matches our own source's prefix, then attempt to use our commit
+	// 3. otherwise attempt to parse it as if it has a revision / branch
+	// 4. Otherwise (and this is most likely), it's just not an import we should be rewriting.
+
+	if strings.HasPrefix(ipt.Path, le.Source.Prefix) {
+		remainingPath := strings.TrimPrefix(ipt.Path, le.Source.Prefix)
+		class := path.Join(le.Source.Prefix, le.Commit, remainingPath)
+		if le2, found := c.classes[class]; found { // (1)
+			ipt.Path = le2.ImportPath
+			return nil
+		} else {
+			le2 := NewLocatedElement(le.Source, le.Commit, remainingPath)
+			if err := le2.FetchFiles(); err != nil { // (2)
+				// even if no files are found, this should not error (at
+				// this point we know this source and commit works). So
+				// this error should be returned.
+				return err
+			} else if len(le2.Files) > 0 {
+				ipt.Path = le2.ImportPath
+				c.EnsureLocatedElement(le2)
+				return nil
+			}
+		}
+	}
+
+	if le2, err := c.Config.ElementSources.Match(ipt.Path); err != nil || le2 == nil {
+		return nil // not an error in this case (format err), so we don't return err
+	} else if err := le2.FetchFiles(); err != nil {
+		// most likely that the branch or commit doesn't exist (mis-parsing). Also not an error.
+		return nil
+	} else if len(le2.Files) > 0 {
+		ipt.Path = le2.ImportPath
+		c.EnsureLocatedElement(le2)
+		return nil
+	}
+
 	return nil
 }
 
 func writeAnthaFiles(files *compile.AnthaFiles, baseDir string) error {
 	for _, file := range files.Files() {
 		outFile := filepath.Join(filepath.Dir(baseDir), filepath.FromSlash(file.Name))
-		fmt.Println(outFile, file.Name)
 		if err := writeAnthaFile(outFile, file); err != nil {
 			return err
 		}
@@ -139,146 +190,4 @@ func writeAnthaFile(outFile string, file *compile.AnthaFile) error {
 
 	_, err = io.Copy(dst, src)
 	return err
-}
-
-// processFile generates the corresponding go code for an antha file.
-func processFile(root *compile.AnthaRoot, outdir, filename, content string) error {
-	fileSet := token.NewFileSet() // per process FileSet
-	file, adjust, err := parse(fileSet, filename, content, false)
-	if err != nil {
-		return err
-	} else if adjust != nil {
-		return errNotAnthaFile
-	}
-
-	antha := compile.NewAntha(root)
-
-	if err := antha.Transform(fileSet, file); err != nil {
-		return err
-	}
-
-	files, err := antha.Generate(fileSet, file)
-	if err != nil {
-		return err
-	}
-
-	return writeAnthaFiles(files, outdir)
-}
-
-const (
-	parserMode = parser.ParseComments
-)
-
-var (
-	errNotAnthaFile = errors.New("not antha file")
-)
-
-// parse parses src, which was read from filename,
-// as an Antha source file or statement list.
-func parse(fset *token.FileSet, filename string, src string, stdin bool) (*ast.File, func(orig, src []byte) []byte, error) {
-	// Try as whole source file.
-	file, err := parser.ParseFile(fset, filename, []byte(src), parserMode)
-	if err == nil {
-		return file, nil, nil
-	}
-	// If the error is that the source file didn't begin with a
-	// package line and this is standard input, fall through to
-	// try as a source fragment.  Stop and return on any other error.
-	if !stdin || !strings.Contains(err.Error(), "expected 'package'") {
-		return nil, nil, err
-	}
-
-	// If this is a declaration list, make it a source file
-	// by inserting a package clause.
-	// Insert using a ;, not a newline, so that the line numbers
-	// in psrc match the ones in src.
-	psrc := append([]byte("protocol p;"), src...)
-	file, err = parser.ParseFile(fset, filename, psrc, parserMode)
-	if err == nil {
-		adjust := func(orig, src []byte) []byte {
-			// Remove the package clause.
-			// Anthafmt has turned the ; into a \n.
-			src = src[len("protocol p\n"):]
-			return matchSpace(orig, src)
-		}
-		return file, adjust, nil
-	}
-	// If the error is that the source file didn't begin with a
-	// declaration, fall through to try as a statement list.
-	// Stop and return on any other error.
-	if !strings.Contains(err.Error(), "expected declaration") {
-		return nil, nil, err
-	}
-
-	// If this is a statement list, make it a source file
-	// by inserting a package clause and turning the list
-	// into a function body.  This handles expressions too.
-	// Insert using a ;, not a newline, so that the line numbers
-	// in fsrc match the ones in src.
-	fsrc := append(append([]byte("protocol p; func _() {"), src...), '}')
-	file, err = parser.ParseFile(fset, filename, fsrc, parserMode)
-	if err == nil {
-		adjust := func(orig, src []byte) []byte {
-			// Remove the wrapping.
-			// Anthafmt has turned the ; into a \n\n.
-			src = src[len("protocol p\n\nfunc _() {"):]
-			src = src[:len(src)-len("}\n")]
-			// Anthafmt has also indented the function body one level.
-			// Remove that indent.
-			src = bytes.Replace(src, []byte("\n\t"), []byte("\n"), -1)
-			return matchSpace(orig, src)
-		}
-		return file, adjust, nil
-	}
-
-	// Failed, and out of options.
-	return nil, nil, err
-}
-
-// Utility function for matchSpace
-func cutSpace(b []byte) (before, middle, after []byte) {
-	i := 0
-	for i < len(b) && (b[i] == ' ' || b[i] == '\t' || b[i] == '\n') {
-		i++
-	}
-	j := len(b)
-	for j > 0 && (b[j-1] == ' ' || b[j-1] == '\t' || b[j-1] == '\n') {
-		j--
-	}
-	if i <= j {
-		return b[:i], b[i:j], b[j:]
-	}
-	return nil, nil, b[j:]
-}
-
-// matchSpace reformats src to use the same space context as orig.
-// 1) If orig begins with blank lines, matchSpace inserts them at the beginning of src.
-// 2) matchSpace copies the indentation of the first non-blank line in orig
-//    to every non-blank line in src.
-// 3) matchSpace copies the trailing space from orig and uses it in place
-//   of src's trailing space.
-func matchSpace(orig []byte, src []byte) []byte {
-	before, _, after := cutSpace(orig)
-	i := bytes.LastIndex(before, []byte{'\n'})
-	before, indent := before[:i+1], before[i+1:]
-
-	_, src, _ = cutSpace(src)
-
-	var b bytes.Buffer
-	b.Write(before)
-	for len(src) > 0 {
-		line := src
-		if i := bytes.IndexByte(line, '\n'); i >= 0 {
-			line, src = line[:i+1], line[i+1:]
-		} else {
-			src = nil
-		}
-		if len(line) > 0 && line[0] != '\n' { // not blank
-			b.Write(indent) // nolint: errcheck
-		}
-		b.Write(line)
-	}
-	b.Write(after) // nolint: errcheck
-
-	return b.Bytes()
 }

@@ -47,7 +47,7 @@ func main() {
 		log.Fatal(err)
 	} else if err := comp.Transpile(); err != nil {
 		log.Fatal(err)
-		//} else if err := comp.GenerateMain(os.Stdout); err != nil {
-		//		log.Fatal(err)
+	} else if err := comp.GenerateMain(); err != nil {
+		log.Fatal(err)
 	}
 }

@@ -24,7 +24,6 @@ package compile
 
 import (
 	"bytes"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -123,20 +122,14 @@ func isAnthaGenDeclToken(tok token.Token) bool {
 	}
 }
 
-func manglePackageName(pkg string) string {
-	return "_" + hex.EncodeToString([]byte(pkg))
+// An ImportReq is a request to add an import
+type ImportReq struct {
+	Path    string // Package path
+	Name    string // Package alias
+	useExpr string // Dummy expression to supress unused imports
 }
 
-// An importReq is a request to add an import
-type importReq struct {
-	Path         string // Package path
-	Name         string // Package identifier
-	UseExpr      string // Dummy expression to supress unused imports
-	Added        bool   // Has the import already been added?
-	ProtoPackage string // Protobuf package this import cooresponds to
-}
-
-func (r *importReq) ImportName() string {
+func (r *ImportReq) ImportName() string {
 	if len(r.Name) != 0 {
 		return r.Name
 	}
@@ -144,8 +137,32 @@ func (r *importReq) ImportName() string {
 	return path.Base(r.Path)
 }
 
+type ImportReqs []*ImportReq
+
+func (irs ImportReqs) Sort() {
+	sort.Slice(irs, func(i, j int) bool {
+		iSplit := strings.Split(irs[i].Path, "/")
+		jSplit := strings.Split(irs[j].Path, "/")
+		iLen, jLen := len(iSplit), len(jSplit)
+		l := iLen
+		if jLen < iLen {
+			l = jLen
+		}
+		for idx := 0; idx < l; idx++ {
+			if iSplit[idx] < jSplit[idx] {
+				return true
+			} else if iSplit[idx] > jSplit[idx] {
+				return false
+			}
+		}
+		return iLen < jLen
+	})
+}
+
 // Antha is a preprocessing pass from antha file to go file
 type Antha struct {
+	fileSet *token.FileSet
+	file    *ast.File
 	// Description of this element
 	description string
 	// Path to element file
@@ -155,28 +172,16 @@ type Antha struct {
 	// Protocol name as given in Antha file
 	protocolName string
 
-	root *AnthaRoot
-
 	// inputs or outputs of an element but not messages
 	tokenByParamName map[string]token.Token
-	blocksUsed       map[token.Token]bool
-	// Replacements for identifiers in expressions in functions
-	intrinsics map[string]string
-	// Replacement for go type names in type expressions and types and type lists
-	types map[string]string
 	// Imports in protocol and imports to add
-	importReqs   []*importReq
-	importByName map[string]*importReq
+	ImportReqs   ImportReqs
+	importByName map[string]struct{}
 }
 
-// NewAntha creates a new antha pass
-func NewAntha(root *AnthaRoot) *Antha {
-	p := &Antha{
-		root:         root,
-		importByName: make(map[string]*importReq),
-	}
-
-	p.intrinsics = map[string]string{
+var (
+	// Replacements for identifiers in expressions in functions
+	intrinsics = map[string]string{
 		"Centrifuge":    "execute.Centrifuge",
 		"Electroshock":  "execute.Electroshock",
 		"ExecuteMixes":  "execute.ExecuteMixes",
@@ -196,7 +201,8 @@ func NewAntha(root *AnthaRoot) *Antha {
 		"SplitSample":   "execute.SplitSample",
 	}
 
-	p.types = map[string]string{
+	// Replacement for go type names in type expressions and types and type lists
+	types = map[string]string{
 		"Amount":               "wunit.Amount",
 		"Angle":                "wunit.Angle",
 		"AngularVelocity":      "wunit.AngularVelocity",
@@ -237,61 +243,59 @@ func NewAntha(root *AnthaRoot) *Antha {
 		"Volume":               "wunit.Volume",
 		"Warning":              "wtype.Warning",
 	}
+)
 
-	// TODO: add usage tracking to replace UseExpr
-	p.addImportReq(&importReq{
+// NewAntha creates a new antha pass
+func NewAntha(fileSet *token.FileSet, src *ast.File) (*Antha, error) {
+	if src.Tok != token.PROTOCOL {
+		return nil, errNotAnthaFile
+	}
+
+	p := &Antha{
+		fileSet:      fileSet,
+		file:         src,
+		protocolName: src.Name.Name,
+		elementPath:  fileSet.File(src.Package).Name(),
+		description:  src.Doc.Text(),
+		importByName: make(map[string]struct{}),
+	}
+
+	// TODO: add usage tracking to replace useExpr
+	p.addImportReq(&ImportReq{
 		Path: "github.com/antha-lang/antha/laboratory",
 	})
-	p.addImportReq(&importReq{
+	p.addImportReq(&ImportReq{
 		Path:    "github.com/antha-lang/antha/antha/anthalib/wtype",
-		UseExpr: "wtype.FALSE",
+		useExpr: "wtype.FALSE",
 	})
-	p.addImportReq(&importReq{
+	p.addImportReq(&ImportReq{
 		Path:    "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/jobfile",
-		UseExpr: "jobfile.DefaultClient",
+		useExpr: "jobfile.DefaultClient",
 	})
-	p.addImportReq(&importReq{
+	p.addImportReq(&ImportReq{
 		Path:    "github.com/antha-lang/antha/antha/anthalib/wunit",
-		UseExpr: "wunit.GetGlobalUnitRegistry",
+		useExpr: "wunit.GetGlobalUnitRegistry",
 	})
-	p.addImportReq(&importReq{
+	p.addImportReq(&ImportReq{
 		Path:    "github.com/antha-lang/antha/execute",
-		UseExpr: "execute.MixInto",
-	})
-	p.addImportReq(&importReq{
-		Path:         "github.com/antha-lang/antha/api/v1",
-		Name:         "api",
-		UseExpr:      "api.State_CREATED",
-		ProtoPackage: "org.antha_lang.antha.v1",
+		useExpr: "execute.MixInto",
 	})
 
-	return p
-}
-
-func filterDupSpecs(specs []ast.Spec) []ast.Spec {
-	type pair struct {
-		name, path string
-	}
-	seen := make(map[pair]bool)
-	var keep []ast.Spec
-	for _, spec := range specs {
-		ispec, ok := spec.(*ast.ImportSpec)
-		if !ok {
-			keep = append(keep, spec)
-			continue
-		}
-		key := pair{
-			name: ispec.Name.String(),
-			path: ispec.Path.Value,
-		}
-		if seen[key] {
-			continue
-		}
-		seen[key] = true
-		keep = append(keep, spec)
+	p.file.Tok = token.PACKAGE
+	// Case-insensitive comparison because some filesystems are
+	// case-insensitive
+	packagePath := filepath.Base(filepath.Dir(p.elementPath))
+	if e, f := p.protocolName, packagePath; strings.ToLower(e) != strings.ToLower(f) {
+		return nil, fmt.Errorf("%s: expecting protocol %s to be in directory %s", p.elementPath, e, f)
 	}
 
-	return keep
+	p.recordImports()
+	p.recordMessages()
+	if err := p.validateMessages(); err != nil {
+		return nil, err
+	}
+
+	return p, nil
 }
 
 // getImportInsertPos returns position of last import decl or last decl if no
@@ -315,27 +319,21 @@ func getImportInsertPos(decls []ast.Decl) token.Pos {
 	return lastNode.Pos()
 }
 
-// addImports merges multiple import blocks and then adds paths; returns
-// merged imports
-func (p *Antha) addImports(file *ast.File) {
-	var specs []ast.Spec
-	var restDecls []ast.Decl
-	insertPos := getImportInsertPos(file.Decls)
+// setImports merges multiple import blocks and then adds paths
+func (p *Antha) setImports() {
+	var nonImports []ast.Decl
+	insertPos := getImportInsertPos(p.file.Decls)
 
-	for _, d := range file.Decls {
+	for _, d := range p.file.Decls {
 		gd, ok := d.(*ast.GenDecl)
 		if !ok || gd.Tok != token.IMPORT {
-			restDecls = append(restDecls, d)
-			continue
+			nonImports = append(nonImports, d)
 		}
-		specs = append(specs, gd.Specs...)
 	}
 
-	for _, req := range p.importReqs {
-		if req.Added {
-			continue
-		}
-
+	p.ImportReqs.Sort()
+	imports := make([]ast.Spec, 0, len(p.ImportReqs))
+	for _, req := range p.ImportReqs {
 		imp := &ast.ImportSpec{
 			Path: &ast.BasicLit{
 				Kind:     token.STRING,
@@ -346,25 +344,17 @@ func (p *Antha) addImports(file *ast.File) {
 		if len(req.Name) != 0 {
 			imp.Name = ast.NewIdent(req.Name)
 		}
-		specs = append(specs, imp)
-	}
-
-	if len(specs) == 0 {
-		if len(restDecls) != len(file.Decls) {
-			// Clean up empty imports
-			file.Decls = restDecls
-		}
-		return
+		imports = append(imports, imp)
 	}
 
 	merged := &ast.GenDecl{
 		Tok:    token.IMPORT,
 		Lparen: insertPos,
 		Rparen: insertPos,
-		Specs:  filterDupSpecs(specs),
+		Specs:  imports,
 	}
 
-	file.Decls = append([]ast.Decl{merged}, restDecls...)
+	p.file.Decls = append([]ast.Decl{merged}, nonImports...)
 }
 
 // getTypeString return appropriate go type string for an antha (type) expr;
@@ -376,7 +366,7 @@ func (p *Antha) getTypeString(e ast.Expr, used map[string]bool) string {
 		return ""
 
 	case *ast.Ident:
-		v, ok := p.types[t.Name]
+		v, ok := types[t.Name]
 		if ok {
 			return v
 		}
@@ -409,104 +399,37 @@ func (p *Antha) getTypeString(e ast.Expr, used map[string]bool) string {
 	return ""
 }
 
-// Transform rewrites AST to go standard primitives
-func (p *Antha) Transform(fileSet *token.FileSet, src *ast.File) (err error) {
-	if src.Tok != token.PROTOCOL {
-		return errNotAnthaFile
+func (p *Antha) addImportReq(req *ImportReq) {
+	name := req.ImportName()
+	if _, found := p.importByName[name]; !found {
+		p.ImportReqs = append(p.ImportReqs, req)
+		p.importByName[name] = struct{}{}
 	}
-
-	p.protocolName = src.Name.Name
-
-	src.Tok = token.PACKAGE
-
-	p.description = src.Doc.Text()
-
-	file := fileSet.File(src.Package)
-	p.elementPath = file.Name()
-	p.root.addProtocolDirectory(p.protocolName, filepath.Dir(p.elementPath))
-
-	// Case-insensitive comparison because some filesystems are
-	// case-insensitive
-	packagePath := filepath.Base(filepath.Dir(p.elementPath))
-	if e, f := p.protocolName, packagePath; strings.ToLower(e) != strings.ToLower(f) {
-		return fmt.Errorf("%s: expecting protocol %s to be in directory %s", file.Name(), e, f)
-	}
-
-	p.recordImports(src.Decls)
-	p.recordMessages(src.Decls)
-	if err := p.validateMessages(p.messages); err != nil {
-		return err
-	}
-
-	p.desugar(fileSet, src)
-	p.addImports(src)
-	p.addUses(src)
-
-	return
 }
 
-func (p *Antha) addImportReq(req *importReq) {
-	name := req.Name
-	if len(name) == 0 {
-		name = path.Base(req.Path)
-	}
-
-	p.importReqs = append(p.importReqs, req)
-	p.importByName[name] = req
-}
-
-// Return name relative to a base if possible
-func relativeTo(bases []string, name string) (string, error) {
-	absName, err := filepath.Abs(name)
-	if err != nil {
-		return "", err
-	}
-
-	var prefixes []string
-	prefixes = append(prefixes, bases...)
-
-	// In reverse alphabetical to ensure longest match first
-	sort.Strings(prefixes)
-	for idx := len(prefixes) - 1; idx >= 0; idx-- {
-		p := prefixes[idx]
-		if !strings.HasPrefix(absName, p) {
-			continue
-		} else if rp, err := filepath.Rel(p, absName); err != nil {
-			return "", err
-		} else {
-			return rp, nil
-		}
-	}
-
-	return name, nil
-}
-
-func (p *Antha) recordImports(decls []ast.Decl) {
-	for _, decl := range decls {
+func (p *Antha) recordImports() {
+	for _, decl := range p.file.Decls {
 		gd, ok := decl.(*ast.GenDecl)
-		if !ok || gd.Tok != token.IMPORT {
-			continue
-		}
+		if ok && gd.Tok == token.IMPORT {
+			for _, spec := range gd.Specs {
+				im := spec.(*ast.ImportSpec)
 
-		for _, spec := range gd.Specs {
-			im := spec.(*ast.ImportSpec)
+				value, _ := strconv.Unquote(im.Path.Value)
+				req := &ImportReq{
+					Path: value,
+				}
+				if im.Name != nil {
+					req.Name = im.Name.String()
+				}
 
-			value, _ := strconv.Unquote(im.Path.Value)
-			req := &importReq{
-				Added: true,
-				Path:  value,
+				p.addImportReq(req)
 			}
-			if im.Name != nil {
-				req.Name = im.Name.String()
-			}
-
-			p.addImportReq(req)
 		}
 	}
 }
 
 // recordMessages records all the spec definitions for inputs and outputs to element
-func (p *Antha) recordMessages(decls []ast.Decl) {
+func (p *Antha) recordMessages() {
 	join := func(xs ...string) string {
 		var ret []string
 		for _, x := range xs {
@@ -518,7 +441,7 @@ func (p *Antha) recordMessages(decls []ast.Decl) {
 		return strings.Join(ret, "\n")
 	}
 
-	for _, decl := range decls {
+	for _, decl := range p.file.Decls {
 		decl, ok := decl.(*ast.GenDecl)
 		if !ok {
 			continue
@@ -575,12 +498,12 @@ func uniqueFields(fields []*Field) error {
 	return nil
 }
 
-func (p *Antha) validateMessages(messages []*Message) error {
+func (p *Antha) validateMessages() error {
 	p.tokenByParamName = make(map[string]token.Token)
 
 	seen := make(map[string]*Message)
 
-	for _, msg := range messages {
+	for _, msg := range p.messages {
 		name := msg.Name
 
 		for _, field := range msg.Fields {
@@ -608,43 +531,35 @@ func (p *Antha) validateMessages(messages []*Message) error {
 	return nil
 }
 
-func (p *Antha) generateElement(fileSet *token.FileSet, file *ast.File) ([]byte, error) {
-	var buf bytes.Buffer
+// Transform rewrites AST to go standard primitives
+func (p *Antha) Transform(files *AnthaFiles) error {
+	p.desugar()
+	p.setImports()
+	p.addUses()
+
+	buf := new(bytes.Buffer)
 	compiler := &Config{
 		Mode:     printerMode,
 		Tabwidth: tabWidth,
 	}
-	lineMap, err := compiler.Fprint(&buf, fileSet, file)
+	lineMap, err := compiler.Fprint(buf, p.fileSet, p.file)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	if err := p.printFunctions(&buf, lineMap); err != nil {
-		return nil, err
-	}
-
-	return buf.Bytes(), nil
-}
-
-// Generate returns files with slash names to complete antha to go
-// transformation
-func (p *Antha) Generate(fileSet *token.FileSet, file *ast.File) (*AnthaFiles, error) {
-	elementBs, err := p.generateElement(fileSet, file)
-	if err != nil {
-		return nil, err
+	if err := p.printFunctions(buf, lineMap); err != nil {
+		return err
 	}
 
 	elementName := path.Join(p.protocolName, elementFilename)
 
-	files := NewAnthaFiles()
-	files.addFile(elementName, elementBs)
-
-	return files, nil
+	files.addFile(elementName, buf)
+	return nil
 }
 
-func (p *Antha) addUses(src *ast.File) {
-	for _, req := range p.importReqs {
-		if len(req.UseExpr) == 0 {
+func (p *Antha) addUses() {
+	for _, req := range p.ImportReqs {
+		if len(req.useExpr) == 0 {
 			continue
 		}
 		decl := &ast.GenDecl{
@@ -653,35 +568,10 @@ func (p *Antha) addUses(src *ast.File) {
 
 		decl.Specs = append(decl.Specs, &ast.ValueSpec{
 			Names:  identList("_"),
-			Values: []ast.Expr{mustParseExpr(req.UseExpr)},
+			Values: []ast.Expr{mustParseExpr(req.useExpr)},
 		})
-		src.Decls = append(src.Decls, decl)
+		p.file.Decls = append(p.file.Decls, decl)
 	}
-}
-
-func encodeByteArray(bs []byte) string {
-	var buf bytes.Buffer
-	buf.WriteString("[]byte {\n")
-	for len(bs) > 0 {
-		n := 16
-		if n > len(bs) {
-			n = len(bs)
-		}
-
-		for _, c := range bs[:n] {
-			buf.WriteString("0x")
-			buf.WriteString(hex.EncodeToString([]byte{c}))
-			buf.WriteString(",")
-		}
-
-		buf.WriteString("\n")
-
-		bs = bs[n:]
-	}
-
-	buf.WriteString("}")
-
-	return buf.String()
 }
 
 // printFunctions generates synthetic antha functions and data stuctures
@@ -701,10 +591,14 @@ func New{{.ElementTypeName}}(lab *laboratory.Laboratory) *{{.ElementTypeName}} {
 }
 
 func RegisterLineMap(lab *laboratory.Laboratory) {
-	var lineMap = map[int]int{
+	lineMap := map[int]int{
 		{{range $key, $value := .LineMap}}{{$key}}: {{$value}}, {{end}}
 	}
-	lab.RegisterLineMap({{printf "%q" .GeneratedPath}}, {{printf "%q" .Path}}, {{printf "%q" .ElementTypeName}}, lineMap)
+	lab.RegisterLineMap(
+		{{printf "%q" .GeneratedPath}},
+		{{printf "%q" .Path}},
+		{{printf "%q" .ElementTypeName}},
+		lineMap)
 }
 
 `
@@ -717,7 +611,7 @@ func RegisterLineMap(lab *laboratory.Laboratory) {
 
 	tv := TVars{
 		ElementTypeName: p.protocolName,
-		GeneratedPath:   filepath.Join(p.protocolName, elementFilename),
+		GeneratedPath:   filepath.Join(filepath.Dir(p.elementPath), elementFilename),
 		Path:            p.elementPath,
 		LineMap:         lineMap,
 	}
@@ -726,8 +620,8 @@ func RegisterLineMap(lab *laboratory.Laboratory) {
 }
 
 // desugar updates AST for antha semantics
-func (p *Antha) desugar(fileSet *token.FileSet, src *ast.File) {
-	for idx, d := range src.Decls {
+func (p *Antha) desugar() {
+	for idx, d := range p.file.Decls {
 		switch d := d.(type) {
 
 		case *ast.GenDecl:
@@ -738,7 +632,7 @@ func (p *Antha) desugar(fileSet *token.FileSet, src *ast.File) {
 			ast.Inspect(d.Body, p.inspectIntrinsics)
 			ast.Inspect(d.Body, p.inspectParamUses)
 			ast.Inspect(d.Body, p.inspectTypes)
-			src.Decls[idx] = p.desugarAnthaDecl(fileSet, src, d)
+			p.file.Decls[idx] = p.desugarAnthaDecl(d)
 
 		default:
 			ast.Inspect(d, p.inspectTypes)
@@ -773,7 +667,7 @@ func (p *Antha) desugarGenDecl(d *ast.GenDecl) {
 //   Validation
 // to
 //  func (element *ElementTypeName) Validation(lab *laboratory.Laboratory)
-func (p *Antha) desugarAnthaDecl(fileSet *token.FileSet, src *ast.File, d *ast.AnthaDecl) ast.Decl {
+func (p *Antha) desugarAnthaDecl(d *ast.AnthaDecl) ast.Decl {
 	f := &ast.FuncDecl{
 		Doc: d.Doc,
 		Recv: &ast.FieldList{
@@ -808,7 +702,7 @@ func (p *Antha) desugarAnthaDecl(fileSet *token.FileSet, src *ast.File, d *ast.A
 // desugarTypeIdent returns appropriate nested SelectorExpr for the replacement for
 // Identifier
 func (p *Antha) desugarTypeIdent(t *ast.Ident) ast.Expr {
-	v, ok := p.types[t.Name]
+	v, ok := types[t.Name]
 	if !ok {
 		return t
 	}
@@ -976,7 +870,7 @@ func (p *Antha) inspectIntrinsics(node ast.Node) bool {
 			break
 		}
 
-		if desugar, ok := p.intrinsics[ident.Name]; ok {
+		if desugar, ok := intrinsics[ident.Name]; ok {
 			ident.Name = desugar
 			n.Args = append([]ast.Expr{ast.NewIdent("lab")}, n.Args...) // only for now.
 		}

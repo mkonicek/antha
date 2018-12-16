@@ -10,12 +10,12 @@ import (
 type AnthaFile struct {
 	// Name is a slash-delimited filename
 	Name string
-	Data []byte
+	Data *bytes.Buffer
 }
 
 // NewReader returns a new reader for this file
 func (f *AnthaFile) NewReader() io.ReadCloser {
-	return ioutil.NopCloser(bytes.NewReader(f.Data))
+	return ioutil.NopCloser(f.Data)
 }
 
 // AnthaFiles is a collection of AnthaFiles
@@ -33,7 +33,7 @@ func (f *AnthaFiles) Files() []*AnthaFile {
 	return f.files
 }
 
-func (f *AnthaFiles) addFile(name string, data []byte) {
+func (f *AnthaFiles) addFile(name string, data *bytes.Buffer) {
 	f.files = append(f.files, &AnthaFile{
 		Name: name,
 		Data: data,

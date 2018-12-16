@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 )
 
 // The Config struct is used to deserialise the config file only.
@@ -44,7 +45,8 @@ type Composer struct {
 	Config   *Config
 	Workflow *Workflow
 
-	classes map[string]*LocatedElement
+	classes  map[string]*LocatedElement
+	worklist []*LocatedElement
 }
 
 func NewComposer(cfg *Config, workflow *Workflow) *Composer {
@@ -58,32 +60,45 @@ func NewComposer(cfg *Config, workflow *Workflow) *Composer {
 
 func (c *Composer) LocateElementClasses() error {
 	for _, class := range c.Workflow.ElementClasses() {
-		if locElem, err := c.Config.ElementSources.Match(class); err != nil {
+		if le, err := c.Config.ElementSources.Match(class); err != nil {
 			return err
-		} else if locElem == nil {
+		} else if le == nil {
 			return fmt.Errorf("Unable to resolve element name: %s", class)
-		} else if err := locElem.FetchFiles(); err != nil {
+		} else if err := le.FetchFiles(); err != nil {
 			return err
 		} else {
-			c.classes[class] = locElem
+			c.EnsureLocatedElement(le)
 		}
 	}
 	return nil
+}
+
+func (c *Composer) EnsureLocatedElement(le *LocatedElement) {
+	if _, found := c.classes[le.ImportPath]; !found {
+		c.classes[le.ImportPath] = le
+		c.worklist = append(c.worklist, le)
+	}
 }
 
 func (c *Composer) Transpile() error {
-	for _, locElem := range c.classes {
-		if err := locElem.Transpile(c.Config); err != nil {
+	for idx := 0; idx < len(c.worklist); idx++ {
+		le := c.worklist[idx]
+		if err := le.Transpile(c); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (c *Composer) GenerateMain(w io.Writer) error {
+func (c *Composer) GenerateMain() error {
 	mr := &mainRenderer{
 		Composer: c,
 		varMemo:  make(map[string]string),
 	}
-	return mr.render(w)
+	if fh, err := os.OpenFile(filepath.Join(c.Config.OutDir, "main.go"), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600); err != nil {
+		return err
+	} else {
+		defer fh.Close()
+		return mr.render(fh)
+	}
 }

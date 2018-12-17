@@ -79,7 +79,7 @@ func getTestTransfer(vol wunit.Volume) RobotInstruction {
 		[]int{12},
 		[]int{8},
 		[]int{12},
-		[]string{"notsure"},
+		[]string{"water"},
 		[]wtype.LHPolicy{nil},
 	)
 }

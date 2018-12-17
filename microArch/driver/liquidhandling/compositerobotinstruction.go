@@ -63,6 +63,7 @@ type SingleChannelBlockInstruction struct {
 	FVolume    []wunit.Volume
 	TVolume    []wunit.Volume
 	Prms       *wtype.LHChannelParameter
+	Component  []string
 }
 
 func NewSingleChannelBlockInstruction() *SingleChannelBlockInstruction {
@@ -78,6 +79,7 @@ func NewSingleChannelBlockInstruction() *SingleChannelBlockInstruction {
 		TVolume:         []wunit.Volume{},
 		FPlateType:      []string{},
 		TPlateType:      []string{},
+		Component:       []string{},
 	}
 	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
 	return v
@@ -99,6 +101,7 @@ func (ins *SingleChannelBlockInstruction) AddTransferParams(mct TransferParams) 
 	ins.FVolume = append(ins.FVolume, mct.FVolume)
 	ins.TVolume = append(ins.TVolume, mct.TVolume)
 	ins.Prms = mct.Channel
+	ins.Component = append(ins.Component, mct.Component)
 }
 
 func (ins *SingleChannelBlockInstruction) GetParameter(name InstructionParameter) interface{} {
@@ -132,6 +135,8 @@ func (ins *SingleChannelBlockInstruction) GetParameter(name InstructionParameter
 		return ins.TVolume
 	case TOPLATETYPE:
 		return ins.TPlateType
+	case COMPONENT:
+		return ins.Component
 	default:
 		return ins.BaseRobotInstruction.GetParameter(name)
 	}
@@ -593,6 +598,7 @@ type SingleChannelTransferInstruction struct {
 	TVolume    wunit.Volume
 	Prms       *wtype.LHChannelParameter
 	TipType    string
+	Component  string
 }
 
 func (scti *SingleChannelTransferInstruction) Params() TransferParams {
@@ -609,6 +615,7 @@ func (scti *SingleChannelTransferInstruction) Params() TransferParams {
 	tp.TVolume = wunit.CopyVolume(scti.TVolume)
 	tp.Channel = scti.Prms
 	tp.TipType = scti.TipType
+	tp.Component = scti.Component
 	return tp
 }
 

@@ -30,8 +30,8 @@ func TestOrdering(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 
-	if len(inss) != 16 {
-		t.Errorf("Expected 16 instructions, got %d", len(inss))
+	if len(inss) != 58 {
+		t.Errorf("Expected 58 instructions, got %d", len(inss))
 	}
 
 	if inss[4].Type() != MOV {
@@ -69,9 +69,9 @@ func getTransferMulti() RobotInstruction {
 		[]string{"A1", "B1", "C1"},
 		[]string{"DWST12", "DWST12", "DWST12"},
 		[]string{"DSW96", "DSW96", "DSW96"},
-		[]wunit.Volume{vol, vol, vol},
-		[]wunit.Volume{v2, v2, v2},
-		[]wunit.Volume{v3, v3, v3},
+		[]wunit.Volume{vol.Dup(), vol.Dup(), vol.Dup()},
+		[]wunit.Volume{v2.Dup(), v2.Dup(), v2.Dup()},
+		[]wunit.Volume{v3.Dup(), v3.Dup(), v3.Dup()},
 		[]int{8, 8, 8},
 		[]int{12, 12, 12},
 		[]int{8, 8, 8},
@@ -88,9 +88,9 @@ func getTransferMulti() RobotInstruction {
 		[]string{"A1", "B1", "C1"},
 		[]string{"DWST12", "DWST12", "DWST12"},
 		[]string{"DSW96", "DSW96", "DSW96"},
-		[]wunit.Volume{vol, vol, vol},
-		[]wunit.Volume{v2, v2, v2},
-		[]wunit.Volume{v3, v3, v3},
+		[]wunit.Volume{vol.Dup(), vol.Dup(), vol.Dup()},
+		[]wunit.Volume{v2.Dup(), v2.Dup(), v2.Dup()},
+		[]wunit.Volume{v3.Dup(), v3.Dup(), v3.Dup()},
 		[]int{8, 8, 8},
 		[]int{12, 12, 12},
 		[]int{8, 8, 8},

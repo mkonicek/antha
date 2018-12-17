@@ -8,24 +8,24 @@ import (
 )
 
 type TransferParams struct {
-	What       string // liquid type
-	PltFrom    string // plate from ?
-	PltTo      string // plate to ?
-	WellFrom   string
-	WellTo     string
-	Volume     wunit.Volume // volume of sample being transferred
-	FPlateType string       // from plate type ?
-	TPlateType string       // to plate type ?
-	FVolume    wunit.Volume // from volume ?
-	TVolume    wunit.Volume // to volume ?
-	Channel    *wtype.LHChannelParameter
-	TipType    string
-	FPlateWX   int
-	FPlateWY   int
-	TPlateWX   int
-	TPlateWY   int
-	Component  string
-	Policy     wtype.LHPolicy
+	What       string                    // liquid class
+	PltFrom    string                    // from position
+	PltTo      string                    // to position
+	WellFrom   string                    // well coordinate in from plate
+	WellTo     string                    // well coordinate in to plate
+	Volume     wunit.Volume              // volume of sample being transferred
+	FPlateType string                    // from plate type
+	TPlateType string                    // to plate type
+	FVolume    wunit.Volume              // volume in 'from' well
+	TVolume    wunit.Volume              // volume in 'to' well
+	Channel    *wtype.LHChannelParameter // which channel to use
+	TipType    string                    // type of tip to use
+	FPlateWX   int                       // X dimension in 'from' plate
+	FPlateWY   int                       // Y dimension in 'from' plate
+	TPlateWX   int                       // X dimension in 'to' plate
+	TPlateWY   int                       // Y dimension in 'to' plate
+	Component  string                    // component type
+	Policy     wtype.LHPolicy            // policy attached to this transfer
 }
 
 func (tp TransferParams) ToString() string {

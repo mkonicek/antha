@@ -505,7 +505,7 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 	sci := NewSingleChannelBlockInstruction()
 	sci.Prms = headsLoaded[0].Params // TODO Fix Hard Code Here
 
-	lastWhat := ""
+	lastCmp := ""
 	for _, t := range ins.Transfers {
 		for _, tp := range t.Transfers {
 			if !tp.Volume.IsPositive() {
@@ -513,7 +513,7 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 			}
 
 			// TODO --> reorder instructions
-			if lastWhat != "" && tp.What != lastWhat {
+			if lastCmp != "" && tp.Component != lastCmp {
 				if len(sci.Volume) > 0 {
 					ret = append(ret, sci)
 				}
@@ -522,14 +522,77 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 			}
 
 			sci.AddTransferParams(tp)
-			lastWhat = tp.What
+			lastCmp = tp.Component
 		}
 	}
 	if len(sci.Volume) > 0 {
 		ret = append(ret, sci)
 	}
 
+	ret = ensureOrderMaintained(ret, ins.Transfers)
+
 	return ret, nil
+}
+
+func ensureOrderMaintained(inss []RobotInstruction, tps []MultiTransferParams) []RobotInstruction {
+	m := make(map[string][]RobotInstruction, len(inss))
+
+	firstNonEmpty := func(sa []string) string {
+		for _, s := range sa {
+			if s != "" {
+				return s
+			}
+		}
+
+		return sa[0]
+	}
+
+	for _, ins := range inss {
+		c := ins.GetParameter("COMPONENT")
+
+		ct := ""
+		switch c.(type) {
+		case string:
+			ct = c.(string)
+		case []string:
+			ct = firstNonEmpty(c.([]string))
+
+		case [][]string:
+			ct = firstNonEmpty(c.([][]string)[0])
+		}
+
+		ar, ok := m[ct]
+
+		if !ok {
+			ar = make([]RobotInstruction, 0, 1)
+		}
+
+		ar = append(ar, ins)
+
+		m[ct] = ar
+	}
+
+	ret := make([]RobotInstruction, 0, len(inss))
+
+	for _, tp := range tps {
+		cmp := tp.RemoveInitialBlanks().Component()[0]
+
+		ar, ok := m[cmp]
+
+		if !ok {
+			continue
+		}
+
+		delete(m, cmp)
+
+		ret = append(ret, ar...)
+	}
+
+	if len(ret) != len(inss) {
+		panic(fmt.Sprintf("Error ensuring instruction order: before %d after %d", len(ret), len(inss)))
+	}
+
+	return ret
 }
 
 func (ins *TransferInstruction) ReviseTransferVolumes(prms *LHProperties) error {

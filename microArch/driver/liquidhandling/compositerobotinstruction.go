@@ -302,6 +302,7 @@ type MultiChannelBlockInstruction struct {
 	TPlateType [][]string
 	FVolume    [][]wunit.Volume
 	TVolume    [][]wunit.Volume
+	Component  [][]string
 	Multi      int
 	Prms       *wtype.LHChannelParameter
 }
@@ -319,6 +320,7 @@ func NewMultiChannelBlockInstruction() *MultiChannelBlockInstruction {
 		TPlateType:      [][]string{},
 		FVolume:         [][]wunit.Volume{},
 		TVolume:         [][]wunit.Volume{},
+		Component:       [][]string{},
 	}
 	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
 	return v
@@ -339,6 +341,7 @@ func (ins *MultiChannelBlockInstruction) AddTransferParams(mct MultiTransferPara
 	ins.TPlateType = append(ins.TPlateType, mct.TPlateType())
 	ins.FVolume = append(ins.FVolume, mct.FVolume())
 	ins.TVolume = append(ins.TVolume, mct.TVolume())
+	ins.Component = append(ins.Component, mct.Component())
 }
 
 func (ins *MultiChannelBlockInstruction) GetParameter(name InstructionParameter) interface{} {
@@ -372,6 +375,8 @@ func (ins *MultiChannelBlockInstruction) GetParameter(name InstructionParameter)
 		return ins.TVolume
 	case TOPLATETYPE:
 		return ins.TPlateType
+	case COMPONENT:
+		return ins.Component
 	default:
 		return ins.BaseRobotInstruction.GetParameter(name)
 	}

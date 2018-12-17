@@ -105,15 +105,18 @@ func (ri *RobotInstructionSet) Generate(ctx context.Context, lhpr *wtype.LHPolic
 func (ri *RobotInstructionSet) ToString(level int) string {
 
 	name := ""
+	var w interface{}
 
 	if ri.parent != nil {
 		name = ri.parent.Type().Name
+
+		w = ri.parent.GetParameter(COMPONENT)
 	}
 	s := ""
 	for i := 0; i < level-1; i++ {
 		s += fmt.Sprintf("\t")
 	}
-	s += fmt.Sprintf("%s\n", name)
+	s += fmt.Sprintf("%s %v\n", name, w)
 	for i := 0; i < level; i++ {
 		s += fmt.Sprintf("\t")
 	}

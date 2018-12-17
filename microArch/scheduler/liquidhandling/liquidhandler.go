@@ -942,7 +942,7 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		return err
 	}
 
-	//find what liquids are explicitely provided by the user
+	//find what liquids are explicitly provided by the user
 	solutionsFromPlates, err := request.GetSolutionsFromInputPlates()
 	if err != nil {
 		return err
@@ -987,6 +987,12 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	request, err = this.ExecutionPlan(ctx, request)
 	if err != nil {
 		return err
+	}
+
+	if request.Options.PrintInstructions {
+		fmt.Println("TREE VIEW")
+		fmt.Println(request.InstructionSet.ToString(0))
+		fmt.Println("END TREEV")
 	}
 
 	// counts tips used in this run -- reads instructions generated above so must happen

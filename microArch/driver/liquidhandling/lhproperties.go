@@ -399,10 +399,8 @@ func (lhp *LHProperties) TipWastesMounted() int {
 	r := 0
 	// go looking for tipwastes
 	for _, pref := range lhp.Preferences[Tipwastes] {
-		if _, ok := lhp.Tipwastes[lhp.PosLookup[pref]]; ok {
+		if _, ok := lhp.Tipwastes[pref]; ok {
 			r += 1
-		} else {
-			fmt.Printf("no Tipwaste at %q: PlateLookup has: %v\n", pref, lhp.PlateLookup[pref])
 		}
 	}
 
@@ -414,7 +412,7 @@ func (lhp *LHProperties) TipSpacesLeft() int {
 	r := 0
 	// go looking for tipboxes
 	for _, pref := range lhp.Preferences[Tipwastes] {
-		if bx, ok := lhp.Tipwastes[lhp.PosLookup[pref]]; ok {
+		if bx, ok := lhp.Tipwastes[pref]; ok {
 			r += bx.SpaceLeft()
 		}
 	}

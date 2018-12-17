@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"io"
 	"log"
 	"os"
 
@@ -25,10 +24,8 @@ func main() {
 		}
 	}
 
-	var r io.Reader
-	if workflowPath == "-" {
-		r = os.Stdin
-	} else {
+	r := os.Stdin
+	if workflowPath != "-" {
 		if fh, err := os.Open(workflowPath); err != nil {
 			log.Fatal(err)
 		} else {

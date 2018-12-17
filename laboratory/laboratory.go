@@ -25,6 +25,7 @@ type Laboratory struct {
 	Completed chan struct{}
 
 	*lineMapManager
+	*Log
 }
 
 func NewLaboratory() *Laboratory {
@@ -34,6 +35,7 @@ func NewLaboratory() *Laboratory {
 		Completed: make(chan struct{}),
 
 		lineMapManager: NewLineMapManager(),
+		Log:            NewLog(),
 	}
 }
 

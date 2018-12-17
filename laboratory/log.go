@@ -8,12 +8,12 @@ import (
 	kitlog "github.com/go-kit/kit/log"
 )
 
-type Log struct {
+type Logger struct {
 	kitlog.Logger
 }
 
 type wrapper struct {
-	l *Log
+	l *Logger
 }
 
 func (w wrapper) Write(p []byte) (n int, err error) {
@@ -24,23 +24,23 @@ func (w wrapper) Write(p []byte) (n int, err error) {
 	}
 }
 
-func NewLog() *Log {
+func NewLogger() *Logger {
 	logger := kitlog.NewLogfmtLogger(kitlog.NewSyncWriter(os.Stdout))
 	logger = kitlog.With(logger, "ts", kitlog.DefaultTimestampUTC)
 
-	l := &Log{Logger: logger}
+	l := &Logger{Logger: logger}
 
 	stdlog.SetOutput(&wrapper{l: l})
 
 	return l
 }
 
-func (l Log) Fatal(keyvals ...interface{}) {
-	l.Log(keyvals...)
+func (l Logger) Fatal(err error) {
+	l.Log("error", err.Error())
 	os.Exit(1)
 }
 
-func (l Log) With(keyvals ...interface{}) *Log {
+func (l Logger) With(keyvals ...interface{}) *Logger {
 	logger := kitlog.With(l.Logger, keyvals...)
-	return &Log{Logger: logger}
+	return &Logger{Logger: logger}
 }

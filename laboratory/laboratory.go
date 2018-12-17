@@ -25,7 +25,7 @@ type Laboratory struct {
 	Completed chan struct{}
 
 	*lineMapManager
-	*Log
+	*Logger
 }
 
 func NewLaboratory() *Laboratory {
@@ -35,7 +35,7 @@ func NewLaboratory() *Laboratory {
 		Completed: make(chan struct{}),
 
 		lineMapManager: NewLineMapManager(),
-		Log:            NewLog(),
+		Logger:         NewLogger(),
 	}
 }
 
@@ -117,6 +117,7 @@ func (lab *Laboratory) Error(err error) {
 	lab.errLock.Lock()
 	defer lab.errLock.Unlock()
 	lab.errors = append(lab.errors, err)
+	lab.Logger.Log("error", err.Error())
 	select { // we keep the lock here to avoid a race to close
 	case <-lab.Errored:
 	default:

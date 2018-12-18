@@ -953,7 +953,7 @@ func (p *LHProperties) MinPossibleVolume() wunit.Volume {
 	if len(headsLoaded) == 0 {
 		return wunit.ZeroVolume()
 	}
-	minvol := headsLoaded[0].GetParams().Minvol
+	minvol := headsLoaded[0].GetParams().Maxvol
 	for _, head := range headsLoaded {
 		for _, tip := range p.Tips {
 			lhcp := head.Params.MergeWithTip(tip)

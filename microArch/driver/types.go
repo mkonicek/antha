@@ -22,19 +22,99 @@
 
 package driver
 
-// need an errcode lookup
+import (
+	"fmt"
+	"github.com/antha-lang/antha/microArch/logger"
+	"github.com/pkg/errors"
+)
+
+type ErrorCode int
 
 const (
-	OK int = iota
+	OK ErrorCode = iota
 	ERR
 	WRN
 	NIM // Not implemented
 )
 
+var ecNames = map[ErrorCode]string{
+	OK:  "ok",
+	ERR: "error",
+	WRN: "warning",
+	NIM: "not implemented",
+}
+
+func (ec ErrorCode) String() string {
+	if ret, ok := ecNames[ec]; ok {
+		return ret
+	}
+	panic(fmt.Sprintf("unknown error code: %d", ec))
+}
+
+// CommandStatus the result of a robot instruction
 type CommandStatus struct {
-	OK        bool
-	Errorcode int
-	Msg       string
+	ErrorCode
+	Msg string
+}
+
+// CommandOk indicate that the function was successful
+func CommandOk() CommandStatus {
+	return CommandStatus{}
+}
+
+// CommandError indicate that a fatal error occurred
+func CommandError(message string) CommandStatus {
+	return CommandStatus{
+		ErrorCode: ERR,
+		Msg:       message,
+	}
+}
+
+// CommandWarn indicate that the function completed successfully but that a warning was generated
+func CommandWarn(message string) CommandStatus {
+	return CommandStatus{
+		ErrorCode: WRN,
+		Msg:       message,
+	}
+}
+
+// CommandNotImplemented indicates that the function is not implemented for this driver
+func CommandNotImplemented(message string) CommandStatus {
+	return CommandStatus{
+		ErrorCode: NIM,
+		Msg:       message,
+	}
+}
+
+// Ok tests whether the function returned successfully
+func (cs CommandStatus) Ok() bool {
+	return cs.ErrorCode == OK
+}
+
+// Fatal returns true if a fatal error occurred
+func (cs CommandStatus) Fatal() bool {
+	return cs.ErrorCode != OK && cs.ErrorCode != WRN
+}
+
+// String returns a string representation of the CommandStatus
+func (cs CommandStatus) String() string {
+	if cs.Msg != "" {
+		return fmt.Sprintf("%s: %s", cs.ErrorCode, cs.Msg)
+	} else {
+		return cs.ErrorCode.String()
+	}
+}
+
+// Error if a fatal error occurred, returns it. Otherwise returns nil.
+// If a warning was returned, it is written to the logger
+func (cs CommandStatus) Error() error {
+	if cs.Fatal() {
+		return errors.New(cs.String())
+	} else if cs.ErrorCode == WRN {
+		// nb. source reference in log will be to the line below rather than the source
+		logger.Warning(cs.String())
+	}
+	return nil
 }
 
 type Status map[string]interface{}

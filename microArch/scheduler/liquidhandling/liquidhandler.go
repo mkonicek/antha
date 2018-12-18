@@ -37,7 +37,6 @@ import (
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/cache"
 	"github.com/antha-lang/antha/inventory/cache/plateCache"
-	"github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/logger"
 	"github.com/antha-lang/antha/microArch/simulator"
@@ -611,14 +610,9 @@ func (this *Liquidhandler) get_setup_instructions(rq *LHRequest) []liquidhandlin
 }
 
 func (this *Liquidhandler) update_metadata(rq *LHRequest) error {
-
-	if _, ok := this.Properties.Driver.(liquidhandling.LowLevelLiquidhandlingDriver); ok {
-		stat := this.Properties.Driver.(liquidhandling.LowLevelLiquidhandlingDriver).UpdateMetaData(this.Properties)
-		if stat.Errorcode == driver.ERR {
-			return wtype.LHError(wtype.LH_ERR_DRIV, stat.Msg)
-		}
+	if drv, ok := this.Properties.Driver.(liquidhandling.LowLevelLiquidhandlingDriver); ok {
+		return drv.UpdateMetaData(this.Properties).Error()
 	}
-
 	return nil
 }
 

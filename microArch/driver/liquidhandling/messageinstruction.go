@@ -50,7 +50,7 @@ func (msi *MessageInstruction) OutputTo(driver LiquidhandlingDriver) error {
 	//level int, title, text string, showcancel bool
 
 	if msi.Message != wtype.MAGICBARRIERPROMPTSTRING {
-		return driver.Message(0, "", msi.Message, false).Error()
+		return driver.Message(0, "", msi.Message, false).GetError()
 	}
 	return nil
 }

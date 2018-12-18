@@ -611,7 +611,7 @@ func (this *Liquidhandler) get_setup_instructions(rq *LHRequest) []liquidhandlin
 
 func (this *Liquidhandler) update_metadata(rq *LHRequest) error {
 	if drv, ok := this.Properties.Driver.(liquidhandling.LowLevelLiquidhandlingDriver); ok {
-		return drv.UpdateMetaData(this.Properties).Error()
+		return drv.UpdateMetaData(this.Properties).GetError()
 	}
 	return nil
 }

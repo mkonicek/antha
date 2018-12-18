@@ -248,7 +248,7 @@ func (a *Mixer) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, e
 
 func (a *Mixer) saveFile(name string) ([]byte, error) {
 	data, status := a.driver.GetOutputFile()
-	if err := status.Error(); err != nil {
+	if err := status.GetError(); err != nil {
 		return nil, err
 	} else if len(data) == 0 {
 		return nil, nil
@@ -466,7 +466,7 @@ func (a *Mixer) makeMix(ctx context.Context, mixes []*wtype.LHInstruction) (*tar
 // New creates a new Mixer
 func New(opt Opt, d driver.LiquidhandlingDriver) (*Mixer, error) {
 	p, status := d.GetCapabilities()
-	if err := status.Error(); err != nil {
+	if err := status.GetError(); err != nil {
 		return nil, err
 	}
 

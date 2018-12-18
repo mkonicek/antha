@@ -37,7 +37,7 @@ func (rapi *RemoveAllPlatesInstruction) Check(lhpr wtype.LHPolicyRule) bool {
 }
 
 func (rapi *RemoveAllPlatesInstruction) OutputTo(drv LiquidhandlingDriver) error {
-	return drv.RemoveAllPlates().Error()
+	return drv.RemoveAllPlates().GetError()
 }
 
 type AddPlateToInstruction struct {
@@ -85,5 +85,5 @@ func (apti *AddPlateToInstruction) Check(lhpr wtype.LHPolicyRule) bool {
 }
 
 func (apti *AddPlateToInstruction) OutputTo(drv LiquidhandlingDriver) error {
-	return drv.AddPlateTo(apti.Position, apti.Plate, apti.Name).Error()
+	return drv.AddPlateTo(apti.Position, apti.Plate, apti.Name).GetError()
 }

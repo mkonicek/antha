@@ -107,7 +107,7 @@ func (ins *TransferInstruction) OutputTo(drv LiquidhandlingDriver) error {
 			volumes[i] = vol.ConvertToString("ul")
 		}
 
-		return hlld.Transfer(mtp.What(), mtp.PltFrom(), mtp.WellFrom(), mtp.PltTo(), mtp.WellTo(), volumes).Error()
+		return hlld.Transfer(mtp.What(), mtp.PltFrom(), mtp.WellFrom(), mtp.PltTo(), mtp.WellTo(), volumes).GetError()
 	}
 }
 

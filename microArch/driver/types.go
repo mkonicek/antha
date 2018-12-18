@@ -105,9 +105,9 @@ func (cs CommandStatus) String() string {
 	}
 }
 
-// Error if a fatal error occurred, returns it. Otherwise returns nil.
+// GetError if a fatal error occurred, returns it. Otherwise returns nil.
 // If a warning was returned, it is written to the logger
-func (cs CommandStatus) Error() error {
+func (cs CommandStatus) GetError() error {
 	if cs.Fatal() {
 		return errors.New(cs.String())
 	} else if cs.ErrorCode == WRN {

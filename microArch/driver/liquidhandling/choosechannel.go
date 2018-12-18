@@ -140,8 +140,9 @@ func ChooseChannel(vol wunit.Volume, prms *LHProperties) (*wtype.LHChannelParame
 }
 
 func tipHeadCompatible(tip *wtype.LHTip, head *wtype.LHHead) bool {
-	// true if some overlap between head and tip range
-	return tip.MaxVol.GreaterThan(head.Params.Minvol) || tip.MinVol.LessThan(head.Params.Maxvol)
+	//v1 - tip range must be contained entirely within head range
+
+	return !(tip.MinVol.LessThan(head.Params.Minvol) || tip.MaxVol.GreaterThan(head.Params.Maxvol))
 }
 
 func ChooseChannels(vols []wunit.Volume, prms *LHProperties) ([]*wtype.LHChannelParameter, []*wtype.LHTip, []string, error) {

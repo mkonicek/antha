@@ -1,8 +1,8 @@
 package liquidhandling
 
 import (
-	"context"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/laboratory"
 	"github.com/antha-lang/antha/microArch/driver"
 )
 
@@ -25,7 +25,7 @@ func (ins *RemoveAllPlatesInstruction) Visit(visitor RobotInstructionVisitor) {
 	visitor.RemoveAllPlates(ins)
 }
 
-func (rapi *RemoveAllPlatesInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (rapi *RemoveAllPlatesInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return []RobotInstruction{}, nil
 }
 
@@ -70,7 +70,7 @@ func (ins *AddPlateToInstruction) Visit(visitor RobotInstructionVisitor) {
 	visitor.AddPlateTo(ins)
 }
 
-func (apti *AddPlateToInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (apti *AddPlateToInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return []RobotInstruction{}, nil
 }
 

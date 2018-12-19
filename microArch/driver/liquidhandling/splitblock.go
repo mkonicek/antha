@@ -1,9 +1,10 @@
 package liquidhandling
 
 import (
-	"context"
 	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/laboratory"
 )
 
 type SplitBlockInstruction struct {
@@ -27,7 +28,7 @@ func (sb *SplitBlockInstruction) Visit(visitor RobotInstructionVisitor) {
 
 // this instruction does not generate anything
 // it just modifies the components in the robot
-func (sp SplitBlockInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, robot *LHProperties) ([]RobotInstruction, error) {
+func (sp SplitBlockInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, robot *LHProperties) ([]RobotInstruction, error) {
 	// this may need more work
 
 	for _, ins := range sp.Inss {

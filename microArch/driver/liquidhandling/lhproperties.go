@@ -23,7 +23,6 @@
 package liquidhandling
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -34,7 +33,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
-	"github.com/antha-lang/antha/inventory"
+	"github.com/antha-lang/antha/laboratory"
 	"github.com/antha-lang/antha/microArch/logger"
 )
 
@@ -778,7 +777,7 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.Liquid, carryvol wuni
 	return plateIDs, wellCoords, vols, nil
 }
 
-func (lhp *LHProperties) GetCleanTips(ctx context.Context, tiptype []string, channel []*wtype.LHChannelParameter, usetiptracking bool) (wells, positions, boxtypes [][]string, err error) {
+func (lhp *LHProperties) GetCleanTips(lab *laboratory.Laboratory, tiptype []string, channel []*wtype.LHChannelParameter, usetiptracking bool) (wells, positions, boxtypes [][]string, err error) {
 
 	// these are merged into subsets with tip and channel types in common here
 	// each subset has a mask which is the same size as the number of channels available
@@ -789,7 +788,7 @@ func (lhp *LHProperties) GetCleanTips(ctx context.Context, tiptype []string, cha
 	}
 
 	for _, set := range subsets {
-		sw, sp, sb, err := lhp.getCleanTipSubset(ctx, set, usetiptracking)
+		sw, sp, sb, err := lhp.getCleanTipSubset(lab, set, usetiptracking)
 
 		if err != nil {
 			return [][]string{}, [][]string{}, [][]string{}, err
@@ -826,7 +825,7 @@ func copyToRightLength(sa []string, m int) []string {
 
 // this function only returns true if we can get all tips at once
 // TODO -- support not getting in a single operation
-func (lhp *LHProperties) getCleanTipSubset(ctx context.Context, tipParams TipSubset, usetiptracking bool) (wells, positions, boxtypes []string, err error) {
+func (lhp *LHProperties) getCleanTipSubset(lab *laboratory.Laboratory, tipParams TipSubset, usetiptracking bool) (wells, positions, boxtypes []string, err error) {
 	positions = make([]string, len(tipParams.Mask))
 	boxtypes = make([]string, len(tipParams.Mask))
 
@@ -864,7 +863,7 @@ func (lhp *LHProperties) getCleanTipSubset(ctx context.Context, tipParams TipSub
 			break
 		} else if usetiptracking && lhp.HasTipTracking() {
 			bx.Refresh()
-			return lhp.getCleanTipSubset(ctx, tipParams, usetiptracking)
+			return lhp.getCleanTipSubset(lab, tipParams, usetiptracking)
 		}
 	}
 
@@ -875,7 +874,7 @@ func (lhp *LHProperties) getCleanTipSubset(ctx context.Context, tipParams TipSub
 
 	if !foundit {
 		// try adding a new tip box
-		bx, err := inventory.NewTipbox(ctx, tipParams.TipType)
+		bx, err := lab.Inventory.NewTipbox(tipParams.TipType)
 
 		if err != nil {
 			return nil, nil, nil, wtype.LHError(wtype.LH_ERR_NO_TIPS, fmt.Sprintf("No tipbox of type %s found: %s", tipParams.TipType, err))
@@ -888,7 +887,7 @@ func (lhp *LHProperties) getCleanTipSubset(ctx context.Context, tipParams TipSub
 			return nil, nil, nil, err
 		}
 
-		return lhp.getCleanTipSubset(ctx, tipParams, usetiptracking)
+		return lhp.getCleanTipSubset(lab, tipParams, usetiptracking)
 		//		return nil, nil, nil
 	}
 

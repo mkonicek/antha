@@ -7,6 +7,8 @@ import (
 )
 
 type Workflow struct {
+	JobId string `json:"JobId"`
+
 	Processes      map[string]*Process   `json:"Processes"`
 	Parameters     map[string]*Parameter `json:"Parameters"`
 	Connections    []*Connection         `json:"Connections"`

@@ -1,14 +1,15 @@
 package testinventory
 
 import (
-	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/inventory"
 )
+
+var ErrUnknownType = errors.New("unknown type requested from inventory")
 
 type testInventory struct {
 	componentByName map[string]*wtype.Liquid
@@ -17,45 +18,40 @@ type testInventory struct {
 	tipwasteByType  map[string]*wtype.LHTipwaste
 }
 
-func (i *testInventory) NewComponent(ctx context.Context, name string) (*wtype.Liquid, error) {
+func (i *testInventory) NewComponent(name string) (*wtype.Liquid, error) {
 	c, ok := i.componentByName[name]
 	if !ok {
-		return nil, fmt.Errorf("%s: invalid solution: %s", inventory.ErrUnknownType, name)
+		return nil, fmt.Errorf("%s: invalid solution: %s", ErrUnknownType, name)
 	}
 	// Cp is required here to ensure component IDs are unique
 	return c.Cp(), nil
 }
 
-func (i *testInventory) NewPlate(ctx context.Context, typ string) (*wtype.Plate, error) {
+func (i *testInventory) NewPlate(typ string) (*wtype.Plate, error) {
 	p, ok := i.plateByType[typ]
 	if !ok {
-		return nil, fmt.Errorf("%s: invalid plate: %s", inventory.ErrUnknownType, typ)
+		return nil, fmt.Errorf("%s: invalid plate: %s", ErrUnknownType, typ)
 	}
 	return p.LHPlate(), nil
 }
-func (i *testInventory) NewTipbox(ctx context.Context, typ string) (*wtype.LHTipbox, error) {
+func (i *testInventory) NewTipbox(typ string) (*wtype.LHTipbox, error) {
 	tb, ok := i.tipboxByType[typ]
 	if !ok {
-		return nil, inventory.ErrUnknownType
+		return nil, ErrUnknownType
 	}
 	return tb.Dup(), nil
 }
 
-func (i *testInventory) NewTipwaste(ctx context.Context, typ string) (*wtype.LHTipwaste, error) {
+func (i *testInventory) NewTipwaste(typ string) (*wtype.LHTipwaste, error) {
 	tw, ok := i.tipwasteByType[typ]
 	if !ok {
-		return nil, inventory.ErrUnknownType
+		return nil, ErrUnknownType
 	}
 	return tw.Dup(), nil
 }
 
-func (i *testInventory) XXXGetPlates(ctx context.Context) ([]*wtype.Plate, error) {
-	plates := GetPlates(ctx)
-	return plates, nil
-}
-
 // NewContext creates a new test inventory context
-func NewContext(ctx context.Context) context.Context {
+func NewInventory() *testInventory {
 	inv := &testInventory{
 		componentByName: make(map[string]*wtype.Liquid),
 		plateByType:     make(map[string]PlateForSerializing),
@@ -101,12 +97,11 @@ func NewContext(ctx context.Context) context.Context {
 		inv.tipwasteByType[tw.Type] = tw
 	}
 
-	return inventory.NewContext(ctx, inv)
+	return inv
 }
 
 // GetTipboxes returns the tipboxes in a test inventory context
-func GetTipboxes(ctx context.Context) []*wtype.LHTipbox {
-	inv := inventory.GetInventory(ctx).(*testInventory)
+func (inv *testInventory) GetTipboxes() []*wtype.LHTipbox {
 	var tbs []*wtype.LHTipbox
 	for _, tb := range inv.tipboxByType {
 		tbs = append(tbs, tb)
@@ -120,8 +115,7 @@ func GetTipboxes(ctx context.Context) []*wtype.LHTipbox {
 }
 
 // GetPlates returns the plates in a test inventory context
-func GetPlates(ctx context.Context) []*wtype.Plate {
-	inv := inventory.GetInventory(ctx).(*testInventory)
+func (inv *testInventory) GetPlates() []*wtype.Plate {
 	var ps []*wtype.Plate
 	for _, p := range inv.plateByType {
 		ps = append(ps, p.LHPlate())
@@ -135,8 +129,7 @@ func GetPlates(ctx context.Context) []*wtype.Plate {
 }
 
 // GetComponents returns the components in a test inventory context
-func GetComponents(ctx context.Context) []*wtype.Liquid {
-	inv := inventory.GetInventory(ctx).(*testInventory)
+func (inv *testInventory) GetComponents() []*wtype.Liquid {
 	var cs []*wtype.Liquid
 	for _, c := range inv.componentByName {
 		cs = append(cs, c)

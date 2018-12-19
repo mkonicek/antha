@@ -75,7 +75,7 @@ import (
 {{end}})
 
 func main() {
-	labBuild := laboratory.NewLaboratoryBuilder()
+	labBuild := laboratory.NewLaboratoryBuilder({{printf "%q" .JobId}})
 	// Register line maps for the elements we're using
 {{range elementClasses}}	{{.PackageName}}.RegisterLineMap(labBuild)
 {{end}}

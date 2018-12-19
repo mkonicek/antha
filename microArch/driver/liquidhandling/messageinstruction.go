@@ -1,9 +1,10 @@
 package liquidhandling
 
 import (
-	"context"
 	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/laboratory"
 )
 
 type MessageInstruction struct {
@@ -31,7 +32,7 @@ func (ins *MessageInstruction) Visit(visitor RobotInstructionVisitor) {
 	visitor.Message(ins)
 }
 
-func (msi *MessageInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (msi *MessageInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	// use side effect to keep IDs straight
 
 	prms.UpdateComponentIDs(msi.PassThrough)

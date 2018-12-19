@@ -23,18 +23,17 @@
 package liquidhandling
 
 import (
-	"context"
 	"fmt"
 	"sort"
 	"strings"
 
-	"github.com/dustinkirkland/golang-petname"
+	petname "github.com/dustinkirkland/golang-petname"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/inventory"
-	"github.com/antha-lang/antha/microArch/sampletracker"
+	"github.com/antha-lang/antha/laboratory"
 )
 
 type InputSorter struct {
@@ -78,8 +77,7 @@ func (is InputSorter) Less(i, j int) bool {
 // INPUT: 	"input_platetype", "inputs"
 //OUTPUT: 	"input_plates"      -- these each have components in wells
 //		"input_assignments" -- map with arrays of assignment strings, i.e. {tea: [plate1:A:1, plate1:A:2...] }etc.
-func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, error) {
-	st := sampletracker.FromContext(ctx)
+func input_plate_setup(lab *laboratory.Laboratory, request *LHRequest) (*LHRequest, error) {
 	// I think this might need moving too
 	input_platetypes := request.InputPlatetypes
 
@@ -230,7 +228,7 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 					volume.Subtract(usefulVolume)
 				}
 
-				st.SetLocationOf(component.ID, location)
+				lab.SampleTracker.SetLocationOf(component.ID, location)
 
 				err := curr_well.AddComponent(newcomponent)
 				if err != nil {

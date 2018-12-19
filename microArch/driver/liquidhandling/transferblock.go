@@ -1,13 +1,12 @@
 package liquidhandling
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/inventory"
+	"github.com/antha-lang/antha/laboratory"
 )
 
 type TransferBlockInstruction struct {
@@ -33,7 +32,7 @@ func (ins *TransferBlockInstruction) Visit(visitor RobotInstructionVisitor) {
 // via multichannel operation. At present this means they must be aligned in rows or columns
 // depending on the robot type and configuration
 
-func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, robot *LHProperties) ([]RobotInstruction, error) {
+func (ti TransferBlockInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, robot *LHProperties) ([]RobotInstruction, error) {
 	var tfr []*TransferInstruction
 	var err error
 
@@ -48,7 +47,7 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 	}
 
 	// list of ids
-	parallel_sets, prm, err := get_parallel_sets_robot(ctx, ti.Inss, robot, policy)
+	parallel_sets, prm, err := get_parallel_sets_robot(lab, ti.Inss, robot, policy)
 
 	// what if prm is nil?
 
@@ -73,7 +72,7 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 		// aggregates across components
 		//TODO --> allow setting legacy volume if necessary
 
-		tfr, err = ConvertInstructions(ctx, insset, robot, wunit.NewVolume(0.5, "ul"), prm, prm.Multi, false, policy)
+		tfr, err = ConvertInstructions(lab, insset, robot, wunit.NewVolume(0.5, "ul"), prm, prm.Multi, false, policy)
 		if err != nil {
 			return inss, err
 		}
@@ -120,7 +119,7 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 
 		insset := []*wtype.LHInstruction{ins}
 
-		tfr, err = ConvertInstructions(ctx, insset, robot, wunit.NewVolume(0.5, "ul"), prm, 1, false, policy)
+		tfr, err = ConvertInstructions(lab, insset, robot, wunit.NewVolume(0.5, "ul"), prm, 1, false, policy)
 
 		if err != nil {
 			return inss, err
@@ -140,7 +139,7 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 type IDSet []string
 type SetOfIDSets []IDSet
 
-func get_parallel_sets_robot(ctx context.Context, ins []*wtype.LHInstruction, robot *LHProperties, policy *wtype.LHPolicyRuleSet) (SetOfIDSets, *wtype.LHChannelParameter, error) {
+func get_parallel_sets_robot(lab *laboratory.Laboratory, ins []*wtype.LHInstruction, robot *LHProperties, policy *wtype.LHPolicyRuleSet) (SetOfIDSets, *wtype.LHChannelParameter, error) {
 	//  depending on the configuration and options we may have to try and
 	//  use one or both of H / V or... whatever
 	//  -- issue is this choice and choosechannel conflict with one another
@@ -163,7 +162,7 @@ func get_parallel_sets_robot(ctx context.Context, ins []*wtype.LHInstruction, ro
 		}
 
 		// also TODO here -- allow adaptor changes
-		sids, err := get_parallel_sets_head(ctx, head, ins)
+		sids, err := get_parallel_sets_head(lab, head, ins)
 
 		if err != nil {
 			return SetOfIDSets{}, &wtype.LHChannelParameter{}, err
@@ -212,7 +211,7 @@ func (ibc InsByCol) Less(i, j int) bool {
 }
 
 // limited to SBS format plates for now
-func get_parallel_sets_head(ctx context.Context, head *wtype.LHHead, ins []*wtype.LHInstruction) (SetOfIDSets, error) {
+func get_parallel_sets_head(lab *laboratory.Laboratory, head *wtype.LHHead, ins []*wtype.LHInstruction) (SetOfIDSets, error) {
 	// surely not
 
 	if len(ins) == 0 {
@@ -251,7 +250,7 @@ func get_parallel_sets_head(ctx context.Context, head *wtype.LHHead, ins []*wtyp
 
 			// gerrabirrovinfo on the plate type
 			// is this always set??
-			pt, err := inventory.NewPlate(ctx, i.Platetype)
+			pt, err := lab.Inventory.NewPlate(i.Platetype)
 
 			if err != nil {
 				return ret, wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("No plate type exists for ID %s - requested was %s", i.PlateID, i.Platetype))

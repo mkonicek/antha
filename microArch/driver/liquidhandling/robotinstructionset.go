@@ -23,10 +23,10 @@
 package liquidhandling
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/laboratory"
 )
 
 type RobotInstructionSet struct {
@@ -46,11 +46,11 @@ func (ri *RobotInstructionSet) Add(ins RobotInstruction) {
 	ri.instructions = append(ri.instructions, ris)
 }
 
-func (ri *RobotInstructionSet) Generate(ctx context.Context, lhpr *wtype.LHPolicyRuleSet, lhpm *LHProperties) ([]RobotInstruction, error) {
+func (ri *RobotInstructionSet) Generate(lab *laboratory.Laboratory, lhpr *wtype.LHPolicyRuleSet, lhpm *LHProperties) ([]RobotInstruction, error) {
 	ret := make([]RobotInstruction, 0, 1)
 
 	if ri.parent != nil {
-		arr, err := ri.parent.Generate(ctx, lhpr, lhpm)
+		arr, err := ri.parent.Generate(lab, lhpr, lhpm)
 
 		if err != nil {
 			return ret, err
@@ -72,7 +72,7 @@ func (ri *RobotInstructionSet) Generate(ctx context.Context, lhpr *wtype.LHPolic
 	}
 
 	for _, ins := range ri.instructions {
-		arr, err := ins.Generate(ctx, lhpr, lhpm)
+		arr, err := ins.Generate(lab, lhpr, lhpm)
 
 		if err != nil {
 			return arr, err

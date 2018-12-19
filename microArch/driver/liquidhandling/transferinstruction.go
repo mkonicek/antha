@@ -23,7 +23,6 @@
 package liquidhandling
 
 import (
-	"context"
 	"fmt"
 	"sort"
 	"strconv"
@@ -33,6 +32,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/inventory/cache"
+	"github.com/antha-lang/antha/laboratory"
 )
 
 type TransferInstruction struct {
@@ -210,14 +210,14 @@ func firstNonEmpty(types []string) string {
 }
 
 // add policies as argument to GetParallelSetsFor to check multichannelability
-func (ins *TransferInstruction) GetParallelSetsFor(ctx context.Context, robot *LHProperties, policy wtype.LHPolicy) []int {
+func (ins *TransferInstruction) GetParallelSetsFor(lab *laboratory.Laboratory, robot *LHProperties, policy wtype.LHPolicy) []int {
 	r := make([]int, 0, len(ins.Transfers))
 
 	for i := 0; i < len(ins.Transfers); i++ {
 		// a parallel transfer is valid if any robot head can do it
 		// TODO --> support head/adaptor changes. Maybe.
 		for _, head := range robot.GetLoadedHeads() {
-			if ins.validateParallelSet(ctx, robot, head, i, policy) {
+			if ins.validateParallelSet(lab, robot, head, i, policy) {
 				r = append(r, i)
 			}
 		}
@@ -228,7 +228,7 @@ func (ins *TransferInstruction) GetParallelSetsFor(ctx context.Context, robot *L
 
 // add policies as argument to GetParallelSetsFor to check multichannelability
 // which is the index relating to position in multitransferparams matrix
-func (ins *TransferInstruction) validateParallelSet(ctx context.Context, robot *LHProperties, head *wtype.LHHead, which int, policy wtype.LHPolicy) bool {
+func (ins *TransferInstruction) validateParallelSet(lab *laboratory.Laboratory, robot *LHProperties, head *wtype.LHHead, which int, policy wtype.LHPolicy) bool {
 	channel := head.Adaptor.Params
 
 	if channel.Multi == 1 {
@@ -256,7 +256,7 @@ func (ins *TransferInstruction) validateParallelSet(ctx context.Context, robot *
 	}
 
 	fromPlateType := firstNonEmpty(ins.Transfers[which].FPlateType())
-	fromPlate, err := cache.NewPlate(ctx, fromPlateType)
+	fromPlate, err := cache.NewPlate(lab, fromPlateType)
 	if err != nil {
 		panic(err)
 	}
@@ -271,13 +271,13 @@ func (ins *TransferInstruction) validateParallelSet(ctx context.Context, robot *
 		return false
 	}
 
-	err = cache.ReturnObject(ctx, fromPlate)
+	err = cache.ReturnObject(lab, fromPlate)
 	if err != nil {
 		panic(err)
 	}
 
 	toPlateType := firstNonEmpty(ins.Transfers[which].TPlateType())
-	toPlate, err := cache.NewPlate(ctx, toPlateType)
+	toPlate, err := cache.NewPlate(lab, toPlateType)
 	if err != nil {
 		panic(err)
 	}
@@ -292,7 +292,7 @@ func (ins *TransferInstruction) validateParallelSet(ctx context.Context, robot *
 		return false
 	}
 
-	err = cache.ReturnObject(ctx, toPlate)
+	err = cache.ReturnObject(lab, toPlate)
 	if err != nil {
 		panic(err)
 	}
@@ -415,7 +415,7 @@ func (ins *TransferInstruction) ChooseChannels(prms *LHProperties) {
 	}
 }
 
-func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *TransferInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	// if the liquid handler is of the high-level type we cut the tree here
 	// after ensuring that the transfers are within limitations of the liquid handler
 
@@ -453,7 +453,7 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 	// if we can multi we do this first
 	if pol["CAN_MULTI"].(bool) {
 		// add policies as argument to GetParallelSetsFor to check multichannelability
-		parallelsets := ins.GetParallelSetsFor(ctx, prms, pol)
+		parallelsets := ins.GetParallelSetsFor(lab, prms, pol)
 
 		mci := NewMultiChannelBlockInstruction()
 		mci.Prms = headsLoaded[0].Params // TODO Remove Hard code here

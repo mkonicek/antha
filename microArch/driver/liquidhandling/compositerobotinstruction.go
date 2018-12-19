@@ -23,7 +23,6 @@
 package liquidhandling
 
 import (
-	"context"
 	"fmt"
 	"math"
 
@@ -35,7 +34,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/antha/anthalib/wutil/text"
-	"github.com/antha-lang/antha/inventory"
+	"github.com/antha-lang/antha/laboratory"
 	anthadriver "github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/logger"
 )
@@ -145,7 +144,7 @@ func tipArrays(multi int) ([]string, []*wtype.LHChannelParameter) {
 	return tt, chanA
 }
 
-func (ins *SingleChannelBlockInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *SingleChannelBlockInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	usetiptracking := SafeGetBool(policy.Options, "USE_DRIVER_TIP_TRACKING")
 
 	ret := make([]RobotInstruction, 0)
@@ -175,7 +174,7 @@ func (ins *SingleChannelBlockInstruction) Generate(ctx context.Context, policy *
 	tt[0] = tiptype
 	chanA[0] = channel
 
-	tipget, err := GetTips(ctx, tt, prms, chanA, usetiptracking)
+	tipget, err := GetTips(lab, tt, prms, chanA, usetiptracking)
 
 	if err != nil {
 		return ret, err
@@ -231,7 +230,7 @@ func (ins *SingleChannelBlockInstruction) Generate(ctx context.Context, policy *
 				tt, chanA = tipArrays(newchannel.Multi)
 				tt[0] = newtiptype
 				chanA[0] = newchannel
-				tipget, err := GetTips(ctx, tt, prms, chanA, usetiptracking)
+				tipget, err := GetTips(lab, tt, prms, chanA, usetiptracking)
 
 				if err != nil {
 					return ret, err
@@ -407,7 +406,7 @@ func mergeTipsAndChannels(channels []*wtype.LHChannelParameter, tips []*wtype.LH
 }
 
 // By the point at which the MultiChannelBlockInstruction is used by the Generate method all transfers will share the same policy.
-func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *MultiChannelBlockInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	usetiptracking := SafeGetBool(policy.Options, "USE_DRIVER_TIP_TRACKING")
 
 	pol, err := GetPolicyFor(policy, ins)
@@ -434,7 +433,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 		return ret, err
 	}
 
-	tipget, err := GetTips(ctx, tiptypes, prms, channels, usetiptracking)
+	tipget, err := GetTips(lab, tiptypes, prms, channels, usetiptracking)
 	if err != nil {
 		return ret, err
 	}
@@ -499,7 +498,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 				}
 				ret = append(ret, tipdrp)
 
-				tipget, err := GetTips(ctx, newtiptypes, prms, newchannels, usetiptracking)
+				tipget, err := GetTips(lab, newtiptypes, prms, newchannels, usetiptracking)
 
 				if err != nil {
 					return ret, err
@@ -657,7 +656,7 @@ func (ins *SingleChannelTransferInstruction) GetParameter(name InstructionParame
 	}
 }
 
-func (ins *SingleChannelTransferInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *SingleChannelTransferInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	ret := make([]RobotInstruction, 0)
 	// make the instructions
 
@@ -778,7 +777,7 @@ func (ins *MultiChannelTransferInstruction) GetParameter(name InstructionParamet
 	}
 }
 
-func (ins *MultiChannelTransferInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *MultiChannelTransferInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	ret := make([]RobotInstruction, 0)
 
 	if len(ins.Volume) == 0 {
@@ -840,7 +839,7 @@ func (ins *StateChangeInstruction) GetParameter(name InstructionParameter) inter
 	}
 }
 
-func (ins *StateChangeInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *StateChangeInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
@@ -892,7 +891,7 @@ func (ins *ChangeAdaptorInstruction) GetParameter(name InstructionParameter) int
 	}
 }
 
-func (ins *ChangeAdaptorInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *ChangeAdaptorInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	ret := make([]RobotInstruction, 4)
 	/*
 		ret[0]=NewMoveInstruction(ins.DropPosition,...)
@@ -949,7 +948,7 @@ func (ins *LoadTipsMoveInstruction) GetParameter(name InstructionParameter) inte
 	}
 }
 
-func (ins *LoadTipsMoveInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *LoadTipsMoveInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	ret := make([]RobotInstruction, 2)
 
 	// move to just above the tip
@@ -1029,7 +1028,7 @@ func (ins *UnloadTipsMoveInstruction) GetParameter(name InstructionParameter) in
 	}
 }
 
-func (ins *UnloadTipsMoveInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *UnloadTipsMoveInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	ret := make([]RobotInstruction, 2)
 
 	// move
@@ -1118,7 +1117,7 @@ func (ins *AspirateInstruction) GetParameter(name InstructionParameter) interfac
 	}
 }
 
-func (ins *AspirateInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *AspirateInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
@@ -1194,7 +1193,7 @@ func (ins *DispenseInstruction) GetParameter(name InstructionParameter) interfac
 	}
 }
 
-func (ins *DispenseInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *DispenseInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
@@ -1264,7 +1263,7 @@ func (ins *BlowoutInstruction) GetParameter(name InstructionParameter) interface
 	}
 }
 
-func (ins *BlowoutInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *BlowoutInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
@@ -1319,7 +1318,7 @@ func (ins *PTZInstruction) GetParameter(name InstructionParameter) interface{} {
 	}
 }
 
-func (ins *PTZInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *PTZInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
@@ -1413,7 +1412,7 @@ func (ins *MoveInstruction) MaybeMerge(next RobotInstruction) RobotInstruction {
 	}
 }
 
-func (ins *MoveInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *MoveInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
@@ -1504,7 +1503,7 @@ func (ins *MoveRawInstruction) GetParameter(name InstructionParameter) interface
 	}
 }
 
-func (ins *MoveRawInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *MoveRawInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
@@ -1574,7 +1573,7 @@ func (ins *LoadTipsInstruction) GetParameter(name InstructionParameter) interfac
 	}
 }
 
-func (ins *LoadTipsInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *LoadTipsInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
@@ -1645,7 +1644,7 @@ func (ins *UnloadTipsInstruction) GetParameter(name InstructionParameter) interf
 	}
 }
 
-func (ins *UnloadTipsInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *UnloadTipsInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
@@ -1746,7 +1745,7 @@ func (ins *SuckInstruction) GetParameter(name InstructionParameter) interface{} 
 	}
 }
 
-func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *SuckInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	// MIS XXX -- separate out channel-level parameters from head-level ones
 	ret := make([]RobotInstruction, 0, 1)
 
@@ -1785,7 +1784,7 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	ofz := SafeGetF64(pol, "ASPZOFFSET")
 	ofzadj := SafeGetF64(pol, "OFFSETZADJUST")
 	ofz += ofzadj
-	ofz, err = makeZOffsetSafe(ctx, prms, ofz, ins.Head, ins.PltFrom, ins.TipType)
+	ofz, err = makeZOffsetSafe(lab, prms, ofz, ins.Head, ins.PltFrom, ins.TipType)
 	if err != nil {
 		return nil, err
 	}
@@ -1795,7 +1794,7 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	mixofz := SafeGetF64(pol, "PRE_MIX_Z")
 	mixofz += ofzadj
 	final_asp_ref := SafeGetInt(pol, "ASPREFERENCE")
-	mixofz, err = makeZOffsetSafe(ctx, prms, mixofz, ins.Head, ins.PltFrom, ins.TipType)
+	mixofz, err = makeZOffsetSafe(lab, prms, mixofz, ins.Head, ins.PltFrom, ins.TipType)
 	if err != nil {
 		return nil, err
 	}
@@ -2205,7 +2204,7 @@ func setDefaults(head int, pol wtype.LHPolicy) []RobotInstruction {
 	return ret
 }
 
-func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *BlowInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	ret := make([]RobotInstruction, 0)
 	// apply policies here
 
@@ -2244,7 +2243,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	ofz := SafeGetF64(pol, "DSPZOFFSET")
 	ofzadj := SafeGetF64(pol, "OFFSETZADJUST")
 	ofz += ofzadj
-	ofz, err = makeZOffsetSafe(ctx, prms, ofz, ins.Head, ins.PltTo, ins.TipType)
+	ofz, err = makeZOffsetSafe(lab, prms, ofz, ins.Head, ins.PltTo, ins.TipType)
 	if err != nil {
 		return nil, err
 	}
@@ -2457,7 +2456,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		pmzoff := SafeGetF64(pol, "POST_MIX_Z")
 		pmzoff += ofzadj
 
-		pmzoff, err = makeZOffsetSafe(ctx, prms, pmzoff, ins.Head, ins.PltTo, ins.TipType)
+		pmzoff, err = makeZOffsetSafe(lab, prms, pmzoff, ins.Head, ins.PltTo, ins.TipType)
 		if err != nil {
 			return nil, err
 		}
@@ -2484,8 +2483,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 			override := SafeGetBool(pol, "MIX_VOLUME_OVERRIDE_TIP_MAX")
 
 			//does the tip have a filter?
-			inv := inventory.GetInventory(ctx)
-			tb, err := inv.NewTipbox(ctx, ins.TipType)
+			tb, err := lab.Inventory.NewTipbox(ins.TipType)
 			if err != nil {
 				return ret, wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("While getting tip %v", err))
 			}
@@ -2647,7 +2645,7 @@ func (ins *SetPipetteSpeedInstruction) GetParameter(name InstructionParameter) i
 	}
 }
 
-func (ins *SetPipetteSpeedInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *SetPipetteSpeedInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
@@ -2695,7 +2693,7 @@ func (ins *SetDriveSpeedInstruction) GetParameter(name InstructionParameter) int
 	}
 }
 
-func (ins *SetDriveSpeedInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *SetDriveSpeedInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
@@ -2734,7 +2732,7 @@ func (ins *InitializeInstruction) GetParameter(name InstructionParameter) interf
 	return ins.BaseRobotInstruction.GetParameter(name)
 }
 
-func (ins *InitializeInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *InitializeInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
@@ -2769,7 +2767,7 @@ func (ins *FinalizeInstruction) GetParameter(name InstructionParameter) interfac
 	return ins.BaseRobotInstruction.GetParameter(name)
 }
 
-func (ins *FinalizeInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *FinalizeInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
@@ -2810,7 +2808,7 @@ func (ins *WaitInstruction) GetParameter(name InstructionParameter) interface{} 
 	}
 }
 
-func (ins *WaitInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *WaitInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
@@ -2866,7 +2864,7 @@ func (ins *LightsOnInstruction) GetParameter(name InstructionParameter) interfac
 	return ins.BaseRobotInstruction.GetParameter(name)
 }
 
-func (ins *LightsOnInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *LightsOnInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
@@ -2918,7 +2916,7 @@ func (ins *LightsOffInstruction) GetParameter(name InstructionParameter) interfa
 	return ins.BaseRobotInstruction.GetParameter(name)
 }
 
-func (ins *LightsOffInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *LightsOffInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
@@ -2970,7 +2968,7 @@ func (ins *OpenInstruction) GetParameter(name InstructionParameter) interface{} 
 	return ins.BaseRobotInstruction.GetParameter(name)
 }
 
-func (ins *OpenInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *OpenInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
@@ -3022,7 +3020,7 @@ func (ins *CloseInstruction) GetParameter(name InstructionParameter) interface{}
 	return ins.BaseRobotInstruction.GetParameter(name)
 }
 
-func (ins *CloseInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *CloseInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
@@ -3074,7 +3072,7 @@ func (ins *LoadAdaptorInstruction) GetParameter(name InstructionParameter) inter
 	return ins.BaseRobotInstruction.GetParameter(name)
 }
 
-func (ins *LoadAdaptorInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *LoadAdaptorInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
@@ -3126,7 +3124,7 @@ func (ins *UnloadAdaptorInstruction) GetParameter(name InstructionParameter) int
 	return ins.BaseRobotInstruction.GetParameter(name)
 }
 
-func (ins *UnloadAdaptorInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *UnloadAdaptorInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
@@ -3225,7 +3223,7 @@ func (ins *ResetInstruction) AddMultiTransferParams(mtp MultiTransferParams) {
 	}
 }
 
-func (ins *ResetInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *ResetInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	pol, err := GetPolicyFor(policy, ins)
 
 	if err != nil {
@@ -3373,7 +3371,7 @@ func (ins *MoveMixInstruction) GetParameter(name InstructionParameter) interface
 	}
 }
 
-func (ins *MoveMixInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *MoveMixInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	ret := make([]RobotInstruction, 2)
 
 	// move
@@ -3436,7 +3434,7 @@ func (ins *MixInstruction) Visit(visitor RobotInstructionVisitor) {
 	visitor.Mix(ins)
 }
 
-func (ins *MixInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *MixInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
@@ -3502,9 +3500,9 @@ func getFirstDefined(sa []string) int {
 	return x
 }
 
-func GetTips(ctx context.Context, tiptypes []string, params *LHProperties, channel []*wtype.LHChannelParameter, usetiptracking bool) ([]RobotInstruction, error) {
+func GetTips(lab *laboratory.Laboratory, tiptypes []string, params *LHProperties, channel []*wtype.LHChannelParameter, usetiptracking bool) ([]RobotInstruction, error) {
 	// GetCleanTips returns enough sets of tip boxes to get all distinct tip types
-	tipwells, tipboxpositions, tipboxtypes, terr := params.GetCleanTips(ctx, tiptypes, channel, usetiptracking)
+	tipwells, tipboxpositions, tipboxtypes, terr := params.GetCleanTips(lab, tiptypes, channel, usetiptracking)
 
 	if tipwells == nil || terr != nil {
 		err := wtype.LHError(wtype.LH_ERR_NO_TIPS, fmt.Sprintf("PICKUP: types: %v On Deck: %v", tiptypes, params.GetLayout()))
@@ -3636,7 +3634,7 @@ func checkAndSaften(proposed, min, max float64, overrideIfOutOfRange bool) (floa
 //with shorter tips.
 //Does not affect behaviour with troughs and other wells that are big enough for
 //the entire head to fit inside.
-func makeZOffsetSafe(ctx context.Context, prms *LHProperties, zoffset float64, headIndex int, plates []string, tiptype string) (float64, error) {
+func makeZOffsetSafe(lab *laboratory.Laboratory, prms *LHProperties, zoffset float64, headIndex int, plates []string, tiptype string) (float64, error) {
 	platename := ""
 	for _, p := range plates {
 		if p != "" {

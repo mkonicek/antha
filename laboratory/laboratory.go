@@ -6,6 +6,8 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/microArch/sampletracker"
 	"github.com/antha-lang/antha/utils"
 )
 
@@ -19,7 +21,18 @@ type Element interface {
 	Validation(*Laboratory)
 }
 
+type Inventory interface {
+	NewComponent(typ string) (*wtype.Liquid, error)
+	NewPlate(typ string) (*wtype.Plate, error)
+	NewTipwaste(typ string) (*wtype.LHTipwaste, error)
+	NewTipbox(typ string) (*wtype.LHTipbox, error)
+	GetComponents() []*wtype.Liquid
+	GetPlates() []*wtype.Plate
+}
+
 type LaboratoryBuilder struct {
+	JobId string
+
 	elemLock   sync.Mutex
 	elemsUnrun int64
 	elements   map[Element]*ElementBase
@@ -32,16 +45,28 @@ type LaboratoryBuilder struct {
 
 	*lineMapManager
 	logger *Logger
+
+	Trace         *Trace
+	Maker         *Maker
+	SampleTracker *sampletracker.SampleTracker
+	Inventory     Inventory
 }
 
-func NewLaboratoryBuilder() *LaboratoryBuilder {
+func NewLaboratoryBuilder(jobId string) *LaboratoryBuilder {
 	return &LaboratoryBuilder{
+		JobId: jobId,
+
 		elements:  make(map[Element]*ElementBase),
 		Errored:   make(chan struct{}),
 		Completed: make(chan struct{}),
 
 		lineMapManager: NewLineMapManager(),
 		logger:         NewLogger(),
+
+		Trace:         NewTrace(),
+		Maker:         NewMaker(),
+		SampleTracker: sampletracker.NewSampleTracker(),
+		Inventory:     testInventory.NewInventory(),
 	}
 }
 

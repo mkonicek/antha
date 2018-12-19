@@ -1,31 +1,19 @@
 package execute
 
 import (
-	"context"
-
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/driver"
-	"github.com/antha-lang/antha/inventory"
-	"github.com/antha-lang/antha/microArch/sampletracker"
+	"github.com/antha-lang/antha/laboratory"
 	"github.com/antha-lang/antha/target"
 )
 
-// a commandInst is a generic intrinsic instruction
-type commandInst struct {
-	// Arguments to this command. Used to determine command dependencies.
-	Args []*wtype.Liquid
-	// Components created by this command. Returned back to user code
-	result  []*wtype.Liquid
-	Command *ast.Command
-}
-
 // SetInputPlate Indicate to the scheduler the the contents of the plate is user
 // supplied. This modifies the argument to mark each well as such.
-func SetInputPlate(ctx context.Context, plate *wtype.Plate) {
-	sampletracker.FromContext(ctx).SetInputPlate(plate)
+func SetInputPlate(lab *laboratory.Laboratory, plate *wtype.Plate) {
+	lab.SampleTracker.SetInputPlate(plate)
 }
 
 // An IncubateOpt are options to an incubate command
@@ -49,20 +37,20 @@ type IncubateOpt struct {
 	PreShakeRadius wunit.Length
 }
 
-func newCompFromComp(ctx context.Context, in *wtype.Liquid) *wtype.Liquid {
+func newCompFromComp(lab *laboratory.Laboratory, in *wtype.Liquid) *wtype.Liquid {
 	comp := in.Dup()
 	comp.ID = wtype.GetUUID()
-	comp.BlockID = wtype.NewBlockID(getID(ctx))
+	comp.BlockID = wtype.NewBlockID(lab.JobId)
 	comp.SetGeneration(comp.Generation() + 1)
 
-	getMaker(ctx).UpdateAfterInst(in.ID, comp.ID)
-	sampletracker.FromContext(ctx).UpdateIDOf(in.ID, comp.ID)
+	lab.Maker.UpdateAfterInst(in.ID, comp.ID)
+	lab.SampleTracker.UpdateIDOf(in.ID, comp.ID)
 
 	return comp
 }
 
 // Incubate incubates a component
-func Incubate(ctx context.Context, in *wtype.Liquid, opt IncubateOpt) *wtype.Liquid {
+func Incubate(lab *laboratory.Laboratory, in *wtype.Liquid, opt IncubateOpt) *wtype.Liquid {
 	// nolint: gosimple
 	innerInst := &ast.IncubateInst{
 		Time:           opt.Time,
@@ -75,9 +63,9 @@ func Incubate(ctx context.Context, in *wtype.Liquid, opt IncubateOpt) *wtype.Liq
 		PreShakeRadius: opt.PreShakeRadius,
 	}
 
-	inst := &commandInst{
+	inst := &laboratory.CommandInst{
 		Args:   []*wtype.Liquid{in},
-		result: []*wtype.Liquid{newCompFromComp(ctx, in)},
+		result: []*wtype.Liquid{newCompFromComp(lab, in)},
 		Command: &ast.Command{
 			Inst: innerInst,
 		},
@@ -92,7 +80,7 @@ func Incubate(ctx context.Context, in *wtype.Liquid, opt IncubateOpt) *wtype.Liq
 		},
 	})
 
-	Issue(ctx, inst)
+	lab.Trace.Issue(inst)
 	return inst.result[0]
 }
 
@@ -107,29 +95,29 @@ type mixerPromptOpts struct {
 }
 
 // MixerPrompt prompts user with a message during mixer execution
-func MixerPrompt(ctx context.Context, in *wtype.Liquid, message string) *wtype.Liquid {
-	inst := mixerPrompt(ctx,
+func MixerPrompt(lab *laboratory.Laboratory, in *wtype.Liquid, message string) *wtype.Liquid {
+	inst := mixerPrompt(
 		mixerPromptOpts{
-			Component:   newCompFromComp(ctx, in),
+			Component:   newCompFromComp(lab, in),
 			ComponentIn: in,
 			Message:     message,
 		},
 	)
-	Issue(ctx, inst)
+	lab.Trace.Issue(inst)
 	return inst.result[0]
 }
 
 // ExecuteMixes will ensure that all mix activities
 // in a workflow prior to this point must be completed before Mix instructions after this point.
-func ExecuteMixes(ctx context.Context, liquid *wtype.LHComponent) *wtype.LHComponent {
-	return MixerPrompt(ctx, liquid, wtype.MAGICBARRIERPROMPTSTRING)
+func ExecuteMixes(lab *laboratory.Laboratory, liquid *wtype.LHComponent) *wtype.LHComponent {
+	return MixerPrompt(lab, liquid, wtype.MAGICBARRIERPROMPTSTRING)
 }
 
 // Prompt prompts user with a message
-func Prompt(ctx context.Context, in *wtype.Liquid, message string) *wtype.Liquid {
-	inst := &commandInst{
+func Prompt(lab *laboratory.Laboratory, in *wtype.Liquid, message string) *wtype.Liquid {
+	inst := &laboratory.CommandInst{
 		Args:   []*wtype.Liquid{in},
-		result: []*wtype.Liquid{newCompFromComp(ctx, in)},
+		result: []*wtype.Liquid{newCompFromComp(lab, in)},
 		Command: &ast.Command{
 			Inst: &ast.PromptInst{
 				Message: message,
@@ -143,11 +131,11 @@ func Prompt(ctx context.Context, in *wtype.Liquid, message string) *wtype.Liquid
 		},
 	})
 
-	Issue(ctx, inst)
+	lab.Trace.Issue(inst)
 	return inst.result[0]
 }
 
-func mixerPrompt(ctx context.Context, opts mixerPromptOpts) *commandInst {
+func mixerPrompt(opts mixerPromptOpts) *laboratory.CommandInst {
 	inst := wtype.NewLHPromptInstruction()
 	inst.SetGeneration(opts.ComponentIn.Generation())
 	inst.Message = opts.Message
@@ -155,7 +143,7 @@ func mixerPrompt(ctx context.Context, opts mixerPromptOpts) *commandInst {
 	inst.AddInput(opts.ComponentIn)
 	inst.PassThrough[opts.ComponentIn.ID] = opts.Component
 
-	return &commandInst{
+	return &laboratory.CommandInst{
 		Args:   []*wtype.Liquid{opts.ComponentIn},
 		result: []*wtype.Liquid{opts.Component},
 		Command: &ast.Command{
@@ -171,8 +159,8 @@ func mixerPrompt(ctx context.Context, opts mixerPromptOpts) *commandInst {
 	}
 }
 
-func handle(ctx context.Context, opt HandleOpt) *commandInst {
-	comp := newCompFromComp(ctx, opt.Component)
+func handle(lab *laboratory.Laboratory, opt HandleOpt) *laboratory.CommandInst {
+	comp := newCompFromComp(lab, opt.Component)
 
 	var sels []ast.NameValue
 
@@ -184,7 +172,7 @@ func handle(ctx context.Context, opt HandleOpt) *commandInst {
 		}
 	}
 
-	return &commandInst{
+	return &laboratory.CommandInst{
 		Args:   []*wtype.Liquid{opt.Component},
 		result: []*wtype.Liquid{comp},
 		Command: &ast.Command{
@@ -206,9 +194,9 @@ type HandleOpt struct {
 }
 
 // Handle performs a low level instruction on a component
-func Handle(ctx context.Context, opt HandleOpt) *wtype.Liquid {
-	inst := handle(ctx, opt)
-	Issue(ctx, inst)
+func Handle(lab *laboratory.Laboratory, opt HandleOpt) *wtype.Liquid {
+	inst := handle(lab, opt)
+	lab.Trace.Issue(inst)
 	return inst.result[0]
 }
 
@@ -218,7 +206,7 @@ type PlateReadOpts struct {
 	Options string
 }
 
-func readPlate(ctx context.Context, opts PlateReadOpts) *commandInst {
+func readPlate(opts PlateReadOpts) *laboratory.CommandInst {
 	inst := wtype.NewPRInstruction()
 	inst.ComponentIn = opts.Sample
 
@@ -226,7 +214,7 @@ func readPlate(ctx context.Context, opts PlateReadOpts) *commandInst {
 	inst.ComponentOut = newCompFromComp(ctx, opts.Sample)
 	inst.Options = opts.Options
 
-	return &commandInst{
+	return &laboratory.CommandInst{
 		Args:   []*wtype.Liquid{opts.Sample},
 		result: []*wtype.Liquid{inst.ComponentOut},
 		Command: &ast.Command{
@@ -243,9 +231,9 @@ func readPlate(ctx context.Context, opts PlateReadOpts) *commandInst {
 }
 
 // PlateRead reads absorbance of a component
-func PlateRead(ctx context.Context, opt PlateReadOpts) *wtype.Liquid {
-	inst := readPlate(ctx, opt)
-	Issue(ctx, inst)
+func PlateRead(lab *laboratory.Laboratory, opt PlateReadOpts) *wtype.Liquid {
+	inst := readPlate(opt)
+	lab.Trace.Issue(inst)
 	return inst.result[0]
 }
 
@@ -257,7 +245,7 @@ type QPCROptions struct {
 	TagAs      string
 }
 
-func runQPCR(ctx context.Context, opts QPCROptions, command string) *commandInst {
+func runQPCR(lab *laboratory.Laboratory, opts QPCROptions, command string) *laboratory.CommandInst {
 	inst := ast.NewQPCRInstruction()
 	inst.Command = command
 	inst.ComponentIn = opts.Reactions
@@ -267,10 +255,10 @@ func runQPCR(ctx context.Context, opts QPCROptions, command string) *commandInst
 	inst.ComponentOut = []*wtype.Liquid{}
 
 	for _, r := range inst.ComponentIn {
-		inst.ComponentOut = append(inst.ComponentOut, newCompFromComp(ctx, r))
+		inst.ComponentOut = append(inst.ComponentOut, newCompFromComp(lab, r))
 	}
 
-	return &commandInst{
+	return &laboratory.CommandInst{
 		Args:   opts.Reactions,
 		result: inst.ComponentOut,
 		Command: &ast.Command{
@@ -287,39 +275,39 @@ func runQPCR(ctx context.Context, opts QPCROptions, command string) *commandInst
 }
 
 // RunQPCRExperiment starts a new QPCR experiment, using an experiment input file.
-func RunQPCRExperiment(ctx context.Context, opt QPCROptions) []*wtype.Liquid {
-	inst := runQPCR(ctx, opt, "RunExperiment")
-	Issue(ctx, inst)
+func RunQPCRExperiment(lab *laboratory.Laboratory, opt QPCROptions) []*wtype.Liquid {
+	inst := runQPCR(lab, opt, "RunExperiment")
+	lab.Trace.Issue(inst)
 	return inst.result
 }
 
 // RunQPCRFromTemplate starts a new QPCR experiment, using a template input file.
-func RunQPCRFromTemplate(ctx context.Context, opt QPCROptions) []*wtype.Liquid {
-	inst := runQPCR(ctx, opt, "RunExperimentFromTemplate")
-	Issue(ctx, inst)
+func RunQPCRFromTemplate(lab *laboratory.Laboratory, opt QPCROptions) []*wtype.Liquid {
+	inst := runQPCR(lab, opt, "RunExperimentFromTemplate")
+	lab.Trace.Issue(inst)
 	return inst.result
 }
 
 // NewComponent returns a new component given a component type
-func NewComponent(ctx context.Context, typ string) *wtype.Liquid {
-	c, err := inventory.NewComponent(ctx, typ)
+func NewComponent(lab *laboratory.Laboratory, typ string) *wtype.Liquid {
+	c, err := lab.Inventory.NewComponent(typ)
 	if err != nil {
-		Errorf(ctx, "cannot make component %s: %s", typ, err)
+		lab.Errorf("cannot make component %s: %s", typ, err)
 	}
 	return c
 }
 
 // NewPlate returns a new plate given a plate type
-func NewPlate(ctx context.Context, typ string) *wtype.Plate {
-	p, err := inventory.NewPlate(ctx, typ)
+func NewPlate(lab *laboratory.Laboratory, typ string) *wtype.Plate {
+	p, err := lab.Inventory.NewPlate(typ)
 	if err != nil {
-		Errorf(ctx, "cannot make plate %s: %s", typ, err)
+		lab.Errorf("cannot make plate %s: %s", typ, err)
 	}
 	return p
 }
 
-func mix(ctx context.Context, inst *wtype.LHInstruction) *commandInst {
-	inst.BlockID = wtype.NewBlockID(getID(ctx))
+func mix(lab *laboratory.Laboratory, inst *wtype.LHInstruction) *laboratory.CommandInst {
+	inst.BlockID = wtype.NewBlockID(lab.JobId)
 	inst.Outputs[0].BlockID = inst.BlockID
 	result := inst.Outputs[0]
 	//result.BlockID = inst.BlockID // DELETEME
@@ -342,14 +330,14 @@ func mix(ctx context.Context, inst *wtype.LHInstruction) *commandInst {
 		if c.Generation() > mx {
 			mx = c.Generation()
 		}
-		getMaker(ctx).UpdateAfterInst(c.ID, result.ID)
+		lab.Maker.UpdateAfterInst(c.ID, result.ID)
 	}
 
 	inst.SetGeneration(mx)
 	result.SetGeneration(mx + 1)
 	result.DeclareInstance()
 
-	return &commandInst{
+	return &laboratory.CommandInst{
 		Args: inst.Inputs,
 		Command: &ast.Command{
 			Requests: reqs,
@@ -359,9 +347,9 @@ func mix(ctx context.Context, inst *wtype.LHInstruction) *commandInst {
 	}
 }
 
-func genericMix(ctx context.Context, generic *wtype.LHInstruction) *wtype.Liquid {
-	inst := mix(ctx, generic)
-	Issue(ctx, inst)
+func genericMix(lab *laboratory.Laboratory, generic *wtype.LHInstruction) *wtype.Liquid {
+	inst := mix(lab, generic)
+	lab.Trace.Issue(inst)
 	if generic.Welladdress != "" {
 		err := inst.result[0].SetWellLocation(generic.Welladdress)
 		if err != nil {
@@ -372,15 +360,15 @@ func genericMix(ctx context.Context, generic *wtype.LHInstruction) *wtype.Liquid
 }
 
 // Mix mixes components
-func Mix(ctx context.Context, components ...*wtype.Liquid) *wtype.Liquid {
-	return genericMix(ctx, mixer.GenericMix(mixer.MixOptions{
+func Mix(lab *laboratory.Laboratory, components ...*wtype.Liquid) *wtype.Liquid {
+	return genericMix(lab, mixer.GenericMix(mixer.MixOptions{
 		Inputs: components,
 	}))
 }
 
 // MixInto mixes components
-func MixInto(ctx context.Context, outplate *wtype.Plate, address string, components ...*wtype.Liquid) *wtype.Liquid {
-	return genericMix(ctx, mixer.GenericMix(mixer.MixOptions{
+func MixInto(lab *laboratory.Laboratory, outplate *wtype.Plate, address string, components ...*wtype.Liquid) *wtype.Liquid {
+	return genericMix(lab, mixer.GenericMix(mixer.MixOptions{
 		Inputs:      components,
 		Destination: outplate,
 		Address:     address,
@@ -388,8 +376,8 @@ func MixInto(ctx context.Context, outplate *wtype.Plate, address string, compone
 }
 
 // MixNamed mixes components
-func MixNamed(ctx context.Context, outplatetype, address string, platename string, components ...*wtype.Liquid) *wtype.Liquid {
-	return genericMix(ctx, mixer.GenericMix(mixer.MixOptions{
+func MixNamed(lab *laboratory.Laboratory, outplatetype, address string, platename string, components ...*wtype.Liquid) *wtype.Liquid {
+	return genericMix(lab, mixer.GenericMix(mixer.MixOptions{
 		Inputs:    components,
 		PlateType: outplatetype,
 		Address:   address,
@@ -400,8 +388,8 @@ func MixNamed(ctx context.Context, outplatetype, address string, platename strin
 // MixTo mixes components
 //
 // TODO: Addresses break dependence information. Deprecated.
-func MixTo(ctx context.Context, outplatetype, address string, platenum int, components ...*wtype.Liquid) *wtype.Liquid {
-	return genericMix(ctx, mixer.GenericMix(mixer.MixOptions{
+func MixTo(lab *laboratory.Laboratory, outplatetype, address string, platenum int, components ...*wtype.Liquid) *wtype.Liquid {
+	return genericMix(lab, mixer.GenericMix(mixer.MixOptions{
 		Inputs:    components,
 		PlateType: outplatetype,
 		Address:   address,
@@ -412,24 +400,24 @@ func MixTo(ctx context.Context, outplatetype, address string, platenum int, comp
 // SplitSample is essentially an inverse mix: takes one component and a volume and returns two
 // the question is then over what happens subsequently.. unlike mix this does not have a
 // destination as it's intrinsically a source operation
-func SplitSample(ctx context.Context, component *wtype.Liquid, volume wunit.Volume) (removed, remaining *wtype.Liquid) {
+func SplitSample(lab *laboratory.Laboratory, component *wtype.Liquid, volume wunit.Volume) (removed, remaining *wtype.Liquid) {
 	// at this point we cannot guarantee that volumes are accurate
 	// so it's a case of best-efforts
 
-	inst := splitSample(ctx, component, volume)
+	inst := splitSample(lab, component, volume)
 
-	Issue(ctx, inst)
+	lab.Trace.Issue(inst)
 
 	// protocol world must not be able to modify the copies seen here
 	return inst.result[0].Dup(), inst.result[1].Dup()
 }
 
 // Sample takes a sample of volume v from this liquid
-func Sample(ctx context.Context, liquid *wtype.Liquid, v wunit.Volume) *wtype.Liquid {
+func Sample(lab *laboratory.Laboratory, liquid *wtype.Liquid, v wunit.Volume) *wtype.Liquid {
 	return mixer.Sample(liquid, v)
 }
 
-func splitSample(ctx context.Context, component *wtype.Liquid, volume wunit.Volume) *commandInst {
+func splitSample(lab *laboratory.Laboratory, component *wtype.Liquid, volume wunit.Volume) *laboratory.CommandInst {
 
 	split := wtype.NewLHSplitInstruction()
 
@@ -439,13 +427,13 @@ func splitSample(ctx context.Context, component *wtype.Liquid, volume wunit.Volu
 	cmpMoving, cmpStaying := mixer.SplitSample(component, volume)
 
 	//the ID of the component that is staying has been updated
-	sampletracker.FromContext(ctx).UpdateIDOf(component.ID, cmpStaying.ID)
+	lab.SampleTracker.UpdateIDOf(component.ID, cmpStaying.ID)
 
 	split.Outputs = append(split.Outputs, cmpMoving)
 	split.Outputs = append(split.Outputs, cmpStaying)
 
 	// Create Instruction
-	inst := &commandInst{
+	inst := &laboratory.CommandInst{
 		Args: []*wtype.Liquid{component},
 		Command: &ast.Command{
 			Requests: []ast.Request{{

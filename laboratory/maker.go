@@ -1,4 +1,4 @@
-package execute
+package laboratory
 
 import (
 	"strings"
@@ -7,7 +7,7 @@ import (
 	"github.com/antha-lang/antha/ast"
 )
 
-type maker struct {
+type Maker struct {
 	// Map from old LHComponent id to new id after instruction (typically 1)
 	afterInst map[string][]string
 	// Map from old LHComponent id to new id after sample
@@ -17,8 +17,8 @@ type maker struct {
 	byID   map[string][]*ast.UseComp
 }
 
-func newMaker() *maker {
-	return &maker{
+func NewMaker() *Maker {
+	return &Maker{
 		afterInst:   make(map[string][]string),
 		afterSample: make(map[string][]string),
 		byComp:      make(map[*wtype.Liquid]*ast.UseComp),
@@ -26,7 +26,7 @@ func newMaker() *maker {
 	}
 }
 
-func (a *maker) makeComp(c *wtype.Liquid) *ast.UseComp {
+func (a *Maker) makeComp(c *wtype.Liquid) *ast.UseComp {
 	u, ok := a.byComp[c]
 	if !ok {
 		u = &ast.UseComp{
@@ -40,7 +40,7 @@ func (a *maker) makeComp(c *wtype.Liquid) *ast.UseComp {
 	return u
 }
 
-func (a *maker) makeCommand(in *commandInst) ast.Node {
+func (a *Maker) makeCommand(in *CommandInst) ast.Node {
 	for _, arg := range in.Args {
 		in.Command.From = append(in.Command.From, a.makeComp(arg))
 	}
@@ -51,7 +51,7 @@ func (a *maker) makeCommand(in *commandInst) ast.Node {
 }
 
 // resolveReuses tracks samples of the same component sharing the same id.
-func (a *maker) resolveReuses() {
+func (a *Maker) resolveReuses() {
 	for _, uses := range a.byID {
 		// HACK: assume that samples are used sequentially; remove when
 		// dependencies are tracked individually
@@ -76,7 +76,7 @@ func (a *maker) resolveReuses() {
 }
 
 // Manifest dependencies across opaque blocks
-func (a *maker) resolveUpdates(m map[string][]string) {
+func (a *Maker) resolveUpdates(m map[string][]string) {
 	for oldID, newIDs := range m {
 		// Uses by id are sequential from resolveReuses, so it is sufficient to
 		// match first use to last def
@@ -95,7 +95,7 @@ func (a *maker) resolveUpdates(m map[string][]string) {
 	}
 }
 
-func (a *maker) removeMultiEdges() {
+func (a *Maker) removeMultiEdges() {
 	for _, use := range a.byComp {
 		var filtered []ast.Node
 		seen := make(map[ast.Node]bool)
@@ -110,12 +110,12 @@ func (a *maker) removeMultiEdges() {
 	}
 }
 
-func (a *maker) UpdateAfterInst(oldID, newID string) {
+func (a *Maker) UpdateAfterInst(oldID, newID string) {
 	a.afterInst[oldID] = append(a.afterInst[oldID], newID)
 }
 
 // Normalize commands into well-formed AST
-func (a *maker) MakeNodes(insts []*commandInst) ([]ast.Node, error) {
+func (a *Maker) MakeNodes(insts []*CommandInst) ([]ast.Node, error) {
 	var nodes []ast.Node
 	for _, inst := range insts {
 		nodes = append(nodes, a.makeCommand(inst))

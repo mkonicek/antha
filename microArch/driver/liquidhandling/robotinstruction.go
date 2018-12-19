@@ -23,7 +23,6 @@
 package liquidhandling
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -31,12 +30,13 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/laboratory"
 )
 
 type RobotInstruction interface {
 	Type() *InstructionType
 	GetParameter(name InstructionParameter) interface{}
-	Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error)
+	Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error)
 	MaybeMerge(next RobotInstruction) RobotInstruction
 	Check(lhpr wtype.LHPolicyRule) bool
 	Visit(RobotInstructionVisitor)

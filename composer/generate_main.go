@@ -75,24 +75,24 @@ import (
 {{end}})
 
 func main() {
-	lab := laboratory.NewLaboratory()
+	labBuild := laboratory.NewLaboratoryBuilder()
 	// Register line maps for the elements we're using
-{{range elementClasses}}	{{.PackageName}}.RegisterLineMap(lab)
+{{range elementClasses}}	{{.PackageName}}.RegisterLineMap(labBuild)
 {{end}}
 	// Create the elements
-{{range $name, $proc := .Processes}}	{{varName $name}} := {{packageName $proc.Component}}.New(lab)
+{{range $name, $proc := .Processes}}	{{varName $name}} := {{packageName $proc.Component}}.New(labBuild, {{printf "%q" $name}})
 {{end}}
 	// Add wiring
-{{range .Connections}}	lab.AddLink({{varName .Source.Process}}, {{varName .Target.Process}}, func () { {{varName .Target.Process}}.Inputs.{{.Target.Port}} = {{varName .Source.Process}}.Outputs.{{.Source.Port}} })
+{{range .Connections}}	labBuild.AddLink({{varName .Source.Process}}, {{varName .Target.Process}}, func () { {{varName .Target.Process}}.Inputs.{{.Target.Port}} = {{varName .Source.Process}}.Outputs.{{.Source.Port}} })
 {{end}}
 	// Set parameters
 {{range $name, $params := .Parameters}}{{range $param, $value := $params}}	if err := {{varName $name}}.Inputs.{{$param}}.SetFromJSON([]byte({{printf "%q" $value}})); err != nil {
-		lab.Log.Fatal(err)
+		labBuild.Fatal(err)
 	}
 {{end}}{{end}}
 	// Run!
-	if err := lab.Run(); err != nil {
-		lab.Log.Fatal(err)
+	if err := labBuild.Run(); err != nil {
+		labBuild.Fatal(err)
 	}
 }
 `

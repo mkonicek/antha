@@ -29,15 +29,8 @@ func NewLogger() *Logger {
 	logger = kitlog.With(logger, "ts", kitlog.DefaultTimestampUTC)
 
 	l := &Logger{Logger: logger}
-
 	stdlog.SetOutput(&wrapper{l: l})
-
 	return l
-}
-
-func (l Logger) Fatal(err error) {
-	l.Log("error", err.Error())
-	os.Exit(1)
 }
 
 func (l Logger) With(keyvals ...interface{}) *Logger {

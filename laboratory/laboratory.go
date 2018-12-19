@@ -2,56 +2,62 @@ package laboratory
 
 import (
 	"fmt"
+	"os"
 	"sync"
 	"sync/atomic"
+
+	"github.com/antha-lang/antha/utils"
 )
 
 type Element interface {
+	Name() string
+	TypeName() string
+
 	Setup(*Laboratory)
 	Steps(*Laboratory)
 	Analysis(*Laboratory)
 	Validation(*Laboratory)
 }
 
-type Laboratory struct {
+type LaboratoryBuilder struct {
 	elemLock   sync.Mutex
 	elemsUnrun int64
 	elements   map[Element]*ElementBase
 
 	errLock sync.Mutex
-	errors  []error
+	errors  utils.ErrorSlice
 	Errored chan struct{}
 
 	Completed chan struct{}
 
 	*lineMapManager
-	*Logger
+	logger *Logger
 }
 
-func NewLaboratory() *Laboratory {
-	return &Laboratory{
+func NewLaboratoryBuilder() *LaboratoryBuilder {
+	return &LaboratoryBuilder{
 		elements:  make(map[Element]*ElementBase),
 		Errored:   make(chan struct{}),
 		Completed: make(chan struct{}),
 
 		lineMapManager: NewLineMapManager(),
-		Logger:         NewLogger(),
+		logger:         NewLogger(),
 	}
 }
 
 // Only use this before you call run.
-func (lab *Laboratory) InstallElement(e Element) {
+func (labBuild *LaboratoryBuilder) InstallElement(e Element) {
 	eb := NewElementBase(e)
-	lab.elemLock.Lock()
-	defer lab.elemLock.Unlock()
-	lab.elements[e] = eb
-	lab.elemsUnrun++
+	labBuild.elemLock.Lock()
+	defer labBuild.elemLock.Unlock()
+	labBuild.elements[e] = eb
+	labBuild.elemsUnrun++
 }
 
-func (lab *Laboratory) AddLink(src, dst Element, fun func()) error {
-	if ebSrc, found := lab.elements[src]; !found {
+func (labBuild *LaboratoryBuilder) AddLink(src, dst Element, fun func()) error {
+	if ebSrc, found := labBuild.elements[src]; !found {
 		return fmt.Errorf("Unknown src element: %v", src)
-	} else if ebDst, found := lab.elements[dst]; !found {
+	} else if ebDst, found := labBuild.elements[dst]; !found {
 		return fmt.Errorf("Unknown dst element: %v", dst)
 	} else {
 		ebDst.AddBlockedInput()
@@ -61,28 +67,78 @@ func (lab *Laboratory) AddLink(src, dst Element, fun func()) error {
 }
 
 // Run all the installed elements.
-func (lab *Laboratory) Run() error {
-	lab.elemLock.Lock()
-	if lab.elemsUnrun == 0 {
-		lab.elemLock.Unlock()
-		close(lab.Completed)
+func (labBuild *LaboratoryBuilder) Run() error {
+	labBuild.elemLock.Lock()
+	if labBuild.elemsUnrun == 0 {
+		labBuild.elemLock.Unlock()
+		close(labBuild.Completed)
 		return nil
 
 	} else {
-		for _, eb := range lab.elements {
-			eb.AddOnExit(lab.elementCompleted)
+		for _, eb := range labBuild.elements {
+			eb.AddOnExit(labBuild.elementCompleted)
 		}
-		for _, eb := range lab.elements {
-			go eb.Run(lab)
+		for e, eb := range labBuild.elements {
+			go eb.Run(labBuild.makeLab(e))
 		}
-		<-lab.Completed
+		<-labBuild.Completed
 
 		select {
-		case <-lab.Errored:
-			return lab.errors[0]
+		case <-labBuild.Errored:
+			return labBuild.errors
 		default:
 			return nil
 		}
+	}
+}
+
+func (labBuild *LaboratoryBuilder) elementCompleted() {
+	labBuild.elemLock.Lock()
+	defer labBuild.elemLock.Unlock()
+	labBuild.elemsUnrun--
+	if labBuild.elemsUnrun == 0 {
+		close(labBuild.Completed)
+	}
+}
+
+func (labBuild *LaboratoryBuilder) recordError(err error) {
+	labBuild.errLock.Lock()
+	defer labBuild.errLock.Unlock()
+	labBuild.errors = append(labBuild.errors, err)
+	select { // we keep the lock here to avoid a race to close
+	case <-labBuild.Errored:
+	default:
+		close(labBuild.Errored)
+	}
+}
+
+func (labBuild *LaboratoryBuilder) Fatal(err error) {
+	labBuild.logger.Log("fatal", err.Error())
+	os.Exit(1)
+}
+
+func (labBuild *LaboratoryBuilder) Errors() error {
+	select {
+	case <-labBuild.Errored:
+		labBuild.errLock.Lock()
+		defer labBuild.errLock.Unlock()
+		return labBuild.errors
+	default:
+		return nil
+	}
+}
+
+type Laboratory struct {
+	*LaboratoryBuilder
+	element Element
+	Logger  *Logger
+}
+
+func (labBuild *LaboratoryBuilder) makeLab(e Element) *Laboratory {
+	return &Laboratory{
+		LaboratoryBuilder: labBuild,
+		element:           e,
+		Logger:            labBuild.logger.With("name", e.Name(), "type", e.TypeName()),
 	}
 }
 
@@ -93,36 +149,20 @@ func (lab *Laboratory) CallSteps(e Element) error {
 	finished := make(chan struct{})
 	eb.AddOnExit(func() { close(finished) })
 
-	go eb.Run(lab, eb.element.Steps)
+	go eb.Run(lab.makeLab(e), eb.element.Steps)
 	<-finished
 
 	select {
 	case <-lab.Errored:
-		return lab.errors[0]
+		return lab.errors
 	default:
 		return nil
 	}
 }
 
-func (lab *Laboratory) elementCompleted() {
-	lab.elemLock.Lock()
-	defer lab.elemLock.Unlock()
-	lab.elemsUnrun--
-	if lab.elemsUnrun == 0 {
-		close(lab.Completed)
-	}
-}
-
 func (lab *Laboratory) Error(err error) {
-	lab.errLock.Lock()
-	defer lab.errLock.Unlock()
-	lab.errors = append(lab.errors, err)
+	lab.recordError(err)
 	lab.Logger.Log("error", err.Error())
-	select { // we keep the lock here to avoid a race to close
-	case <-lab.Errored:
-	default:
-		close(lab.Errored)
-	}
 }
 
 func (lab *Laboratory) Errorf(fmtStr string, args ...interface{}) {

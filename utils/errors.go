@@ -11,5 +11,5 @@ func (es ErrorSlice) Error() string {
 	for i, err := range es {
 		strs[i] = err.Error()
 	}
-	return strings.Join(strs, "\n")
+	return strings.Join(strs, "; ")
 }

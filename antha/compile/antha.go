@@ -578,23 +578,33 @@ func (p *Antha) addUses() {
 func (p *Antha) printFunctions(out io.Writer, lineMap map[int]int) error {
 	var tmpl = `
 type {{.ElementTypeName}} struct {
+	name string
+
 	Inputs     Inputs
 	Outputs    Outputs
 	Parameters Parameters
 	Data       Data
 }
 
-func New{{.ElementTypeName}}(lab *laboratory.Laboratory) *{{.ElementTypeName}} {
-	element := &{{.ElementTypeName}}{}
-	lab.InstallElement(element)
+func New{{.ElementTypeName}}(labBuild laboratory.LaboratoryBuilder, name string) *{{.ElementTypeName}} {
+	element := &{{.ElementTypeName}}{name: name}
+	labBuild.InstallElement(element)
 	return element
 }
 
-func RegisterLineMap(lab *laboratory.Laboratory) {
+func (element {{.ElementTypeName}}) Name() string {
+	return element.name
+}
+
+func (element {{.ElementTypeName}}) TypeName() string {
+	return {{printf "%q" .ElementTypeName}}
+}
+
+func RegisterLineMap(labBuild *laboratory.LaboratoryBuilder) {
 	lineMap := map[int]int{
 		{{range $key, $value := .LineMap}}{{$key}}: {{$value}}, {{end}}
 	}
-	lab.RegisterLineMap(
+	labBuild.RegisterLineMap(
 		{{printf "%q" .GeneratedPath}},
 		{{printf "%q" .Path}},
 		{{printf "%q" .ElementTypeName}},

@@ -25,14 +25,13 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
-	"sort"
-	"strconv"
-	"strings"
-
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/inventory/cache"
+	"sort"
+	"strconv"
+	"strings"
 )
 
 type TransferInstruction struct {
@@ -575,21 +574,22 @@ func ensureOrderMaintained(inss []RobotInstruction, tps []MultiTransferParams) [
 	ret := make([]RobotInstruction, 0, len(inss))
 
 	for _, tp := range tps {
-		cmp := tp.RemoveInitialBlanks().Component()[0]
+		for _, cmp := range tp.RemoveInitialBlanks().Component() {
 
-		ar, ok := m[cmp]
+			ar, ok := m[cmp]
 
-		if !ok {
-			continue
+			if !ok {
+				continue
+			}
+
+			delete(m, cmp)
+
+			ret = append(ret, ar...)
 		}
-
-		delete(m, cmp)
-
-		ret = append(ret, ar...)
 	}
 
 	if len(ret) != len(inss) {
-		panic(fmt.Sprintf("Error ensuring instruction order: before %d after %d", len(ret), len(inss)))
+		panic(fmt.Sprintf("Error ensuring instruction order: before %d after %d", len(inss), len(ret)))
 	}
 
 	return ret

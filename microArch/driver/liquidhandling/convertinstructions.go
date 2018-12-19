@@ -45,7 +45,8 @@ func ConvertInstructions(ctx context.Context, inssIn LHIVector, robot *LHPropert
 	// 1) calling convertInstructions with multi = 8 when there are no actual multichannel instructions causes
 	//    undesirable source volume selection, see tests "TestExecutionPlanning/single_channel_well_use", and
 	//    "TestExecutionPlanning/single_channel_auto_allocation"
-	// 2) convertInstructions makes changes to robot, meaning that it must be called exactly once with the the copy of robot passed to the function
+	// 2) convertInstructions makes changes to robot, meaning that it must be called exactly once with the the copy of robot passed to the function - once the value of multi is chosen it is necessary to call this function with this value to ensure
+	//    robot state is correct
 	if transfers, err := convertInstructions(inssIn, robot.DupKeepIDs(), carryvol, channelprms, multi, legacyVolume); err != nil {
 		return nil, err
 	} else if hasMCB, err := hasMultiChannelBlock(ctx, transfers, robot, policy); err != nil {

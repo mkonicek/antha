@@ -262,6 +262,7 @@ func (ins *SingleChannelBlockInstruction) Generate(ctx context.Context, policy *
 			stci.TPlateType = ins.TPlateType[t]
 			stci.FVolume = wunit.CopyVolume(ins.FVolume[t])
 			stci.TVolume = wunit.CopyVolume(ins.TVolume[t])
+			stci.Component = ins.Component[t]
 			stci.Prms = channel.MergeWithTip(tipp)
 			stci.TipType = tiptype
 			ret = append(ret, stci)
@@ -534,6 +535,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 			mci.WellTo = ins.WellTo[t]
 			mci.FPlateType = ins.FPlateType[t]
 			mci.TPlateType = ins.TPlateType[t]
+			mci.Component = ins.Component[t]
 			mci.TipType = newtiptypes
 			//mci.Multi = ins.Multi
 			mci.Multi = countMulti(ins.PltFrom[t])
@@ -664,6 +666,8 @@ func (ins *SingleChannelTransferInstruction) GetParameter(name InstructionParame
 		return ins.TPlateType
 	case TIPTYPE:
 		return ins.TipType
+	case COMPONENT:
+		return ins.Component
 	default:
 		return ins.BaseRobotInstruction.GetParameter(name)
 	}
@@ -713,6 +717,7 @@ type MultiChannelTransferInstruction struct {
 	Multi      int // potentially deprecated
 	Prms       []*wtype.LHChannelParameter
 	TipType    []string
+	Component  []string
 }
 
 func (scti *MultiChannelTransferInstruction) Params(k int) TransferParams {
@@ -729,6 +734,7 @@ func (scti *MultiChannelTransferInstruction) Params(k int) TransferParams {
 	tp.TVolume = wunit.CopyVolume(scti.TVolume[k])
 	tp.Channel = scti.Prms[k].Dup()
 	tp.TipType = scti.TipType[k]
+	tp.Component = scti.Component[k]
 	return tp
 }
 func NewMultiChannelTransferInstruction() *MultiChannelTransferInstruction {
@@ -745,6 +751,7 @@ func NewMultiChannelTransferInstruction() *MultiChannelTransferInstruction {
 		FPlateType:      []string{},
 		TPlateType:      []string{},
 		TipType:         []string{},
+		Component:       []string{},
 	}
 	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
 	return v
@@ -785,6 +792,8 @@ func (ins *MultiChannelTransferInstruction) GetParameter(name InstructionParamet
 		return ins.TVolume
 	case TOPLATETYPE:
 		return ins.TPlateType
+	case COMPONENT:
+		return ins.Component
 	default:
 		return ins.BaseRobotInstruction.GetParameter(name)
 	}
@@ -1087,6 +1096,7 @@ type AspirateInstruction struct {
 	What       []string
 	LLF        []bool
 	Platform   string
+	Component  []string
 }
 
 func NewAspirateInstruction() *AspirateInstruction {
@@ -1096,6 +1106,7 @@ func NewAspirateInstruction() *AspirateInstruction {
 		Plt:             []string{},
 		What:            []string{},
 		LLF:             []bool{},
+		Component:       []string{},
 	}
 	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
 	return v
@@ -1125,6 +1136,8 @@ func (ins *AspirateInstruction) GetParameter(name InstructionParameter) interfac
 		return ins.LLF
 	case PLATFORM:
 		return ins.Platform
+	case COMPONENT:
+		return ins.Component
 	default:
 		return ins.BaseRobotInstruction.GetParameter(name)
 	}
@@ -1156,13 +1169,14 @@ func (ins *AspirateInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
 type DispenseInstruction struct {
 	BaseRobotInstruction
 	*InstructionType
-	Head     int
-	Volume   []wunit.Volume
-	Multi    int
-	Plt      []string
-	What     []string
-	LLF      []bool
-	Platform string
+	Head      int
+	Volume    []wunit.Volume
+	Multi     int
+	Plt       []string
+	What      []string
+	LLF       []bool
+	Platform  string
+	Component []string
 }
 
 func NewDispenseInstruction() *DispenseInstruction {
@@ -1172,6 +1186,7 @@ func NewDispenseInstruction() *DispenseInstruction {
 		Plt:             []string{},
 		What:            []string{},
 		LLF:             []bool{},
+		Component:       []string{},
 	}
 	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
 	return v
@@ -1201,6 +1216,8 @@ func (ins *DispenseInstruction) GetParameter(name InstructionParameter) interfac
 		return ins.Plt
 	case PLATFORM:
 		return ins.Platform
+	case COMPONENT:
+		return ins.Component
 	default:
 		return ins.BaseRobotInstruction.GetParameter(name)
 	}
@@ -1690,6 +1707,7 @@ type SuckInstruction struct {
 	Multi       int
 	Overstroke  bool
 	TipType     string
+	Component   []string
 }
 
 func NewSuckInstruction() *SuckInstruction {
@@ -1701,6 +1719,7 @@ func NewSuckInstruction() *SuckInstruction {
 		Volume:          []wunit.Volume{},
 		FPlateType:      []string{},
 		FVolume:         []wunit.Volume{},
+		Component:       []string{},
 	}
 	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
 	return v
@@ -1720,6 +1739,7 @@ func (ins *SuckInstruction) AddTransferParams(tp TransferParams) {
 	ins.Prms = tp.Channel
 	ins.Head = tp.Channel.Head
 	ins.TipType = tp.TipType
+	ins.Component = append(ins.Component, tp.Component)
 }
 
 func (ins *SuckInstruction) GetParameter(name InstructionParameter) interface{} {
@@ -2045,6 +2065,7 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	aspins.Overstroke = ins.Overstroke
 	aspins.What = ins.What
 	aspins.Plt = ins.FPlateType
+	aspins.Component = ins.Component
 
 	for i := 0; i < ins.Multi; i++ {
 		aspins.LLF = append(aspins.LLF, use_llf[i])
@@ -2115,6 +2136,7 @@ type BlowInstruction struct {
 	Prms       *wtype.LHChannelParameter
 	Multi      int
 	TipType    string
+	Component  []string
 }
 
 func NewBlowInstruction() *BlowInstruction {
@@ -2126,6 +2148,7 @@ func NewBlowInstruction() *BlowInstruction {
 		Volume:          []wunit.Volume{},
 		TPlateType:      []string{},
 		TVolume:         []wunit.Volume{},
+		Component:       []string{},
 	}
 	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
 	return v
@@ -2162,6 +2185,8 @@ func (ins *BlowInstruction) GetParameter(name InstructionParameter) interface{} 
 		return ins.Multi
 	case TIPTYPE:
 		return ins.TipType
+	case COMPONENT:
+		return ins.Component
 	default:
 		return ins.BaseRobotInstruction.GetParameter(name)
 	}
@@ -2177,6 +2202,7 @@ func (ins *BlowInstruction) AddTransferParams(tp TransferParams) {
 	ins.Prms = tp.Channel
 	ins.Head = tp.Channel.Head
 	ins.TipType = tp.TipType
+	ins.Component = append(ins.Component, tp.Component)
 }
 func (scti *BlowInstruction) Params() MultiTransferParams {
 	tp := NewMultiTransferParams(scti.Multi)
@@ -2407,6 +2433,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		dspins.Multi = ins.Multi
 		dspins.Plt = ins.TPlateType
 		dspins.What = ins.What
+		dspins.Component = ins.Component
 
 		for i := 0; i < ins.Multi; i++ {
 			dspins.LLF = append(dspins.LLF, use_llf[i])

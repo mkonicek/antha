@@ -80,13 +80,13 @@ func main() {
 {{range elementClasses}}	{{.PackageName}}.RegisterLineMap(labBuild)
 {{end}}
 	// Create the elements
-{{range $name, $proc := .Processes}}	{{varName $name}} := {{packageName $proc.Component}}.New(labBuild, {{printf "%q" $name}})
+{{range $name, $proc := .Processes}}	{{varName $name}} := {{packageName $proc.Component}}.New{{packageName $proc.Component}}(labBuild, {{printf "%q" $name}})
 {{end}}
 	// Add wiring
 {{range .Connections}}	labBuild.AddLink({{varName .Source.Process}}, {{varName .Target.Process}}, func () { {{varName .Target.Process}}.Inputs.{{.Target.Port}} = {{varName .Source.Process}}.Outputs.{{.Source.Port}} })
 {{end}}
 	// Set parameters
-{{range $name, $params := .Parameters}}{{range $param, $value := $params}}	if err := {{varName $name}}.Inputs.{{$param}}.SetFromJSON([]byte({{printf "%q" $value}})); err != nil {
+{{range $name, $params := .Parameters}}{{range $param, $value := $params}}	if err := {{varName $name}}.Parameters.{{$param}}.SetFromJSON([]byte({{printf "%q" $value}})); err != nil {
 		labBuild.Fatal(err)
 	}
 {{end}}{{end}}

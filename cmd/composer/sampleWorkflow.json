@@ -1,81 +1,32 @@
 {
     "JobId": "abc",
     "Processes": {
-        "Prompt User From Liquid Set 1_run1": {
-            "Component": "repos.antha.com/antha-ninja/elements-westeros/matthew/Elements/New-MVL/Prompt_On_Liquid_Set",
+        "myFileOutput": {
+            "Component": "repos.antha.com/antha-ninja/elements-westeros/matthew/Tests/FileOutput",
             "Metadata": {
                 "x": 442,
                 "y": 256
             }
-        },
-        "Aliquot Liquid 1_run1": {
-            "Component": "repos.antha.com/antha-ninja/elements-westeros/matthew/Elements/New-MVL/Aliquot_Liquid",
-            "Metadata": {
-                "x": 164,
-                "y": 170
-            }
-        },
-        "Aliquot Liquid Set 1_run1": {
-            "Component": "repos.antha.com/antha-ninja/elements-westeros/matthew/Elements/New-MVL/Aliquot_Liquid_Set",
-            "Metadata": {
-                "x": 706,
-                "y": 134
-            }
         }
     },
     "Connections": [
-        {
-            "Source": {
-                "Process": "Aliquot Liquid 1_run1",
-                "Port": "OutputLiquidSet"
-            },
-            "Target": {
-                "Process": "Prompt User From Liquid Set 1_run1",
-                "Port": "PromptingLiquidSet"
-            }
-        },
-        {
-            "Source": {
-                "Process": "Aliquot Liquid 1_run1",
-                "Port": "WellsUsed"
-            },
-            "Target": {
-                "Process": "Aliquot Liquid Set 1_run1",
-                "Port": "AvoidWells"
-            }
-        },
-        {
-            "Source": {
-                "Process": "Prompt User From Liquid Set 1_run1",
-                "Port": "OutputLiquidSet"
-            },
-            "Target": {
-                "Process": "Aliquot Liquid Set 1_run1",
-                "Port": "LiquidSetToAliquot"
-            }
-        }
     ],
     "Parameters": {
-        "Prompt User From Liquid Set 1_run1": {
-            "PromptMessage": "What's up at 37ºC? !\"#$%&/()=?»«'+´*`º~ª^çÇ,.-_:;",
-            "PromptInLiquidHandler": false,
-            "PromptInAnthaTimeline": true
-        },
-        "Aliquot Liquid 1_run1": {
-            "ByRow": false,
-            "LiquidToAliquot": "water",
-            "OutPlate": "SRWFB96_riser18",
-            "Replicates": 8,
-            "VolumePerAliquot": "200ul"
-        },
-        "Aliquot Liquid Set 1_run1": {
-            "ByRow": false,
-            "OutPlate": "pcrplate_skirted_riser18",
-            "Replicates": 2,
-            "VolumePerAliquot": {
-                "default": "10ul"
+        "myFileOutput": {
+            "ParamFileA": {
+                "name": "paramfileaname",
+                "hostFile": {
+                    "filename": "datarepo:///job/26M18B24JT9MGQVH35D4GRVHV6/saru-post.parquet.parquet"
+                }
             },
-            "KeepReplicatesTogether": false
+            "ParamFileB": {
+                "name": "paramfilebname",
+                "hostFile": {
+                    "filename": "datarepo:///job/26M18B24JT9MGQVH35D4GRVHV6/saru-post.parquet.parquet"
+                }
+            },
+            "ParamFilename": "myfilename",
+            "ParamFileSlice": []
         }
     }
 }

@@ -12,7 +12,7 @@ type CommandInst struct {
 	// Arguments to this command. Used to determine command dependencies.
 	Args []*wtype.Liquid
 	// Components created by this command. Returned back to user code
-	result  []*wtype.Liquid
+	Result  []*wtype.Liquid
 	Command *ast.Command
 }
 

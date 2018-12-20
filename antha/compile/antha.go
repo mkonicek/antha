@@ -586,7 +586,7 @@ type {{.ElementTypeName}} struct {
 	Data       Data
 }
 
-func New{{.ElementTypeName}}(labBuild laboratory.LaboratoryBuilder, name string) *{{.ElementTypeName}} {
+func New{{.ElementTypeName}}(labBuild *laboratory.LaboratoryBuilder, name string) *{{.ElementTypeName}} {
 	element := &{{.ElementTypeName}}{name: name}
 	labBuild.InstallElement(element)
 	return element

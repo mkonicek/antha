@@ -6,6 +6,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/driver"
+	"github.com/antha-lang/antha/laboratory"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/target"
 )
@@ -63,9 +64,9 @@ func Incubate(lab *laboratory.Laboratory, in *wtype.Liquid, opt IncubateOpt) *wt
 		PreShakeRadius: opt.PreShakeRadius,
 	}
 
-	inst := &laboratory.CommandInst{
+	inst := &effects.CommandInst{
 		Args:   []*wtype.Liquid{in},
-		result: []*wtype.Liquid{newCompFromComp(lab, in)},
+		Result: []*wtype.Liquid{newCompFromComp(lab, in)},
 		Command: &ast.Command{
 			Inst: innerInst,
 		},
@@ -81,7 +82,7 @@ func Incubate(lab *laboratory.Laboratory, in *wtype.Liquid, opt IncubateOpt) *wt
 	})
 
 	lab.Trace.Issue(inst)
-	return inst.result[0]
+	return inst.Result[0]
 }
 
 // prompt... works pretty much like Handle does
@@ -104,7 +105,7 @@ func MixerPrompt(lab *laboratory.Laboratory, in *wtype.Liquid, message string) *
 		},
 	)
 	lab.Trace.Issue(inst)
-	return inst.result[0]
+	return inst.Result[0]
 }
 
 // ExecuteMixes will ensure that all mix activities
@@ -115,9 +116,9 @@ func ExecuteMixes(lab *laboratory.Laboratory, liquid *wtype.LHComponent) *wtype.
 
 // Prompt prompts user with a message
 func Prompt(lab *laboratory.Laboratory, in *wtype.Liquid, message string) *wtype.Liquid {
-	inst := &laboratory.CommandInst{
+	inst := &effects.CommandInst{
 		Args:   []*wtype.Liquid{in},
-		result: []*wtype.Liquid{newCompFromComp(lab, in)},
+		Result: []*wtype.Liquid{newCompFromComp(lab, in)},
 		Command: &ast.Command{
 			Inst: &ast.PromptInst{
 				Message: message,
@@ -132,10 +133,10 @@ func Prompt(lab *laboratory.Laboratory, in *wtype.Liquid, message string) *wtype
 	})
 
 	lab.Trace.Issue(inst)
-	return inst.result[0]
+	return inst.Result[0]
 }
 
-func mixerPrompt(opts mixerPromptOpts) *laboratory.CommandInst {
+func mixerPrompt(opts mixerPromptOpts) *effects.CommandInst {
 	inst := wtype.NewLHPromptInstruction()
 	inst.SetGeneration(opts.ComponentIn.Generation())
 	inst.Message = opts.Message
@@ -143,9 +144,9 @@ func mixerPrompt(opts mixerPromptOpts) *laboratory.CommandInst {
 	inst.AddInput(opts.ComponentIn)
 	inst.PassThrough[opts.ComponentIn.ID] = opts.Component
 
-	return &laboratory.CommandInst{
+	return &effects.CommandInst{
 		Args:   []*wtype.Liquid{opts.ComponentIn},
-		result: []*wtype.Liquid{opts.Component},
+		Result: []*wtype.Liquid{opts.Component},
 		Command: &ast.Command{
 			Inst: inst,
 			Requests: []ast.Request{
@@ -159,7 +160,7 @@ func mixerPrompt(opts mixerPromptOpts) *laboratory.CommandInst {
 	}
 }
 
-func handle(lab *laboratory.Laboratory, opt HandleOpt) *laboratory.CommandInst {
+func handle(lab *laboratory.Laboratory, opt HandleOpt) *effects.CommandInst {
 	comp := newCompFromComp(lab, opt.Component)
 
 	var sels []ast.NameValue
@@ -172,9 +173,9 @@ func handle(lab *laboratory.Laboratory, opt HandleOpt) *laboratory.CommandInst {
 		}
 	}
 
-	return &laboratory.CommandInst{
+	return &effects.CommandInst{
 		Args:   []*wtype.Liquid{opt.Component},
-		result: []*wtype.Liquid{comp},
+		Result: []*wtype.Liquid{comp},
 		Command: &ast.Command{
 			Inst: &ast.HandleInst{
 
@@ -197,7 +198,7 @@ type HandleOpt struct {
 func Handle(lab *laboratory.Laboratory, opt HandleOpt) *wtype.Liquid {
 	inst := handle(lab, opt)
 	lab.Trace.Issue(inst)
-	return inst.result[0]
+	return inst.Result[0]
 }
 
 // PlateReadOpts defines plate-reader absorbance options
@@ -206,17 +207,17 @@ type PlateReadOpts struct {
 	Options string
 }
 
-func readPlate(opts PlateReadOpts) *laboratory.CommandInst {
+func readPlate(lab *laboratory.Laboratory, opts PlateReadOpts) *effects.CommandInst {
 	inst := wtype.NewPRInstruction()
 	inst.ComponentIn = opts.Sample
 
 	// Clone the component to represent the result of the AbsorbanceRead
-	inst.ComponentOut = newCompFromComp(ctx, opts.Sample)
+	inst.ComponentOut = newCompFromComp(lab, opts.Sample)
 	inst.Options = opts.Options
 
-	return &laboratory.CommandInst{
+	return &effects.CommandInst{
 		Args:   []*wtype.Liquid{opts.Sample},
-		result: []*wtype.Liquid{inst.ComponentOut},
+		Result: []*wtype.Liquid{inst.ComponentOut},
 		Command: &ast.Command{
 			Inst: inst,
 			Requests: []ast.Request{
@@ -232,9 +233,9 @@ func readPlate(opts PlateReadOpts) *laboratory.CommandInst {
 
 // PlateRead reads absorbance of a component
 func PlateRead(lab *laboratory.Laboratory, opt PlateReadOpts) *wtype.Liquid {
-	inst := readPlate(opt)
+	inst := readPlate(lab, opt)
 	lab.Trace.Issue(inst)
-	return inst.result[0]
+	return inst.Result[0]
 }
 
 // QPCROptions are the options for a QPCR request.
@@ -245,7 +246,7 @@ type QPCROptions struct {
 	TagAs      string
 }
 
-func runQPCR(lab *laboratory.Laboratory, opts QPCROptions, command string) *laboratory.CommandInst {
+func runQPCR(lab *laboratory.Laboratory, opts QPCROptions, command string) *effects.CommandInst {
 	inst := ast.NewQPCRInstruction()
 	inst.Command = command
 	inst.ComponentIn = opts.Reactions
@@ -258,9 +259,9 @@ func runQPCR(lab *laboratory.Laboratory, opts QPCROptions, command string) *labo
 		inst.ComponentOut = append(inst.ComponentOut, newCompFromComp(lab, r))
 	}
 
-	return &laboratory.CommandInst{
+	return &effects.CommandInst{
 		Args:   opts.Reactions,
-		result: inst.ComponentOut,
+		Result: inst.ComponentOut,
 		Command: &ast.Command{
 			Inst: inst,
 			Requests: []ast.Request{
@@ -278,14 +279,14 @@ func runQPCR(lab *laboratory.Laboratory, opts QPCROptions, command string) *labo
 func RunQPCRExperiment(lab *laboratory.Laboratory, opt QPCROptions) []*wtype.Liquid {
 	inst := runQPCR(lab, opt, "RunExperiment")
 	lab.Trace.Issue(inst)
-	return inst.result
+	return inst.Result
 }
 
 // RunQPCRFromTemplate starts a new QPCR experiment, using a template input file.
 func RunQPCRFromTemplate(lab *laboratory.Laboratory, opt QPCROptions) []*wtype.Liquid {
 	inst := runQPCR(lab, opt, "RunExperimentFromTemplate")
 	lab.Trace.Issue(inst)
-	return inst.result
+	return inst.Result
 }
 
 // NewComponent returns a new component given a component type
@@ -306,7 +307,7 @@ func NewPlate(lab *laboratory.Laboratory, typ string) *wtype.Plate {
 	return p
 }
 
-func mix(lab *laboratory.Laboratory, inst *wtype.LHInstruction) *laboratory.CommandInst {
+func mix(lab *laboratory.Laboratory, inst *wtype.LHInstruction) *effects.CommandInst {
 	inst.BlockID = wtype.NewBlockID(lab.JobId)
 	inst.Outputs[0].BlockID = inst.BlockID
 	result := inst.Outputs[0]
@@ -337,13 +338,13 @@ func mix(lab *laboratory.Laboratory, inst *wtype.LHInstruction) *laboratory.Comm
 	result.SetGeneration(mx + 1)
 	result.DeclareInstance()
 
-	return &laboratory.CommandInst{
+	return &effects.CommandInst{
 		Args: inst.Inputs,
 		Command: &ast.Command{
 			Requests: reqs,
 			Inst:     inst,
 		},
-		result: []*wtype.Liquid{result},
+		Result: []*wtype.Liquid{result},
 	}
 }
 
@@ -351,12 +352,12 @@ func genericMix(lab *laboratory.Laboratory, generic *wtype.LHInstruction) *wtype
 	inst := mix(lab, generic)
 	lab.Trace.Issue(inst)
 	if generic.Welladdress != "" {
-		err := inst.result[0].SetWellLocation(generic.Welladdress)
+		err := inst.Result[0].SetWellLocation(generic.Welladdress)
 		if err != nil {
 			panic(err)
 		}
 	}
-	return inst.result[0]
+	return inst.Result[0]
 }
 
 // Mix mixes components
@@ -409,7 +410,7 @@ func SplitSample(lab *laboratory.Laboratory, component *wtype.Liquid, volume wun
 	lab.Trace.Issue(inst)
 
 	// protocol world must not be able to modify the copies seen here
-	return inst.result[0].Dup(), inst.result[1].Dup()
+	return inst.Result[0].Dup(), inst.Result[1].Dup()
 }
 
 // Sample takes a sample of volume v from this liquid
@@ -417,7 +418,7 @@ func Sample(lab *laboratory.Laboratory, liquid *wtype.Liquid, v wunit.Volume) *w
 	return mixer.Sample(liquid, v)
 }
 
-func splitSample(lab *laboratory.Laboratory, component *wtype.Liquid, volume wunit.Volume) *laboratory.CommandInst {
+func splitSample(lab *laboratory.Laboratory, component *wtype.Liquid, volume wunit.Volume) *effects.CommandInst {
 
 	split := wtype.NewLHSplitInstruction()
 
@@ -433,7 +434,7 @@ func splitSample(lab *laboratory.Laboratory, component *wtype.Liquid, volume wun
 	split.Outputs = append(split.Outputs, cmpStaying)
 
 	// Create Instruction
-	inst := &laboratory.CommandInst{
+	inst := &effects.CommandInst{
 		Args: []*wtype.Liquid{component},
 		Command: &ast.Command{
 			Requests: []ast.Request{{
@@ -443,7 +444,7 @@ func splitSample(lab *laboratory.Laboratory, component *wtype.Liquid, volume wun
 			},
 			Inst: split,
 		},
-		result: []*wtype.Liquid{cmpMoving, cmpStaying},
+		Result: []*wtype.Liquid{cmpMoving, cmpStaying},
 	}
 
 	return inst

@@ -30,7 +30,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/inventory"
 	lhdriver "github.com/antha-lang/antha/microArch/driver/liquidhandling"
-	"github.com/antha-lang/antha/microArch/logger"
 )
 
 //  TASK: 	Determine number of tip boxes of each type
@@ -103,9 +102,9 @@ func (lh *Liquidhandler) Tip_box_setup(ctx context.Context, request *LHRequest) 
 			ar2 = append(ar2, k)
 		}
 
-		logger.Debug(fmt.Sprintln("TIPS OF TYPE ", actualtiptype, " USED: ", ntip))
+		fmt.Println("TIPS OF TYPE ", actualtiptype, " USED: ", ntip)
 
-		logger.Info(fmt.Sprintf("Block %s Tips of type %s used: %d", request.BlockID, actualtiptype, ntip))
+		fmt.Printf("Block %s Tips of type %s used: %d\n", request.BlockID, actualtiptype, ntip)
 
 		// how many tips remain on the platform?
 

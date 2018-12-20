@@ -25,8 +25,6 @@ package wtype
 import (
 	"fmt"
 	"strconv"
-
-	"github.com/antha-lang/antha/microArch/logger"
 )
 
 // base types required for movement
@@ -88,7 +86,6 @@ func NewLocation(name string, nPositions int, shape *Shape) Location { //TODO on
 // level = 1 means they share a parent etc
 func SameLocation(l, m Location, level int) bool {
 	if level < 0 {
-		logger.Fatal(fmt.Sprintf("SameLocation: level parameter %d makes no sense", level))
 		panic(fmt.Sprintf("SameLocation: level parameter %d makes no sense", level))
 	} else if level == 0 {
 		if l.Location_ID() == m.Location_ID() {

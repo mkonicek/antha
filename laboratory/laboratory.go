@@ -95,6 +95,7 @@ func (labBuild *LaboratoryBuilder) RunElements() error {
 		for e, eb := range labBuild.elements {
 			go eb.Run(labBuild.makeLab(e))
 		}
+		labBuild.elemLock.Unlock()
 		<-labBuild.Completed
 
 		select {

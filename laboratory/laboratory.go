@@ -6,7 +6,8 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/inventory/cache/plateCache"
+	"github.com/antha-lang/antha/inventory/testinventory"
 	"github.com/antha-lang/antha/microArch/sampletracker"
 	"github.com/antha-lang/antha/utils"
 )
@@ -19,15 +20,6 @@ type Element interface {
 	Steps(*Laboratory)
 	Analysis(*Laboratory)
 	Validation(*Laboratory)
-}
-
-type Inventory interface {
-	NewComponent(typ string) (*wtype.Liquid, error)
-	NewPlate(typ string) (*wtype.Plate, error)
-	NewTipwaste(typ string) (*wtype.LHTipwaste, error)
-	NewTipbox(typ string) (*wtype.LHTipbox, error)
-	GetComponents() []*wtype.Liquid
-	GetPlates() []*wtype.Plate
 }
 
 type LaboratoryBuilder struct {
@@ -49,11 +41,12 @@ type LaboratoryBuilder struct {
 	Trace         *Trace
 	Maker         *Maker
 	SampleTracker *sampletracker.SampleTracker
-	Inventory     Inventory
+	Inventory     *testinventory.TestInventory
+	PlateCache    *plateCache.PlateCache
 }
 
 func NewLaboratoryBuilder(jobId string) *LaboratoryBuilder {
-	return &LaboratoryBuilder{
+	labBuild := &LaboratoryBuilder{
 		JobId: jobId,
 
 		elements:  make(map[Element]*ElementBase),
@@ -66,8 +59,11 @@ func NewLaboratoryBuilder(jobId string) *LaboratoryBuilder {
 		Trace:         NewTrace(),
 		Maker:         NewMaker(),
 		SampleTracker: sampletracker.NewSampleTracker(),
-		Inventory:     testInventory.NewInventory(),
+		Inventory:     testinventory.NewInventory(),
 	}
+	labBuild.PlateCache = plateCache.NewPlateCache(labBuild.Inventory)
+
+	return labBuild
 }
 
 // Only use this before you call run.

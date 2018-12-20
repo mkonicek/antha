@@ -11,14 +11,19 @@ import (
 
 var ErrUnknownType = errors.New("unknown type requested from inventory")
 
-type testInventory struct {
+const (
+	// WaterType is the component type of water
+	WaterType = "water"
+)
+
+type TestInventory struct {
 	componentByName map[string]*wtype.Liquid
 	plateByType     map[string]PlateForSerializing
 	tipboxByType    map[string]*wtype.LHTipbox
 	tipwasteByType  map[string]*wtype.LHTipwaste
 }
 
-func (i *testInventory) NewComponent(name string) (*wtype.Liquid, error) {
+func (i *TestInventory) NewComponent(name string) (*wtype.Liquid, error) {
 	c, ok := i.componentByName[name]
 	if !ok {
 		return nil, fmt.Errorf("%s: invalid solution: %s", ErrUnknownType, name)
@@ -27,14 +32,14 @@ func (i *testInventory) NewComponent(name string) (*wtype.Liquid, error) {
 	return c.Cp(), nil
 }
 
-func (i *testInventory) NewPlate(typ string) (*wtype.Plate, error) {
+func (i *TestInventory) NewPlate(typ string) (*wtype.Plate, error) {
 	p, ok := i.plateByType[typ]
 	if !ok {
 		return nil, fmt.Errorf("%s: invalid plate: %s", ErrUnknownType, typ)
 	}
 	return p.LHPlate(), nil
 }
-func (i *testInventory) NewTipbox(typ string) (*wtype.LHTipbox, error) {
+func (i *TestInventory) NewTipbox(typ string) (*wtype.LHTipbox, error) {
 	tb, ok := i.tipboxByType[typ]
 	if !ok {
 		return nil, ErrUnknownType
@@ -42,7 +47,7 @@ func (i *testInventory) NewTipbox(typ string) (*wtype.LHTipbox, error) {
 	return tb.Dup(), nil
 }
 
-func (i *testInventory) NewTipwaste(typ string) (*wtype.LHTipwaste, error) {
+func (i *TestInventory) NewTipwaste(typ string) (*wtype.LHTipwaste, error) {
 	tw, ok := i.tipwasteByType[typ]
 	if !ok {
 		return nil, ErrUnknownType
@@ -51,8 +56,8 @@ func (i *testInventory) NewTipwaste(typ string) (*wtype.LHTipwaste, error) {
 }
 
 // NewContext creates a new test inventory context
-func NewInventory() *testInventory {
-	inv := &testInventory{
+func NewInventory() *TestInventory {
+	inv := &TestInventory{
 		componentByName: make(map[string]*wtype.Liquid),
 		plateByType:     make(map[string]PlateForSerializing),
 		tipboxByType:    make(map[string]*wtype.LHTipbox),
@@ -101,7 +106,7 @@ func NewInventory() *testInventory {
 }
 
 // GetTipboxes returns the tipboxes in a test inventory context
-func (inv *testInventory) GetTipboxes() []*wtype.LHTipbox {
+func (inv *TestInventory) GetTipboxes() []*wtype.LHTipbox {
 	var tbs []*wtype.LHTipbox
 	for _, tb := range inv.tipboxByType {
 		tbs = append(tbs, tb)
@@ -115,7 +120,7 @@ func (inv *testInventory) GetTipboxes() []*wtype.LHTipbox {
 }
 
 // GetPlates returns the plates in a test inventory context
-func (inv *testInventory) GetPlates() []*wtype.Plate {
+func (inv *TestInventory) GetPlates() []*wtype.Plate {
 	var ps []*wtype.Plate
 	for _, p := range inv.plateByType {
 		ps = append(ps, p.LHPlate())
@@ -129,7 +134,7 @@ func (inv *testInventory) GetPlates() []*wtype.Plate {
 }
 
 // GetComponents returns the components in a test inventory context
-func (inv *testInventory) GetComponents() []*wtype.Liquid {
+func (inv *TestInventory) GetComponents() []*wtype.Liquid {
 	var cs []*wtype.Liquid
 	for _, c := range inv.componentByName {
 		cs = append(cs, c)

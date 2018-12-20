@@ -4,7 +4,6 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
-	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -12,9 +11,8 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/ast"
-	"github.com/antha-lang/antha/inventory"
+	"github.com/antha-lang/antha/laboratory"
 	driver "github.com/antha-lang/antha/microArch/driver/liquidhandling"
-	"github.com/antha-lang/antha/microArch/sampletracker"
 	planner "github.com/antha-lang/antha/microArch/scheduler/liquidhandling"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/human"
@@ -72,7 +70,7 @@ type lhreq struct {
 	*planner.Liquidhandler // ... and its associated planner
 }
 
-func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
+func (a *Mixer) makeLhreq(labBuild *laboratory.LaboratoryBuilder) (*lhreq, error) {
 	// MIS -- this might be a hole. We probably need to invoke the sample tracker here
 	addPlate := func(req *planner.LHRequest, ip *wtype.Plate) error {
 		if _, seen := req.InputPlates[ip.ID]; seen {
@@ -122,7 +120,7 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 
 	if p := a.opt.InputPlateTypes; len(p) != 0 {
 		for _, v := range p {
-			p, err := inventory.NewPlate(ctx, v)
+			p, err := labBuild.Inventory.NewPlate(v)
 			if err != nil {
 				return nil, err
 			}
@@ -133,7 +131,7 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 
 	if p := a.opt.OutputPlateTypes; len(p) != 0 {
 		for _, v := range p {
-			p, err := inventory.NewPlate(ctx, v)
+			p, err := labBuild.Inventory.NewPlate(v)
 			if err != nil {
 				return nil, err
 			}
@@ -143,7 +141,7 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 
 	if p := a.opt.TipTypes; len(p) != 0 {
 		for _, v := range p {
-			t, err := inventory.NewTipbox(ctx, v)
+			t, err := labBuild.Inventory.NewTipbox(v)
 			if err != nil {
 				return nil, err
 			}
@@ -154,7 +152,7 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 	if p := a.opt.InputPlateData; len(p) != 0 {
 		for idx, bs := range p {
 			buf := bytes.NewBuffer(bs)
-			r, err := ParsePlateCSV(ctx, buf)
+			r, err := ParsePlateCSV(labBuild, buf)
 			if err != nil {
 				return nil, fmt.Errorf("cannot parse data at idx %d: %s", idx, err)
 			}
@@ -179,9 +177,7 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 
 	// add plates requested via protocol
 
-	st := sampletracker.FromContext(ctx)
-
-	parr := st.GetInputPlates()
+	parr := labBuild.SampleTracker.GetInputPlates()
 
 	for _, p := range parr {
 		if err := addPlate(req, p); err != nil {
@@ -226,7 +222,7 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 }
 
 // Compile implements a Device
-func (a *Mixer) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, error) {
+func (a *Mixer) Compile(labBuild *laboratory.LaboratoryBuilder, nodes []ast.Node) ([]target.Inst, error) {
 	var mixes []*wtype.LHInstruction
 	for _, node := range nodes {
 		if c, ok := node.(*ast.Command); !ok {
@@ -238,7 +234,7 @@ func (a *Mixer) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, e
 		}
 	}
 
-	mix, err := a.makeMix(ctx, mixes)
+	mix, err := a.makeMix(labBuild, mixes)
 	if err != nil {
 		return nil, err
 	}
@@ -371,7 +367,7 @@ func unModifyTypeName(componentType string) string {
 	return strings.Split(componentType, modifiedPolicySuffix)[0]
 }
 
-func (a *Mixer) makeMix(ctx context.Context, mixes []*wtype.LHInstruction) (*target.Mix, error) {
+func (a *Mixer) makeMix(labBuild *laboratory.LaboratoryBuilder, mixes []*wtype.LHInstruction) (*target.Mix, error) {
 	hasPlate := func(plates []*wtype.Plate, typ, id string) bool {
 		for _, p := range plates {
 			if p.Type == typ && (id == "" || p.ID == id) {
@@ -393,7 +389,7 @@ func (a *Mixer) makeMix(ctx context.Context, mixes []*wtype.LHInstruction) (*tar
 		return
 	}
 
-	r, err := a.makeLhreq(ctx)
+	r, err := a.makeLhreq(labBuild)
 	if err != nil {
 		return nil, err
 	}
@@ -418,7 +414,7 @@ func (a *Mixer) makeMix(ctx context.Context, mixes []*wtype.LHInstruction) (*tar
 
 	for _, mix := range mixes {
 		if len(mix.Platetype) != 0 && !hasPlate(r.LHRequest.OutputPlatetypes, mix.Platetype, mix.PlateID) {
-			p, err := inventory.NewPlate(ctx, mix.Platetype)
+			p, err := labBuild.Inventory.NewPlate(mix.Platetype)
 			if err != nil {
 				return nil, err
 			}
@@ -428,7 +424,7 @@ func (a *Mixer) makeMix(ctx context.Context, mixes []*wtype.LHInstruction) (*tar
 		r.LHRequest.Add_instruction(mix)
 	}
 
-	err = r.Liquidhandler.MakeSolutions(ctx, r.LHRequest)
+	err = r.Liquidhandler.MakeSolutions(labBuild, r.LHRequest)
 	// TODO: MIS unfortunately we need to make sure this stays up to date would
 	// be better to remove this and just use the ones the liquid handler holds
 	r.LHProperties = r.Liquidhandler.Properties

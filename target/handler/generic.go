@@ -2,13 +2,13 @@ package handler
 
 import (
 	"bytes"
-	"context"
 	"encoding/gob"
 	"errors"
 	"fmt"
 
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/graph"
+	"github.com/antha-lang/antha/laboratory"
 	"github.com/antha-lang/antha/target"
 )
 
@@ -98,7 +98,7 @@ func (a GenericHandler) merge(nodes []ast.Node) (*ast.Command, error) {
 }
 
 // Compile implements a Device
-func (a *GenericHandler) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, error) {
+func (a *GenericHandler) Compile(labBuild *laboratory.LaboratoryBuilder, nodes []ast.Node) ([]target.Inst, error) {
 	g := ast.Deps(nodes)
 
 	entry := &target.Wait{}

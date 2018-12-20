@@ -23,20 +23,18 @@
 package liquidhandling
 
 import (
-	"context"
 	"fmt"
-	"github.com/pkg/errors"
 	"math"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
-	"github.com/antha-lang/antha/inventory"
-	"github.com/antha-lang/antha/inventory/cache"
-	"github.com/antha-lang/antha/inventory/cache/plateCache"
+	"github.com/antha-lang/antha/laboratory"
 	"github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/logger"
@@ -71,9 +69,9 @@ import (
 type Liquidhandler struct {
 	Properties       *liquidhandling.LHProperties
 	FinalProperties  *liquidhandling.LHProperties
-	SetupAgent       func(context.Context, *LHRequest, *liquidhandling.LHProperties) (*LHRequest, error)
-	LayoutAgent      func(context.Context, *LHRequest, *liquidhandling.LHProperties) (*LHRequest, error)
-	ExecutionPlanner func(context.Context, *LHRequest, *liquidhandling.LHProperties) (*LHRequest, error)
+	SetupAgent       func(*laboratory.LaboratoryBuilder, *LHRequest, *liquidhandling.LHProperties) (*LHRequest, error)
+	LayoutAgent      func(*laboratory.LaboratoryBuilder, *LHRequest, *liquidhandling.LHProperties) (*LHRequest, error)
+	ExecutionPlanner func(*laboratory.LaboratoryBuilder, *LHRequest, *liquidhandling.LHProperties) (*LHRequest, error)
 	PolicyManager    *LHPolicyManager
 	plateIDMap       map[string]string // which plates are before / after versions
 }
@@ -139,13 +137,13 @@ func ValidateRequest(request *LHRequest) error {
 
 // high-level function which requests planning and execution for an incoming set of
 // solutions
-func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest) error {
+func (this *Liquidhandler) MakeSolutions(labBuild *laboratory.LaboratoryBuilder, request *LHRequest) error {
 	err := ValidateRequest(request)
 	if err != nil {
 		return err
 	}
 
-	err = this.Plan(ctx, request)
+	err = this.Plan(labBuild, request)
 	if err != nil {
 		return err
 	}
@@ -724,7 +722,7 @@ func assertMixResultsCorrect(request *LHRequest) error {
 
 //assertWellNotOverfilled checks that mix instructions aren't going to overfill the wells when a plate is specified
 //assumes assertMixResultsCorrect returns nil
-func assertWellNotOverfilled(ctx context.Context, request *LHRequest) error {
+func assertWellNotOverfilled(labBuild *laboratory.LaboratoryBuilder, request *LHRequest) error {
 	for _, ins := range request.LHInstructions {
 		if ins.Type != wtype.LHIMIX {
 			continue
@@ -742,7 +740,7 @@ func assertWellNotOverfilled(ctx context.Context, request *LHRequest) error {
 				plate = p
 			}
 		} else if ins.Platetype != "" {
-			if p, err := inventory.NewPlate(ctx, ins.Platetype); err != nil {
+			if p, err := labBuild.Inventory.NewPlate(ins.Platetype); err != nil {
 				continue
 			} else {
 				plate = p
@@ -815,10 +813,10 @@ func forceSanity(request *LHRequest) {
 }
 
 //check that none of the plates we're returning came from the cache
-func assertNoTemporaryPlates(ctx context.Context, request *LHRequest) error {
+func assertNoTemporaryPlates(labBuild *laboratory.LaboratoryBuilder, request *LHRequest) error {
 
 	for id, plate := range request.Plates {
-		if cache.IsFromCache(ctx, plate) {
+		if labBuild.PlateCache.IsFromCache(plate) {
 			return wtype.LHErrorf(wtype.LH_ERR_DIRE, "found a temporary plate (id=%s) being returned in the request", id)
 		}
 	}
@@ -826,11 +824,7 @@ func assertNoTemporaryPlates(ctx context.Context, request *LHRequest) error {
 	return nil
 }
 
-func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
-
-	//add in a plateCache for instruction generation
-	ctx = plateCache.NewContext(ctx)
-
+func (this *Liquidhandler) Plan(labBuild *laboratory.LaboratoryBuilder, request *LHRequest) error {
 	// figure out the ordering for the high level instructions
 	if ichain, err := buildInstructionChain(request.LHInstructions); err != nil {
 		return err
@@ -873,7 +867,7 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	if err := assertMixResultsCorrect(request); err != nil {
 		return err
 	}
-	if err := assertWellNotOverfilled(ctx, request); err != nil {
+	if err := assertWellNotOverfilled(labBuild, request); err != nil {
 		return err
 	}
 
@@ -897,7 +891,7 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 
 	// set up the mapping of the outputs
 	// tried moving here to see if we can use results in fixVolumes
-	request, err = this.Layout(ctx, request)
+	request, err = this.Layout(labBuild, request)
 
 	if err != nil {
 		return err
@@ -933,7 +927,7 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	if err := assertMixResultsCorrect(request); err != nil {
 		return err
 	}
-	if err := assertWellNotOverfilled(ctx, request); err != nil {
+	if err := assertWellNotOverfilled(labBuild, request); err != nil {
 		return err
 	}
 
@@ -957,14 +951,14 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 
 	// define the input plates
 	// should be merged with the above
-	request, err = input_plate_setup(ctx, request)
+	request, err = input_plate_setup(labBuild, request)
 
 	if err != nil {
 		return err
 	}
 
 	// next we need to determine the liquid handler setup
-	request, err = this.Setup(ctx, request)
+	request, err = this.Setup(labBuild, request)
 	if err != nil {
 		return err
 	}
@@ -984,7 +978,7 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	}
 
 	// now make instructions
-	request, err = this.ExecutionPlan(ctx, request)
+	request, err = this.ExecutionPlan(labBuild, request)
 	if err != nil {
 		return err
 	}
@@ -1012,20 +1006,20 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		return err
 	}
 
-	err = assertNoTemporaryPlates(ctx, request)
+	err = assertNoTemporaryPlates(labBuild, request)
 
 	return err
 }
 
 // define which labware to use
-func (this *Liquidhandler) GetPlates(ctx context.Context, plates map[string]*wtype.Plate, major_layouts map[int][]string, ptype *wtype.Plate) (map[string]*wtype.Plate, error) {
+func (this *Liquidhandler) GetPlates(labBuild *laboratory.LaboratoryBuilder, plates map[string]*wtype.Plate, major_layouts map[int][]string, ptype *wtype.Plate) (map[string]*wtype.Plate, error) {
 	if plates == nil {
 		plates = make(map[string]*wtype.Plate, len(major_layouts))
 
 		// assign new plates
 		for i := 0; i < len(major_layouts); i++ {
 			//newplate := wtype.New_Plate(ptype)
-			newplate, err := inventory.NewPlate(ctx, ptype.Type)
+			newplate, err := labBuild.Inventory.NewPlate(ptype.Type)
 			if err != nil {
 				return nil, err
 			}
@@ -1047,22 +1041,22 @@ func (this *Liquidhandler) GetPlates(ctx context.Context, plates map[string]*wty
 }
 
 // generate setup for the robot
-func (this *Liquidhandler) Setup(ctx context.Context, request *LHRequest) (*LHRequest, error) {
+func (this *Liquidhandler) Setup(labBuild *laboratory.LaboratoryBuilder, request *LHRequest) (*LHRequest, error) {
 	// assign the plates to positions
 	// this needs to be parameterizable
-	return this.SetupAgent(ctx, request, this.Properties)
+	return this.SetupAgent(labBuild, request, this.Properties)
 }
 
 // generate the output layout
-func (this *Liquidhandler) Layout(ctx context.Context, request *LHRequest) (*LHRequest, error) {
+func (this *Liquidhandler) Layout(labBuild *laboratory.LaboratoryBuilder, request *LHRequest) (*LHRequest, error) {
 	// assign the results to destinations
 	// again needs to be parameterized
 
-	return this.LayoutAgent(ctx, request, this.Properties)
+	return this.LayoutAgent(labBuild, request, this.Properties)
 }
 
 // make the instructions for executing this request
-func (this *Liquidhandler) ExecutionPlan(ctx context.Context, request *LHRequest) (*LHRequest, error) {
+func (this *Liquidhandler) ExecutionPlan(labBuild *laboratory.LaboratoryBuilder, request *LHRequest) (*LHRequest, error) {
 	// necessary??
 	this.FinalProperties = this.Properties.Dup()
 	temprobot := this.Properties.Dup()
@@ -1072,9 +1066,9 @@ func (this *Liquidhandler) ExecutionPlan(ctx context.Context, request *LHRequest
 	var err error
 
 	if request.Options.ExecutionPlannerVersion == "ep3" {
-		rq, err = ExecutionPlanner3(ctx, request, this.Properties)
+		rq, err = ExecutionPlanner3(labBuild, request, this.Properties)
 	} else {
-		rq, err = this.ExecutionPlanner(ctx, request, this.Properties)
+		rq, err = this.ExecutionPlanner(labBuild, request, this.Properties)
 	}
 
 	this.FinalProperties = temprobot

@@ -1,7 +1,6 @@
 package image
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,6 +13,7 @@ import (
 
 	anthapath "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/AnthaPath"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/laboratory"
 )
 
 // An AnthaColor represents a color linked to an LHComponent
@@ -322,7 +322,7 @@ func SelectLibrary(libID string) (palette color.Palette) {
 }
 
 // SelectLivingColorLibrary will return a the desired set of livingcolors given an ID
-func SelectLivingColorLibrary(ctx context.Context, libID string) (palette LivingPalette) {
+func SelectLivingColorLibrary(lab *laboratory.Laboratory, libID string) (palette LivingPalette) {
 
 	selectedLib, found := livingColorSets[libID]
 
@@ -333,7 +333,7 @@ func SelectLivingColorLibrary(ctx context.Context, libID string) (palette Living
 
 	for _, colorID := range selectedLib {
 		c := livingColors[colorID]
-		lc := MakeLivingColor(ctx, colorID, c.Color, c.Seq)
+		lc := MakeLivingColor(lab, colorID, c.Color, c.Seq)
 
 		palette.LivingColors = append(palette.LivingColors, *lc)
 	}
@@ -342,7 +342,7 @@ func SelectLivingColorLibrary(ctx context.Context, libID string) (palette Living
 }
 
 // SelectLivingColor will return a LivingColor given its ID
-func SelectLivingColor(ctx context.Context, colID string) LivingColor {
+func SelectLivingColor(lab *laboratory.Laboratory, colID string) LivingColor {
 
 	c, found := livingColors[colID]
 
@@ -351,7 +351,7 @@ func SelectLivingColor(ctx context.Context, colID string) LivingColor {
 		panic(fmt.Sprintf("library %s not found so could not make palette", colID))
 	}
 
-	lc := MakeLivingColor(ctx, colID, c.Color, c.Seq)
+	lc := MakeLivingColor(lab, colID, c.Color, c.Seq)
 
 	return *lc
 }

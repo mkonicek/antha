@@ -2,19 +2,14 @@ package execute
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	api "github.com/antha-lang/antha/api/v1"
-	"github.com/antha-lang/antha/inject"
-	"github.com/antha-lang/antha/inventory"
-	"github.com/antha-lang/antha/meta"
+	"github.com/antha-lang/antha/laboratory"
 	"github.com/antha-lang/antha/target/mixer"
-	"github.com/antha-lang/antha/workflow"
 	"github.com/golang/protobuf/jsonpb"
 )
 
@@ -50,12 +45,12 @@ type unmarshaler struct {
 	ReadLocalFiles bool
 }
 
-func (a *unmarshaler) unmarshalLHTipbox(ctx context.Context, data []byte, obj *wtype.LHTipbox) error {
+func (a *unmarshaler) unmarshalLHTipbox(labBuild *laboratory.LaboratoryBuilder, data []byte, obj *wtype.LHTipbox) error {
 	s := tryString(data)
 	if len(s) == 0 {
 		return json.Unmarshal(data, obj)
 	}
-	t, err := inventory.NewTipbox(ctx, s)
+	t, err := labBuild.Inventory.NewTipbox(s)
 	if err != nil {
 		return err
 	}
@@ -63,12 +58,12 @@ func (a *unmarshaler) unmarshalLHTipbox(ctx context.Context, data []byte, obj *w
 	return nil
 }
 
-func (a *unmarshaler) unmarshalLHPlate(ctx context.Context, data []byte, obj *wtype.Plate) error {
+func (a *unmarshaler) unmarshalLHPlate(labBuild *laboratory.LaboratoryBuilder, data []byte, obj *wtype.Plate) error {
 	s := tryString(data)
 	if len(s) == 0 {
 		return json.Unmarshal(data, obj)
 	}
-	t, err := inventory.NewPlate(ctx, s)
+	t, err := labBuild.Inventory.NewPlate(s)
 	if err != nil {
 		return err
 	}
@@ -76,12 +71,12 @@ func (a *unmarshaler) unmarshalLHPlate(ctx context.Context, data []byte, obj *wt
 	return nil
 }
 
-func (a *unmarshaler) unmarshalLHComponent(ctx context.Context, data []byte, obj *wtype.Liquid) error {
+func (a *unmarshaler) unmarshalLHComponent(labBuild *laboratory.LaboratoryBuilder, data []byte, obj *wtype.Liquid) error {
 	s := tryString(data)
 	if len(s) == 0 {
 		return json.Unmarshal(data, obj)
 	}
-	t, err := inventory.NewComponent(ctx, s)
+	t, err := labBuild.Inventory.NewComponent(s)
 	if err != nil {
 		return err
 	}
@@ -119,15 +114,15 @@ func (a *unmarshaler) unmarshalFile(data []byte, obj *wtype.File) error {
 	return nil
 }
 
-func (a *unmarshaler) unmarshalStruct(ctx context.Context, data []byte, obj interface{}) error {
+func (a *unmarshaler) unmarshalStruct(labBuild *laboratory.LaboratoryBuilder, data []byte, obj interface{}) error {
 	var err error
 	switch obj := obj.(type) {
 	case *wtype.LHTipbox:
-		err = a.unmarshalLHTipbox(ctx, data, obj)
+		err = a.unmarshalLHTipbox(labBuild, data, obj)
 	case *wtype.Plate:
-		err = a.unmarshalLHPlate(ctx, data, obj)
+		err = a.unmarshalLHPlate(labBuild, data, obj)
 	case *wtype.Liquid:
-		err = a.unmarshalLHComponent(ctx, data, obj)
+		err = a.unmarshalLHComponent(labBuild, data, obj)
 	case *wtype.File:
 		err = a.unmarshalFile(data, obj)
 	default:
@@ -137,7 +132,8 @@ func (a *unmarshaler) unmarshalStruct(ctx context.Context, data []byte, obj inte
 	return err
 }
 
-func setParam(ctx context.Context, um *unmarshaler, w *workflow.Workflow, process, name string, data []byte, in map[string]interface{}) error {
+/*
+func setParam(labBuild *laboratory.LaboratoryBuilder, um *unmarshaler, w *workflow.Workflow, process, name string, data []byte, in map[string]interface{}) error {
 	value, ok := in[name]
 	if !ok {
 		return errUnknownParam
@@ -145,7 +141,7 @@ func setParam(ctx context.Context, um *unmarshaler, w *workflow.Workflow, proces
 
 	m := &meta.Unmarshaler{
 		Struct: func(data []byte, obj interface{}) error {
-			return um.unmarshalStruct(ctx, data, obj)
+			return um.unmarshalStruct(labBuild, data, obj)
 		},
 	}
 	if err := m.Unmarshal(data, &value); err != nil {
@@ -155,7 +151,7 @@ func setParam(ctx context.Context, um *unmarshaler, w *workflow.Workflow, proces
 	return w.SetParam(workflow.Port{Process: process, Port: name}, value)
 }
 
-func setParams(ctx context.Context, w *workflow.Workflow, params *RawParams, readLocalFiles bool) (*mixer.Opt, error) {
+func setParams(labBuild *laboratory.LaboratoryBuilder, w *workflow.Workflow, params *RawParams, readLocalFiles bool) (*mixer.Opt, error) {
 	if params == nil {
 		return nil, nil
 	}
@@ -191,3 +187,4 @@ func setParams(ctx context.Context, w *workflow.Workflow, params *RawParams, rea
 
 	return params.Config, nil
 }
+*/

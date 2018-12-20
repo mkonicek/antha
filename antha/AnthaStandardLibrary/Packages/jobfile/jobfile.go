@@ -3,7 +3,6 @@
 package jobfile
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -95,7 +94,7 @@ type File struct {
 
 // ListFiles returns files for a job. If jobID is empty, list files for the
 // current job.
-func (c *Client) ListFiles(ctx context.Context, jobID JobID) ([]*File, error) {
+func (c *Client) ListFiles(jobID JobID) ([]*File, error) {
 	if len(jobID) == 0 {
 		jobID = JobID(c.jobID)
 	}
@@ -120,8 +119,8 @@ func (c *Client) ListFiles(ctx context.Context, jobID JobID) ([]*File, error) {
 }
 
 // NewWriter returns a writer to the filename in the current job
-func (c *Client) NewWriter(ctx context.Context, name string) io.WriteCloser {
-	writer, err := c.apiClient.WriteStream(ctx, name)
+func (c *Client) NewWriter(name string) io.WriteCloser {
+	writer, err := c.apiClient.WriteStream(name)
 	return &errWrapper{
 		Writer: writer,
 		Closer: writer,
@@ -131,7 +130,7 @@ func (c *Client) NewWriter(ctx context.Context, name string) io.WriteCloser {
 
 // NewReader returns a reader of a filename in the given job. If
 // the job id is missing, read a file in the current job.
-func (c *Client) NewReader(ctx context.Context, jobID JobID, name string) io.ReadCloser {
+func (c *Client) NewReader(jobID JobID, name string) io.ReadCloser {
 	if len(jobID) == 0 {
 		jobID = JobID(c.jobID)
 	}

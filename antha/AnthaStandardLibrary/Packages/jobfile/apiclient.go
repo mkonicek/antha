@@ -2,7 +2,6 @@ package jobfile
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -43,7 +42,7 @@ type regenerateResponse struct {
 	SignedURL []string `json:"signed_url"`
 }
 
-func (c *apiClient) regenerateTicket(ctx context.Context, req *regenerateRequest) (*regenerateResponse, error) {
+func (c *apiClient) regenerateTicket(req *regenerateRequest) (*regenerateResponse, error) {
 	u, err := url.Parse(c.endpoint + regenerateTicketPath)
 	if err != nil {
 		return nil, err
@@ -92,8 +91,8 @@ func matchURL(signedURLs []string, name string) (string, error) {
 	return "", errNoMatchingURL
 }
 
-func (c *apiClient) WriteStream(ctx context.Context, name string) (io.WriteCloser, error) {
-	resp, err := c.regenerateTicket(ctx, &regenerateRequest{
+func (c *apiClient) WriteStream(name string) (io.WriteCloser, error) {
+	resp, err := c.regenerateTicket(&regenerateRequest{
 		FileNames: []string{name},
 		Username:  c.username,
 		Password:  c.password,

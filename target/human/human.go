@@ -1,10 +1,11 @@
 package human
 
 import (
-	"context"
 	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/ast"
+	"github.com/antha-lang/antha/laboratory"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/handler"
 )
@@ -77,8 +78,8 @@ func (a *Human) MoveCost(from target.Device) int64 {
 }
 
 // Compile implements target.device Compile
-func (a *Human) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, error) {
-	return a.impl.Compile(ctx, nodes)
+func (a *Human) Compile(labBuild *laboratory.LaboratoryBuilder, nodes []ast.Node) ([]target.Inst, error) {
+	return a.impl.Compile(labBuild, nodes)
 }
 
 func (a *Human) generate(cmd interface{}) ([]target.Inst, error) {

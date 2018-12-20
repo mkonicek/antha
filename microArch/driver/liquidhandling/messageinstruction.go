@@ -32,7 +32,7 @@ func (ins *MessageInstruction) Visit(visitor RobotInstructionVisitor) {
 	visitor.Message(ins)
 }
 
-func (msi *MessageInstruction) Generate(lab *laboratory.Laboratory, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (msi *MessageInstruction) Generate(labBuild *laboratory.LaboratoryBuilder, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	// use side effect to keep IDs straight
 
 	prms.UpdateComponentIDs(msi.PassThrough)

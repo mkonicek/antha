@@ -23,12 +23,11 @@
 package liquidhandling
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/inventory"
+	"github.com/antha-lang/antha/laboratory"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
@@ -36,7 +35,7 @@ import (
 // positioning in the face of constraints
 
 // default setup agent
-func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhandling.LHProperties) (*LHRequest, error) {
+func BasicSetupAgent(labBuild *laboratory.LaboratoryBuilder, request *LHRequest, params *liquidhandling.LHProperties) (*LHRequest, error) {
 	// this is quite tricky and requires extensive interaction with the liquid handling
 	// parameters
 
@@ -250,15 +249,15 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 			// representation of the liquid handler
 			switch params.Model {
 			case "Pipetmax":
-				waste, err = inventory.NewTipwaste(ctx, "GilsonTipChute")
+				waste, err = labBuild.Inventory.NewTipwaste("GilsonTipChute")
 			case "GeneTheatre":
 				fallthrough
 			case "Felix":
-				waste, err = inventory.NewTipwaste(ctx, "CyBiotipwaste")
+				waste, err = labBuild.Inventory.NewTipwaste("CyBiotipwaste")
 			case "Human":
-				waste, err = inventory.NewTipwaste(ctx, "Manualtipwaste")
+				waste, err = labBuild.Inventory.NewTipwaste("Manualtipwaste")
 			case "Evo":
-				waste, err = inventory.NewTipwaste(ctx, "Tecantipwaste")
+				waste, err = labBuild.Inventory.NewTipwaste("Tecantipwaste")
 			default:
 				return nil, wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("tip waste not handled for type: %s", params.Model))
 			}

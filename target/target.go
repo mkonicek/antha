@@ -3,7 +3,6 @@
 package target
 
 import (
-	"context"
 	"errors"
 
 	"github.com/antha-lang/antha/ast"
@@ -54,20 +53,6 @@ var (
 type targetKey int
 
 const theTargetKey targetKey = 0
-
-// GetTarget returns the current Target in context
-func GetTarget(ctx context.Context) (*Target, error) {
-	v, ok := ctx.Value(theTargetKey).(*Target)
-	if !ok {
-		return nil, errNoTarget
-	}
-	return v, nil
-}
-
-// WithTarget creates a context with the given Target
-func WithTarget(parent context.Context, t *Target) context.Context {
-	return context.WithValue(parent, theTargetKey, t)
-}
 
 // Target for execution (collection of devices).
 type Target struct {

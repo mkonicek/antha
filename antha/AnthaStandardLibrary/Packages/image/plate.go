@@ -1,7 +1,6 @@
 package image
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	goimage "image"
@@ -12,7 +11,7 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
-	"github.com/antha-lang/antha/inventory"
+	"github.com/antha-lang/antha/laboratory"
 	"github.com/disintegration/imaging"
 )
 
@@ -467,13 +466,13 @@ func MakeAnthaImg(goImg goimage.Image, anthaPalette *AnthaPalette, anthaImgPlate
 }
 
 // MakeLivingColor is an object constructor for a LivingColor with default settings
-func MakeLivingColor(ctx context.Context, ID string, color *color.NRGBA, seq string) (livingColor *LivingColor) {
+func MakeLivingColor(lab *laboratory.Laboratory, ID string, color *color.NRGBA, seq string) (livingColor *LivingColor) {
 
 	//generating DNA sequence object
 	DNASequence := wtype.MakeLinearDNASequence("ColorDNA", seq)
 
 	//use water as LHComponent
-	component, err := inventory.NewComponent(ctx, "dna")
+	component, err := lab.Inventory.NewComponent("dna")
 	if err != nil {
 		panic(err)
 	}

@@ -777,7 +777,7 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.Liquid, carryvol wuni
 	return plateIDs, wellCoords, vols, nil
 }
 
-func (lhp *LHProperties) GetCleanTips(lab *laboratory.Laboratory, tiptype []string, channel []*wtype.LHChannelParameter, usetiptracking bool) (wells, positions, boxtypes [][]string, err error) {
+func (lhp *LHProperties) GetCleanTips(labBuild *laboratory.LaboratoryBuilder, tiptype []string, channel []*wtype.LHChannelParameter, usetiptracking bool) (wells, positions, boxtypes [][]string, err error) {
 
 	// these are merged into subsets with tip and channel types in common here
 	// each subset has a mask which is the same size as the number of channels available
@@ -788,7 +788,7 @@ func (lhp *LHProperties) GetCleanTips(lab *laboratory.Laboratory, tiptype []stri
 	}
 
 	for _, set := range subsets {
-		sw, sp, sb, err := lhp.getCleanTipSubset(lab, set, usetiptracking)
+		sw, sp, sb, err := lhp.getCleanTipSubset(labBuild, set, usetiptracking)
 
 		if err != nil {
 			return [][]string{}, [][]string{}, [][]string{}, err
@@ -825,7 +825,7 @@ func copyToRightLength(sa []string, m int) []string {
 
 // this function only returns true if we can get all tips at once
 // TODO -- support not getting in a single operation
-func (lhp *LHProperties) getCleanTipSubset(lab *laboratory.Laboratory, tipParams TipSubset, usetiptracking bool) (wells, positions, boxtypes []string, err error) {
+func (lhp *LHProperties) getCleanTipSubset(labBuild *laboratory.LaboratoryBuilder, tipParams TipSubset, usetiptracking bool) (wells, positions, boxtypes []string, err error) {
 	positions = make([]string, len(tipParams.Mask))
 	boxtypes = make([]string, len(tipParams.Mask))
 
@@ -863,7 +863,7 @@ func (lhp *LHProperties) getCleanTipSubset(lab *laboratory.Laboratory, tipParams
 			break
 		} else if usetiptracking && lhp.HasTipTracking() {
 			bx.Refresh()
-			return lhp.getCleanTipSubset(lab, tipParams, usetiptracking)
+			return lhp.getCleanTipSubset(labBuild, tipParams, usetiptracking)
 		}
 	}
 
@@ -874,7 +874,7 @@ func (lhp *LHProperties) getCleanTipSubset(lab *laboratory.Laboratory, tipParams
 
 	if !foundit {
 		// try adding a new tip box
-		bx, err := lab.Inventory.NewTipbox(tipParams.TipType)
+		bx, err := labBuild.Inventory.NewTipbox(tipParams.TipType)
 
 		if err != nil {
 			return nil, nil, nil, wtype.LHError(wtype.LH_ERR_NO_TIPS, fmt.Sprintf("No tipbox of type %s found: %s", tipParams.TipType, err))
@@ -887,7 +887,7 @@ func (lhp *LHProperties) getCleanTipSubset(lab *laboratory.Laboratory, tipParams
 			return nil, nil, nil, err
 		}
 
-		return lhp.getCleanTipSubset(lab, tipParams, usetiptracking)
+		return lhp.getCleanTipSubset(labBuild, tipParams, usetiptracking)
 		//		return nil, nil, nil
 	}
 

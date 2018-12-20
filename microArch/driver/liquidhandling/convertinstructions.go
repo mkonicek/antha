@@ -25,7 +25,7 @@ package liquidhandling
 import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/laboratory"
+	"github.com/antha-lang/antha/laboratory/effects"
 )
 
 //
@@ -40,7 +40,7 @@ import (
 //	etc.
 //
 
-func ConvertInstructions(labBuild *laboratory.LaboratoryBuilder, inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool, policy *wtype.LHPolicyRuleSet) ([]*TransferInstruction, error) {
+func ConvertInstructions(labEffects *effects.LaboratoryEffects, inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool, policy *wtype.LHPolicyRuleSet) ([]*TransferInstruction, error) {
 	// we call convertInstructions twice because
 	// 1) calling convertInstructions with multi = 8 when there are no actual multichannel instructions causes
 	//    undesirable source volume selection, see tests "TestExecutionPlanning/single_channel_well_use", and
@@ -48,7 +48,7 @@ func ConvertInstructions(labBuild *laboratory.LaboratoryBuilder, inssIn LHIVecto
 	// 2) convertInstructions makes changes to robot, meaning that it must be called exactly once with the the copy of robot passed to the function
 	if transfers, err := convertInstructions(inssIn, robot.DupKeepIDs(), carryvol, channelprms, multi, legacyVolume); err != nil {
 		return nil, err
-	} else if hasMCB, err := hasMultiChannelBlock(labBuild, transfers, robot, policy); err != nil {
+	} else if hasMCB, err := hasMultiChannelBlock(labEffects, transfers, robot, policy); err != nil {
 		return nil, err
 	} else if hasMCB {
 		return convertInstructions(inssIn, robot, carryvol, channelprms, multi, legacyVolume)
@@ -57,9 +57,9 @@ func ConvertInstructions(labBuild *laboratory.LaboratoryBuilder, inssIn LHIVecto
 	}
 }
 
-func hasMultiChannelBlock(labBuild *laboratory.LaboratoryBuilder, tfrs []*TransferInstruction, rbt *LHProperties, policy *wtype.LHPolicyRuleSet) (bool, error) {
+func hasMultiChannelBlock(labEffects *effects.LaboratoryEffects, tfrs []*TransferInstruction, rbt *LHProperties, policy *wtype.LHPolicyRuleSet) (bool, error) {
 	for _, tfr := range tfrs {
-		instrx, err := tfr.Dup().Generate(labBuild, policy, rbt)
+		instrx, err := tfr.Dup().Generate(labEffects, policy, rbt)
 
 		if err != nil {
 			return false, err

@@ -10,7 +10,7 @@ import (
 	"github.com/antha-lang/antha/codegen"
 	"github.com/antha-lang/antha/driver"
 	platereader "github.com/antha-lang/antha/driver/antha_platereader_v1"
-	"github.com/antha-lang/antha/laboratory"
+	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/target"
 )
 
@@ -38,7 +38,7 @@ func (a *WOPlateReader) MoveCost(from target.Device) int64 {
 }
 
 // Compile implements a Device
-func (a *WOPlateReader) Compile(labBuild *laboratory.LaboratoryBuilder, nodes []ast.Node) ([]target.Inst, error) {
+func (a *WOPlateReader) Compile(labEffects *effects.LaboratoryEffects, nodes []ast.Node) ([]target.Inst, error) {
 
 	// Find the LHComponentID for the samples to measure. We'll then search
 	// for these later.

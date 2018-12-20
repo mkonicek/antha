@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/laboratory"
+	"github.com/antha-lang/antha/laboratory/effects"
 )
 
 type MessageInstruction struct {
@@ -32,7 +32,7 @@ func (ins *MessageInstruction) Visit(visitor RobotInstructionVisitor) {
 	visitor.Message(ins)
 }
 
-func (msi *MessageInstruction) Generate(labBuild *laboratory.LaboratoryBuilder, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (msi *MessageInstruction) Generate(labEffects *effects.LaboratoryEffects, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	// use side effect to keep IDs straight
 
 	prms.UpdateComponentIDs(msi.PassThrough)

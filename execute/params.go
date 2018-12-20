@@ -8,7 +8,7 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	api "github.com/antha-lang/antha/api/v1"
-	"github.com/antha-lang/antha/laboratory"
+	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/target/mixer"
 	"github.com/golang/protobuf/jsonpb"
 )
@@ -45,12 +45,12 @@ type unmarshaler struct {
 	ReadLocalFiles bool
 }
 
-func (a *unmarshaler) unmarshalLHTipbox(labBuild *laboratory.LaboratoryBuilder, data []byte, obj *wtype.LHTipbox) error {
+func (a *unmarshaler) unmarshalLHTipbox(labEffects *effects.LaboratoryEffects, data []byte, obj *wtype.LHTipbox) error {
 	s := tryString(data)
 	if len(s) == 0 {
 		return json.Unmarshal(data, obj)
 	}
-	t, err := labBuild.Inventory.NewTipbox(s)
+	t, err := labEffects.Inventory.NewTipbox(s)
 	if err != nil {
 		return err
 	}
@@ -58,12 +58,12 @@ func (a *unmarshaler) unmarshalLHTipbox(labBuild *laboratory.LaboratoryBuilder, 
 	return nil
 }
 
-func (a *unmarshaler) unmarshalLHPlate(labBuild *laboratory.LaboratoryBuilder, data []byte, obj *wtype.Plate) error {
+func (a *unmarshaler) unmarshalLHPlate(labEffects *effects.LaboratoryEffects, data []byte, obj *wtype.Plate) error {
 	s := tryString(data)
 	if len(s) == 0 {
 		return json.Unmarshal(data, obj)
 	}
-	t, err := labBuild.Inventory.NewPlate(s)
+	t, err := labEffects.Inventory.NewPlate(s)
 	if err != nil {
 		return err
 	}
@@ -71,12 +71,12 @@ func (a *unmarshaler) unmarshalLHPlate(labBuild *laboratory.LaboratoryBuilder, d
 	return nil
 }
 
-func (a *unmarshaler) unmarshalLHComponent(labBuild *laboratory.LaboratoryBuilder, data []byte, obj *wtype.Liquid) error {
+func (a *unmarshaler) unmarshalLHComponent(labEffects *effects.LaboratoryEffects, data []byte, obj *wtype.Liquid) error {
 	s := tryString(data)
 	if len(s) == 0 {
 		return json.Unmarshal(data, obj)
 	}
-	t, err := labBuild.Inventory.NewComponent(s)
+	t, err := labEffects.Inventory.NewComponent(s)
 	if err != nil {
 		return err
 	}
@@ -114,15 +114,15 @@ func (a *unmarshaler) unmarshalFile(data []byte, obj *wtype.File) error {
 	return nil
 }
 
-func (a *unmarshaler) unmarshalStruct(labBuild *laboratory.LaboratoryBuilder, data []byte, obj interface{}) error {
+func (a *unmarshaler) unmarshalStruct(labEffects *effects.LaboratoryEffects, data []byte, obj interface{}) error {
 	var err error
 	switch obj := obj.(type) {
 	case *wtype.LHTipbox:
-		err = a.unmarshalLHTipbox(labBuild, data, obj)
+		err = a.unmarshalLHTipbox(labEffects, data, obj)
 	case *wtype.Plate:
-		err = a.unmarshalLHPlate(labBuild, data, obj)
+		err = a.unmarshalLHPlate(labEffects, data, obj)
 	case *wtype.Liquid:
-		err = a.unmarshalLHComponent(labBuild, data, obj)
+		err = a.unmarshalLHComponent(labEffects, data, obj)
 	case *wtype.File:
 		err = a.unmarshalFile(data, obj)
 	default:
@@ -133,7 +133,7 @@ func (a *unmarshaler) unmarshalStruct(labBuild *laboratory.LaboratoryBuilder, da
 }
 
 /*
-func setParam(labBuild *laboratory.LaboratoryBuilder, um *unmarshaler, w *workflow.Workflow, process, name string, data []byte, in map[string]interface{}) error {
+func setParam(labEffects *effects.LaboratoryEffects, um *unmarshaler, w *workflow.Workflow, process, name string, data []byte, in map[string]interface{}) error {
 	value, ok := in[name]
 	if !ok {
 		return errUnknownParam
@@ -141,7 +141,7 @@ func setParam(labBuild *laboratory.LaboratoryBuilder, um *unmarshaler, w *workfl
 
 	m := &meta.Unmarshaler{
 		Struct: func(data []byte, obj interface{}) error {
-			return um.unmarshalStruct(labBuild, data, obj)
+			return um.unmarshalStruct(labEffects, data, obj)
 		},
 	}
 	if err := m.Unmarshal(data, &value); err != nil {
@@ -151,7 +151,7 @@ func setParam(labBuild *laboratory.LaboratoryBuilder, um *unmarshaler, w *workfl
 	return w.SetParam(workflow.Port{Process: process, Port: name}, value)
 }
 
-func setParams(labBuild *laboratory.LaboratoryBuilder, w *workflow.Workflow, params *RawParams, readLocalFiles bool) (*mixer.Opt, error) {
+func setParams(labEffects *effects.LaboratoryEffects, w *workflow.Workflow, params *RawParams, readLocalFiles bool) (*mixer.Opt, error) {
 	if params == nil {
 		return nil, nil
 	}

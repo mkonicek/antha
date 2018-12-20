@@ -5,7 +5,7 @@ import (
 	"reflect"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/laboratory"
+	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/utils"
 )
 
@@ -112,7 +112,7 @@ func (ma MovAsp) GetParameter(name InstructionParameter) interface{} {
 	return getParameter(name, ma.Mov, ma.Asp)
 }
 
-func (ma MovAsp) Generate(labBuild *laboratory.LaboratoryBuilder, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ma MovAsp) Generate(labEffects *effects.LaboratoryEffects, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return []RobotInstruction{}, nil
 }
 
@@ -145,7 +145,7 @@ func (md MovDsp) GetParameter(name InstructionParameter) interface{} {
 	return getParameter(name, md.Mov, md.Dsp)
 }
 
-func (md MovDsp) Generate(labBuild *laboratory.LaboratoryBuilder, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (md MovDsp) Generate(labEffects *effects.LaboratoryEffects, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return []RobotInstruction{}, nil
 }
 
@@ -178,7 +178,7 @@ func (mb MovBlo) GetParameter(name InstructionParameter) interface{} {
 	return getParameter(name, mb.Mov, mb.Blo)
 }
 
-func (mb MovBlo) Generate(labBuild *laboratory.LaboratoryBuilder, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (mb MovBlo) Generate(labEffects *effects.LaboratoryEffects, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return []RobotInstruction{}, nil
 }
 
@@ -211,7 +211,7 @@ func (mm MovMix) GetParameter(name InstructionParameter) interface{} {
 	return getParameter(name, mm.Mov, mm.Mix)
 }
 
-func (mm MovMix) Generate(labBuild *laboratory.LaboratoryBuilder, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (mm MovMix) Generate(labEffects *effects.LaboratoryEffects, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return []RobotInstruction{}, nil
 }
 

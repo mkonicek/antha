@@ -30,13 +30,13 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/laboratory"
+	"github.com/antha-lang/antha/laboratory/effects"
 )
 
 type RobotInstruction interface {
 	Type() *InstructionType
 	GetParameter(name InstructionParameter) interface{}
-	Generate(labBuild *laboratory.LaboratoryBuilder, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error)
+	Generate(labEffects *effects.LaboratoryEffects, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error)
 	MaybeMerge(next RobotInstruction) RobotInstruction
 	Check(lhpr wtype.LHPolicyRule) bool
 	Visit(RobotInstructionVisitor)

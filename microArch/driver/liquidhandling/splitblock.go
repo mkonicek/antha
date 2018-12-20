@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/laboratory"
+	"github.com/antha-lang/antha/laboratory/effects"
 )
 
 type SplitBlockInstruction struct {
@@ -28,7 +28,7 @@ func (sb *SplitBlockInstruction) Visit(visitor RobotInstructionVisitor) {
 
 // this instruction does not generate anything
 // it just modifies the components in the robot
-func (sp SplitBlockInstruction) Generate(labBuild *laboratory.LaboratoryBuilder, policy *wtype.LHPolicyRuleSet, robot *LHProperties) ([]RobotInstruction, error) {
+func (sp SplitBlockInstruction) Generate(labEffects *effects.LaboratoryEffects, policy *wtype.LHPolicyRuleSet, robot *LHProperties) ([]RobotInstruction, error) {
 	// this may need more work
 
 	for _, ins := range sp.Inss {

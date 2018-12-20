@@ -9,7 +9,7 @@ import (
 	"github.com/antha-lang/antha/driver"
 	framework "github.com/antha-lang/antha/driver/antha_framework_v1"
 	quantstudio "github.com/antha-lang/antha/driver/antha_quantstudio_v1"
-	"github.com/antha-lang/antha/laboratory"
+	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/target"
 	"github.com/golang/protobuf/proto"
 )
@@ -109,7 +109,7 @@ func (dev *QPCRDevice) makePrompt(inst *ast.QPCRInstruction) target.Inst {
 }
 
 // Compile implements a qPCR device.
-func (dev *QPCRDevice) Compile(labBuild *laboratory.LaboratoryBuilder, nodes []ast.Node) ([]target.Inst, error) {
+func (dev *QPCRDevice) Compile(labEffects *effects.LaboratoryEffects, nodes []ast.Node) ([]target.Inst, error) {
 	if len(nodes) > 1 {
 		return nil, fmt.Errorf("Currently only permit a single qPCR instruction per workflow. Received %d", len(nodes))
 	}

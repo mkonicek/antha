@@ -8,7 +8,7 @@ import (
 
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/graph"
-	"github.com/antha-lang/antha/laboratory"
+	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/target"
 )
 
@@ -98,7 +98,7 @@ func (a GenericHandler) merge(nodes []ast.Node) (*ast.Command, error) {
 }
 
 // Compile implements a Device
-func (a *GenericHandler) Compile(labBuild *laboratory.LaboratoryBuilder, nodes []ast.Node) ([]target.Inst, error) {
+func (a *GenericHandler) Compile(labEffects *effects.LaboratoryEffects, nodes []ast.Node) ([]target.Inst, error) {
 	g := ast.Deps(nodes)
 
 	entry := &target.Wait{}

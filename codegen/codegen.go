@@ -12,7 +12,7 @@ import (
 
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/graph"
-	"github.com/antha-lang/antha/laboratory"
+	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/human"
 )
@@ -308,7 +308,7 @@ func (a *ir) coalesceDevices(device map[ast.Node]target.Device) {
 
 // Run plan through device-specific planners. Adjust assignment based on
 // planner capabilities and return output.
-func (a *ir) tryPlan(labBuild *laboratory.LaboratoryBuilder) error {
+func (a *ir) tryPlan(labEffects *effects.LaboratoryEffects) error {
 	dg := graph.MakeQuotient(graph.MakeQuotientOpt{
 		Graph: a.Commands,
 		Colorer: func(n graph.Node) interface{} {
@@ -347,7 +347,7 @@ func (a *ir) tryPlan(labBuild *laboratory.LaboratoryBuilder) error {
 
 	a.output = make(map[*drun][]target.Inst)
 	for _, d := range runs {
-		insts, err := d.Device.Compile(labBuild, cmds[d])
+		insts, err := d.Device.Compile(labEffects, cmds[d])
 		if err != nil {
 			return err
 		}
@@ -411,7 +411,7 @@ func splice(head, tail target.Inst, insts []target.Inst) {
 }
 
 // Create move of dependencies if necessary
-func (a *ir) addMove(labBuild *laboratory.LaboratoryBuilder, t *target.Target, dnode graph.Node, run *drun) error {
+func (a *ir) addMove(labEffects *effects.LaboratoryEffects, t *target.Target, dnode graph.Node, run *drun) error {
 
 	rewrite := func(n ast.Node, cs []*ast.UseComp, move *ast.Move) {
 		m := make(map[ast.Node]bool)
@@ -476,7 +476,7 @@ func (a *ir) addMove(labBuild *laboratory.LaboratoryBuilder, t *target.Target, d
 	splice(tail, nil, a.output[run])
 
 	for dev, ms := range moves {
-		ins, err := dev.Compile(labBuild, ms)
+		ins, err := dev.Compile(labEffects, ms)
 		if err != nil {
 			return err
 		}
@@ -491,7 +491,7 @@ func (a *ir) addMove(labBuild *laboratory.LaboratoryBuilder, t *target.Target, d
 }
 
 // Add implied moves between devices
-func (a *ir) addMoves(labBuild *laboratory.LaboratoryBuilder, t *target.Target) error {
+func (a *ir) addMoves(labEffects *effects.LaboratoryEffects, t *target.Target) error {
 	a.DeviceDeps = graph.MakeQuotient(graph.MakeQuotientOpt{
 		Graph: a.Commands,
 		Colorer: func(n graph.Node) interface{} {
@@ -517,7 +517,7 @@ func (a *ir) addMoves(labBuild *laboratory.LaboratoryBuilder, t *target.Target) 
 		}
 		someNode := a.DeviceDeps.Orig(n, 0).(ast.Node)
 		run := a.assignment[someNode]
-		if err := a.addMove(labBuild, t, n, run); err != nil {
+		if err := a.addMove(labEffects, t, n, run); err != nil {
 			return err
 		}
 	}
@@ -593,7 +593,7 @@ func (a *ir) genInsts() ([]target.Inst, error) {
 // configuration. This supports incremental compilation, so roots may refer to
 // nodes that have already been compiled, in which case, the result may refer
 // to previously generated instructions.
-func Compile(labBuild *laboratory.LaboratoryBuilder, t *target.Target, roots []ast.Node) ([]target.Inst, error) {
+func Compile(labEffects *effects.LaboratoryEffects, t *target.Target, roots []ast.Node) ([]target.Inst, error) {
 	if len(roots) == 0 {
 		return nil, nil
 	}
@@ -609,11 +609,11 @@ func Compile(labBuild *laboratory.LaboratoryBuilder, t *target.Target, roots []a
 	if err := ir.assignDevices(t); err != nil {
 		return nil, fmt.Errorf("error assigning devices with target configuration %s: %s", t, err)
 	}
-	if err := ir.tryPlan(labBuild); err != nil {
+	if err := ir.tryPlan(labEffects); err != nil {
 		return nil, fmt.Errorf("error planning: %s", err)
 	}
 
-	if err := ir.addMoves(labBuild, t); err != nil {
+	if err := ir.addMoves(labEffects, t); err != nil {
 		return nil, fmt.Errorf("error adding moves: %s", err)
 	}
 

@@ -6,9 +6,10 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/antha-lang/antha/inventory/cache/plateCache"
-	"github.com/antha-lang/antha/inventory/testinventory"
-	"github.com/antha-lang/antha/microArch/sampletracker"
+	"github.com/antha-lang/antha/ast"
+	"github.com/antha-lang/antha/codegen"
+	"github.com/antha-lang/antha/laboratory/effects"
+	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/utils"
 )
 
@@ -36,13 +37,9 @@ type LaboratoryBuilder struct {
 	Completed chan struct{}
 
 	*lineMapManager
-	logger *Logger
+	Logger *Logger
 
-	Trace         *Trace
-	Maker         *Maker
-	SampleTracker *sampletracker.SampleTracker
-	Inventory     *testinventory.TestInventory
-	PlateCache    *plateCache.PlateCache
+	*effects.LaboratoryEffects
 }
 
 func NewLaboratoryBuilder(jobId string) *LaboratoryBuilder {
@@ -54,14 +51,10 @@ func NewLaboratoryBuilder(jobId string) *LaboratoryBuilder {
 		Completed: make(chan struct{}),
 
 		lineMapManager: NewLineMapManager(),
-		logger:         NewLogger(),
+		Logger:         NewLogger(),
 
-		Trace:         NewTrace(),
-		Maker:         NewMaker(),
-		SampleTracker: sampletracker.NewSampleTracker(),
-		Inventory:     testinventory.NewInventory(),
+		LaboratoryEffects: effects.NewLaboratoryEffects(),
 	}
-	labBuild.PlateCache = plateCache.NewPlateCache(labBuild.Inventory)
 
 	return labBuild
 }
@@ -88,7 +81,7 @@ func (labBuild *LaboratoryBuilder) AddLink(src, dst Element, fun func()) error {
 }
 
 // Run all the installed elements.
-func (labBuild *LaboratoryBuilder) Run() error {
+func (labBuild *LaboratoryBuilder) RunElements() error {
 	labBuild.elemLock.Lock()
 	if labBuild.elemsUnrun == 0 {
 		labBuild.elemLock.Unlock()
@@ -113,6 +106,16 @@ func (labBuild *LaboratoryBuilder) Run() error {
 	}
 }
 
+func (labBuild *LaboratoryBuilder) Compile(target *target.Target) ([]ast.Node, []target.Inst, error) {
+	if nodes, err := labBuild.Maker.MakeNodes(labBuild.Trace.Instructions()); err != nil {
+		return nil, nil, err
+	} else if instrs, err := codegen.Compile(labBuild.LaboratoryEffects, target, nodes); err != nil {
+		return nil, nil, err
+	} else {
+		return nodes, instrs, nil
+	}
+}
+
 func (labBuild *LaboratoryBuilder) elementCompleted() {
 	labBuild.elemLock.Lock()
 	defer labBuild.elemLock.Unlock()
@@ -134,7 +137,7 @@ func (labBuild *LaboratoryBuilder) recordError(err error) {
 }
 
 func (labBuild *LaboratoryBuilder) Fatal(err error) {
-	labBuild.logger.Log("fatal", err.Error())
+	labBuild.Logger.Log("fatal", err.Error())
 	os.Exit(1)
 }
 
@@ -159,7 +162,7 @@ func (labBuild *LaboratoryBuilder) makeLab(e Element) *Laboratory {
 	return &Laboratory{
 		LaboratoryBuilder: labBuild,
 		element:           e,
-		Logger:            labBuild.logger.With("name", e.Name(), "type", e.TypeName()),
+		Logger:            labBuild.Logger.With("name", e.Name(), "type", e.TypeName()),
 	}
 }
 

@@ -91,8 +91,12 @@ func main() {
 	}
 {{end}}{{end}}
 	// Run!
-	if err := labBuild.Run(); err != nil {
+	if err := labBuild.RunElements(); err != nil {
 		labBuild.Fatal(err)
+	} else if nodes, instrs, err := labBuild.Compile(nil /* the target */); err != nil {
+		labBuild.Fatal(err)
+	} else {
+		labBuild.Logger.Log("nodes", nodes, "instrs", instrs)
 	}
 }
 `

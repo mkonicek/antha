@@ -26,7 +26,7 @@ import (
 	"fmt"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/laboratory"
+	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
@@ -49,7 +49,7 @@ func hasSplit(inss []*wtype.LHInstruction) bool {
 }
 
 // robot here should be a copy... this routine will be destructive of state
-func ExecutionPlanner3(labBuild *laboratory.LaboratoryBuilder, request *LHRequest, robot *liquidhandling.LHProperties) (*LHRequest, error) {
+func ExecutionPlanner3(labEffects *effects.LaboratoryEffects, request *LHRequest, robot *liquidhandling.LHProperties) (*LHRequest, error) {
 	ch := request.InstructionChain
 
 	for {
@@ -88,7 +88,7 @@ func ExecutionPlanner3(labBuild *laboratory.LaboratoryBuilder, request *LHReques
 		ch = ch.Child
 	}
 
-	inx, err := request.InstructionSet.Generate(labBuild, request.Policies(), robot)
+	inx, err := request.InstructionSet.Generate(labEffects, request.Policies(), robot)
 
 	if err != nil {
 		return nil, err

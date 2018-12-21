@@ -33,7 +33,6 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wtype/liquidtype"
-	"github.com/antha-lang/antha/cmd/antha/frontend"
 	"github.com/antha-lang/antha/cmd/antha/spawn"
 	"github.com/antha-lang/antha/execute"
 	"github.com/antha-lang/antha/execute/executeutil"
@@ -161,13 +160,6 @@ func (a *runOpt) Run() error {
 	if err != nil {
 		return err
 	}
-
-	// frontend is deprecated
-	fe, err := frontend.New()
-	if err != nil {
-		return err
-	}
-	defer fe.Shutdown() // nolint: errcheck
 
 	ctx, err := makeContext()
 	if err != nil {

@@ -24,8 +24,6 @@ package simpleliquidhandler
 
 import (
 	"time"
-
-	"github.com/antha-lang/antha/microArch/logger"
 )
 
 var (
@@ -102,7 +100,6 @@ func (lh *SimpleLiquidHandler) SetPositionState(position string, state LHPositio
 	return LHCommandStatus{true, 0, "OK"}
 }
 func (lh *SimpleLiquidHandler) GetCapabilities() LHProperties {
-	logger.Fatal("not yet implemented")
 	panic("not yet implemented")
 }
 func (lh *SimpleLiquidHandler) GetCurrentPosition(head int) (string, LHCommandStatus) {
@@ -118,6 +115,5 @@ func (lh *SimpleLiquidHandler) GetHeadState(head int) (string, LHCommandStatus) 
 	return "", LHCommandStatus{true, 0, "OK"}
 }
 func (lh *SimpleLiquidHandler) GetStatus() (LHStatus, LHCommandStatus) {
-	logger.Fatal("not yet implemented")
 	panic("not yet implemented")
 }

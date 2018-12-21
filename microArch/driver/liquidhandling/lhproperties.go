@@ -34,7 +34,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/laboratory/effects"
-	"github.com/antha-lang/antha/microArch/logger"
 )
 
 // describes a liquid handler, its capabilities and current state
@@ -507,7 +506,7 @@ func (lhp *LHProperties) AddTipBox(tipbox *wtype.LHTipbox) error {
 }
 func (lhp *LHProperties) AddTipBoxTo(pos string, tipbox *wtype.LHTipbox) bool {
 	if lhp.PosLookup[pos] != "" {
-		logger.Debug(fmt.Sprintf("Tried to add tipbox to full position: %s", pos))
+		fmt.Printf("Tried to add tipbox to full position: %s\n", pos)
 		return false
 	}
 	lhp.Tipboxes[pos] = tipbox
@@ -535,7 +534,7 @@ func (lhp *LHProperties) TipWastesMounted() int {
 			_, ok := lhp.Tipwastes[lhp.PosLookup[pref]]
 
 			if !ok {
-				logger.Debug(fmt.Sprintf("Position %s claims to have a tipbox but is empty", pref))
+				fmt.Printf("Position %s claims to have a tipbox but is empty\n", pref)
 				continue
 			}
 
@@ -554,7 +553,7 @@ func (lhp *LHProperties) TipSpacesLeft() int {
 			bx, ok := lhp.Tipwastes[lhp.PosLookup[pref]]
 
 			if !ok {
-				logger.Debug(fmt.Sprintf("Position %s claims to have a tipbox but is empty", pref))
+				fmt.Printf("Position %s claims to have a tipbox but is empty\n", pref)
 				continue
 			}
 
@@ -646,7 +645,7 @@ func (lhp *LHProperties) RemovePlateAtPosition(pos string) {
 
 func (lhp *LHProperties) AddWasteTo(pos string, waste *wtype.Plate) bool {
 	if lhp.PosLookup[pos] != "" {
-		logger.Debug("CAN'T ADD WASTE TO FULL POSITION")
+		fmt.Println("CAN'T ADD WASTE TO FULL POSITION")
 		return false
 	}
 	lhp.Wastes[pos] = waste
@@ -666,14 +665,14 @@ func (lhp *LHProperties) AddWash(wash *wtype.Plate) bool {
 		return true
 	}
 
-	logger.Debug("NO WASH SPACES LEFT")
+	fmt.Println("NO WASH SPACES LEFT")
 	return false
 }
 
 func (lhp *LHProperties) AddWashTo(pos string, wash *wtype.Plate) bool {
 	if lhp.PosLookup[pos] != "" {
 
-		logger.Debug("CAN'T ADD WASH TO FULL POSITION")
+		fmt.Println("CAN'T ADD WASH TO FULL POSITION")
 		return false
 	}
 	lhp.Washes[pos] = wash
@@ -944,14 +943,14 @@ func (lhp *LHProperties) RemoveComponent(plateID string, well string, volume wun
 	p := lhp.Plates[lhp.PlateIDLookup[plateID]]
 
 	if p == nil {
-		logger.Info(fmt.Sprint("RemoveComponent ", plateID, " ", well, " ", volume.ToString(), " can't find plate"))
+		fmt.Println("RemoveComponent ", plateID, " ", well, " ", volume.ToString(), " can't find plate")
 		return false
 	}
 
 	r := p.RemoveComponent(well, volume)
 
 	if r == nil {
-		logger.Info(fmt.Sprint("CAN'T REMOVE COMPONENT ", plateID, " ", well, " ", volume.ToString()))
+		fmt.Println("CAN'T REMOVE COMPONENT ", plateID, " ", well, " ", volume.ToString())
 		return false
 	}
 

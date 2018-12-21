@@ -26,7 +26,6 @@ import (
 	"bufio"
 	"os"
 
-	"github.com/antha-lang/antha/microArch/logger"
 	"github.com/biogo/biogo/io/seqio/fasta"
 	"github.com/biogo/biogo/seq"
 	"github.com/biogo/biogo/seq/linear"
@@ -48,7 +47,6 @@ func ReadFastaSeqs(fn string) []seq.Sequence {
 	f, e := os.Open(fn)
 
 	if e != nil {
-		logger.Fatal(e.Error())
 		panic(e)
 	}
 

@@ -12,7 +12,7 @@ import (
 // The Config struct is used to deserialise the config file only.
 type Config struct {
 	// repos containing elements
-	ElementSources ElementSources `json:"ElementSources"`
+	Repositories Repositories `json:"Repositories"`
 	// the directory in which we build the result
 	OutDir string
 }
@@ -23,7 +23,6 @@ func ConfigFromReader(r io.Reader) (*Config, error) {
 	if err := dec.Decode(c); err != nil {
 		return nil, err
 	} else {
-		c.ElementSources.Sort()
 		if len(c.OutDir) == 0 {
 			if c.OutDir, err = ioutil.TempDir("", "antha-composer"); err != nil {
 				return nil, err
@@ -60,14 +59,15 @@ func NewComposer(cfg *Config, workflow *Workflow) *Composer {
 
 func (c *Composer) LocateElementClasses() error {
 	for _, class := range c.Workflow.ElementClasses() {
-		if le, err := c.Config.ElementSources.Match(class); err != nil {
-			return err
-		} else if le == nil {
-			return fmt.Errorf("Unable to resolve element name: %s", class)
-		} else if err := le.FetchFiles(); err != nil {
-			return err
+		if repo, found := c.Config.Repositories[class.RepoId]; !found {
+			return fmt.Errorf("Unable to find matching Repository for RepoId '%s'", class.RepoId)
 		} else {
-			c.EnsureLocatedElement(le)
+			le := NewLocatedElement(repo, class)
+			if err := le.FetchFiles(); err != nil {
+				return err
+			} else {
+				c.EnsureLocatedElement(le)
+			}
 		}
 	}
 	return nil

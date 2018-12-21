@@ -3,7 +3,6 @@ package composer
 import (
 	"encoding/json"
 	"io"
-	"sort"
 )
 
 type Workflow struct {
@@ -12,12 +11,27 @@ type Workflow struct {
 	Processes      map[string]*Process   `json:"Processes"`
 	Parameters     map[string]*Parameter `json:"Parameters"`
 	Connections    []*Connection         `json:"Connections"`
-	elementClasses []string
+	elementClasses []*ElementSource
 }
 
 type Process struct {
-	Component string          `json:"Component"`
-	Metadata  json.RawMessage `json:"Metadata"`
+	Source   *ElementSource  `json:"Source"`
+	Metadata json.RawMessage `json:"Metadata"`
+}
+
+type ElementSource struct {
+	RepoId RepoId `json:"RepoId"`
+	Branch string `json:"Branch"`
+	Commit string `json:"Commit"`
+	Path   string `json:"Path"`
+}
+
+func (es *ElementSource) CommitOrBranch() string {
+	if es.Commit != "" {
+		return es.Commit
+	} else {
+		return es.Branch
+	}
 }
 
 type Parameter map[string]json.RawMessage
@@ -32,17 +46,18 @@ type ConnectionEnd struct {
 	Port    string `json:"Port"`
 }
 
-func (wf *Workflow) ElementClasses() []string {
+func (wf *Workflow) ElementClasses() []*ElementSource {
 	if wf.elementClasses == nil {
-		seen := make(map[string]struct{})
-		ec := make([]string, 0, len(wf.Processes))
+		// use value, not pointer, so we do structural equality
+		seen := make(map[ElementSource]struct{})
+		ec := make([]*ElementSource, 0, len(wf.Processes))
 		for _, proc := range wf.Processes {
-			if _, found := seen[proc.Component]; !found {
-				seen[proc.Component] = struct{}{}
-				ec = append(ec, proc.Component)
+			src := *proc.Source
+			if _, found := seen[src]; !found {
+				seen[src] = struct{}{}
+				ec = append(ec, &src)
 			}
 		}
-		sort.Strings(ec)
 		wf.elementClasses = ec
 	}
 	return wf.elementClasses

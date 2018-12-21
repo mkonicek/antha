@@ -82,7 +82,7 @@ func main() {
 {{range elementClasses}}	{{.PackageName}}.RegisterLineMap(labBuild)
 {{end}}
 	// Create the elements
-{{range $name, $proc := .Processes}}	{{varName $name}} := {{packageName $proc.Component}}.New{{packageName $proc.Component}}(labBuild, {{printf "%q" $name}})
+{{range $name, $proc := .Processes}}	{{varName $name}} := {{packageName $proc.Source.Path}}.New{{packageName $proc.Source.Path}}(labBuild, {{printf "%q" $name}})
 {{end}}
 	// Add wiring
 {{range .Connections}}	labBuild.AddLink({{varName .Source.Process}}, {{varName .Target.Process}}, func () { {{varName .Target.Process}}.Inputs.{{.Target.Port}} = {{varName .Source.Process}}.Outputs.{{.Source.Port}} })

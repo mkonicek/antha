@@ -2,7 +2,10 @@
     "JobId": "abc",
     "Processes": {
         "myFileOutput": {
-            "Component": "repos.antha.com/antha-ninja/elements-westeros/matthew/Tests/FileOutput",
+            "Source": {
+                "RepoId": "mySecondRepo",
+                "Path": "Tests/FileOutput"
+            },
             "Metadata": {
                 "x": 442,
                 "y": 256

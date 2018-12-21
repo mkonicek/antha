@@ -507,7 +507,7 @@ func (lhp *LHProperties) AddTipBox(tipbox *wtype.LHTipbox) error {
 }
 func (lhp *LHProperties) AddTipBoxTo(pos string, tipbox *wtype.LHTipbox) bool {
 	if lhp.PosLookup[pos] != "" {
-		fmt.Println("Tried to add tipbox to full position: %s", pos)
+		fmt.Printf("Tried to add tipbox to full position: %s\n", pos)
 		return false
 	}
 	lhp.Tipboxes[pos] = tipbox

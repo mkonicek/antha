@@ -35,7 +35,6 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
-	"github.com/antha-lang/antha/microArch/logger"
 )
 
 // LHPlate is an alias for Plate to preserve backwards compatibility.
@@ -668,7 +667,7 @@ func (lhp *Plate) DupKeepIDs() *Plate {
 func (lhp *Plate) dup(keep_ids bool) *Plate {
 	// protect yourself fgs
 	if lhp == nil {
-		logger.Fatal(fmt.Sprintln("Can't dup nonexistent plate"))
+		panic(fmt.Sprintln("Can't dup nonexistent plate"))
 	}
 
 	var wellType *LHWell
@@ -736,7 +735,7 @@ func (p *Plate) RemoveComponent(well string, vol wunit.Volume) *Liquid {
 	w := p.Wellcoords[well]
 
 	if w == nil {
-		logger.Debug(fmt.Sprint("RemoveComponent (plate) ERROR: ", well, " ", vol.ToString(), " Can't find well"))
+		fmt.Println("RemoveComponent (plate) ERROR: ", well, " ", vol.ToString(), " Can't find well")
 		return nil
 	}
 

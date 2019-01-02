@@ -1,39 +1,9 @@
 package composer
 
 import (
-	"encoding/json"
-	"fmt"
-	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 )
-
-// The Config struct is used to deserialise the config file only.
-type Config struct {
-	// repos containing elements
-	Repositories Repositories `json:"Repositories"`
-	// the directory in which we build the result
-	OutDir string
-}
-
-func ConfigFromReader(r io.Reader) (*Config, error) {
-	c := &Config{}
-	dec := json.NewDecoder(r)
-	if err := dec.Decode(c); err != nil {
-		return nil, err
-	} else {
-		if len(c.OutDir) == 0 {
-			if c.OutDir, err = ioutil.TempDir("", "antha-composer"); err != nil {
-				return nil, err
-			}
-		}
-		if err := os.MkdirAll(c.OutDir, 0700); err != nil {
-			return nil, err
-		}
-		return c, nil
-	}
-}
 
 // The composer manages the whole operation:
 // - taking a configuration and a workflow,
@@ -41,49 +11,43 @@ func ConfigFromReader(r io.Reader) (*Config, error) {
 // - transpiling those elements and writing them out to the right place
 // - generating a suitable main.go from the workflow
 type Composer struct {
-	Config   *Config
+	OutDir   string
 	Workflow *Workflow
 
-	classes  map[string]*LocatedElement
-	worklist []*LocatedElement
+	elementTypes map[ElementTypeName]*ElementType
+	worklist     []*ElementType
 }
 
-func NewComposer(cfg *Config, workflow *Workflow) *Composer {
+func NewComposer(outDir string, workflow *Workflow) *Composer {
 	return &Composer{
-		Config:   cfg,
+		OutDir:   outDir,
 		Workflow: workflow,
 
-		classes: make(map[string]*LocatedElement),
+		elementTypes: make(map[ElementTypeName]*ElementType),
 	}
 }
 
-func (c *Composer) LocateElementClasses() error {
-	for _, class := range c.Workflow.ElementClasses() {
-		if repo, found := c.Config.Repositories[class.RepoId]; !found {
-			return fmt.Errorf("Unable to find matching Repository for RepoId '%s'", class.RepoId)
+func (c *Composer) FindWorkflowElementTypes() error {
+	for _, et := range c.Workflow.ElementTypes {
+		if _, err := c.Workflow.Repositories.FetchFiles(et); err != nil {
+			return err
 		} else {
-			le := NewLocatedElement(repo, class)
-			if err := le.FetchFiles(); err != nil {
-				return err
-			} else {
-				c.EnsureLocatedElement(le)
-			}
+			c.EnsureElementType(et)
 		}
 	}
 	return nil
 }
 
-func (c *Composer) EnsureLocatedElement(le *LocatedElement) {
-	if _, found := c.classes[le.ImportPath]; !found {
-		c.classes[le.ImportPath] = le
-		c.worklist = append(c.worklist, le)
+func (c *Composer) EnsureElementType(et *ElementType) {
+	if _, found := c.elementTypes[et.Name()]; !found {
+		c.elementTypes[et.Name()] = et
+		c.worklist = append(c.worklist, et)
 	}
 }
 
 func (c *Composer) Transpile() error {
 	for idx := 0; idx < len(c.worklist); idx++ {
-		le := c.worklist[idx]
-		if err := le.Transpile(c); err != nil {
+		if err := c.worklist[idx].Transpile(c); err != nil {
 			return err
 		}
 	}
@@ -91,11 +55,8 @@ func (c *Composer) Transpile() error {
 }
 
 func (c *Composer) GenerateMain() error {
-	mr := &mainRenderer{
-		Composer: c,
-		varMemo:  make(map[string]string),
-	}
-	if fh, err := os.OpenFile(filepath.Join(c.Config.OutDir, "main.go"), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600); err != nil {
+	mr := newMainRenderer(c)
+	if fh, err := os.OpenFile(filepath.Join(c.OutDir, "main.go"), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600); err != nil {
 		return err
 	} else {
 		defer fh.Close()

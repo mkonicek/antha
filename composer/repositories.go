@@ -1,7 +1,6 @@
 package composer
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -14,152 +13,59 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing"
 )
 
-type RepoId string
-
-type Repository struct {
-	id           RepoId
-	ImportPrefix string `json:"ImportPrefix"`
-	File         string `json:"File"`
-	Git          string `json:"Git"`
-
-	repo repo
-}
-
-type repo interface {
-	FetchFiles(*LocatedElement) (map[string][]byte, error)
-}
-
-type Repositories map[RepoId]*Repository
-
-func (rs *Repositories) UnmarshalJSON(bs []byte) error {
-	if string(bs) == "null" {
-		return nil
-	}
-	rs2 := make(map[RepoId]*Repository)
-	if err := json.Unmarshal(bs, &rs2); err != nil {
-		return err
-	}
-	for id, repo := range rs2 {
-		repo.id = RepoId(id)
-		if fileEmpty, gitEmpty := repo.File == "", repo.Git == ""; fileEmpty == gitEmpty {
-			return fmt.Errorf("Exactly one of File and Git must be specified in repository '%s'", id)
-		} else if fileEmpty {
-			repo.repo = newGitRepo(repo.Git)
-		} else {
-			repo.repo = newFileRepo(repo.File)
+func (rs Repositories) LongestMatching(importPath string) (RepositoryPrefix, *Repository) {
+	var winningRepo *Repository
+	winningPrefix := RepositoryPrefix("")
+	for repoPrefix, repo := range rs {
+		if strings.HasPrefix(importPath, string(repoPrefix)) && len(repoPrefix) > len(winningPrefix) {
+			winningRepo = repo
+			winningPrefix = repoPrefix
 		}
 	}
-	*rs = Repositories(rs2)
-	return nil
+	return winningPrefix, winningRepo
 }
 
-func (r *Repository) ImportPath(element *ElementSource) string {
-	if r.File != "" {
-		return path.Join(r.ImportPrefix, element.Path)
+func (rs Repositories) FetchFiles(et *ElementType) (map[string][]byte, error) {
+	if et.files != nil {
+		return et.files, nil
+	} else if r, found := rs[et.RepositoryPrefix]; !found {
+		return nil, fmt.Errorf("Unknown RepositoryPrefix when FetchingFiles: '%v'", et.RepositoryPrefix)
 	} else {
-		return path.Join(r.ImportPrefix, element.CommitOrBranch(), element.Path)
+		return r.FetchFiles(et)
 	}
 }
 
-type gitRepo struct {
-	dir  string
-	repo *git.Repository
-}
-
-func newGitRepo(dir string) *gitRepo {
-	return &gitRepo{
-		dir: dir,
+func (r *Repository) FetchFiles(et *ElementType) (map[string][]byte, error) {
+	var err error
+	var files map[string][]byte
+	switch {
+	case r.Branch == "" && r.Commit == "":
+		files, err = r.fetchFilesFromDirectory(et)
+	case r.Commit != "":
+		files, err = r.fetchFilesFromGitCommit(et)
+	default:
+		files, err = r.fetchFilesFromGitBranch(et)
 	}
-}
-
-func (g *gitRepo) ensureRepo() error {
-	if g.repo == nil {
-		if repo, err := git.PlainOpen(g.dir); err != nil {
-			return err
-		} else if _, err := repo.Head(); err != nil { // basically just check it works
-			return err
-		} else {
-			g.repo = repo
-		}
-	}
-	return nil
-}
-
-func (g *gitRepo) FetchFiles(le *LocatedElement) (map[string][]byte, error) {
-	if bEmpty, cEmpty := le.Element.Branch == "", le.Element.Commit == ""; bEmpty == cEmpty {
-		return nil, fmt.Errorf("Exactly one of Commit and Branch must be specified for git (Commit: '%s', Branch: '%s')", le.Element.Commit, le.Element.Branch)
-	}
-
-	if err := g.ensureRepo(); err != nil {
-		return nil, err
-	}
-
-	var commitHash plumbing.Hash
-	if le.Element.Commit != "" {
-		commitHash = plumbing.NewHash(le.Element.Commit)
-	} else {
-		if branch, err := g.repo.Branch(le.Element.Branch); err != nil {
-			// it's not a branch, so assume it's a commit hash
-			return nil, err
-		} else if ch, err := g.repo.ResolveRevision(plumbing.Revision(branch.Merge)); err != nil {
-			return nil, err
-		} else {
-			commitHash = *ch
-		}
-	}
-
-	// now follow that commitHash
-	if commit, err := g.repo.CommitObject(commitHash); err != nil {
-		return nil, err
-	} else if tree, err := g.repo.TreeObject(commit.TreeHash); err != nil {
+	if err != nil {
 		return nil, err
 	} else {
-		p := strings.Trim(le.Element.Path, "/") + "/"
-		results := make(map[string][]byte)
-		iter := tree.Files()
-		for {
-			if f, err := iter.Next(); err == io.EOF {
-				break
-			} else if err != nil {
-				return nil, err
-			} else if !strings.HasPrefix(f.Name, p) {
-				continue
-			} else if c, err := f.Contents(); err != nil {
-				return nil, err
-			} else {
-				results[strings.TrimPrefix(f.Name, p)] = []byte(c)
-			}
-		}
-		return results, nil
+		et.files = files
+		return files, nil
 	}
 }
 
-type fileRepo struct {
-	dir string
-}
-
-func newFileRepo(dir string) *fileRepo {
-	return &fileRepo{
-		dir: dir,
-	}
-}
-
-func (f *fileRepo) FetchFiles(le *LocatedElement) (map[string][]byte, error) {
-	if le.Element.Branch != "" || le.Element.Commit != "" {
-		return nil, fmt.Errorf("Neither Commit nor Branch can be specified for file (Commit: '%s', Branch: '%s')", le.Element.Commit, le.Element.Branch)
-	}
-
-	p := path.Join(le.Repository.File, strings.Trim(le.Element.Path, "/")) + "/"
+func (r *Repository) fetchFilesFromDirectory(et *ElementType) (map[string][]byte, error) {
+	d := filepath.FromSlash(path.Join(r.Directory, string(et.ElementPath)))
 	results := make(map[string][]byte)
-	err := filepath.Walk(p, func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(d, func(p string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		} else if !info.Mode().IsRegular() {
 			return nil
-		} else if c, err := ioutil.ReadFile(path); err != nil {
+		} else if c, err := ioutil.ReadFile(p); err != nil {
 			return err
 		} else {
-			results[strings.TrimPrefix(path, p)] = c
+			results[filepath.ToSlash(strings.TrimPrefix(p, d))] = c
 			return nil
 		}
 	})
@@ -168,4 +74,61 @@ func (f *fileRepo) FetchFiles(le *LocatedElement) (map[string][]byte, error) {
 	} else {
 		return results, nil
 	}
+}
+
+func (r *Repository) fetchFilesFromGitCommit(et *ElementType) (map[string][]byte, error) {
+	if err := r.ensureGitRepo(); err != nil {
+		return nil, err
+	}
+	commitHash := plumbing.NewHash(r.Commit)
+	if commit, err := r.gitRepo.CommitObject(commitHash); err != nil {
+		return nil, err
+	} else if tree, err := r.gitRepo.TreeObject(commit.TreeHash); err != nil {
+		return nil, err
+	} else {
+		prefix := strings.Trim(string(et.ElementPath), "/") + "/"
+		results := make(map[string][]byte)
+		iter := tree.Files()
+		for {
+			if f, err := iter.Next(); err == io.EOF {
+				break
+			} else if err != nil {
+				return nil, err
+			} else if !strings.HasPrefix(f.Name, prefix) {
+				continue
+			} else if c, err := f.Contents(); err != nil {
+				return nil, err
+			} else {
+				results[strings.TrimPrefix(f.Name, prefix)] = []byte(c)
+			}
+		}
+		return results, nil
+	}
+}
+
+func (r *Repository) fetchFilesFromGitBranch(et *ElementType) (map[string][]byte, error) {
+	if err := r.ensureGitRepo(); err != nil {
+		return nil, err
+	}
+	if branch, err := r.gitRepo.Branch(r.Branch); err != nil {
+		return nil, err
+	} else if ch, err := r.gitRepo.ResolveRevision(plumbing.Revision(branch.Merge)); err != nil {
+		return nil, err
+	} else {
+		r.Commit = ch.String()
+		return r.fetchFilesFromGitCommit(et)
+	}
+}
+
+func (r *Repository) ensureGitRepo() error {
+	if r.gitRepo == nil {
+		if repo, err := git.PlainOpen(r.Directory); err != nil {
+			return err
+		} else if _, err := repo.Head(); err != nil { // basically just check it works
+			return err
+		} else {
+			r.gitRepo = repo
+		}
+	}
+	return nil
 }

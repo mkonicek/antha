@@ -1,6 +1,7 @@
 package composer
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -13,48 +14,19 @@ import (
 	"github.com/antha-lang/antha/antha/token"
 )
 
-type LocatedElement struct {
-	Repository  *Repository
-	Element     *ElementSource
-	PackageName string
-	ImportPath  string
-	// files fetched from the element directory mapping name to
-	// content. Note that file name (key) is the path relative to the
-	// path field.
-	Files map[string][]byte
-}
-
-func NewLocatedElement(repo *Repository, element *ElementSource) *LocatedElement {
-	return &LocatedElement{
-		Repository:  repo,
-		Element:     element,
-		PackageName: path.Base(element.Path),
-		ImportPath:  repo.ImportPath(element),
-	}
-}
-
-func (le *LocatedElement) FetchFiles() error {
-	if le.Files != nil {
-		return nil
-	} else if files, err := le.Repository.repo.FetchFiles(le); err != nil {
-		return err
-	} else {
-		le.Files = files
-		return nil
-	}
-}
-
-func (le *LocatedElement) Transpile(c *Composer) error {
-	baseDir := filepath.Join(c.Config.OutDir, "src", le.ImportPath)
+func (et *ElementType) Transpile(c *Composer) error {
+	baseDir := filepath.FromSlash(path.Join(c.OutDir, "src", et.ImportPath()))
+	fmt.Println(baseDir)
 
 	fSet := token.NewFileSet()
 	anthaFiles := compile.NewAnthaFiles()
 
-	for leaf, content := range le.Files {
-		fullPath := filepath.Join(baseDir, leaf)
-		dir := filepath.Dir(fullPath)
+	for leafPath, content := range et.files {
+		fullPath := filepath.Join(baseDir, filepath.FromSlash(leafPath))
+		fmt.Println(fullPath)
+		elemDir := filepath.Dir(fullPath)
 
-		if err := os.MkdirAll(dir, 0700); err != nil {
+		if err := os.MkdirAll(elemDir, 0700); err != nil {
 			return err
 		}
 
@@ -69,7 +41,7 @@ func (le *LocatedElement) Transpile(c *Composer) error {
 				return err
 			} else {
 				for _, ipt := range antha.ImportReqs {
-					if err := le.maybeRewriteImport(c, ipt); err != nil {
+					if err := et.maybeRewriteImport(c, ipt); err != nil {
 						return err
 					}
 				}
@@ -82,40 +54,25 @@ func (le *LocatedElement) Transpile(c *Composer) error {
 	return writeAnthaFiles(anthaFiles, baseDir)
 }
 
-func (le *LocatedElement) maybeRewriteImport(c *Composer, ipt *compile.ImportReq) error {
+func (et *ElementType) maybeRewriteImport(c *Composer, ipt *compile.ImportReq) error {
 	// we don't expect imports inside antha files to have revisions
 	// within them. So, the strategy is:
-	// 1. if it already matches a class with our own prefix and commit, then we're done
-	// 2. else if it matches our own source's prefix, then attempt to use our commit
-	// 3. Otherwise (and this is most likely), it's just not an import we should be rewriting.
+	// 1. Look for longest matching repo and use that
+	// 2. Otherwise (and this is most likely), it's not an import we should be rewriting.
 
-	if strings.HasPrefix(ipt.Path, le.Repository.ImportPrefix) {
-		remainingPath := strings.TrimPrefix(ipt.Path, le.Repository.ImportPrefix)
-		elem := &ElementSource{
-			RepoId: le.Element.RepoId,
-			Branch: le.Element.Branch,
-			Commit: le.Element.Commit,
-			Path:   remainingPath,
-		}
-		impPath := le.Repository.ImportPath(elem)
-
-		if le2, found := c.classes[impPath]; found { // (1)
-			ipt.Path = le2.ImportPath
-			return nil
-		} else {
-			le2 := NewLocatedElement(le.Repository, elem)
-			if err := le2.FetchFiles(); err != nil { // (2)
-				// even if no files are found, this should not error (at
-				// this point we know this source and commit works). So
-				// this error should be returned.
-				return err
-			} else if len(le2.Files) > 0 {
-				ipt.Path = le2.ImportPath
-				c.EnsureLocatedElement(le2)
-				return nil
-			}
-		}
+	repoPrefix, repo := c.Workflow.Repositories.LongestMatching(ipt.Path)
+	if repo == nil {
+		return nil // (2)
 	}
+	et2 := &ElementType{
+		RepositoryPrefix: repoPrefix,
+		ElementPath:      ElementPath(strings.TrimPrefix(ipt.Path, string(repoPrefix))),
+	}
+	if _, err := repo.FetchFiles(et2); err != nil {
+		return err
+	}
+	ipt.Path = et2.ImportPath()
+	c.EnsureElementType(et2)
 
 	return nil
 }

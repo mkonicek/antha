@@ -1,20 +1,30 @@
 {
     "JobId": "abc",
-    "Processes": {
+
+    "Repositories": {
+        "repos.antha.com/antha-ninja/elements-westeros": {
+            "Directory": "/home/matthew/src/Go_external_1.11/src/repos.antha.com/antha-ninja/elements-westeros"
+        }
+    },
+
+    "ElementTypes": [
+        {
+            "RepositoryPrefix": "repos.antha.com/antha-ninja/elements-westeros",
+            "ElementPath": "Tests/FileOutput"
+        }
+    ],
+
+    "ElementInstances": {
         "myFileOutput": {
-            "Source": {
-                "RepoId": "mySecondRepo",
-                "Path": "Tests/FileOutput"
-            },
+            "ElementTypeName": "FileOutput",
             "Metadata": {
                 "x": 442,
                 "y": 256
             }
         }
     },
-    "Connections": [
-    ],
-    "Parameters": {
+
+    "ElementParameters": {
         "myFileOutput": {
             "ParamFileA": {
                 "name": "paramfileaname",

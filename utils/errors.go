@@ -13,3 +13,17 @@ func (es ErrorSlice) Error() string {
 	}
 	return strings.Join(strs, "; ")
 }
+
+func (es ErrorSlice) Nub() ErrorSlice {
+	res := make(ErrorSlice, 0, len(es))
+	for _, err := range es {
+		if err != nil {
+			res = append(res, err)
+		}
+	}
+	if len(res) > 0 {
+		return res
+	} else {
+		return nil
+	}
+}

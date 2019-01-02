@@ -55,11 +55,10 @@ func (c *Composer) Transpile() error {
 }
 
 func (c *Composer) GenerateMain() error {
-	mr := newMainRenderer(c)
 	if fh, err := os.OpenFile(filepath.Join(c.OutDir, "main.go"), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600); err != nil {
 		return err
 	} else {
 		defer fh.Close()
-		return mr.render(fh)
+		return newMainRenderer(c).render(fh)
 	}
 }

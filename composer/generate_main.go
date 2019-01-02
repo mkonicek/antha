@@ -86,7 +86,7 @@ func main() {
 {{range $name, $type := .ElementInstances}}	{{varName $name}} := {{$type.ElementTypeName}}.New{{$type.ElementTypeName}}(labBuild, {{printf "%q" $name}})
 {{end}}
 	// Add wiring
-{{range .ElementConnections}}	labBuild.AddLink({{varName .Source.ElementInstanceName}}, {{varName .Target.ElementInstanceName}}, func () { {{varName .Target.ElementInstanceName}}.Inputs.{{.Target.ParameterName}} = {{varName .Source.ElementInstanceName}}.Outputs.{{.Source.ParameterName}} })
+{{range .ElementConnections}}	labBuild.AddLink({{varName .Source.ElementInstance}}, {{varName .Target.ElementInstance}}, func () { {{varName .Target.ElementInstance}}.Inputs.{{.Target.ParameterName}} = {{varName .Source.ElementInstance}}.Outputs.{{.Source.ParameterName}} })
 {{end}}
 	// Set parameters
 {{range $name, $params := .ElementParameters}}{{range $param, $value := $params}}	if err := json.Unmarshal([]byte({{printf "%q" $value}}), &{{varName $name}}.Parameters.{{$param}}); err != nil {

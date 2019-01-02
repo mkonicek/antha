@@ -1,7 +1,6 @@
 package composer
 
 import (
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -16,14 +15,12 @@ import (
 
 func (et *ElementType) Transpile(c *Composer) error {
 	baseDir := filepath.FromSlash(path.Join(c.OutDir, "src", et.ImportPath()))
-	fmt.Println(baseDir)
 
 	fSet := token.NewFileSet()
 	anthaFiles := compile.NewAnthaFiles()
 
 	for leafPath, content := range et.files {
 		fullPath := filepath.Join(baseDir, filepath.FromSlash(leafPath))
-		fmt.Println(fullPath)
 		elemDir := filepath.Dir(fullPath)
 
 		if err := os.MkdirAll(elemDir, 0700); err != nil {

@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+
 	"github.com/antha-lang/antha/execute"
 	"github.com/antha-lang/antha/utils"
 	"github.com/antha-lang/antha/workflow"
 	"github.com/antha-lang/antha/workflowtest"
-	"io/ioutil"
 )
 
 // A Bundle is a workflow with its inputs
@@ -39,9 +40,12 @@ func UnmarshalAll(paths ...string) (map[string]*Bundle, map[string]*workflow.Des
 		if bytes, err := ioutil.ReadFile(path); err != nil {
 			errs = append(errs, fmt.Errorf("Error when reading file %s: %v", path, err))
 		} else {
+			var raw json.RawMessage
 			bundle := &Bundle{}
-			if err := json.Unmarshal(bytes, bundle); err != nil {
+			if err := json.Unmarshal(bytes, &raw); err != nil { // not json at all
 				errs = append(errs, fmt.Errorf("Error when parsing content of %s: %v", path, err))
+			} else if err := json.Unmarshal(bytes, bundle); err != nil {
+				continue // it is json, but we can't unmarshal it into a bundle
 			} else if bundle.Processes != nil && bundle.Parameters != nil { // it's a bundle
 				bundles[path] = bundle
 			} else if bundle.Processes != nil { // it's a workflow

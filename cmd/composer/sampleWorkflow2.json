@@ -1,12 +1,6 @@
 {
     "JobId": "abc",
 
-    "Repositories": {
-        "repos.antha.com/antha-ninja/elements-westeros": {
-            "Directory": "/home/matthew/src/Go_external_1.11/src/repos.antha.com/antha-ninja/elements-westeros"
-        }
-    },
-
     "ElementTypes": [
         {
             "RepositoryPrefix": "repos.antha.com/antha-ninja/elements-westeros",

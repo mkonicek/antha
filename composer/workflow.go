@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -51,6 +52,14 @@ func WorkflowFromReaders(rs ...io.Reader) (*Workflow, error) {
 		return nil, err
 	} else {
 		return acc, nil
+	}
+}
+
+func (wf *Workflow) WriteToFile(p string) error {
+	if bs, err := json.Marshal(wf); err != nil {
+		return err
+	} else {
+		return ioutil.WriteFile(p, bs, 0400)
 	}
 }
 

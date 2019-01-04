@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/antha-lang/antha/composer"
 )
@@ -68,6 +69,8 @@ func main() {
 	} else if err := comp.Transpile(); err != nil {
 		log.Fatal(err)
 	} else if err := comp.GenerateMain(); err != nil {
+		log.Fatal(err)
+	} else if err := wf.WriteToFile(filepath.Join(outdir, "workflow.json")); err != nil {
 		log.Fatal(err)
 	}
 }

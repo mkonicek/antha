@@ -111,7 +111,7 @@ func (cs CommandStatus) GetError() error {
 	if cs.Fatal() {
 		return errors.New(cs.String())
 	} else if cs.ErrorCode == WRN {
-		fmt.Fprintf(os.Stderr, "driver warning: %s", cs.String())
+		fmt.Fprintf(os.Stderr, "driver warning: %s", cs.String()) // nolint
 	}
 	return nil
 }

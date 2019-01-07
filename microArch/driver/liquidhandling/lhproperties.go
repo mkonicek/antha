@@ -959,14 +959,12 @@ func (lhp *LHProperties) RemoveComponent(plateID string, well string, volume wun
 		w := p.Wellcoords[well]
 
 		if w == nil {
-			logger.Info(fmt.Sprint("RemoveComponent ", plateID, " ", well, " ", volume.ToString(), " can't find well"))
 			return false
 		}
 
 		c:=w.Remove(volume)
 
 		if c==nil{
-			logger.Info(fmt.Sprint("RemoveComponent ", plateID, " ", well, " ", volume.ToString(), " can't find well"))
 			return false
 		}
 	*/

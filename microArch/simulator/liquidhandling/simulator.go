@@ -539,7 +539,7 @@ func makeOffsets(Xs, Ys, Zs []float64) []wtype.Coordinates {
 func (self *VirtualLiquidHandler) Move(deckpositionS []string, wellcoords []string, reference []int,
 	offsetX, offsetY, offsetZ []float64, platetypeS []string,
 	head int) driver.CommandStatus {
-	ret := driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "MOVE ACK"}
+	ret := driver.CommandOk()
 
 	//get the adaptor
 	adaptor, err := self.GetAdaptorState(head)
@@ -695,14 +695,14 @@ func (self *VirtualLiquidHandler) Move(deckpositionS []string, wellcoords []stri
 //Move raw - not yet implemented in compositerobotinstruction
 func (self *VirtualLiquidHandler) MoveRaw(head int, x, y, z float64) driver.CommandStatus {
 	self.AddWarning("not yet implemented")
-	return driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "MOVERAW ACK"}
+	return driver.CommandOk()
 }
 
 //Aspirate - used
 func (self *VirtualLiquidHandler) Aspirate(volume []float64, overstroke []bool, head int, multi int,
 	platetype []string, what []string, llf []bool) driver.CommandStatus {
 
-	ret := driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "ASPIRATE ACK"}
+	ret := driver.CommandOk()
 
 	//extend arguments - at some point shortform slices might become illegal
 	if adaptor, err := self.GetAdaptorState(head); err == nil {
@@ -851,7 +851,7 @@ func (self *VirtualLiquidHandler) Aspirate(volume []float64, overstroke []bool, 
 func (self *VirtualLiquidHandler) Dispense(volume []float64, blowout []bool, head int, multi int,
 	platetype []string, what []string, llf []bool) driver.CommandStatus {
 
-	ret := driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "DISPENSE ACK"}
+	ret := driver.CommandOk()
 
 	//extend arguments - at some point shortform slices might become illegal
 	if adaptor, err := self.GetAdaptorState(head); err == nil {
@@ -1009,7 +1009,7 @@ func (self *VirtualLiquidHandler) Dispense(volume []float64, blowout []bool, hea
 //LoadTips - used
 func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 	platetypeS, positionS, well []string) driver.CommandStatus {
-	ret := driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "LOADTIPS ACK"}
+	ret := driver.CommandOk()
 	deck := self.state.GetDeck()
 
 	//get the adaptor
@@ -1272,7 +1272,7 @@ func (self *VirtualLiquidHandler) overrideLoadTips(channels []int, head, multi i
 //UnloadTips - used
 func (self *VirtualLiquidHandler) UnloadTips(channels []int, head, multi int,
 	platetype, position, well []string) driver.CommandStatus {
-	ret := driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "UNLOADTIPS ACK"}
+	ret := driver.CommandOk()
 
 	//get the adaptor
 	adaptor, err := self.GetAdaptorState(head)
@@ -1420,7 +1420,7 @@ func (self *VirtualLiquidHandler) UnloadTips(channels []int, head, multi int,
 
 //SetPipetteSpeed - used
 func (self *VirtualLiquidHandler) SetPipetteSpeed(head, channel int, rate float64) driver.CommandStatus {
-	ret := driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "SETPIPETTESPEED ACK"}
+	ret := driver.CommandOk()
 
 	adaptor, err := self.GetAdaptorState(head)
 	if err != nil {
@@ -1466,7 +1466,7 @@ func (self *VirtualLiquidHandler) SetPipetteSpeed(head, channel int, rate float6
 // XXX Bug: it is currently not possible to select which head assembly should be affected
 // currently assume we're talking about group zero
 func (self *VirtualLiquidHandler) SetDriveSpeed(drive string, rate float64) driver.CommandStatus {
-	ret := driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "SETDRIVESPEED ACK"}
+	ret := driver.CommandOk()
 
 	//Assume we're talking about adaptor group zero
 	groupNumber := 0
@@ -1493,13 +1493,13 @@ func (self *VirtualLiquidHandler) SetDriveSpeed(drive string, rate float64) driv
 //Stop - unused
 func (self *VirtualLiquidHandler) Stop() driver.CommandStatus {
 	self.AddWarning("not yet implemented")
-	return driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "STOP ACK"}
+	return driver.CommandOk()
 }
 
 //Go - unused
 func (self *VirtualLiquidHandler) Go() driver.CommandStatus {
 	self.AddWarning("not yet implemented")
-	return driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "GO ACK"}
+	return driver.CommandOk()
 }
 
 //Initialize - used
@@ -1508,7 +1508,7 @@ func (self *VirtualLiquidHandler) Initialize() driver.CommandStatus {
 		self.AddWarning("Call to initialize when robot is already initialized")
 	}
 	self.state.Initialize()
-	return driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "INITIALIZE ACK"}
+	return driver.CommandOk()
 }
 
 //Finalize - used
@@ -1520,7 +1520,7 @@ func (self *VirtualLiquidHandler) Finalize() driver.CommandStatus {
 		self.AddWarning("Call to finalize when robot is already finalized")
 	}
 	self.state.Finalize()
-	return driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "FINALIZE ACK"}
+	return driver.CommandOk()
 }
 
 //Wait - used
@@ -1528,14 +1528,14 @@ func (self *VirtualLiquidHandler) Wait(time float64) driver.CommandStatus {
 	if time < 0.0 {
 		self.AddWarning("waiting for negative time")
 	}
-	return driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "WAIT ACK"}
+	return driver.CommandOk()
 }
 
 //Mix - used
 func (self *VirtualLiquidHandler) Mix(head int, volume []float64, platetype []string, cycles []int,
 	multi int, what []string, blowout []bool) driver.CommandStatus {
 
-	ret := driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "MIX ACK"}
+	ret := driver.CommandOk()
 
 	//extend arguments - at some point shortform slices might become illegal
 	if adaptor, err := self.GetAdaptorState(head); err == nil {
@@ -1649,7 +1649,7 @@ func (self *VirtualLiquidHandler) Mix(head int, volume []float64, platetype []st
 //ResetPistons - used
 func (self *VirtualLiquidHandler) ResetPistons(head, channel int) driver.CommandStatus {
 	self.AddWarning("not yet implemented")
-	return driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "RESETPISTONS ACK"}
+	return driver.CommandOk()
 }
 
 //These values correct for the Glison Driver offset and will eventually be removed
@@ -1661,7 +1661,7 @@ const (
 //AddPlateTo - used
 func (self *VirtualLiquidHandler) AddPlateTo(position string, plate interface{}, name string) driver.CommandStatus {
 
-	ret := driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "ADDPLATETO ACK"}
+	ret := driver.CommandOk()
 
 	if original, ok := plate.(wtype.LHObject); ok {
 		obj := original.Duplicate(true)
@@ -1733,111 +1733,111 @@ func (self *VirtualLiquidHandler) RemoveAllPlates() driver.CommandStatus {
 			self.AddError(err.Error())
 		}
 	}
-	return driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "REMOVEALLPLATES ACK"}
+	return driver.CommandOk()
 }
 
 //RemovePlateAt - unused
 func (self *VirtualLiquidHandler) RemovePlateAt(position string) driver.CommandStatus {
 	self.AddWarning("not yet implemented")
-	return driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "REMOVEPLATEAT ACK"}
+	return driver.CommandOk()
 }
 
 //SetPositionState - unused
 func (self *VirtualLiquidHandler) SetPositionState(position string, state driver.PositionState) driver.CommandStatus {
 	self.AddWarning("not yet implemented")
-	return driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "SETPOSITIONSTATE ACK"}
+	return driver.CommandOk()
 }
 
 //GetCapabilites - used
 func (self *VirtualLiquidHandler) GetCapabilities() (liquidhandling.LHProperties, driver.CommandStatus) {
 	self.AddWarning("not yet implemented")
-	return liquidhandling.LHProperties{}, driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "GETCAPABILITIES ACK"}
+	return liquidhandling.LHProperties{}, driver.CommandOk()
 }
 
 //GetCurrentPosition - unused
 func (self *VirtualLiquidHandler) GetCurrentPosition(head int) (string, driver.CommandStatus) {
 	self.AddWarning("not yet implemented")
-	return "", driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "GETCURRNETPOSITION ACK"}
+	return "", driver.CommandOk()
 }
 
 //GetPositionState - unused
 func (self *VirtualLiquidHandler) GetPositionState(position string) (string, driver.CommandStatus) {
 	self.AddWarning("not yet implemented")
-	return "", driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "GETPOSITIONSTATE ACK"}
+	return "", driver.CommandOk()
 }
 
 //GetHeadState - unused
 func (self *VirtualLiquidHandler) GetHeadState(head int) (string, driver.CommandStatus) {
 	self.AddWarning("not yet implemented")
-	return "I'm fine thanks, how are you?", driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "GETHEADSTATE ACK"}
+	return "I'm fine thanks, how are you?", driver.CommandOk()
 }
 
 //GetStatus - unused
 func (self *VirtualLiquidHandler) GetStatus() (driver.Status, driver.CommandStatus) {
 	self.AddWarning("not yet implemented")
-	return driver.Status{}, driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "GETSTATUS ACK"}
+	return driver.Status{}, driver.CommandOk()
 }
 
 //UpdateMetaData - used
 func (self *VirtualLiquidHandler) UpdateMetaData(props *liquidhandling.LHProperties) driver.CommandStatus {
 	self.AddWarning("not yet implemented")
-	return driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "UPDATEMETADATA ACK"}
+	return driver.CommandOk()
 }
 
 //UnloadHead - unused
 func (self *VirtualLiquidHandler) UnloadHead(param int) driver.CommandStatus {
 	self.AddWarning("not yet implemented")
-	return driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "UNLOADHEAD ACK"}
+	return driver.CommandOk()
 }
 
 //LoadHead - unused
 func (self *VirtualLiquidHandler) LoadHead(param int) driver.CommandStatus {
 	self.AddWarning("not yet implemented")
-	return driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "LOADHEAD ACK"}
+	return driver.CommandOk()
 }
 
 //Lights On - not implemented in compositerobotinstruction
 func (self *VirtualLiquidHandler) LightsOn() driver.CommandStatus {
-	return driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "LIGHTSON ACK"}
+	return driver.CommandOk()
 }
 
 //Lights Off - notimplemented in compositerobotinstruction
 func (self *VirtualLiquidHandler) LightsOff() driver.CommandStatus {
-	return driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "LIGHTSOFF ACK"}
+	return driver.CommandOk()
 }
 
 //LoadAdaptor - notimplemented in CRI
 func (self *VirtualLiquidHandler) LoadAdaptor(param int) driver.CommandStatus {
 	self.AddWarning("not yet implemented")
-	return driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "LOADADAPTOR ACK"}
+	return driver.CommandOk()
 }
 
 //UnloadAdaptor - notimplemented in CRI
 func (self *VirtualLiquidHandler) UnloadAdaptor(param int) driver.CommandStatus {
 	self.AddWarning("not yet implemented")
-	return driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "UNLOADADAPTOR ACK"}
+	return driver.CommandOk()
 }
 
 //Open - notimplemented in CRI
 func (self *VirtualLiquidHandler) Open() driver.CommandStatus {
 	self.AddWarning("not yet implemented")
-	return driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "OPEN ACK"}
+	return driver.CommandOk()
 }
 
 //Close - notimplement in CRI
 func (self *VirtualLiquidHandler) Close() driver.CommandStatus {
 	self.AddWarning("not yet implemented")
-	return driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "CLOSE ACK"}
+	return driver.CommandOk()
 }
 
 //Message - unused
 func (self *VirtualLiquidHandler) Message(level int, title, text string, showcancel bool) driver.CommandStatus {
 	self.AddWarning("not yet implemented")
-	return driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "MESSAGE ACK"}
+	return driver.CommandOk()
 }
 
 //GetOutputFile - used, but not in instruction stream
 func (self *VirtualLiquidHandler) GetOutputFile() ([]byte, driver.CommandStatus) {
 	self.AddWarning("not yet implemented")
-	return []byte("You forgot to say 'please'"), driver.CommandStatus{OK: true, Errorcode: driver.OK, Msg: "GETOUTPUTFILE ACK"}
+	return []byte("You forgot to say 'please'"), driver.CommandOk()
 }

@@ -94,27 +94,21 @@ func (ins *TransferInstruction) Visit(visitor RobotInstructionVisitor) {
 }
 
 func (ins *TransferInstruction) OutputTo(drv LiquidhandlingDriver) error {
-	hlld, ok := drv.(HighLevelLiquidhandlingDriver)
-
-	if !ok {
+	if hlld, ok := drv.(HighLevelLiquidhandlingDriver); !ok {
 		return fmt.Errorf("Driver type %T not compatible with TransferInstruction, need HighLevelLiquidhandlingDriver", drv)
+	} else {
+
+		// make sure we disable the RobotInstruction pointer
+		ins.BaseRobotInstruction = BaseRobotInstruction{}
+
+		mtp := SetOfMultiTransferParams(ins.Transfers)
+		volumes := make([]float64, len(mtp.Volume()))
+		for i, vol := range mtp.Volume() {
+			volumes[i] = vol.ConvertToString("ul")
+		}
+
+		return hlld.Transfer(mtp.What(), mtp.PltFrom(), mtp.WellFrom(), mtp.PltTo(), mtp.WellTo(), volumes).GetError()
 	}
-
-	// make sure we disable the RobotInstruction pointer
-	ins.BaseRobotInstruction = BaseRobotInstruction{}
-
-	volumes := make([]float64, len(SetOfMultiTransferParams(ins.Transfers).Volume()))
-	for i, vol := range SetOfMultiTransferParams(ins.Transfers).Volume() {
-		volumes[i] = vol.ConvertToString("ul")
-	}
-
-	reply := hlld.Transfer(SetOfMultiTransferParams(ins.Transfers).What(), SetOfMultiTransferParams(ins.Transfers).PltFrom(), SetOfMultiTransferParams(ins.Transfers).WellFrom(), SetOfMultiTransferParams(ins.Transfers).PltTo(), SetOfMultiTransferParams(ins.Transfers).WellTo(), volumes)
-
-	if !reply.OK {
-		return fmt.Errorf(" %d : %s", reply.Errorcode, reply.Msg)
-	}
-
-	return nil
 }
 
 func (tfri *TransferInstruction) Add(tp MultiTransferParams) {

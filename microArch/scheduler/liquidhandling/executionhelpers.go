@@ -355,10 +355,7 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 			wlf, ok := flhp.WellAtString(tfrs[i].WellCoords[xx]) //fromWellss[i][xx])
 
 			if !ok {
-				//logger.Fatal(fmt.Sprint("Well ", fromWells[ix], " not found on source plate ", fromPlateID[ix]))
-				//err = wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("Well ", fromWellss[i][xx], " not found on source plate ", fromPlateIDs[i][xx]))
-				err = wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("Well ", tfrs[i].WellCoords[xx], " not found on source plate ", tfrs[i].PlateIDs[xx]))
-				return nil, err
+				return nil, wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("Well ", tfrs[i].WellCoords[xx], " not found on source plate ", tfrs[i].PlateIDs[xx]))
 			}
 
 			vf = append(vf, wlf.CurrentVolume())

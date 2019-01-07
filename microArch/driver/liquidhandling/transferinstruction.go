@@ -501,8 +501,8 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 	}
 
 	// mop up all the single instructions which are left
-	sci := NewSingleChannelBlockInstruction()
-	sci.Prms = headsLoaded[0].Params // TODO Fix Hard Code Here
+	mci := NewMultiChannelBlockInstruction()
+	mci.Prms = headsLoaded[0].Params // TODO Fix Hard Code Here
 
 	lastCmp := ""
 	for _, t := range ins.Transfers {
@@ -511,88 +511,23 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 				continue
 			}
 
-			// TODO --> reorder instructions
 			if lastCmp != "" && tp.Component != lastCmp {
-				if len(sci.Volume) > 0 {
-					ret = append(ret, sci)
+				if len(mci.Volume) > 0 {
+					ret = append(ret, mci)
 				}
-				sci = NewSingleChannelBlockInstruction()
-				sci.Prms = headsLoaded[0].Params
+				mci = NewMultiChannelBlockInstruction()
+				mci.Prms = headsLoaded[0].Params
 			}
 
-			sci.AddTransferParams(tp)
+			mci.AddTransferParams(MultiTransferParams{Multi: 1, Transfers: []TransferParams{tp}})
 			lastCmp = tp.Component
 		}
 	}
-	if len(sci.Volume) > 0 {
-		ret = append(ret, sci)
+	if len(mci.Volume) > 0 {
+		ret = append(ret, mci)
 	}
-
-	ret = ensureOrderMaintained(ret, ins.Transfers)
 
 	return ret, nil
-}
-
-func ensureOrderMaintained(inss []RobotInstruction, tps []MultiTransferParams) []RobotInstruction {
-	m := make(map[string][]RobotInstruction, len(inss))
-
-	firstNonEmpty := func(sa []string) string {
-		for _, s := range sa {
-			if s != "" {
-				return s
-			}
-		}
-
-		return sa[0]
-	}
-
-	for _, ins := range inss {
-		c := ins.GetParameter("COMPONENT")
-
-		ct := ""
-		switch c.(type) {
-		case string:
-			ct = c.(string)
-		case []string:
-			ct = firstNonEmpty(c.([]string))
-
-		case [][]string:
-			ct = firstNonEmpty(c.([][]string)[0])
-		}
-
-		ar, ok := m[ct]
-
-		if !ok {
-			ar = make([]RobotInstruction, 0, 1)
-		}
-
-		ar = append(ar, ins)
-
-		m[ct] = ar
-	}
-
-	ret := make([]RobotInstruction, 0, len(inss))
-
-	for _, tp := range tps {
-		for _, cmp := range tp.RemoveInitialBlanks().Component() {
-
-			ar, ok := m[cmp]
-
-			if !ok {
-				continue
-			}
-
-			delete(m, cmp)
-
-			ret = append(ret, ar...)
-		}
-	}
-
-	if len(ret) != len(inss) {
-		panic(fmt.Sprintf("Error ensuring instruction order: before %d after %d", len(inss), len(ret)))
-	}
-
-	return ret
 }
 
 func (ins *TransferInstruction) ReviseTransferVolumes(prms *LHProperties) error {

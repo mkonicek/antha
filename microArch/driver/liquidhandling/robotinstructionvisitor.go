@@ -3,9 +3,7 @@ package liquidhandling
 type RobotInstructionVisitor interface {
 	Transfer(*TransferInstruction)
 	TransferBlock(*TransferBlockInstruction)
-	SingleChannelBlock(*SingleChannelBlockInstruction)
 	MultiChannelBlock(*MultiChannelBlockInstruction)
-	SingleChannelTransfer(*SingleChannelTransferInstruction)
 	MultiChannelTransfer(*MultiChannelTransferInstruction)
 	StateChange(*StateChangeInstruction)
 	LoadTipsMove(*LoadTipsMoveInstruction)
@@ -46,48 +44,46 @@ type RobotInstructionVisitor interface {
 }
 
 type RobotInstructionBaseVisitor struct {
-	HandleTransfer              func(*TransferInstruction)
-	HandleTransferBlock         func(*TransferBlockInstruction)
-	HandleSingleChannelBlock    func(*SingleChannelBlockInstruction)
-	HandleMultiChannelBlock     func(*MultiChannelBlockInstruction)
-	HandleSingleChannelTransfer func(*SingleChannelTransferInstruction)
-	HandleMultiChannelTransfer  func(*MultiChannelTransferInstruction)
-	HandleStateChange           func(*StateChangeInstruction)
-	HandleLoadTipsMove          func(*LoadTipsMoveInstruction)
-	HandleUnloadTipsMove        func(*UnloadTipsMoveInstruction)
-	HandleReset                 func(*ResetInstruction)
-	HandleChangeAdaptor         func(*ChangeAdaptorInstruction)
-	HandleAspirate              func(*AspirateInstruction)
-	HandleDispense              func(*DispenseInstruction)
-	HandleBlowout               func(*BlowoutInstruction)
-	HandlePTZ                   func(*PTZInstruction)
-	HandleMove                  func(*MoveInstruction)
-	HandleMoveRaw               func(*MoveRawInstruction)
-	HandleLoadTips              func(*LoadTipsInstruction)
-	HandleUnloadTips            func(*UnloadTipsInstruction)
-	HandleSuck                  func(*SuckInstruction)
-	HandleBlow                  func(*BlowInstruction)
-	HandleSetPipetteSpeed       func(*SetPipetteSpeedInstruction)
-	HandleSetDriveSpeed         func(*SetDriveSpeedInstruction)
-	HandleInitialize            func(*InitializeInstruction)
-	HandleFinalize              func(*FinalizeInstruction)
-	HandleWait                  func(*WaitInstruction)
-	HandleLightsOn              func(*LightsOnInstruction)
-	HandleLightsOff             func(*LightsOffInstruction)
-	HandleOpen                  func(*OpenInstruction)
-	HandleClose                 func(*CloseInstruction)
-	HandleLoadAdaptor           func(*LoadAdaptorInstruction)
-	HandleUnloadAdaptor         func(*UnloadAdaptorInstruction)
-	HandleMoveMix               func(*MoveMixInstruction)
-	HandleMix                   func(*MixInstruction)
-	HandleMessage               func(*MessageInstruction)
-	HandleMovAsp                func(*MovAsp)
-	HandleMovDsp                func(*MovDsp)
-	HandleMovMix                func(*MovMix)
-	HandleMovBlo                func(*MovBlo)
-	HandleRemoveAllPlates       func(*RemoveAllPlatesInstruction)
-	HandleAddPlateTo            func(*AddPlateToInstruction)
-	HandleSplitBlock            func(*SplitBlockInstruction)
+	HandleTransfer             func(*TransferInstruction)
+	HandleTransferBlock        func(*TransferBlockInstruction)
+	HandleMultiChannelBlock    func(*MultiChannelBlockInstruction)
+	HandleMultiChannelTransfer func(*MultiChannelTransferInstruction)
+	HandleStateChange          func(*StateChangeInstruction)
+	HandleLoadTipsMove         func(*LoadTipsMoveInstruction)
+	HandleUnloadTipsMove       func(*UnloadTipsMoveInstruction)
+	HandleReset                func(*ResetInstruction)
+	HandleChangeAdaptor        func(*ChangeAdaptorInstruction)
+	HandleAspirate             func(*AspirateInstruction)
+	HandleDispense             func(*DispenseInstruction)
+	HandleBlowout              func(*BlowoutInstruction)
+	HandlePTZ                  func(*PTZInstruction)
+	HandleMove                 func(*MoveInstruction)
+	HandleMoveRaw              func(*MoveRawInstruction)
+	HandleLoadTips             func(*LoadTipsInstruction)
+	HandleUnloadTips           func(*UnloadTipsInstruction)
+	HandleSuck                 func(*SuckInstruction)
+	HandleBlow                 func(*BlowInstruction)
+	HandleSetPipetteSpeed      func(*SetPipetteSpeedInstruction)
+	HandleSetDriveSpeed        func(*SetDriveSpeedInstruction)
+	HandleInitialize           func(*InitializeInstruction)
+	HandleFinalize             func(*FinalizeInstruction)
+	HandleWait                 func(*WaitInstruction)
+	HandleLightsOn             func(*LightsOnInstruction)
+	HandleLightsOff            func(*LightsOffInstruction)
+	HandleOpen                 func(*OpenInstruction)
+	HandleClose                func(*CloseInstruction)
+	HandleLoadAdaptor          func(*LoadAdaptorInstruction)
+	HandleUnloadAdaptor        func(*UnloadAdaptorInstruction)
+	HandleMoveMix              func(*MoveMixInstruction)
+	HandleMix                  func(*MixInstruction)
+	HandleMessage              func(*MessageInstruction)
+	HandleMovAsp               func(*MovAsp)
+	HandleMovDsp               func(*MovDsp)
+	HandleMovMix               func(*MovMix)
+	HandleMovBlo               func(*MovBlo)
+	HandleRemoveAllPlates      func(*RemoveAllPlatesInstruction)
+	HandleAddPlateTo           func(*AddPlateToInstruction)
+	HandleSplitBlock           func(*SplitBlockInstruction)
 }
 
 func (self RobotInstructionBaseVisitor) Transfer(ins *TransferInstruction) {
@@ -100,19 +96,9 @@ func (self RobotInstructionBaseVisitor) TransferBlock(ins *TransferBlockInstruct
 		self.HandleTransferBlock(ins)
 	}
 }
-func (self RobotInstructionBaseVisitor) SingleChannelBlock(ins *SingleChannelBlockInstruction) {
-	if self.HandleSingleChannelBlock != nil {
-		self.HandleSingleChannelBlock(ins)
-	}
-}
 func (self RobotInstructionBaseVisitor) MultiChannelBlock(ins *MultiChannelBlockInstruction) {
 	if self.HandleMultiChannelBlock != nil {
 		self.HandleMultiChannelBlock(ins)
-	}
-}
-func (self RobotInstructionBaseVisitor) SingleChannelTransfer(ins *SingleChannelTransferInstruction) {
-	if self.HandleSingleChannelTransfer != nil {
-		self.HandleSingleChannelTransfer(ins)
 	}
 }
 func (self RobotInstructionBaseVisitor) MultiChannelTransfer(ins *MultiChannelTransferInstruction) {

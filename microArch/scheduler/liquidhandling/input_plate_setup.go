@@ -161,8 +161,6 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 			return request, fmt.Errorf("Error: Autoallocated mix-in-place components cannot be spread across multiple wells")
 		}
 
-		//logger.Debug(fmt.Sprintln("Well assignments: ", well_assignments))
-
 		var curr_well *wtype.LHWell
 		var assignments []string
 

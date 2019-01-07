@@ -24,8 +24,8 @@ package driver
 
 import (
 	"fmt"
-	"github.com/antha-lang/antha/microArch/logger"
 	"github.com/pkg/errors"
+	"os"
 )
 
 type ErrorCode int
@@ -106,13 +106,12 @@ func (cs CommandStatus) String() string {
 }
 
 // GetError if a fatal error occurred, returns it. Otherwise returns nil.
-// If a warning was returned, it is written to the logger
+// If a warning was returned, it is written to standard error
 func (cs CommandStatus) GetError() error {
 	if cs.Fatal() {
 		return errors.New(cs.String())
 	} else if cs.ErrorCode == WRN {
-		// nb. source reference in log will be to the line below rather than the source
-		logger.Warning(cs.String())
+		fmt.Fprintf(os.Stderr, "driver warning: %s", cs.String())
 	}
 	return nil
 }

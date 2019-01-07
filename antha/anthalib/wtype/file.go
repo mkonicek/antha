@@ -1,11 +1,6 @@
 package wtype
 
-import (
-	"bytes"
-
-	api "github.com/antha-lang/antha/api/v1"
-	"github.com/golang/protobuf/jsonpb"
-)
+//	api "github.com/antha-lang/antha/api/v1"
 
 // Representation of a file.
 type File struct {
@@ -24,6 +19,7 @@ func (a *File) WriteAll(data []byte) error {
 	return nil
 }
 
+/*
 func (a *File) UnmarshalBlob(blob *api.Blob) error {
 	a.Name = blob.Name
 	a.bytes = blob.GetBytes().GetBytes()
@@ -59,3 +55,4 @@ func (a File) MarshalJSON() ([]byte, error) {
 
 	return out.Bytes(), nil
 }
+*/

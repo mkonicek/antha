@@ -1,6 +1,7 @@
 package effects
 
 import (
+	"encoding/json"
 	"sync"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -42,4 +43,25 @@ func (tr *Trace) Instructions() []*CommandInst {
 	clone := make([]*CommandInst, len(tr.instructions))
 	copy(clone, tr.instructions)
 	return clone
+}
+
+func (tr *Trace) MarshalJSON() ([]byte, error) {
+	return json.Marshal(tr.Instructions())
+}
+
+func (tr *Trace) UnmarshalJSON(bs []byte) error {
+	if string(bs) == "null" {
+		return nil
+
+	} else {
+		tr.lock.Lock()
+		defer tr.lock.Unlock()
+		var insts []*CommandInst
+		if err := json.Unmarshal(bs, &insts); err != nil {
+			return err
+		} else {
+			tr.instructions = insts
+			return nil
+		}
+	}
 }

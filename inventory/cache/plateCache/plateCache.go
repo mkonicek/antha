@@ -1,6 +1,7 @@
 package plateCache
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -8,9 +9,42 @@ import (
 )
 
 type PlateCache struct {
-	inventory       *testinventory.TestInventory
+	Inventory       *testinventory.TestInventory
 	platesByType    map[string][]*wtype.Plate
 	platesFromCache map[string]bool
+}
+
+type plateCacheSerializable struct {
+	Inventory       *testinventory.TestInventory
+	PlatesByType    map[string][]*wtype.Plate
+	PlatesFromCache map[string]bool
+}
+
+func (p *PlateCache) MarshalJSON() ([]byte, error) {
+	ps := &plateCacheSerializable{
+		Inventory:       p.Inventory,
+		PlatesByType:    p.platesByType,
+		PlatesFromCache: p.platesFromCache,
+	}
+
+	return json.Marshal(ps)
+}
+
+func (p *PlateCache) UnmarshalJSON(bs []byte) error {
+	if string(bs) == "null" {
+		return nil
+
+	} else {
+		ps := &plateCacheSerializable{}
+		if err := json.Unmarshal(bs, ps); err != nil {
+			return err
+		} else {
+			p.Inventory = ps.Inventory
+			p.platesByType = ps.PlatesByType
+			p.platesFromCache = ps.PlatesFromCache
+			return nil
+		}
+	}
 }
 
 func (p *PlateCache) NewPlate(typ string) (*wtype.Plate, error) {
@@ -26,7 +60,7 @@ func (p *PlateCache) NewPlate(typ string) (*wtype.Plate, error) {
 		return plate, nil
 	}
 
-	plate, err := p.inventory.NewPlate(typ)
+	plate, err := p.Inventory.NewPlate(typ)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +98,7 @@ func (p *PlateCache) IsFromCache(obj interface{}) bool {
 
 func NewPlateCache(inv *testinventory.TestInventory) *PlateCache {
 	return &PlateCache{
-		inventory:       inv,
+		Inventory:       inv,
 		platesByType:    make(map[string][]*wtype.Plate),
 		platesFromCache: make(map[string]bool),
 	}

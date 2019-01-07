@@ -1,6 +1,7 @@
 package sampletracker
 
 import (
+	"encoding/json"
 	"sync"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -15,10 +16,48 @@ type SampleTracker struct {
 	plates   []*wtype.Plate
 }
 
+type sampleTrackerSerializable struct {
+	Records  map[string]string
+	Forwards map[string]string
+	Plates   []*wtype.Plate
+}
+
 func NewSampleTracker() *SampleTracker {
 	return &SampleTracker{
 		records:  make(map[string]string),
 		forwards: make(map[string]string),
+	}
+}
+
+func (st *SampleTracker) MarshalJSON() ([]byte, error) {
+	st.lock.Lock()
+	defer st.lock.Unlock()
+
+	sts := &sampleTrackerSerializable{
+		Records:  st.records,
+		Forwards: st.forwards,
+		Plates:   st.plates,
+	}
+
+	return json.Marshal(sts)
+}
+
+func (st *SampleTracker) UnmarshalJSON(bs []byte) error {
+	if string(bs) == "null" {
+		return nil
+
+	} else {
+		st.lock.Lock()
+		defer st.lock.Unlock()
+		sts := &sampleTrackerSerializable{}
+		if err := json.Unmarshal(bs, sts); err != nil {
+			return err
+		} else {
+			st.records = sts.Records
+			st.forwards = sts.Forwards
+			st.plates = sts.Plates
+			return nil
+		}
 	}
 }
 

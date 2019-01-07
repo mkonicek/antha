@@ -23,6 +23,42 @@ type TestInventory struct {
 	tipwasteByType  map[string]*wtype.LHTipwaste
 }
 
+type testInventorySerializable struct {
+	ComponentByName map[string]*wtype.Liquid
+	PlateByType     map[string]PlateForSerializing
+	TipboxByType    map[string]*wtype.LHTipbox
+	TipwasteByType  map[string]*wtype.LHTipwaste
+}
+
+func (i *TestInventory) MarshalJSON() ([]byte, error) {
+	is := &testInventorySerializable{
+		ComponentByName: i.componentByName,
+		PlateByType:     i.plateByType,
+		TipboxByType:    i.tipboxByType,
+		TipwasteByType:  i.tipwasteByType,
+	}
+
+	return json.Marshal(is)
+}
+
+func (i *TestInventory) UnmarshalJSON(bs []byte) error {
+	if string(bs) == "null" {
+		return nil
+
+	} else {
+		is := &testInventorySerializable{}
+		if err := json.Unmarshal(bs, is); err != nil {
+			return err
+		} else {
+			i.componentByName = is.ComponentByName
+			i.plateByType = is.PlateByType
+			i.tipboxByType = is.TipboxByType
+			i.tipwasteByType = is.TipwasteByType
+			return nil
+		}
+	}
+}
+
 func (i *TestInventory) NewComponent(name string) (*wtype.Liquid, error) {
 	c, ok := i.componentByName[name]
 	if !ok {

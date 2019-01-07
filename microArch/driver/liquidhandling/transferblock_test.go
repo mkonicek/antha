@@ -523,9 +523,12 @@ func testPositive(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPoli
 	for _, ri := range ri2 {
 		switch ri.Type() {
 		case MCB:
-			multi += 1
-		case SCB:
-			single += 1
+			m := ri.GetParameter(MULTI).(int)
+			if m > 1 {
+				multi += 1
+			} else {
+				single += 1
+			}
 		case TFR:
 			t.Error("ERROR: Transfer generated from Transfer")
 		}
@@ -552,7 +555,7 @@ func testNegative(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPoli
 		}
 
 		for _, ri := range ri2 {
-			if ri.Type() != SCB {
+			if ri.Type() == MCB && ri.GetParameter("MULTI").(int) != 1 {
 				t.Errorf("Multichannel block generated without permission: %v %v %v", ri.GetParameter(LIQUIDCLASS), ri.GetParameter(WELLFROM), ri.GetParameter(WELLTO))
 			}
 		}

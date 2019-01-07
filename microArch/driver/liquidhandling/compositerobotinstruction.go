@@ -145,6 +145,8 @@ func (ins *MultiChannelBlockInstruction) GetParameter(name InstructionParameter)
 		return ins.TPlateType
 	case COMPONENT:
 		return ins.Component
+	case MULTI:
+		return ins.Multi
 	default:
 		return ins.BaseRobotInstruction.GetParameter(name)
 	}

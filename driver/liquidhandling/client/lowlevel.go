@@ -21,6 +21,13 @@ func toInt32(i []int) []int32 {
 	return r
 }
 
+func commandStatus(r *pb.CommandReply) driver.CommandStatus {
+	return driver.CommandStatus{
+		ErrorCode: driver.ErrorCode(r.Errorcode),
+		Msg:       r.Msg,
+	}
+}
+
 type LowLevelClient struct {
 	client pb.LowLevelLiquidhandlingDriverClient
 }
@@ -44,26 +51,17 @@ func NewLowLevelClientFromConn(conn *grpc.ClientConn) *LowLevelClient {
 
 func (llc *LowLevelClient) handleCommandReply(reply *pb.CommandReply, err error) driver.CommandStatus {
 	if err != nil {
-		return driver.CommandStatus{
-			Msg:       err.Error(),
-			Errorcode: driver.ERR,
-		}
+		return driver.CommandError(err.Error())
 	} else {
-		return driver.CommandStatus{OK: reply.OK, Errorcode: int(reply.Errorcode), Msg: reply.Msg}
+		return commandStatus(reply)
 	}
 }
 
 func (llc *LowLevelClient) AddPlateTo(position string, plate interface{}, name string) driver.CommandStatus {
 	if obj, ok := plate.(wtype.LHObject); !ok {
-		return driver.CommandStatus{
-			Errorcode: driver.ERR,
-			Msg:       fmt.Sprintf("unable to serialize object of type %T", plate),
-		}
+		return driver.CommandError(fmt.Sprintf("unable to serialize object of type %T", plate))
 	} else if plateJSON, err := wtype.MarshalDeckObject(obj); err != nil {
-		return driver.CommandStatus{
-			Msg:       err.Error(),
-			Errorcode: driver.ERR,
-		}
+		return driver.CommandError(err.Error())
 	} else {
 		r, err := llc.client.AddPlateTo(context.Background(), &pb.AddPlateToRequest{
 			Position:   position,
@@ -106,27 +104,21 @@ func (llc *LowLevelClient) Message(level int, title, text string, showcancel boo
 
 func (llc *LowLevelClient) GetOutputFile() ([]byte, driver.CommandStatus) {
 	if r, err := llc.client.GetOutputFile(context.Background(), &pb.GetOutputFileRequest{}); err != nil {
-		return nil, driver.CommandStatus{
-			Msg:       err.Error(),
-			Errorcode: driver.ERR,
-		}
+		return nil, driver.CommandError(err.Error())
 	} else {
-		return r.OutputFile, driver.CommandStatus{OK: r.Status.OK, Errorcode: int(r.Status.Errorcode), Msg: r.Status.Msg}
+		return r.OutputFile, commandStatus(r.Status)
 	}
 }
 
 func (llc *LowLevelClient) GetCapabilities() (liquidhandling.LHProperties, driver.CommandStatus) {
 	if r, err := llc.client.GetCapabilities(context.Background(), &pb.GetCapabilitiesRequest{}); err != nil {
-		return liquidhandling.LHProperties{}, driver.CommandStatus{
-			Msg:       err.Error(),
-			Errorcode: driver.ERR,
-		}
+		return liquidhandling.LHProperties{}, driver.CommandError(err.Error())
 	} else {
 		var ret liquidhandling.LHProperties
 		if err := json.Unmarshal([]byte(r.LHProperties_JSON), &ret); err != nil {
-			return ret, driver.CommandStatus{Errorcode: driver.ERR, Msg: err.Error()}
+			return ret, driver.CommandError(err.Error())
 		}
-		return ret, driver.CommandStatus{OK: r.Status.OK, Errorcode: int(r.Status.Errorcode), Msg: r.Status.Msg}
+		return ret, commandStatus(r.Status)
 	}
 }
 
@@ -241,7 +233,7 @@ func (llc *LowLevelClient) ResetPistons(head, channel int) driver.CommandStatus 
 
 func (llc *LowLevelClient) UpdateMetaData(props *liquidhandling.LHProperties) driver.CommandStatus {
 	if propsJSON, err := json.Marshal(props); err != nil {
-		return driver.CommandStatus{Errorcode: driver.ERR, Msg: err.Error()}
+		return driver.CommandError(err.Error())
 	} else {
 		r, err := llc.client.UpdateMetaData(context.Background(), &pb.UpdateMetaDataRequest{
 			LHProperties_JSON: string(propsJSON),

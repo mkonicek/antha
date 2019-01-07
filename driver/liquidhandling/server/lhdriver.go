@@ -12,9 +12,8 @@ import (
 
 func makeCommandReply(cs driver.CommandStatus) *pb.CommandReply {
 	return &pb.CommandReply{
-		OK:        cs.OK,
 		Msg:       cs.Msg,
-		Errorcode: int32(cs.Errorcode),
+		Errorcode: int32(cs.ErrorCode),
 	}
 }
 

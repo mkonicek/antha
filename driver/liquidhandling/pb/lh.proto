@@ -155,7 +155,7 @@ message TransferRequest {
 }
 
 message CommandReply {
-   bool OK = 1;
+   reserved 1;
    int32 errorcode = 2;
    string msg = 3;
 }

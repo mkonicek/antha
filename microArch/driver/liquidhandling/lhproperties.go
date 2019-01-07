@@ -448,7 +448,6 @@ func (lhp *LHProperties) AddTipWaste(tipwaste *wtype.LHTipwaste) error {
 }
 
 func (lhp *LHProperties) AddTipWasteTo(pos string, tipwaste *wtype.LHTipwaste) error {
-	fmt.Printf("AddTipWasteTo(%q, %s)\n", pos, tipwaste.Name)
 	if !lhp.IsEmpty(pos) {
 		return wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprintf("Trying to add tip waste to full position %s", pos))
 	}

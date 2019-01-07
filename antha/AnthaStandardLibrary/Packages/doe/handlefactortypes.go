@@ -200,7 +200,7 @@ func HandleLHComponentFactor(lab *laboratory.Laboratory, header string, value in
 	}
 
 	if strings.Contains(err.Error(), testinventory.ErrUnknownType.Error()) {
-		component, err = lab.inventory.NewComponent(testinventory.WaterType)
+		component, err = lab.Inventory.NewComponent(testinventory.WaterType)
 		component.CName = str
 		return component, err
 	}

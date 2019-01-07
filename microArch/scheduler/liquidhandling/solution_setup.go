@@ -27,7 +27,6 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/antha/anthalib/wutil/text"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
@@ -175,7 +174,7 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 
 		if !ok {
 			Smax[cmp] = 9999999
-			wutil.Warn(fmt.Sprintf("Max solubility undefined for component %s -- assuming infinite solubility!", cmp))
+			fmt.Printf("Max solubility undefined for component %s -- assuming infinite solubility!\n", cmp)
 		}
 
 	}

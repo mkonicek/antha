@@ -37,7 +37,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wutil/text"
 	"github.com/antha-lang/antha/inventory"
 	anthadriver "github.com/antha-lang/antha/microArch/driver"
-	"github.com/antha-lang/antha/microArch/logger"
 )
 
 // Valid parameter fields for robot instructions
@@ -1489,7 +1488,6 @@ func (ins *MoveRawInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
 			return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
 		}
 	*/
-	logger.Fatal("Not yet implemented")
 	panic("Not yet implemented")
 }
 

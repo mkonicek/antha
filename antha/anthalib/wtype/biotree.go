@@ -26,8 +26,6 @@ import (
 	"io/ioutil"
 	"regexp"
 	"strings"
-
-	"github.com/antha-lang/antha/microArch/logger"
 )
 
 // we use the open tree of life to define taxonomic relationships
@@ -45,7 +43,6 @@ func Load_TOL(filename string) (*TOL, *map[string]*TOL) {
 	cnts, err := ioutil.ReadFile(filename)
 
 	if err != nil {
-		logger.Fatal(err.Error())
 		panic(err)
 	}
 

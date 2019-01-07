@@ -31,7 +31,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
-	"github.com/antha-lang/antha/microArch/logger"
 	"github.com/antha-lang/antha/microArch/sampletracker"
 )
 
@@ -427,7 +426,7 @@ func getAndCompleteAssignments(st *sampletracker.SampleTracker, request *LHReque
 			// this could be a mix in place which has been split
 
 			if i == -1 {
-				logger.Debug("CONTRADICTORY PLATE ID SITUATION ", v)
+				fmt.Println("CONTRADICTORY PLATE ID SITUATION ", v)
 			}
 			for i2, v2 := range s[i].Wells {
 				if v2 == tx[1] {
@@ -588,7 +587,7 @@ func uniquePlateName(namein string, seen map[string]bool, maxtries int) string {
 		}
 
 		if ok {
-			logger.Fatal(fmt.Sprintf("Tried to assign more than %d output plates", maxtries))
+			fmt.Printf("Tried to assign more than %d output plates\n", maxtries)
 		}
 
 	}

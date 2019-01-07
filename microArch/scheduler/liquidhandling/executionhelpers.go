@@ -49,9 +49,9 @@ func convertToInstructionChain(sortedNodes []graph.Node, tg graph.Graph) *wtype.
 		addToIChain(ic, n, tg)
 	}
 
-	// we need to ensure that splits and mixes are kept separate by fissioning nodes
+	// we need to ensure that splits, prompts and mixes are kept separate by fissioning nodes
 
-	ic.SplitMixedNodes()
+	ic = ic.SplitMixedNodes()
 
 	return ic
 }
@@ -74,7 +74,6 @@ func findNode(ic *wtype.IChain, n graph.Node, tg graph.Graph, deps map[graph.Nod
 		return findNode(ic.Child, n, tg, deps)
 	} else {
 		newNode := wtype.NewIChain(ic)
-		ic.Child = newNode
 		return newNode
 	}
 }

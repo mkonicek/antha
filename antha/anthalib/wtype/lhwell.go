@@ -32,7 +32,6 @@ import (
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/eng"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
-	"github.com/antha-lang/antha/microArch/logger"
 )
 
 type WellBottomType int
@@ -236,7 +235,6 @@ func (w *LHWell) UnProtect() {
 
 func (w *LHWell) Contents() *Liquid {
 	if w == nil {
-		logger.Debug("CONTENTS OF NIL WELL REQUESTED")
 		return nil
 	}
 
@@ -256,7 +254,7 @@ func (w *LHWell) SetContents(newContents *Liquid) error {
 		//HJK: Disabling overflow errors until CarryVolume issues are resolved
 		//return LHError(LH_ERR_VOL,
 		//	fmt.Sprintf("Cannot set %s as contents of well %s as maximum volume is %s", newContents.GetName(), w.GetName(), maxVol)s
-		logger.Warning(fmt.Sprintf("setting %s as contents of well %s even though maximum volume is %s", newContents.GetName(), w.GetName(), maxVol))
+		fmt.Printf("setting %s as contents of well %s even though maximum volume is %s\n", newContents.GetName(), w.GetName(), maxVol)
 	}
 
 	w.WContents = newContents
@@ -327,7 +325,7 @@ func (w *LHWell) AddComponent(c *Liquid) error {
 	if finalVol.GreaterThan(maxVol) {
 		//HJK: Disabled overflow errors while CarryVolume issues are resolved
 		//return fmt.Errorf("Cannot add %s to well \"%s\", well already contains %s and maximum volume is %s", c.GetName(), w.GetName(), curVol, maxVol)
-		logger.Warning(fmt.Sprintf("Adding %s to well \"%s\", even though well already contains %s and maximum volume is %s", c.Summarize(), w.GetName(), curVol, maxVol))
+		fmt.Printf("Adding %s to well \"%s\", even though well already contains %s and maximum volume is %s\n", c.Summarize(), w.GetName(), curVol, maxVol)
 	}
 
 	w.Contents().Mix(c)
@@ -345,8 +343,8 @@ func (w *LHWell) RemoveVolume(v wunit.Volume) (*Liquid, error) {
 	if v.GreaterThan(w.CurrentWorkingVolume()) {
 		//HJK: Disabled underflow errors while CarryVolume issues are resolved
 		//return nil, fmt.Errorf("requested %s from well \"%s\" which only contains %s working volume", v, w.GetName(), w.CurrentWorkingVolume())
-		logger.Warning(fmt.Sprintf("requested %s from well \"%s\" which only contains %s working volume and %s total volume",
-			v, w.GetName(), w.CurrentWorkingVolume(), w.CurrentVolume()))
+		fmt.Printf("requested %s from well \"%s\" which only contains %s working volume and %s total volume\n",
+			v, w.GetName(), w.CurrentWorkingVolume(), w.CurrentVolume())
 	}
 
 	ret := w.Contents().Dup()
@@ -760,7 +758,7 @@ func (well *LHWell) DeclareTemporary() {
 
 		well.Extra["temporary"] = true
 	} else {
-		logger.Debug("Warning: Attempt to access nil well in DeclareTemporary()")
+		fmt.Println("Warning: Attempt to access nil well in DeclareTemporary()")
 	}
 }
 
@@ -771,7 +769,7 @@ func (well *LHWell) DeclareNotTemporary() {
 		}
 		well.Extra["temporary"] = false
 	} else {
-		logger.Debug("Warning: Attempt to access nil well in DeclareTemporary()")
+		fmt.Println("Warning: Attempt to access nil well in DeclareTemporary()")
 	}
 }
 
@@ -794,7 +792,7 @@ func (well *LHWell) IsTemporary() bool {
 		}
 		return true
 	} else {
-		logger.Debug("Warning: Attempt to access nil well in IsTemporary()")
+		fmt.Println("Warning: Attempt to access nil well in IsTemporary()")
 	}
 	return false
 }
@@ -808,7 +806,7 @@ func (well *LHWell) DeclareAutoallocated() {
 
 		well.Extra["autoallocated"] = true
 	} else {
-		logger.Debug("Warning: Attempt to access nil well in DeclareAutoallocated()")
+		fmt.Println("Warning: Attempt to access nil well in DeclareAutoallocated()")
 	}
 }
 
@@ -819,7 +817,7 @@ func (well *LHWell) DeclareNotAutoallocated() {
 		}
 		well.Extra["autoallocated"] = false
 	} else {
-		logger.Debug("Warning: Attempt to access nil well in DeclareNotAutoallocated()")
+		fmt.Println("Warning: Attempt to access nil well in DeclareNotAutoallocated()")
 	}
 }
 
@@ -836,7 +834,7 @@ func (well *LHWell) IsAutoallocated() bool {
 		}
 		return true
 	} else {
-		logger.Debug("Warning: Attempt to access nil well in IsAutoallocated()")
+		fmt.Println("Warning: Attempt to access nil well in IsAutoallocated()")
 	}
 	return false
 }

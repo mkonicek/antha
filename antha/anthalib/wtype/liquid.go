@@ -29,7 +29,6 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
-	//"github.com/antha-lang/antha/microArch/logger"
 	"github.com/antha-lang/antha/graph"
 )
 
@@ -702,9 +701,6 @@ func (cmp *Liquid) Mix(cmp2 *Liquid) {
 	// determine type of final
 	cmp.Type = mergeTypes(cmp, cmp2)
 	// add cmp2 to cmp
-
-	// allow trace back
-	//logger.Track(fmt.Sprintf("MIX %s %s %s", cmp.ID, cmp2.ID, vcmp.ToString()))
 
 	// add parent IDs... this is recursive
 

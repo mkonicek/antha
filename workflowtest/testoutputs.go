@@ -3,7 +3,9 @@ package workflowtest
 import (
 	"errors"
 	"fmt"
+	"math"
 	"strings"
+	"time"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/execute"
@@ -28,6 +30,7 @@ type TestResults struct {
 type MixTaskResult struct {
 	Instructions liquidhandling.SetOfRobotInstructions
 	Outputs      map[string]*wtype.Plate
+	TimeEstimate time.Duration
 }
 
 func generaliseInstructions(insIn []liquidhandling.TerminalRobotInstruction) []liquidhandling.RobotInstruction {
@@ -73,16 +76,48 @@ func CompareTestResults(runResult *execute.Result, opt TestOpt) error {
 			if err != nil {
 				errstr += err.Error() + "\n"
 			}
+			// step to compare time estimate
+			if err := compareTimeEstimates(
+				opt.Results.MixTaskResults[i].TimeEstimate.Seconds(),
+				mixTasks[i].Request.TimeEstimate,
+				timeEstimatePrecisionFactor); err != nil {
+				errstr += err.Error() + "\n"
+			}
 		} else if opt.CompareOutputs {
 			ssss := compareOutputs(opt.Results.MixTaskResults[i].Outputs, getMixTaskOutputs(mixTasks[i]), opt)
 			if ssss != "" {
 				errstr += ssss + "\n"
+			}
+			// step to compare time estimate
+			if err := compareTimeEstimates(
+				opt.Results.MixTaskResults[i].TimeEstimate.Seconds(),
+				mixTasks[i].Request.TimeEstimate,
+				timeEstimatePrecisionFactor); err != nil {
+				errstr += err.Error() + "\n"
 			}
 		}
 	}
 
 	if errstr != "" {
 		return errors.New(errstr)
+	}
+	return nil
+}
+
+// permitted proportional difference between test result time estimate and returned result.
+const timeEstimatePrecisionFactor = 0.1
+
+// compareTimeEstimates returns an error if the testTimeInSecs deviates from the expectedTimeInSecs
+// by greater than the expectedTimeInSecs * precisionFactor
+func compareTimeEstimates(expectedTimeInSecs, testTimeInSecs, precisionFactor float64) error {
+	if math.Abs(expectedTimeInSecs-testTimeInSecs) > (timeEstimatePrecisionFactor * expectedTimeInSecs) {
+		return fmt.Errorf(
+			"Expected time estimate %f seconds but got %f seconds; \n"+
+				"Time estimates must be equal within %f %% to be permitted",
+			expectedTimeInSecs,
+			testTimeInSecs,
+			precisionFactor*100.0,
+		)
 	}
 	return nil
 }
@@ -115,7 +150,11 @@ func SaveTestOutputs(runResult *execute.Result, comparisonOptions string) TestOp
 		mixTaskResults[i] = MixTaskResult{
 			Instructions: liquidhandling.SetOfRobotInstructions{
 				RobotInstructions: generaliseInstructions(mixTasks[i].Request.Instructions),
-			}, Outputs: outputs,
+			},
+			Outputs: outputs,
+			// We're ok with truncating to the nearest second by casting into an int64;
+			// this is much more precise than the required precision.
+			TimeEstimate: time.Duration(time.Duration(mixTasks[i].Request.TimeEstimate) * time.Second),
 		}
 	}
 

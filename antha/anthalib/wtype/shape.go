@@ -27,7 +27,6 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/microArch/logger"
 
 	"math"
 )
@@ -84,7 +83,7 @@ func (sh *Shape) MaxCrossSectionalArea() (area wunit.Area, err error) {
 		areaunit = "mm^2" //sh.LengthUnit + `^` + strconv.Itoa(2)
 	} else {
 		err = fmt.Errorf("sh.Lengthunit = %s", sh.LengthUnit)
-		logger.Debug(err.Error())
+		fmt.Println(err.Error())
 	}
 	var circular bool
 	var boxlike bool

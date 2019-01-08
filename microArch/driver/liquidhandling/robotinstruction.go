@@ -136,6 +136,7 @@ const (
 	LLF                                  = "LLF"
 	MESSAGE                              = "MESSAGE"
 	MULTI                                = "MULTI"
+	MULTIGT1                             = "MULTIGT1"
 	NAME                                 = "NAME"
 	NEWADAPTOR                           = "NEWADAPTOR"
 	NEWSTATE                             = "NEWSTATE"

@@ -70,8 +70,8 @@ type MultiChannelBlockInstruction struct {
 	FVolume    [][]wunit.Volume
 	TVolume    [][]wunit.Volume
 	Component  [][]string
-	Multi      int
-	Prms       *wtype.LHChannelParameter
+	Prms       [][]*wtype.LHChannelParameter
+	Multi      []int
 }
 
 func NewMultiChannelBlockInstruction() *MultiChannelBlockInstruction {
@@ -88,6 +88,8 @@ func NewMultiChannelBlockInstruction() *MultiChannelBlockInstruction {
 		FVolume:         [][]wunit.Volume{},
 		TVolume:         [][]wunit.Volume{},
 		Component:       [][]string{},
+		Prms:            [][]*wtype.LHChannelParameter{},
+		Multi:           []int{},
 	}
 	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
 	return v
@@ -109,6 +111,8 @@ func (ins *MultiChannelBlockInstruction) AddTransferParams(mct MultiTransferPara
 	ins.FVolume = append(ins.FVolume, mct.FVolume())
 	ins.TVolume = append(ins.TVolume, mct.TVolume())
 	ins.Component = append(ins.Component, mct.Component())
+	ins.Prms = append(ins.Prms, mct.Channels())
+	ins.Multi = append(ins.Multi, mct.Multi)
 }
 
 func (ins *MultiChannelBlockInstruction) GetParameter(name InstructionParameter) interface{} {
@@ -132,10 +136,20 @@ func (ins *MultiChannelBlockInstruction) GetParameter(name InstructionParameter)
 	case PARAMS:
 		return ins.Prms
 	case PLATFORM:
-		if ins.Prms == nil {
-			return ""
+		ret := []string{}
+		for _, p := range ins.Prms {
+			for _, ppp := range p {
+				var pp string
+
+				if ppp != nil {
+					pp = ppp.Platform
+					break
+				}
+
+				ret = append(ret, pp)
+			}
 		}
-		return ins.Prms.Platform
+		return ret
 	case WELLTO:
 		return ins.WellTo
 	case WELLTOVOLUME:
@@ -146,6 +160,14 @@ func (ins *MultiChannelBlockInstruction) GetParameter(name InstructionParameter)
 		return ins.Component
 	case MULTI:
 		return ins.Multi
+	case MULTIGT1:
+		for _, t := range ins.Multi {
+			if t > 1 {
+				return true
+			}
+		}
+
+		return false
 	default:
 		return ins.BaseRobotInstruction.GetParameter(name)
 	}
@@ -218,9 +240,23 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 	var dirty bool
 
 	for t := 0; t < len(ins.Volume); t++ {
-		tvols := NewVolumeSet(ins.Prms.Multi)
-		//		vols := NewVolumeSet(ins.Prms.Multi)
-		fvols := NewVolumeSet(ins.Prms.Multi)
+		if len(ins.What[t]) == 0 {
+			continue
+		}
+
+		findPrmSet := func(sa []*wtype.LHChannelParameter) *wtype.LHChannelParameter {
+			for _, s := range sa {
+				if s != nil {
+					return s
+				}
+			}
+			return nil
+		}
+
+		prmSet := findPrmSet(ins.Prms[t])
+
+		tvols := NewVolumeSet(prmSet.Multi)
+		fvols := NewVolumeSet(prmSet.Multi)
 		for i := range ins.Volume[t] {
 			fvols[i] = wunit.CopyVolume(ins.FVolume[t][i])
 			tvols[i] = wunit.CopyVolume(ins.TVolume[t][i])

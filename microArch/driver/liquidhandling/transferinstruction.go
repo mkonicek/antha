@@ -202,11 +202,13 @@ func firstNonEmpty(types []string) string {
 	return ""
 }
 
-// add policies as argument to GetParallelSetsFor to check multichannelability
-func (ins *TransferInstruction) GetParallelSetsFor(ctx context.Context, robot *LHProperties, policy wtype.LHPolicy) []bool {
+func (ins *TransferInstruction) GetParallelSetsFor(ctx context.Context, robot *LHProperties, policy wtype.LHPolicy) ([]bool, []*wtype.LHChannelParameter) {
 	m := make([]bool, 0, len(ins.Transfers))
+	c := make([]*wtype.LHChannelParameter, 0, len(ins.Transfers))
 
 	for i := 0; i < len(ins.Transfers); i++ {
+		var channelPrm *wtype.LHChannelParameter
+
 		// a parallel transfer is valid if any robot head can do it
 		// TODO --> support head/adaptor changes. Maybe.
 		t := false
@@ -214,15 +216,17 @@ func (ins *TransferInstruction) GetParallelSetsFor(ctx context.Context, robot *L
 			for _, head := range robot.GetLoadedHeads() {
 				if ins.validateParallelSet(ctx, robot, head, i, policy) {
 					t = true
+					channelPrm = head.Params
 					break
 				}
 			}
 		}
 
 		m = append(m, t)
+		c = append(c, channelPrm)
 	}
 
-	return m
+	return m, c
 }
 
 // add policies as argument to GetParallelSetsFor to check multichannelability
@@ -445,10 +449,11 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 	}
 
 	ret := make([]RobotInstruction, 0)
+	mci := NewMultiChannelBlockInstruction()
 
 	headsLoaded := prms.GetLoadedHeads()
 
-	multis := ins.GetParallelSetsFor(ctx, prms, pol)
+	multis, channels := ins.GetParallelSetsFor(ctx, prms, pol)
 
 	for set, multi := range multis {
 		vols := VolumeSet(ins.Transfers[set].Volume())
@@ -469,40 +474,32 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 		}
 
 		if multi {
-			tp := ins.Transfers[set].Dup()
-			for i := 0; i < len(tp.Transfers); i++ {
-				tp.Transfers[i].Volume = vols[i].Dup()
+			mtp := ins.Transfers[set].Dup()
+			for i := 0; i < len(mtp.Transfers); i++ {
+				mtp.Transfers[i].Volume = vols[i].Dup()
+				mtp.Transfers[i].Channel = channels[set]
 			}
 
 			ins.Transfers[set].RemoveVolumes(vols)
 			ins.Transfers[set].RemoveFVolumes(vols)
 			ins.Transfers[set].AddTVolumes(vols)
 
-			mci := NewMultiChannelBlockInstruction()
-			mci.Prms = headsLoaded[0].Params // TODO Remove Hard code here
-			mci.Multi = len(vols)
-			mci.AddTransferParams(tp)
-			ret = append(ret, mci)
-		}
+			mtp.Multi = len(vols)
 
-		mci := NewMultiChannelBlockInstruction()
-		mci.Prms = headsLoaded[0].Params // TODO Fix Hard Code Here
-		mci.Multi = 1
+			mci.AddTransferParams(mtp)
+		}
 
 		for _, tp := range ins.Transfers[set].Transfers {
 			if !tp.Volume.IsPositive() {
 				continue
 			}
+			tp.Channel = headsLoaded[0].Params
 			mci.AddTransferParams(MultiTransferParams{Multi: 1, Transfers: []TransferParams{tp}})
 		}
 
-		if len(mci.Volume) != 0 {
-			ret = append(ret, mci)
-			mci = NewMultiChannelBlockInstruction()
-			mci.Prms = headsLoaded[0].Params
-		}
 	}
 
+	ret = append(ret, mci)
 	return ret, nil
 }
 

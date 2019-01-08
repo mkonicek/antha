@@ -285,6 +285,15 @@ func (mtp MultiTransferParams) ParamSet(n int) TransferParams {
 	return mtp.Transfers[n]
 }
 
+func (mtp MultiTransferParams) Channels() []*wtype.LHChannelParameter {
+	r := []*wtype.LHChannelParameter{}
+
+	for _, c := range mtp.Transfers {
+		r = append(r, c.Channel)
+	}
+	return r
+}
+
 func (mtp MultiTransferParams) ToString() string {
 	s := ""
 	for i := 0; i < mtp.Multi; i++ {

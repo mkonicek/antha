@@ -24,7 +24,7 @@
         }
     },
 
-    "ElementParameters": {
+    "ElementInstanceParameters": {
         "myFileOutput": {
             "ParamFileA": {
                 "name": "paramfileaname",

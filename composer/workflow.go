@@ -18,22 +18,22 @@ import (
 type Workflow struct {
 	JobId JobId `json:"JobId"`
 
-	Repositories       Repositories       `json:"Repositories"`
-	ElementTypes       ElementTypes       `json:"ElementTypes"`
-	ElementInstances   ElementInstances   `json:"ElementInstances"`
-	ElementParameters  ElementParameters  `json:"ElementParameters"`
-	ElementConnections ElementConnections `json:"ElementConnections"`
+	Repositories               Repositories               `json:"Repositories"`
+	ElementTypes               ElementTypes               `json:"ElementTypes"`
+	ElementInstances           ElementInstances           `json:"ElementInstances"`
+	ElementInstanceParameters  ElementInstanceParameters  `json:"ElementInstanceParameters"`
+	ElementInstanceConnections ElementInstanceConnections `json:"ElementInstanceConnections"`
 
 	typeNames map[ElementTypeName]*ElementType
 }
 
 func newWorkflow() *Workflow {
 	return &Workflow{
-		Repositories:       make(Repositories),
-		ElementTypes:       make(ElementTypes, 0),
-		ElementInstances:   make(ElementInstances),
-		ElementParameters:  make(ElementParameters),
-		ElementConnections: make(ElementConnections, 0),
+		Repositories:               make(Repositories),
+		ElementTypes:               make(ElementTypes, 0),
+		ElementInstances:           make(ElementInstances),
+		ElementInstanceParameters:  make(ElementInstanceParameters),
+		ElementInstanceConnections: make(ElementInstanceConnections, 0),
 	}
 }
 
@@ -104,11 +104,11 @@ type ElementInstance struct {
 	Metadata        json.RawMessage `json:"Metadata"`
 }
 
-type ElementParameters map[ElementInstanceName]ElementParameterSet
+type ElementInstanceParameters map[ElementInstanceName]ElementParameterSet
 
 type ElementParameterSet map[ElementParameterName]json.RawMessage
 
-type ElementConnections []ElementConnection
+type ElementInstanceConnections []ElementConnection
 
 type ElementConnection struct {
 	Source ElementSocket `json:"Source"`
@@ -146,8 +146,8 @@ func (a *Workflow) merge(b *Workflow) error {
 		a.Repositories.merge(b.Repositories),
 		a.ElementTypes.merge(b.ElementTypes),
 		a.ElementInstances.merge(b.ElementInstances),
-		a.ElementParameters.merge(b.ElementParameters),
-		a.ElementConnections.merge(b.ElementConnections),
+		a.ElementInstanceParameters.merge(b.ElementInstanceParameters),
+		a.ElementInstanceConnections.merge(b.ElementInstanceConnections),
 	}
 
 	if err := errs.Nub(); err != nil {
@@ -216,7 +216,7 @@ func (a ElementInstances) merge(b ElementInstances) error {
 	return nil
 }
 
-func (a ElementParameters) merge(b ElementParameters) error {
+func (a ElementInstanceParameters) merge(b ElementInstanceParameters) error {
 	// Just like element instances, these should be completely distinct
 	for name, paramSetB := range b {
 		if _, found := a[name]; found {
@@ -228,7 +228,7 @@ func (a ElementParameters) merge(b ElementParameters) error {
 	return nil
 }
 
-func (conns ElementConnections) sort() {
+func (conns ElementInstanceConnections) sort() {
 	sort.Slice(conns, func(i, j int) bool {
 		return conns[i].lessThan(conns[j])
 	})
@@ -244,12 +244,12 @@ func (a ElementSocket) lessThan(b ElementSocket) bool {
 		(a.ElementInstance == b.ElementInstance && a.ParameterName < b.ParameterName)
 }
 
-func (a *ElementConnections) merge(b ElementConnections) error {
-	all := make(ElementConnections, 0, len(*a)+len(b))
+func (a *ElementInstanceConnections) merge(b ElementInstanceConnections) error {
+	all := make(ElementInstanceConnections, 0, len(*a)+len(b))
 	all = append(all, *a...)
 	all = append(all, b...)
 
-	result := make(ElementConnections, 0, len(all))
+	result := make(ElementInstanceConnections, 0, len(all))
 	old := ElementConnection{}
 	for _, cur := range all {
 		if old == cur { // structural equality
@@ -272,9 +272,9 @@ func (wf *Workflow) validate() error {
 		return err
 	} else if err := wf.ElementInstances.validate(wf); err != nil {
 		return err
-	} else if err := wf.ElementParameters.validate(wf); err != nil {
+	} else if err := wf.ElementInstanceParameters.validate(wf); err != nil {
 		return err
-	} else if err := wf.ElementConnections.validate(wf); err != nil {
+	} else if err := wf.ElementInstanceConnections.validate(wf); err != nil {
 		return err
 	} else {
 		return nil
@@ -349,16 +349,16 @@ func (ei ElementInstance) validate(wf *Workflow) error {
 	}
 }
 
-func (eps ElementParameters) validate(wf *Workflow) error {
+func (eps ElementInstanceParameters) validate(wf *Workflow) error {
 	for name, _ := range eps {
 		if _, found := wf.ElementInstances[name]; !found {
-			return fmt.Errorf("ElementParameters provided for unknown ElementInstance '%v'", name)
+			return fmt.Errorf("ElementInstanceParameters provided for unknown ElementInstance '%v'", name)
 		}
 	}
 	return nil
 }
 
-func (conns ElementConnections) validate(wf *Workflow) error {
+func (conns ElementInstanceConnections) validate(wf *Workflow) error {
 	for _, conn := range conns {
 		if err := conn.Source.validate(wf); err != nil {
 			return err

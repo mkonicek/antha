@@ -42,7 +42,7 @@
         }
     },
 
-    "ElementInstanceConnections": [
+    "ElementInstancesConnections": [
         {
             "Source": {
                 "ElementInstance": "aliquot_A",
@@ -85,7 +85,7 @@
         }
     ],
 
-    "ElementInstanceParameters": {
+    "ElementInstancesParameters": {
         "aliquot_A": {
             "ByRow": false,
             "LiquidToAliquot": "water",

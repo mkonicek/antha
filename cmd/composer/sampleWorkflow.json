@@ -24,20 +24,10 @@
         }
     },
 
-    "ElementInstanceParameters": {
+    "ElementInstancesParameters": {
         "myFileOutput": {
-            "ParamFileA": {
-                "name": "paramfileaname",
-                "hostFile": {
-                    "filename": "datarepo:///job/26M18B24JT9MGQVH35D4GRVHV6/saru-post.parquet.parquet"
-                }
-            },
-            "ParamFileB": {
-                "name": "paramfilebname",
-                "hostFile": {
-                    "filename": "datarepo:///job/26M18B24JT9MGQVH35D4GRVHV6/saru-post.parquet.parquet"
-                }
-            },
+            "ParamFileA": {"Path": "/tmp/anthafoobar/inputs/fileA.txt"},
+            "ParamFileB": {"Path": "/tmp/anthafoobar/inputs/fileB.txt"},
             "ParamFilename": "myfilename",
             "ParamFileSlice": []
         }

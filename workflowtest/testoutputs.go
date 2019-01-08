@@ -127,7 +127,7 @@ func getMixTaskOutputs(mix *target.Mix) map[string]*wtype.Plate {
 
 	// get output plates (ONLY)
 
-	for _, pos := range mix.FinalProperties.Preferences[liquidhandling.Outputs] {
+	for _, pos := range mix.FinalProperties.Preferences.Outputs {
 		plate, ok := mix.FinalProperties.Plates[pos]
 
 		if ok {

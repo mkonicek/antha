@@ -37,20 +37,9 @@ func TestUnknownLocations(t *testing.T) {
 		}
 	}
 
-	categories := []liquidhandling.ObjectCategory{
-		liquidhandling.Tipboxes,
-		liquidhandling.Inputs,
-		liquidhandling.Outputs,
-		liquidhandling.Washes,
-		liquidhandling.Wastes,
-		liquidhandling.Tipwastes,
-	}
-
-	for _, category := range categories {
-		lhp := defaultLHProperties()
-		lhp.Preferences[category] = append(lhp.Preferences[category], "undefined_pref")
-		assertPropsInvalid(t, lhp, "Undefined "+category.String())
-	}
+	lhp := defaultLHProperties()
+	lhp.Preferences.Tipboxes = append(lhp.Preferences.Tipboxes, "undefined_pref")
+	assertPropsInvalid(t, lhp, "tipboxes")
 }
 
 func TestNewVirtualLiquidHandler_ValidProps(t *testing.T) {

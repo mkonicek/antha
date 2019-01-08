@@ -7,10 +7,10 @@ import (
 
 type LayoutOptTest struct {
 	Name          string
-	Driver        LayoutOpt
-	User          LayoutOpt
+	Driver        *LayoutOpt
+	User          *LayoutOpt
 	ExpectedError string
-	Expected      LayoutOpt
+	Expected      *LayoutOpt
 }
 
 func (test *LayoutOptTest) expecting(err error) bool {
@@ -22,10 +22,10 @@ func (test *LayoutOptTest) expecting(err error) bool {
 }
 
 func (test *LayoutOptTest) Run(t *testing.T) {
-	if err := test.Driver.Merge(test.User); !test.expecting(err) {
+	if got, err := test.Driver.ApplyUserPreferences(test.User); !test.expecting(err) {
 		t.Errorf("errors don't match:\ne: %v\ng: %v", test.ExpectedError, err)
 	} else if err == nil {
-		assert.Equal(t, test.Expected, test.Driver, "output of merge didn't match expected")
+		assert.Equal(t, test.Expected, got, "output of merge didn't match expected")
 	}
 }
 
@@ -41,28 +41,28 @@ func TestLayoutOpt(t *testing.T) {
 	LayoutOptTests{
 		{
 			Name: "basic example",
-			Driver: LayoutOpt{
+			Driver: &LayoutOpt{
 				Tipboxes:  Addresses{"a", "b", "c", "d"},
 				Tipwastes: Addresses{"e"},
 			},
-			User: LayoutOpt{
+			User: &LayoutOpt{
 				Tipboxes: Addresses{"b", "c"},
 			},
-			Expected: LayoutOpt{
+			Expected: &LayoutOpt{
 				Tipboxes:  Addresses{"b", "c"},
 				Tipwastes: Addresses{"e"},
 			},
 		},
 		{
 			Name: "error",
-			Driver: LayoutOpt{
+			Driver: &LayoutOpt{
 				Tipboxes:  Addresses{"a", "b", "c", "d"},
 				Tipwastes: Addresses{"e"},
 			},
-			User: LayoutOpt{
+			User: &LayoutOpt{
 				Tipboxes: Addresses{"b", "c", "the moon"},
 			},
-			ExpectedError: "invalid user preferences: cannot place tipboxes at \"the moon\"",
+			ExpectedError: "invalid user preferences: cannot place tipboxes at: \"the moon\"",
 		},
 	}.Run(t)
 }

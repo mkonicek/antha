@@ -6,37 +6,7 @@ import (
 	"strings"
 )
 
-// ObjectCategory enumerate the different types of objects which can appear on deck
-type ObjectCategory int
-
-const (
-	Tipboxes  ObjectCategory = iota
-	Inputs                   // plates containing input solutions
-	Outputs                  // plates that will have output solutions added to them
-	Tipwastes                // for disposing of tips - often device specific
-	Wastes                   // for disponsing of waste liquids
-	Washes                   // for washing
-)
-
-// this should require updating only very rarely, so probably OK to do it like this
-var categoryNames = map[ObjectCategory]string{
-	Tipboxes:  "tipboxes",
-	Inputs:    "inputs",
-	Outputs:   "outputs",
-	Tipwastes: "tipwastes",
-	Wastes:    "wastes",
-	Washes:    "washes",
-}
-
-// String description of the category suitable for showing in error messages
-func (c ObjectCategory) String() string {
-	if ret, ok := categoryNames[c]; ok {
-		return ret
-	} else {
-		panic("unknown category")
-	}
-}
-
+// Addresses an ordered list of names of positions within a liquidhandling device, as defined by the plugin for that device
 type Addresses []string
 
 // Map returns a set containing the addresses
@@ -48,90 +18,90 @@ func (a Addresses) Map() map[string]bool {
 	return ret
 }
 
-// Filter returns a new address slice containing the addresses in b that also appear in a
-func (a Addresses) Filter(b Addresses) Addresses {
-	inA := a.Map()
-	ret := make(Addresses, len(b))
-	for _, address := range b {
-		if inA[address] {
-			ret = append(ret, address)
-		}
+// Dup return a copy of the list of addresses
+func (a Addresses) Dup() Addresses {
+	if a == nil {
+		return nil
 	}
-
-	return ret
-}
-
-// Remove return a new address slice containing the addresses in a which don't appear in b
-func (a Addresses) Remove(b Addresses) Addresses {
-	inB := b.Map()
-	ret := make(Addresses, 0, len(b))
-	for _, address := range a {
-		if !inB[address] {
-			ret = append(ret, address)
-		}
-	}
+	ret := make(Addresses, len(a))
+	copy(ret, a)
 	return ret
 }
 
 // String list the addresses wrapped in inverted commas
 func (a Addresses) String() string {
-	return fmt.Sprintf("\"%s\"", strings.Join([]string(a), "\", \""))
+	return fmt.Sprintf(`"%s"`, strings.Join([]string(a), `", "`))
 }
 
 // LayoutOpt describes the options available for layout of various types of objects
-// on a liquidhandler deck
-type LayoutOpt map[ObjectCategory]Addresses
-
-func (lo LayoutOpt) Dup() LayoutOpt {
-	ret := make(LayoutOpt, len(lo))
-	for k, v := range lo {
-		c := make(Addresses, len(v))
-		copy(c, v)
-		ret[k] = c
-	}
-	return ret
+// on a liquidhandler deck, listed in priority order from highest to lowest
+type LayoutOpt struct {
+	Tipboxes  Addresses // locations where boxes of tips can be placed
+	Inputs    Addresses // plates containing input solutions
+	Outputs   Addresses // plates that will have output solutions added to them
+	Tipwastes Addresses // for disposing of tips - often device specific
+	Wastes    Addresses // for disponsing of waste liquids
+	Washes    Addresses // for washing
 }
 
-func joinCategories(a, b LayoutOpt) []ObjectCategory {
-	seen := make(map[ObjectCategory]bool, len(a)+len(b))
-	for cat := range a {
-		seen[cat] = true
+// Dup return a copy of the layout options
+func (lo *LayoutOpt) Dup() *LayoutOpt {
+	return &LayoutOpt{
+		Tipboxes:  lo.Tipboxes,
+		Inputs:    lo.Inputs,
+		Outputs:   lo.Outputs,
+		Tipwastes: lo.Tipwastes,
+		Wastes:    lo.Wastes,
+		Washes:    lo.Washes,
 	}
-	for cat := range b {
-		seen[cat] = true
-	}
-
-	ret := make([]ObjectCategory, 0, len(seen))
-	for cat := range seen {
-		ret = append(ret, cat)
-	}
-	return ret
 }
 
-// Merge combine the driver reported layout preferences with the users'
-func (lo LayoutOpt) Merge(user LayoutOpt) error {
-	categories := joinCategories(lo, user)
-
-	// user preferences should be a strict subset of this
-	errs := make([]string, 0, len(categories))
-	for _, category := range categories {
-		if invalid := user[category].Remove(lo[category]); len(invalid) > 0 {
-			errs = append(errs, fmt.Sprintf("cannot place %s at %s", category, invalid))
-		}
-	}
-	if len(errs) > 0 {
-		if len(errs) == 1 {
-			return errors.Errorf("invalid user preferences: %s", errs[0])
-		} else {
-			return errors.Errorf("invalid user preferences:\n\t%s", strings.Join(errs, "\n\t"))
-		}
-	}
+// ApplyUserPreferences combine the user supplied preferences with the driver plugin supplied rules
+// An error is returned if the user requests an object be placed in a location that the driver
+// has not allowed
+func (lo *LayoutOpt) ApplyUserPreferences(user *LayoutOpt) (*LayoutOpt, error) {
 
 	// override driver preferences with user preferences, if specified
-	for _, category := range categories {
-		if u, ok := user[category]; ok && len(u) > 0 {
-			lo[category] = u
+	override := func(driver, user Addresses) (Addresses, error) {
+		// return an error if the user requests an address that's not OK
+		valid := driver.Map()
+		invalid := make(Addresses, 0, len(user))
+		for _, u := range user {
+			if !valid[u] {
+				invalid = append(invalid, u)
+			}
+		}
+		if len(invalid) > 0 {
+			return nil, errors.New(invalid.String())
+		}
+
+		if len(user) > 0 {
+			return user.Dup(), nil
+		} else {
+			return driver.Dup(), nil
 		}
 	}
-	return nil
+
+	if tipboxes, err := override(lo.Tipboxes, user.Tipboxes); err != nil {
+		return nil, errors.WithMessage(err, "invalid user preferences: cannot place tipboxes at")
+	} else if inputs, err := override(lo.Inputs, user.Inputs); err != nil {
+		return nil, errors.WithMessage(err, "invalid user preferences: cannot place inputs at")
+	} else if outputs, err := override(lo.Outputs, user.Outputs); err != nil {
+		return nil, errors.WithMessage(err, "invalid user preferences: cannot place outputs at")
+	} else if tipwastes, err := override(lo.Tipwastes, user.Tipwastes); err != nil {
+		return nil, errors.WithMessage(err, "invalid user preferences: cannot place tipwastes at")
+	} else if wastes, err := override(lo.Wastes, user.Wastes); err != nil {
+		return nil, errors.WithMessage(err, "invalid user preferences: cannot place wastes at")
+	} else if washes, err := override(lo.Washes, user.Washes); err != nil {
+		return nil, errors.WithMessage(err, "invalid user preferences: cannot place washes at")
+	} else {
+		return &LayoutOpt{
+			Tipboxes:  tipboxes,
+			Inputs:    inputs,
+			Outputs:   outputs,
+			Tipwastes: tipwastes,
+			Wastes:    wastes,
+			Washes:    washes,
+		}, nil
+	}
 }

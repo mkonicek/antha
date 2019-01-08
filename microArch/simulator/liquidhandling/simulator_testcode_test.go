@@ -144,10 +144,7 @@ func makeLHProperties(p *LHPropertiesParams) *liquidhandling.LHProperties {
 
 	layout := make(map[string]*wtype.LHPosition)
 	for _, lp := range p.Layouts {
-		layout[lp.Name] = &wtype.LHPosition{
-			Name:     lp.Name,
-			Location: wtype.Coordinates{X: lp.Xpos, Y: lp.Ypos, Z: lp.Zpos},
-		}
+		layout[lp.Name] = wtype.NewLHPosition(lp.Name, wtype.Coordinates{X: lp.Xpos, Y: lp.Ypos, Z: lp.Zpos})
 	}
 
 	lhp := liquidhandling.NewLHProperties(p.Name, p.Mfg, liquidhandling.LLLiquidHandler, liquidhandling.DisposableTips, layout)
@@ -158,13 +155,13 @@ func makeLHProperties(p *LHPropertiesParams) *liquidhandling.LHProperties {
 	}
 	lhp.Heads = lhp.GetLoadedHeads()
 
-	lhp.Preferences = liquidhandling.LayoutOpt{
-		liquidhandling.Tipboxes:  p.TipPreferences,
-		liquidhandling.Inputs:    p.InputPreferences,
-		liquidhandling.Outputs:   p.OutputPreferences,
-		liquidhandling.Tipwastes: p.TipwastePreferences,
-		liquidhandling.Washes:    p.WashPreferences,
-		liquidhandling.Wastes:    p.WastePreferences,
+	lhp.Preferences = &liquidhandling.LayoutOpt{
+		Tipboxes:  p.TipPreferences,
+		Inputs:    p.InputPreferences,
+		Outputs:   p.OutputPreferences,
+		Tipwastes: p.TipwastePreferences,
+		Washes:    p.WashPreferences,
+		Wastes:    p.WastePreferences,
 	}
 
 	return lhp

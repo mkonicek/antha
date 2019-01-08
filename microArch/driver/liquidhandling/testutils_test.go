@@ -74,11 +74,8 @@ func makeGilsonForTest(ctx context.Context, tipList []string) *LHProperties {
 	for y := 0; y < 3; y++ {
 		xp = x0
 		for x := 0; x < 3; x++ {
-			pos := wtype.LHPosition{
-				Name:     fmt.Sprintf("position_%d", i+1),
-				Location: wtype.Coordinates{X: xp, Y: yp, Z: zp},
-			}
-			layout[pos.Name] = &pos
+			pos := wtype.NewLHPosition(fmt.Sprintf("position_%d", i+1), wtype.Coordinates{X: xp, Y: yp, Z: zp})
+			layout[pos.Name] = pos
 			i += 1
 			xp += xi
 		}
@@ -88,7 +85,7 @@ func makeGilsonForTest(ctx context.Context, tipList []string) *LHProperties {
 	// get tips permissible from the factory
 	SetUpTipsFor(ctx, lhp, tipList)
 
-	lhp.Preferences = LayoutOpt{
+	lhp.Preferences = &LayoutOpt{
 		Tipboxes:  Addresses{"position_2", "position_3", "position_6", "position_9", "position_8", "position_5", "position_4", "position_7"},
 		Inputs:    Addresses{"position_4", "position_5", "position_6", "position_9", "position_8", "position_3"},
 		Outputs:   Addresses{"position_8", "position_9", "position_6", "position_5", "position_3", "position_1"},

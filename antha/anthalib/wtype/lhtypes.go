@@ -219,6 +219,14 @@ type LHPosition struct {
 	Location Coordinates // absolute position of read left corner of the position
 }
 
+// NewLHPosition constructs a new position on a liquidhandling deck
+func NewLHPosition(name string, location Coordinates) *LHPosition {
+	return &LHPosition{
+		Name:     name,
+		Location: location,
+	}
+}
+
 // structure describing a solution: a combination of liquid components
 // deprecated and no longer used... may well need to be deleted
 type LHSolution struct {

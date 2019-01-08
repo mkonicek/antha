@@ -63,11 +63,8 @@ func makeGilson(ctx context.Context) *liquidhandling.LHProperties {
 	for y := 0; y < 3; y++ {
 		xp = x0
 		for x := 0; x < 3; x++ {
-			pos := wtype.LHPosition{
-				Name:     fmt.Sprintf("position_%d", i+1),
-				Location: wtype.Coordinates{X: xp, Y: yp, Z: zp},
-			}
-			layout[pos.Name] = &pos
+			pos := wtype.NewLHPosition(fmt.Sprintf("position_%d", i+1), wtype.Coordinates{X: xp, Y: yp, Z: zp})
+			layout[pos.Name] = pos
 			i += 1
 			xp += xi
 		}
@@ -77,13 +74,13 @@ func makeGilson(ctx context.Context) *liquidhandling.LHProperties {
 	// get tips permissible from the factory
 	setUpTipsFor(ctx, lhp)
 
-	lhp.Preferences = liquidhandling.LayoutOpt{
-		liquidhandling.Tipboxes:  liquidhandling.Addresses{"position_9", "position_6", "position_3", "position_5", "position_2"},
-		liquidhandling.Inputs:    liquidhandling.Addresses{"position_4", "position_5", "position_6", "position_9", "position_8", "position_3"},
-		liquidhandling.Outputs:   liquidhandling.Addresses{"position_7", "position_8", "position_9", "position_6", "position_5", "position_3"},
-		liquidhandling.Washes:    liquidhandling.Addresses{"position_8"},
-		liquidhandling.Tipwastes: liquidhandling.Addresses{"position_1"},
-		liquidhandling.Wastes:    liquidhandling.Addresses{"position_9"},
+	lhp.Preferences = &liquidhandling.LayoutOpt{
+		Tipboxes:  liquidhandling.Addresses{"position_9", "position_6", "position_3", "position_5", "position_2"},
+		Inputs:    liquidhandling.Addresses{"position_4", "position_5", "position_6", "position_9", "position_8", "position_3"},
+		Outputs:   liquidhandling.Addresses{"position_7", "position_8", "position_9", "position_6", "position_5", "position_3"},
+		Washes:    liquidhandling.Addresses{"position_8"},
+		Tipwastes: liquidhandling.Addresses{"position_1"},
+		Wastes:    liquidhandling.Addresses{"position_9"},
 	}
 
 	hvconfig := getHVConfig()

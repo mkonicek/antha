@@ -21,7 +21,7 @@ type sProperties struct {
 	HeadAssemblies []*wtype.SerializableHeadAssembly // describes how each loaded head and adaptor is loaded into the machine
 	Tips           []*wtype.LHTip
 	CurrConf       *wtype.LHChannelParameter
-	Preferences    LayoutOpt
+	Preferences    *LayoutOpt
 	Cnfvol         []*wtype.LHChannelParameter
 }
 

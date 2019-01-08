@@ -465,12 +465,12 @@ func (a *Mixer) makeMix(ctx context.Context, mixes []*wtype.LHInstruction) (*tar
 
 // New creates a new Mixer
 func New(opt Opt, d driver.LiquidhandlingDriver) (*Mixer, error) {
-	userPreferences := driver.LayoutOpt{
-		driver.Tipboxes:  driver.Addresses(opt.DriverSpecificTipPreferences),
-		driver.Inputs:    driver.Addresses(opt.DriverSpecificInputPreferences),
-		driver.Outputs:   driver.Addresses(opt.DriverSpecificOutputPreferences),
-		driver.Tipwastes: driver.Addresses(opt.DriverSpecificTipWastePreferences),
-		driver.Washes:    driver.Addresses(opt.DriverSpecificWashPreferences),
+	userPreferences := &driver.LayoutOpt{
+		Tipboxes:  driver.Addresses(opt.DriverSpecificTipPreferences),
+		Inputs:    driver.Addresses(opt.DriverSpecificInputPreferences),
+		Outputs:   driver.Addresses(opt.DriverSpecificOutputPreferences),
+		Tipwastes: driver.Addresses(opt.DriverSpecificTipWastePreferences),
+		Washes:    driver.Addresses(opt.DriverSpecificWashPreferences),
 	}
 
 	if p, status := d.GetCapabilities(); !status.Ok() {

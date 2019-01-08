@@ -103,10 +103,7 @@ func makeGilsonForTest(ctx context.Context, tipList []string) *liquidhandling.LH
 		xp = x0
 		for x := 0; x < 3; x++ {
 			posname := fmt.Sprintf("position_%d", i+1)
-			layout[posname] = &wtype.LHPosition{
-				Name:     posname,
-				Location: wtype.Coordinates{X: xp, Y: yp, Z: zp},
-			}
+			layout[posname] = wtype.NewLHPosition(posname, wtype.Coordinates{X: xp, Y: yp, Z: zp})
 			i += 1
 			xp += xi
 		}
@@ -116,13 +113,13 @@ func makeGilsonForTest(ctx context.Context, tipList []string) *liquidhandling.LH
 	// get tips permissible from the factory
 	SetUpTipsFor(ctx, lhp, tipList)
 
-	lhp.Preferences = liquidhandling.LayoutOpt{
-		liquidhandling.Tipboxes:  []string{"position_2", "position_3", "position_6", "position_9", "position_8", "position_5", "position_4", "position_7"},
-		liquidhandling.Inputs:    []string{"position_4", "position_5", "position_6", "position_9", "position_8", "position_3"},
-		liquidhandling.Outputs:   []string{"position_8", "position_9", "position_6", "position_5", "position_3", "position_1"},
-		liquidhandling.Washes:    []string{"position_8"},
-		liquidhandling.Tipwastes: []string{"position_1", "position_7"},
-		liquidhandling.Wastes:    []string{"position_9"},
+	lhp.Preferences = &liquidhandling.LayoutOpt{
+		Tipboxes:  []string{"position_2", "position_3", "position_6", "position_9", "position_8", "position_5", "position_4", "position_7"},
+		Inputs:    []string{"position_4", "position_5", "position_6", "position_9", "position_8", "position_3"},
+		Outputs:   []string{"position_8", "position_9", "position_6", "position_5", "position_3", "position_1"},
+		Washes:    []string{"position_8"},
+		Tipwastes: []string{"position_1", "position_7"},
+		Wastes:    []string{"position_9"},
 	}
 
 	hvconfig := getHVConfig()

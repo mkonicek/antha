@@ -83,16 +83,16 @@ func NewVirtualLiquidHandler(props *liquidhandling.LHProperties, settings *Simul
 		//deck.SetSlotAccepts(name, "riser")
 	}
 
-	for _, name := range props.Preferences[liquidhandling.Tipboxes] {
+	for _, name := range props.Preferences.Tipboxes {
 		deck.SetSlotAccepts(name, "tipbox")
 	}
-	for _, name := range props.Preferences[liquidhandling.Inputs] {
+	for _, name := range props.Preferences.Inputs {
 		deck.SetSlotAccepts(name, "plate")
 	}
-	for _, name := range props.Preferences[liquidhandling.Outputs] {
+	for _, name := range props.Preferences.Outputs {
 		deck.SetSlotAccepts(name, "plate")
 	}
-	for _, name := range props.Preferences[liquidhandling.Tipwastes] {
+	for _, name := range props.Preferences.Tipwastes {
 		deck.SetSlotAccepts(name, "tipwaste")
 	}
 
@@ -240,20 +240,27 @@ func (self *VirtualLiquidHandler) AddErrorf(format string, a ...interface{}) {
 func (self *VirtualLiquidHandler) validateProperties(props *liquidhandling.LHProperties) error {
 
 	//check a property
-	check_prop := func(l []string, name string) error {
+	check_prop := func(l []string) error {
 		//all locations defined
 		for _, loc := range l {
 			if !props.Exists(loc) {
-				return errors.Errorf("undefined location \"%s\" referenced in %s", loc, name)
+				return errors.Errorf(`unknown location "%s"`, loc)
 			}
 		}
 		return nil
 	}
-
-	for category, addresses := range props.Preferences {
-		if err := check_prop(addresses, fmt.Sprintf("preferences for %s", category)); err != nil {
-			return err
-		}
+	if err := check_prop(props.Preferences.Tipboxes); err != nil {
+		return errors.WithMessage(err, "in tipbox preferences")
+	} else if err := check_prop(props.Preferences.Inputs); err != nil {
+		return errors.WithMessage(err, "in input preferences")
+	} else if err := check_prop(props.Preferences.Outputs); err != nil {
+		return errors.WithMessage(err, "in output preferences")
+	} else if err := check_prop(props.Preferences.Tipwastes); err != nil {
+		return errors.WithMessage(err, "in tipwaste preferences")
+	} else if err := check_prop(props.Preferences.Wastes); err != nil {
+		return errors.WithMessage(err, "in waste preferences")
+	} else if err := check_prop(props.Preferences.Washes); err != nil {
+		return errors.WithMessage(err, "in wash preferences")
 	}
 
 	return nil

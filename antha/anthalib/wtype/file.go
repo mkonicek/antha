@@ -1,7 +1,5 @@
 package wtype
 
-//	api "github.com/antha-lang/antha/api/v1"
-
 // Representation of a file.
 type File struct {
 	Name  string
@@ -18,41 +16,3 @@ func (a *File) WriteAll(data []byte) error {
 	a.bytes = data
 	return nil
 }
-
-/*
-func (a *File) UnmarshalBlob(blob *api.Blob) error {
-	a.Name = blob.Name
-	a.bytes = blob.GetBytes().GetBytes()
-
-	return nil
-}
-
-func (a *File) UnmarshalJSON(data []byte) error {
-	var u jsonpb.Unmarshaler
-	var blob api.Blob
-	if err := u.Unmarshal(bytes.NewReader(data), &blob); err != nil {
-		return err
-	}
-
-	return a.UnmarshalBlob(&blob)
-}
-
-func (a File) MarshalJSON() ([]byte, error) {
-	blob := &api.Blob{
-		Name: a.Name,
-		From: &api.Blob_Bytes{
-			Bytes: &api.FromBytes{
-				Bytes: a.bytes,
-			},
-		},
-	}
-
-	var m jsonpb.Marshaler
-	var out bytes.Buffer
-	if err := m.Marshal(&out, blob); err != nil {
-		return nil, err
-	}
-
-	return out.Bytes(), nil
-}
-*/

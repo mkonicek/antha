@@ -25,7 +25,7 @@ func (w wrapper) Write(p []byte) (n int, err error) {
 }
 
 func NewLogger() *Logger {
-	logger := kitlog.NewLogfmtLogger(kitlog.NewSyncWriter(os.Stdout))
+	logger := kitlog.NewLogfmtLogger(kitlog.NewSyncWriter(os.Stderr))
 	logger = kitlog.With(logger, "ts", kitlog.DefaultTimestampUTC)
 
 	l := &Logger{Logger: logger}

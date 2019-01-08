@@ -27,6 +27,10 @@ func NewLaboratoryEffects() *LaboratoryEffects {
 	return le
 }
 
+func (le *LaboratoryEffects) ToJSON() ([]byte, error) {
+	return json.Marshal(le)
+}
+
 func (le *LaboratoryEffects) FromJSON(bs []byte) error {
 	// the default json marshaling is fine, we just need to do some rewriting of pointers:
 	if err := json.Unmarshal(bs, le); err != nil {

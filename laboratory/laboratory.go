@@ -1,10 +1,12 @@
 package laboratory
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"sync"
 	"sync/atomic"
 
@@ -61,23 +63,23 @@ func NewLaboratoryBuilder(jobId string) *LaboratoryBuilder {
 		LaboratoryEffects: effects.NewLaboratoryEffects(),
 	}
 
-	outDir := ""
-	flag.StringVar(&outDir, "outdir", "", "Path to directory in which to write output files")
+	flag.StringVar(&labBuild.outDir, "outdir", "", "Path to directory in which to write output files")
 	flag.Parse()
 
-	if outDir == "" {
+	if labBuild.outDir == "" {
 		if d, err := ioutil.TempDir("", fmt.Sprintf("antha-%s", jobId)); err != nil {
 			labBuild.Fatal(err)
 		} else {
-			outDir = d
+			labBuild.outDir = d
 			labBuild.Logger.Log("outdir", d)
 		}
-	} else {
-		if err := os.MkdirAll(outDir, 0700); err != nil {
+	}
+	for _, leaf := range []string{"elements", "data"} {
+		if err := os.MkdirAll(filepath.Join(labBuild.outDir, leaf), 0700); err != nil {
 			labBuild.Fatal(err)
 		}
 	}
-	labBuild.FileManager = NewFileManager(outDir)
+	labBuild.FileManager = NewFileManager(filepath.Join(labBuild.outDir, "data"))
 
 	return labBuild
 }
@@ -131,7 +133,15 @@ func (labBuild *LaboratoryBuilder) RunElements() error {
 }
 
 func (labBuild *LaboratoryBuilder) Save() error {
-	return nil
+	if bs, err := json.Marshal(labBuild.LaboratoryEffects); err != nil {
+		return err
+	} else if ioutil.WriteFile(filepath.Join(labBuild.outDir, "effects.json"), bs, 0400); err != nil {
+		return err
+	} else if len(labBuild.errors) != 0 {
+		return ioutil.WriteFile(filepath.Join(labBuild.outDir, "errors.txt"), []byte(labBuild.errors.Error()), 0400)
+	} else {
+		return nil
+	}
 }
 
 func (labBuild *LaboratoryBuilder) Compile(target *target.Target) ([]ast.Node, []target.Inst, error) {
@@ -243,7 +253,7 @@ func NewElementBase(e Element) *ElementBase {
 }
 
 func (eb *ElementBase) Run(lab *Laboratory, funs ...func(*Laboratory)) {
-	defer eb.Completed()
+	defer eb.Completed(lab)
 	eb.InputReady()
 
 	if len(funs) == 0 {
@@ -276,11 +286,23 @@ func (eb *ElementBase) Run(lab *Laboratory, funs ...func(*Laboratory)) {
 	}
 }
 
-func (eb *ElementBase) Completed() {
+func (eb *ElementBase) Completed(lab *Laboratory) {
+	if err := eb.Save(lab); err != nil {
+		lab.Error(err)
+	}
 	funs := eb.onExit
 	eb.onExit = nil
 	for _, fun := range funs {
 		fun()
+	}
+}
+
+func (eb *ElementBase) Save(lab *Laboratory) error {
+	if bs, err := json.Marshal(eb.element); err != nil {
+		return err
+	} else {
+		p := filepath.Join(lab.outDir, "elements", fmt.Sprintf("%s.json", eb.element.Name()))
+		return ioutil.WriteFile(p, bs, 0400)
 	}
 }
 

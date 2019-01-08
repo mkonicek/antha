@@ -47,7 +47,7 @@ func (fm *FileManager) Write(e Element, bs []byte) (*wtype.File, error) {
 
 	fm.writtenCount++
 	p := filepath.Join(fm.outDir, fmt.Sprintf("%d", fm.writtenCount))
-	if err := ioutil.WriteFile(p, bs, 0600); err != nil {
+	if err := ioutil.WriteFile(p, bs, 0400); err != nil {
 		return nil, err
 	} else {
 		p2 := filepath.ToSlash(p)

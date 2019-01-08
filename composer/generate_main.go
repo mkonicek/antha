@@ -94,10 +94,13 @@ func main() {
 	}
 {{end}}{{end}}
 	// Run!
-	if err := labBuild.RunElements(); err != nil {
-		labBuild.Fatal(err)
-	} else if err := labBuild.Save(); err != nil {
-		labBuild.Fatal(err)
+	errRun := labBuild.RunElements()
+	errSave := labBuild.Save()
+	if errRun != nil {
+		labBuild.Fatal(errRun)
+	}
+	if errSave != nil {
+		labBuild.Fatal(errSave)
 	}
 }
 `

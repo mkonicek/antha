@@ -556,7 +556,7 @@ func testNegative(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPoli
 
 		for _, ri := range ri2 {
 			if ri.Type() == MCB && ri.GetParameter("MULTI").(int) != 1 {
-				t.Errorf("Multichannel block generated without permission: %v %v %v", ri.GetParameter(LIQUIDCLASS), ri.GetParameter(WELLFROM), ri.GetParameter(WELLTO))
+				t.Errorf("Multichannel block generated without permission: %v %v %v %v", ri.GetParameter(MULTI), ri.GetParameter(LIQUIDCLASS), ri.GetParameter(WELLFROM), ri.GetParameter(WELLTO))
 			}
 		}
 
@@ -591,7 +591,9 @@ func generateRobotInstructions(t *testing.T, ctx context.Context, inss []*wtype.
 func assertNumTipsUsed(t *testing.T, instructions []RobotInstruction, expectedTips int) {
 	var loaded, unloaded int
 
+	lines := make([]string, 0, 1)
 	for _, instruction := range instructions {
+		lines = append(lines, InsToString(instruction))
 		switch ins := instruction.(type) {
 		case *LoadTipsInstruction:
 			loaded += ins.Multi

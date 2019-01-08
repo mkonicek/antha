@@ -610,7 +610,6 @@ func RegisterLineMap(labBuild *laboratory.LaboratoryBuilder) {
 		{{printf "%q" .ElementTypeName}},
 		lineMap)
 }
-
 `
 	type TVars struct {
 		ElementTypeName string

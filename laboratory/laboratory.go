@@ -1,7 +1,9 @@
 package laboratory
 
 import (
+	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"sync"
 	"sync/atomic"
@@ -26,6 +28,8 @@ type Element interface {
 type LaboratoryBuilder struct {
 	JobId string
 
+	outDir string
+
 	elemLock   sync.Mutex
 	elemsUnrun int64
 	elements   map[Element]*ElementBase
@@ -37,7 +41,8 @@ type LaboratoryBuilder struct {
 	Completed chan struct{}
 
 	*lineMapManager
-	Logger *Logger
+	Logger      *Logger
+	FileManager *FileManager
 
 	*effects.LaboratoryEffects
 }
@@ -55,6 +60,24 @@ func NewLaboratoryBuilder(jobId string) *LaboratoryBuilder {
 
 		LaboratoryEffects: effects.NewLaboratoryEffects(),
 	}
+
+	outDir := ""
+	flag.StringVar(&outDir, "outdir", "", "Path to directory in which to write output files")
+	flag.Parse()
+
+	if outDir == "" {
+		if d, err := ioutil.TempDir("", fmt.Sprintf("antha-%s", jobId)); err != nil {
+			labBuild.Fatal(err)
+		} else {
+			outDir = d
+			labBuild.Logger.Log("outdir", d)
+		}
+	} else {
+		if err := os.MkdirAll(outDir, 0700); err != nil {
+			labBuild.Fatal(err)
+		}
+	}
+	labBuild.FileManager = NewFileManager(outDir)
 
 	return labBuild
 }
@@ -105,6 +128,10 @@ func (labBuild *LaboratoryBuilder) RunElements() error {
 			return nil
 		}
 	}
+}
+
+func (labBuild *LaboratoryBuilder) Save() error {
+	return nil
 }
 
 func (labBuild *LaboratoryBuilder) Compile(target *target.Target) ([]ast.Node, []target.Inst, error) {

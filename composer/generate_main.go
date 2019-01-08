@@ -71,7 +71,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/antha-lang/antha/laboratory"
 
@@ -97,10 +96,8 @@ func main() {
 	// Run!
 	if err := labBuild.RunElements(); err != nil {
 		labBuild.Fatal(err)
-	} else if bs, err := labBuild.ToJSON(); err != nil {
+	} else if err := labBuild.Save(); err != nil {
 		labBuild.Fatal(err)
-	} else {
-		fmt.Println(string(bs))
 	}
 }
 `

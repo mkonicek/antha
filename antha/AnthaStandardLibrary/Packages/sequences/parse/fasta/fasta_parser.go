@@ -33,6 +33,7 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/laboratory"
 )
 
 // Fasta represents the intermediate structure containing contents of Fasta file as strings
@@ -43,11 +44,11 @@ type Fasta struct {
 }
 
 // This will retrieve seq from FASTA file using the sequence ID found in the file
-func RetrieveSeqFromFASTA(id string, fastaFile wtype.File) (seq wtype.DNASequence, err error) {
+func RetrieveSeqFromFASTA(lab *laboratory.Laboratory, id string, fastaFile wtype.File) (seq wtype.DNASequence, err error) {
 
 	var nofeatures []wtype.Feature
 
-	allparts, err := fastaFile.ReadAll()
+	allparts, err := lab.FileManager.ReadAll(fastaFile)
 	if err != nil {
 		return
 	}
@@ -78,7 +79,7 @@ func RetrieveSeqFromFASTA(id string, fastaFile wtype.File) (seq wtype.DNASequenc
 }
 
 // This will retrieve seq from FASTA file
-func FASTAtoLinearDNASeqs(fastaFile wtype.File) (seqs []wtype.DNASequence, err error) {
+func FASTAtoLinearDNASeqs(lab *laboratory.Laboratory, fastaFile wtype.File) (seqs []wtype.DNASequence, err error) {
 
 	var nofeatures []wtype.Feature
 
@@ -86,7 +87,7 @@ func FASTAtoLinearDNASeqs(fastaFile wtype.File) (seqs []wtype.DNASequence, err e
 
 	var seq wtype.DNASequence
 
-	allparts, err := fastaFile.ReadAll()
+	allparts, err := lab.FileManager.ReadAll(fastaFile)
 	if err != nil {
 		return
 	}
@@ -110,7 +111,7 @@ func FASTAtoLinearDNASeqs(fastaFile wtype.File) (seqs []wtype.DNASequence, err e
 }
 
 // This will retrieve sequences from a FASTA file of type wtype.File and set all sequences to plasmids
-func FASTAtoPlasmidDNASeqs(file wtype.File) (seqs []wtype.DNASequence, err error) {
+func FASTAtoPlasmidDNASeqs(lab *laboratory.Laboratory, file wtype.File) (seqs []wtype.DNASequence, err error) {
 
 	var nofeatures []wtype.Feature
 
@@ -118,7 +119,7 @@ func FASTAtoPlasmidDNASeqs(file wtype.File) (seqs []wtype.DNASequence, err error
 
 	var seq wtype.DNASequence
 
-	allparts, err := file.ReadAll()
+	allparts, err := lab.FileManager.ReadAll(file)
 	if err != nil {
 		return
 	}
@@ -144,8 +145,8 @@ func FASTAtoPlasmidDNASeqs(file wtype.File) (seqs []wtype.DNASequence, err error
 
 // Convert a sequence file in Fasta format to an array of DNASequence.
 // If the header does not contain the key words PLASMID, CIRCULAR or VECTOR the sequence will be assumed to be linear.
-func FastaToDNASequences(sequenceFile wtype.File) (seqs []wtype.DNASequence, err error) {
-	data, err := sequenceFile.ReadAll()
+func FastaToDNASequences(lab *laboratory.Laboratory, sequenceFile wtype.File) (seqs []wtype.DNASequence, err error) {
+	data, err := lab.FileManager.ReadAll(sequenceFile)
 	if err != nil {
 		return
 	}
@@ -236,8 +237,8 @@ func fastaParse(fastaFh []byte) []Fasta {
 	return outputs
 }
 
-func Fastatocsv(inputfilename wtype.File, outputfileprefix string) (csvfile *os.File, err error) {
-	fastaFh, err := inputfilename.ReadAll()
+func Fastatocsv(lab *laboratory.Laboratory, inputfilename wtype.File, outputfileprefix string) (csvfile *os.File, err error) {
+	fastaFh, err := lab.FileManager.ReadAll(inputfilename)
 	if err != nil {
 		return
 	}

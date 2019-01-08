@@ -27,7 +27,6 @@ import (
 	"encoding/csv"
 	"fmt"
 	"math"
-	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -781,9 +780,9 @@ const SubComponentsHeader = "SubComponents"
 
 // ExportPlateCSV a exports an LHPlate and its contents as a csv file.
 // The caller is required to set the well locations and volumes explicitely with this function.
-func ExportPlateCSV(outputFileName string, plate *Plate, plateName string, wells []string, liquids []*Liquid, volumes []wunit.Volume) (file File, err error) {
+func ExportPlateCSV(outputFileName string, plate *Plate, plateName string, wells []string, liquids []*Liquid, volumes []wunit.Volume) (data []byte, err error) {
 	if len(wells) != len(liquids) || len(liquids) != len(volumes) {
-		return File{}, fmt.Errorf("Found %d liquids, %d wells and %d volumes. Cannot ExportPlateCSV unless these are all equal.", len(liquids), len(wells), len(volumes))
+		return nil, fmt.Errorf("Found %d liquids, %d wells and %d volumes. Cannot ExportPlateCSV unless these are all equal.", len(liquids), len(wells), len(volumes))
 	}
 
 	records := make([][]string, 0)
@@ -840,7 +839,7 @@ func ExportPlateCSV(outputFileName string, plate *Plate, plateName string, wells
 // at the time of running an element, the scheduler  will not have allocated positions
 // for the components so, for example, accurate well information cannot currently be obtained with this function.
 // If allocating wells manually use the ExportPlateCSV function and explicitely set the sample locations and volumes.
-func AutoExportPlateCSV(outputFileName string, plate *Plate) (file File, err error) {
+func AutoExportPlateCSV(outputFileName string, plate *Plate) (data []byte, err error) {
 
 	var platename string = plate.PlateName
 	var wells = make([]string, 0)
@@ -867,8 +866,7 @@ func AutoExportPlateCSV(outputFileName string, plate *Plate) (file File, err err
 }
 
 // Export a 2D array of string data as a csv file
-func exportCSV(records [][]string, filename string) (File, error) {
-	var anthafile File
+func exportCSV(records [][]string, filename string) ([]byte, error) {
 	var buf bytes.Buffer
 
 	/// use the buffer to create a csv writer
@@ -877,34 +875,10 @@ func exportCSV(records [][]string, filename string) (File, error) {
 	// write all records to the buffer
 	err := w.WriteAll(records)
 	if err != nil {
-		return anthafile, err
+		return nil, err
+	} else {
+		return buf.Bytes(), nil
 	}
-
-	if err := w.Error(); err != nil {
-		return anthafile, fmt.Errorf("error writing csv: %s", err.Error())
-	}
-
-	//This code shows how to create an antha File from this buffer which can be downloaded through the UI:
-
-	anthafile.Name = filename
-
-	err = anthafile.WriteAll(buf.Bytes())
-	if err != nil {
-		return anthafile, err
-	}
-
-	///// to write this to a file on the command line this is what we'd do (or something similar)
-
-	// also create a file on os
-	file, _ := os.Create(filename)
-	defer file.Close() // nolint
-
-	// this time we'll use the file to create the writer instead of a buffer (anything which fulfils the writer interface can be used here ... checkout golang io.Writer and io.Reader)
-	fw := csv.NewWriter(file)
-
-	// same as before ...
-	err = fw.WriteAll(records)
-	return anthafile, err
 }
 
 func makeConstraintKeyFor(platform string) string {

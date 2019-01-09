@@ -3,7 +3,6 @@ package liquidhandling
 import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/laboratory/effects"
-	"github.com/antha-lang/antha/microArch/driver"
 )
 
 // instructions to deal with robot setup
@@ -38,13 +37,7 @@ func (rapi *RemoveAllPlatesInstruction) Check(lhpr wtype.LHPolicyRule) bool {
 }
 
 func (rapi *RemoveAllPlatesInstruction) OutputTo(drv LiquidhandlingDriver) error {
-	stat := drv.RemoveAllPlates()
-
-	if stat.Errorcode == driver.ERR {
-		return wtype.LHError(wtype.LH_ERR_DRIV, stat.Msg)
-	}
-
-	return nil
+	return drv.RemoveAllPlates().GetError()
 }
 
 type AddPlateToInstruction struct {
@@ -92,11 +85,5 @@ func (apti *AddPlateToInstruction) Check(lhpr wtype.LHPolicyRule) bool {
 }
 
 func (apti *AddPlateToInstruction) OutputTo(drv LiquidhandlingDriver) error {
-	stat := drv.AddPlateTo(apti.Position, apti.Plate, apti.Name)
-
-	if stat.Errorcode == driver.ERR {
-		return wtype.LHError(wtype.LH_ERR_DRIV, stat.Msg)
-	}
-
-	return nil
+	return drv.AddPlateTo(apti.Position, apti.Plate, apti.Name).GetError()
 }

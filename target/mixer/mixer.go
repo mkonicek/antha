@@ -244,8 +244,8 @@ func (a *Mixer) Compile(labEffects *effects.LaboratoryEffects, nodes []ast.Node)
 
 func (a *Mixer) saveFile(name string) ([]byte, error) {
 	data, status := a.driver.GetOutputFile()
-	if !status.OK {
-		return nil, fmt.Errorf("%d: %s", status.Errorcode, status.Msg)
+	if err := status.GetError(); err != nil {
+		return nil, err
 	} else if len(data) == 0 {
 		return nil, nil
 	}
@@ -462,8 +462,8 @@ func (a *Mixer) makeMix(labEffects *effects.LaboratoryEffects, mixes []*wtype.LH
 // New creates a new Mixer
 func New(opt Opt, d driver.LiquidhandlingDriver) (*Mixer, error) {
 	p, status := d.GetCapabilities()
-	if !status.OK {
-		return nil, fmt.Errorf("cannot get capabilities: %s", status.Msg)
+	if err := status.GetError(); err != nil {
+		return nil, err
 	}
 
 	update := func(addr *[]string, v []string) {

@@ -1,8 +1,6 @@
 package liquidhandling
 
 import (
-	"fmt"
-
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/laboratory/effects"
 )
@@ -52,10 +50,7 @@ func (msi *MessageInstruction) OutputTo(driver LiquidhandlingDriver) error {
 	//level int, title, text string, showcancel bool
 
 	if msi.Message != wtype.MAGICBARRIERPROMPTSTRING {
-		ret := driver.Message(0, "", msi.Message, false)
-		if !ret.OK {
-			return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
-		}
+		return driver.Message(0, "", msi.Message, false).GetError()
 	}
 	return nil
 }

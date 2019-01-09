@@ -39,7 +39,7 @@ type testDriver struct {
 
 func (td *testDriver) call(s string) driver.CommandStatus {
 	td.callList = append(td.callList, s)
-	return driver.CommandStatus{OK: true, Msg: s}
+	return driver.CommandStatus{ErrorCode: driver.OK, Msg: s}
 }
 
 func (td *testDriver) AddPlateTo(position string, plate interface{}, name string) driver.CommandStatus {
@@ -312,7 +312,7 @@ type LLGetCapabilities struct {
 }
 
 func (gc *LLGetCapabilities) GetCapabilities() (liquidhandling.LHProperties, driver.CommandStatus) {
-	return *gc.Props, driver.CommandStatus{OK: true}
+	return *gc.Props, driver.CommandOk()
 }
 
 func TestGetCapabilities(t *testing.T) {
@@ -337,7 +337,7 @@ func TestGetCapabilities(t *testing.T) {
 		t.Error(err)
 	}
 
-	if got, status := c.GetCapabilities(); !status.OK {
+	if got, status := c.GetCapabilities(); !status.Ok() {
 		t.Errorf("got bad status: %v", status)
 	} else if !reflect.DeepEqual(expected, &got) {
 		t.Errorf("Proerties changed:\ne: %+v\ng:%+v", expected, got)

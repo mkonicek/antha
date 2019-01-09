@@ -86,10 +86,15 @@ func main() {
 {{range $name, $type := .ElementInstances}}	{{varName $name}} := {{$type.ElementTypeName}}.New{{$type.ElementTypeName}}(labBuild, {{printf "%q" $name}})
 {{end}}
 	// Add wiring
-{{range .ElementInstancesConnections}}	labBuild.AddLink({{varName .Source.ElementInstance}}, {{varName .Target.ElementInstance}}, func () { {{varName .Target.ElementInstance}}.Inputs.{{.Target.ParameterName}} = {{varName .Source.ElementInstance}}.Outputs.{{.Source.ParameterName}} })
+{{range .ElementInstancesConnections}}	labBuild.AddLink({{varName .Source.ElementInstance}}, {{varName .Target.ElementInstance}}, func () { {{varName .Target.ElementInstance}}.{{if .Target.IsPhysical}}Inputs.{{.Target.PhysicalName}}{{else}}Parameters.{{.Target.DataName}}{{end}} = {{varName .Source.ElementInstance}}.{{if .Source.IsPhysical}}Outputs.{{.Source.PhysicalName}}{{else}}Data.{{.Source.DataName}}{{end}} })
 {{end}}
 	// Set parameters
 {{range $name, $params := .ElementInstancesParameters}}{{range $param, $value := $params}}	if err := json.Unmarshal([]byte({{printf "%q" $value}}), &{{varName $name}}.Parameters.{{$param}}); err != nil {
+		labBuild.Fatal(err)
+	}
+{{end}}{{end}}
+	// Set inputs
+{{range $name, $params := .ElementInstancesInputs}}{{range $param, $value := $params}}	if err := json.Unmarshal([]byte({{printf "%q" $value}}), &{{varName $name}}.Inputs.{{$param}}); err != nil {
 		labBuild.Fatal(err)
 	}
 {{end}}{{end}}

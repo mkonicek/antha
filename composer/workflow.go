@@ -22,6 +22,7 @@ type Workflow struct {
 	ElementTypes                ElementTypes                `json:"ElementTypes"`
 	ElementInstances            ElementInstances            `json:"ElementInstances"`
 	ElementInstancesParameters  ElementInstancesParameters  `json:"ElementInstancesParameters"`
+	ElementInstancesInputs      ElementInstancesInputs      `json:"ElementInstancesInputs"`
 	ElementInstancesConnections ElementInstancesConnections `json:"ElementInstancesConnections"`
 
 	typeNames map[ElementTypeName]*ElementType
@@ -33,6 +34,7 @@ func newWorkflow() *Workflow {
 		ElementTypes:                make(ElementTypes, 0),
 		ElementInstances:            make(ElementInstances),
 		ElementInstancesParameters:  make(ElementInstancesParameters),
+		ElementInstancesInputs:      make(ElementInstancesInputs),
 		ElementInstancesConnections: make(ElementInstancesConnections, 0),
 	}
 }
@@ -117,6 +119,7 @@ type ElementInstance struct {
 }
 
 type ElementInstancesParameters map[ElementInstanceName]ElementParameterSet
+type ElementInstancesInputs map[ElementInstanceName]ElementParameterSet
 
 type ElementParameterSet map[ElementParameterName]json.RawMessage
 
@@ -129,7 +132,12 @@ type ElementConnection struct {
 
 type ElementSocket struct {
 	ElementInstance ElementInstanceName  `json:"ElementInstance"`
-	ParameterName   ElementParameterName `json:"ParameterName"`
+	PhysicalName    ElementParameterName `json:"PhysicalName"`
+	DataName        ElementParameterName `json:"DataName"`
+}
+
+func (es ElementSocket) IsPhysical() bool {
+	return es.PhysicalName != ""
 }
 
 func (wf *Workflow) TypeNames() map[ElementTypeName]*ElementType {
@@ -159,9 +167,9 @@ func (a *Workflow) merge(b *Workflow) error {
 		a.ElementTypes.merge(b.ElementTypes),
 		a.ElementInstances.merge(b.ElementInstances),
 		a.ElementInstancesParameters.merge(b.ElementInstancesParameters),
+		a.ElementInstancesInputs.merge(b.ElementInstancesInputs),
 		a.ElementInstancesConnections.merge(b.ElementInstancesConnections),
 	}
-
 	if err := errs.Nub(); err != nil {
 		return err
 	} else {
@@ -240,6 +248,18 @@ func (a ElementInstancesParameters) merge(b ElementInstancesParameters) error {
 	return nil
 }
 
+func (a ElementInstancesInputs) merge(b ElementInstancesInputs) error {
+	// Just like element instances, these should be completely distinct
+	for name, paramSetB := range b {
+		if _, found := a[name]; found {
+			return fmt.Errorf("Cannot merge: element parameters '%v' exists in both workflows", name)
+		} else {
+			a[name] = paramSetB
+		}
+	}
+	return nil
+}
+
 func (conns ElementInstancesConnections) sort() {
 	sort.Slice(conns, func(i, j int) bool {
 		return conns[i].lessThan(conns[j])
@@ -253,7 +273,7 @@ func (a ElementConnection) lessThan(b ElementConnection) bool {
 
 func (a ElementSocket) lessThan(b ElementSocket) bool {
 	return a.ElementInstance < b.ElementInstance ||
-		(a.ElementInstance == b.ElementInstance && a.ParameterName < b.ParameterName)
+		(a.ElementInstance == b.ElementInstance && (a.DataName < b.DataName || a.PhysicalName < b.PhysicalName))
 }
 
 func (a *ElementInstancesConnections) merge(b ElementInstancesConnections) error {
@@ -278,18 +298,20 @@ func (a *ElementInstancesConnections) merge(b ElementInstancesConnections) error
 func (wf *Workflow) validate() error {
 	if wf.JobId == "" {
 		return errors.New("Workflow has empty JobId")
-	} else if err := wf.Repositories.validate(); err != nil {
-		return err
-	} else if err := wf.ElementTypes.validate(wf); err != nil {
-		return err
-	} else if err := wf.ElementInstances.validate(wf); err != nil {
-		return err
-	} else if err := wf.ElementInstancesParameters.validate(wf); err != nil {
-		return err
-	} else if err := wf.ElementInstancesConnections.validate(wf); err != nil {
-		return err
 	} else {
-		return nil
+		errs := utils.ErrorSlice{
+			wf.Repositories.validate(),
+			wf.ElementTypes.validate(wf),
+			wf.ElementInstances.validate(wf),
+			wf.ElementInstancesParameters.validate(wf),
+			wf.ElementInstancesInputs.validate(wf),
+			wf.ElementInstancesConnections.validate(wf),
+		}
+		if err := errs.Nub(); err != nil {
+			return err
+		} else {
+			return nil
+		}
 	}
 }
 
@@ -370,12 +392,24 @@ func (eps ElementInstancesParameters) validate(wf *Workflow) error {
 	return nil
 }
 
+func (eps ElementInstancesInputs) validate(wf *Workflow) error {
+	for name, _ := range eps {
+		if _, found := wf.ElementInstances[name]; !found {
+			return fmt.Errorf("ElementInstancesParameters provided for unknown ElementInstance '%v'", name)
+		}
+	}
+	return nil
+}
+
 func (conns ElementInstancesConnections) validate(wf *Workflow) error {
 	for _, conn := range conns {
 		if err := conn.Source.validate(wf); err != nil {
 			return err
 		} else if err := conn.Target.validate(wf); err != nil {
 			return err
+		} else if conn.Source.IsPhysical() != conn.Target.IsPhysical() {
+			return fmt.Errorf("ElementInstancesConnection between '%v' and '%v': cannot create connection between physical and data.",
+				conn.Source.ElementInstance, conn.Target.ElementInstance)
 		}
 	}
 	return nil
@@ -384,6 +418,8 @@ func (conns ElementInstancesConnections) validate(wf *Workflow) error {
 func (soc ElementSocket) validate(wf *Workflow) error {
 	if _, found := wf.ElementInstances[soc.ElementInstance]; !found {
 		return fmt.Errorf("ElementConnection uses ElementInstance '%v' which does not exist.", soc.ElementInstance)
+	} else if physicalEmpty, dataEmpty := soc.PhysicalName == "", soc.DataName == ""; physicalEmpty == dataEmpty {
+		return fmt.Errorf("ElementConnection using ElementInstance '%v' must specify one of PhysicalName and DataName.", soc.ElementInstance)
 	} else {
 		return nil
 	}

@@ -2,6 +2,7 @@ package liquidhandling
 
 import (
 	"fmt"
+	"github.com/antha-lang/antha/utils"
 	"github.com/pkg/errors"
 	"strings"
 )
@@ -58,11 +59,21 @@ func (lo *LayoutOpt) Dup() *LayoutOpt {
 
 // ApplyUserPreferences combine the user supplied preferences with the driver plugin supplied rules
 // An error is returned if the user requests an object be placed in a location that the driver
-// has not allowed
+// has not allowed, i.e. the user preferences must be a subset of the driver rules,
+// but can specify any order of the acceptable addresses.
+//
+// Nb. (HJK)
+// If the user preferences for any category are empty, they are replaced by the driver's defaults.
+// This is because currently the UI cannot access the set of driver defaults (and they will soon
+// vary with the specific device instance not just device type), so a blank entry signifies defaults.
+// This has the side effect that it is not possible for the user to specify that there are no positions
+// for objects of a particular type.
+// This seems like an unlikely use case, so it was decided to proceed as is until there is UX in place
+// to correctly set these preferences
 func (lo *LayoutOpt) ApplyUserPreferences(user *LayoutOpt) (*LayoutOpt, error) {
 
 	// override driver preferences with user preferences, if specified
-	override := func(driver, user Addresses) (Addresses, error) {
+	override := func(target *Addresses, driver, user Addresses, name string) error {
 		// return an error if the user requests an address that's not OK
 		valid := driver.Map()
 		invalid := make(Addresses, 0, len(user))
@@ -72,36 +83,26 @@ func (lo *LayoutOpt) ApplyUserPreferences(user *LayoutOpt) (*LayoutOpt, error) {
 			}
 		}
 		if len(invalid) > 0 {
-			return nil, errors.New(invalid.String())
+			return errors.Errorf("cannot place %s at: %s", name, invalid.String())
 		}
 
 		if len(user) > 0 {
-			return user.Dup(), nil
+			*target = user.Dup()
 		} else {
-			return driver.Dup(), nil
+			*target = driver.Dup()
 		}
+		return nil
 	}
 
-	if tipboxes, err := override(lo.Tipboxes, user.Tipboxes); err != nil {
-		return nil, errors.WithMessage(err, "invalid user preferences: cannot place tipboxes at")
-	} else if inputs, err := override(lo.Inputs, user.Inputs); err != nil {
-		return nil, errors.WithMessage(err, "invalid user preferences: cannot place inputs at")
-	} else if outputs, err := override(lo.Outputs, user.Outputs); err != nil {
-		return nil, errors.WithMessage(err, "invalid user preferences: cannot place outputs at")
-	} else if tipwastes, err := override(lo.Tipwastes, user.Tipwastes); err != nil {
-		return nil, errors.WithMessage(err, "invalid user preferences: cannot place tipwastes at")
-	} else if wastes, err := override(lo.Wastes, user.Wastes); err != nil {
-		return nil, errors.WithMessage(err, "invalid user preferences: cannot place wastes at")
-	} else if washes, err := override(lo.Washes, user.Washes); err != nil {
-		return nil, errors.WithMessage(err, "invalid user preferences: cannot place washes at")
-	} else {
-		return &LayoutOpt{
-			Tipboxes:  tipboxes,
-			Inputs:    inputs,
-			Outputs:   outputs,
-			Tipwastes: tipwastes,
-			Wastes:    wastes,
-			Washes:    washes,
-		}, nil
+	ret := &LayoutOpt{}
+	errs := utils.ErrorSlice{
+		override(&ret.Tipboxes, lo.Tipboxes, user.Tipboxes, "tipboxes"),
+		override(&ret.Inputs, lo.Inputs, user.Inputs, "input plates"),
+		override(&ret.Outputs, lo.Outputs, user.Outputs, "output plates"),
+		override(&ret.Tipwastes, lo.Tipwastes, user.Tipwastes, "tipwastes"),
+		override(&ret.Wastes, lo.Wastes, user.Wastes, "wastes"),
+		override(&ret.Washes, lo.Washes, user.Washes, "washes"),
 	}
+	return ret, errors.WithMessage(errs.Pack(), "invalid layout preferences")
+
 }

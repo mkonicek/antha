@@ -62,7 +62,7 @@ func TestLayoutOpt(t *testing.T) {
 			User: &LayoutOpt{
 				Tipboxes: Addresses{"b", "c", "the moon"},
 			},
-			ExpectedError: "invalid user preferences: cannot place tipboxes at: \"the moon\"",
+			ExpectedError: "invalid layout preferences: cannot place tipboxes at: \"the moon\"",
 		},
 	}.Run(t)
 }

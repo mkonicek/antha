@@ -34,6 +34,7 @@ import (
 	"github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/simulator"
+	"github.com/antha-lang/antha/utils"
 )
 
 const arbitraryZOffset = 4.0
@@ -240,30 +241,23 @@ func (self *VirtualLiquidHandler) AddErrorf(format string, a ...interface{}) {
 func (self *VirtualLiquidHandler) validateProperties(props *liquidhandling.LHProperties) error {
 
 	//check a property
-	check_prop := func(l []string) error {
+	check_prop := func(l []string, name string) error {
 		//all locations defined
 		for _, loc := range l {
 			if !props.Exists(loc) {
-				return errors.Errorf(`unknown location "%s"`, loc)
+				return errors.Errorf(`unknown location "%s" found in %s preferences`, loc, name)
 			}
 		}
 		return nil
 	}
-	if err := check_prop(props.Preferences.Tipboxes); err != nil {
-		return errors.WithMessage(err, "in tipbox preferences")
-	} else if err := check_prop(props.Preferences.Inputs); err != nil {
-		return errors.WithMessage(err, "in input preferences")
-	} else if err := check_prop(props.Preferences.Outputs); err != nil {
-		return errors.WithMessage(err, "in output preferences")
-	} else if err := check_prop(props.Preferences.Tipwastes); err != nil {
-		return errors.WithMessage(err, "in tipwaste preferences")
-	} else if err := check_prop(props.Preferences.Wastes); err != nil {
-		return errors.WithMessage(err, "in waste preferences")
-	} else if err := check_prop(props.Preferences.Washes); err != nil {
-		return errors.WithMessage(err, "in wash preferences")
-	}
-
-	return nil
+	return utils.ErrorSlice{
+		check_prop(props.Preferences.Tipboxes, "tipbox"),
+		check_prop(props.Preferences.Inputs, "input"),
+		check_prop(props.Preferences.Outputs, "output"),
+		check_prop(props.Preferences.Tipwastes, "tipwaste"),
+		check_prop(props.Preferences.Wastes, "waste"),
+		check_prop(props.Preferences.Washes, "wash"),
+	}.Pack()
 }
 
 //testSliceLength test that a bunch of slices are the correct length

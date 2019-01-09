@@ -238,7 +238,7 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 	for name, pt := range lhp.PlateLookup {
 		var pt2 interface{}
 		var newid string
-		var pos string
+		var addr string
 		switch pt.(type) {
 		case *wtype.LHTipwaste:
 			var tmp *wtype.LHTipwaste
@@ -250,8 +250,8 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 			}
 			pt2 = tmp
 			newid = tmp.ID
-			pos = lhp.PlateIDLookup[name]
-			r.Tipwastes[pos] = tmp
+			addr = lhp.PlateIDLookup[name]
+			r.Tipwastes[addr] = tmp
 		case *wtype.Plate:
 			var tmp *wtype.Plate
 			if keepIDs {
@@ -261,16 +261,16 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 			}
 			pt2 = tmp
 			newid = tmp.ID
-			pos = lhp.PlateIDLookup[name]
-			_, waste := lhp.Wastes[pos]
-			_, wash := lhp.Washes[pos]
+			addr = lhp.PlateIDLookup[name]
+			_, waste := lhp.Wastes[addr]
+			_, wash := lhp.Washes[addr]
 
 			if waste {
-				r.Wastes[pos] = tmp
+				r.Wastes[addr] = tmp
 			} else if wash {
-				r.Washes[pos] = tmp
+				r.Washes[addr] = tmp
 			} else {
-				r.Plates[pos] = tmp
+				r.Plates[addr] = tmp
 			}
 		case *wtype.LHTipbox:
 			var tmp *wtype.LHTipbox
@@ -281,12 +281,12 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 			}
 			pt2 = tmp
 			newid = tmp.ID
-			pos = lhp.PlateIDLookup[name]
-			r.Tipboxes[pos] = tmp
+			addr = lhp.PlateIDLookup[name]
+			r.Tipboxes[addr] = tmp
 		}
 		r.PlateLookup[newid] = pt2
-		r.PlateIDLookup[newid] = pos
-		r.PosLookup[pos] = newid
+		r.PlateIDLookup[newid] = addr
+		r.PosLookup[addr] = newid
 	}
 
 	for _, tip := range lhp.Tips {
@@ -360,34 +360,34 @@ func (lhp *LHProperties) GetTipType() TipType {
 }
 
 func (lhp *LHProperties) AddTipBox(tipbox *wtype.LHTipbox) error {
-	for _, pref := range lhp.Preferences.Tipboxes {
-		if !lhp.IsEmpty(pref) {
+	for _, addr := range lhp.Preferences.Tipboxes {
+		if !lhp.IsEmpty(addr) {
 			continue
 		}
 
-		lhp.AddTipBoxTo(pref, tipbox)
+		lhp.AddTipBoxTo(addr, tipbox)
 		return nil
 	}
 
 	return wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, "Trying to add tip box")
 }
-func (lhp *LHProperties) AddTipBoxTo(pos string, tipbox *wtype.LHTipbox) bool {
-	if !lhp.IsEmpty(pos) {
-		fmt.Printf("Tried to add tipbox to full position: %s\n", pos)
+func (lhp *LHProperties) AddTipBoxTo(addr string, tipbox *wtype.LHTipbox) bool {
+	if !lhp.IsEmpty(addr) {
+		fmt.Printf("Tried to add tipbox to full position: %s\n", addr)
 		return false
 	}
-	lhp.Tipboxes[pos] = tipbox
+	lhp.Tipboxes[addr] = tipbox
 	lhp.PlateLookup[tipbox.ID] = tipbox
-	lhp.PosLookup[pos] = tipbox.ID
-	lhp.PlateIDLookup[tipbox.ID] = pos
+	lhp.PosLookup[addr] = tipbox.ID
+	lhp.PlateIDLookup[tipbox.ID] = addr
 
 	return true
 }
 
 func (lhp *LHProperties) RemoveTipBoxes() {
-	for pos, tbx := range lhp.Tipboxes {
+	for addr, tbx := range lhp.Tipboxes {
 		lhp.PlateLookup[tbx.ID] = nil
-		lhp.PosLookup[pos] = ""
+		lhp.PosLookup[addr] = ""
 		lhp.PlateIDLookup[tbx.ID] = ""
 	}
 
@@ -397,9 +397,9 @@ func (lhp *LHProperties) RemoveTipBoxes() {
 func (lhp *LHProperties) TipWastesMounted() int {
 	r := 0
 	// go looking for tipwastes
-	for _, pref := range lhp.Preferences.Tipwastes {
-		if _, ok := lhp.Tipwastes[pref]; !ok {
-			fmt.Printf("Position %s claims to have a tipbox but is empty\n", pref)
+	for _, addr := range lhp.Preferences.Tipwastes {
+		if _, ok := lhp.Tipwastes[addr]; !ok {
+			fmt.Printf("Position %s claims to have a tipbox but is empty\n", addr)
 		} else {
 			r += 1
 		}
@@ -412,9 +412,9 @@ func (lhp *LHProperties) TipWastesMounted() int {
 func (lhp *LHProperties) TipSpacesLeft() int {
 	r := 0
 	// go looking for tipboxes
-	for _, pref := range lhp.Preferences.Tipwastes {
-		if bx, ok := lhp.Tipwastes[pref]; !ok {
-			fmt.Printf("Position %s claims to have a tipbox but is empty\n", pref)
+	for _, addr := range lhp.Preferences.Tipwastes {
+		if bx, ok := lhp.Tipwastes[addr]; !ok {
+			fmt.Printf("Position %s claims to have a tipbox but is empty\n", addr)
 		} else {
 			r += bx.SpaceLeft()
 		}
@@ -435,103 +435,103 @@ func (lhp *LHProperties) Exists(address string) bool {
 }
 
 func (lhp *LHProperties) AddTipWaste(tipwaste *wtype.LHTipwaste) error {
-	for _, pref := range lhp.Preferences.Tipwastes {
-		if !lhp.IsEmpty(pref) {
+	for _, addr := range lhp.Preferences.Tipwastes {
+		if !lhp.IsEmpty(addr) {
 			continue
 		}
 
-		err := lhp.AddTipWasteTo(pref, tipwaste)
+		err := lhp.AddTipWasteTo(addr, tipwaste)
 		return err
 	}
 
 	return wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, "Trying to add tip waste")
 }
 
-func (lhp *LHProperties) AddTipWasteTo(pos string, tipwaste *wtype.LHTipwaste) error {
-	if !lhp.IsEmpty(pos) {
-		return wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprintf("Trying to add tip waste to full position %s", pos))
+func (lhp *LHProperties) AddTipWasteTo(addr string, tipwaste *wtype.LHTipwaste) error {
+	if !lhp.IsEmpty(addr) {
+		return wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprintf("Trying to add tip waste to full position %s", addr))
 	}
 
-	lhp.Tipwastes[pos] = tipwaste
+	lhp.Tipwastes[addr] = tipwaste
 	lhp.PlateLookup[tipwaste.ID] = tipwaste
-	lhp.PosLookup[pos] = tipwaste.ID
-	lhp.PlateIDLookup[tipwaste.ID] = pos
+	lhp.PosLookup[addr] = tipwaste.ID
+	lhp.PlateIDLookup[tipwaste.ID] = addr
 	return nil
 }
 
 func (lhp *LHProperties) AddInputPlate(plate *wtype.Plate) error {
-	for _, pref := range lhp.Preferences.Inputs {
-		if !lhp.IsEmpty(pref) {
+	for _, addr := range lhp.Preferences.Inputs {
+		if !lhp.IsEmpty(addr) {
 			continue
 		}
 
-		err := lhp.AddPlateTo(pref, plate)
+		err := lhp.AddPlateTo(addr, plate)
 		return err
 	}
 
 	return wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprintf("Trying to add input plate %s, type %s", plate.PlateName, plate.Type))
 }
 func (lhp *LHProperties) AddOutputPlate(plate *wtype.Plate) error {
-	for _, pref := range lhp.Preferences.Outputs {
-		if !lhp.IsEmpty(pref) {
+	for _, addr := range lhp.Preferences.Outputs {
+		if !lhp.IsEmpty(addr) {
 			continue
 		}
 
-		err := lhp.AddPlateTo(pref, plate)
+		err := lhp.AddPlateTo(addr, plate)
 		return err
 	}
 
 	return wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprintf("Trying to add output plate %s, type %s", plate.PlateName, plate.Type))
 }
 
-func (lhp *LHProperties) AddPlateTo(pos string, plate *wtype.Plate) error {
-	if !lhp.IsEmpty(pos) {
-		return wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprintf("Trying to add plate to full position %s", pos))
+func (lhp *LHProperties) AddPlateTo(addr string, plate *wtype.Plate) error {
+	if !lhp.IsEmpty(addr) {
+		return wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprintf("Trying to add plate to full position %s", addr))
 	}
-	lhp.Plates[pos] = plate
+	lhp.Plates[addr] = plate
 	lhp.PlateLookup[plate.ID] = plate
-	lhp.PosLookup[pos] = plate.ID
-	lhp.PlateIDLookup[plate.ID] = pos
+	lhp.PosLookup[addr] = plate.ID
+	lhp.PlateIDLookup[plate.ID] = addr
 	return nil
 }
 
 // reverse the above
 
 func (lhp *LHProperties) RemovePlateWithID(id string) {
-	pos := lhp.PlateIDLookup[id]
-	delete(lhp.PosLookup, pos)
+	addr := lhp.PlateIDLookup[id]
+	delete(lhp.PosLookup, addr)
 	delete(lhp.PlateIDLookup, id)
 	delete(lhp.PlateLookup, id)
-	delete(lhp.Plates, pos)
+	delete(lhp.Plates, addr)
 }
 
-func (lhp *LHProperties) RemovePlateAtPosition(pos string) {
-	id := lhp.PosLookup[pos]
-	delete(lhp.PosLookup, pos)
+func (lhp *LHProperties) RemovePlateAtPosition(addr string) {
+	id := lhp.PosLookup[addr]
+	delete(lhp.PosLookup, addr)
 	delete(lhp.PlateIDLookup, id)
 	delete(lhp.PlateLookup, id)
-	delete(lhp.Plates, pos)
+	delete(lhp.Plates, addr)
 }
 
-func (lhp *LHProperties) AddWasteTo(pos string, waste *wtype.Plate) bool {
-	if !lhp.IsEmpty(pos) {
+func (lhp *LHProperties) AddWasteTo(addr string, waste *wtype.Plate) bool {
+	if !lhp.IsEmpty(addr) {
 		fmt.Println("CAN'T ADD WASTE TO FULL POSITION")
 		return false
 	}
-	lhp.Wastes[pos] = waste
+	lhp.Wastes[addr] = waste
 	lhp.PlateLookup[waste.ID] = waste
-	lhp.PosLookup[pos] = waste.ID
-	lhp.PlateIDLookup[waste.ID] = pos
+	lhp.PosLookup[addr] = waste.ID
+	lhp.PlateIDLookup[waste.ID] = addr
 	return true
 }
 
 func (lhp *LHProperties) AddWash(wash *wtype.Plate) bool {
-	for _, pref := range lhp.Preferences.Washes {
-		if !lhp.IsEmpty(pref) {
+	for _, addr := range lhp.Preferences.Washes {
+		if !lhp.IsEmpty(addr) {
 			continue
 		}
 
-		lhp.AddWashTo(pref, wash)
+		lhp.AddWashTo(addr, wash)
 		return true
 	}
 
@@ -539,16 +539,16 @@ func (lhp *LHProperties) AddWash(wash *wtype.Plate) bool {
 	return false
 }
 
-func (lhp *LHProperties) AddWashTo(pos string, wash *wtype.Plate) bool {
-	if !lhp.IsEmpty(pos) {
+func (lhp *LHProperties) AddWashTo(addr string, wash *wtype.Plate) bool {
+	if !lhp.IsEmpty(addr) {
 
 		fmt.Println("CAN'T ADD WASH TO FULL POSITION")
 		return false
 	}
-	lhp.Washes[pos] = wash
+	lhp.Washes[addr] = wash
 	lhp.PlateLookup[wash.ID] = wash
-	lhp.PosLookup[pos] = wash.ID
-	lhp.PlateIDLookup[wash.ID] = pos
+	lhp.PosLookup[addr] = wash.ID
+	lhp.PlateIDLookup[wash.ID] = addr
 	return true
 }
 
@@ -701,8 +701,8 @@ func (lhp *LHProperties) getCleanTipSubset(ctx context.Context, tipParams TipSub
 	foundit := false
 	multi := countMultiB(tipParams.Mask)
 
-	for _, pos := range lhp.Preferences.Tipboxes {
-		bx, ok := lhp.Tipboxes[pos]
+	for _, addr := range lhp.Preferences.Tipboxes {
+		bx, ok := lhp.Tipboxes[addr]
 		if !ok || bx.Tiptype.Type != tipParams.TipType {
 			continue
 		}
@@ -725,7 +725,7 @@ func (lhp *LHProperties) getCleanTipSubset(ctx context.Context, tipParams TipSub
 			foundit = true
 			for i := 0; i < len(wells); i++ {
 				if tipParams.Mask[i] {
-					positions[i] = pos
+					positions[i] = addr
 					boxtypes[i] = bx.Boxname
 				}
 			}
@@ -772,14 +772,14 @@ func (lhp *LHProperties) DropDirtyTips(channels []*wtype.LHChannelParameter) (we
 
 	foundit := false
 
-	for pos, bx := range lhp.Tipwastes {
+	for addr, bx := range lhp.Tipwastes {
 		wellCoords, ok := bx.Dispose(channels)
 		if ok {
 			foundit = true
 			for i := 0; i < multi; i++ {
 				if channels[i] != nil {
 					wells[i] = wellCoords[i].FormatA1()
-					positions[i] = pos
+					positions[i] = addr
 					boxtypes[i] = bx.Type
 				}
 			}
@@ -936,9 +936,9 @@ type UserPlates []UserPlate
 func (p *LHProperties) SaveUserPlates() UserPlates {
 	up := make(UserPlates, 0, len(p.Positions))
 
-	for pos, plate := range p.Plates {
+	for addr, plate := range p.Plates {
 		if plate.IsUserAllocated() {
-			up = append(up, UserPlate{Plate: plate.DupKeepIDs(), Position: pos})
+			up = append(up, UserPlate{Plate: plate.DupKeepIDs(), Position: addr})
 		}
 	}
 

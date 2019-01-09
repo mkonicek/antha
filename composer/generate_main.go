@@ -74,14 +74,14 @@ import (
 
 	"github.com/antha-lang/antha/laboratory"
 
-{{range elementTypes}}	{{printf "%q" .ImportPath}}
-{{end}})
+{{range elementTypes}}{{if .IsAnthaElement}}	{{printf "%q" .ImportPath}}
+{{end}}{{end}})
 
 func main() {
 	labBuild := laboratory.NewLaboratoryBuilder({{printf "%q" .JobId}})
 	// Register line maps for the elements we're using
-{{range elementTypes}}	{{.Name}}.RegisterLineMap(labBuild)
-{{end}}
+{{range elementTypes}}{{if .IsAnthaElement}}	{{.Name}}.RegisterLineMap(labBuild)
+{{end}}{{end}}
 	// Create the elements
 {{range $name, $type := .ElementInstances}}	{{varName $name}} := {{$type.ElementTypeName}}.New{{$type.ElementTypeName}}(labBuild, {{printf "%q" $name}})
 {{end}}

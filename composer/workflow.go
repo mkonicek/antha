@@ -87,6 +87,18 @@ type ElementType struct {
 	ElementPath      ElementPath      `json:"ElementPath"`
 
 	files map[string][]byte
+	// An element can import code from elsewhere within its repository,
+	// and we cope with that just fine, creating new instances of
+	// ElementType to track this. But need to keep an eye out for
+	// whether the files we find within such a package/directory
+	// actually contain .an files, because we can only assume certain
+	// functions (eg RegisterLineMap) exist for packages which really
+	// contain elements.
+	isAnthaElement bool
+}
+
+func (et ElementType) IsAnthaElement() bool {
+	return et.isAnthaElement
 }
 
 func (et ElementType) Name() ElementTypeName {

@@ -46,41 +46,41 @@
         {
             "Source": {
                 "ElementInstance": "aliquot_A",
-                "PhysicalName": "RemainingLiquidToAliquot"
+                "ParameterName": "RemainingLiquidToAliquot"
             },
             "Target": {
                 "ElementInstance": "aliquot_C",
-                "PhysicalName": "LiquidToAliquot"
+                "ParameterName": "LiquidToAliquot"
             }
         },
         {
             "Source": {
                 "ElementInstance": "aliquot_A",
-                "PhysicalName": "RemainingLiquidToAliquot"
+                "ParameterName": "RemainingLiquidToAliquot"
             },
             "Target": {
                 "ElementInstance": "aliquot_B",
-                "PhysicalName": "LiquidToAliquot"
+                "ParameterName": "LiquidToAliquot"
             }
         },
         {
             "Source": {
                 "ElementInstance": "aliquot_B",
-                "PhysicalName": "RemainingLiquidToAliquot"
+                "ParameterName": "RemainingLiquidToAliquot"
             },
             "Target": {
                 "ElementInstance": "aliquot_D",
-                "PhysicalName": "LiquidToAliquot"
+                "ParameterName": "LiquidToAliquot"
             }
         },
         {
             "Source": {
                 "ElementInstance": "aliquot_C",
-                "DataName": "PlateNameUsed"
+                "ParameterName": "PlateNameUsed"
             },
             "Target": {
                 "ElementInstance": "aliquot_D",
-                "DataName": "NewPlateName"
+                "ParameterName": "NewPlateName"
             }
         }
     ],
@@ -88,42 +88,31 @@
     "ElementInstancesParameters": {
         "aliquot_A": {
             "ByRow": false,
+            "LiquidToAliquot": "water",
+            "OutPlate": "SRWFB96_riser18",
             "Replicates": 8,
             "VolumePerAliquot": "50ul"
         },
         "aliquot_B": {
             "ByRow": false,
+            "LiquidToAliquot": "water",
+            "OutPlate": "SRWFB96_riser18",
             "Replicates": 8,
             "VolumePerAliquot": "50ul"
         },
         "aliquot_C": {
             "ByRow": false,
+            "LiquidToAliquot": "water",
+            "OutPlate": "SRWFB96_riser18",
             "Replicates": 8,
             "VolumePerAliquot": "50ul"
         },
         "aliquot_D": {
             "ByRow": false,
+            "LiquidToAliquot": "water",
+            "OutPlate": "SRWFB96_riser18",
             "Replicates": 8,
             "VolumePerAliquot": "50ul"
-        }
-    },
-
-    "ElementInstancesInputs": {
-        "aliquot_A": {
-            "LiquidToAliquot": "water",
-            "OutPlate": "SRWFB96_riser18"
-        },
-        "aliquot_B": {
-            "LiquidToAliquot": "water",
-            "OutPlate": "SRWFB96_riser18"
-        },
-        "aliquot_C": {
-            "LiquidToAliquot": "water",
-            "OutPlate": "SRWFB96_riser18"
-        },
-        "aliquot_D": {
-            "LiquidToAliquot": "water",
-            "OutPlate": "SRWFB96_riser18"
         }
     }
 }

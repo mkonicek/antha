@@ -173,7 +173,7 @@ type Antha struct {
 	protocolName string
 
 	// inputs or outputs of an element but not messages
-	tokenByParamName map[string]token.Token
+	TokenByParamName map[string]token.Token
 	// Imports in protocol and imports to add
 	ImportReqs   ImportReqs
 	importByName map[string]struct{}
@@ -486,45 +486,28 @@ func (p *Antha) recordMessages() {
 	}
 }
 
-func uniqueFields(fields []*Field) error {
-	seen := make(map[string]bool)
-	for _, f := range fields {
-		if seen[f.Name] {
-			return fmt.Errorf("%s already declared", f.Name)
-		}
-		seen[f.Name] = true
-	}
-
-	return nil
-}
-
 func (p *Antha) validateMessages() error {
-	p.tokenByParamName = make(map[string]token.Token)
+	p.TokenByParamName = make(map[string]token.Token)
 
-	seen := make(map[string]*Message)
+	seenMessage := make(map[string]*Message)
 
 	for _, msg := range p.messages {
 		name := msg.Name
+		if _, found := seenMessage[name]; found {
+			return fmt.Errorf("%s already declared", name)
+		}
+
+		seenMessage[name] = msg
 
 		for _, field := range msg.Fields {
-			if _, seen := p.tokenByParamName[field.Name]; seen {
-				return fmt.Errorf("%s already declared", name)
+			if tok, found := p.TokenByParamName[field.Name]; found {
+				return fmt.Errorf("%s already declared as %v", name, tok)
 			}
-			p.tokenByParamName[field.Name] = msg.Kind
+			p.TokenByParamName[field.Name] = msg.Kind
 
 			if !ast.IsExported(field.Name) {
 				return fmt.Errorf("field %s must begin with an upper case letter", name)
 			}
-		}
-
-		if _, seen := seen[name]; seen {
-			return fmt.Errorf("%s already declared", name)
-		}
-
-		seen[name] = msg
-
-		if err := uniqueFields(msg.Fields); err != nil {
-			return err
 		}
 	}
 
@@ -820,7 +803,7 @@ func (p *Antha) inspectTypes(n ast.Node) bool {
 func (p *Antha) inspectParamUses(node ast.Node) bool {
 	// desugar if it is a known param
 	rewriteIdent := func(node *ast.Ident) {
-		tok, ok := p.tokenByParamName[node.Name]
+		tok, ok := p.TokenByParamName[node.Name]
 		if !ok {
 			return
 		}
@@ -835,7 +818,7 @@ func (p *Antha) inspectParamUses(node ast.Node) bool {
 				continue
 			}
 
-			tok, found := p.tokenByParamName[ident.Name]
+			tok, found := p.TokenByParamName[ident.Name]
 			if !found || !isOutput(tok) {
 				continue
 			}

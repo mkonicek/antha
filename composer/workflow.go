@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"sort"
 
+	"github.com/antha-lang/antha/antha/compile"
 	"github.com/antha-lang/antha/utils"
 	git "gopkg.in/src-d/go-git.v4"
 )
@@ -96,11 +97,11 @@ type ElementType struct {
 	// actually contain .an files, because we can only assume certain
 	// functions (eg RegisterLineMap) exist for packages which really
 	// contain elements.
-	isAnthaElement bool
+	transpiler *compile.Antha
 }
 
 func (et ElementType) IsAnthaElement() bool {
-	return et.isAnthaElement
+	return et.transpiler != nil
 }
 
 func (et ElementType) Name() ElementTypeName {
@@ -132,12 +133,7 @@ type ElementConnection struct {
 
 type ElementSocket struct {
 	ElementInstance ElementInstanceName  `json:"ElementInstance"`
-	PhysicalName    ElementParameterName `json:"PhysicalName"`
-	DataName        ElementParameterName `json:"DataName"`
-}
-
-func (es ElementSocket) IsPhysical() bool {
-	return es.PhysicalName != ""
+	ParameterName   ElementParameterName `json:"ParameterName"`
 }
 
 func (wf *Workflow) TypeNames() map[ElementTypeName]*ElementType {
@@ -273,7 +269,7 @@ func (a ElementConnection) lessThan(b ElementConnection) bool {
 
 func (a ElementSocket) lessThan(b ElementSocket) bool {
 	return a.ElementInstance < b.ElementInstance ||
-		(a.ElementInstance == b.ElementInstance && (a.DataName < b.DataName || a.PhysicalName < b.PhysicalName))
+		(a.ElementInstance == b.ElementInstance && a.ParameterName < b.ParameterName)
 }
 
 func (a *ElementInstancesConnections) merge(b ElementInstancesConnections) error {
@@ -407,9 +403,6 @@ func (conns ElementInstancesConnections) validate(wf *Workflow) error {
 			return err
 		} else if err := conn.Target.validate(wf); err != nil {
 			return err
-		} else if conn.Source.IsPhysical() != conn.Target.IsPhysical() {
-			return fmt.Errorf("ElementInstancesConnection between '%v' and '%v': cannot create connection between physical and data.",
-				conn.Source.ElementInstance, conn.Target.ElementInstance)
 		}
 	}
 	return nil
@@ -418,8 +411,8 @@ func (conns ElementInstancesConnections) validate(wf *Workflow) error {
 func (soc ElementSocket) validate(wf *Workflow) error {
 	if _, found := wf.ElementInstances[soc.ElementInstance]; !found {
 		return fmt.Errorf("ElementConnection uses ElementInstance '%v' which does not exist.", soc.ElementInstance)
-	} else if physicalEmpty, dataEmpty := soc.PhysicalName == "", soc.DataName == ""; physicalEmpty == dataEmpty {
-		return fmt.Errorf("ElementConnection using ElementInstance '%v' must specify one of PhysicalName and DataName.", soc.ElementInstance)
+	} else if soc.ParameterName == "" {
+		return fmt.Errorf("ElementConnection using ElementInstance '%v' must specify a ParameterName.", soc.ElementInstance)
 	} else {
 		return nil
 	}

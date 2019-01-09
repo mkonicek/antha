@@ -37,7 +37,6 @@ func (et *ElementType) Transpile(c *Composer) error {
 			} else if antha, err := compile.NewAntha(fSet, src); err != nil {
 				return err
 			} else {
-				et.isAnthaElement = true
 				for _, ipt := range antha.ImportReqs {
 					if err := et.maybeRewriteImport(c, ipt); err != nil {
 						return err
@@ -46,6 +45,7 @@ func (et *ElementType) Transpile(c *Composer) error {
 				if err := antha.Transform(anthaFiles); err != nil {
 					return err
 				}
+				et.transpiler = antha
 			}
 		}
 	}

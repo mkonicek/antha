@@ -302,6 +302,12 @@ func getSystemDerivedUnits() derivedUnits {
 				TargetSymbol: "g/l",
 				TargetScale:  10.0,
 			},
+			{
+				Name:         "percentage volume per volume of solution",
+				Symbol:       "% v/v",
+				TargetSymbol: "v/v",
+				TargetScale:  0.01,
+			},
 		},
 		"Volume": {
 			{

@@ -50,19 +50,6 @@ type unmarshaler struct {
 	ReadLocalFiles bool
 }
 
-func (a *unmarshaler) unmarshalLHTipbox(ctx context.Context, data []byte, obj *wtype.LHTipbox) error {
-	s := tryString(data)
-	if len(s) == 0 {
-		return json.Unmarshal(data, obj)
-	}
-	t, err := inventory.NewTipbox(ctx, s)
-	if err != nil {
-		return err
-	}
-	*obj = *t
-	return nil
-}
-
 func (a *unmarshaler) unmarshalLHPlate(ctx context.Context, data []byte, obj *wtype.Plate) error {
 	s := tryString(data)
 	if len(s) == 0 {
@@ -122,8 +109,6 @@ func (a *unmarshaler) unmarshalFile(data []byte, obj *wtype.File) error {
 func (a *unmarshaler) unmarshalStruct(ctx context.Context, data []byte, obj interface{}) error {
 	var err error
 	switch obj := obj.(type) {
-	case *wtype.LHTipbox:
-		err = a.unmarshalLHTipbox(ctx, data, obj)
 	case *wtype.Plate:
 		err = a.unmarshalLHPlate(ctx, data, obj)
 	case *wtype.Liquid:

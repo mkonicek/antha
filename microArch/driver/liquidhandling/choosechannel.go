@@ -116,7 +116,7 @@ func ChooseChannel(vol wunit.Volume, prms *LHProperties) (*wtype.LHChannelParame
 	//fmt.Println("There are ", len(prms.CountHeadsLoaded()), " heads loaded and ", len(prms.Tips), " Tip types available ")
 
 	for _, head := range prms.GetLoadedHeads() {
-		for _, tip := range prms.Tips {
+		for _, tip := range prms.TipFactory.Tips() {
 			if tipHeadCompatible(tip, head) {
 				sc := scorer.ScoreCombinedChannel(vol, head, head.Adaptor, tip)
 				if sc > bestscore {

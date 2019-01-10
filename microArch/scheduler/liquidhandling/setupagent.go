@@ -29,7 +29,6 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
@@ -156,22 +155,8 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 		return nil, wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, errStr)
 	}
 
-	// tips
-	tips := request.Tips
-
-	// just need to set the tip types
-	// these should be distinct... we should check really
-	// ...eventually
-	if len(tips) != 0 {
-		tipz := make([]*wtype.LHTip, len(tips))
-		for i, tb := range tips {
-			if tb == nil {
-				continue
-			}
-			//	params.Tips = append(params.Tips, tb.Tips[0][0])
-			tipz[i] = tb.Tips[0][0]
-		}
-		params.Tips = tipz
+	if len(request.TipTypes) != 0 {
+		params.TipFactory.ConstrainTipboxTypes(request.TipTypes)
 	}
 
 	setup := make(map[string]interface{})
@@ -239,35 +224,21 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 
 	// add the waste if required...
 	if params.GetTipType() == liquidhandling.DisposableTips || params.GetTipType() == liquidhandling.MixedDisposableAndFixedTips {
-		s := params.TipWastesMounted()
-
-		if s == 0 {
-			var waste *wtype.LHTipwaste
-			var err error
-			// this should be added to the automagic config setup... however it will require adding to the
-			// representation of the liquid handler
-			switch params.Model {
-			case "Pipetmax":
-				waste, err = inventory.NewTipwaste(ctx, "GilsonTipChute")
-			case "GeneTheatre":
-				fallthrough
-			case "Felix":
-				waste, err = inventory.NewTipwaste(ctx, "CyBiotipwaste")
-			case "Human":
-				waste, err = inventory.NewTipwaste(ctx, "Manualtipwaste")
-			case "Evo":
-				waste, err = inventory.NewTipwaste(ctx, "Tecantipwaste")
-			default:
-				return nil, wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("tip waste not handled for type: %s", params.Model))
+		if s := params.TipwastesMounted(); s == 0 {
+			// for now, choose the larges tipwaste available for the device
+			// in the future we might want to base this on other things as well, e.g. location preferences
+			capacity := 0
+			var tipwaste *wtype.LHTipwaste
+			for _, tw := range params.TipFactory.Tipwastes() {
+				if tw.Capacity > capacity {
+					tipwaste, capacity = tw, tw.Capacity
+				}
 			}
 
-			if err != nil {
-				return nil, wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("error for liquid handler of model %s: %s", params.Model, err))
-			}
-
-			err = params.AddTipWaste(waste)
-			if err != nil {
-				return nil, wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("error adding tip waste for model %s: %s", params.Model, err))
+			if tipwaste == nil {
+				return request, wtype.LHErrorf(wtype.LH_ERR_TIP_WASTE, "no tipwaste available for device %s %s", params.Mnfr, params.Model)
+			} else {
+				params.AddTipwaste(tipwaste)
 			}
 		}
 	}

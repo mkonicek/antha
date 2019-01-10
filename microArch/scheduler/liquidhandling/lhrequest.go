@@ -38,7 +38,7 @@ type LHRequest struct {
 	BlockName             string
 	LHInstructions        map[string]*wtype.LHInstruction
 	Plates                map[string]*wtype.Plate
-	Tips                  []*wtype.LHTipbox
+	TipTypes              []string
 	InstructionSet        *liquidhandling.RobotInstructionSet
 	Instructions          []liquidhandling.TerminalRobotInstruction
 	InstructionText       string

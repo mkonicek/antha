@@ -142,12 +142,8 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 	}
 
 	if p := a.opt.TipTypes; len(p) != 0 {
-		for _, v := range p {
-			t, err := inventory.NewTipbox(ctx, v)
-			if err != nil {
-				return nil, err
-			}
-			req.Tips = append(req.Tips, t)
+		for _, t := range p {
+			req.TipTypes = append(req.TipTypes, t)
 		}
 	}
 

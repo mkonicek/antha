@@ -35,7 +35,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/antha/anthalib/wutil/text"
-	"github.com/antha-lang/antha/inventory"
 	anthadriver "github.com/antha-lang/antha/microArch/driver"
 )
 
@@ -2444,14 +2443,14 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 			override := SafeGetBool(pol, "MIX_VOLUME_OVERRIDE_TIP_MAX")
 
 			//does the tip have a filter?
-			inv := inventory.GetInventory(ctx)
-			tb, err := inv.NewTipbox(ctx, ins.TipType)
-			if err != nil {
+			if tb, err := prms.TipFactory.NewTipbox(ins.TipType); err != nil {
 				return ret, wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("While getting tip %v", err))
+			} else {
+				//filter tips always override max volume
+				override = override || tb.Tiptype.Filtered
 			}
 
-			//filter tips always override max volume
-			if override || tb.Tiptype.Filtered {
+			if override {
 				mixvol = ins.Prms.Maxvol.ConvertToString("ul")
 			} else {
 				return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("Setting POST_MIX_VOLUME to %s cannot be achieved with current tip (type %s) volume limits %v, instruction details: %s", vmixvol.ToString(), ins.TipType, ins.Prms, text.PrettyPrint(ins)))

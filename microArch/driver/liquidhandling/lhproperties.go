@@ -31,7 +31,6 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/inventory"
 )
 
 // describes a liquid handler, its capabilities and current state
@@ -55,8 +54,8 @@ type LHProperties struct {
 	Heads          []*wtype.LHHead         // lists every head (whether loaded or not) that is available for the machine
 	Adaptors       []*wtype.LHAdaptor      // lists every adaptor (whether loaded or not) that is available for the machine
 	HeadAssemblies []*wtype.LHHeadAssembly // describes how each loaded head and adaptor is loaded into the machine
-	Tips           []*wtype.LHTip          // lists each type of tip available in the current configuration
 	Preferences    *LayoutOpt              // describes where difference categories of objects are to be placed on the liquid handler
+	TipFactory     *TipFactory             // describes the tips and tipwastes which can be used in this liquidhandler
 	Driver         LiquidhandlingDriver    `gotopb:"-"`
 	CurrConf       *wtype.LHChannelParameter
 	Cnfvol         []*wtype.LHChannelParameter
@@ -289,15 +288,7 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 		r.PosLookup[addr] = newid
 	}
 
-	for _, tip := range lhp.Tips {
-		newtip := tip.Dup()
-		if keepIDs {
-			newtip.ID = tip.ID
-		}
-
-		r.Tips = append(r.Tips, newtip)
-	}
-
+	r.TipFactory = lhp.TipFactory.Dup()
 	r.Preferences = lhp.Preferences.Dup()
 
 	if lhp.CurrConf != nil {
@@ -341,7 +332,6 @@ func NewLHProperties(model, manufacturer string, lhtype LiquidHandlerLevel, tipt
 		Tipwastes:      make(map[string]*wtype.LHTipwaste, len(positions)),
 		Wastes:         make(map[string]*wtype.Plate, len(positions)),
 		Washes:         make(map[string]*wtype.Plate, len(positions)),
-		Tips:           make([]*wtype.LHTip, 0, 3),
 	}
 }
 
@@ -394,7 +384,7 @@ func (lhp *LHProperties) RemoveTipBoxes() {
 	lhp.Tipboxes = make(map[string]*wtype.LHTipbox)
 }
 
-func (lhp *LHProperties) TipWastesMounted() int {
+func (lhp *LHProperties) TipwastesMounted() int {
 	r := 0
 	// go looking for tipwastes
 	for _, addr := range lhp.Preferences.Tipwastes {
@@ -434,20 +424,20 @@ func (lhp *LHProperties) Exists(address string) bool {
 	return ret
 }
 
-func (lhp *LHProperties) AddTipWaste(tipwaste *wtype.LHTipwaste) error {
+func (lhp *LHProperties) AddTipwaste(tipwaste *wtype.LHTipwaste) error {
 	for _, addr := range lhp.Preferences.Tipwastes {
 		if !lhp.IsEmpty(addr) {
 			continue
 		}
 
-		err := lhp.AddTipWasteTo(addr, tipwaste)
+		err := lhp.AddTipwasteTo(addr, tipwaste)
 		return err
 	}
 
 	return wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, "Trying to add tip waste")
 }
 
-func (lhp *LHProperties) AddTipWasteTo(addr string, tipwaste *wtype.LHTipwaste) error {
+func (lhp *LHProperties) AddTipwasteTo(addr string, tipwaste *wtype.LHTipwaste) error {
 	if !lhp.IsEmpty(addr) {
 		return wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprintf("Trying to add tip waste to full position %s", addr))
 	}
@@ -657,7 +647,7 @@ func (lhp *LHProperties) GetCleanTips(ctx context.Context, tiptype []string, cha
 	}
 
 	for _, set := range subsets {
-		sw, sp, sb, err := lhp.getCleanTipSubset(ctx, set, usetiptracking)
+		sw, sp, sb, err := lhp.getCleanTipSubset(set, usetiptracking)
 
 		if err != nil {
 			return [][]string{}, [][]string{}, [][]string{}, err
@@ -694,7 +684,7 @@ func copyToRightLength(sa []string, m int) []string {
 
 // this function only returns true if we can get all tips at once
 // TODO -- support not getting in a single operation
-func (lhp *LHProperties) getCleanTipSubset(ctx context.Context, tipParams TipSubset, usetiptracking bool) (wells, positions, boxtypes []string, err error) {
+func (lhp *LHProperties) getCleanTipSubset(tipParams TipSubset, usetiptracking bool) (wells, positions, boxtypes []string, err error) {
 	positions = make([]string, len(tipParams.Mask))
 	boxtypes = make([]string, len(tipParams.Mask))
 
@@ -732,7 +722,7 @@ func (lhp *LHProperties) getCleanTipSubset(ctx context.Context, tipParams TipSub
 			break
 		} else if usetiptracking && lhp.HasTipTracking() {
 			bx.Refresh()
-			return lhp.getCleanTipSubset(ctx, tipParams, usetiptracking)
+			return lhp.getCleanTipSubset(tipParams, usetiptracking)
 		}
 	}
 
@@ -743,7 +733,7 @@ func (lhp *LHProperties) getCleanTipSubset(ctx context.Context, tipParams TipSub
 
 	if !foundit {
 		// try adding a new tip box
-		bx, err := inventory.NewTipbox(ctx, tipParams.TipType)
+		bx, err := lhp.TipFactory.NewTipbox(tipParams.TipType)
 
 		if err != nil {
 			return nil, nil, nil, wtype.LHError(wtype.LH_ERR_NO_TIPS, fmt.Sprintf("No tipbox of type %s found: %s", tipParams.TipType, err))
@@ -756,7 +746,7 @@ func (lhp *LHProperties) getCleanTipSubset(ctx context.Context, tipParams TipSub
 			return nil, nil, nil, err
 		}
 
-		return lhp.getCleanTipSubset(ctx, tipParams, usetiptracking)
+		return lhp.getCleanTipSubset(tipParams, usetiptracking)
 		//		return nil, nil, nil
 	}
 
@@ -966,14 +956,13 @@ func (p *LHProperties) MinPossibleVolume() wunit.Volume {
 	}
 	minvol := headsLoaded[0].GetParams().Minvol
 	for _, head := range headsLoaded {
-		for _, tip := range p.Tips {
+		for _, tip := range p.TipFactory.Tips() {
 			lhcp := head.Params.MergeWithTip(tip)
 			v := lhcp.Minvol
 			if v.LessThan(minvol) {
 				minvol = v
 			}
 		}
-
 	}
 
 	return minvol

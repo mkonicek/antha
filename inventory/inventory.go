@@ -33,12 +33,6 @@ func fromContext(ctx context.Context) Inventory {
 type Inventory interface {
 	NewComponent(ctx context.Context, typ string) (*wtype.Liquid, error)
 	NewPlate(ctx context.Context, typ string) (*wtype.Plate, error)
-	NewTipwaste(ctx context.Context, typ string) (*wtype.LHTipwaste, error)
-	NewTipbox(ctx context.Context, typ string) (*wtype.LHTipbox, error)
-}
-
-type hasXXXGetPlates interface {
-	XXXGetPlates(ctx context.Context) ([]*wtype.Plate, error)
 }
 
 // NewContext returns a context with the given inventory
@@ -59,26 +53,4 @@ func NewComponent(ctx context.Context, typ string) (*wtype.Liquid, error) {
 // NewPlate returns a new plate of the given type
 func NewPlate(ctx context.Context, typ string) (*wtype.Plate, error) {
 	return fromContext(ctx).NewPlate(ctx, typ)
-}
-
-// NewTipwaste returns a new tipwaste of the given type
-func NewTipwaste(ctx context.Context, typ string) (*wtype.LHTipwaste, error) {
-	return fromContext(ctx).NewTipwaste(ctx, typ)
-}
-
-// NewTipbox returns a new tipbox of the given type
-func NewTipbox(ctx context.Context, typ string) (*wtype.LHTipbox, error) {
-	return fromContext(ctx).NewTipbox(ctx, typ)
-}
-
-// XXXNewPlates is a transitional call that will be removed once the planner
-// requires input plate types to be explicitly set.
-func XXXNewPlates(ctx context.Context) ([]*wtype.Plate, error) {
-	inv := GetInventory(ctx)
-	xInv, ok := inv.(hasXXXGetPlates)
-	if !ok {
-		return nil, errCannotListPlates
-	}
-
-	return xInv.XXXGetPlates(ctx)
 }

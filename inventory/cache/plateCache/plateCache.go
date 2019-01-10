@@ -18,14 +18,6 @@ func (p *plateCache) NewComponent(ctx context.Context, name string) (*wtype.Liqu
 	return inventory.NewComponent(ctx, name)
 }
 
-func (p *plateCache) NewTipbox(ctx context.Context, typ string) (*wtype.LHTipbox, error) {
-	return inventory.NewTipbox(ctx, typ)
-}
-
-func (p *plateCache) NewTipwaste(ctx context.Context, typ string) (*wtype.LHTipwaste, error) {
-	return inventory.NewTipwaste(ctx, typ)
-}
-
 func (p *plateCache) NewPlate(ctx context.Context, typ string) (*wtype.Plate, error) {
 	plateList, ok := p.platesByType[typ]
 	if !ok {

@@ -42,16 +42,6 @@ func NewPlate(ctx context.Context, typ string) (*wtype.Plate, error) {
 	return fromContext(ctx).NewPlate(ctx, typ)
 }
 
-// NewTipwaste returns a new tipwaste of the given type
-func NewTipwaste(ctx context.Context, typ string) (*wtype.LHTipwaste, error) {
-	return fromContext(ctx).NewTipwaste(ctx, typ)
-}
-
-// NewTipbox returns a new tipbox of the given type
-func NewTipbox(ctx context.Context, typ string) (*wtype.LHTipbox, error) {
-	return fromContext(ctx).NewTipbox(ctx, typ)
-}
-
 // ReturnObject return an object to the cache to be cleaned
 func ReturnObject(ctx context.Context, obj interface{}) error {
 	return fromContext(ctx).ReturnObject(ctx, obj)

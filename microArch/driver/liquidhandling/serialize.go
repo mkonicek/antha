@@ -19,7 +19,7 @@ type sProperties struct {
 	Heads          []*wtype.SerializableHead         // lists every head (whether loaded or not) that is available for the machine
 	Adaptors       []*wtype.LHAdaptor                // lists every adaptor (whether loaded or not) that is available for the machine
 	HeadAssemblies []*wtype.SerializableHeadAssembly // describes how each loaded head and adaptor is loaded into the machine
-	Tips           []*wtype.LHTip
+	TipFactory     *TipFactory
 	CurrConf       *wtype.LHChannelParameter
 	Preferences    *LayoutOpt
 	Cnfvol         []*wtype.LHChannelParameter
@@ -39,7 +39,7 @@ func newSProperties(lhp *LHProperties) *sProperties {
 		LHType:      lhp.LHType,
 		TipType:     lhp.TipType,
 		Adaptors:    lhp.Adaptors,
-		Tips:        lhp.Tips,
+		TipFactory:  lhp.TipFactory,
 		Preferences: lhp.Preferences,
 		CurrConf:    lhp.CurrConf,
 		Cnfvol:      lhp.Cnfvol,
@@ -79,7 +79,7 @@ func (slhp *sProperties) Fill(lhp *LHProperties) {
 	lhp.LHType = slhp.LHType
 	lhp.TipType = slhp.TipType
 	lhp.Adaptors = slhp.Adaptors
-	lhp.Tips = slhp.Tips
+	lhp.TipFactory = slhp.TipFactory
 	lhp.Preferences = slhp.Preferences
 	lhp.CurrConf = slhp.CurrConf
 	lhp.Cnfvol = slhp.Cnfvol

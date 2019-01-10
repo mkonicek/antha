@@ -225,11 +225,11 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 	// add the waste if required...
 	if params.GetTipType() == liquidhandling.DisposableTips || params.GetTipType() == liquidhandling.MixedDisposableAndFixedTips {
 		if s := params.TipwastesMounted(); s == 0 {
-			// for now, choose the larges tipwaste available for the device
+			// for now, choose the largest tipwaste available for the device
 			// in the future we might want to base this on other things as well, e.g. location preferences
 			capacity := 0
 			var tipwaste *wtype.LHTipwaste
-			for _, tw := range params.TipFactory.Tipwastes() {
+			for _, tw := range params.TipFactory.Tipwastes {
 				if tw.Capacity > capacity {
 					tipwaste, capacity = tw, tw.Capacity
 				}

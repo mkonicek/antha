@@ -173,7 +173,7 @@ func (ins *SingleChannelBlockInstruction) Generate(ctx context.Context, policy *
 	tt[0] = tiptype
 	chanA[0] = channel
 
-	tipget, err := GetTips(ctx, tt, prms, chanA, usetiptracking)
+	tipget, err := GetTips(tt, prms, chanA, usetiptracking)
 
 	if err != nil {
 		return ret, err
@@ -229,7 +229,7 @@ func (ins *SingleChannelBlockInstruction) Generate(ctx context.Context, policy *
 				tt, chanA = tipArrays(newchannel.Multi)
 				tt[0] = newtiptype
 				chanA[0] = newchannel
-				tipget, err := GetTips(ctx, tt, prms, chanA, usetiptracking)
+				tipget, err := GetTips(tt, prms, chanA, usetiptracking)
 
 				if err != nil {
 					return ret, err
@@ -432,7 +432,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 		return ret, err
 	}
 
-	tipget, err := GetTips(ctx, tiptypes, prms, channels, usetiptracking)
+	tipget, err := GetTips(tiptypes, prms, channels, usetiptracking)
 	if err != nil {
 		return ret, err
 	}
@@ -497,7 +497,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 				}
 				ret = append(ret, tipdrp)
 
-				tipget, err := GetTips(ctx, newtiptypes, prms, newchannels, usetiptracking)
+				tipget, err := GetTips(newtiptypes, prms, newchannels, usetiptracking)
 
 				if err != nil {
 					return ret, err
@@ -3422,11 +3422,12 @@ func getFirstDefined(sa []string) int {
 	return x
 }
 
-func GetTips(ctx context.Context, tiptypes []string, params *LHProperties, channel []*wtype.LHChannelParameter, usetiptracking bool) ([]RobotInstruction, error) {
+func GetTips(tiptypes []string, params *LHProperties, channel []*wtype.LHChannelParameter, usetiptracking bool) ([]RobotInstruction, error) {
 	// GetCleanTips returns enough sets of tip boxes to get all distinct tip types
-	tipwells, tipboxpositions, tipboxtypes, terr := params.GetCleanTips(ctx, tiptypes, channel, usetiptracking)
-
-	if tipwells == nil || terr != nil {
+	tipwells, tipboxpositions, tipboxtypes, terr := params.GetCleanTips(tiptypes, channel, usetiptracking)
+	if terr != nil {
+		return nil, terr
+	} else if tipwells == nil {
 		err := wtype.LHError(wtype.LH_ERR_NO_TIPS, fmt.Sprintf("PICKUP: types: %v On Deck: %v", tiptypes, params.GetLayout()))
 		return []RobotInstruction{NewLoadTipsMoveInstruction()}, err
 	}

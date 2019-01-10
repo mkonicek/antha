@@ -23,7 +23,6 @@
 package liquidhandling
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -636,7 +635,7 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.Liquid, carryvol wuni
 	return plateIDs, wellCoords, vols, nil
 }
 
-func (lhp *LHProperties) GetCleanTips(ctx context.Context, tiptype []string, channel []*wtype.LHChannelParameter, usetiptracking bool) (wells, positions, boxtypes [][]string, err error) {
+func (lhp *LHProperties) GetCleanTips(tiptype []string, channel []*wtype.LHChannelParameter, usetiptracking bool) (wells, positions, boxtypes [][]string, err error) {
 
 	// these are merged into subsets with tip and channel types in common here
 	// each subset has a mask which is the same size as the number of channels available
@@ -956,8 +955,8 @@ func (p *LHProperties) MinPossibleVolume() wunit.Volume {
 	}
 	minvol := headsLoaded[0].GetParams().Minvol
 	for _, head := range headsLoaded {
-		for _, tip := range p.TipFactory.Tips() {
-			lhcp := head.Params.MergeWithTip(tip)
+		for _, tb := range p.TipFactory.Tipboxes {
+			lhcp := head.Params.MergeWithTip(tb.Tiptype)
 			v := lhcp.Minvol
 			if v.LessThan(minvol) {
 				minvol = v

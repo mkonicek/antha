@@ -6,22 +6,32 @@ import (
 	"strings"
 	"text/template"
 	"unicode"
+
+	"github.com/PaesslerAG/jsonpath"
 )
 
 type mainRenderer struct {
 	composer *Composer
 	varCount uint64
 	varMemo  map[ElementInstanceName]string
+
+	liquidNames map[string]struct{}
+	plateNames  map[string]struct{}
+	tipBoxNames map[string]struct{}
 }
 
 func newMainRenderer(c *Composer) *mainRenderer {
 	return &mainRenderer{
-		composer: c,
-		varMemo:  make(map[ElementInstanceName]string),
+		composer:    c,
+		varMemo:     make(map[ElementInstanceName]string),
+		liquidNames: make(map[string]struct{}),
+		plateNames:  make(map[string]struct{}),
+		tipBoxNames: make(map[string]struct{}),
 	}
 }
 
 func (mr *mainRenderer) render(w io.Writer) error {
+	fmt.Println(mr.ExtractComponents(), mr.liquidNames, mr.plateNames, mr.tipBoxNames)
 	funcs := template.FuncMap{
 		"elementTypes": mr.elementTypes,
 		"varName":      mr.varName,
@@ -31,6 +41,52 @@ func (mr *mainRenderer) render(w io.Writer) error {
 		return err
 	} else {
 		return t.Execute(w, mr.composer.Workflow)
+	}
+}
+
+func (mr *mainRenderer) ExtractComponents() error {
+	types := map[string]map[string]struct{}{
+		"wtype.Liquid":   mr.liquidNames,
+		"wtype.Plate":    mr.plateNames,
+		"wtype.LHTipbox": mr.tipBoxNames,
+	}
+
+	for instanceName, ei := range mr.composer.Workflow.ElementInstances {
+		if et := mr.composer.elementTypes[ei.ElementTypeName]; et.IsAnthaElement() {
+			if ps, err := mr.composer.Workflow.ElementInstancesParameters[instanceName].AsJSONInterface(); err != nil {
+				return err
+			} else {
+				for _, msg := range et.transpiler.Messages {
+					if msg.Name == "Inputs" || msg.Name == "Parameters" {
+						jsonPathsMap := msg.JSONPathsPerType()
+						for t, m := range types {
+							for _, path := range jsonPathsMap[t] {
+								if res, err := jsonpath.Get(path, ps); err != nil {
+									return err
+								} else {
+									jsonPathResultsToStrings(m, res)
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func jsonPathResultsToStrings(acc map[string]struct{}, i interface{}) {
+	// we only ever expect a string or a []interface
+	switch i := i.(type) {
+	case string:
+		acc[i] = struct{}{}
+	case []interface{}:
+		for _, j := range i {
+			jsonPathResultsToStrings(acc, j)
+		}
+	default:
+		panic(fmt.Sprintf("Unexpected type: %T", i))
 	}
 }
 

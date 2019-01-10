@@ -23,7 +23,6 @@ type Workflow struct {
 	ElementTypes                ElementTypes                `json:"ElementTypes"`
 	ElementInstances            ElementInstances            `json:"ElementInstances"`
 	ElementInstancesParameters  ElementInstancesParameters  `json:"ElementInstancesParameters"`
-	ElementInstancesInputs      ElementInstancesInputs      `json:"ElementInstancesInputs"`
 	ElementInstancesConnections ElementInstancesConnections `json:"ElementInstancesConnections"`
 
 	typeNames map[ElementTypeName]*ElementType
@@ -35,7 +34,6 @@ func newWorkflow() *Workflow {
 		ElementTypes:                make(ElementTypes, 0),
 		ElementInstances:            make(ElementInstances),
 		ElementInstancesParameters:  make(ElementInstancesParameters),
-		ElementInstancesInputs:      make(ElementInstancesInputs),
 		ElementInstancesConnections: make(ElementInstancesConnections, 0),
 	}
 }
@@ -120,9 +118,20 @@ type ElementInstance struct {
 }
 
 type ElementInstancesParameters map[ElementInstanceName]ElementParameterSet
-type ElementInstancesInputs map[ElementInstanceName]ElementParameterSet
 
 type ElementParameterSet map[ElementParameterName]json.RawMessage
+
+// for use with jsonpath stuff; yeah this is a bit weird really
+func (eps ElementParameterSet) AsJSONInterface() (interface{}, error) {
+	var res interface{}
+	if bs, err := json.Marshal(eps); err != nil {
+		return nil, err
+	} else if err := json.Unmarshal(bs, &res); err != nil {
+		return nil, err
+	} else {
+		return res, nil
+	}
+}
 
 type ElementInstancesConnections []ElementConnection
 
@@ -163,7 +172,6 @@ func (a *Workflow) merge(b *Workflow) error {
 		a.ElementTypes.merge(b.ElementTypes),
 		a.ElementInstances.merge(b.ElementInstances),
 		a.ElementInstancesParameters.merge(b.ElementInstancesParameters),
-		a.ElementInstancesInputs.merge(b.ElementInstancesInputs),
 		a.ElementInstancesConnections.merge(b.ElementInstancesConnections),
 	}
 	if err := errs.Nub(); err != nil {
@@ -244,18 +252,6 @@ func (a ElementInstancesParameters) merge(b ElementInstancesParameters) error {
 	return nil
 }
 
-func (a ElementInstancesInputs) merge(b ElementInstancesInputs) error {
-	// Just like element instances, these should be completely distinct
-	for name, paramSetB := range b {
-		if _, found := a[name]; found {
-			return fmt.Errorf("Cannot merge: element parameters '%v' exists in both workflows", name)
-		} else {
-			a[name] = paramSetB
-		}
-	}
-	return nil
-}
-
 func (conns ElementInstancesConnections) sort() {
 	sort.Slice(conns, func(i, j int) bool {
 		return conns[i].lessThan(conns[j])
@@ -300,7 +296,6 @@ func (wf *Workflow) validate() error {
 			wf.ElementTypes.validate(wf),
 			wf.ElementInstances.validate(wf),
 			wf.ElementInstancesParameters.validate(wf),
-			wf.ElementInstancesInputs.validate(wf),
 			wf.ElementInstancesConnections.validate(wf),
 		}
 		if err := errs.Nub(); err != nil {
@@ -380,15 +375,6 @@ func (ei ElementInstance) validate(wf *Workflow) error {
 }
 
 func (eps ElementInstancesParameters) validate(wf *Workflow) error {
-	for name, _ := range eps {
-		if _, found := wf.ElementInstances[name]; !found {
-			return fmt.Errorf("ElementInstancesParameters provided for unknown ElementInstance '%v'", name)
-		}
-	}
-	return nil
-}
-
-func (eps ElementInstancesInputs) validate(wf *Workflow) error {
 	for name, _ := range eps {
 		if _, found := wf.ElementInstances[name]; !found {
 			return fmt.Errorf("ElementInstancesParameters provided for unknown ElementInstance '%v'", name)

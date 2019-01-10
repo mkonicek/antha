@@ -80,6 +80,52 @@ type Field struct {
 	Tag  string
 }
 
+// So from the message field definition, we construct JSON Paths which
+// we can later apply to element parameters in order to extract
+// parameters of each type. This is required because it allows us to
+// deal with special types like Liquids and Plates which have to be
+// constructed as components in the inventory.
+func (f Field) JSONPathsPerType() map[string][]string {
+	res := make(map[string][]string)
+	cur := []string{"$", f.Name}
+	var fun func(n ast.Node)
+	fun = func(n ast.Node) {
+		oldCur := cur
+		switch n := n.(type) {
+		case *ast.SelectorExpr:
+			if pkgIdent, ok := n.X.(*ast.Ident); ok {
+				// this is *always* a qualified type name, not a field name
+				name := pkgIdent.String() + "." + n.Sel.String()
+				res[name] = append(res[name], strings.Join(cur, "."))
+			}
+		case *ast.Ident:
+			// if we see an ident here, it is *always* a type name, not a field name
+			res[n.Name] = append(res[n.Name], strings.Join(cur, "."))
+		case *ast.ArrayType:
+			// this covers slices too
+			cur = append(cur, "*")
+			fun(n.Elt)
+			cur = oldCur
+		case *ast.StarExpr:
+			fun(n.X)
+		case *ast.MapType:
+			cur = append(cur, "*")
+			fun(n.Value)
+			cur = oldCur
+		case *ast.StructType:
+			for _, f := range n.Fields.List {
+				for _, name := range f.Names {
+					cur = append(cur, name.Name)
+					fun(f.Type)
+					cur = oldCur
+				}
+			}
+		}
+	}
+	fun(f.Type)
+	return res
+}
+
 // A Message is an input or an output or user defined type
 type Message struct {
 	Name   string
@@ -88,11 +134,14 @@ type Message struct {
 	Kind   token.Token // One of token.{DATA, PARAMETERS, OUTPUTS, INPUTS}
 }
 
-func (m *Message) getFields() []*Field {
-	if m == nil {
-		return nil
+func (msg *Message) JSONPathsPerType() map[string][]string {
+	res := make(map[string][]string)
+	for _, field := range msg.Fields {
+		for typ, paths := range field.JSONPathsPerType() {
+			res[typ] = append(res[typ], paths...)
+		}
 	}
-	return m.Fields
+	return res
 }
 
 func isOutput(tok token.Token) bool {
@@ -168,7 +217,7 @@ type Antha struct {
 	// Path to element file
 	elementPath string
 	// messages of an element as well as inputs and outputs
-	messages []*Message
+	Messages []*Message
 	// Protocol name as given in Antha file
 	protocolName string
 
@@ -357,48 +406,6 @@ func (p *Antha) setImports() {
 	p.file.Decls = append([]ast.Decl{merged}, nonImports...)
 }
 
-// getTypeString return appropriate go type string for an antha (type) expr;
-// mark used package selectors
-func (p *Antha) getTypeString(e ast.Expr, used map[string]bool) string {
-	switch t := e.(type) {
-
-	case nil:
-		return ""
-
-	case *ast.Ident:
-		v, ok := types[t.Name]
-		if ok {
-			return v
-		}
-		return t.Name
-
-	case *ast.SelectorExpr:
-		sel := p.getTypeString(t.X, used)
-		if used != nil {
-			used[sel] = true
-		}
-		return sel + "." + t.Sel.Name
-
-	case *ast.BasicLit:
-		return t.Value
-
-	case *ast.ArrayType:
-		bound := p.getTypeString(t.Len, used)
-		return "[" + bound + "]" + p.getTypeString(t.Elt, used)
-
-	case *ast.StarExpr:
-		return "*" + p.getTypeString(t.X, used)
-
-	case *ast.MapType:
-		return fmt.Sprintf("map[%s]%s", p.getTypeString(t.Key, used), p.getTypeString(t.Value, used))
-
-	default:
-		throwErrorf(e.Pos(), "invalid type spec to get type of: %T", t)
-	}
-
-	return ""
-}
-
 func (p *Antha) addImportReq(req *ImportReq) {
 	name := req.ImportName()
 	if _, found := p.importByName[name]; !found {
@@ -476,7 +483,7 @@ func (p *Antha) recordMessages() {
 				}
 			}
 
-			p.messages = append(p.messages, &Message{
+			p.Messages = append(p.Messages, &Message{
 				Name:   spec.Name.String(),
 				Fields: fields,
 				Doc:    join(decl.Doc.Text(), spec.Comment.Text(), spec.Doc.Text()),
@@ -491,7 +498,7 @@ func (p *Antha) validateMessages() error {
 
 	seenMessage := make(map[string]*Message)
 
-	for _, msg := range p.messages {
+	for _, msg := range p.Messages {
 		name := msg.Name
 		if _, found := seenMessage[name]; found {
 			return fmt.Errorf("%s already declared", name)

@@ -1,6 +1,7 @@
 package composer
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -32,7 +33,9 @@ func (et *ElementType) Transpile(c *Composer) error {
 		}
 
 		if filepath.Ext(fullPath) == ".an" {
-			if src, err := parser.ParseFile(fSet, fullPath, content, parser.ParseComments); err != nil {
+			if et.transpiler != nil {
+				return fmt.Errorf("Multiple .an files found in %v", elemDir)
+			} else if src, err := parser.ParseFile(fSet, fullPath, content, parser.ParseComments); err != nil {
 				return err
 			} else if antha, err := compile.NewAntha(fSet, src); err != nil {
 				return err

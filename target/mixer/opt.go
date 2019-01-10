@@ -2,7 +2,6 @@ package mixer
 
 import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/meta"
 )
 
 var (
@@ -60,18 +59,4 @@ type Opt struct {
 	// Two ways to set user liquid policies rule set
 	CustomPolicyData    map[string]wtype.LHPolicy `json:"customPolicyData,omitempty"`    // Set rule set from policies
 	CustomPolicyRuleSet *wtype.LHPolicyRuleSet    `json:"customPolicyRuleSet,omitempty"` // Directly
-}
-
-// Merge two configs together and return the result. Values in the argument
-// override those in the receiver.
-func (a Opt) Merge(x *Opt) Opt {
-	if x == nil {
-		return a
-	}
-
-	obj, err := meta.ShallowMerge(a, *x)
-	if err != nil {
-		panic(err)
-	}
-	return obj.(Opt)
 }

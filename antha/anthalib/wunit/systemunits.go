@@ -1,6 +1,8 @@
 package wunit
 
-import "math"
+import (
+	"math"
+)
 
 type baseUnit struct {
 	Name     string

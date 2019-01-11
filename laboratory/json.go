@@ -21,7 +21,9 @@ func (lj *liquidJson) UpdateExt(dst interface{}, src interface{}) {
 		if liquid, err := lj.labBuild.Inventory.NewComponent(name); err != nil {
 			lj.labBuild.Fatal(err)
 		} else {
-			dst = liquid // nb dst is *always* a pointer (so *Liquid in this case)
+			// nb dst is *always* a pointer (so *Liquid in this case)
+			dstLiquid := dst.(*wtype.Liquid)
+			*dstLiquid = *liquid
 		}
 	} else {
 		lj.labBuild.Fatal(fmt.Errorf("Liquid specification in workflow should be a string (liquid name), but was: %T", src))
@@ -41,7 +43,8 @@ func (pj *plateJson) UpdateExt(dst interface{}, src interface{}) {
 		if plate, err := pj.labBuild.Inventory.NewPlate(name); err != nil {
 			pj.labBuild.Fatal(err)
 		} else {
-			dst = plate
+			dstPlate := dst.(*wtype.Plate)
+			*dstPlate = *plate
 		}
 	} else {
 		pj.labBuild.Fatal(fmt.Errorf("Plate specification in workflow should be a string (plate name), but was: %T", src))
@@ -61,7 +64,8 @@ func (tj *tipboxJson) UpdateExt(dst interface{}, src interface{}) {
 		if tipbox, err := tj.labBuild.Inventory.NewTipbox(name); err != nil {
 			tj.labBuild.Fatal(err)
 		} else {
-			dst = tipbox
+			dstTipBox := dst.(*wtype.LHTipbox)
+			*dstTipBox = *tipbox
 		}
 	} else {
 		tj.labBuild.Fatal(fmt.Errorf("Tipbox specification in workflow should be a string (tipbox name), but was: %T", src))

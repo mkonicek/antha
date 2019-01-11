@@ -24,6 +24,7 @@ package wunit
 
 import (
 	"encoding/json"
+
 	"github.com/pkg/errors"
 )
 

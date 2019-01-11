@@ -228,8 +228,7 @@ func (lab *Laboratory) Error(err error) {
 }
 
 func (lab *Laboratory) Errorf(fmtStr string, args ...interface{}) {
-	err := fmt.Errorf(fmtStr, args...)
-	lab.Error(err)
+	lab.Error(fmt.Errorf(fmtStr, args...))
 }
 
 // ElementBase
@@ -267,7 +266,9 @@ func (eb *ElementBase) Run(lab *Laboratory, funs ...func(*Laboratory)) {
 
 	defer func() {
 		if res := recover(); res != nil {
-			lab.Errorf("%s\n%s", res, lab.lineMapManager.ElementStackTrace())
+			lab.Errorf("%v", res)
+			// Use println because of the embedded \n in the Stack Trace
+			fmt.Println(lab.lineMapManager.ElementStackTrace())
 		}
 	}()
 

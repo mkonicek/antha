@@ -58,7 +58,7 @@ func (i *testInventory) XXXGetPlates(ctx context.Context) ([]*wtype.Plate, error
 func NewContext(ctx context.Context) context.Context {
 	inv := &testInventory{
 		componentByName: make(map[string]*wtype.Liquid),
-		plateByType:     make(map[string]PlateForSerializing),
+		plateByType:     getPlatesByType(),
 		tipboxByType:    make(map[string]*wtype.LHTipbox),
 		tipwasteByType:  make(map[string]*wtype.LHTipwaste),
 	}
@@ -68,19 +68,6 @@ func NewContext(ctx context.Context) context.Context {
 			panic(fmt.Sprintf("component %s already added", c.CName))
 		}
 		inv.componentByName[c.CName] = c
-	}
-
-	serialPlateArr, err := getPlatesFromSerial()
-
-	if err != nil {
-		panic(err)
-	}
-
-	for _, p := range serialPlateArr {
-		if _, seen := inv.plateByType[p.PlateType]; seen {
-			panic(fmt.Sprintf("plate %s already added", p.PlateType))
-		}
-		inv.plateByType[p.PlateType] = p
 	}
 
 	for _, tb := range makeTipboxes() {
@@ -104,19 +91,30 @@ func NewContext(ctx context.Context) context.Context {
 	return inventory.NewContext(ctx, inv)
 }
 
-// GetTipboxes returns the tipboxes in a test inventory context
-func GetTipboxes(ctx context.Context) []*wtype.LHTipbox {
-	inv := inventory.GetInventory(ctx).(*testInventory)
-	var tbs []*wtype.LHTipbox
-	for _, tb := range inv.tipboxByType {
-		tbs = append(tbs, tb)
-	}
+// GetTipboxes returns the test tipboxes
+func GetTipboxes() []*wtype.LHTipbox {
+	tbs := makeTipboxes()
 
 	sort.Slice(tbs, func(i, j int) bool {
 		return tbs[i].Type < tbs[j].Type
 	})
 
 	return tbs
+}
+
+func getPlatesByType() map[string]*wtype.Plate {
+	if serialPlateArr, err := getPlatesFromSerial(); err != nil {
+		panic(err)
+	} else {
+		ret := make(map[string]*wtype.LHPlate, len(serialPlateArr))
+
+		for _, p := range serialPlateArr {
+			if _, seen := ret[p.PlateType]; seen {
+				panic(fmt.Sprintf("plate %s already added", p.PlateType))
+			}
+			ret[p.PlateType] = p.LHPlate()
+		}
+	}
 }
 
 // GetPlates returns the plates in a test inventory context

@@ -2,14 +2,17 @@ package effects
 
 import (
 	"strings"
+	"sync"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/ast"
 )
 
 type Maker struct {
+	lock sync.Mutex
 	// Map from old LHComponent id to new id after instruction (typically 1)
-	afterInst map[string][]string
+	// AfterInst is the only thing we need to serialize hence it being the only thing that's public
+	AfterInst map[string][]string
 	// Map from old LHComponent id to new id after sample
 	afterSample map[string][]string
 	// Map from from wtype world to ast world
@@ -19,7 +22,7 @@ type Maker struct {
 
 func NewMaker() *Maker {
 	return &Maker{
-		afterInst:   make(map[string][]string),
+		AfterInst:   make(map[string][]string),
 		afterSample: make(map[string][]string),
 		byComp:      make(map[*wtype.Liquid]*ast.UseComp),
 		byID:        make(map[string][]*ast.UseComp),
@@ -111,7 +114,9 @@ func (a *Maker) removeMultiEdges() {
 }
 
 func (a *Maker) UpdateAfterInst(oldID, newID string) {
-	a.afterInst[oldID] = append(a.afterInst[oldID], newID)
+	a.lock.Lock()
+	defer a.lock.Unlock()
+	a.AfterInst[oldID] = append(a.AfterInst[oldID], newID)
 }
 
 // Normalize commands into well-formed AST
@@ -131,7 +136,7 @@ func (a *Maker) MakeNodes(insts []*CommandInst) ([]ast.Node, error) {
 	}
 
 	a.resolveReuses()
-	a.resolveUpdates(a.afterInst)
+	a.resolveUpdates(a.AfterInst)
 	a.resolveUpdates(a.afterSample)
 	a.removeMultiEdges()
 

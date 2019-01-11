@@ -3,12 +3,15 @@ package plateCache
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/inventory/testinventory"
 )
 
 type PlateCache struct {
+	lock sync.Mutex
+
 	Inventory       *testinventory.TestInventory
 	platesByType    map[string][]*wtype.Plate
 	platesFromCache map[string]bool
@@ -48,6 +51,9 @@ func (p *PlateCache) UnmarshalJSON(bs []byte) error {
 }
 
 func (p *PlateCache) NewPlate(typ string) (*wtype.Plate, error) {
+	p.lock.Lock()
+	defer p.lock.Unlock()
+
 	plateList, ok := p.platesByType[typ]
 	if !ok {
 		plateList = make([]*wtype.Plate, 0)
@@ -70,6 +76,9 @@ func (p *PlateCache) NewPlate(typ string) (*wtype.Plate, error) {
 }
 
 func (p *PlateCache) ReturnObject(obj interface{}) error {
+	p.lock.Lock()
+	defer p.lock.Unlock()
+
 	if !p.IsFromCache(obj) {
 		return fmt.Errorf("cannont return non cache object %s", wtype.NameOf(obj))
 	}
@@ -92,6 +101,9 @@ func (p *PlateCache) ReturnObject(obj interface{}) error {
 }
 
 func (p *PlateCache) IsFromCache(obj interface{}) bool {
+	p.lock.Lock()
+	defer p.lock.Unlock()
+
 	_, ok := p.platesFromCache[wtype.IDOf(obj)]
 	return ok
 }

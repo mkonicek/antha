@@ -526,11 +526,11 @@ func New{{.ElementTypeName}}(labBuild *laboratory.LaboratoryBuilder, name string
 	return element
 }
 
-func (element {{.ElementTypeName}}) Name() string {
+func (element *{{.ElementTypeName}}) Name() string {
 	return element.name
 }
 
-func (element {{.ElementTypeName}}) TypeName() string {
+func (element *{{.ElementTypeName}}) TypeName() string {
 	return {{printf "%q" .ElementTypeName}}
 }
 

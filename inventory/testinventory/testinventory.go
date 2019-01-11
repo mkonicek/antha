@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"sync"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
@@ -17,6 +18,8 @@ const (
 )
 
 type TestInventory struct {
+	lock sync.Mutex
+
 	componentByName map[string]*wtype.Liquid
 	plateByType     map[string]PlateForSerializing
 	tipboxByType    map[string]*wtype.LHTipbox
@@ -60,6 +63,9 @@ func (i *TestInventory) UnmarshalJSON(bs []byte) error {
 }
 
 func (i *TestInventory) NewComponent(name string) (*wtype.Liquid, error) {
+	i.lock.Lock()
+	defer i.lock.Unlock()
+
 	c, ok := i.componentByName[name]
 	if !ok {
 		return nil, fmt.Errorf("%s: invalid solution: %s", ErrUnknownType, name)
@@ -69,6 +75,9 @@ func (i *TestInventory) NewComponent(name string) (*wtype.Liquid, error) {
 }
 
 func (i *TestInventory) NewPlate(typ string) (*wtype.Plate, error) {
+	i.lock.Lock()
+	defer i.lock.Unlock()
+
 	p, ok := i.plateByType[typ]
 	if !ok {
 		return nil, fmt.Errorf("%s: invalid plate: %s", ErrUnknownType, typ)
@@ -76,6 +85,9 @@ func (i *TestInventory) NewPlate(typ string) (*wtype.Plate, error) {
 	return p.LHPlate(), nil
 }
 func (i *TestInventory) NewTipbox(typ string) (*wtype.LHTipbox, error) {
+	i.lock.Lock()
+	defer i.lock.Unlock()
+
 	tb, ok := i.tipboxByType[typ]
 	if !ok {
 		return nil, ErrUnknownType
@@ -84,6 +96,9 @@ func (i *TestInventory) NewTipbox(typ string) (*wtype.LHTipbox, error) {
 }
 
 func (i *TestInventory) NewTipwaste(typ string) (*wtype.LHTipwaste, error) {
+	i.lock.Lock()
+	defer i.lock.Unlock()
+
 	tw, ok := i.tipwasteByType[typ]
 	if !ok {
 		return nil, ErrUnknownType
@@ -143,6 +158,9 @@ func NewInventory() *TestInventory {
 
 // GetTipboxes returns the tipboxes in a test inventory context
 func (inv *TestInventory) GetTipboxes() []*wtype.LHTipbox {
+	inv.lock.Lock()
+	defer inv.lock.Unlock()
+
 	var tbs []*wtype.LHTipbox
 	for _, tb := range inv.tipboxByType {
 		tbs = append(tbs, tb)
@@ -157,6 +175,9 @@ func (inv *TestInventory) GetTipboxes() []*wtype.LHTipbox {
 
 // GetPlates returns the plates in a test inventory context
 func (inv *TestInventory) GetPlates() []*wtype.Plate {
+	inv.lock.Lock()
+	defer inv.lock.Unlock()
+
 	var ps []*wtype.Plate
 	for _, p := range inv.plateByType {
 		ps = append(ps, p.LHPlate())
@@ -171,6 +192,9 @@ func (inv *TestInventory) GetPlates() []*wtype.Plate {
 
 // GetComponents returns the components in a test inventory context
 func (inv *TestInventory) GetComponents() []*wtype.Liquid {
+	inv.lock.Lock()
+	defer inv.lock.Unlock()
+
 	var cs []*wtype.Liquid
 	for _, c := range inv.componentByName {
 		cs = append(cs, c)

@@ -100,7 +100,10 @@ func (labBuild *LaboratoryBuilder) AddLink(src, dst Element, fun func()) error {
 		return fmt.Errorf("Unknown dst element: %v", dst)
 	} else {
 		ebDst.AddBlockedInput()
-		ebSrc.AddOnExit(func() { fun(); ebDst.InputReady() })
+		ebSrc.AddOnExit(func() {
+			fun()
+			ebDst.InputReady()
+		})
 		return nil
 	}
 }
@@ -200,7 +203,7 @@ func (labBuild *LaboratoryBuilder) makeLab(e Element) *Laboratory {
 	return &Laboratory{
 		LaboratoryBuilder: labBuild,
 		element:           e,
-		Logger:            labBuild.Logger.With("name", e.Name(), "type", e.TypeName()),
+		Logger:            labBuild.Logger, //.With("name", e.Name(), "type", e.TypeName()),
 	}
 }
 

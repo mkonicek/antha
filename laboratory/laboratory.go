@@ -60,7 +60,7 @@ func NewLaboratoryBuilder(jobId string) *LaboratoryBuilder {
 		lineMapManager: NewLineMapManager(),
 		Logger:         NewLogger(),
 
-		LaboratoryEffects: effects.NewLaboratoryEffects(),
+		LaboratoryEffects: effects.NewLaboratoryEffects(jobId),
 	}
 
 	flag.StringVar(&labBuild.outDir, "outdir", "", "Path to directory in which to write output files")

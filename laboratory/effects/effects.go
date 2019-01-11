@@ -14,14 +14,16 @@ type LaboratoryEffects struct {
 	SampleTracker *sampletracker.SampleTracker
 	Inventory     *testinventory.TestInventory `json:"-"` // Inventory is part of plate cache, so we don't encode it.
 	PlateCache    *plateCache.PlateCache
+	ID            *IDGenerator
 }
 
-func NewLaboratoryEffects() *LaboratoryEffects {
+func NewLaboratoryEffects(jobId string) *LaboratoryEffects {
 	le := &LaboratoryEffects{
 		Trace:         NewTrace(),
 		Maker:         NewMaker(),
 		SampleTracker: sampletracker.NewSampleTracker(),
 		Inventory:     testinventory.NewInventory(),
+		ID:            NewIDGenerator(jobId),
 	}
 	le.PlateCache = plateCache.NewPlateCache(le.Inventory)
 	return le

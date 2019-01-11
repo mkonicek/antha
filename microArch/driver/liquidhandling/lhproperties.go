@@ -40,7 +40,6 @@ import (
 // probably needs splitting up to separate out the state information
 // from the properties information
 type LHProperties struct {
-	ID                   string
 	Nposns               int
 	Positions            map[string]*wtype.LHPosition // position descriptions by position name
 	PlateLookup          map[string]interface{}       // deck object (plate, tipbox, etc) by object ID
@@ -93,7 +92,7 @@ func (p LHProperties) OutputLayout() {
 
 func (p LHProperties) GetLayout() string {
 	s := ""
-	s += fmt.Sprintln("Layout for liquid handler ", p.ID, " type ", p.Mnfr, " ", p.Model)
+	s += fmt.Sprintln("Layout for liquid handler type ", p.Mnfr, " ", p.Model)
 	n := p.OrderedPositionNames()
 
 	for _, pos := range n {
@@ -281,7 +280,6 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 	r := NewLHProperties(lhp.Nposns, lhp.Model, lhp.Mnfr, lhp.LHType, lhp.TipType, lo)
 
 	if keepIDs {
-		r.ID = lhp.ID
 		for name, pos := range lhp.Positions {
 			r.Positions[name].ID = pos.ID
 		}
@@ -423,8 +421,6 @@ func NewLHProperties(num_positions int, model, manufacturer string, lhtype Liqui
 	}
 
 	var lhp LHProperties
-
-	lhp.ID = wtype.GetUUID()
 
 	lhp.Nposns = num_positions
 

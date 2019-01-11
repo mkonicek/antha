@@ -5,7 +5,6 @@ import (
 )
 
 type sProperties struct {
-	ID                   string
 	Nposns               int
 	Positions            map[string]*wtype.LHPosition // position descriptions by position name
 	Plates               map[string]*wtype.Plate      // plates by position name
@@ -34,7 +33,6 @@ type sProperties struct {
 
 func newSProperties(lhp *LHProperties) *sProperties {
 	slhp := &sProperties{
-		ID:                   lhp.ID,
 		Nposns:               lhp.Nposns,
 		Positions:            lhp.Positions,
 		Plates:               lhp.Plates,
@@ -81,7 +79,6 @@ func newSProperties(lhp *LHProperties) *sProperties {
 }
 
 func (slhp *sProperties) Fill(lhp *LHProperties) {
-	lhp.ID = slhp.ID
 	lhp.Nposns = slhp.Nposns
 	lhp.Positions = slhp.Positions
 	lhp.Plates = slhp.Plates

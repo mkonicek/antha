@@ -31,6 +31,7 @@ import (
 	"fmt"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/laboratory"
 )
 
 // SkipAlternateWells is an option which can be used in the NextFreeWell function
@@ -48,7 +49,7 @@ const SkipAlternateWells Option = "SkipAlternateWells"
 // This is designed to support multichannelling when a plate has 16 rows (i.e. 384 well plate)
 // when using a fixed 8 channel pipette head.
 //
-func NextFreeWell(plate *wtype.Plate, avoidWells []string, preferredWells []string, byRow bool, options ...Option) (well string, err error) {
+func NextFreeWell(lab *laboratory.Laboratory, plate *wtype.Plate, avoidWells []string, preferredWells []string, byRow bool, options ...Option) (well string, err error) {
 
 	if plate == nil {
 		return "", fmt.Errorf("no plate specified as argument to NextFreeWell function")
@@ -59,7 +60,7 @@ func NextFreeWell(plate *wtype.Plate, avoidWells []string, preferredWells []stri
 			if err := checkWellValidity(plate, well); err != nil {
 				return "", err
 			}
-			if plate.WellMap()[well].IsEmpty() && !InStrings(avoidWells, well) {
+			if plate.WellMap()[well].IsEmpty(lab.IDGenerator) && !InStrings(avoidWells, well) {
 				return well, nil
 			}
 		}
@@ -86,7 +87,7 @@ func NextFreeWell(plate *wtype.Plate, avoidWells []string, preferredWells []stri
 
 	for _, well := range allWellPositions {
 		// If a well position is found to already have been used then add one to our counter that specifies the next well to use. See step 2 of the following comments.
-		if plate.WellMap()[well].IsEmpty() && !InStrings(avoidWells, well) {
+		if plate.WellMap()[well].IsEmpty(lab.IDGenerator) && !InStrings(avoidWells, well) {
 			return well, nil
 		}
 	}
@@ -118,11 +119,11 @@ func checkWellValidity(plate *wtype.Plate, well string) error {
 
 // IsFreeWell checks for whether a well on a plate is free.
 // An error is returned if the well is not found on the plate or is occupied.
-func IsFreeWell(plate *wtype.Plate, well string) error {
+func IsFreeWell(lab *laboratory.Laboratory, plate *wtype.Plate, well string) error {
 	if err := checkWellValidity(plate, well); err != nil {
 		return err
 	}
-	if plate.WellMap()[well].IsEmpty() {
+	if plate.WellMap()[well].IsEmpty(lab.IDGenerator) {
 		return nil
 	}
 	return fmt.Errorf("well %s not free on plate %s %s. Contains %s", well, plate.Name(), plate.Type, plate.WellMap()[well].WContents.Name())

@@ -2,8 +2,10 @@ package liquidhandling
 
 import (
 	"fmt"
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"strings"
+
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 type LHIVector []*wtype.LHInstruction
@@ -34,7 +36,7 @@ func (lhiv LHIVector) MaxLen() int {
 	return l
 }
 
-func (lhiv LHIVector) CompsAt(i int) []*wtype.Liquid {
+func (lhiv LHIVector) CompsAt(idGen *id.IDGenerator, i int) []*wtype.Liquid {
 	ret := make([]*wtype.Liquid, len(lhiv))
 
 	for ix, ins := range lhiv {
@@ -46,7 +48,7 @@ func (lhiv LHIVector) CompsAt(i int) []*wtype.Liquid {
 			continue
 		}
 
-		ret[ix] = ins.Inputs[i].Dup()
+		ret[ix] = ins.Inputs[i].Dup(idGen)
 
 		ret[ix].Loc = ins.PlateID + ":" + ins.Welladdress
 	}

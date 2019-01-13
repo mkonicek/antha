@@ -80,7 +80,7 @@ func (a *Mixer) makeLhreq(labEffects *effects.LaboratoryEffects) (*lhreq, error)
 		return nil
 	}
 
-	req := planner.NewLHRequest()
+	req := planner.NewLHRequest(labEffects.IDGenerator)
 
 	if data := a.opt.CustomPolicyData; len(data) > 0 {
 		lhpr := wtype.NewLHPolicyRuleSet()
@@ -424,7 +424,7 @@ func (a *Mixer) makeMix(labEffects *effects.LaboratoryEffects, mixes []*wtype.LH
 		r.LHRequest.Add_instruction(mix)
 	}
 
-	err = r.Liquidhandler.MakeSolutions(labEffects, r.LHRequest)
+	err = r.Liquidhandler.MakeSolutions(labEffects.IDGenerator, r.LHRequest)
 	// TODO: MIS unfortunately we need to make sure this stays up to date would
 	// be better to remove this and just use the ones the liquid handler holds
 	r.LHProperties = r.Liquidhandler.Properties

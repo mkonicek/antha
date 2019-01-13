@@ -1,10 +1,12 @@
 package wtype
 
-func CopyComponentArray(arin []*Liquid) []*Liquid {
+import "github.com/antha-lang/antha/laboratory/effects/id"
+
+func CopyComponentArray(idGen *id.IDGenerator, arin []*Liquid) []*Liquid {
 	r := make([]*Liquid, len(arin))
 
 	for i, v := range arin {
-		r[i] = v.Dup()
+		r[i] = v.Dup(idGen)
 	}
 
 	return r

@@ -2,6 +2,8 @@ package wtype
 
 import (
 	"fmt"
+
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 // PRInstruction is a high-level instruction to a plate reader to measure a
@@ -18,8 +20,8 @@ func (ins PRInstruction) String() string {
 }
 
 // NewPRInstruction creates a new PRInstruction
-func NewPRInstruction() *PRInstruction {
+func NewPRInstruction(idGen *id.IDGenerator) *PRInstruction {
 	var pri PRInstruction
-	pri.ID = GetUUID()
+	pri.ID = idGen.NextID()
 	return &pri
 }

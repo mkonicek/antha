@@ -30,6 +30,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/laboratory"
 )
 
 type PHperdegC float64
@@ -76,7 +77,7 @@ func MeasurePH(*wtype.Liquid) (measured PHMeasurement) {
 
 // this should be performed on an LHComponent
 // currently (wrongly) assumes only acid or base will be needed
-func (ph *PHMeasurement) AdjustpH(ph_setpoint float64, ph_tolerance float64, ph_setPointTemp wunit.Temperature, Acid *wtype.Liquid, Base *wtype.Liquid) (adjustedsol wtype.Liquid, newph PHMeasurement, componentadded wtype.Liquid, err error) {
+func (ph *PHMeasurement) AdjustpH(lab *laboratory.Laboratory, ph_setpoint float64, ph_tolerance float64, ph_setPointTemp wunit.Temperature, Acid *wtype.Liquid, Base *wtype.Liquid) (adjustedsol wtype.Liquid, newph PHMeasurement, componentadded wtype.Liquid, err error) {
 
 	pHmax := ph_setpoint + ph_tolerance
 	pHmin := ph_setpoint - ph_tolerance
@@ -87,8 +88,8 @@ func (ph *PHMeasurement) AdjustpH(ph_setpoint float64, ph_tolerance float64, ph_
 		// calculate concentration of solution needed first, for now we'll add 10ul at a time until adjusted
 		for {
 			//newphmeasurement = ph
-			acidsamp := mixer.Sample(Acid, wunit.NewVolume(10, "ul"))
-			temporary := mixer.MixInto(ph.Location, "", ph.Component, acidsamp)
+			acidsamp := mixer.Sample(lab.IDGenerator, Acid, wunit.NewVolume(10, "ul"))
+			temporary := mixer.MixInto(lab, ph.Location, "", ph.Component, acidsamp)
 			time.Sleep(10 * time.Second)
 			newphmeasurement := MeasurePH(temporary)
 			if newphmeasurement.PHValue > pHmax {
@@ -112,8 +113,8 @@ func (ph *PHMeasurement) AdjustpH(ph_setpoint float64, ph_tolerance float64, ph_
 	if ph.PHValue < pHmin {
 		for {
 			//newphmeasurement = ph
-			basesamp := mixer.Sample(Base, wunit.NewVolume(10, "ul"))
-			temporary := mixer.MixInto(ph.Location, "", ph.Component, basesamp)
+			basesamp := mixer.Sample(lab.IDGenerator, Base, wunit.NewVolume(10, "ul"))
+			temporary := mixer.MixInto(lab, ph.Location, "", ph.Component, basesamp)
 			time.Sleep(10 * time.Second)
 			newphmeasurement := MeasurePH(temporary)
 			if newphmeasurement.PHValue > pHmax {

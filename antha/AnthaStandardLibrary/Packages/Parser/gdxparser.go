@@ -30,6 +30,7 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
+	"github.com/antha-lang/antha/laboratory"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
@@ -99,8 +100,8 @@ func ParseToAssemblyParameters(filename string) ([]enzymes.Assemblyparameters, e
 // design file is expected to follow a format as shown in the provided example
 // files An error will be returned if no data is found within the .gdx design
 // file or if the file is not in the expected format.
-func ParseGDX(file wtype.File) ([]enzymes.Assemblyparameters, error) {
-	data, err := file.ReadAll()
+func ParseGDX(lab *laboratory.Laboratory, file wtype.File) ([]enzymes.Assemblyparameters, error) {
+	data, err := lab.FileManager.ReadAll(file)
 	if err != nil {
 		return nil, err
 	}

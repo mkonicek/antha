@@ -2,6 +2,7 @@ package ast
 
 import (
 	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
@@ -18,11 +19,4 @@ type QPCRInstruction struct {
 
 func (ins QPCRInstruction) String() string {
 	return fmt.Sprint("QPCRInstruction")
-}
-
-// NewQPCRInstruction creates a new QPCRInstruction
-func NewQPCRInstruction() *QPCRInstruction {
-	return &QPCRInstruction{
-		ID: wtype.GetUUID(),
-	}
 }

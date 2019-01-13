@@ -31,6 +31,7 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"github.com/antha-lang/antha/laboratory"
 	"github.com/tealeg/xlsx"
 )
 
@@ -49,8 +50,8 @@ func OpenXLSXFromFileName(filename string) (file *xlsx.File, err error) {
 }
 
 // OpenXLSX opens an xlsx file and returns the xlsx.File data structure.
-func OpenXLSX(xlsx wtype.File) (file *xlsx.File, err error) {
-	fileContents, err := xlsx.ReadAll()
+func OpenXLSX(lab *laboratory.Laboratory, xlsx wtype.File) (file *xlsx.File, err error) {
+	fileContents, err := lab.FileManager.ReadAll(xlsx)
 	if err != nil {
 		return nil, err
 	}

@@ -2,6 +2,7 @@ package testinventory
 
 import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 var (
@@ -39,12 +40,12 @@ type PlateForSerializing struct {
 }
 
 // LHPlate returns an initialized, empty, LHPlate of the type corresponding to this PlateForSerializing
-func (pt PlateForSerializing) LHPlate() *wtype.Plate {
+func (pt PlateForSerializing) LHPlate(idGen *id.IDGenerator) *wtype.Plate {
 	newWellShape := wtype.NewShape(wtype.ShapeTypeID(pt.WellShape), lunit, pt.WellH, pt.WellW, pt.WellD)
 
-	newWelltype := wtype.NewLHWell(vunit, pt.MaxVol, pt.MinVol, newWellShape, pt.BottomType, pt.WellX, pt.WellY, pt.WellZ, pt.BottomH, lunit)
+	newWelltype := wtype.NewLHWell(idGen, vunit, pt.MaxVol, pt.MinVol, newWellShape, pt.BottomType, pt.WellX, pt.WellY, pt.WellZ, pt.BottomH, lunit)
 
-	plate := wtype.NewLHPlate(pt.PlateType, pt.Manufacturer, pt.ColSize, pt.RowSize, makePlateCoords(pt.Height), newWelltype, pt.WellXOffset, pt.WellYOffset, pt.WellXStart, pt.WellYStart, pt.WellZStart)
+	plate := wtype.NewLHPlate(idGen, pt.PlateType, pt.Manufacturer, pt.ColSize, pt.RowSize, makePlateCoords(pt.Height), newWelltype, pt.WellXOffset, pt.WellYOffset, pt.WellXStart, pt.WellYStart, pt.WellZStart)
 
 	plate.Welltype.Extra = pt.Extra
 

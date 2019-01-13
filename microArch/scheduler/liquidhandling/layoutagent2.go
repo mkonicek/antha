@@ -29,8 +29,8 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/laboratory/effects"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
-	"github.com/antha-lang/antha/microArch/sampletracker"
 )
 
 //ImprovedLayoutAgent assigns destinations to mix instructions
@@ -44,7 +44,7 @@ func ImprovedLayoutAgent(labEffects *effects.LaboratoryEffects, request *LHReque
 	var err error
 
 	// stage zero: seed in user plates if destinations are required
-	pc = map_in_user_plates(request, pc)
+	pc = map_in_user_plates(labEffects.IDGenerator, request, pc)
 
 	k := 1
 
@@ -84,13 +84,13 @@ func ImprovedLayoutAgent(labEffects *effects.LaboratoryEffects, request *LHReque
 	return request, err
 }
 
-func map_in_user_plates(rq *LHRequest, pc []PlateChoice) []PlateChoice {
+func map_in_user_plates(idGen *id.IDGenerator, rq *LHRequest, pc []PlateChoice) []PlateChoice {
 	for _, p := range rq.InputPlates {
-		pc = map_in_user_plate(p, pc, rq)
+		pc = map_in_user_plate(idGen, p, pc, rq)
 	}
 
 	for _, p := range rq.OutputPlates {
-		pc = map_in_user_plate(p, pc, rq)
+		pc = map_in_user_plate(idGen, p, pc, rq)
 	}
 
 	return pc
@@ -110,7 +110,7 @@ func findInPC(ass, w string, pc PlateChoice) int {
 	return i
 }
 
-func map_in_user_plate(p *wtype.Plate, pc []PlateChoice, rq *LHRequest) []PlateChoice {
+func map_in_user_plate(idGen *id.IDGenerator, p *wtype.Plate, pc []PlateChoice, rq *LHRequest) []PlateChoice {
 	nm := p.PlateName
 
 	it := wtype.NewAddressIterator(p, wtype.ColumnWise, wtype.TopToBottom, wtype.LeftToRight, false)
@@ -118,7 +118,7 @@ func map_in_user_plate(p *wtype.Plate, pc []PlateChoice, rq *LHRequest) []PlateC
 	for wc := it.Curr(); it.Valid(); wc = it.Next() {
 		w := p.Wellcoords[wc.FormatA1()]
 
-		if w.IsEmpty() {
+		if w.IsEmpty(idGen) {
 			continue
 		}
 
@@ -159,7 +159,7 @@ func LayoutStage(labEffects *effects.LaboratoryEffects, request *LHRequest, para
 
 	// find existing assignments and copy into the plate_choices structure
 	// this may be because 1) the user has set the assignment 2) the assignment derives from a component
-	plate_choices, mapchoices, err := getAndCompleteAssignments(labEffects.SampleTracker, request, chain.ValueIDs(), plate_choices, mapchoices)
+	plate_choices, mapchoices, err := getAndCompleteAssignments(labEffects, request, chain.ValueIDs(), plate_choices, mapchoices)
 
 	// map choices maps layout groups to (temp)plate IDs
 
@@ -296,7 +296,7 @@ type PlateChoice struct {
 	Output    []bool
 }
 
-func getAndCompleteAssignments(st *sampletracker.SampleTracker, request *LHRequest, order []string, s []PlateChoice, m map[string]string) ([]PlateChoice, map[string]string, error) {
+func getAndCompleteAssignments(labEffects *effects.LaboratoryEffects, request *LHRequest, order []string, s []PlateChoice, m map[string]string) ([]PlateChoice, map[string]string, error) {
 	//s := make([]PlateChoice, 0, 3)
 	//m := make(map[int]string)
 
@@ -344,7 +344,7 @@ func getAndCompleteAssignments(st *sampletracker.SampleTracker, request *LHReque
 			id, ok := m[mlg]
 			// if no plate assigned so far, assign a temp ID for grouping
 			if !ok {
-				id = wtype.NewUUID()
+				id = labEffects.IDGenerator.NextID()
 				m[mlg] = id
 				if nm == "Output_plate" {
 					nm += "_" + id[0:6]
@@ -369,7 +369,7 @@ func getAndCompleteAssignments(st *sampletracker.SampleTracker, request *LHReque
 
 					if i == -1 {
 						// a '-1' means we didn't find one
-						id := wtype.NewUUID()
+						id := labEffects.IDGenerator.NextID()
 						request.LHInstructions[k].SetPlateID(id)
 						s = append(s, PlateChoice{Platetype: v.Platetype, Assigned: []string{v.ID}, ID: v.PlateID, Wells: []string{v.Welladdress}, Name: nm, Output: []bool{true}})
 						i = len(s) - 1
@@ -390,7 +390,7 @@ func getAndCompleteAssignments(st *sampletracker.SampleTracker, request *LHReque
 			}
 
 			if v.Inputs[0].PlateLocation().ID == "" {
-				addr, ok := st.GetLocationOf(v.Inputs[0].ID)
+				addr, ok := labEffects.SampleTracker.GetLocationOf(v.Inputs[0].ID)
 
 				if !ok {
 					err := wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("MIX IN PLACE WITH NO LOCATION SET FOR %s", v.Inputs[0].Name()))
@@ -501,7 +501,7 @@ func choose_plates(labEffects *effects.LaboratoryEffects, request *LHRequest, pc
 				if len(request.OutputPlatetypes) == 0 {
 					return nil, fmt.Errorf("no output plate types specified. \n If not specifying output plate type in a Mix Command, at least one output plate type must be specified in config > outputPlateTypes.")
 				}
-				pc = append(pc, PlateChoice{Platetype: chooseAPlate(request, v), Assigned: []string{v.ID}, ID: wtype.GetUUID(), Wells: []string{""}, Name: "Output_plate_" + v.ID[0:6], Output: []bool{true}})
+				pc = append(pc, PlateChoice{Platetype: chooseAPlate(request, v), Assigned: []string{v.ID}, ID: labEffects.IDGenerator.NextID(), Wells: []string{""}, Name: "Output_plate_" + v.ID[0:6], Output: []bool{true}})
 				continue
 			}
 
@@ -524,7 +524,7 @@ func choose_plates(labEffects *effects.LaboratoryEffects, request *LHRequest, pc
 
 		// chop the assignments up
 
-		pc2 = append(pc2, modpc(v, plate.Nwells)...)
+		pc2 = append(pc2, modpc(labEffects.IDGenerator, v, plate.Nwells)...)
 	}
 
 	// copy the choices in
@@ -546,7 +546,7 @@ func choose_plates(labEffects *effects.LaboratoryEffects, request *LHRequest, pc
 }
 
 // chop the assignments up modulo plate size
-func modpc(choice PlateChoice, nwell int) []PlateChoice {
+func modpc(idGen *id.IDGenerator, choice PlateChoice, nwell int) []PlateChoice {
 	r := make([]PlateChoice, 0, 1)
 
 	seen := make(map[string]bool)
@@ -559,7 +559,7 @@ func modpc(choice PlateChoice, nwell int) []PlateChoice {
 		ID := choice.ID
 		if s != 0 {
 			// new ID
-			ID = wtype.GetUUID()
+			ID = idGen.NextID()
 		}
 
 		nm := uniquePlateName(choice.Name, seen, 100)
@@ -694,7 +694,7 @@ func make_layouts(labEffects *effects.LaboratoryEffects, request *LHRequest, pc 
 				if !ok {
 					return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("well (%s) specified is out of range of available wells for plate type %s", w, plat.Type))
 				}
-				err := markWellUsed(well)
+				err := markWellUsed(labEffects.IDGenerator, well)
 				if err != nil {
 					return err
 				}
@@ -711,13 +711,13 @@ func make_layouts(labEffects *effects.LaboratoryEffects, request *LHRequest, pc 
 			var assignment string
 
 			if well == "" {
-				wc := plat.NextEmptyWell(it)
+				wc := plat.NextEmptyWell(labEffects.IDGenerator, it)
 				well, ok := plat.WellAt(wc)
 				if !ok {
 					return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("too many assignments made to output plate \"%s\"", c.Platetype))
 				}
 
-				err := markWellUsed(well)
+				err := markWellUsed(labEffects.IDGenerator, well)
 				if err != nil {
 					return err
 				}
@@ -738,12 +738,12 @@ func make_layouts(labEffects *effects.LaboratoryEffects, request *LHRequest, pc 
 }
 
 //markWellUsed add a dummy component to the well so that it's marked as having been used
-func markWellUsed(well *wtype.LHWell) error {
+func markWellUsed(idGen *id.IDGenerator, well *wtype.LHWell) error {
 	//avoid adding a dummy component if one's already been added
-	if well.IsEmpty() {
-		dummycmp := wtype.NewLHComponent()
+	if well.IsEmpty(idGen) {
+		dummycmp := wtype.NewLHComponent(idGen)
 		dummycmp.SetVolume(well.MaxVolume())
-		err := well.AddComponent(dummycmp)
+		err := well.AddComponent(idGen, dummycmp)
 		if err != nil {
 			return wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Layout Agent : %s", err.Error()))
 		}

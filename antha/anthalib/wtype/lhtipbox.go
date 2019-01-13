@@ -27,6 +27,8 @@ import (
 	"fmt"
 	"math"
 	"strings"
+
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 /* tip box */
@@ -53,10 +55,9 @@ type LHTipbox struct {
 	parent LHObject `gotopb:"-"`
 }
 
-func NewLHTipbox(nrows, ncols int, size Coordinates, manufacturer, boxtype string, tiptype *LHTip, well *LHWell, tipxoffset, tipyoffset, tipxstart, tipystart, tipzstart float64) *LHTipbox {
+func NewLHTipbox(idGen *id.IDGenerator, nrows, ncols int, size Coordinates, manufacturer, boxtype string, tiptype *LHTip, well *LHWell, tipxoffset, tipyoffset, tipxstart, tipystart, tipzstart float64) *LHTipbox {
 	var tipbox LHTipbox
-	//tipbox.ID = "tipbox-" + GetUUID()
-	tipbox.ID = GetUUID()
+	tipbox.ID = idGen.NextID()
 	tipbox.Type = boxtype
 	tipbox.Boxname = fmt.Sprintf("%s_%s", boxtype, tipbox.ID[1:len(tipbox.ID)-2])
 	tipbox.Mnfr = manufacturer
@@ -76,7 +77,7 @@ func NewLHTipbox(nrows, ncols int, size Coordinates, manufacturer, boxtype strin
 	tipbox.TipYStart = tipystart
 	tipbox.TipZStart = tipzstart
 
-	return initialize_tips(&tipbox, tiptype)
+	return initialize_tips(idGen, &tipbox, tiptype)
 }
 
 func (tb LHTipbox) GetID() string {
@@ -144,15 +145,15 @@ TipZStart : %f,
 	)
 }
 
-func (tb *LHTipbox) Dup() *LHTipbox {
-	return tb.dup(false)
+func (tb *LHTipbox) Dup(idGen *id.IDGenerator) *LHTipbox {
+	return tb.dup(idGen, false)
 }
-func (tb *LHTipbox) DupKeepIDs() *LHTipbox {
-	return tb.dup(true)
+func (tb *LHTipbox) DupKeepIDs(idGen *id.IDGenerator) *LHTipbox {
+	return tb.dup(idGen, true)
 }
 
-func (tb *LHTipbox) dup(keepIDs bool) *LHTipbox {
-	tb2 := NewLHTipbox(tb.Nrows, tb.Ncols, tb.Bounds.GetSize(), tb.Mnfr, tb.Type, tb.Tiptype, tb.AsWell, tb.TipXOffset, tb.TipYOffset, tb.TipXStart, tb.TipYStart, tb.TipZStart)
+func (tb *LHTipbox) dup(idGen *id.IDGenerator, keepIDs bool) *LHTipbox {
+	tb2 := NewLHTipbox(idGen, tb.Nrows, tb.Ncols, tb.Bounds.GetSize(), tb.Mnfr, tb.Type, tb.Tiptype, tb.AsWell, tb.TipXOffset, tb.TipYOffset, tb.TipXStart, tb.TipYStart, tb.TipZStart)
 	tb2.Bounds.Position = tb.Bounds.GetPosition()
 
 	if keepIDs {
@@ -168,9 +169,9 @@ func (tb *LHTipbox) dup(keepIDs bool) *LHTipbox {
 				tb2.Tips[i][j] = nil
 			} else {
 				if keepIDs {
-					tb2.Tips[i][j] = t.DupKeepID()
+					tb2.Tips[i][j] = t.DupKeepID(idGen)
 				} else {
-					tb2.Tips[i][j] = t.Dup()
+					tb2.Tips[i][j] = t.Dup(idGen)
 				}
 				tb2.Tips[i][j].SetParent(tb2) //nolint - tb2 is certainly an lhtipbox
 			}
@@ -369,20 +370,20 @@ func (self *LHTipbox) GetParent() LHObject {
 }
 
 //Duplicate copies an LHObject
-func (self *LHTipbox) Duplicate(keepIDs bool) LHObject {
-	return self.dup(keepIDs)
+func (self *LHTipbox) Duplicate(idGen *id.IDGenerator, keepIDs bool) LHObject {
+	return self.dup(idGen, keepIDs)
 }
 
 //DimensionsString returns a string description of the position and size of the object and its children.
 //useful for debugging
-func (self *LHTipbox) DimensionsString() string {
+func (self *LHTipbox) DimensionsString(idGen *id.IDGenerator) string {
 	ret := make([]string, 0, 1+self.NRows()*self.NCols())
 	ret = append(ret, fmt.Sprintf("Tipbox \"%s\" at %v+%v, with %dx%d tips bounded by %v",
 		self.GetName(), self.GetPosition(), self.GetSize(), self.NCols(), self.NRows(), self.GetTipBounds()))
 
 	for _, tiprow := range self.Tips {
 		for _, tip := range tiprow {
-			ret = append(ret, "\t"+tip.DimensionsString())
+			ret = append(ret, "\t"+tip.DimensionsString(idGen))
 		}
 	}
 
@@ -415,7 +416,7 @@ func (tb *LHTipbox) GetChildByAddress(c WellCoords) LHObject {
 	return tb.Tips[c.X][c.Y]
 }
 
-func (tb *LHTipbox) CoordsToWellCoords(r Coordinates) (WellCoords, Coordinates) {
+func (tb *LHTipbox) CoordsToWellCoords(idGen *id.IDGenerator, r Coordinates) (WellCoords, Coordinates) {
 	//get relative Coordinates
 	rel := r.Subtract(tb.GetPosition())
 	tipSize := tb.Tiptype.GetSize()
@@ -434,12 +435,12 @@ func (tb *LHTipbox) CoordsToWellCoords(r Coordinates) (WellCoords, Coordinates) 
 		wc.Y = tb.Nrows - 1
 	}
 
-	r2, _ := tb.WellCoordsToCoords(wc, TopReference)
+	r2, _ := tb.WellCoordsToCoords(idGen, wc, TopReference)
 
 	return wc, r.Subtract(r2)
 }
 
-func (tb *LHTipbox) WellCoordsToCoords(wc WellCoords, r WellReference) (Coordinates, bool) {
+func (tb *LHTipbox) WellCoordsToCoords(idGen *id.IDGenerator, wc WellCoords, r WellReference) (Coordinates, bool) {
 	if !tb.AddressExists(wc) {
 		return Coordinates{}, false
 	}
@@ -743,12 +744,12 @@ func reverse(ar []string) []string {
 	}
 	return ret
 }
-func (tb *LHTipbox) Refresh() {
-	initialize_tips(tb, tb.Tiptype)
+func (tb *LHTipbox) Refresh(idGen *id.IDGenerator) {
+	initialize_tips(idGen, tb, tb.Tiptype)
 }
 
-func (tb *LHTipbox) Refill() {
-	tb.Refresh()
+func (tb *LHTipbox) Refill(idGen *id.IDGenerator) {
+	tb.Refresh(idGen)
 }
 
 func (tb *LHTipbox) MarshalJSON() ([]byte, error) {
@@ -764,7 +765,7 @@ func (tb *LHTipbox) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func initialize_tips(tipbox *LHTipbox, tiptype *LHTip) *LHTipbox {
+func initialize_tips(idGen *id.IDGenerator, tipbox *LHTipbox, tiptype *LHTip) *LHTipbox {
 	nr := tipbox.Nrows
 	nc := tipbox.Ncols
 	//make sure tips are in the center of the address
@@ -772,7 +773,7 @@ func initialize_tips(tipbox *LHTipbox, tiptype *LHTip) *LHTipbox {
 	y_off := -tiptype.GetSize().Y / 2.
 	for i := 0; i < nc; i++ {
 		for j := 0; j < nr; j++ {
-			tipbox.Tips[i][j] = tiptype.Dup()
+			tipbox.Tips[i][j] = tiptype.Dup(idGen)
 			tipbox.Tips[i][j].SetOffset(Coordinates{ //nolint
 				X: tipbox.TipXStart + float64(i)*tipbox.TipXOffset + x_off,
 				Y: tipbox.TipYStart + float64(j)*tipbox.TipYOffset + y_off,

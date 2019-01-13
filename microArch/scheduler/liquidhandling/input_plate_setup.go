@@ -29,7 +29,6 @@ import (
 
 	petname "github.com/dustinkirkland/golang-petname"
 
-	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/search"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/laboratory/effects"
@@ -122,7 +121,7 @@ func input_plate_setup(labEffects *effects.LaboratoryEffects, request *LHRequest
 			return nil, fmt.Errorf("no input plate set: \n  - Please upload plate file or select at least one input plate type in Configuration > Preferences > inputPlateTypes. \n - Important: Please add a riser to the plate choice for low profile plates such as PCR plates, 96 and 384 well plates. ")
 		}
 		var err error
-		well_count_assignments, err = choosePlateAssignments(input_volumes, input_platetypes, weights_constraints)
+		well_count_assignments, err = choosePlateAssignments(labEffects.IDGenerator, input_volumes, input_platetypes, weights_constraints)
 
 		if err != nil {
 			return nil, err
@@ -190,7 +189,7 @@ func input_plate_setup(labEffects *effects.LaboratoryEffects, request *LHRequest
 				}
 
 				// find somewhere to put it
-				curr_well, ok = wtype.Get_Next_Well(curr_plate, component, curr_well)
+				curr_well, ok = wtype.Get_Next_Well(labEffects.IDGenerator, curr_plate, component, curr_well)
 
 				if !ok {
 					// if no space, reset
@@ -214,20 +213,20 @@ func input_plate_setup(labEffects *effects.LaboratoryEffects, request *LHRequest
 					// don't let these get deleted...
 					curr_well.SetUserAllocated()
 				} else {
-					newcomponent = component.Dup()
+					newcomponent = component.Dup(labEffects.IDGenerator)
 					newcomponent.Vol = curr_well.MaxVolume().RawValue()
 					newcomponent.Vunit = curr_well.MaxVolume().Unit().PrefixedSymbol()
 					newcomponent.Loc = location
 
 					//usefulVolume is the most we can get from the well assuming one transfer
-					usefulVolume := curr_well.CurrentWorkingVolume()
+					usefulVolume := curr_well.CurrentWorkingVolume(labEffects.IDGenerator)
 					usefulVolume.Subtract(request.CarryVolume)
 					volume.Subtract(usefulVolume)
 				}
 
 				labEffects.SampleTracker.SetLocationOf(component.ID, location)
 
-				err := curr_well.AddComponent(newcomponent)
+				err := curr_well.AddComponent(labEffects.IDGenerator, newcomponent)
 				if err != nil {
 					return nil, wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Input plate setup : %s", err.Error()))
 				}
@@ -289,11 +288,14 @@ func getSafePlateName(request *LHRequest, prefix, sep string, curplaten int) str
 }
 
 func randomPlateName(prefix, sep string, order int) string {
-
-	blackListed := []string{"crappie", "titmouse", "stinkbug"}
+	blackListed := map[string]bool{
+		"crappie":  true,
+		"titmouse": true,
+		"stinkbug": true,
+	}
 
 	randomName := petname.Generate(1, "")
-	for search.InStrings(blackListed, randomName) {
+	for blackListed[randomName] {
 		randomName = petname.Generate(1, "")
 	}
 	tox := []string{prefix, fmt.Sprintf("%d", order), randomName}

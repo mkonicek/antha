@@ -24,11 +24,13 @@ package liquidhandling
 
 import (
 	"fmt"
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/pkg/errors"
 	"sort"
 	"strings"
+
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/laboratory/effects/id"
+	"github.com/pkg/errors"
 )
 
 //checkTipPresence checks that tips are present (or not) on the adaptor at the given
@@ -189,7 +191,7 @@ func assertNoTipsOnOthersInGroup(adaptor *AdaptorState) error {
 }
 
 //assertNoCollisionsInGroup check that there are no collisions, ignoring the specified channels on the given adaptor
-func assertNoCollisionsInGroup(settings *SimulatorSettings, adaptor *AdaptorState, channelsToIgnore []int, channelClearance float64) *CollisionError {
+func assertNoCollisionsInGroup(idGen *id.IDGenerator, settings *SimulatorSettings, adaptor *AdaptorState, channelsToIgnore []int, channelClearance float64) *CollisionError {
 
 	var maxChannels int
 	for _, ad := range adaptor.GetGroup().GetAdaptors() {
@@ -237,7 +239,7 @@ func assertNoCollisionsInGroup(settings *SimulatorSettings, adaptor *AdaptorStat
 	for obj := range objectMap {
 		uniqueObjects = append(uniqueObjects, obj)
 	}
-	return NewCollisionError(robotState, channelMap, uniqueObjects)
+	return NewCollisionError(idGen, robotState, channelMap, uniqueObjects)
 }
 
 var pluralMap = map[string]string{
@@ -262,11 +264,11 @@ func pluralClassOf(o interface{}, num int) string {
 
 //addComponent add a component to the container without storing component history
 //all we care about are the volume and Cname
-func addComponent(container wtype.LHContainer, rhs *wtype.Liquid) error {
+func addComponent(idGen *id.IDGenerator, container wtype.LHContainer, rhs *wtype.Liquid) error {
 
-	lhs := container.Contents()
+	lhs := container.Contents(idGen)
 
-	ret := wtype.NewLHComponent()
+	ret := wtype.NewLHComponent(idGen)
 
 	var names []string
 	names = append(names, strings.Split(lhs.CName, "+")...)
@@ -279,7 +281,7 @@ func addComponent(container wtype.LHContainer, rhs *wtype.Liquid) error {
 	ret.Vol = fV.RawValue()
 	ret.Vunit = fV.Unit().PrefixedSymbol()
 
-	return container.SetContents(ret)
+	return container.SetContents(idGen, ret)
 }
 
 func coordsMatch(tc [][]wtype.WellCoords, wc []wtype.WellCoords) bool {

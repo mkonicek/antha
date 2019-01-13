@@ -24,14 +24,16 @@ package liquidhandling
 
 import (
 	"fmt"
+	"math"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 	"gonum.org/v1/gonum/mat"
 	"gonum.org/v1/gonum/optimize/convex/lp"
-	"math"
 )
 
-func choosePlateAssignments(component_volumes map[string]wunit.Volume, plate_types []*wtype.Plate, weight_constraint map[string]float64) (map[string]map[*wtype.Plate]int, error) {
+func choosePlateAssignments(idGen *id.IDGenerator, component_volumes map[string]wunit.Volume, plate_types []*wtype.Plate, weight_constraint map[string]float64) (map[string]map[*wtype.Plate]int, error) {
 
 	// 	v2.0: modified to use gonum/optimize/convex/lp
 	//
@@ -166,7 +168,7 @@ func choosePlateAssignments(component_volumes map[string]wunit.Volume, plate_typ
 		pmap := make(map[*wtype.Plate]int)
 		for _, p := range plate_types {
 			if optX[cur] > 0.0 {
-				pmap[p.Dup()] = int(math.Ceil(optX[cur]))
+				pmap[p.Dup(idGen)] = int(math.Ceil(optX[cur]))
 			}
 			cur += 1
 		}

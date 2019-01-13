@@ -30,6 +30,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/graph"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 const InPlaceMarker = "-INPLACE"
@@ -561,7 +562,7 @@ func (lhc *Liquid) Remove(v wunit.Volume) wunit.Volume {
 	return v
 }
 
-func (lhc *Liquid) Sample(v wunit.Volume) (*Liquid, error) {
+func (lhc *Liquid) Sample(idGen *id.IDGenerator, v wunit.Volume) (*Liquid, error) {
 	if lhc.IsZero() {
 		return nil, fmt.Errorf("Cannot sample empty component")
 	} else if lhc.Volume().EqualTo(v) {
@@ -569,8 +570,8 @@ func (lhc *Liquid) Sample(v wunit.Volume) (*Liquid, error) {
 		return lhc, nil
 	}
 
-	c := lhc.Dup()
-	c.ID = NewUUID()
+	c := lhc.Dup(idGen)
+	c.ID = idGen.NextID()
 	v2 := lhc.Remove(v)
 	c.Vunit = v2.Unit().PrefixedSymbol()
 	c.Vol = v2.RawValue()
@@ -583,14 +584,14 @@ func (lhc *Liquid) Sample(v wunit.Volume) (*Liquid, error) {
 	return c, nil
 }
 
-func (lhc *Liquid) Cp() *Liquid {
-	c := lhc.Dup()
-	c.ID = GetUUID()
+func (lhc *Liquid) Cp(idGen *id.IDGenerator) *Liquid {
+	c := lhc.Dup(idGen)
+	c.ID = idGen.NextID()
 	return c
 }
 
-func (lhc *Liquid) Dup() *Liquid {
-	c := NewLHComponent()
+func (lhc *Liquid) Dup(idGen *id.IDGenerator) *Liquid {
+	c := NewLHComponent(idGen)
 	if lhc != nil {
 		c.ID = lhc.ID
 		c.Order = lhc.Order
@@ -681,8 +682,8 @@ func (cmp *Liquid) ReplaceDaughterID(ID1, ID2 string) {
 	}
 }
 
-func (cmp *Liquid) MixPreserveTvol(cmp2 *Liquid) {
-	cmp.Mix(cmp2)
+func (cmp *Liquid) MixPreserveTvol(idGen *id.IDGenerator, cmp2 *Liquid) {
+	cmp.Mix(idGen, cmp2)
 	if cmp2.Vol == 0.00 && cmp2.Tvol > 0.00 {
 		vcmp := wunit.NewVolume(cmp.Vol, cmp.Vunit)
 		vcmp2 := wunit.NewVolume(cmp2.Tvol, cmp2.Vunit)
@@ -695,7 +696,7 @@ func (cmp *Liquid) MixPreserveTvol(cmp2 *Liquid) {
 }
 
 // add cmp2 to cmp
-func (cmp *Liquid) Mix(cmp2 *Liquid) {
+func (cmp *Liquid) Mix(idGen *id.IDGenerator, cmp2 *Liquid) {
 	wasEmpty := cmp.IsZero()
 	cmp.Smax = mergeSolubilities(cmp, cmp2)
 	// determine type of final
@@ -711,7 +712,7 @@ func (cmp *Liquid) Mix(cmp2 *Liquid) {
 	*/
 	cmp.AddParentComponent(cmp2)
 	//	cmp.ID = "component-" + GetUUID()
-	cmp.ID = GetUUID()
+	cmp.ID = idGen.NextID()
 	cmp2.AddDaughterComponent(cmp)
 
 	if wasEmpty {
@@ -798,10 +799,9 @@ func (lhc *Liquid) GetType() string {
 	return typeName.String()
 }
 
-func NewLHComponent() *Liquid {
+func NewLHComponent(idGen *id.IDGenerator) *Liquid {
 	var lhc Liquid
-	//lhc.ID = "component-" + GetUUID()
-	lhc.ID = GetUUID()
+	lhc.ID = idGen.NextID()
 	lhc.Vunit = "ul"
 	lhc.Policy = make(map[string]interface{})
 	lhc.Extra = make(map[string]interface{})

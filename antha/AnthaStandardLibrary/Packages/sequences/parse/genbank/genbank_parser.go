@@ -33,11 +33,12 @@ import (
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/laboratory"
 )
 
 //Parses file of type .gb to DNASequence. Features are not annotated
-func GenbankToFeaturelessDNASequence(sequenceFile wtype.File) (wtype.DNASequence, error) {
-	data, err := sequenceFile.ReadAll()
+func GenbankToFeaturelessDNASequence(lab *laboratory.Laboratory, sequenceFile wtype.File) (wtype.DNASequence, error) {
+	data, err := lab.FileManager.ReadAll(sequenceFile)
 	if err != nil {
 		return wtype.DNASequence{}, err
 	}
@@ -58,11 +59,11 @@ func GenbankToFeaturelessDNASequence(sequenceFile wtype.File) (wtype.DNASequence
 }
 
 //Parses a feature from a genbank file into a DNASequence.
-func GenbankFeatureToDNASequence(file wtype.File, featurename string) (wtype.DNASequence, error) {
+func GenbankFeatureToDNASequence(lab *laboratory.Laboratory, file wtype.File, featurename string) (wtype.DNASequence, error) {
 	var line string
 	genbanklines := make([]string, 0)
 
-	data, err := file.ReadAll()
+	data, err := lab.FileManager.ReadAll(file)
 
 	if err != nil {
 		return wtype.DNASequence{}, err
@@ -98,8 +99,8 @@ func GenbankFeatureToDNASequence(file wtype.File, featurename string) (wtype.DNA
 }
 
 // parses a genbank file into a DNASEquence making features from annotations
-func GenbankToAnnotatedSeq(file wtype.File) (annotated wtype.DNASequence, err error) {
-	data, err := file.ReadAll()
+func GenbankToAnnotatedSeq(lab *laboratory.Laboratory, file wtype.File) (annotated wtype.DNASequence, err error) {
+	data, err := lab.FileManager.ReadAll(file)
 	if err != nil {
 		return
 	}

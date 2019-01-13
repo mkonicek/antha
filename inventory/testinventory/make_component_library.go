@@ -24,14 +24,15 @@ package testinventory
 import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
-func makeComponents() []*wtype.Liquid {
+func makeComponents(idGen *id.IDGenerator) []*wtype.Liquid {
 	var components []*wtype.Liquid
 	var defaultConc wunit.Concentration
 
 	add := func(name string, typ wtype.LiquidType, smax float64, conc wunit.Concentration) {
-		c := wtype.NewLHComponent()
+		c := wtype.NewLHComponent(idGen)
 		c.CName = name
 		c.Type = typ
 		c.Smax = smax

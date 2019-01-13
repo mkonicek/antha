@@ -9,13 +9,14 @@ import (
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/pcr"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/laboratory"
 )
 
 // ParsePCRExc3el takes in a pcr design file (.xlsx or .csv) and converts this
 // into an array of type PCRReactions.
-func ParsePCRExcel(designfile wtype.File) ([]pcr.Reaction, error) {
+func ParsePCRExcel(lab *laboratory.Laboratory, designfile wtype.File) ([]pcr.Reaction, error) {
 
-	data, err := designfile.ReadAll()
+	data, err := lab.FileManager.ReadAll(designfile)
 	var pcrreaction []pcr.Reaction
 
 	if err != nil {
@@ -23,7 +24,7 @@ func ParsePCRExcel(designfile wtype.File) ([]pcr.Reaction, error) {
 	} else {
 
 		switch {
-		case filepath.Ext(designfile.Name) == ".xlsx":
+		case filepath.Ext(designfile.Path) == ".xlsx":
 			csvfile1, err := xlsxparserBinary(data, 0, "Sheet2")
 			if err != nil {
 				return nil, err
@@ -40,7 +41,7 @@ func ParsePCRExcel(designfile wtype.File) ([]pcr.Reaction, error) {
 		//	pcrreaction = pcrReactionfromcsv(designfile.Name)
 		//	return pcrreaction, err
 
-		case filepath.Ext(designfile.Name) != ".xlsx": //".csv" && filepath.Ext(designfile.Name) != ".xlsx":
+		case filepath.Ext(designfile.Path) != ".xlsx": //".csv" && filepath.Ext(designfile.Name) != ".xlsx":
 			err = fmt.Errorf("File format not supported please use .xlsx file. ")
 			return nil, err
 		}

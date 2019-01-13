@@ -31,6 +31,7 @@ import (
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/parse/fasta"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/parse/genbank"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/laboratory"
 )
 
 // PartSource is any type which has a GetSequences method
@@ -74,20 +75,20 @@ type FileSet []wtype.File
 
 // GetSequences returns all sequences and any errors which occur.
 // Any fasta or Genbank files will return DNASequences.
-func (fs FileSet) GetSequences() (partslist []wtype.DNASequence, err error) {
+func (fs FileSet) GetSequences(lab *laboratory.Laboratory) (partslist []wtype.DNASequence, err error) {
 	var errs []string
 
 	for _, file := range fs {
 
-		filename := file.Name
+		filename := file.Path
 		if strings.EqualFold(filepath.Ext(filename), ".fasta") || strings.EqualFold(filepath.Ext(filename), ".fa") {
-			sequences, err := fasta.FastaToDNASequences(file)
+			sequences, err := fasta.FastaToDNASequences(lab, file)
 			if err != nil {
 				errs = append(errs, err.Error())
 			}
 			partslist = append(partslist, sequences...)
 		} else if strings.EqualFold(filepath.Ext(filename), ".gb") || strings.EqualFold(filepath.Ext(filename), ".gbk") {
-			seq, err := genbank.GenbankToAnnotatedSeq(file)
+			seq, err := genbank.GenbankToAnnotatedSeq(lab, file)
 			if err != nil {
 				errs = append(errs, err.Error())
 			}

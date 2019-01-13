@@ -24,9 +24,11 @@ package wtype
 
 import (
 	"fmt"
+
 	"github.com/pkg/errors"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 type ChannelOrientation bool
@@ -142,19 +144,19 @@ func (lhcp LHChannelParameter) GetConstraint(n int) LHMultiChannelConstraint {
 	return LHMultiChannelConstraint{x, y, max}
 }
 
-func (lhcp *LHChannelParameter) Dup() *LHChannelParameter {
-	return lhcp.dup(false)
+func (lhcp *LHChannelParameter) Dup(idGen *id.IDGenerator) *LHChannelParameter {
+	return lhcp.dup(idGen, false)
 }
 
-func (lhcp *LHChannelParameter) DupKeepIDs() *LHChannelParameter {
-	return lhcp.dup(true)
+func (lhcp *LHChannelParameter) DupKeepIDs(idGen *id.IDGenerator) *LHChannelParameter {
+	return lhcp.dup(idGen, true)
 }
 
-func (lhcp *LHChannelParameter) dup(keepIDs bool) *LHChannelParameter {
+func (lhcp *LHChannelParameter) dup(idGen *id.IDGenerator, keepIDs bool) *LHChannelParameter {
 	if lhcp == nil {
 		return nil
 	}
-	r := NewLHChannelParameter(lhcp.Name, lhcp.Platform, lhcp.Minvol, lhcp.Maxvol, lhcp.Minspd, lhcp.Maxspd, lhcp.Multi, lhcp.Independent, lhcp.Orientation, lhcp.Head)
+	r := NewLHChannelParameter(idGen, lhcp.Name, lhcp.Platform, lhcp.Minvol, lhcp.Maxvol, lhcp.Minspd, lhcp.Maxspd, lhcp.Multi, lhcp.Independent, lhcp.Orientation, lhcp.Head)
 	if keepIDs {
 		r.ID = lhcp.ID
 	}
@@ -162,9 +164,9 @@ func (lhcp *LHChannelParameter) dup(keepIDs bool) *LHChannelParameter {
 	return r
 }
 
-func NewLHChannelParameter(name, platform string, minvol, maxvol wunit.Volume, minspd, maxspd wunit.FlowRate, multi int, independent bool, orientation ChannelOrientation, head int) *LHChannelParameter {
+func NewLHChannelParameter(idGen *id.IDGenerator, name, platform string, minvol, maxvol wunit.Volume, minspd, maxspd wunit.FlowRate, multi int, independent bool, orientation ChannelOrientation, head int) *LHChannelParameter {
 	var lhp LHChannelParameter
-	lhp.ID = GetUUID()
+	lhp.ID = idGen.NextID()
 	lhp.Name = name
 	lhp.Platform = platform
 	lhp.Minvol = minvol
@@ -200,16 +202,16 @@ type LHDevice struct {
 	Mnfr string
 }
 
-func NewLHDevice(name, mfr string) *LHDevice {
+func NewLHDevice(idGen *id.IDGenerator, name, mfr string) *LHDevice {
 	var dev LHDevice
-	dev.ID = GetUUID()
+	dev.ID = idGen.NextID()
 	dev.Name = name
 	dev.Mnfr = mfr
 	return &dev
 }
 
-func (lhd *LHDevice) Dup() *LHDevice {
-	d := NewLHDevice(lhd.Name, lhd.Mnfr)
+func (lhd *LHDevice) Dup(idGen *id.IDGenerator) *LHDevice {
+	d := NewLHDevice(idGen, lhd.Name, lhd.Mnfr)
 	return d
 }
 
@@ -222,9 +224,9 @@ type LHPosition struct {
 	Maxh  float64
 }
 
-func NewLHPosition(position_number int, name string, maxh float64) *LHPosition {
+func NewLHPosition(idGen *id.IDGenerator, position_number int, name string, maxh float64) *LHPosition {
 	var lhp LHPosition
-	lhp.ID = GetUUID()
+	lhp.ID = idGen.NextID()
 	lhp.Name = name
 	lhp.Num = position_number
 	lhp.Extra = make([]LHDevice, 0, 2)
@@ -278,9 +280,9 @@ type LHSolution struct {
 	Minorlayoutgroup int
 }
 
-func NewLHSolution() *LHSolution {
+func NewLHSolution(idGen *id.IDGenerator) *LHSolution {
 	var lhs LHSolution
-	lhs.ID = GetUUID()
+	lhs.ID = idGen.NextID()
 	lhs.Majorlayoutgroup = -1
 	lhs.Minorlayoutgroup = -1
 	return &lhs
@@ -328,9 +330,9 @@ func (lhs *LHSolution) GetAssignment() string {
 	return lhs.Plateaddress + ":" + lhs.Welladdress
 }
 
-func New_Solution() *LHSolution {
+func New_Solution(idGen *id.IDGenerator) *LHSolution {
 	var solution LHSolution
-	solution.ID = GetUUID()
+	solution.ID = idGen.NextID()
 	solution.Components = make([]*Liquid, 0, 4)
 	return &solution
 }

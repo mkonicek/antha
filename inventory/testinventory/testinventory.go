@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 var ErrUnknownType = errors.New("unknown type requested from inventory")
@@ -18,7 +19,8 @@ const (
 )
 
 type TestInventory struct {
-	lock sync.Mutex
+	lock  sync.Mutex
+	idGen *id.IDGenerator
 
 	componentByName map[string]*wtype.Liquid
 	plateByType     map[string]PlateForSerializing
@@ -71,7 +73,7 @@ func (i *TestInventory) NewComponent(name string) (*wtype.Liquid, error) {
 		return nil, fmt.Errorf("%s: invalid solution: %s", ErrUnknownType, name)
 	}
 	// Cp is required here to ensure component IDs are unique
-	return c.Cp(), nil
+	return c.Cp(i.idGen), nil
 }
 
 func (i *TestInventory) NewPlate(typ string) (*wtype.Plate, error) {
@@ -82,7 +84,7 @@ func (i *TestInventory) NewPlate(typ string) (*wtype.Plate, error) {
 	if !ok {
 		return nil, fmt.Errorf("%s: invalid plate: %s", ErrUnknownType, typ)
 	}
-	return p.LHPlate(), nil
+	return p.LHPlate(i.idGen), nil
 }
 func (i *TestInventory) NewTipbox(typ string) (*wtype.LHTipbox, error) {
 	i.lock.Lock()
@@ -92,7 +94,7 @@ func (i *TestInventory) NewTipbox(typ string) (*wtype.LHTipbox, error) {
 	if !ok {
 		return nil, ErrUnknownType
 	}
-	return tb.Dup(), nil
+	return tb.Dup(i.idGen), nil
 }
 
 func (i *TestInventory) NewTipwaste(typ string) (*wtype.LHTipwaste, error) {
@@ -103,19 +105,20 @@ func (i *TestInventory) NewTipwaste(typ string) (*wtype.LHTipwaste, error) {
 	if !ok {
 		return nil, ErrUnknownType
 	}
-	return tw.Dup(), nil
+	return tw.Dup(i.idGen), nil
 }
 
 // NewContext creates a new test inventory context
-func NewInventory() *TestInventory {
+func NewInventory(idGen *id.IDGenerator) *TestInventory {
 	inv := &TestInventory{
+		idGen:           idGen,
 		componentByName: make(map[string]*wtype.Liquid),
 		plateByType:     make(map[string]PlateForSerializing),
 		tipboxByType:    make(map[string]*wtype.LHTipbox),
 		tipwasteByType:  make(map[string]*wtype.LHTipwaste),
 	}
 
-	for _, c := range makeComponents() {
+	for _, c := range makeComponents(idGen) {
 		if _, seen := inv.componentByName[c.CName]; seen {
 			panic(fmt.Sprintf("component %s already added", c.CName))
 		}
@@ -135,7 +138,7 @@ func NewInventory() *TestInventory {
 		inv.plateByType[p.PlateType] = p
 	}
 
-	for _, tb := range makeTipboxes() {
+	for _, tb := range makeTipboxes(idGen) {
 		if _, seen := inv.tipboxByType[tb.Type]; seen {
 			panic(fmt.Sprintf("tipbox %s already added", tb.Type))
 		}
@@ -146,7 +149,7 @@ func NewInventory() *TestInventory {
 		inv.tipboxByType[tb.Tiptype.Type] = tb
 	}
 
-	for _, tw := range makeTipwastes() {
+	for _, tw := range makeTipwastes(idGen) {
 		if _, seen := inv.tipwasteByType[tw.Type]; seen {
 			panic(fmt.Sprintf("tipwaste %s already added", tw.Type))
 		}
@@ -180,7 +183,7 @@ func (inv *TestInventory) GetPlates() []*wtype.Plate {
 
 	var ps []*wtype.Plate
 	for _, p := range inv.plateByType {
-		ps = append(ps, p.LHPlate())
+		ps = append(ps, p.LHPlate(inv.idGen))
 	}
 
 	sort.Slice(ps, func(i, j int) bool {

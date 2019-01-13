@@ -24,12 +24,14 @@ package liquidhandling
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"sort"
 	"strings"
 
+	"github.com/pkg/errors"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 // -------------------------------------------------------------------------------
@@ -219,19 +221,13 @@ type AdaptorState struct {
 	index        int
 }
 
-func NewAdaptorState(name string,
-	independent bool,
-	channels int,
-	channel_offset wtype.Coordinates,
-	coneRadius float64,
-	params *wtype.LHChannelParameter,
-	tipBehaviour wtype.TipLoadingBehaviour) *AdaptorState {
+func NewAdaptorState(idGen *id.IDGenerator, name string, independent bool, channels int, channel_offset wtype.Coordinates, coneRadius float64, params *wtype.LHChannelParameter, tipBehaviour wtype.TipLoadingBehaviour) *AdaptorState {
 	as := AdaptorState{
 		name,
 		make([]*ChannelState, 0, channels),
 		wtype.Coordinates{},
 		independent,
-		params.Dup(),
+		params.Dup(idGen),
 		nil,
 		tipBehaviour,
 		-1,
@@ -520,7 +516,7 @@ type AdaptorGroup struct {
 }
 
 // NewAdaptorGroup convert a HeadAssembly into an AdaptorGroup for simulation
-func NewAdaptorGroup(assembly *wtype.LHHeadAssembly) *AdaptorGroup {
+func NewAdaptorGroup(idGen *id.IDGenerator, assembly *wtype.LHHeadAssembly) *AdaptorGroup {
 
 	offsets := make([]wtype.Coordinates, len(assembly.Positions))
 	for i, pos := range assembly.Positions {
@@ -549,7 +545,7 @@ func NewAdaptorGroup(assembly *wtype.LHHeadAssembly) *AdaptorGroup {
 		} else if p.Orientation == wtype.LHHChannel {
 			spacing.X = 9.
 		}
-		adaptor := NewAdaptorState(pos.Head.Adaptor.Name, p.Independent, p.Multi, spacing, coneRadius, p, pos.Head.TipLoading)
+		adaptor := NewAdaptorState(idGen, pos.Head.Adaptor.Name, p.Independent, p.Multi, spacing, coneRadius, p, pos.Head.TipLoading)
 		group.LoadAdaptor(i, adaptor)
 	}
 

@@ -1,7 +1,9 @@
 package liquidhandling
 
+import "github.com/antha-lang/antha/laboratory/effects/id"
+
 // no longer need to supply tipboxes after the fact
-func (lh *Liquidhandler) Refresh_tipboxes_tipwastes(rq *LHRequest) {
+func (lh *Liquidhandler) Refresh_tipboxes_tipwastes(idGen *id.IDGenerator, rq *LHRequest) {
 
 	// dead simple
 
@@ -11,10 +13,10 @@ func (lh *Liquidhandler) Refresh_tipboxes_tipwastes(rq *LHRequest) {
 		tb, ok := lh.Properties.Tipboxes[pos]
 
 		if ok {
-			newTb := tb.Dup()
+			newTb := tb.Dup(idGen)
 			lh.FinalProperties.AddTipBoxTo(pos, newTb)
 			lh.plateIDMap[tb.ID] = newTb.ID
-			tb.Refresh()
+			tb.Refresh(idGen)
 			continue
 		}
 

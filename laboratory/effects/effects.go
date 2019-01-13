@@ -5,6 +5,7 @@ import (
 
 	"github.com/antha-lang/antha/inventory/cache/plateCache"
 	"github.com/antha-lang/antha/inventory/testinventory"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 	"github.com/antha-lang/antha/microArch/sampletracker"
 )
 
@@ -14,16 +15,17 @@ type LaboratoryEffects struct {
 	SampleTracker *sampletracker.SampleTracker
 	Inventory     *testinventory.TestInventory `json:"-"` // Inventory is part of plate cache, so we don't encode it.
 	PlateCache    *plateCache.PlateCache
-	ID            *IDGenerator
+	IDGenerator   *id.IDGenerator
 }
 
 func NewLaboratoryEffects(jobId string) *LaboratoryEffects {
+	idGen := id.NewIDGenerator(jobId)
 	le := &LaboratoryEffects{
 		Trace:         NewTrace(),
 		Maker:         NewMaker(),
 		SampleTracker: sampletracker.NewSampleTracker(),
-		Inventory:     testinventory.NewInventory(),
-		ID:            NewIDGenerator(jobId),
+		Inventory:     testinventory.NewInventory(idGen),
+		IDGenerator:   idGen,
 	}
 	le.PlateCache = plateCache.NewPlateCache(le.Inventory)
 	return le

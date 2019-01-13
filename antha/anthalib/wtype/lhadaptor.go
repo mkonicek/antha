@@ -1,5 +1,7 @@
 package wtype
 
+import "github.com/antha-lang/antha/laboratory/effects/id"
+
 // adaptor
 type LHAdaptor struct {
 	Name         string
@@ -10,19 +12,19 @@ type LHAdaptor struct {
 }
 
 //NewLHAdaptor make a new adaptor
-func NewLHAdaptor(name, mf string, params *LHChannelParameter) *LHAdaptor {
+func NewLHAdaptor(idGen *id.IDGenerator, name, mf string, params *LHChannelParameter) *LHAdaptor {
 	return &LHAdaptor{
 		Name:         name,
 		Manufacturer: mf,
 		Params:       params,
-		ID:           GetUUID(),
+		ID:           idGen.NextID(),
 		Tips:         make([]*LHTip, params.Multi),
 	}
 }
 
 //Dup duplicate the adaptor and any loaded tips with new IDs
-func (lha *LHAdaptor) Dup() *LHAdaptor {
-	return lha.dup(false)
+func (lha *LHAdaptor) Dup(idGen *id.IDGenerator) *LHAdaptor {
+	return lha.dup(idGen, false)
 }
 
 //AdaptorType the manufacturer and name of the adaptor
@@ -31,23 +33,23 @@ func (lha *LHAdaptor) AdaptorType() string {
 }
 
 //DupKeepIDs duplicate the adaptor and any loaded tips keeping the same IDs
-func (lha *LHAdaptor) DupKeepIDs() *LHAdaptor {
-	return lha.dup(true)
+func (lha *LHAdaptor) DupKeepIDs(idGen *id.IDGenerator) *LHAdaptor {
+	return lha.dup(idGen, true)
 }
 
-func (lha *LHAdaptor) dup(keepIDs bool) *LHAdaptor {
+func (lha *LHAdaptor) dup(idGen *id.IDGenerator, keepIDs bool) *LHAdaptor {
 
 	var ad *LHAdaptor
 	if keepIDs {
-		ad = NewLHAdaptor(lha.Name, lha.Manufacturer, lha.Params.DupKeepIDs())
+		ad = NewLHAdaptor(idGen, lha.Name, lha.Manufacturer, lha.Params.DupKeepIDs(idGen))
 		ad.ID = lha.ID
 		for i, tip := range lha.Tips {
-			ad.AddTip(i, tip.DupKeepID())
+			ad.AddTip(i, tip.DupKeepID(idGen))
 		}
 	} else {
-		ad = NewLHAdaptor(lha.Name, lha.Manufacturer, lha.Params.Dup())
+		ad = NewLHAdaptor(idGen, lha.Name, lha.Manufacturer, lha.Params.Dup(idGen))
 		for i, tip := range lha.Tips {
-			ad.AddTip(i, tip.Dup())
+			ad.AddTip(i, tip.Dup(idGen))
 		}
 	}
 

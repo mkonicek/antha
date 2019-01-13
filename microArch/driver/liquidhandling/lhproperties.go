@@ -34,6 +34,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/laboratory/effects"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 // describes a liquid handler, its capabilities and current state
@@ -86,11 +87,11 @@ func (lhp *LHProperties) UnmarshalJSON(data []byte) error {
 
 // utility print function
 
-func (p LHProperties) OutputLayout() {
-	fmt.Println(p.GetLayout())
+func (p LHProperties) OutputLayout(idGen *id.IDGenerator) {
+	fmt.Println(p.GetLayout(idGen))
 }
 
-func (p LHProperties) GetLayout() string {
+func (p LHProperties) GetLayout(idGen *id.IDGenerator) string {
 	s := ""
 	s += fmt.Sprintln("Layout for liquid handler type ", p.Mnfr, " ", p.Model)
 	n := p.OrderedPositionNames()
@@ -109,7 +110,7 @@ func (p LHProperties) GetLayout() string {
 			case *wtype.Plate:
 				plt := lw.(*wtype.Plate)
 				s += fmt.Sprintln("Plate ", plt.PlateName, " type ", plt.Mnfr, " ", plt.Type, " Contents:")
-				s += plt.GetLayout()
+				s += plt.GetLayout(idGen)
 			case *wtype.LHTipbox:
 				tb := lw.(*wtype.LHTipbox)
 				s += fmt.Sprintln("Tip box ", tb.Mnfr, " ", tb.Type, " ", tb.Boxname, " ", tb.N_clean_tips())
@@ -264,20 +265,20 @@ func (lhp *LHProperties) GetLoadedAdaptor(i int) *wtype.LHAdaptor {
 }
 
 // copy constructor
-func (lhp *LHProperties) Dup() *LHProperties {
-	return lhp.dup(false)
+func (lhp *LHProperties) Dup(idGen *id.IDGenerator) *LHProperties {
+	return lhp.dup(idGen, false)
 }
 
-func (lhp *LHProperties) DupKeepIDs() *LHProperties {
-	return lhp.dup(true)
+func (lhp *LHProperties) DupKeepIDs(idGen *id.IDGenerator) *LHProperties {
+	return lhp.dup(idGen, true)
 }
 
-func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
+func (lhp *LHProperties) dup(idGen *id.IDGenerator, keepIDs bool) *LHProperties {
 	lo := make(map[string]wtype.Coordinates, len(lhp.Layout))
 	for k, v := range lhp.Layout {
 		lo[k] = v
 	}
-	r := NewLHProperties(lhp.Nposns, lhp.Model, lhp.Mnfr, lhp.LHType, lhp.TipType, lo)
+	r := NewLHProperties(idGen, lhp.Nposns, lhp.Model, lhp.Mnfr, lhp.LHType, lhp.TipType, lo)
 
 	if keepIDs {
 		for name, pos := range lhp.Positions {
@@ -289,9 +290,9 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 	for _, a := range lhp.Adaptors {
 		var ad *wtype.LHAdaptor
 		if keepIDs {
-			ad = a.DupKeepIDs()
+			ad = a.DupKeepIDs(idGen)
 		} else {
-			ad = a.Dup()
+			ad = a.Dup(idGen)
 		}
 		r.Adaptors = append(r.Adaptors, ad)
 		adaptorMap[a] = ad
@@ -302,9 +303,9 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 		var hd *wtype.LHHead
 		adaptor := adaptorMap[h.Adaptor]
 		if keepIDs {
-			hd = h.DupKeepIDs()
+			hd = h.DupKeepIDs(idGen)
 		} else {
-			hd = h.Dup()
+			hd = h.Dup(idGen)
 		}
 		hd.Adaptor = adaptor
 		r.Heads = append(r.Heads, hd)
@@ -331,10 +332,10 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 		case *wtype.LHTipwaste:
 			var tmp *wtype.LHTipwaste
 			if keepIDs {
-				tmp = pt.(*wtype.LHTipwaste).Dup()
+				tmp = pt.(*wtype.LHTipwaste).Dup(idGen)
 				tmp.ID = pt.(*wtype.LHTipwaste).ID
 			} else {
-				tmp = pt.(*wtype.LHTipwaste).Dup()
+				tmp = pt.(*wtype.LHTipwaste).Dup(idGen)
 			}
 			pt2 = tmp
 			newid = tmp.ID
@@ -343,9 +344,9 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 		case *wtype.Plate:
 			var tmp *wtype.Plate
 			if keepIDs {
-				tmp = pt.(*wtype.Plate).DupKeepIDs()
+				tmp = pt.(*wtype.Plate).DupKeepIDs(idGen)
 			} else {
-				tmp = pt.(*wtype.Plate).Dup()
+				tmp = pt.(*wtype.Plate).Dup(idGen)
 			}
 			pt2 = tmp
 			newid = tmp.ID
@@ -363,9 +364,9 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 		case *wtype.LHTipbox:
 			var tmp *wtype.LHTipbox
 			if keepIDs {
-				tmp = pt.(*wtype.LHTipbox).DupKeepIDs()
+				tmp = pt.(*wtype.LHTipbox).DupKeepIDs(idGen)
 			} else {
-				tmp = pt.(*wtype.LHTipbox).Dup()
+				tmp = pt.(*wtype.LHTipbox).Dup(idGen)
 			}
 			pt2 = tmp
 			newid = tmp.ID
@@ -378,7 +379,7 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 	}
 
 	for _, tip := range lhp.Tips {
-		newtip := tip.Dup()
+		newtip := tip.Dup(idGen)
 		if keepIDs {
 			newtip.ID = tip.ID
 		}
@@ -394,7 +395,7 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 	r.Wash_preferences = append(r.Wash_preferences, lhp.Wash_preferences...)
 
 	if lhp.CurrConf != nil {
-		r.CurrConf = lhp.CurrConf.Dup()
+		r.CurrConf = lhp.CurrConf.Dup(idGen)
 	}
 
 	copy(r.Cnfvol, lhp.Cnfvol)
@@ -410,7 +411,7 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 }
 
 // constructor for the above
-func NewLHProperties(num_positions int, model, manufacturer string, lhtype LiquidHandlerLevel, tiptype TipType, layout map[string]wtype.Coordinates) *LHProperties {
+func NewLHProperties(idGen *id.IDGenerator, num_positions int, model, manufacturer string, lhtype LiquidHandlerLevel, tiptype TipType, layout map[string]wtype.Coordinates) *LHProperties {
 	// assert validity of lh and tip types
 
 	if !lhtype.IsValid() {
@@ -439,7 +440,7 @@ func NewLHProperties(num_positions int, model, manufacturer string, lhtype Liqui
 		// not overriding these defaults seems like a
 		// bad idea --- TODO: Fix, e.g., MAXH here
 		posname := fmt.Sprintf("position_%d", i+1)
-		positions[posname] = wtype.NewLHPosition(i+1, "position_"+strconv.Itoa(i+1), 80.0)
+		positions[posname] = wtype.NewLHPosition(idGen, i+1, "position_"+strconv.Itoa(i+1), 80.0)
 	}
 
 	lhp.Positions = positions
@@ -712,7 +713,7 @@ func (lhp *LHProperties) mergeInputOutputPreferences() []string {
 // the ID may or may not refer to an instance which is previously made
 // but by this point we must have concrete locations for everything
 
-func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.Liquid, carryvol wunit.Volume, legacyVolume bool) ([][]string, [][]string, [][]wunit.Volume, error) {
+func (lhp *LHProperties) GetComponentsSingle(idGen *id.IDGenerator, cmps []*wtype.Liquid, carryvol wunit.Volume, legacyVolume bool) ([][]string, [][]string, [][]wunit.Volume, error) {
 	plateIDs := make([][]string, len(cmps))
 	wellCoords := make([][]string, len(cmps))
 	vols := make([][]wunit.Volume, len(cmps))
@@ -722,7 +723,7 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.Liquid, carryvol wuni
 	localplates := make(map[string]*wtype.Plate, len(lhp.Plates))
 
 	for k, v := range lhp.Plates {
-		localplates[k] = v.DupKeepIDs()
+		localplates[k] = v.DupKeepIDs(idGen)
 	}
 
 	// cmps are requests for components
@@ -732,7 +733,7 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.Liquid, carryvol wuni
 		vols[i] = make([]wunit.Volume, 0, 1)
 		foundIt := false
 
-		cmpdup := cmp.Dup()
+		cmpdup := cmp.Dup(idGen)
 
 		// searches all plates: input and output
 		for _, ipref := range lhp.InputSearchPreferences() {
@@ -740,10 +741,10 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.Liquid, carryvol wuni
 			// component we seek
 
 			p, ok := localplates[ipref]
-			if ok && !p.IsEmpty() {
+			if ok && !p.IsEmpty(idGen) {
 				// whaddya got?
 				// nb this won't work if we need to split a volume across several plates
-				wcarr, varr, ok := p.BetterGetComponent(cmpdup, lhp.MinPossibleVolume(), legacyVolume)
+				wcarr, varr, ok := p.BetterGetComponent(idGen, cmpdup, lhp.MinPossibleVolume(), legacyVolume)
 
 				if ok {
 					foundIt = true
@@ -756,7 +757,7 @@ func (lhp *LHProperties) GetComponentsSingle(cmps []*wtype.Liquid, carryvol wuni
 						vl = vl.Dup()
 						vl.Add(carryvol)
 						//lhp.RemoveComponent(p.ID, wc, vl)
-						p.RemoveComponent(wc, vl)
+						p.RemoveComponent(idGen, wc, vl)
 					}
 					break
 				}
@@ -857,7 +858,7 @@ func (lhp *LHProperties) getCleanTipSubset(labEffects *effects.LaboratoryEffects
 			}
 			break
 		} else if usetiptracking && lhp.HasTipTracking() {
-			bx.Refresh()
+			bx.Refresh(labEffects.IDGenerator)
 			return lhp.getCleanTipSubset(labEffects, tipParams, usetiptracking)
 		}
 	}
@@ -935,7 +936,7 @@ func (lhp *LHProperties) GetChannelScoreFunc() ChannelScoreFunc {
 
 // convenience method
 
-func (lhp *LHProperties) RemoveComponent(plateID string, well string, volume wunit.Volume) bool {
+func (lhp *LHProperties) RemoveComponent(idGen *id.IDGenerator, plateID string, well string, volume wunit.Volume) bool {
 	p := lhp.Plates[lhp.PlateIDLookup[plateID]]
 
 	if p == nil {
@@ -943,7 +944,7 @@ func (lhp *LHProperties) RemoveComponent(plateID string, well string, volume wun
 		return false
 	}
 
-	r := p.RemoveComponent(well, volume)
+	r := p.RemoveComponent(idGen, well, volume)
 
 	if r == nil {
 		fmt.Println("CAN'T REMOVE COMPONENT ", plateID, " ", well, " ", volume.ToString())
@@ -971,7 +972,7 @@ func (lhp *LHProperties) RemoveComponent(plateID string, well string, volume wun
 // that didn't end up getting used
 // In direct translation to component states that
 // means any components that are temporary _and_ autoallocated.
-func (lhp *LHProperties) RemoveUnusedAutoallocatedComponents() {
+func (lhp *LHProperties) RemoveUnusedAutoallocatedComponents(idGen *id.IDGenerator) {
 	ids := make([]string, 0, 1)
 	for _, p := range lhp.Plates {
 		if p.IsTemporary() && p.IsAutoallocated() {
@@ -981,7 +982,7 @@ func (lhp *LHProperties) RemoveUnusedAutoallocatedComponents() {
 
 		for _, w := range p.Wellcoords {
 			if w.IsTemporary() && w.IsAutoallocated() {
-				w.Clear()
+				w.Clear(idGen)
 			}
 		}
 	}
@@ -1003,12 +1004,12 @@ func (lhp *LHProperties) GetEnvironment() wtype.Environment {
 	}
 }
 
-func (lhp *LHProperties) Evaporate(t time.Duration) []wtype.VolumeCorrection {
+func (lhp *LHProperties) Evaporate(idGen *id.IDGenerator, t time.Duration) []wtype.VolumeCorrection {
 	// TODO: proper environmental calls
 	env := lhp.GetEnvironment()
 	ret := make([]wtype.VolumeCorrection, 0, 5)
 	for _, v := range lhp.Plates {
-		ret = append(ret, v.Evaporate(t, env)...)
+		ret = append(ret, v.Evaporate(idGen, t, env)...)
 	}
 
 	return ret
@@ -1087,12 +1088,12 @@ type UserPlate struct {
 }
 type UserPlates []UserPlate
 
-func (p *LHProperties) SaveUserPlates() UserPlates {
+func (p *LHProperties) SaveUserPlates(idGen *id.IDGenerator) UserPlates {
 	up := make(UserPlates, 0, len(p.Positions))
 
 	for pos, plate := range p.Plates {
 		if plate.IsUserAllocated() {
-			up = append(up, UserPlate{Plate: plate.DupKeepIDs(), Position: pos})
+			up = append(up, UserPlate{Plate: plate.DupKeepIDs(idGen), Position: pos})
 		}
 	}
 

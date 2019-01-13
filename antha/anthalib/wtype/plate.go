@@ -34,6 +34,7 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 // LHPlate is an alias for Plate to preserve backwards compatibility.
@@ -71,16 +72,16 @@ var (
 	CONSTRAINTMARKER = "constraint-"
 )
 
-func (plate Plate) OutputLayout() {
-	fmt.Println(plate.GetLayout())
+func (plate Plate) OutputLayout(idGen *id.IDGenerator) {
+	fmt.Println(plate.GetLayout(idGen))
 }
 
-func (plate Plate) GetLayout() string {
+func (plate Plate) GetLayout(idGen *id.IDGenerator) string {
 	s := ""
 	for x := 0; x < plate.WellsX(); x += 1 {
 		for y := 0; y < plate.WellsY(); y += 1 {
 			well := plate.Cols[x][y]
-			if well.IsEmpty() {
+			if well.IsEmpty(idGen) {
 				continue
 			}
 			s += fmt.Sprint("\t\t")
@@ -96,7 +97,7 @@ func (plate Plate) GetLayout() string {
 				s += fmt.Sprint(well.WContents.CName, " ")
 			}
 			//}
-			s += fmt.Sprintln(well.Contents().Volume())
+			s += fmt.Sprintln(well.Contents(idGen).Volume())
 			s += fmt.Sprintln()
 			s += fmt.Sprintln()
 		}
@@ -167,12 +168,12 @@ func (lhp Plate) String() string {
 	)
 }
 
-func (lhp *Plate) GetContentVector(wv []WellCoords) ComponentVector {
+func (lhp *Plate) GetContentVector(idGen *id.IDGenerator, wv []WellCoords) ComponentVector {
 	ret := make([]*Liquid, len(wv))
 
 	for i, wc := range wv {
-		ret[i] = lhp.Wellcoords[wc.FormatA1()].WContents.Dup()
-		wv := lhp.Wellcoords[wc.FormatA1()].CurrentWorkingVolume()
+		ret[i] = lhp.Wellcoords[wc.FormatA1()].WContents.Dup(idGen)
+		wv := lhp.Wellcoords[wc.FormatA1()].CurrentWorkingVolume(idGen)
 		ret[i].Vol = wv.ConvertToString(ret[i].Vunit)
 	}
 
@@ -267,7 +268,7 @@ func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, in
 */
 
 // this gets ONE component... possibly from several wells
-func (lhp *Plate) BetterGetComponent(cmp *Liquid, mpv wunit.Volume, legacyVolume bool) ([]WellCoords, []wunit.Volume, bool) {
+func (lhp *Plate) BetterGetComponent(idGen *id.IDGenerator, cmp *Liquid, mpv wunit.Volume, legacyVolume bool) ([]WellCoords, []wunit.Volume, bool) {
 	// we first try to find a single well that satisfies us
 	// should do DP to improve on this mess
 	ret := make([]WellCoords, 0, 1)
@@ -283,13 +284,13 @@ func (lhp *Plate) BetterGetComponent(cmp *Liquid, mpv wunit.Volume, legacyVolume
 	for wc := it.Curr(); it.Valid(); wc = it.Next() {
 		w := lhp.Wellcoords[wc.FormatA1()]
 
-		if w.IsEmpty() {
+		if w.IsEmpty(idGen) {
 			continue
 		}
 
 		//if w.Contents().CName == cmp.CName {
-		if w.Contains(cmp) {
-			v := w.CurrentWorkingVolume()
+		if w.Contains(idGen, cmp) {
+			v := w.CurrentWorkingVolume(idGen)
 
 			// check volume unless this is an instance and we are tolerating this
 			if !cmp.IsInstance() || !legacyVolume {
@@ -312,7 +313,7 @@ func (lhp *Plate) BetterGetComponent(cmp *Liquid, mpv wunit.Volume, legacyVolume
 	}
 
 	if volGot.LessThan(cmp.Volume()) {
-		return lhp.GetComponent(cmp, mpv)
+		return lhp.GetComponent(idGen, cmp, mpv)
 	}
 	//fmt.Println("FOUND: ", cmp.CName, " AT: ", ret[0].FormatA1(), " WANT ", cmp.Volume().ToString(), " GOT ", volGot.ToString(), "  ", ret)
 
@@ -321,7 +322,7 @@ func (lhp *Plate) BetterGetComponent(cmp *Liquid, mpv wunit.Volume, legacyVolume
 
 // convenience method
 
-func (lhp *Plate) AddComponent(cmp *Liquid, overflow bool) (wc []WellCoords, err error) {
+func (lhp *Plate) AddComponent(idGen *id.IDGenerator, cmp *Liquid, overflow bool) (wc []WellCoords, err error) {
 	ret := make([]WellCoords, 0, 1)
 
 	v := wunit.NewVolume(cmp.Vol, cmp.Vunit)
@@ -338,16 +339,16 @@ func (lhp *Plate) AddComponent(cmp *Liquid, overflow bool) (wc []WellCoords, err
 	for wc := it.Curr(); it.Valid(); wc = it.Next() {
 		wl := lhp.Wellcoords[wc.FormatA1()]
 
-		if !wl.IsEmpty() {
+		if !wl.IsEmpty(idGen) {
 			continue
 		}
 
-		c, err := cmp.Sample(wv)
+		c, err := cmp.Sample(idGen, wv)
 		if err != nil {
 			return ret, err
 		}
 
-		err = wl.AddComponent(c)
+		err = wl.AddComponent(idGen, c)
 		if err != nil {
 			//this shouldn't happen because the well was empty
 			//but we should check for linting
@@ -366,7 +367,7 @@ func (lhp *Plate) AddComponent(cmp *Liquid, overflow bool) (wc []WellCoords, err
 
 // convenience method
 
-func (lhp *Plate) GetComponent(cmp *Liquid, mpv wunit.Volume) ([]WellCoords, []wunit.Volume, bool) {
+func (lhp *Plate) GetComponent(idGen *id.IDGenerator, cmp *Liquid, mpv wunit.Volume) ([]WellCoords, []wunit.Volume, bool) {
 	ret := make([]WellCoords, 0, 1)
 	vols := make([]wunit.Volume, 0, 1)
 	it := NewAddressIterator(lhp, ColumnWise, TopToBottom, LeftToRight, false)
@@ -377,8 +378,8 @@ func (lhp *Plate) GetComponent(cmp *Liquid, mpv wunit.Volume) ([]WellCoords, []w
 	for wc := it.Curr(); it.Valid(); wc = it.Next() {
 		w := lhp.Wellcoords[wc.FormatA1()]
 
-		if w.Contains(cmp) {
-			v := w.CurrentWorkingVolume()
+		if w.Contains(idGen, cmp) {
+			v := w.CurrentWorkingVolume(idGen)
 			if v.LessThan(mpv) {
 				continue
 			}
@@ -408,12 +409,12 @@ func (lhp *Plate) GetComponent(cmp *Liquid, mpv wunit.Volume) ([]WellCoords, []w
 	return ret, vols, true
 }
 
-func (lhp *Plate) ValidateVolumes() error {
+func (lhp *Plate) ValidateVolumes(idGen *id.IDGenerator) error {
 	var lastErr error
 	var errCoords []string
 
 	for coords, well := range lhp.Wellcoords {
-		err := well.ValidateVolume()
+		err := well.ValidateVolume(idGen)
 		if err != nil {
 			lastErr = err
 			errCoords = append(errCoords, coords)
@@ -556,9 +557,9 @@ func (lhp *Plate) WellsY() int {
 	return lhp.WlsY
 }
 
-func (lhp *Plate) IsEmpty() bool {
+func (lhp *Plate) IsEmpty(idGen *id.IDGenerator) bool {
 	for _, w := range lhp.Wellcoords {
-		if !w.IsEmpty() {
+		if !w.IsEmpty(idGen) {
 			return false
 		}
 	}
@@ -574,7 +575,7 @@ func (lhp *Plate) Clean() {
 	lhp.Welltype.Clean()
 }
 
-func (lhp *Plate) NextEmptyWell(it AddressIterator) WellCoords {
+func (lhp *Plate) NextEmptyWell(idGen *id.IDGenerator, it AddressIterator) WellCoords {
 	c := 0
 	for wc := it.Curr(); it.Valid(); wc = it.Next() {
 		if c == lhp.Nwells {
@@ -582,7 +583,7 @@ func (lhp *Plate) NextEmptyWell(it AddressIterator) WellCoords {
 			break
 		}
 
-		if lhp.Cols[wc.X][wc.Y].IsEmpty() {
+		if lhp.Cols[wc.X][wc.Y].IsEmpty(idGen) {
 			return wc
 		}
 	}
@@ -590,11 +591,11 @@ func (lhp *Plate) NextEmptyWell(it AddressIterator) WellCoords {
 	return ZeroWellCoords()
 }
 
-func NewLHPlate(platetype, mfr string, nrows, ncols int, size Coordinates, welltype *LHWell, wellXOffset, wellYOffset, wellXStart, wellYStart, wellZStart float64) *Plate {
+func NewLHPlate(idGen *id.IDGenerator, platetype, mfr string, nrows, ncols int, size Coordinates, welltype *LHWell, wellXOffset, wellYOffset, wellXStart, wellYStart, wellZStart float64) *Plate {
 	var lhp Plate
 	lhp.Type = platetype
 	//lhp.ID = "plate-" + GetUUID()
-	lhp.ID = GetUUID()
+	lhp.ID = idGen.NextID()
 	lhp.PlateName = fmt.Sprintf("%s_%s", platetype, lhp.ID[1:len(lhp.ID)-2])
 	lhp.Mnfr = mfr
 	lhp.WlsX = ncols
@@ -628,7 +629,7 @@ func NewLHPlate(platetype, mfr string, nrows, ncols int, size Coordinates, wellt
 			if colarr[j] == nil {
 				colarr[j] = make([]*LHWell, nrows)
 			}
-			arr[i][j] = welltype.CDup()
+			arr[i][j] = welltype.CDup(idGen)
 
 			//crds := wutil.NumToAlpha(i+1) + ":" + strconv.Itoa(j+1)
 			crds := WellCoords{j, i}
@@ -655,15 +656,15 @@ func NewLHPlate(platetype, mfr string, nrows, ncols int, size Coordinates, wellt
 	return &lhp
 }
 
-func (lhp *Plate) Dup() *Plate {
-	return lhp.dup(false)
+func (lhp *Plate) Dup(idGen *id.IDGenerator) *Plate {
+	return lhp.dup(idGen, false)
 }
 
-func (lhp *Plate) DupKeepIDs() *Plate {
-	return lhp.dup(true)
+func (lhp *Plate) DupKeepIDs(idGen *id.IDGenerator) *Plate {
+	return lhp.dup(idGen, true)
 }
 
-func (lhp *Plate) dup(keep_ids bool) *Plate {
+func (lhp *Plate) dup(idGen *id.IDGenerator, keep_ids bool) *Plate {
 	// protect yourself fgs
 	if lhp == nil {
 		panic(fmt.Sprintln("Can't dup nonexistent plate"))
@@ -671,12 +672,12 @@ func (lhp *Plate) dup(keep_ids bool) *Plate {
 
 	var wellType *LHWell
 	if keep_ids {
-		wellType = lhp.Welltype.DupKeepIDs()
+		wellType = lhp.Welltype.DupKeepIDs(idGen)
 	} else {
-		wellType = lhp.Welltype.Dup()
+		wellType = lhp.Welltype.Dup(idGen)
 	}
 
-	ret := NewLHPlate(lhp.Type, lhp.Mnfr, lhp.WlsY, lhp.WlsX, lhp.GetSize(), wellType, lhp.WellXOffset, lhp.WellYOffset, lhp.WellXStart, lhp.WellYStart, lhp.WellZStart)
+	ret := NewLHPlate(idGen, lhp.Type, lhp.Mnfr, lhp.WlsY, lhp.WlsX, lhp.GetSize(), wellType, lhp.WellXOffset, lhp.WellYOffset, lhp.WellXStart, lhp.WellYStart, lhp.WellZStart)
 	if keep_ids {
 		ret.ID = lhp.ID
 	}
@@ -689,9 +690,9 @@ func (lhp *Plate) dup(keep_ids bool) *Plate {
 	for i, row := range lhp.Rows {
 		for j, well := range row {
 			if keep_ids {
-				d = well.DupKeepIDs()
+				d = well.DupKeepIDs(idGen)
 			} else {
-				d = well.Dup()
+				d = well.Dup(idGen)
 				d.WContents.Loc = ret.ID + ":" + d.Crds.FormatA1()
 			}
 			d.SetParent(ret) //nolint - ret is certainly an lhplate
@@ -717,12 +718,12 @@ func (p *Plate) UnProtectAllWells() {
 	}
 }
 
-func Initialize_Wells(plate *Plate) {
+func Initialize_Wells(idGen *id.IDGenerator, plate *Plate) {
 	wells := (*plate).HWells
 	newwells := make(map[string]*LHWell, len(wells))
 	wellcrds := (*plate).Wellcoords
 	for _, well := range wells {
-		well.ID = GetUUID()
+		well.ID = idGen.NextID()
 		newwells[well.ID] = well
 		wellcrds[well.Crds.FormatA1()] = well
 	}
@@ -730,7 +731,7 @@ func Initialize_Wells(plate *Plate) {
 	(*plate).Wellcoords = wellcrds
 }
 
-func (p *Plate) RemoveComponent(well string, vol wunit.Volume) *Liquid {
+func (p *Plate) RemoveComponent(idGen *id.IDGenerator, well string, vol wunit.Volume) *Liquid {
 	w := p.Wellcoords[well]
 
 	if w == nil {
@@ -738,7 +739,7 @@ func (p *Plate) RemoveComponent(well string, vol wunit.Volume) *Liquid {
 		return nil
 	}
 
-	cmp, _ := w.RemoveVolume(vol)
+	cmp, _ := w.RemoveVolume(idGen, vol)
 
 	return cmp
 }
@@ -839,7 +840,7 @@ func ExportPlateCSV(outputFileName string, plate *Plate, plateName string, wells
 // at the time of running an element, the scheduler  will not have allocated positions
 // for the components so, for example, accurate well information cannot currently be obtained with this function.
 // If allocating wells manually use the ExportPlateCSV function and explicitely set the sample locations and volumes.
-func AutoExportPlateCSV(outputFileName string, plate *Plate) (data []byte, err error) {
+func AutoExportPlateCSV(idGen *id.IDGenerator, outputFileName string, plate *Plate) (data []byte, err error) {
 
 	var platename string = plate.PlateName
 	var wells = make([]string, 0)
@@ -852,10 +853,10 @@ func AutoExportPlateCSV(outputFileName string, plate *Plate) (data []byte, err e
 	for _, position := range allpositions {
 		well := plate.WellMap()[position]
 
-		if !well.IsEmpty() {
+		if !well.IsEmpty(idGen) {
 			wells = append(wells, position)
-			liquids = append(liquids, well.Contents())
-			volumes = append(volumes, well.CurrentVolume())
+			liquids = append(liquids, well.Contents(idGen))
+			volumes = append(volumes, well.CurrentVolume(idGen))
 		} else {
 			wells = append(wells, position)
 			liquids = append(liquids, nilComponent)
@@ -1022,14 +1023,14 @@ func (self *Plate) GetPointIntersections(point Coordinates) []LHObject {
 	return ret
 }
 
-func (p *Plate) Evaporate(time time.Duration, env Environment) []VolumeCorrection {
+func (p *Plate) Evaporate(idGen *id.IDGenerator, time time.Duration, env Environment) []VolumeCorrection {
 	ret := make([]VolumeCorrection, 0, 10)
 	if p == nil {
 		return ret
 	}
 	for _, w := range p.Wellcoords {
-		if !w.IsEmpty() {
-			vc := w.Evaporate(time, env)
+		if !w.IsEmpty(idGen) {
+			vc := w.Evaporate(idGen, time, env)
 			if vc.Type != "" {
 				ret = append(ret, vc)
 			}
@@ -1058,12 +1059,12 @@ func (self *Plate) GetParent() LHObject {
 }
 
 //Duplicate copies an LHObject
-func (self *Plate) Duplicate(keepIDs bool) LHObject {
-	return self.dup(keepIDs)
+func (self *Plate) Duplicate(idGen *id.IDGenerator, keepIDs bool) LHObject {
+	return self.dup(idGen, keepIDs)
 }
 
 //DimensionsString returns a string description of the position and size of the object and its children.
-func (self *Plate) DimensionsString() string {
+func (self *Plate) DimensionsString(idGen *id.IDGenerator) string {
 	wb := self.GetWellBounds()
 	ret := make([]string, 0, 1+len(self.Wellcoords))
 	ret = append(ret, fmt.Sprintf("Plate %s at %v+%v, with %dx%d wells bounded by %v",
@@ -1078,7 +1079,7 @@ func (self *Plate) DimensionsString() string {
 
 	for _, wellrow := range self.Rows {
 		for _, well := range wellrow {
-			ret = append(ret, "\t"+well.DimensionsString())
+			ret = append(ret, "\t"+well.DimensionsString(idGen))
 		}
 	}
 
@@ -1112,7 +1113,7 @@ func (self *Plate) GetChildByAddress(c WellCoords) LHObject {
 	return self.Cols[c.X][c.Y]
 }
 
-func (self *Plate) CoordsToWellCoords(r Coordinates) (WellCoords, Coordinates) {
+func (self *Plate) CoordsToWellCoords(idGen *id.IDGenerator, r Coordinates) (WellCoords, Coordinates) {
 	rel := r.Subtract(self.GetPosition())
 	wellSize := self.Welltype.GetSize()
 	wc := WellCoords{
@@ -1130,12 +1131,12 @@ func (self *Plate) CoordsToWellCoords(r Coordinates) (WellCoords, Coordinates) {
 		wc.Y = self.WlsY - 1
 	}
 
-	r2, _ := self.WellCoordsToCoords(wc, TopReference)
+	r2, _ := self.WellCoordsToCoords(idGen, wc, TopReference)
 
 	return wc, r.Subtract(r2)
 }
 
-func (self *Plate) WellCoordsToCoords(wc WellCoords, r WellReference) (Coordinates, bool) {
+func (self *Plate) WellCoordsToCoords(idGen *id.IDGenerator, wc WellCoords, r WellReference) (Coordinates, bool) {
 	if !self.AddressExists(wc) {
 		return Coordinates{}, false
 	}
@@ -1149,7 +1150,7 @@ func (self *Plate) WellCoordsToCoords(wc WellCoords, r WellReference) (Coordinat
 	} else if r == TopReference {
 		z = child.GetPosition().Z + child.GetSize().Z
 	} else if r == LiquidReference {
-		if volInUl, err := child.CurrentVolume().InStringUnit("ul"); err != nil {
+		if volInUl, err := child.CurrentVolume(idGen).InStringUnit("ul"); err != nil {
 			panic(err) // this really shouldn't happen as all volume units are compatible with "ul"
 		} else {
 			z = child.GetPosition().Z + child.Bottomh + self.Welltype.GetLiquidLevel(wunit.Volume{ConcreteMeasurement: volInUl.(*wunit.ConcreteMeasurement)})
@@ -1213,15 +1214,15 @@ func (p *Plate) MergeWith(p2 *Plate) {
 	}
 }
 
-func (p *Plate) MarkNonEmptyWellsUserAllocated() {
+func (p *Plate) MarkNonEmptyWellsUserAllocated(idGen *id.IDGenerator) {
 	for _, w := range p.Wellcoords {
-		if !w.IsEmpty() {
+		if !w.IsEmpty(idGen) {
 			w.SetUserAllocated()
 		}
 	}
 }
 
-func (p *Plate) AllNonEmptyWells() []*LHWell {
+func (p *Plate) AllNonEmptyWells(idGen *id.IDGenerator) []*LHWell {
 	ret := make([]*LHWell, 0, p.Nwells)
 
 	it := NewAddressIterator(p, ColumnWise, TopToBottom, LeftToRight, false)
@@ -1229,7 +1230,7 @@ func (p *Plate) AllNonEmptyWells() []*LHWell {
 	for wc := it.Curr(); it.Valid(); wc = it.Next() {
 		w := p.Wellcoords[wc.FormatA1()]
 
-		if !w.IsEmpty() {
+		if !w.IsEmpty(idGen) {
 			ret = append(ret, w)
 		}
 	}
@@ -1288,16 +1289,16 @@ func componentList(vec ComponentVector) map[string]bool {
 	return r
 }
 
-func (p *Plate) GetVolumeFilteredContentVector(wv []WellCoords, cmps ComponentVector, mpv wunit.Volume, ignoreInstances bool) ComponentVector {
-	cv := p.GetFilteredContentVector(wv, cmps, ignoreInstances)
+func (p *Plate) GetVolumeFilteredContentVector(idGen *id.IDGenerator, wv []WellCoords, cmps ComponentVector, mpv wunit.Volume, ignoreInstances bool) ComponentVector {
+	cv := p.GetFilteredContentVector(idGen, wv, cmps, ignoreInstances)
 	cv.DeleteAllBelowVolume(mpv)
 	return cv
 }
 
-func (p *Plate) GetFilteredContentVector(wv []WellCoords, cmps ComponentVector, ignoreInstances bool) ComponentVector {
+func (p *Plate) GetFilteredContentVector(idGen *id.IDGenerator, wv []WellCoords, cmps ComponentVector, ignoreInstances bool) ComponentVector {
 	wants := componentList(cmps)
 
-	cv := p.GetContentVector(wv)
+	cv := p.GetContentVector(idGen, wv)
 
 	fcv := make([]*Liquid, len(cv))
 

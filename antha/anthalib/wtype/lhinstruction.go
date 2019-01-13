@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 // enum of instruction types
@@ -103,29 +104,29 @@ func (ins *LHInstruction) Summarize(indent int) string {
 }
 
 // privatised in favour of specific instruction constructors
-func newLHInstruction() *LHInstruction {
+func newLHInstruction(idGen *id.IDGenerator) *LHInstruction {
 	var lhi LHInstruction
-	lhi.ID = GetUUID()
+	lhi.ID = idGen.NextID()
 	lhi.Majorlayoutgroup = -1
 	lhi.PassThrough = make(map[string]*Liquid, 1)
 	return &lhi
 }
 
-func NewLHMixInstruction() *LHInstruction {
-	lhi := newLHInstruction()
+func NewLHMixInstruction(idGen *id.IDGenerator) *LHInstruction {
+	lhi := newLHInstruction(idGen)
 	lhi.Type = LHIMIX
 	return lhi
 
 }
 
-func NewLHPromptInstruction() *LHInstruction {
-	lhi := newLHInstruction()
+func NewLHPromptInstruction(idGen *id.IDGenerator) *LHInstruction {
+	lhi := newLHInstruction(idGen)
 	lhi.Type = LHIPRM
 	return lhi
 }
 
-func NewLHSplitInstruction() *LHInstruction {
-	lhi := newLHInstruction()
+func NewLHSplitInstruction(idGen *id.IDGenerator) *LHInstruction {
+	lhi := newLHInstruction(idGen)
 	lhi.Type = LHISPL
 	return lhi
 }
@@ -231,8 +232,8 @@ func (ins *LHInstruction) ParentString() string {
 
 }
 
-func (ins *LHInstruction) NamesOfComponentsMoving() string {
-	ar := ins.ComponentsMoving()
+func (ins *LHInstruction) NamesOfComponentsMoving(idGen *id.IDGenerator) string {
+	ar := ins.ComponentsMoving(idGen)
 
 	sa := make([]string, 0)
 
@@ -243,14 +244,14 @@ func (ins *LHInstruction) NamesOfComponentsMoving() string {
 	return strings.Join(sa, "+")
 }
 
-func (ins *LHInstruction) ComponentsMoving() []*Liquid {
+func (ins *LHInstruction) ComponentsMoving(idGen *id.IDGenerator) []*Liquid {
 	ca := make([]*Liquid, 0)
 	for i, v := range ins.Inputs {
 		// ignore component 1 if this is a mix-in-place
 		if i == 0 && ins.IsMixInPlace() {
 			continue
 		}
-		ca = append(ca, v.Dup())
+		ca = append(ca, v.Dup(idGen))
 	}
 
 	return ca

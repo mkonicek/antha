@@ -35,6 +35,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/antha/anthalib/wutil/text"
 	"github.com/antha-lang/antha/laboratory/effects"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 	anthadriver "github.com/antha-lang/antha/microArch/driver"
 )
 
@@ -206,7 +207,7 @@ func (ins *SingleChannelBlockInstruction) Generate(labEffects *effects.Laborator
 			change_tips = change_tips || channel != newchannel
 			change_tips = change_tips || newtiptype != tiptype
 
-			this_thing := prms.Plates[ins.PltFrom[t]].Wellcoords[ins.WellFrom[t]].Contents()
+			this_thing := prms.Plates[ins.PltFrom[t]].Wellcoords[ins.WellFrom[t]].Contents(labEffects.IDGenerator)
 
 			if last_thing != nil {
 				if this_thing.CName != last_thing.CName {
@@ -388,7 +389,7 @@ func (ins *MultiChannelBlockInstruction) GetVolumes() []wunit.Volume {
 	return v
 }
 
-func mergeTipsAndChannels(channels []*wtype.LHChannelParameter, tips []*wtype.LHTip) []*wtype.LHChannelParameter {
+func mergeTipsAndChannels(idGen *id.IDGenerator, channels []*wtype.LHChannelParameter, tips []*wtype.LHTip) []*wtype.LHChannelParameter {
 	ret := make([]*wtype.LHChannelParameter, len(channels))
 
 	for i := 0; i < len(channels); i++ {
@@ -396,7 +397,7 @@ func mergeTipsAndChannels(channels []*wtype.LHChannelParameter, tips []*wtype.LH
 			if tips[i] != nil {
 				ret[i] = channels[i].MergeWithTip(tips[i])
 			} else {
-				ret[i] = channels[i].Dup()
+				ret[i] = channels[i].Dup(idGen)
 			}
 		}
 	}
@@ -427,7 +428,7 @@ func (ins *MultiChannelBlockInstruction) Generate(labEffects *effects.Laboratory
 	// as we move to independent we need to get all volumes
 
 	//channels, _, tiptypes, err := ChooseChannels(ins.GetVolumes(), prms)
-	channels, _, tiptypes, err := ChooseChannels(ins.Volume[0], prms)
+	channels, _, tiptypes, err := ChooseChannels(labEffects.IDGenerator, ins.Volume[0], prms)
 	if err != nil {
 		return ret, err
 	}
@@ -451,7 +452,7 @@ func (ins *MultiChannelBlockInstruction) Generate(labEffects *effects.Laboratory
 		}
 
 		// choose tips
-		newchannels, newtips, newtiptypes, err := ChooseChannels(ins.Volume[t], prms)
+		newchannels, newtips, newtiptypes, err := ChooseChannels(labEffects.IDGenerator, ins.Volume[t], prms)
 		if err != nil {
 			return ret, err
 		}
@@ -460,7 +461,7 @@ func (ins *MultiChannelBlockInstruction) Generate(labEffects *effects.Laboratory
 
 		// split the transfer up
 		// volumes no longer equal
-		tvs, err := TransferVolumesMulti(VolumeSet(ins.Volume[t]), mergeTipsAndChannels(newchannels, newtips))
+		tvs, err := TransferVolumesMulti(VolumeSet(ins.Volume[t]), mergeTipsAndChannels(labEffects.IDGenerator, newchannels, newtips))
 
 		if err != nil {
 			return ret, err
@@ -474,7 +475,7 @@ func (ins *MultiChannelBlockInstruction) Generate(labEffects *effects.Laboratory
 			change_tips = change_tips || !reflect.DeepEqual(tiptypes, newtiptypes)
 
 			// big dangerous assumption here: we need to check if anything is different
-			this_thing := prms.Plates[ins.PltFrom[t][0]].Wellcoords[ins.WellFrom[t][0]].Contents()
+			this_thing := prms.Plates[ins.PltFrom[t][0]].Wellcoords[ins.WellFrom[t][0]].Contents(labEffects.IDGenerator)
 
 			if last_thing != nil {
 				if this_thing.CName != last_thing.CName {
@@ -701,7 +702,7 @@ type MultiChannelTransferInstruction struct {
 	TipType    []string
 }
 
-func (scti *MultiChannelTransferInstruction) Params(k int) TransferParams {
+func (scti *MultiChannelTransferInstruction) Params(idGen *id.IDGenerator, k int) TransferParams {
 	var tp TransferParams
 	tp.What = scti.What[k]
 	tp.PltFrom = scti.PltFrom[k]
@@ -713,7 +714,7 @@ func (scti *MultiChannelTransferInstruction) Params(k int) TransferParams {
 	tp.TPlateType = scti.TPlateType[k]
 	tp.FVolume = wunit.CopyVolume(scti.FVolume[k])
 	tp.TVolume = wunit.CopyVolume(scti.TVolume[k])
-	tp.Channel = scti.Prms[k].Dup()
+	tp.Channel = scti.Prms[k].Dup(idGen)
 	tp.TipType = scti.TipType[k]
 	return tp
 }
@@ -796,8 +797,8 @@ func (ins *MultiChannelTransferInstruction) Generate(labEffects *effects.Laborat
 			continue
 		}
 		c += 1
-		suckinstruction.AddTransferParams(ins.Params(i))
-		blowinstruction.AddTransferParams(ins.Params(i))
+		suckinstruction.AddTransferParams(ins.Params(labEffects.IDGenerator, i))
+		blowinstruction.AddTransferParams(ins.Params(labEffects.IDGenerator, i))
 	}
 
 	ret = append(ret, suckinstruction)
@@ -2125,7 +2126,8 @@ func (ins *BlowInstruction) AddTransferParams(tp TransferParams) {
 	ins.Head = tp.Channel.Head
 	ins.TipType = tp.TipType
 }
-func (scti *BlowInstruction) Params() MultiTransferParams {
+
+func (scti *BlowInstruction) Params(idGen *id.IDGenerator) MultiTransferParams {
 	tp := NewMultiTransferParams(scti.Multi)
 	/*
 		tp.What = scti.What
@@ -2138,7 +2140,7 @@ func (scti *BlowInstruction) Params() MultiTransferParams {
 	*/
 
 	for i := 0; i < len(scti.What); i++ {
-		tp.Transfers = append(tp.Transfers, TransferParams{What: scti.What[i], PltTo: scti.PltTo[i], WellTo: scti.WellTo[i], Volume: scti.Volume[i], TPlateType: scti.TPlateType[i], TVolume: scti.TVolume[i], Channel: scti.Prms.Dup()})
+		tp.Transfers = append(tp.Transfers, TransferParams{What: scti.What[i], PltTo: scti.PltTo[i], WellTo: scti.WellTo[i], Volume: scti.Volume[i], TPlateType: scti.TPlateType[i], TVolume: scti.TVolume[i], Channel: scti.Prms.Dup(idGen)})
 	}
 
 	return tp
@@ -2564,7 +2566,7 @@ func (ins *BlowInstruction) Generate(labEffects *effects.LaboratoryEffects, poli
 	if weneedtoreset && !overridereset {
 		resetinstruction := NewResetInstruction()
 
-		resetinstruction.AddMultiTransferParams(ins.Params())
+		resetinstruction.AddMultiTransferParams(ins.Params(labEffects.IDGenerator))
 		resetinstruction.Prms = ins.Prms
 		ret = append(ret, resetinstruction)
 	}
@@ -3426,7 +3428,7 @@ func GetTips(labEffects *effects.LaboratoryEffects, tiptypes []string, params *L
 	tipwells, tipboxpositions, tipboxtypes, terr := params.GetCleanTips(labEffects, tiptypes, channel, usetiptracking)
 
 	if tipwells == nil || terr != nil {
-		err := wtype.LHError(wtype.LH_ERR_NO_TIPS, fmt.Sprintf("PICKUP: types: %v On Deck: %v", tiptypes, params.GetLayout()))
+		err := wtype.LHError(wtype.LH_ERR_NO_TIPS, fmt.Sprintf("PICKUP: types: %v On Deck: %v", tiptypes, params.GetLayout(labEffects.IDGenerator)))
 		return []RobotInstruction{NewLoadTipsMoveInstruction()}, err
 	}
 

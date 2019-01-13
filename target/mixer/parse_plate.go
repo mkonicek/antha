@@ -288,7 +288,7 @@ func parsePlateCSVWithValidationConfig(labEffects *effects.LaboratoryEffects, in
 		concentration := wunit.NewConcentration(conc, cunit)
 
 		// Make component
-		cmp := wtype.NewLHComponent()
+		cmp := wtype.NewLHComponent(labEffects.IDGenerator)
 
 		cmp.Vol = volume.RawValue()
 		cmp.Vunit = volume.Unit().PrefixedSymbol()
@@ -305,7 +305,7 @@ func parsePlateCSVWithValidationConfig(labEffects *effects.LaboratoryEffects, in
 				trimmedSubCompName := strings.TrimRight(subCompName, ":")
 				if k+1 < len(rec) {
 					subCompConc := get(rec, k+1)
-					subCmp := wtype.NewLHComponent()
+					subCmp := wtype.NewLHComponent(labEffects.IDGenerator)
 					subCmp.SetName(trimmedSubCompName)
 					err := cmp.AddSubComponent(subCmp, wunit.NewConcentration(wunit.SplitValueAndUnit(subCompConc)))
 					if err != nil {

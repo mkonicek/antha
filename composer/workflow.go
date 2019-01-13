@@ -174,7 +174,7 @@ func (a *Workflow) merge(b *Workflow) error {
 		a.ElementInstancesParameters.merge(b.ElementInstancesParameters),
 		a.ElementInstancesConnections.merge(b.ElementInstancesConnections),
 	}
-	if err := errs.Nub(); err != nil {
+	if err := errs.Pack(); err != nil {
 		return err
 	} else {
 		return nil
@@ -298,7 +298,7 @@ func (wf *Workflow) validate() error {
 			wf.ElementInstancesParameters.validate(wf),
 			wf.ElementInstancesConnections.validate(wf),
 		}
-		if err := errs.Nub(); err != nil {
+		if err := errs.Pack(); err != nil {
 			return err
 		} else {
 			return nil

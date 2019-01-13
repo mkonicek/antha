@@ -27,11 +27,12 @@ import (
 
 	parse "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Parser"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/laboratory"
 )
 
 // GDXToDNASequence parses DNA sequence files in .gdx format into a set of DNA sequences of type []wtype.DNASequence
-func GDXToDNASequence(sequenceFile wtype.File) (partsList []wtype.DNASequence, err error) {
-	data, err := sequenceFile.ReadAll()
+func GDXToDNASequence(lab *laboratory.Laboratory, sequenceFile wtype.File) (partsList []wtype.DNASequence, err error) {
+	data, err := lab.FileManager.ReadAll(sequenceFile)
 	if err != nil {
 		return nil, err
 	}

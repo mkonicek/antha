@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 type ComponentVector []*Liquid
@@ -24,14 +25,14 @@ func (cv ComponentVector) DeleteAllBelowVolume(vol wunit.Volume) {
 	}
 }
 
-func (cv ComponentVector) Dup() ComponentVector {
+func (cv ComponentVector) Dup(idGen *id.IDGenerator) ComponentVector {
 	ret := make(ComponentVector, len(cv))
 
 	for i, v := range cv {
 		if v == nil {
 			continue
 		}
-		ret[i] = v.Dup()
+		ret[i] = v.Dup(idGen)
 	}
 	return ret
 }

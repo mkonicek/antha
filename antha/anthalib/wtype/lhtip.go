@@ -25,7 +25,9 @@ package wtype
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 //  TODO remove BBox once shape implements LHObject
@@ -45,13 +47,13 @@ type LHTip struct {
 }
 
 //@implement Named
-func (self *LHTip) GetName() string {
+func (self *LHTip) GetName(idGen *id.IDGenerator) string {
 	if self == nil {
 		return "<nil>"
 	}
 	if addr, ok := self.parent.(Addressable); ok {
 		pos := self.GetPosition().Add(self.GetSize().Multiply(0.5))
-		wc, _ := addr.CoordsToWellCoords(pos)
+		wc, _ := addr.CoordsToWellCoords(idGen, pos)
 		return fmt.Sprintf("%s@%s", wc.FormatA1(), NameOf(self.parent))
 	}
 	return fmt.Sprintf("%s_%s", self.Mnfr, self.Type)
@@ -141,8 +143,8 @@ func (self *LHTip) GetParent() LHObject {
 }
 
 //Duplicate copies an LHObject
-func (self *LHTip) Duplicate(keepIDs bool) LHObject {
-	return self.dup(keepIDs)
+func (self *LHTip) Duplicate(idGen *id.IDGenerator, keepIDs bool) LHObject {
+	return self.dup(idGen, keepIDs)
 }
 
 func (tip *LHTip) GetParams() *LHChannelParameter {
@@ -163,22 +165,22 @@ func (tip *LHTip) IsNil() bool {
 }
 
 //Dup copy the tip generating a new ID
-func (tip *LHTip) Dup() *LHTip {
-	return tip.dup(false)
+func (tip *LHTip) Dup(idGen *id.IDGenerator) *LHTip {
+	return tip.dup(idGen, false)
 }
 
 //Dup copy the tip keeping the previous ID
-func (tip *LHTip) DupKeepID() *LHTip {
-	return tip.dup(true)
+func (tip *LHTip) DupKeepID(idGen *id.IDGenerator) *LHTip {
+	return tip.dup(idGen, true)
 }
 
-func (tip *LHTip) dup(keepIDs bool) *LHTip {
+func (tip *LHTip) dup(idGen *id.IDGenerator, keepIDs bool) *LHTip {
 	if tip == nil {
 		return nil
 	}
-	t := NewLHTip(tip.Mnfr, tip.Type, tip.MinVol.RawValue(), tip.MaxVol.RawValue(), tip.MinVol.Unit().PrefixedSymbol(), tip.Filtered, tip.Shape.Dup(), tip.GetEffectiveHeight())
+	t := NewLHTip(idGen, tip.Mnfr, tip.Type, tip.MinVol.RawValue(), tip.MaxVol.RawValue(), tip.MinVol.Unit().PrefixedSymbol(), tip.Filtered, tip.Shape.Dup(), tip.GetEffectiveHeight())
 	t.Dirty = tip.Dirty
-	t.contents = tip.Contents().Dup()
+	t.contents = tip.Contents(idGen).Dup(idGen)
 	t.Bounds = tip.Bounds
 
 	if keepIDs {
@@ -188,12 +190,12 @@ func (tip *LHTip) dup(keepIDs bool) *LHTip {
 	return t
 }
 
-func NewLHTip(mfr, ttype string, minvol, maxvol float64, volunit string, filtered bool, shape *Shape, effectiveHeightMM float64) *LHTip {
+func NewLHTip(idGen *id.IDGenerator, mfr, ttype string, minvol, maxvol float64, volunit string, filtered bool, shape *Shape, effectiveHeightMM float64) *LHTip {
 	if effectiveHeightMM <= 0.0 {
 		effectiveHeightMM = shape.Depth().ConvertToString("mm")
 	}
 	lht := LHTip{
-		ID:     GetUUID(),
+		ID:     idGen.NextID(),
 		Type:   ttype,
 		Mnfr:   mfr,
 		Dirty:  false, //dirty
@@ -207,7 +209,7 @@ func NewLHTip(mfr, ttype string, minvol, maxvol float64, volunit string, filtere
 		}},
 		EffectiveHeight: effectiveHeightMM,
 		parent:          nil,
-		contents:        NewLHComponent(),
+		contents:        NewLHComponent(idGen),
 		Filtered:        filtered,
 	}
 
@@ -219,27 +221,27 @@ func CopyTip(tt LHTip) *LHTip {
 }
 
 //DimensionsString returns a string description of the position and size of the object and its children.
-func (self *LHTip) DimensionsString() string {
+func (self *LHTip) DimensionsString(idGen *id.IDGenerator) string {
 	if self == nil {
 		return "no tip"
 	}
-	return fmt.Sprintf("Tip %s at %v+%v", self.GetName(), self.GetPosition(), self.GetSize())
+	return fmt.Sprintf("Tip %s at %v+%v", self.GetName(idGen), self.GetPosition(), self.GetSize())
 }
 
 //@implement LHContainer
-func (self *LHTip) Contents() *Liquid {
+func (self *LHTip) Contents(idGen *id.IDGenerator) *Liquid {
 	if self == nil {
 		return nil
 	}
 	//Only happens with dodgy tip initialization
 	if self.contents == nil {
-		self.contents = NewLHComponent()
+		self.contents = NewLHComponent(idGen)
 	}
 	return self.contents
 }
 
 //@implement LHContainer
-func (self *LHTip) CurrentVolume() wunit.Volume {
+func (self *LHTip) CurrentVolume(*id.IDGenerator) wunit.Volume {
 	return self.contents.Volume()
 }
 
@@ -250,33 +252,33 @@ func (self *LHTip) ResidualVolume() wunit.Volume {
 }
 
 //@implement LHContainer
-func (self *LHTip) CurrentWorkingVolume() wunit.Volume {
+func (self *LHTip) CurrentWorkingVolume(*id.IDGenerator) wunit.Volume {
 	return self.contents.Volume()
 }
 
 //@implement LHContainer
-func (self *LHTip) AddComponent(v *Liquid) error {
-	fv := self.CurrentVolume()
+func (self *LHTip) AddComponent(idGen *id.IDGenerator, v *Liquid) error {
+	fv := self.CurrentVolume(idGen)
 	fv.Add(v.Volume())
 
-	self.contents.Mix(v)
+	self.contents.Mix(idGen, v)
 
 	if fv.GreaterThan(self.MaxVol) {
-		return fmt.Errorf("Tip %s overfull, contains %v and maximum is %v", self.GetName(), fv, self.MaxVol)
+		return fmt.Errorf("Tip %s overfull, contains %v and maximum is %v", self.GetName(idGen), fv, self.MaxVol)
 	}
 	if fv.LessThan(self.MinVol) {
-		return fmt.Errorf("Added less than minimum volume to %s, contains %v and minimum working volume is %v", self.GetName(), fv, self.MinVol)
+		return fmt.Errorf("Added less than minimum volume to %s, contains %v and minimum working volume is %v", self.GetName(idGen), fv, self.MinVol)
 	}
 	return nil
 }
 
 //SetContents set the contents of the tip, returns an error if the tip is overfilled
-func (self *LHTip) SetContents(v *Liquid) error {
+func (self *LHTip) SetContents(idGen *id.IDGenerator, v *Liquid) error {
 	if v.Volume().GreaterThan(self.MaxVol) {
-		return fmt.Errorf("Tip %s overfull, contains %v and maximum is %v", self.GetName(), v.Volume(), self.MaxVol)
+		return fmt.Errorf("Tip %s overfull, contains %v and maximum is %v", self.GetName(idGen), v.Volume(), self.MaxVol)
 	}
 	if v.Volume().LessThan(self.MinVol) {
-		return fmt.Errorf("Added less than minimum volume to %s, contains %v and minimum working volume is %v", self.GetName(), v.Volume(), self.MinVol)
+		return fmt.Errorf("Added less than minimum volume to %s, contains %v and minimum working volume is %v", self.GetName(idGen), v.Volume(), self.MinVol)
 	}
 
 	self.contents = v
@@ -284,11 +286,11 @@ func (self *LHTip) SetContents(v *Liquid) error {
 }
 
 //@implement LHContainer
-func (self *LHTip) RemoveVolume(v wunit.Volume) (*Liquid, error) {
-	if v.GreaterThan(self.CurrentWorkingVolume()) {
-		return nil, fmt.Errorf("Requested removal of %v from tip %s which only has %v working volume", v, self.GetName(), self.CurrentWorkingVolume())
+func (self *LHTip) RemoveVolume(idGen *id.IDGenerator, v wunit.Volume) (*Liquid, error) {
+	if v.GreaterThan(self.CurrentWorkingVolume(idGen)) {
+		return nil, fmt.Errorf("Requested removal of %v from tip %s which only has %v working volume", v, self.GetName(idGen), self.CurrentWorkingVolume(idGen))
 	}
-	ret := self.contents.Dup()
+	ret := self.contents.Dup(idGen)
 	ret.Vol = v.ConvertToString("ul")
 	self.contents.Remove(v)
 	return ret, nil

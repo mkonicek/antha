@@ -14,7 +14,7 @@ func (es ErrorSlice) Error() string {
 	return strings.Join(strs, "; ")
 }
 
-func (es ErrorSlice) Nub() ErrorSlice {
+func (es ErrorSlice) Pack() error {
 	res := make(ErrorSlice, 0, len(es))
 	for _, err := range es {
 		if err != nil {

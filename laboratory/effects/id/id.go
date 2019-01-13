@@ -1,4 +1,4 @@
-package effects
+package id
 
 import (
 	"encoding/json"
@@ -31,7 +31,7 @@ func (idg *IDGenerator) MarshalJSON() ([]byte, error) {
 
 func (idg *IDGenerator) UnmarshalJSON(bs []byte) error {
 	idgj := &idGeneratorJson{}
-	if err := json.UnmarshalJSON(bs, idgj); err != nil {
+	if err := json.Unmarshal(bs, idgj); err != nil {
 		return err
 	} else {
 		idg.prefix = idgj.Prefix

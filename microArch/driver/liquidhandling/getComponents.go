@@ -7,6 +7,7 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 type ComponentVolumeHash map[string]wunit.Volume
@@ -100,7 +101,7 @@ func getPlateIterator(lhp *wtype.Plate, ori wtype.ChannelOrientation, multi int)
 	}
 }
 
-func (lhp *LHProperties) GetSourcesFor(cmps wtype.ComponentVector, ori wtype.ChannelOrientation, multi int, minPossibleVolume wunit.Volume, ignoreInstances bool) []wtype.ComponentVector {
+func (lhp *LHProperties) GetSourcesFor(idGen *id.IDGenerator, cmps wtype.ComponentVector, ori wtype.ChannelOrientation, multi int, minPossibleVolume wunit.Volume, ignoreInstances bool) []wtype.ComponentVector {
 	ret := make([]wtype.ComponentVector, 0, 1)
 
 	for _, ipref := range lhp.OrderedMergedPlatePrefs() {
@@ -110,7 +111,7 @@ func (lhp *LHProperties) GetSourcesFor(cmps wtype.ComponentVector, ori wtype.Cha
 			it := getPlateIterator(p, ori, multi)
 			for wv := it.Curr(); it.Valid(); wv = it.Next() {
 				// cmps needs duping here
-				mycmps := p.GetVolumeFilteredContentVector(wv, cmps, minPossibleVolume, ignoreInstances) // dups components
+				mycmps := p.GetVolumeFilteredContentVector(idGen, wv, cmps, minPossibleVolume, ignoreInstances) // dups components
 				if mycmps.Empty() {
 					continue
 				}
@@ -255,16 +256,16 @@ func cmpsEqual(c1, c2 *wtype.Liquid) bool {
 	return c1.ID == c2.ID && c1.Vol == c2.Vol
 }
 
-func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsReply, error) {
+func (lhp *LHProperties) GetComponents(idGen *id.IDGenerator, opt GetComponentsOptions) (GetComponentsReply, error) {
 	rep := newReply()
 	// build list of possible sources -- this is a list of ComponentVectors
 
-	srcs := lhp.GetSourcesFor(opt.Cmps, opt.Ori, opt.Multi, lhp.MinPossibleVolume(), opt.IgnoreInstances)
+	srcs := lhp.GetSourcesFor(idGen, opt.Cmps, opt.Ori, opt.Multi, lhp.MinPossibleVolume(), opt.IgnoreInstances)
 
 	// keep taking chunks until either we get everything or run out
 	// optimization options apply here as parameters for the next level down
 
-	currCmps := opt.Cmps.Dup()
+	currCmps := opt.Cmps.Dup(idGen)
 	var lastCmps wtype.ComponentVector
 
 	var done bool
@@ -281,7 +282,7 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 				return GetComponentsReply{}, fmt.Errorf("Insufficient source volumes for components %s", s)
 			} else {
 				opt.IgnoreInstances = true
-				return lhp.GetComponents(opt)
+				return lhp.GetComponents(idGen, opt)
 			}
 		}
 
@@ -299,7 +300,7 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 				continue
 			}
 
-			match, err := wtype.MatchComponents(currCmps, src, opt.Independent, false)
+			match, err := wtype.MatchComponents(idGen, currCmps, src, opt.Independent, false)
 
 			if err != nil && err.Error() != wtype.NotFoundError {
 				return rep, err
@@ -322,7 +323,7 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 		// update sources
 
 		updateSources(bestSrc, bestMatch, opt.Carryvol, lhp.MinPossibleVolume())
-		lastCmps = currCmps.Dup()
+		lastCmps = currCmps.Dup(idGen)
 		updateDests(currCmps, bestMatch)
 		rep.Transfers = append(rep.Transfers, matchToParallelTransfer(bestMatch))
 	}

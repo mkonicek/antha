@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 // SampleTracker record the location of components generated during element execution
@@ -63,14 +64,14 @@ func (st *SampleTracker) UnmarshalJSON(bs []byte) error {
 
 // SetInputPlate declare the given plate as an input to the experiment
 // recording the id and location of every sample in it
-func (st *SampleTracker) SetInputPlate(p *wtype.Plate) {
+func (st *SampleTracker) SetInputPlate(idGen *id.IDGenerator, p *wtype.Plate) {
 	st.lock.Lock()
 	defer st.lock.Unlock()
 
 	st.plates = append(st.plates, p)
 
 	for _, w := range p.HWells {
-		if !w.IsEmpty() {
+		if !w.IsEmpty(idGen) {
 			st.setLocationOf(w.WContents.ID, w.WContents.Loc)
 			w.SetUserAllocated()
 		}

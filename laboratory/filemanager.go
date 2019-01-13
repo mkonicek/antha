@@ -41,7 +41,7 @@ func (fm *FileManager) ReadAll(f wtype.File) ([]byte, error) {
 	return bsCopy, nil
 }
 
-func (fm *FileManager) Write(bs []byte) (*wtype.File, error) {
+func (fm *FileManager) WriteAll(bs []byte) (*wtype.File, error) {
 	fm.lock.Lock()
 	defer fm.lock.Unlock()
 
@@ -57,5 +57,5 @@ func (fm *FileManager) Write(bs []byte) (*wtype.File, error) {
 }
 
 func (fm *FileManager) WriteString(str string) (*wtype.File, error) {
-	return fm.Write([]byte(str))
+	return fm.WriteAll([]byte(str))
 }

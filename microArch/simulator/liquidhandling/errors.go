@@ -28,6 +28,7 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 	driver "github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/simulator"
 )
@@ -160,12 +161,12 @@ type CollisionError struct {
 }
 
 //NewCollisionError make a new collision
-func NewCollisionError(state *RobotState, channelsColliding map[int][]int, objectsColliding []wtype.LHObject) *CollisionError {
+func NewCollisionError(idGen *id.IDGenerator, state *RobotState, channelsColliding map[int][]int, objectsColliding []wtype.LHObject) *CollisionError {
 	ret := &CollisionError{
 		channelsColliding: channelsColliding,
 		stateAtError:      state.SummariseState(channelsColliding),
 	}
-	ret.setCollisionDescription(objectsColliding)
+	ret.setCollisionDescription(idGen, objectsColliding)
 	return ret
 }
 
@@ -213,7 +214,7 @@ func (self *CollisionError) CollisionDescription() string {
 
 //setCollisionDescription store a human readable description of the collision,
 //grouping objects involved in the collision as much as possible
-func (self *CollisionError) setCollisionDescription(objectsColliding []wtype.LHObject) {
+func (self *CollisionError) setCollisionDescription(idGen *id.IDGenerator, objectsColliding []wtype.LHObject) {
 
 	//list adaptors in order for consistent errors
 	adaptorIndexes := make([]int, 0, len(self.channelsColliding))
@@ -248,7 +249,7 @@ func (self *CollisionError) setCollisionDescription(objectsColliding []wtype.LHO
 			wellcoords := make([]wtype.WellCoords, 0, len(children))
 			for _, child := range children {
 				pos := child.GetPosition().Add(child.GetSize().Multiply(0.5))
-				wc, _ := addr.CoordsToWellCoords(pos)
+				wc, _ := addr.CoordsToWellCoords(idGen, pos)
 				wellcoords = append(wellcoords, wc)
 			}
 			//WellCoordArrayRow sorts by col then row

@@ -28,6 +28,8 @@ import (
 	"math"
 	"sort"
 	"strings"
+
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 type deckSlot struct {
@@ -71,11 +73,11 @@ func (self *deckSlot) IsBelow(point Coordinates) bool {
 }
 
 //Duplicate copy the deckSlot and contained objects, optionally keeping IDs unchanged
-func (self *deckSlot) Duplicate(keepIDs bool) *deckSlot {
+func (self *deckSlot) Duplicate(idGen *id.IDGenerator, keepIDs bool) *deckSlot {
 	accepts := make([]string, len(self.accepts))
 	copy(accepts, self.accepts)
 	return &deckSlot{
-		contents: self.contents.Duplicate(keepIDs),
+		contents: self.contents.Duplicate(idGen, keepIDs),
 		position: self.position,
 		size:     self.size,
 		accepts:  accepts,
@@ -92,8 +94,8 @@ type LHDeck struct {
 }
 
 //NewLHDeck make a new deck
-func NewLHDeck(name, mfg, decktype string) *LHDeck {
-	r := LHDeck{name, mfg, decktype, GetUUID(), make(map[string]*deckSlot)}
+func NewLHDeck(idGen *id.IDGenerator, name, mfg, decktype string) *LHDeck {
+	r := LHDeck{name, mfg, decktype, idGen.NextID(), make(map[string]*deckSlot)}
 	return &r
 }
 
@@ -114,7 +116,7 @@ func (self *LHDeck) GetClass() string {
 }
 
 //DimensionsString returns a string description of the position and size of the object and its children.
-func (self *LHDeck) DimensionsString() string {
+func (self *LHDeck) DimensionsString(idGen *id.IDGenerator) string {
 	ret := []string{fmt.Sprintf("Deck \"%s\" with %d slots:", self.GetName(), len(self.slots))}
 
 	slotNames := self.GetSlotNames()
@@ -127,7 +129,7 @@ func (self *LHDeck) DimensionsString() string {
 			ret = append(ret, "\t\tempty")
 			continue
 		}
-		ds := slot.contents.DimensionsString()
+		ds := slot.contents.DimensionsString(idGen)
 		ret = append(ret, "\t\t"+strings.Replace(ds, "\n", "\n\t\t", -1))
 	}
 
@@ -190,16 +192,16 @@ func (self *LHDeck) GetParent() LHObject {
 }
 
 //Duplicate copy the LHObject, optionally keeping IDs unchanged
-func (self *LHDeck) Duplicate(keepIDs bool) LHObject {
+func (self *LHDeck) Duplicate(idGen *id.IDGenerator, keepIDs bool) LHObject {
 
 	slots := make(map[string]*deckSlot)
 	for name, sl := range self.slots {
-		slots[name] = sl.Duplicate(keepIDs)
+		slots[name] = sl.Duplicate(idGen, keepIDs)
 	}
 
 	uuid := self.id
 	if !keepIDs {
-		uuid = GetUUID()
+		uuid = idGen.NextID()
 	}
 
 	r := &LHDeck{self.name, self.mfg, self.decktype, uuid, slots}

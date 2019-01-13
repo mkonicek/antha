@@ -31,24 +31,25 @@ import (
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/parse/gdx"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/parse/genbank"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/laboratory"
 )
 
 // Creates a DNASequence from a sequence file of format: .gdx .fasta .gb
-func DNAFileToDNASequence(sequenceFile wtype.File) (sequences []wtype.DNASequence, err error) {
+func DNAFileToDNASequence(lab *laboratory.Laboratory, sequenceFile wtype.File) (sequences []wtype.DNASequence, err error) {
 
 	sequences = make([]wtype.DNASequence, 0)
 	var seqs []wtype.DNASequence
 	var seq wtype.DNASequence
 
-	switch fn := sequenceFile.Name; {
+	switch fn := sequenceFile.Path; {
 	case filepath.Ext(fn) == ".gdx":
-		seqs, err = gdx.GDXToDNASequence(sequenceFile)
+		seqs, err = gdx.GDXToDNASequence(lab, sequenceFile)
 		sequences = append(sequences, seqs...)
 	case filepath.Ext(fn) == ".fasta" || filepath.Ext(fn) == ".fa":
-		seqs, err = fasta.FastaToDNASequences(sequenceFile)
+		seqs, err = fasta.FastaToDNASequences(lab, sequenceFile)
 		sequences = append(sequences, seqs...)
 	case filepath.Ext(fn) == ".gb" || filepath.Ext(fn) == ".gbk":
-		seq, err = genbank.GenbankToFeaturelessDNASequence(sequenceFile)
+		seq, err = genbank.GenbankToFeaturelessDNASequence(lab, sequenceFile)
 		sequences = append(sequences, seq)
 	default:
 		err = fmt.Errorf("non valid sequence file format: %s", filepath.Ext(fn))

@@ -25,6 +25,8 @@ package wtype
 import (
 	"fmt"
 	"strconv"
+
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 // base types required for movement
@@ -68,13 +70,13 @@ func (cl *ConcreteLocation) Shape() *Shape {
 	return cl.Shap
 }
 
-func NewLocation(name string, nPositions int, shape *Shape) Location { //TODO only in particular cases should the inner locations be populated
+func NewLocation(idGen *id.IDGenerator, name string, nPositions int, shape *Shape) Location { //TODO only in particular cases should the inner locations be populated
 	positions := make([]*ConcreteLocation, nPositions)
-	l := ConcreteLocation{NewUUID(), "", "", positions, nil, shape}
+	l := ConcreteLocation{idGen.NextID(), "", "", positions, nil, shape}
 	l.Cntr = &l
 	if nPositions > 0 {
 		for i := 0; i < nPositions; i++ {
-			l.Psns[i] = NewLocation(name+"_position_"+strconv.Itoa(i+1), 0, shape).(*ConcreteLocation)
+			l.Psns[i] = NewLocation(idGen, name+"_position_"+strconv.Itoa(i+1), 0, shape).(*ConcreteLocation)
 			l.Psns[i].Cntr = &l
 		}
 	}

@@ -35,6 +35,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/laboratory/effects"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/simulator"
 	simulator_lh "github.com/antha-lang/antha/microArch/simulator/liquidhandling"
@@ -156,7 +157,7 @@ func (this *Liquidhandler) MakeSolutions(labEffects *effects.LaboratoryEffects, 
 		fmt.Printf("  %v\n", tipEstimate)
 	}
 
-	err = this.Simulate(request)
+	err = this.Simulate(labEffects.IDGenerator, request)
 	if err != nil && !request.Options.IgnorePhysicalSimulation {
 		return errors.WithMessage(err, "during physical simulation")
 	}
@@ -167,11 +168,11 @@ func (this *Liquidhandler) MakeSolutions(labEffects *effects.LaboratoryEffects, 
 	}
 
 	// output some info on the final setup
-	OutputSetup(this.Properties)
+	OutputSetup(labEffects.IDGenerator, this.Properties)
 
 	// and after
 	fmt.Println("SETUP AFTER: ")
-	OutputSetup(this.FinalProperties)
+	OutputSetup(labEffects.IDGenerator, this.FinalProperties)
 
 	return nil
 }
@@ -193,7 +194,7 @@ func (this *Liquidhandler) AddSetupInstructions(request *LHRequest) error {
 }
 
 // run the request via the physical simulator
-func (this *Liquidhandler) Simulate(request *LHRequest) error {
+func (this *Liquidhandler) Simulate(idGen *id.IDGenerator, request *LHRequest) error {
 
 	instructions := (*request).Instructions
 	if instructions == nil {
@@ -201,7 +202,7 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 	}
 
 	// set up the simulator with default settings
-	props := this.Properties.DupKeepIDs()
+	props := this.Properties.DupKeepIDs(idGen)
 
 	settings := simulator_lh.DefaultSimulatorSettings()
 
@@ -215,7 +216,7 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 	//collisions when when tips are picked up sequentially
 	settings.EnableTipboxCollision(false)
 
-	vlh, err := simulator_lh.NewVirtualLiquidHandler(props, settings)
+	vlh, err := simulator_lh.NewVirtualLiquidHandler(idGen, props, settings)
 	if err != nil {
 		return err
 	}
@@ -340,7 +341,7 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 	return nil
 }
 
-func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
+func (this *Liquidhandler) revise_volumes(idGen *id.IDGenerator, rq *LHRequest) error {
 	// XXX -- HARD CODE 8 here
 	lastPlate := make([]string, 8)
 	lastWell := make([]string, 8)
@@ -476,17 +477,17 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 			if well.IsAutoallocated() {
 				vol.Add(well.ResidualVolume())
 
-				well2Contents := well2.Contents().Dup()
+				well2Contents := well2.Contents(idGen).Dup(idGen)
 				well2Contents.SetVolume(vol)
-				err := well2.SetContents(well2Contents)
+				err := well2.SetContents(idGen, well2Contents)
 				if err != nil {
 					return err
 				}
 
-				wellContents := well.Contents().Dup()
+				wellContents := well.Contents(idGen).Dup(idGen)
 				wellContents.SetVolume(well.ResidualVolume())
-				wellContents.ID = wtype.GetUUID()
-				err = well.SetContents(wellContents)
+				wellContents.ID = idGen.NextID()
+				err = well.SetContents(idGen, wellContents)
 				if err != nil {
 					return err
 				}
@@ -499,8 +500,8 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 
 	// finally get rid of any temporary stuff
 
-	this.Properties.RemoveUnusedAutoallocatedComponents()
-	this.FinalProperties.RemoveUnusedAutoallocatedComponents()
+	this.Properties.RemoveUnusedAutoallocatedComponents(idGen)
+	this.FinalProperties.RemoveUnusedAutoallocatedComponents(idGen)
 
 	pidm := make(map[string]string, len(this.Properties.Plates))
 	for pos := range this.Properties.Plates {
@@ -538,7 +539,7 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 				for _, w := range wa {
 					// copy the outputs to the correct side
 					// and remove the outputs from the initial state
-					if !w.IsEmpty() {
+					if !w.IsEmpty(idGen) {
 						w2, ok := p2.Wellcoords[w.Crds.FormatA1()]
 						if ok {
 							// there's no strict separation between outputs and
@@ -547,26 +548,26 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 								continue
 							} else if w.IsUserAllocated() {
 								// swap old and new
-								c := w.WContents.Dup()
-								w.Clear()
-								c2 := w2.WContents.Dup()
-								w2.Clear()
-								err := w.AddComponent(c2)
+								c := w.WContents.Dup(idGen)
+								w.Clear(idGen)
+								c2 := w2.WContents.Dup(idGen)
+								w2.Clear(idGen)
+								err := w.AddComponent(idGen, c2)
 								if err != nil {
 									return wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Scheduler : %s", err.Error()))
 								}
-								err = w2.AddComponent(c)
+								err = w2.AddComponent(idGen, c)
 								if err != nil {
 									return wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Scheduler : %s", err.Error()))
 								}
 							} else {
 								// replace
-								w2.Clear()
-								err := w2.AddComponent(w.Contents())
+								w2.Clear(idGen)
+								err := w2.AddComponent(idGen, w.Contents(idGen))
 								if err != nil {
 									return wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Scheduler : %s", err.Error()))
 								}
-								w.Clear()
+								w.Clear(idGen)
 							}
 						}
 					}
@@ -795,13 +796,13 @@ func anotherSanityCheck(request *LHRequest) {
 	}
 }
 
-func forceSanity(request *LHRequest) {
+func forceSanity(idGen *id.IDGenerator, request *LHRequest) {
 	for _, ins := range request.LHInstructions {
 		for i := 0; i < len(ins.Inputs); i++ {
-			ins.Inputs[i] = ins.Inputs[i].Dup()
+			ins.Inputs[i] = ins.Inputs[i].Dup(idGen)
 		}
 
-		ins.Outputs[0] = ins.Outputs[0].Dup()
+		ins.Outputs[0] = ins.Outputs[0].Dup(idGen)
 	}
 }
 
@@ -819,7 +820,7 @@ func assertNoTemporaryPlates(labEffects *effects.LaboratoryEffects, request *LHR
 
 func (this *Liquidhandler) Plan(labEffects *effects.LaboratoryEffects, request *LHRequest) error {
 	// figure out the ordering for the high level instructions
-	if ichain, err := buildInstructionChain(request.LHInstructions); err != nil {
+	if ichain, err := buildInstructionChain(labEffects.IDGenerator, request.LHInstructions); err != nil {
 		return err
 	} else {
 		//sort the instructions within each link of the instruction chain
@@ -848,7 +849,7 @@ func (this *Liquidhandler) Plan(labEffects *effects.LaboratoryEffects, request *
 		return err
 	}
 
-	forceSanity(request)
+	forceSanity(labEffects.IDGenerator, request)
 	// convert requests to volumes and determine required stock concentrations
 
 	if err := assertVolumesNonNegative(request); err != nil {
@@ -889,7 +890,7 @@ func (this *Liquidhandler) Plan(labEffects *effects.LaboratoryEffects, request *
 	if err != nil {
 		return err
 	}
-	forceSanity(request)
+	forceSanity(labEffects.IDGenerator, request)
 	anotherSanityCheck(request)
 
 	// assert: all instructions should now be assigned specific plate IDs, types and wells
@@ -930,7 +931,7 @@ func (this *Liquidhandler) Plan(labEffects *effects.LaboratoryEffects, request *
 	}
 
 	//find what liquids are explicitely provided by the user
-	solutionsFromPlates, err := request.GetSolutionsFromInputPlates()
+	solutionsFromPlates, err := request.GetSolutionsFromInputPlates(labEffects.IDGenerator)
 	if err != nil {
 		return err
 	}
@@ -984,16 +985,16 @@ func (this *Liquidhandler) Plan(labEffects *effects.LaboratoryEffects, request *
 	}
 
 	// Ensures tip boxes and wastes are correct for initial and final robot states
-	this.Refresh_tipboxes_tipwastes(request)
+	this.Refresh_tipboxes_tipwastes(labEffects.IDGenerator, request)
 
 	// revise the volumes - this makes sure the volumes requested are correct
-	err = this.revise_volumes(request)
+	err = this.revise_volumes(labEffects.IDGenerator, request)
 
 	if err != nil {
 		return err
 	}
 	// ensure the after state is correct
-	this.fix_post_ids()
+	this.fix_post_ids(labEffects.IDGenerator)
 	err = this.fix_post_names(request)
 	if err != nil {
 		return err
@@ -1051,8 +1052,8 @@ func (this *Liquidhandler) Layout(labEffects *effects.LaboratoryEffects, request
 // make the instructions for executing this request
 func (this *Liquidhandler) ExecutionPlan(labEffects *effects.LaboratoryEffects, request *LHRequest) (*LHRequest, error) {
 	// necessary??
-	this.FinalProperties = this.Properties.Dup()
-	temprobot := this.Properties.Dup()
+	this.FinalProperties = this.Properties.Dup(labEffects.IDGenerator)
+	temprobot := this.Properties.Dup(labEffects.IDGenerator)
 	//saved_plates := this.Properties.SaveUserPlates()
 
 	var rq *LHRequest
@@ -1071,7 +1072,7 @@ func (this *Liquidhandler) ExecutionPlan(labEffects *effects.LaboratoryEffects, 
 	return rq, err
 }
 
-func OutputSetup(robot *liquidhandling.LHProperties) {
+func OutputSetup(idGen *id.IDGenerator, robot *liquidhandling.LHProperties) {
 	fmt.Println("DECK SETUP INFO")
 	fmt.Println("Tipboxes: ")
 
@@ -1087,13 +1088,13 @@ func OutputSetup(robot *liquidhandling.LHProperties) {
 
 		//TODO Deprecate
 		if strings.Contains(v.GetName(), "Input") {
-			_, err := wtype.AutoExportPlateCSV(v.GetName()+".csv", v)
+			_, err := wtype.AutoExportPlateCSV(idGen, v.GetName()+".csv", v)
 			if err != nil {
 				fmt.Printf("export plate csv (deprecated): %s\n", err.Error())
 			}
 		}
 
-		v.OutputLayout()
+		v.OutputLayout(idGen)
 	}
 
 	fmt.Println("Tipwastes: ")
@@ -1105,11 +1106,11 @@ func OutputSetup(robot *liquidhandling.LHProperties) {
 }
 
 //ugly
-func (lh *Liquidhandler) fix_post_ids() {
+func (lh *Liquidhandler) fix_post_ids(idGen *id.IDGenerator) {
 	for _, p := range lh.FinalProperties.Plates {
 		for _, w := range p.Wellcoords {
 			if w.IsUserAllocated() {
-				w.WContents.ID = wtype.GetUUID()
+				w.WContents.ID = idGen.NextID()
 			}
 		}
 	}

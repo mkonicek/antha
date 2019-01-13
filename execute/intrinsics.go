@@ -14,7 +14,7 @@ import (
 // SetInputPlate Indicate to the scheduler the the contents of the plate is user
 // supplied. This modifies the argument to mark each well as such.
 func SetInputPlate(lab *laboratory.Laboratory, plate *wtype.Plate) {
-	lab.SampleTracker.SetInputPlate(plate)
+	lab.SampleTracker.SetInputPlate(lab.IDGenerator, plate)
 }
 
 // An IncubateOpt are options to an incubate command
@@ -39,8 +39,8 @@ type IncubateOpt struct {
 }
 
 func newCompFromComp(lab *laboratory.Laboratory, in *wtype.Liquid) *wtype.Liquid {
-	comp := in.Dup()
-	comp.ID = wtype.GetUUID()
+	comp := in.Dup(lab.IDGenerator)
+	comp.ID = lab.IDGenerator.NextID()
 	comp.BlockID = wtype.NewBlockID(lab.JobId)
 	comp.SetGeneration(comp.Generation() + 1)
 
@@ -97,7 +97,7 @@ type mixerPromptOpts struct {
 
 // MixerPrompt prompts user with a message during mixer execution
 func MixerPrompt(lab *laboratory.Laboratory, in *wtype.Liquid, message string) *wtype.Liquid {
-	inst := mixerPrompt(
+	inst := mixerPrompt(lab,
 		mixerPromptOpts{
 			Component:   newCompFromComp(lab, in),
 			ComponentIn: in,
@@ -136,8 +136,8 @@ func Prompt(lab *laboratory.Laboratory, in *wtype.Liquid, message string) *wtype
 	return inst.Result[0]
 }
 
-func mixerPrompt(opts mixerPromptOpts) *effects.CommandInst {
-	inst := wtype.NewLHPromptInstruction()
+func mixerPrompt(lab *laboratory.Laboratory, opts mixerPromptOpts) *effects.CommandInst {
+	inst := wtype.NewLHPromptInstruction(lab.IDGenerator)
 	inst.SetGeneration(opts.ComponentIn.Generation())
 	inst.Message = opts.Message
 	inst.AddOutput(opts.Component)
@@ -208,7 +208,7 @@ type PlateReadOpts struct {
 }
 
 func readPlate(lab *laboratory.Laboratory, opts PlateReadOpts) *effects.CommandInst {
-	inst := wtype.NewPRInstruction()
+	inst := wtype.NewPRInstruction(lab.IDGenerator)
 	inst.ComponentIn = opts.Sample
 
 	// Clone the component to represent the result of the AbsorbanceRead
@@ -247,7 +247,7 @@ type QPCROptions struct {
 }
 
 func runQPCR(lab *laboratory.Laboratory, opts QPCROptions, command string) *effects.CommandInst {
-	inst := ast.NewQPCRInstruction()
+	inst := &ast.QPCRInstruction{ID: lab.IDGenerator.NextID()}
 	inst.Command = command
 	inst.ComponentIn = opts.Reactions
 	inst.Definition = opts.Definition
@@ -316,7 +316,7 @@ func mix(lab *laboratory.Laboratory, inst *wtype.LHInstruction) *effects.Command
 	mx := 0
 	var reqs []ast.Request
 	// from the protocol POV components need to be passed by value
-	for i, c := range wtype.CopyComponentArray(inst.Inputs) {
+	for i, c := range wtype.CopyComponentArray(lab.IDGenerator, inst.Inputs) {
 		if c.CName == "" {
 			panic("Nameless Component used in Mix - this is not permitted")
 		}
@@ -362,14 +362,14 @@ func genericMix(lab *laboratory.Laboratory, generic *wtype.LHInstruction) *wtype
 
 // Mix mixes components
 func Mix(lab *laboratory.Laboratory, components ...*wtype.Liquid) *wtype.Liquid {
-	return genericMix(lab, mixer.GenericMix(mixer.MixOptions{
+	return genericMix(lab, mixer.GenericMix(lab.IDGenerator, mixer.MixOptions{
 		Inputs: components,
 	}))
 }
 
 // MixInto mixes components
 func MixInto(lab *laboratory.Laboratory, outplate *wtype.Plate, address string, components ...*wtype.Liquid) *wtype.Liquid {
-	return genericMix(lab, mixer.GenericMix(mixer.MixOptions{
+	return genericMix(lab, mixer.GenericMix(lab.IDGenerator, mixer.MixOptions{
 		Inputs:      components,
 		Destination: outplate,
 		Address:     address,
@@ -378,7 +378,7 @@ func MixInto(lab *laboratory.Laboratory, outplate *wtype.Plate, address string, 
 
 // MixNamed mixes components
 func MixNamed(lab *laboratory.Laboratory, outplatetype, address string, platename string, components ...*wtype.Liquid) *wtype.Liquid {
-	return genericMix(lab, mixer.GenericMix(mixer.MixOptions{
+	return genericMix(lab, mixer.GenericMix(lab.IDGenerator, mixer.MixOptions{
 		Inputs:    components,
 		PlateType: outplatetype,
 		Address:   address,
@@ -390,7 +390,7 @@ func MixNamed(lab *laboratory.Laboratory, outplatetype, address string, platenam
 //
 // TODO: Addresses break dependence information. Deprecated.
 func MixTo(lab *laboratory.Laboratory, outplatetype, address string, platenum int, components ...*wtype.Liquid) *wtype.Liquid {
-	return genericMix(lab, mixer.GenericMix(mixer.MixOptions{
+	return genericMix(lab, mixer.GenericMix(lab.IDGenerator, mixer.MixOptions{
 		Inputs:    components,
 		PlateType: outplatetype,
 		Address:   address,
@@ -410,22 +410,22 @@ func SplitSample(lab *laboratory.Laboratory, component *wtype.Liquid, volume wun
 	lab.Trace.Issue(inst)
 
 	// protocol world must not be able to modify the copies seen here
-	return inst.Result[0].Dup(), inst.Result[1].Dup()
+	return inst.Result[0].Dup(lab.IDGenerator), inst.Result[1].Dup(lab.IDGenerator)
 }
 
 // Sample takes a sample of volume v from this liquid
 func Sample(lab *laboratory.Laboratory, liquid *wtype.Liquid, v wunit.Volume) *wtype.Liquid {
-	return mixer.Sample(liquid, v)
+	return mixer.Sample(lab.IDGenerator, liquid, v)
 }
 
 func splitSample(lab *laboratory.Laboratory, component *wtype.Liquid, volume wunit.Volume) *effects.CommandInst {
 
-	split := wtype.NewLHSplitInstruction()
+	split := wtype.NewLHSplitInstruction(lab.IDGenerator)
 
 	// this will count as a mix-in-place effectively
-	split.Inputs = append(split.Inputs, component.Dup())
+	split.Inputs = append(split.Inputs, component.Dup(lab.IDGenerator))
 
-	cmpMoving, cmpStaying := mixer.SplitSample(component, volume)
+	cmpMoving, cmpStaying := mixer.SplitSample(lab.IDGenerator, component, volume)
 
 	//the ID of the component that is staying has been updated
 	lab.SampleTracker.UpdateIDOf(component.ID, cmpStaying.ID)

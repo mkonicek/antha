@@ -5,6 +5,7 @@ import (
 	"reflect"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 // TODO --> deal with, e.g., 384 well plates
@@ -54,10 +55,10 @@ func printMat(mat [][]mt) {
 	fmt.Println("-----")
 }
 
-func align(want, got ComponentVector, independent, debug bool) Match {
+func align(idGen *id.IDGenerator, want, got ComponentVector, independent, debug bool) Match {
 	for i, v := range want {
 		if v == nil {
-			want[i] = NewLHComponent()
+			want[i] = NewLHComponent(idGen)
 		}
 
 		if i >= len(got) {
@@ -67,7 +68,7 @@ func align(want, got ComponentVector, independent, debug bool) Match {
 		g := got[i]
 
 		if g == nil {
-			got[i] = NewLHComponent()
+			got[i] = NewLHComponent(idGen)
 		}
 	}
 
@@ -212,8 +213,8 @@ const NotFoundError = "Not found"
 // matchComponents takes one bite each time... the best it can find
 // needs to be run repeatedly to pick everything up
 // TODO: needs to supply more options
-func MatchComponents(want, got ComponentVector, independent, debug bool) (Match, error) {
-	match := align(want, got, independent, debug)
+func MatchComponents(idGen *id.IDGenerator, want, got ComponentVector, independent, debug bool) (Match, error) {
+	match := align(idGen, want, got, independent, debug)
 
 	if match.Sc <= 0.0 {
 		return Match{}, fmt.Errorf(NotFoundError)

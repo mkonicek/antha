@@ -28,6 +28,7 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
@@ -92,7 +93,7 @@ func (req *LHRequest) GetPlate(id string) (*wtype.Plate, bool) {
 
 //GetSolutionsFromInputPlates get all the solutions available to the mix task
 //in the input plates
-func (req *LHRequest) GetSolutionsFromInputPlates() (map[string][]*wtype.Liquid, error) {
+func (req *LHRequest) GetSolutionsFromInputPlates(idGen *id.IDGenerator) (map[string][]*wtype.Liquid, error) {
 
 	inputs := make(map[string][]*wtype.Liquid)
 
@@ -118,7 +119,7 @@ func (req *LHRequest) GetSolutionsFromInputPlates() (map[string][]*wtype.Liquid,
 
 	for _, v := range req.InputPlates {
 		for _, w := range v.Wellcoords {
-			if w.IsEmpty() {
+			if w.IsEmpty(idGen) {
 				continue
 			}
 
@@ -132,9 +133,9 @@ func (req *LHRequest) GetSolutionsFromInputPlates() (map[string][]*wtype.Liquid,
 			} else {
 				// bulk components (where instances don't matter) are
 				// identified using just CName
-				c := w.Contents().Dup()
+				c := w.Contents(idGen).Dup(idGen)
 				//get the amount available
-				c.SetVolume(w.CurrentWorkingVolume())
+				c.SetVolume(w.CurrentWorkingVolume(idGen))
 				inputs[c.CName] = append(inputs[c.CName], c)
 			}
 		}
@@ -165,9 +166,9 @@ func columnWiseIterator(a wtype.Addressable) wtype.AddressIterator {
 	return wtype.NewAddressIterator(a, wtype.ColumnWise, wtype.TopToBottom, wtype.LeftToRight, false)
 }
 
-func NewLHRequest() *LHRequest {
+func NewLHRequest(idGen *id.IDGenerator) *LHRequest {
 	lhr := &LHRequest{
-		ID:                wtype.GetUUID(),
+		ID:                idGen.NextID(),
 		LHInstructions:    make(map[string]*wtype.LHInstruction),
 		Plates:            make(map[string]*wtype.Plate),
 		InstructionSet:    liquidhandling.NewRobotInstructionSet(nil),
@@ -226,7 +227,7 @@ func (lhr *LHRequest) NewComponentsAdded() bool {
 	return len(lhr.InputSolutions.VolumesWanting) != 0
 }
 
-func (lhr *LHRequest) AddUserPlate(p *wtype.Plate) {
+func (lhr *LHRequest) AddUserPlate(idGen *id.IDGenerator, p *wtype.Plate) {
 	// impose sanity
 
 	if p.PlateName == "" {
@@ -234,7 +235,7 @@ func (lhr *LHRequest) AddUserPlate(p *wtype.Plate) {
 		lhr.NUserPlates += 1
 	}
 
-	p.MarkNonEmptyWellsUserAllocated()
+	p.MarkNonEmptyWellsUserAllocated(idGen)
 
 	lhr.InputPlates[p.ID] = p
 }

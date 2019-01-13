@@ -46,20 +46,20 @@ func ConvertInstructions(labEffects *effects.LaboratoryEffects, inssIn LHIVector
 	//    undesirable source volume selection, see tests "TestExecutionPlanning/single_channel_well_use", and
 	//    "TestExecutionPlanning/single_channel_auto_allocation"
 	// 2) convertInstructions makes changes to robot, meaning that it must be called exactly once with the the copy of robot passed to the function
-	if transfers, err := convertInstructions(inssIn, robot.DupKeepIDs(), carryvol, channelprms, multi, legacyVolume); err != nil {
+	if transfers, err := convertInstructions(labEffects, inssIn, robot.DupKeepIDs(labEffects.IDGenerator), carryvol, channelprms, multi, legacyVolume); err != nil {
 		return nil, err
 	} else if hasMCB, err := hasMultiChannelBlock(labEffects, transfers, robot, policy); err != nil {
 		return nil, err
 	} else if hasMCB {
-		return convertInstructions(inssIn, robot, carryvol, channelprms, multi, legacyVolume)
+		return convertInstructions(labEffects, inssIn, robot, carryvol, channelprms, multi, legacyVolume)
 	} else {
-		return convertInstructions(inssIn, robot, carryvol, channelprms, 1, legacyVolume)
+		return convertInstructions(labEffects, inssIn, robot, carryvol, channelprms, 1, legacyVolume)
 	}
 }
 
 func hasMultiChannelBlock(labEffects *effects.LaboratoryEffects, tfrs []*TransferInstruction, rbt *LHProperties, policy *wtype.LHPolicyRuleSet) (bool, error) {
 	for _, tfr := range tfrs {
-		instrx, err := tfr.Dup().Generate(labEffects, policy, rbt)
+		instrx, err := tfr.Dup(labEffects.IDGenerator).Generate(labEffects, policy, rbt)
 
 		if err != nil {
 			return false, err
@@ -75,7 +75,7 @@ func hasMultiChannelBlock(labEffects *effects.LaboratoryEffects, tfrs []*Transfe
 	return false, nil
 }
 
-func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool) ([]*TransferInstruction, error) {
+func convertInstructions(labEffects *effects.LaboratoryEffects, inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool) ([]*TransferInstruction, error) {
 
 	insOut := make([]*TransferInstruction, 0, 1)
 
@@ -102,13 +102,13 @@ func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 			if inssIn[i] == nil {
 				continue
 			}
-			cmps = inssIn[i].ComponentsMoving()
+			cmps = inssIn[i].ComponentsMoving(labEffects.IDGenerator)
 			inssToUse = make(LHIVector, len(cmps))
 			for j := 0; j < len(cmps); j++ {
 				inssToUse[j] = inssIn[i]
 			}
 		} else {
-			cmps = inssIn.CompsAt(i)
+			cmps = inssIn.CompsAt(labEffects.IDGenerator, i)
 			inssToUse = inssIn
 		}
 		lenToMake := 0
@@ -142,6 +142,7 @@ func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 	for i := 0; i < len(componentsToMove); i++ {
 
 		parallelTransfers, err := robot.GetComponents(
+			labEffects.IDGenerator,
 			GetComponentsOptions{
 				Cmps:         componentsToMove[i],
 				Carryvol:     carryvol,
@@ -156,7 +157,7 @@ func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 		}
 
 		for _, t := range parallelTransfers.Transfers {
-			transfers, err := makeTransfers(t, componentsToMove[i], robot, instructionsToUse[i], carryvol)
+			transfers, err := makeTransfers(labEffects, t, componentsToMove[i], robot, instructionsToUse[i], carryvol)
 
 			if err != nil {
 				return nil, err
@@ -170,7 +171,7 @@ func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 	return insOut, nil
 }
 
-func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.Liquid, robot *LHProperties, inssIn []*wtype.LHInstruction, carryvol wunit.Volume) ([]*TransferInstruction, error) {
+func makeTransfers(labEffects *effects.LaboratoryEffects, parallelTransfer ParallelTransfer, cmps []*wtype.Liquid, robot *LHProperties, inssIn []*wtype.LHInstruction, carryvol wunit.Volume) ([]*TransferInstruction, error) {
 	fromPlateIDs := parallelTransfer.PlateIDs
 	fromWells := parallelTransfer.WellCoords
 	vols := parallelTransfer.Vols
@@ -261,7 +262,7 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.Liquid, robo
 			return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: source well not found on source plate - plate report this error to the authors")
 		}
 
-		vf[ci] = wellFrom.CurrentVolume()
+		vf[ci] = wellFrom.CurrentVolume(labEffects.IDGenerator)
 
 		// dest well volume
 
@@ -271,7 +272,7 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.Liquid, robo
 			return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: dest well not found on dest plate - please report this error to the authors")
 		}
 
-		vt[ci] = wellTo.CurrentVolume()
+		vt[ci] = wellTo.CurrentVolume(labEffects.IDGenerator)
 
 		// source plate dimensions
 
@@ -285,15 +286,15 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.Liquid, robo
 
 		cnames[ci] = wellFrom.WContents.CName
 
-		cmpFrom, err := wellFrom.RemoveVolume(va[ci])
+		cmpFrom, err := wellFrom.RemoveVolume(labEffects.IDGenerator, va[ci])
 		if err != nil {
 			return insOut, wtype.LHErrorf(wtype.LH_ERR_DIRE, "Planning inconsistency: %s - please report this error to the authors", err.Error())
 		}
 
 		// silently remove the carry
-		wellFrom.RemoveCarry(carryvol)
+		wellFrom.RemoveCarry(labEffects.IDGenerator, carryvol)
 
-		err = wellTo.AddComponent(cmpFrom)
+		err = wellTo.AddComponent(labEffects.IDGenerator, cmpFrom)
 		if err != nil {
 			return insOut, wtype.LHErrorf(wtype.LH_ERR_VOL, "Planning inconsistency : %s", err.Error())
 		}

@@ -5,6 +5,7 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 type TransferParams struct {
@@ -36,7 +37,7 @@ func (tp TransferParams) Zero() bool {
 	return tp.What == ""
 }
 
-func (tp TransferParams) Dup() TransferParams {
+func (tp TransferParams) Dup(idGen *id.IDGenerator) TransferParams {
 	return TransferParams{
 		What:       tp.What,
 		PltFrom:    tp.PltFrom,
@@ -48,7 +49,7 @@ func (tp TransferParams) Dup() TransferParams {
 		TPlateType: tp.TPlateType,
 		FVolume:    tp.FVolume.Dup(),
 		TVolume:    tp.TVolume.Dup(),
-		Channel:    tp.Channel.Dup(),
+		Channel:    tp.Channel.Dup(idGen),
 		TipType:    tp.TipType,
 		FPlateWX:   tp.FPlateWX,
 		FPlateWY:   tp.FPlateWY,
@@ -209,10 +210,10 @@ func (mtp MultiTransferParams) TVolume() []wunit.Volume {
 	return r
 }
 
-func (mtp MultiTransferParams) Channel() []*wtype.LHChannelParameter {
+func (mtp MultiTransferParams) Channel(idGen *id.IDGenerator) []*wtype.LHChannelParameter {
 	r := make([]*wtype.LHChannelParameter, mtp.Multi)
 	for i, t := range mtp.Transfers {
-		r[i] = t.Channel.Dup()
+		r[i] = t.Channel.Dup(idGen)
 	}
 
 	return r
@@ -295,11 +296,11 @@ func (mtp MultiTransferParams) ToString() string {
 
 }
 
-func (mtp MultiTransferParams) Dup() MultiTransferParams {
+func (mtp MultiTransferParams) Dup(idGen *id.IDGenerator) MultiTransferParams {
 	tfrs := make([]TransferParams, 0, mtp.Multi)
 
 	for i := 0; i < len(mtp.Transfers); i++ {
-		tfrs = append(tfrs, mtp.Transfers[i].Dup())
+		tfrs = append(tfrs, mtp.Transfers[i].Dup(idGen))
 	}
 
 	ret := NewMultiTransferParams(mtp.Multi)
@@ -428,10 +429,10 @@ func (mtp SetOfMultiTransferParams) TVolume() []wunit.Volume {
 	return r
 }
 
-func (mtp SetOfMultiTransferParams) Channel() []*wtype.LHChannelParameter {
+func (mtp SetOfMultiTransferParams) Channel(idGen *id.IDGenerator) []*wtype.LHChannelParameter {
 	r := make([]*wtype.LHChannelParameter, 0, len(mtp))
 	for _, t := range mtp {
-		r = append(r, t.Channel()...)
+		r = append(r, t.Channel(idGen)...)
 	}
 
 	return r

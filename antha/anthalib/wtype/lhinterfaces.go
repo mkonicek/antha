@@ -23,7 +23,10 @@
 // defines types for dealing with liquid handling requests
 package wtype
 
-import "github.com/antha-lang/antha/antha/anthalib/wunit"
+import (
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/laboratory/effects/id"
+)
 
 type Named interface {
 	GetName() string
@@ -96,10 +99,10 @@ type LHObject interface {
 	//GetID
 	GetID() string
 	//Dup duplicate the object, optionally keeping the IDs identical
-	Duplicate(bool) LHObject
+	Duplicate(*id.IDGenerator, bool) LHObject
 	//DimensionsString returns a string description of the position and size of the object and its children.
 	//useful for debugging
-	DimensionsString() string
+	DimensionsString(idGen *id.IDGenerator) string
 }
 
 //GetObjectRoot get the highest parent
@@ -175,14 +178,14 @@ type Addressable interface {
 	//of the center of the well/tip to the given coordinate
 	//(this leaves the caller to ascertain whether any mis-alignment
 	//is acceptable)
-	CoordsToWellCoords(Coordinates) (WellCoords, Coordinates)
+	CoordsToWellCoords(*id.IDGenerator, Coordinates) (WellCoords, Coordinates)
 	//WellCoordsToCoords Get the physical location of an addressable
 	//position relative to the object origin.
 	//WellCoords should be valid in the object, or the bool will
 	//return false and Coordinates are undefined.
 	//WellReference is the position within a well.
 	//Requesting LiquidReference on a LHTipbox will return false
-	WellCoordsToCoords(WellCoords, WellReference) (Coordinates, bool)
+	WellCoordsToCoords(*id.IDGenerator, WellCoords, WellReference) (Coordinates, bool)
 }
 
 type Targetted interface {
@@ -194,15 +197,15 @@ type Targetted interface {
 
 //LHContainer a tip or a well or something that holds liquids
 type LHContainer interface {
-	Contents() *Liquid
-	CurrentVolume() wunit.Volume
+	Contents(*id.IDGenerator) *Liquid
+	CurrentVolume(*id.IDGenerator) wunit.Volume
 	ResidualVolume() wunit.Volume
 	//WorkingVolume = CurrentVolume - ResidualVolume
-	CurrentWorkingVolume() wunit.Volume
+	CurrentWorkingVolume(*id.IDGenerator) wunit.Volume
 	//Add to the container
-	AddComponent(*Liquid) error
+	AddComponent(*id.IDGenerator, *Liquid) error
 	//Set the contents of the container
-	SetContents(*Liquid) error
+	SetContents(*id.IDGenerator, *Liquid) error
 	//Remove from the container
-	RemoveVolume(wunit.Volume) (*Liquid, error)
+	RemoveVolume(*id.IDGenerator, wunit.Volume) (*Liquid, error)
 }

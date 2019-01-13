@@ -32,6 +32,7 @@ import (
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/laboratory"
 	"github.com/tealeg/xlsx"
 )
 
@@ -154,7 +155,7 @@ func ParseExcelBinary(data []byte) ([]enzymes.Assemblyparameters, error) {
 // concentration column is present in the parts list.  If no concentrations are
 // found the parts list will be created with no concentrations and an error
 // returned.
-func MakePartsFromXLSXPartsList(data []byte) (parts []*wtype.Liquid, concMap map[string]wunit.Concentration, err error) {
+func MakePartsFromXLSXPartsList(lab *laboratory.Laboratory, data []byte) (parts []*wtype.Liquid, concMap map[string]wunit.Concentration, err error) {
 	pl, err := xlsxparserBinary(data, 0, "partslist")
 	if err != nil {
 		return nil, nil, err
@@ -172,7 +173,7 @@ func MakePartsFromXLSXPartsList(data []byte) (parts []*wtype.Liquid, concMap map
 	}
 
 	for _, partName := range partNamesInOrder {
-		newComponent := wtype.NewLHComponent()
+		newComponent := wtype.NewLHComponent(lab.IDGenerator)
 		newComponent.CName = partName
 		if concMap[partName].RawValue() != 0 {
 			newComponent.SetConcentration(concMap[partName])

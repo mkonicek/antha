@@ -29,6 +29,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/laboratory"
 )
 
 type Pellet struct {
@@ -92,13 +93,11 @@ func PhysicaltoComponent(pellet *wtype.Physical) (component *wtype.Liquid) {
 	// placeholder
 	return
 }
-*/
 
 func PelletToComponent(p Pellet) *wtype.Liquid {
 	return wtype.NewLHComponent()
 }
 
-/*
 func Resuspend(pellet Pellet, step Chromstep, column Column) (output_c *wtype.Liquid, processedcolumn Column) {
 
 	var output *wtype.Liquid
@@ -120,12 +119,12 @@ func Resuspend(pellet Pellet, step Chromstep, column Column) (output_c *wtype.Li
 	return output_c, processedcolumn
 }
 */
-func Chromatography(input *wtype.Liquid, step Chromstep, column Column) (output_c *wtype.Liquid, processedcolumn Column) {
+func Chromatography(lab *laboratory.Laboratory, input *wtype.Liquid, step Chromstep, column Column) (output_c *wtype.Liquid, processedcolumn Column) {
 
 	var output *wtype.Liquid
 	samples := make([]*wtype.Liquid, 0)
 	samples = append(samples, input, step.Buffer)
-	mixture := mixer.Mix(samples...)
+	mixture := mixer.Mix(lab, samples...)
 	for i := 0; i < step.Pipetstep.Cycles; i++ {
 
 		aspiratedcolumn, aspiratedsolution := Aspirate(column, mixture, step.Volume, step.Aspiraterate)

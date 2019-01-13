@@ -7,17 +7,16 @@ import (
 	"image"
 	"image/color"
 	"image/gif"
-	"path/filepath"
-	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"github.com/antha-lang/antha/laboratory"
 	"github.com/disintegration/imaging"
 )
 
 // OpenFile takes a wtype.File and returns its contents as image.NRGBA
-func OpenFile(file wtype.File) (*image.NRGBA, error) {
-	data, err := file.ReadAll()
+func OpenFile(lab *laboratory.Laboratory, file wtype.File) (*image.NRGBA, error) {
+	data, err := lab.FileManager.ReadAll(file)
 	if err != nil {
 		return nil, err
 	}
@@ -33,8 +32,8 @@ func OpenFile(file wtype.File) (*image.NRGBA, error) {
 }
 
 // OpenGIF takes a wtype.File and returns its contents as a gif.GIF
-func OpenGIF(file wtype.File) (*gif.GIF, error) {
-	data, err := file.ReadAll()
+func OpenGIF(lab *laboratory.Laboratory, file wtype.File) (*gif.GIF, error) {
+	data, err := lab.FileManager.ReadAll(file)
 	if err != nil {
 		return nil, err
 	}
@@ -87,43 +86,40 @@ func ColourToGrayscale(colour color.Color) (gray color.Gray) {
 	return
 }
 
-// Export exports an image to file. The image format is derived from the
-// filename extension.
-func Export(img image.Image, fileName string) (file wtype.File, err error) {
-	var imageFormat imaging.Format
+type ImageFormat uint8
 
-	if filepath.Ext(fileName) == "" {
+const (
+	PNG ImageFormat = iota
+	JPEG
+	TIFF
+	GIF
+	BMP
+)
+
+// Export exports an image to file.
+func Export(lab *laboratory.Laboratory, img image.Image, format ImageFormat) (*wtype.File, error) {
+	var imageFormat imaging.Format
+	switch format {
+	case PNG:
 		imageFormat = imaging.PNG
-		fileName = fileName + "." + "png"
-	} else if strings.EqualFold(filepath.Ext(fileName), ".png") {
-		imageFormat = imaging.PNG
-	} else if strings.EqualFold(filepath.Ext(fileName), ".jpg") || strings.EqualFold(filepath.Ext(fileName), ".jpeg") {
+	case JPEG:
 		imageFormat = imaging.JPEG
-	} else if strings.EqualFold(filepath.Ext(fileName), ".tif") || strings.EqualFold(filepath.Ext(fileName), ".tiff") {
+	case TIFF:
 		imageFormat = imaging.TIFF
-	} else if strings.EqualFold(filepath.Ext(fileName), ".gif") {
+	case GIF:
 		imageFormat = imaging.GIF
-	} else if strings.EqualFold(filepath.Ext(fileName), ".BMP") {
+	case BMP:
 		imageFormat = imaging.BMP
-	} else {
-		return file, fmt.Errorf("unsupported image file format: %s", filepath.Ext(fileName))
+	default:
+		imageFormat = imaging.PNG
 	}
 
 	var buf bytes.Buffer
-
-	err = imaging.Encode(&buf, img, imageFormat)
-	if err != nil {
-		return
+	if err := imaging.Encode(&buf, img, imageFormat); err != nil {
+		return nil, err
 	}
 
-	err = file.WriteAll(buf.Bytes())
-	if err != nil {
-		return
-	}
-
-	file.Name = fileName
-
-	return
+	return lab.FileManager.WriteAll(buf.Bytes())
 }
 
 // Posterize posterizes an image. This refers to changing an image to use only

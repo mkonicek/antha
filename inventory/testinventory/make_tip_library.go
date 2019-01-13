@@ -23,6 +23,7 @@ package testinventory
 
 import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 const (
@@ -36,70 +37,70 @@ func getTipboxSize() wtype.Coordinates {
 	return wtype.Coordinates{X: sbsX, Y: sbsY, Z: 60.13}
 }
 
-func makeTipboxes() (tipboxes []*wtype.LHTipbox) {
+func makeTipboxes(idGen *id.IDGenerator) (tipboxes []*wtype.LHTipbox) {
 
 	shp := wtype.NewShape("cylinder", "mm", 7.3, 7.3, 51.2)
-	w := wtype.NewLHWell("ul", 250.0, 10.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
+	w := wtype.NewLHWell(idGen, "ul", 250.0, 10.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
 	w.Extra["InnerL"] = 5.6
 	w.Extra["InnerW"] = 5.6
-	tip := wtype.NewLHTip("cybio", "CyBio250", 10.0, 250.0, "ul", false, shp, 0.0)
-	tb := wtype.NewLHTipbox(8, 12, getTipboxSize(), "CyBio", "CyBio250Tipbox", tip, w, 9.0, 9.0, xOffset, yOffset, 0.0)
+	tip := wtype.NewLHTip(idGen, "cybio", "CyBio250", 10.0, 250.0, "ul", false, shp, 0.0)
+	tb := wtype.NewLHTipbox(idGen, 8, 12, getTipboxSize(), "CyBio", "CyBio250Tipbox", tip, w, 9.0, 9.0, xOffset, yOffset, 0.0)
 	tipboxes = append(tipboxes, tb)
 
-	w = wtype.NewLHWell("ul", 50.0, 0.5, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
+	w = wtype.NewLHWell(idGen, "ul", 50.0, 0.5, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
 	w.Extra["InnerL"] = 5.6
 	w.Extra["InnerW"] = 5.6
 
-	tip = wtype.NewLHTip("cybio", "CyBio50", 0.5, 50.0, "ul", false, shp, 0.0)
-	tb = wtype.NewLHTipbox(8, 12, getTipboxSize(), "CyBio", "CyBio50Tipbox", tip, w, 9.0, 9.0, xOffset, yOffset, 0.0)
+	tip = wtype.NewLHTip(idGen, "cybio", "CyBio50", 0.5, 50.0, "ul", false, shp, 0.0)
+	tb = wtype.NewLHTipbox(idGen, 8, 12, getTipboxSize(), "CyBio", "CyBio50Tipbox", tip, w, 9.0, 9.0, xOffset, yOffset, 0.0)
 	tipboxes = append(tipboxes, tb)
 
 	// these details are incorrect and need fixing
-	w = wtype.NewLHWell("ul", 1000.0, 50.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
+	w = wtype.NewLHWell(idGen, "ul", 1000.0, 50.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
 	w.Extra["InnerL"] = 5.6
 	w.Extra["InnerW"] = 5.6
-	tip = wtype.NewLHTip("cybio", "CyBio1000", 100.0, 1000.0, "ul", false, shp, 0.0)
-	tb = wtype.NewLHTipbox(8, 12, getTipboxSize(), "CyBio", "CyBio1000Tipbox", tip, w, 9.0, 9.0, xOffset, yOffset, 0.0)
+	tip = wtype.NewLHTip(idGen, "cybio", "CyBio1000", 100.0, 1000.0, "ul", false, shp, 0.0)
+	tb = wtype.NewLHTipbox(idGen, 8, 12, getTipboxSize(), "CyBio", "CyBio1000Tipbox", tip, w, 9.0, 9.0, xOffset, yOffset, 0.0)
 	tipboxes = append(tipboxes, tb)
 
-	tipboxes = append(tipboxes, makeGilsonTipboxes()...)
+	tipboxes = append(tipboxes, makeGilsonTipboxes(idGen)...)
 
-	tipboxes = append(tipboxes, makeTecanTipBoxes()...)
+	tipboxes = append(tipboxes, makeTecanTipBoxes(idGen)...)
 
 	return tipboxes
 }
 
-func makeGilsonTipboxes() []*wtype.LHTipbox {
+func makeGilsonTipboxes(idGen *id.IDGenerator) []*wtype.LHTipbox {
 	var ret []*wtype.LHTipbox
 
 	shp := wtype.NewShape("cylinder", "mm", 7.3, 7.3, 51.2)
 
 	//Non-filter tips
 
-	w := wtype.NewLHWell("ul", 200.0, 20.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
+	w := wtype.NewLHWell(idGen, "ul", 200.0, 20.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
 	w.Extra["InnerL"] = 5.6
 	w.Extra["InnerW"] = 5.6
-	tip := wtype.NewLHTip("gilson", "Gilson200", 20.0, 200.0, "ul", false, shp, 44.7)
-	tb := wtype.NewLHTipbox(8, 12, getTipboxSize(), "Gilson", "D200 Tip Rack (PIPETMAX 8x200)", tip, w, 9.0, 9.0, xOffset, yOffset, 24.78)
+	tip := wtype.NewLHTip(idGen, "gilson", "Gilson200", 20.0, 200.0, "ul", false, shp, 44.7)
+	tb := wtype.NewLHTipbox(idGen, 8, 12, getTipboxSize(), "Gilson", "D200 Tip Rack (PIPETMAX 8x200)", tip, w, 9.0, 9.0, xOffset, yOffset, 24.78)
 	ret = append(ret, tb)
 
 	// this is the low volume version of the high-volume tip.
-	w = wtype.NewLHWell("ul", 20.0, 1.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
+	w = wtype.NewLHWell(idGen, "ul", 20.0, 1.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
 	w.Extra["InnerL"] = 5.6
 	w.Extra["InnerW"] = 5.6
 
 	// the difference between the effective lengths for the two versions is equal to the difference in coordinate system
 	// for the two heads: 5.4mm
-	tip = wtype.NewLHTip("gilson", "LVGilson200", 1.0, 20.0, "ul", false, shp, 39.3)
-	tb = wtype.NewLHTipbox(8, 12, getTipboxSize(), "Gilson", "D200 Tip Rack (PIPETMAX 8x20)", tip, w, 9.0, 9.0, xOffset, yOffset, 24.78)
+	tip = wtype.NewLHTip(idGen, "gilson", "LVGilson200", 1.0, 20.0, "ul", false, shp, 39.3)
+	tb = wtype.NewLHTipbox(idGen, 8, 12, getTipboxSize(), "Gilson", "D200 Tip Rack (PIPETMAX 8x20)", tip, w, 9.0, 9.0, xOffset, yOffset, 24.78)
 
 	ret = append(ret, tb)
-	w = wtype.NewLHWell("ul", 20.0, 1.0, shp, 0, 7.3, 7.3, 46.0, 0.0, "mm")
+	w = wtype.NewLHWell(idGen, "ul", 20.0, 1.0, shp, 0, 7.3, 7.3, 46.0, 0.0, "mm")
 	w.Extra["InnerL"] = 5.5
 	w.Extra["InnerW"] = 5.5
 	effectiveHeight := 33.9
-	tip = wtype.NewLHTip("gilson", "Gilson20", 0.5, 20.0, "ul", false, shp, effectiveHeight)
-	tb = wtype.NewLHTipbox(8, 12, getTipboxSize(), "Gilson", "DL10 Tip Rack (PIPETMAX 8x20)", tip, w, 9.0, 9.0, xOffset, yOffset, 28.93)
+	tip = wtype.NewLHTip(idGen, "gilson", "Gilson20", 0.5, 20.0, "ul", false, shp, effectiveHeight)
+	tb = wtype.NewLHTipbox(idGen, 8, 12, getTipboxSize(), "Gilson", "DL10 Tip Rack (PIPETMAX 8x20)", tip, w, 9.0, 9.0, xOffset, yOffset, 28.93)
 	ret = append(ret, tb)
 
 	//Filter tips
@@ -108,63 +109,63 @@ func makeGilsonTipboxes() []*wtype.LHTipbox {
 	//however, physical testing showed that the offset below was required to avoid collision with the bottom of the well
 	filterHeightOffset := 0.00
 
-	w = wtype.NewLHWell("ul", 200.0, 20.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
+	w = wtype.NewLHWell(idGen, "ul", 200.0, 20.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
 	w.Extra["InnerL"] = 5.6
 	w.Extra["InnerW"] = 5.6
-	tip = wtype.NewLHTip("gilson", "GilsonFilter200", 20.0, 200.0, "ul", true, shp, 44.7+filterHeightOffset)
-	tb = wtype.NewLHTipbox(8, 12, getTipboxSize(), "Gilson", "DF200 Tip Rack (PIPETMAX 8x200)", tip, w, 9.0, 9.0, xOffset, yOffset, 24.78)
+	tip = wtype.NewLHTip(idGen, "gilson", "GilsonFilter200", 20.0, 200.0, "ul", true, shp, 44.7+filterHeightOffset)
+	tb = wtype.NewLHTipbox(idGen, 8, 12, getTipboxSize(), "Gilson", "DF200 Tip Rack (PIPETMAX 8x200)", tip, w, 9.0, 9.0, xOffset, yOffset, 24.78)
 	ret = append(ret, tb)
 
 	// this is the low volume version of the high-volume tip.
-	w = wtype.NewLHWell("ul", 20.0, 1.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
+	w = wtype.NewLHWell(idGen, "ul", 20.0, 1.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
 	w.Extra["InnerL"] = 5.6
 	w.Extra["InnerW"] = 5.6
-	tip = wtype.NewLHTip("gilson", "LVGilsonFilter200", 1.0, 20.0, "ul", true, shp, 39.3+filterHeightOffset)
-	tb = wtype.NewLHTipbox(8, 12, getTipboxSize(), "Gilson", "DF200 Tip Rack (PIPETMAX 8x20)", tip, w, 9.0, 9.0, xOffset, yOffset, 24.78)
+	tip = wtype.NewLHTip(idGen, "gilson", "LVGilsonFilter200", 1.0, 20.0, "ul", true, shp, 39.3+filterHeightOffset)
+	tb = wtype.NewLHTipbox(idGen, 8, 12, getTipboxSize(), "Gilson", "DF200 Tip Rack (PIPETMAX 8x20)", tip, w, 9.0, 9.0, xOffset, yOffset, 24.78)
 	ret = append(ret, tb)
 
 	//DF30 tip has 20ul max volume to avoid attempts to pick it up with the high volume head which currently causes a crash
 	//HJK (20/3/18)
-	w = wtype.NewLHWell("ul", 20.0, 2.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
+	w = wtype.NewLHWell(idGen, "ul", 20.0, 2.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
 	w.Extra["InnerL"] = 5.6
 	w.Extra["InnerW"] = 5.6
-	tip = wtype.NewLHTip("gilson", "GilsonFilter30", 2.0, 20.0, "ul", true, shp, 39.3+filterHeightOffset)
-	tb = wtype.NewLHTipbox(8, 12, getTipboxSize(), "Gilson", "DF30 Tip Rack (PIPETMAX 8x20)", tip, w, 9.0, 9.0, xOffset, yOffset, 24.78)
+	tip = wtype.NewLHTip(idGen, "gilson", "GilsonFilter30", 2.0, 20.0, "ul", true, shp, 39.3+filterHeightOffset)
+	tb = wtype.NewLHTipbox(idGen, 8, 12, getTipboxSize(), "Gilson", "DF30 Tip Rack (PIPETMAX 8x20)", tip, w, 9.0, 9.0, xOffset, yOffset, 24.78)
 	ret = append(ret, tb)
 
-	w = wtype.NewLHWell("ul", 10.0, 0.5, shp, 0, 7.3, 7.3, 46.0, 0.0, "mm")
+	w = wtype.NewLHWell(idGen, "ul", 10.0, 0.5, shp, 0, 7.3, 7.3, 46.0, 0.0, "mm")
 	w.Extra["InnerL"] = 5.5
 	w.Extra["InnerW"] = 5.5
-	tip = wtype.NewLHTip("gilson", "GilsonFilter10", 0.5, 10.0, "ul", true, shp, 33.9+filterHeightOffset)
-	tb = wtype.NewLHTipbox(8, 12, getTipboxSize(), "Gilson", "DFL10 Tip Rack (PIPETMAX 8x20)", tip, w, 9.0, 9.0, xOffset, yOffset, 28.93)
+	tip = wtype.NewLHTip(idGen, "gilson", "GilsonFilter10", 0.5, 10.0, "ul", true, shp, 33.9+filterHeightOffset)
+	tb = wtype.NewLHTipbox(idGen, 8, 12, getTipboxSize(), "Gilson", "DFL10 Tip Rack (PIPETMAX 8x20)", tip, w, 9.0, 9.0, xOffset, yOffset, 28.93)
 	ret = append(ret, tb)
 
 	return ret
 }
 
-func makeTecanTipBoxes() []*wtype.LHTipbox {
+func makeTecanTipBoxes(idGen *id.IDGenerator) []*wtype.LHTipbox {
 	shp := wtype.NewShape("cylinder", "mm", 7.3, 7.3, 51.2)
 
 	ret := make([]*wtype.LHTipbox, 0, 4)
 
-	w := wtype.NewLHWell("ul", 1000.0, 200.0, shp, 0, 7.3, 7.3, 46.0, 0.0, "mm")
-	tip := wtype.NewLHTip("Tecan", "Tecan1000", 200.0, 1000.0, "ul", false, shp, 0.0)
-	tb := wtype.NewLHTipbox(8, 12, getTipboxSize(), "Tecan", "DiTi 1000uL LiHa", tip, w, 9.0, 9.0, xOffset, yOffset, 28.93)
+	w := wtype.NewLHWell(idGen, "ul", 1000.0, 200.0, shp, 0, 7.3, 7.3, 46.0, 0.0, "mm")
+	tip := wtype.NewLHTip(idGen, "Tecan", "Tecan1000", 200.0, 1000.0, "ul", false, shp, 0.0)
+	tb := wtype.NewLHTipbox(idGen, 8, 12, getTipboxSize(), "Tecan", "DiTi 1000uL LiHa", tip, w, 9.0, 9.0, xOffset, yOffset, 28.93)
 	ret = append(ret, tb)
 
-	w = wtype.NewLHWell("ul", 200.0, 15.0, shp, 0, 7.3, 7.3, 46.0, 0.0, "mm")
-	tip = wtype.NewLHTip("Tecan", "Tecan200", 15.0, 200.0, "ul", false, shp, 0.0)
-	tb = wtype.NewLHTipbox(8, 12, getTipboxSize(), "Tecan", "DiTi 200uL LiHa", tip, w, 9.0, 9.0, xOffset, yOffset, 28.93)
+	w = wtype.NewLHWell(idGen, "ul", 200.0, 15.0, shp, 0, 7.3, 7.3, 46.0, 0.0, "mm")
+	tip = wtype.NewLHTip(idGen, "Tecan", "Tecan200", 15.0, 200.0, "ul", false, shp, 0.0)
+	tb = wtype.NewLHTipbox(idGen, 8, 12, getTipboxSize(), "Tecan", "DiTi 200uL LiHa", tip, w, 9.0, 9.0, xOffset, yOffset, 28.93)
 	ret = append(ret, tb)
 
-	w = wtype.NewLHWell("ul", 50.0, 3.0, shp, 0, 7.3, 7.3, 46.0, 0.0, "mm")
-	tip = wtype.NewLHTip("Tecan", "Tecan50", 3.0, 50.0, "ul", false, shp, 0.0)
-	tb = wtype.NewLHTipbox(8, 12, getTipboxSize(), "Tecan", "DiTi 50uL LiHa", tip, w, 9.0, 9.0, xOffset, yOffset, 28.93)
+	w = wtype.NewLHWell(idGen, "ul", 50.0, 3.0, shp, 0, 7.3, 7.3, 46.0, 0.0, "mm")
+	tip = wtype.NewLHTip(idGen, "Tecan", "Tecan50", 3.0, 50.0, "ul", false, shp, 0.0)
+	tb = wtype.NewLHTipbox(idGen, 8, 12, getTipboxSize(), "Tecan", "DiTi 50uL LiHa", tip, w, 9.0, 9.0, xOffset, yOffset, 28.93)
 	ret = append(ret, tb)
 
-	w = wtype.NewLHWell("ul", 10.0, 1.0, shp, 0, 7.3, 7.3, 46.0, 0.0, "mm")
-	tip = wtype.NewLHTip("Tecan", "Tecan10", 1.0, 10.0, "ul", false, shp, 0.0)
-	tb = wtype.NewLHTipbox(8, 12, getTipboxSize(), "Tecan", "DiTi 10uL LiHa", tip, w, 9.0, 9.0, xOffset, yOffset, 28.93)
+	w = wtype.NewLHWell(idGen, "ul", 10.0, 1.0, shp, 0, 7.3, 7.3, 46.0, 0.0, "mm")
+	tip = wtype.NewLHTip(idGen, "Tecan", "Tecan10", 1.0, 10.0, "ul", false, shp, 0.0)
+	tb = wtype.NewLHTipbox(idGen, 8, 12, getTipboxSize(), "Tecan", "DiTi 10uL LiHa", tip, w, 9.0, 9.0, xOffset, yOffset, 28.93)
 	ret = append(ret, tb)
 
 	return ret

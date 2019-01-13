@@ -23,12 +23,9 @@
 package liquidhandling
 
 import (
-	"fmt"
-
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/graph"
-	driver "github.com/antha-lang/antha/microArch/driver/liquidhandling"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 const (
@@ -159,7 +156,7 @@ func appendSensitively(iar [][]*wtype.LHInstruction, ins *wtype.LHInstruction, t
 	return iar
 }
 
-func aggregatePromptsWithSameMessage(inss []*wtype.LHInstruction, topolGraph graph.Graph) []graph.Node {
+func aggregatePromptsWithSameMessage(idGen *id.IDGenerator, inss []*wtype.LHInstruction, topolGraph graph.Graph) []graph.Node {
 	// merge dependencies of any prompts which have a message in common
 	prMessage := make(map[string][][]*wtype.LHInstruction, len(inss))
 	insOut := make([]graph.Node, 0, len(inss))
@@ -189,9 +186,9 @@ func aggregatePromptsWithSameMessage(inss []*wtype.LHInstruction, topolGraph gra
 	for msg, iar := range prMessage {
 		// single message may appear multiply in the chain
 		for _, ar := range iar {
-			ins := wtype.NewLHPromptInstruction()
+			ins := wtype.NewLHPromptInstruction(idGen)
 			ins.Message = msg
-			ins.AddOutput(wtype.NewLHComponent())
+			ins.AddOutput(wtype.NewLHComponent(idGen))
 			for _, ins2 := range ar {
 				for _, cmp := range ins2.Inputs {
 					ins.Inputs = append(ins.Inputs, cmp)
@@ -208,7 +205,7 @@ func aggregatePromptsWithSameMessage(inss []*wtype.LHInstruction, topolGraph gra
 
 //buildInstructionChain guarantee all nodes are dependency-ordered
 //in order to aggregate without introducing cycles
-func buildInstructionChain(unsorted map[string]*wtype.LHInstruction) (*wtype.IChain, error) {
+func buildInstructionChain(idGen *id.IDGenerator, unsorted map[string]*wtype.LHInstruction) (*wtype.IChain, error) {
 
 	unsortedSlice := make([]*wtype.LHInstruction, 0, len(unsorted))
 	for _, instruction := range unsorted {
@@ -230,7 +227,7 @@ func buildInstructionChain(unsorted map[string]*wtype.LHInstruction) (*wtype.ICh
 		sortedAsIns[i] = sorted[i].(*wtype.LHInstruction)
 	}
 
-	sorted = aggregatePromptsWithSameMessage(sortedAsIns, tg)
+	sorted = aggregatePromptsWithSameMessage(idGen, sortedAsIns, tg)
 
 	// aggregate sorted again
 	sortedAsIns = make([]*wtype.LHInstruction, len(sorted))
@@ -265,6 +262,7 @@ func (bo ByOrdinal) Less(i, j int) bool {
 	return bo[i][0] < bo[j][0]
 }
 
+/* TODO -- appears to be dead code
 // TODO -- refactor this to pass robot through
 func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, carryvol wunit.Volume, legacyVolume bool) (insOut *driver.TransferInstruction, err error) {
 	cmps := insIn.Inputs
@@ -280,7 +278,7 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 	va := make([]wunit.Volume, 0, lenToMake) // volumes
 
 	//fromPlateIDs, fromWellss, volss, err := robot.GetComponents(driver.GetComponentsOptions{Cmps: cmps, Carryvol: carryvol, Ori: wtype.LHVChannel, Multi: 1, Independent: true, LegacyVolume: legacyVolume})
-	getComponentsReply, err := robot.GetComponents(driver.GetComponentsOptions{Cmps: cmps, Carryvol: carryvol, Ori: wtype.LHVChannel, Multi: 1, Independent: true, LegacyVolume: legacyVolume})
+	getComponentsReply, err := robot.GetComponents(idGen, driver.GetComponentsOptions{Cmps: cmps, Carryvol: carryvol, Ori: wtype.LHVChannel, Multi: 1, Independent: true, LegacyVolume: legacyVolume})
 
 	if err != nil {
 		return nil, err
@@ -403,3 +401,4 @@ func ConvertInstruction(insIn *wtype.LHInstruction, robot *driver.LHProperties, 
 
 	return ti, nil
 }
+*/

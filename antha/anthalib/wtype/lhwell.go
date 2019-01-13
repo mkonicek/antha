@@ -32,6 +32,7 @@ import (
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/eng"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 type WellBottomType int
@@ -161,12 +162,12 @@ func (self *LHWell) GetParent() LHObject {
 }
 
 //Duplicate copies an LHObject
-func (self *LHWell) Duplicate(keepIDs bool) LHObject {
-	return self.dup(keepIDs)
+func (self *LHWell) Duplicate(idGen *id.IDGenerator, keepIDs bool) LHObject {
+	return self.dup(idGen, keepIDs)
 }
 
 //DimensionsString returns a string description of the position and size of the object and its children.
-func (self *LHWell) DimensionsString() string {
+func (self *LHWell) DimensionsString(idGen *id.IDGenerator) string {
 	if self == nil {
 		return "nil well"
 	}
@@ -233,19 +234,19 @@ func (w *LHWell) UnProtect() {
 	w.Extra["protected"] = false
 }
 
-func (w *LHWell) Contents() *Liquid {
+func (w *LHWell) Contents(idGen *id.IDGenerator) *Liquid {
 	if w == nil {
 		return nil
 	}
 
 	if w.WContents == nil {
-		w.WContents = NewLHComponent()
+		w.WContents = NewLHComponent(idGen)
 	}
 
 	return w.WContents
 }
 
-func (w *LHWell) SetContents(newContents *Liquid) error {
+func (w *LHWell) SetContents(idGen *id.IDGenerator, newContents *Liquid) error {
 	if w == nil {
 		return nil
 	}
@@ -263,19 +264,19 @@ func (w *LHWell) SetContents(newContents *Liquid) error {
 }
 
 //CurrentVolume return the volume of the component currently in the well
-func (w *LHWell) CurrentVolume() wunit.Volume {
+func (w *LHWell) CurrentVolume(idGen *id.IDGenerator) wunit.Volume {
 	if w == nil {
 		return wunit.ZeroVolume()
 	}
-	return w.Contents().Volume()
+	return w.Contents(idGen).Volume()
 }
 
 //CurrentWorkingVolume return the available working volume in the well - i.e. current volume minus residual volume
-func (w *LHWell) CurrentWorkingVolume() wunit.Volume {
+func (w *LHWell) CurrentWorkingVolume(idGen *id.IDGenerator) wunit.Volume {
 	if w == nil {
 		return wunit.ZeroVolume()
 	}
-	v := w.CurrentVolume()
+	v := w.CurrentVolume(idGen)
 	v.Subtract(w.ResidualVolume())
 	if v.LessThan(wunit.ZeroVolume()) {
 		return wunit.ZeroVolume()
@@ -313,12 +314,12 @@ func (w *LHWell) MaxWorkingVolume() wunit.Volume {
 }
 
 //AddComponent add some liquid to the well
-func (w *LHWell) AddComponent(c *Liquid) error {
+func (w *LHWell) AddComponent(idGen *id.IDGenerator, c *Liquid) error {
 	if w == nil {
 		return nil
 	}
 	maxVol := w.MaxVolume()
-	curVol := w.CurrentVolume()
+	curVol := w.CurrentVolume(idGen)
 	finalVol := c.Volume()
 	finalVol.Add(curVol)
 
@@ -328,58 +329,58 @@ func (w *LHWell) AddComponent(c *Liquid) error {
 		fmt.Printf("Adding %s to well \"%s\", even though well already contains %s and maximum volume is %s\n", c.Summarize(), w.GetName(), curVol, maxVol)
 	}
 
-	w.Contents().Mix(c)
+	w.Contents(idGen).Mix(idGen, c)
 
 	return nil
 }
 
 //RemoveVolume remove some liquid from the well
-func (w *LHWell) RemoveVolume(v wunit.Volume) (*Liquid, error) {
+func (w *LHWell) RemoveVolume(idGen *id.IDGenerator, v wunit.Volume) (*Liquid, error) {
 	if w == nil {
 		return nil, nil
 	}
 
 	// if the volume is too high we complain
-	if v.GreaterThan(w.CurrentWorkingVolume()) {
+	if v.GreaterThan(w.CurrentWorkingVolume(idGen)) {
 		//HJK: Disabled underflow errors while CarryVolume issues are resolved
 		//return nil, fmt.Errorf("requested %s from well \"%s\" which only contains %s working volume", v, w.GetName(), w.CurrentWorkingVolume())
 		fmt.Printf("requested %s from well \"%s\" which only contains %s working volume and %s total volume\n",
-			v, w.GetName(), w.CurrentWorkingVolume(), w.CurrentVolume())
+			v, w.GetName(), w.CurrentWorkingVolume(idGen), w.CurrentVolume(idGen))
 	}
 
-	ret := w.Contents().Dup()
+	ret := w.Contents(idGen).Dup(idGen)
 	ret.Vol = v.ConvertToString("ul")
 
-	w.Contents().Remove(v)
+	w.Contents(idGen).Remove(v)
 	return ret, nil
 }
 
 //RemoveCarry Remove the carry volume
-func (w *LHWell) RemoveCarry(v wunit.Volume) {
+func (w *LHWell) RemoveCarry(idGen *id.IDGenerator, v wunit.Volume) {
 	if w == nil {
 		return
 	}
 
-	w.Contents().Remove(v)
+	w.Contents(idGen).Remove(v)
 }
 
 //IsVolumeValid tests whether the volume in the well is within the allowable range
-func (w *LHWell) IsVolumeValid() bool {
+func (w *LHWell) IsVolumeValid(idGen *id.IDGenerator) bool {
 	if w == nil {
 		return true
 	}
-	vol := w.CurrentVolume()
+	vol := w.CurrentVolume(idGen)
 
 	return vol.LessThan(w.MaxVolume()) && !vol.LessThan(wunit.ZeroVolume())
 }
 
 //ValidateVolume validates that the volume in the well is within allowable range
-func (w *LHWell) ValidateVolume() error {
-	if w.IsVolumeValid() {
+func (w *LHWell) ValidateVolume(idGen *id.IDGenerator) error {
+	if w.IsVolumeValid(idGen) {
 		return nil
 	}
 
-	return LHError(LH_ERR_VOL, fmt.Sprintf("well %s contains invalid volume %s, maximum volume is %s", w.GetName(), w.CurrentVolume(), w.MaxVolume()))
+	return LHError(LH_ERR_VOL, fmt.Sprintf("well %s contains invalid volume %s, maximum volume is %s", w.GetName(), w.CurrentVolume(idGen), w.MaxVolume()))
 }
 
 func (w *LHWell) PlateLocation() PlateLocation {
@@ -426,16 +427,16 @@ func (w *LHWell) ContainerType() string {
 	return TypeOf(w.Plate)
 }
 
-func (w *LHWell) Clear() {
+func (w *LHWell) Clear(idGen *id.IDGenerator) {
 	if w == nil {
 		return
 	}
-	w.WContents = NewLHComponent()
+	w.WContents = NewLHComponent(idGen)
 	w.updateComponentLocation()
 }
 
 //IsEmpty returns true if the well contains nothing, though this does not mean that the working volume is greater than zero
-func (w *LHWell) IsEmpty() bool {
+func (w *LHWell) IsEmpty(idGen *id.IDGenerator) bool {
 	// nil wells are empty
 	if w == nil {
 		return true
@@ -443,7 +444,7 @@ func (w *LHWell) IsEmpty() bool {
 
 	tolerance := wunit.NewVolume(0.000001, "ul")
 
-	return w.CurrentVolume().LessThan(tolerance)
+	return w.CurrentVolume(idGen).LessThan(tolerance)
 }
 
 //Clean resets the volume in the well so that it's empty
@@ -470,19 +471,19 @@ func (w *LHWell) updateComponentLocation() {
 }
 
 // copy of instance
-func (lhw *LHWell) Dup() *LHWell {
-	return lhw.dup(false)
+func (lhw *LHWell) Dup(idGen *id.IDGenerator) *LHWell {
+	return lhw.dup(idGen, false)
 }
 
 // copy of type
-func (lhw *LHWell) CDup() *LHWell {
+func (lhw *LHWell) CDup(idGen *id.IDGenerator) *LHWell {
 	if lhw == nil {
 		return nil
 	}
-	cp := NewLHWell("ul", lhw.MaxVol, lhw.Rvol, lhw.Shape().Dup(), lhw.Bottom, lhw.GetSize().X, lhw.GetSize().Y, lhw.GetSize().Z, lhw.Bottomh, "mm")
+	cp := NewLHWell(idGen, "ul", lhw.MaxVol, lhw.Rvol, lhw.Shape().Dup(), lhw.Bottom, lhw.GetSize().X, lhw.GetSize().Y, lhw.GetSize().Z, lhw.Bottomh, "mm")
 	cp.Plate = lhw.Plate
 	cp.Crds = lhw.Crds
-	cp.WContents = lhw.Contents().Dup()
+	cp.WContents = lhw.Contents(idGen).Dup(idGen)
 
 	for k, v := range lhw.Extra {
 		cp.Extra[k] = v
@@ -491,15 +492,15 @@ func (lhw *LHWell) CDup() *LHWell {
 	return cp
 }
 
-func (lhw *LHWell) DupKeepIDs() *LHWell {
-	return lhw.dup(true)
+func (lhw *LHWell) DupKeepIDs(idGen *id.IDGenerator) *LHWell {
+	return lhw.dup(idGen, true)
 }
 
-func (lhw *LHWell) dup(keep_ids bool) *LHWell {
+func (lhw *LHWell) dup(idGen *id.IDGenerator, keep_ids bool) *LHWell {
 	if lhw == nil {
 		return nil
 	}
-	cp := NewLHWell("ul", lhw.MaxVol, lhw.Rvol, lhw.Shape().Dup(), lhw.Bottom, lhw.GetSize().X, lhw.GetSize().Y, lhw.GetSize().Z, lhw.Bottomh, "mm")
+	cp := NewLHWell(idGen, "ul", lhw.MaxVol, lhw.Rvol, lhw.Shape().Dup(), lhw.Bottom, lhw.GetSize().X, lhw.GetSize().Y, lhw.GetSize().Z, lhw.Bottomh, "mm")
 	cp.Plate = lhw.Plate
 	cp.Crds = lhw.Crds
 	cp.Bounds = lhw.Bounds
@@ -509,7 +510,7 @@ func (lhw *LHWell) dup(keep_ids bool) *LHWell {
 	}
 
 	// Dup here doesn't change ID
-	cp.WContents = lhw.Contents().Dup()
+	cp.WContents = lhw.Contents(idGen).Dup(idGen)
 
 	for k, v := range lhw.Extra {
 		cp.Extra[k] = v
@@ -654,15 +655,15 @@ func (lhw *LHWell) CalculateMaxVolume() (vol wunit.Volume, err error) {
 }
 
 // make a new well structure
-func NewLHWell(vunit string, vol, rvol float64, shape *Shape, bott WellBottomType, xdim, ydim, zdim, bottomh float64, dunit string) *LHWell {
+func NewLHWell(idGen *id.IDGenerator, vunit string, vol, rvol float64, shape *Shape, bott WellBottomType, xdim, ydim, zdim, bottomh float64, dunit string) *LHWell {
 	var well LHWell
 
 	well.Plate = nil
 	crds := ZeroWellCoords()
-	well.WContents = NewLHComponent()
+	well.WContents = NewLHComponent(idGen)
 	well.updateComponentLocation()
 
-	well.ID = GetUUID()
+	well.ID = idGen.NextID()
 	well.Crds = crds
 	well.MaxVol = wunit.NewVolume(vol, vunit).ConvertToString("ul")
 	well.Rvol = wunit.NewVolume(rvol, vunit).ConvertToString("ul")
@@ -679,16 +680,16 @@ func NewLHWell(vunit string, vol, rvol float64, shape *Shape, bott WellBottomTyp
 }
 
 // this function is somewhat buggy... need to define its responsibilities better
-func Get_Next_Well(plate *Plate, component *Liquid, curwell *LHWell) (*LHWell, bool) {
+func Get_Next_Well(idGen *id.IDGenerator, plate *Plate, component *Liquid, curwell *LHWell) (*LHWell, bool) {
 	vol := component.Vol
 
 	it := NewAddressIterator(plate, ColumnWise, TopToBottom, LeftToRight, false)
 
 	if curwell != nil {
 		// quick check to see if we have room
-		vol_left := get_vol_left(curwell)
+		vol_left := get_vol_left(idGen, curwell)
 
-		if vol_left >= vol && curwell.Contains(component) {
+		if vol_left >= vol && curwell.Contains(idGen, component) {
 			// fine we can just return this one
 			return curwell, true
 		}
@@ -703,7 +704,7 @@ func Get_Next_Well(plate *Plate, component *Liquid, curwell *LHWell) (*LHWell, b
 
 		new_well = plate.GetChildByAddress(wc).(*LHWell)
 
-		if new_well.IsEmpty() {
+		if new_well.IsEmpty(idGen) {
 			break
 		}
 		/*
@@ -715,11 +716,11 @@ func Get_Next_Well(plate *Plate, component *Liquid, curwell *LHWell) (*LHWell, b
 				continue
 			}
 		*/
-		if !new_well.Contains(component) {
+		if !new_well.Contains(idGen, component) {
 			new_well = nil
 			continue
 		}
-		vol_left := get_vol_left(new_well)
+		vol_left := get_vol_left(idGen, new_well)
 
 		if vol < vol_left {
 			break
@@ -736,14 +737,14 @@ func Get_Next_Well(plate *Plate, component *Liquid, curwell *LHWell) (*LHWell, b
 }
 
 //XXX sloboda? This makes no sense now; need to revise
-func get_vol_left(well *LHWell) float64 {
+func get_vol_left(idGen *id.IDGenerator, well *LHWell) float64 {
 	//cnts := well.WContents
 	// this is very odd... I can see how this works as a heuristic
 	// but it doesn't make much sense to me
 	carry_vol := 10.0 // microlitres
 	//	total_carry_vol := float64(len(cnts)) * carry_vol
 	total_carry_vol := carry_vol // yeah right
-	Currvol := well.CurrentVolume().ConvertToString("ul")
+	Currvol := well.CurrentVolume(idGen).ConvertToString("ul")
 	rvol := well.ResidualVolume().ConvertToString("ul")
 	vol := well.MaxVolume().ConvertToString("ul")
 	return vol - (Currvol + total_carry_vol + rvol)
@@ -839,7 +840,7 @@ func (well *LHWell) IsAutoallocated() bool {
 	return false
 }
 
-func (well *LHWell) Evaporate(time time.Duration, env Environment) VolumeCorrection {
+func (well *LHWell) Evaporate(idGen *id.IDGenerator, time time.Duration, env Environment) VolumeCorrection {
 	var ret VolumeCorrection
 
 	// don't let this happen
@@ -847,7 +848,7 @@ func (well *LHWell) Evaporate(time time.Duration, env Environment) VolumeCorrect
 		return ret
 	}
 
-	if well.IsEmpty() {
+	if well.IsEmpty(idGen) {
 		return ret
 	}
 
@@ -857,7 +858,7 @@ func (well *LHWell) Evaporate(time time.Duration, env Environment) VolumeCorrect
 
 	vol := eng.EvaporationVolume(env.Temperature, "water", env.Humidity, time.Seconds(), env.MeanAirFlowVelocity, well.AreaForVolume(), env.Pressure)
 
-	r, _ := well.RemoveVolume(vol)
+	r, _ := well.RemoveVolume(idGen, vol)
 
 	if r == nil {
 		well.WContents.Vol = 0.0
@@ -927,9 +928,9 @@ func (w *LHWell) ClearUserAllocated() {
 	w.Extra["UserAllocated"] = false
 }
 
-func (w *LHWell) Contains(cmp *Liquid) bool {
+func (w *LHWell) Contains(idGen *id.IDGenerator, cmp *Liquid) bool {
 	// obviously empty wells don't contain anything
-	if w.IsEmpty() || cmp == nil {
+	if w.IsEmpty(idGen) || cmp == nil {
 		return false
 	}
 	// components are the keepers of this information

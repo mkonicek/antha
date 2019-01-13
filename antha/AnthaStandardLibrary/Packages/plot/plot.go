@@ -28,11 +28,11 @@ package plot
 import (
 	"bytes"
 	"fmt"
-	"path/filepath"
-	"strings"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/spreadsheet"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/laboratory"
+	"github.com/antha-lang/antha/utils"
 	"github.com/tealeg/xlsx"
 	"gonum.org/v1/plot"
 	"gonum.org/v1/plot/plotter"
@@ -40,52 +40,55 @@ import (
 	"gonum.org/v1/plot/vg"
 )
 
+type PlotFormat uint8
+
+const (
+	JPEG PlotFormat = iota
+	PDF
+	PNG
+	SVG
+	TIFF
+)
+
+var plotFormatString = map[PlotFormat]string{
+	JPEG: "jpeg",
+	PDF:  "pdf",
+	PNG:  "png",
+	SVG:  "svg",
+	TIFF: "tiff",
+}
+
 // Export creates a wtype.file from the plot data. Heights and lengths can be parsed from strings i.e. 10cm.
 // If no valid height or length is specified default values of 10cm will be used but an error will also be returned.
 // If the desired filename specified does not contain a file extension, a png file will be used as the default file format.
-func Export(plt *plot.Plot, heightstr string, lengthstr string, filename string) (file wtype.File, err error) {
+func Export(lab *laboratory.Laboratory, plt *plot.Plot, heightstr string, lengthstr string, format PlotFormat) (*wtype.File, error) {
 
-	var errtoreturn error
+	var errs utils.ErrorSlice
 
 	length, err := vg.ParseLength(lengthstr)
 	if err != nil {
 		length = 10 * vg.Centimeter
-		errtoreturn = err
+		errs = append(errs, err)
 	}
 	height, err := vg.ParseLength(heightstr)
 	if err != nil {
 		height = 10 * vg.Centimeter
-		if errtoreturn != nil {
-			errtoreturn = fmt.Errorf(errtoreturn.Error(), " + ", err.Error())
-		}
+		errs = append(errs, err)
 	}
 
-	var plotFormat string
-
-	if len(filepath.Ext(filename)) == 0 {
-		plotFormat = "png"
-		filename = strings.Join([]string{filename, plotFormat}, ".")
-	} else {
-		plotFormat = strings.TrimLeft(filepath.Ext(filename), ".")
-	}
-
+	plotFormat := plotFormatString[format]
 	w, err := plt.WriterTo(length, height, plotFormat)
 	if err != nil {
-		if errtoreturn != nil {
-			errtoreturn = fmt.Errorf(errtoreturn.Error(), " + ", err.Error())
-		}
-		return file, errtoreturn
+		errs = append(errs, err)
+		return nil, errs.Pack()
 	}
 
 	var out bytes.Buffer
-	_, err = w.WriteTo(&out)
-	if err != nil {
-		return
+	if _, err = w.WriteTo(&out); err != nil {
+		return nil, err
 	}
 
-	file.Name = filename
-	err = file.WriteAll(out.Bytes())
-	return
+	return lab.FileManager.WriteAll(out.Bytes())
 }
 
 // Plot creates a plot from float data. Multiple sets of y values may be

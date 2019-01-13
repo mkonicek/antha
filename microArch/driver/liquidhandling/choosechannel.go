@@ -1,9 +1,11 @@
 package liquidhandling
 
 import (
+	"math"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"math"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 func TipChosenError(v wunit.Volume, prms *LHProperties) error {
@@ -145,7 +147,7 @@ func tipHeadCompatible(tip *wtype.LHTip, head *wtype.LHHead) bool {
 	return !(tip.MinVol.LessThan(head.Params.Minvol) || tip.MaxVol.GreaterThan(head.Params.Maxvol))
 }
 
-func ChooseChannels(vols []wunit.Volume, prms *LHProperties) ([]*wtype.LHChannelParameter, []*wtype.LHTip, []string, error) {
+func ChooseChannels(idGen *id.IDGenerator, vols []wunit.Volume, prms *LHProperties) ([]*wtype.LHChannelParameter, []*wtype.LHTip, []string, error) {
 	prmA := make([]*wtype.LHChannelParameter, len(vols))
 	tipA := make([]*wtype.LHTip, len(vols))
 	tipTypeA := make([]string, len(vols))
@@ -161,7 +163,7 @@ func ChooseChannels(vols []wunit.Volume, prms *LHProperties) ([]*wtype.LHChannel
 			return prmA, tipA, tipTypeA, err
 		}
 		prmA[i] = prm
-		tipA[i] = tip.Dup()
+		tipA[i] = tip.Dup(idGen)
 		tipTypeA[i] = tip.Type
 	}
 

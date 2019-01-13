@@ -24,13 +24,15 @@ package liquidhandling
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"math"
 	"sort"
 	"strings"
 
+	"github.com/pkg/errors"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 	"github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/simulator"
@@ -40,6 +42,7 @@ const arbitraryZOffset = 4.0
 
 // Simulate a liquid handler Driver
 type VirtualLiquidHandler struct {
+	idGen              *id.IDGenerator
 	errorHistory       [][]LiquidhandlingError
 	instructionHistory []liquidhandling.TerminalRobotInstruction
 	errors             []LiquidhandlingError
@@ -53,8 +56,9 @@ type VirtualLiquidHandler struct {
 const coneRadius = 3.6
 
 //Create a new VirtualLiquidHandler which mimics an LHDriver
-func NewVirtualLiquidHandler(props *liquidhandling.LHProperties, settings *SimulatorSettings) (*VirtualLiquidHandler, error) {
+func NewVirtualLiquidHandler(idGen *id.IDGenerator, props *liquidhandling.LHProperties, settings *SimulatorSettings) (*VirtualLiquidHandler, error) {
 	var vlh VirtualLiquidHandler
+	vlh.idGen = idGen
 	vlh.errors = make([]LiquidhandlingError, 0)
 	vlh.errorHistory = make([][]LiquidhandlingError, 0)
 	vlh.instructionHistory = make([]liquidhandling.TerminalRobotInstruction, 0)
@@ -72,11 +76,11 @@ func NewVirtualLiquidHandler(props *liquidhandling.LHProperties, settings *Simul
 
 	//add the adaptors
 	for _, assembly := range props.HeadAssemblies {
-		vlh.state.AddAdaptorGroup(NewAdaptorGroup(assembly))
+		vlh.state.AddAdaptorGroup(NewAdaptorGroup(idGen, assembly))
 	}
 
 	//Make the deck
-	deck := wtype.NewLHDeck("simulated deck", props.Mnfr, props.Model)
+	deck := wtype.NewLHDeck(idGen, "simulated deck", props.Mnfr, props.Model)
 	for name, pos := range props.Layout {
 		//size not given un LHProperties, assuming standard 96well size
 		deck.AddSlot(name, pos, wtype.Coordinates{X: 127.76, Y: 85.48, Z: 0})
@@ -451,7 +455,7 @@ func (self *VirtualLiquidHandler) validateLHArgs(head, multi int, platetype, wha
 
 //getTargetPosition get a position within the liquidhandler, adding any errors as neccessary
 //bool is false if the instruction shouldn't continue (e.g. missing deckposition e.t.c)
-func (self *VirtualLiquidHandler) getTargetPosition(adaptorName string, channelIndex int, deckposition, platetype string, wc wtype.WellCoords, ref wtype.WellReference) (wtype.Coordinates, bool) {
+func (self *VirtualLiquidHandler) getTargetPosition(idGen *id.IDGenerator, adaptorName string, channelIndex int, deckposition, platetype string, wc wtype.WellCoords, ref wtype.WellReference) (wtype.Coordinates, bool) {
 	ret := wtype.Coordinates{}
 
 	target, ok := self.state.GetDeck().GetChild(deckposition)
@@ -484,7 +488,7 @@ func (self *VirtualLiquidHandler) getTargetPosition(adaptorName string, channelI
 
 	self.lastTarget = addr.GetChildByAddress(wc)
 
-	ret, ok = addr.WellCoordsToCoords(wc, ref)
+	ret, ok = addr.WellCoordsToCoords(self.idGen, wc, ref)
 	if !ok {
 		//since we already checked that the address exists, this must be a bad reference
 		self.AddErrorf("Object type %s at %s doesn't support reference \"%s\"",
@@ -611,7 +615,7 @@ func (self *VirtualLiquidHandler) Move(deckpositionS []string, wellcoords []stri
 	//find the coordinates of each explicitly requested position
 	coords := make([]wtype.Coordinates, adaptor.GetChannelCount())
 	for _, ch := range channels {
-		c, ok := self.getTargetPosition(adaptor.GetName(), ch, deckposition, platetype, wc[ch], refs[ch])
+		c, ok := self.getTargetPosition(self.idGen, adaptor.GetName(), ch, deckposition, platetype, wc[ch], refs[ch])
 		if !ok {
 			return ret
 		}
@@ -685,7 +689,7 @@ func (self *VirtualLiquidHandler) Move(deckpositionS []string, wellcoords []stri
 	}
 
 	//check for collisions in the new location
-	if err := assertNoCollisionsInGroup(self.settings, adaptor, nil, 0.0); err != nil {
+	if err := assertNoCollisionsInGroup(self.idGen, self.settings, adaptor, nil, 0.0); err != nil {
 		err.SetInstructionDescription(describe())
 		self.addLHError(err)
 	}
@@ -757,7 +761,7 @@ func (self *VirtualLiquidHandler) Aspirate(volume []float64, overstroke []bool, 
 				}
 			} else if wells[ch] != nil {
 				//a non-explicitly requested tip is in a well. If the well has stuff in it, it'll get aspirated
-				if c := wells[ch].Contents(); !c.IsZero() && arg.adaptor.GetChannel(ch).HasTip() {
+				if c := wells[ch].Contents(self.idGen); !c.IsZero() && arg.adaptor.GetChannel(ch).HasTip() {
 					self.AddErrorf(
 						"%s: channel %d will inadvertantly aspirate %s from well %s as head is not independent",
 						describe(), ch, c.Name(), wells[ch].GetName())
@@ -775,9 +779,9 @@ func (self *VirtualLiquidHandler) Aspirate(volume []float64, overstroke []bool, 
 		if wells[i] == nil { //we'll catch this later
 			continue
 		}
-		if wells[i].Contents().GetType() != what[i] && self.settings.IsLiquidTypeWarningEnabled() {
+		if wells[i].Contents(self.idGen).GetType() != what[i] && self.settings.IsLiquidTypeWarningEnabled() {
 			self.AddWarningf("%s: well %s contains %s, not %s",
-				describe(), wells[i].GetName(), wells[i].Contents().GetType(), what[i])
+				describe(), wells[i].GetName(), wells[i].Contents(self.idGen).GetType(), what[i])
 		}
 	}
 
@@ -800,7 +804,7 @@ func (self *VirtualLiquidHandler) Aspirate(volume []float64, overstroke []bool, 
 	for id, well := range uniqueWells {
 		v := wunit.NewVolume(uniqueWellVolumes[id], "ul")
 		//vol.IsZero() checks whether vol is within a small tolerance of zero
-		if d := wunit.SubtractVolumes(v, well.CurrentWorkingVolume()); v.GreaterThan(well.CurrentWorkingVolume()) && !d.IsZero() {
+		if d := wunit.SubtractVolumes(v, well.CurrentWorkingVolume(self.idGen)); v.GreaterThan(well.CurrentWorkingVolume(self.idGen)) && !d.IsZero() {
 			//the volume is taken from len(uniqueWellVolumeIndexes[id]) wells, so the delta is split equally between them
 			reduction := wunit.DivideVolume(d, float64(len(uniqueWellVolumeIndexes[id])))
 			reductionUl := reduction.ConvertToString("ul")
@@ -808,7 +812,7 @@ func (self *VirtualLiquidHandler) Aspirate(volume []float64, overstroke []bool, 
 				volume[i] -= reductionUl
 			}
 			self.AddWarningf("%s: well %s only contains %s working volume, reducing aspirated volume by %v",
-				describe(), well.GetName(), well.CurrentWorkingVolume(), reduction)
+				describe(), well.GetName(), well.CurrentWorkingVolume(self.idGen), reduction)
 		}
 	}
 
@@ -817,25 +821,25 @@ func (self *VirtualLiquidHandler) Aspirate(volume []float64, overstroke []bool, 
 	for _, i := range arg.channels {
 		v := wunit.NewVolume(volume[i], "ul")
 		tip := arg.adaptor.GetChannel(i).GetTip()
-		fv := tip.CurrentVolume()
+		fv := tip.CurrentVolume(self.idGen)
 		fv.Add(v)
 
 		if wells[i] == nil {
 			no_well = append(no_well, i)
-		} else if wells[i].CurrentWorkingVolume().LessThan(v) {
+		} else if wells[i].CurrentWorkingVolume(self.idGen).LessThan(v) {
 			self.AddErrorf("%s: well %s only contains %s working volume",
-				describe(), wells[i].GetName(), wells[i].CurrentWorkingVolume())
+				describe(), wells[i].GetName(), wells[i].CurrentWorkingVolume(self.idGen))
 		} else if fv.GreaterThan(tip.MaxVol) {
 			self.AddErrorf("%s: channel %d contains %s, command exceeds maximum volume %s",
-				describe(), i, tip.CurrentVolume(), tip.MaxVol)
-		} else if c, err := wells[i].RemoveVolume(v); err != nil {
+				describe(), i, tip.CurrentVolume(self.idGen), tip.MaxVol)
+		} else if c, err := wells[i].RemoveVolume(self.idGen, v); err != nil {
 			self.AddErrorf("%s: unexpected well error \"%s\"", describe(), err.Error())
 		} else if fv.LessThan(tip.MinVol) {
 			self.AddWarningf("%s: minimum tip volume is %s",
 				describe(), tip.MinVol)
 			//will get an error here, but ignore it since we're already raising a warning
-			addComponent(tip, c) //nolint
-		} else if err := addComponent(tip, c); err != nil {
+			addComponent(self.idGen, tip, c) //nolint
+		} else if err := addComponent(self.idGen, tip, c); err != nil {
 			self.AddErrorf("%s: unexpected tip error \"%s\"", describe(), err.Error())
 		}
 	}
@@ -923,7 +927,7 @@ func (self *VirtualLiquidHandler) Dispense(volume []float64, blowout []bool, hea
 				}
 			} else if arg.adaptor.GetChannel(ch).HasTip() {
 				//a non-explicitly requested is loaded. If the tip has stuff in it, it'll get dispensed as well
-				if c := arg.adaptor.GetChannel(ch).GetTip().Contents(); !c.IsZero() {
+				if c := arg.adaptor.GetChannel(ch).GetTip().Contents(self.idGen); !c.IsZero() {
 					extra = append(extra, ch)
 				}
 			}
@@ -941,9 +945,9 @@ func (self *VirtualLiquidHandler) Dispense(volume []float64, blowout []bool, hea
 	//check liquid type
 	for i := range arg.channels {
 		if tip := arg.adaptor.GetChannel(i).GetTip(); tip != nil {
-			if tip.Contents().GetType() != what[i] && self.settings.IsLiquidTypeWarningEnabled() {
+			if tip.Contents(self.idGen).GetType() != what[i] && self.settings.IsLiquidTypeWarningEnabled() {
 				self.AddWarningf("%s: channel %d contains %s, not %s",
-					describe(), i, tip.Contents().GetType(), what[i])
+					describe(), i, tip.Contents(self.idGen).GetType(), what[i])
 			}
 		}
 	}
@@ -954,7 +958,7 @@ func (self *VirtualLiquidHandler) Dispense(volume []float64, blowout []bool, hea
 			continue
 		}
 		//reduce the volume to the total volume in the tip (assume blowout removes residual volume as well)
-		cv := arg.adaptor.GetChannel(i).GetTip().CurrentVolume().ConvertToString("ul")
+		cv := arg.adaptor.GetChannel(i).GetTip().CurrentVolume(self.idGen).ConvertToString("ul")
 		volume[i] = math.Min(volume[i], cv)
 	}
 
@@ -963,7 +967,7 @@ func (self *VirtualLiquidHandler) Dispense(volume []float64, blowout []bool, hea
 	maxVolumes := make([]float64, 0, len(arg.channels))
 	overfullWells := make([]int, 0, len(arg.channels))
 	for _, i := range arg.channels {
-		cV := wells[i].CurrentVolume()
+		cV := wells[i].CurrentVolume(self.idGen)
 		mV := wells[i].MaxVolume()
 		fV := wunit.AddVolumes(cV, wunit.NewVolume(volume[i], "ul"))
 		if delta := wunit.SubtractVolumes(fV, mV); fV.GreaterThan(mV) && !delta.IsZero() {
@@ -988,17 +992,17 @@ func (self *VirtualLiquidHandler) Dispense(volume []float64, blowout []bool, hea
 			}
 		}
 
-		if v.GreaterThan(tip.CurrentWorkingVolume()) {
-			v = tip.CurrentWorkingVolume()
+		if v.GreaterThan(tip.CurrentWorkingVolume(self.idGen)) {
+			v = tip.CurrentWorkingVolume(self.idGen)
 			if !blowout[i] {
 				//a bit strange
 				self.AddWarningf("%s: tip on channel %d contains only %s, but blowout flag is false",
-					describe(), i, tip.CurrentWorkingVolume())
+					describe(), i, tip.CurrentWorkingVolume(self.idGen))
 			}
 		}
-		if c, err := tip.RemoveVolume(v); err != nil {
+		if c, err := tip.RemoveVolume(self.idGen, v); err != nil {
 			self.AddErrorf("%s: unexpected tip error \"%s\"", describe(), err.Error())
-		} else if err := addComponent(wells[i], c); err != nil {
+		} else if err := addComponent(self.idGen, wells[i], c); err != nil {
 			self.AddErrorf("%s: unexpected well error \"%s\"", describe(), err.Error())
 		}
 	}
@@ -1111,7 +1115,7 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 
 	//refill the tipbox if there aren't enough tips to service the instruction
 	if adaptor.AutoRefillsTipboxes() && !tipbox.HasEnoughTips(multi) {
-		tipbox.Refill()
+		tipbox.Refill(self.idGen)
 	}
 
 	//if the adaptor might override what we tell it
@@ -1134,7 +1138,7 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 
 		if wc[i].IsZero() {
 			pos := adaptor.GetChannel(i).GetAbsolutePosition()
-			wc[i], _ = tipbox.CoordsToWellCoords(pos)
+			wc[i], _ = tipbox.CoordsToWellCoords(self.idGen, pos)
 			if !wc[i].IsZero() {
 				self.AddWarningf(
 					"%s: Well coordinates for channel %d not specified, assuming %s from adaptor location",
@@ -1209,7 +1213,7 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 				describe(), zo_min, zo_max)
 			return ret
 		}
-		if err := assertNoCollisionsInGroup(self.settings, adaptor, channels, zo_max+0.5); err != nil {
+		if err := assertNoCollisionsInGroup(self.idGen, self.settings, adaptor, channels, zo_max+0.5); err != nil {
 			err.SetInstructionDescription(describe())
 			self.addLHError(err)
 		}
@@ -1372,7 +1376,7 @@ func (self *VirtualLiquidHandler) UnloadTips(channels []int, head, multi int,
 			}
 			//get the child - *LHTip or *LHWell
 			child := addr.GetChildByAddress(wc)
-			well_p, _ := addr.WellCoordsToCoords(wc, wtype.TopReference)
+			well_p, _ := addr.WellCoordsToCoords(self.idGen, wc, wtype.TopReference)
 			delta := ch_pos.Subtract(well_p)
 
 			switch target := target.(type) {
@@ -1584,11 +1588,11 @@ func (self *VirtualLiquidHandler) Mix(head int, volume []float64, platetype []st
 		if wells[i] == nil {
 			no_well = append(no_well, i)
 		} else {
-			if wells[i].Contents().GetType() != what[i] && self.settings.IsLiquidTypeWarningEnabled() {
-				self.AddWarningf("%s: well contains %s not %s", describe(), wells[i].Contents().GetType(), what[i])
+			if wells[i].Contents(self.idGen).GetType() != what[i] && self.settings.IsLiquidTypeWarningEnabled() {
+				self.AddWarningf("%s: well contains %s not %s", describe(), wells[i].Contents(self.idGen).GetType(), what[i])
 			}
-			if wells[i].CurrentVolume().LessThan(v) {
-				self.AddWarningf("%s: well only contains %s", describe(), wells[i].CurrentVolume())
+			if wells[i].CurrentVolume(self.idGen).LessThan(v) {
+				self.AddWarningf("%s: well only contains %s", describe(), wells[i].CurrentVolume(self.idGen))
 			}
 			if wtype.TypeOf(wells[i].Plate) != platetype[i] {
 				self.AddWarningf("%s: plate \"%s\" is of type \"%s\", not \"%s\"",
@@ -1620,22 +1624,22 @@ func (self *VirtualLiquidHandler) Mix(head int, volume []float64, platetype []st
 		//this is pretty pointless unless the tip already contained something
 		//it also makes sure the tip.Contents().Name() is set properly
 		for c := 0; c < cycles[ch]; c++ {
-			com, err := wells[ch].RemoveVolume(v)
+			com, err := wells[ch].RemoveVolume(self.idGen, v)
 			if err != nil {
 				self.AddErrorf("Unexpected well error - %s", err.Error())
 				continue
 			}
-			err = addComponent(tip, com)
+			err = addComponent(self.idGen, tip, com)
 			if err != nil {
 				self.AddErrorf("Unexpected well error - %s", err.Error())
 				continue
 			}
-			com, err = tip.RemoveVolume(v)
+			com, err = tip.RemoveVolume(self.idGen, v)
 			if err != nil {
 				self.AddErrorf("Unexpected tip error - %s", err.Error())
 				continue
 			}
-			err = addComponent(wells[ch], com)
+			err = addComponent(self.idGen, wells[ch], com)
 			if err != nil {
 				self.AddErrorf("Unexpected well error - %s", err.Error())
 				continue
@@ -1664,7 +1668,7 @@ func (self *VirtualLiquidHandler) AddPlateTo(position string, plate interface{},
 	ret := driver.CommandOk()
 
 	if original, ok := plate.(wtype.LHObject); ok {
-		obj := original.Duplicate(true)
+		obj := original.Duplicate(self.idGen, true)
 		if n, nok := obj.(wtype.Named); nok && n.GetName() != name {
 			self.AddWarningf("Object name(=%s) doesn't match argument name(=%s)", n.GetName(), name)
 		}

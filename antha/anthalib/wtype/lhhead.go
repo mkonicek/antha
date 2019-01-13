@@ -1,5 +1,7 @@
 package wtype
 
+import "github.com/antha-lang/antha/laboratory/effects/id"
+
 // head
 type LHHead struct {
 	Name         string
@@ -11,34 +13,35 @@ type LHHead struct {
 }
 
 //NewLHHead constructor for liquid handling heads
-func NewLHHead(name, mf string, params *LHChannelParameter) *LHHead {
+func NewLHHead(idGen *id.IDGenerator, name, mf string, params *LHChannelParameter) *LHHead {
 	return &LHHead{
 		Name:         name,
 		Manufacturer: mf,
+		ID:           idGen.NextID(),
 		Params:       params,
 	}
 }
 
 //Dup duplicate the head and adaptor, changing the IDs
-func (head *LHHead) Dup() *LHHead {
-	return head.dup(false)
+func (head *LHHead) Dup(idGen *id.IDGenerator) *LHHead {
+	return head.dup(idGen, false)
 }
 
 //DupKeepIDs duplicate the head and adaptor, keeping the IDs the same
-func (head *LHHead) DupKeepIDs() *LHHead {
-	return head.dup(true)
+func (head *LHHead) DupKeepIDs(idGen *id.IDGenerator) *LHHead {
+	return head.dup(idGen, true)
 }
 
-func (head *LHHead) dup(keepIDs bool) *LHHead {
-	h := NewLHHead(head.Name, head.Manufacturer, nil)
+func (head *LHHead) dup(idGen *id.IDGenerator, keepIDs bool) *LHHead {
+	h := NewLHHead(idGen, head.Name, head.Manufacturer, nil)
 	h.TipLoading = head.TipLoading
 	if keepIDs {
 		h.ID = head.ID
-		h.Params = head.Params.DupKeepIDs()
-		h.Adaptor = head.Adaptor.DupKeepIDs()
+		h.Params = head.Params.DupKeepIDs(idGen)
+		h.Adaptor = head.Adaptor.DupKeepIDs(idGen)
 	} else {
-		h.Params = head.Params.Dup()
-		h.Adaptor = head.Adaptor.Dup()
+		h.Params = head.Params.Dup(idGen)
+		h.Adaptor = head.Adaptor.Dup(idGen)
 	}
 	return h
 }
@@ -60,7 +63,7 @@ func (lhh *LHHead) GetParams() *LHChannelParameter {
 //Repeated addresses (e.g. ["A1", "A1", "A1"]) imply multiple tips per well, with
 //exact positioning for each tip calculated with LHHead.GetWellTargets().
 //Addresses are not reordered, and so ["A1", "B1"] != ["B1", "A1"].
-func (head *LHHead) CanReach(plate *LHPlate, addresses WellCoordSlice) bool {
+func (head *LHHead) CanReach(idGen *id.IDGenerator, plate *LHPlate, addresses WellCoordSlice) bool {
 	if head.Adaptor == nil {
 		return false
 	}
@@ -86,7 +89,7 @@ func (head *LHHead) CanReach(plate *LHPlate, addresses WellCoordSlice) bool {
 		}
 
 		//we're not particularly interested in the z dimension, so just use topreference
-		crd, ok := plate.WellCoordsToCoords(address, TopReference)
+		crd, ok := plate.WellCoordsToCoords(idGen, address, TopReference)
 		if !ok {
 			//can't address a well which doesn't exist
 			return false

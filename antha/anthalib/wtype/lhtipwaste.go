@@ -3,6 +3,8 @@ package wtype
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 // tip waste
@@ -61,22 +63,22 @@ func (te LHTipwaste) String() string {
 	)
 }
 
-func (tw *LHTipwaste) Dup() *LHTipwaste {
-	return tw.dup(false)
+func (tw *LHTipwaste) Dup(idGen *id.IDGenerator) *LHTipwaste {
+	return tw.dup(idGen, false)
 }
 
-func (tw *LHTipwaste) DupKeepIDs() *LHTipwaste {
-	return tw.dup(true)
+func (tw *LHTipwaste) DupKeepIDs(idGen *id.IDGenerator) *LHTipwaste {
+	return tw.dup(idGen, true)
 }
 
-func (tw *LHTipwaste) dup(keepIDs bool) *LHTipwaste {
+func (tw *LHTipwaste) dup(idGen *id.IDGenerator, keepIDs bool) *LHTipwaste {
 	var aw *LHWell
 	if keepIDs {
-		aw = tw.AsWell.DupKeepIDs()
+		aw = tw.AsWell.DupKeepIDs(idGen)
 	} else {
-		aw = tw.AsWell.Dup()
+		aw = tw.AsWell.Dup(idGen)
 	}
-	tw2 := NewLHTipwaste(tw.Capacity, tw.Type, tw.Mnfr, tw.Bounds.GetSize(), aw, tw.WellXStart, tw.WellYStart, tw.WellZStart)
+	tw2 := NewLHTipwaste(idGen, tw.Capacity, tw.Type, tw.Mnfr, tw.Bounds.GetSize(), aw, tw.WellXStart, tw.WellYStart, tw.WellZStart)
 	tw2.Contents = tw.Contents
 	if keepIDs {
 		tw2.ID = tw.ID
@@ -108,10 +110,9 @@ func (self *LHTipwaste) GetClass() string {
 	return "tipwaste"
 }
 
-func NewLHTipwaste(capacity int, typ, mfr string, size Coordinates, w *LHWell, wellxstart, wellystart, wellzstart float64) *LHTipwaste {
+func NewLHTipwaste(idGen *id.IDGenerator, capacity int, typ, mfr string, size Coordinates, w *LHWell, wellxstart, wellystart, wellzstart float64) *LHTipwaste {
 	var lht LHTipwaste
-	//	lht.ID = "tipwaste-" + GetUUID()
-	lht.ID = GetUUID()
+	lht.ID = idGen.NextID()
 	lht.Type = typ
 	lht.Name = fmt.Sprintf("%s_%s", typ, lht.ID[1:len(lht.ID)-2])
 	lht.Mnfr = mfr
@@ -233,16 +234,16 @@ func (self *LHTipwaste) GetParent() LHObject {
 }
 
 //Duplicate copies an LHObject
-func (self *LHTipwaste) Duplicate(keepIDs bool) LHObject {
-	return self.dup(keepIDs)
+func (self *LHTipwaste) Duplicate(idGen *id.IDGenerator, keepIDs bool) LHObject {
+	return self.dup(idGen, keepIDs)
 }
 
 //DimensionsString returns a string description of the position and size of the object and its children.
-func (self *LHTipwaste) DimensionsString() string {
+func (self *LHTipwaste) DimensionsString(idGen *id.IDGenerator) string {
 	if self == nil {
 		return "nill tipwaste"
 	}
-	return fmt.Sprintf("Tipwaste \"%s\" at %v+%v\n\t%s", self.GetName(), self.GetPosition(), self.GetSize(), self.AsWell.DimensionsString())
+	return fmt.Sprintf("Tipwaste \"%s\" at %v+%v\n\t%s", self.GetName(), self.GetPosition(), self.GetSize(), self.AsWell.DimensionsString(idGen))
 }
 
 //##############################################

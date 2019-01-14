@@ -260,16 +260,7 @@ func (c ComponentList) Add(component *Liquid, conc wunit.Concentration) (newlist
 // Get a single concentration set point for a named component present in a component list.
 // An error will be returned if the component is not present.
 func (c ComponentList) Get(component *Liquid) (conc wunit.Concentration, err error) {
-
-	componentName := NormaliseName(component.Name())
-
-	conc, found := c.Components[componentName]
-
-	if found {
-		return conc, nil
-	}
-
-	return conc, &notFound{Name: component.CName, All: c.AllComponents()}
+	return c.GetByName(component.Name())
 }
 
 // Get a single concentration set point using just the name of a component present in a component list.
@@ -278,10 +269,10 @@ func (c ComponentList) GetByName(component string) (conc wunit.Concentration, er
 
 	component = NormaliseName(component)
 
-	conc, found := c.Components[component]
-
-	if found {
-		return conc, nil
+	for key, conc := range c.Components {
+		if equalFold(key, component) {
+			return conc, nil
+		}
 	}
 
 	return conc, &notFound{Name: component, All: c.AllComponents()}
@@ -426,15 +417,18 @@ func AddSubComponent(component *Liquid, subcomponent *Liquid, conc wunit.Concent
 			return err
 		}
 
-		if _, found := history.Components[subcomponent.CName]; !found {
-			history = history.Add(subcomponent, conc)
-
-			component.SubComponents = history
-			return nil
-		} else {
-			return &alreadyAdded{Name: subcomponent.CName}
+		for componentName := range history.Components {
+			if equalFold(componentName, subcomponent.Name()) {
+				return &alreadyAdded{Name: subcomponent.CName}
+			}
 		}
+
+		history = history.Add(subcomponent, conc)
+
+		component.SubComponents = history
+		return nil
 	}
+
 }
 
 // AddSubComponents adds a component list to a component.
@@ -447,7 +441,7 @@ func AddSubComponents(component *Liquid, allsubComponents ComponentList) error {
 
 		comp.CName = compName
 
-		conc, err := allsubComponents.Get(&comp)
+		conc, err := allsubComponents.GetByName(compName)
 
 		if err != nil {
 			return err

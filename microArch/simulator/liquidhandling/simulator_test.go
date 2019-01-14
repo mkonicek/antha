@@ -38,28 +38,8 @@ func TestUnknownLocations(t *testing.T) {
 	}
 
 	lhp := defaultLHProperties()
-	lhp.Tip_preferences = append(lhp.Tip_preferences, "undefined_tip_pref")
-	assertPropsInvalid(t, lhp, "Undefined Tip_preference")
-
-	lhp = defaultLHProperties()
-	lhp.Input_preferences = append(lhp.Input_preferences, "undefined_input_pref")
-	assertPropsInvalid(t, lhp, "Undefined Input_preference")
-
-	lhp = defaultLHProperties()
-	lhp.Output_preferences = append(lhp.Output_preferences, "undefined_output_pref")
-	assertPropsInvalid(t, lhp, "Undefined Output_preference")
-
-	lhp = defaultLHProperties()
-	lhp.Tipwaste_preferences = append(lhp.Tipwaste_preferences, "undefined_tipwaste_pref")
-	assertPropsInvalid(t, lhp, "Undefined Tipwaste_preference")
-
-	lhp = defaultLHProperties()
-	lhp.Wash_preferences = append(lhp.Wash_preferences, "undefined_wash_pref")
-	assertPropsInvalid(t, lhp, "Undefined Wash_preference")
-
-	lhp = defaultLHProperties()
-	lhp.Waste_preferences = append(lhp.Waste_preferences, "undefined_waste_pref")
-	assertPropsInvalid(t, lhp, "Undefined Waste_preference")
+	lhp.Preferences.Tipboxes = append(lhp.Preferences.Tipboxes, "undefined_pref")
+	assertPropsInvalid(t, lhp, "tipboxes")
 }
 
 func TestNewVirtualLiquidHandler_ValidProps(t *testing.T) {

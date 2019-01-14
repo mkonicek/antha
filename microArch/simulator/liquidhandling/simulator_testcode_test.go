@@ -142,12 +142,12 @@ type LHPropertiesParams struct {
 
 func makeLHProperties(p *LHPropertiesParams) *liquidhandling.LHProperties {
 
-	layout := make(map[string]wtype.Coordinates)
+	layout := make(map[string]*wtype.LHPosition)
 	for _, lp := range p.Layouts {
-		layout[lp.Name] = wtype.Coordinates{X: lp.Xpos, Y: lp.Ypos, Z: lp.Zpos}
+		layout[lp.Name] = wtype.NewLHPosition(lp.Name, wtype.Coordinates{X: lp.Xpos, Y: lp.Ypos, Z: lp.Zpos})
 	}
 
-	lhp := liquidhandling.NewLHProperties(len(layout), p.Name, p.Mfg, liquidhandling.LLLiquidHandler, liquidhandling.DisposableTips, layout)
+	lhp := liquidhandling.NewLHProperties(p.Name, p.Mfg, liquidhandling.LLLiquidHandler, liquidhandling.DisposableTips, layout)
 
 	lhp.HeadAssemblies = make([]*wtype.LHHeadAssembly, 0, len(p.HeadAssemblies))
 	for _, ha := range p.HeadAssemblies {
@@ -155,12 +155,14 @@ func makeLHProperties(p *LHPropertiesParams) *liquidhandling.LHProperties {
 	}
 	lhp.Heads = lhp.GetLoadedHeads()
 
-	lhp.Tip_preferences = p.TipPreferences
-	lhp.Input_preferences = p.InputPreferences
-	lhp.Output_preferences = p.OutputPreferences
-	lhp.Tipwaste_preferences = p.TipwastePreferences
-	lhp.Wash_preferences = p.WashPreferences
-	lhp.Waste_preferences = p.WastePreferences
+	lhp.Preferences = &liquidhandling.LayoutOpt{
+		Tipboxes:  p.TipPreferences,
+		Inputs:    p.InputPreferences,
+		Outputs:   p.OutputPreferences,
+		Tipwastes: p.TipwastePreferences,
+		Washes:    p.WashPreferences,
+		Wastes:    p.WastePreferences,
+	}
 
 	return lhp
 }

@@ -84,7 +84,7 @@ func CompareTestResults(runResult *execute.Result, opt TestOpt) error {
 				errstr += err.Error() + "\n"
 			}
 		} else if opt.CompareOutputs {
-			ssss := compareOutputs(opt.Results.MixTaskResults[i].Outputs, getMixTaskOutputs(mixTasks[i]), opt)
+			ssss := compareOutputs(opt.Results.MixTaskResults[i].Outputs, mixTasks[i].FinalProperties.Plates, opt)
 			if ssss != "" {
 				errstr += ssss + "\n"
 			}
@@ -122,22 +122,6 @@ func compareTimeEstimates(expectedTimeInSecs, testTimeInSecs, precisionFactor fl
 	return nil
 }
 
-func getMixTaskOutputs(mix *target.Mix) map[string]*wtype.Plate {
-	outputs := make(map[string]*wtype.Plate)
-
-	// get output plates (ONLY)
-
-	for _, pos := range mix.FinalProperties.Output_preferences {
-		plate, ok := mix.FinalProperties.Plates[pos]
-
-		if ok {
-			outputs[pos] = plate
-		}
-	}
-
-	return outputs
-}
-
 // SaveTestOutputs extracts a TestOpt from an execution result
 func SaveTestOutputs(runResult *execute.Result, comparisonOptions string) TestOpt {
 	// get mix tasks
@@ -146,7 +130,7 @@ func SaveTestOutputs(runResult *execute.Result, comparisonOptions string) TestOp
 	mixTaskResults := make([]MixTaskResult, len(mixTasks))
 
 	for i := 0; i < len(mixTasks); i++ {
-		outputs := getMixTaskOutputs(mixTasks[i])
+		outputs := mixTasks[i].FinalProperties.Plates
 		mixTaskResults[i] = MixTaskResult{
 			Instructions: liquidhandling.SetOfRobotInstructions{
 				RobotInstructions: generaliseInstructions(mixTasks[i].Request.Instructions),

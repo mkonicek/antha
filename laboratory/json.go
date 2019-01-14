@@ -2,9 +2,13 @@ package laboratory
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"reflect"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/ugorji/go/codec"
 )
 
@@ -80,4 +84,37 @@ func (labBuild *LaboratoryBuilder) RegisterJsonExtensions(jh *codec.JsonHandle) 
 	} else if err := jh.SetInterfaceExt(reflect.TypeOf(wtype.LHTipbox{}), 0, &tipboxJson{labBuild: labBuild}); err != nil {
 		labBuild.Fatal(err)
 	}
+}
+
+func (labBuild *LaboratoryBuilder) Save() error {
+	jh := &codec.JsonHandle{}
+	labBuild.RegisterJsonExtensions(jh)
+
+	outFH, err := os.OpenFile(filepath.Join(labBuild.outDir, "effects.json"), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0400)
+	if err != nil {
+		return err
+	}
+	defer outFH.Close()
+
+	if err := codec.NewEncoder(outFH, jh).Encode(labBuild.LaboratoryEffects); err != nil {
+		return err
+	} else if len(labBuild.errors) != 0 {
+		return ioutil.WriteFile(filepath.Join(labBuild.outDir, "errors.txt"), []byte(labBuild.errors.Pack().Error()), 0400)
+	} else {
+		return nil
+	}
+}
+
+func (labBuild *LaboratoryBuilder) SetEffectsFromPath(path string) error {
+	jh := &codec.JsonHandle{}
+	labBuild.RegisterJsonExtensions(jh)
+
+	inFH, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer inFH.Close()
+
+	labBuild.LaboratoryEffects = &effects.LaboratoryEffects{}
+	return codec.NewDecoder(inFH, jh).Decode(labBuild.LaboratoryEffects)
 }

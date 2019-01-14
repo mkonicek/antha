@@ -28,8 +28,6 @@ type Element interface {
 }
 
 type LaboratoryBuilder struct {
-	JobId string
-
 	outDir string
 
 	elemLock   sync.Mutex
@@ -51,8 +49,6 @@ type LaboratoryBuilder struct {
 
 func NewLaboratoryBuilder(jobId string) *LaboratoryBuilder {
 	labBuild := &LaboratoryBuilder{
-		JobId: jobId,
-
 		elements:  make(map[Element]*ElementBase),
 		Errored:   make(chan struct{}),
 		Completed: make(chan struct{}),
@@ -132,18 +128,6 @@ func (labBuild *LaboratoryBuilder) RunElements() error {
 		default:
 			return nil
 		}
-	}
-}
-
-func (labBuild *LaboratoryBuilder) Save() error {
-	if bs, err := json.Marshal(labBuild.LaboratoryEffects); err != nil {
-		return err
-	} else if ioutil.WriteFile(filepath.Join(labBuild.outDir, "effects.json"), bs, 0400); err != nil {
-		return err
-	} else if len(labBuild.errors) != 0 {
-		return ioutil.WriteFile(filepath.Join(labBuild.outDir, "errors.txt"), []byte(labBuild.errors.Error()), 0400)
-	} else {
-		return nil
 	}
 }
 

@@ -64,6 +64,10 @@ func (i *TestInventory) UnmarshalJSON(bs []byte) error {
 	}
 }
 
+func (i *TestInventory) SetIDGenerator(idGen *id.IDGenerator) {
+	i.idGen = idGen
+}
+
 func (i *TestInventory) NewComponent(name string) (*wtype.Liquid, error) {
 	i.lock.Lock()
 	defer i.lock.Unlock()

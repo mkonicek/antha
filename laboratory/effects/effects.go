@@ -10,10 +10,12 @@ import (
 )
 
 type LaboratoryEffects struct {
+	JobId string
+
 	Trace         *Trace
 	Maker         *Maker
 	SampleTracker *sampletracker.SampleTracker
-	Inventory     *testinventory.TestInventory `json:"-"` // Inventory is part of plate cache, so we don't encode it.
+	Inventory     *testinventory.TestInventory
 	PlateCache    *plateCache.PlateCache
 	IDGenerator   *id.IDGenerator
 }
@@ -21,6 +23,7 @@ type LaboratoryEffects struct {
 func NewLaboratoryEffects(jobId string) *LaboratoryEffects {
 	idGen := id.NewIDGenerator(jobId)
 	le := &LaboratoryEffects{
+		JobId:         jobId,
 		Trace:         NewTrace(),
 		Maker:         NewMaker(),
 		SampleTracker: sampletracker.NewSampleTracker(),
@@ -31,16 +34,41 @@ func NewLaboratoryEffects(jobId string) *LaboratoryEffects {
 	return le
 }
 
-func (le *LaboratoryEffects) ToJSON() ([]byte, error) {
-	return json.Marshal(le)
+type laboratoryEffectsJSON struct {
+	JobId         string
+	Trace         *Trace
+	Maker         *Maker
+	SampleTracker *sampletracker.SampleTracker
+	// Inventory is part of plate cache, so we don't encode it.
+	PlateCache  *plateCache.PlateCache
+	IDGenerator *id.IDGenerator
 }
 
-func (le *LaboratoryEffects) FromJSON(bs []byte) error {
-	// the default json marshaling is fine, we just need to do some rewriting of pointers:
-	if err := json.Unmarshal(bs, le); err != nil {
+func (le *LaboratoryEffects) MarshalJSON() ([]byte, error) {
+	return json.Marshal(&laboratoryEffectsJSON{
+		JobId:         le.JobId,
+		Trace:         le.Trace,
+		Maker:         le.Maker,
+		SampleTracker: le.SampleTracker,
+		PlateCache:    le.PlateCache,
+		IDGenerator:   le.IDGenerator,
+	})
+}
+
+func (le *LaboratoryEffects) UnmarshalJSON(bs []byte) error {
+	lej := &laboratoryEffectsJSON{}
+	if err := json.Unmarshal(bs, lej); err != nil {
 		return err
 	} else {
+		le.JobId = lej.JobId
+		le.Trace = lej.Trace
+		le.Maker = lej.Maker
+		le.SampleTracker = lej.SampleTracker
+		le.PlateCache = lej.PlateCache
+		le.IDGenerator = lej.IDGenerator
+		// Just need to do a little rewiring:
 		le.Inventory = le.PlateCache.Inventory
+		le.Inventory.SetIDGenerator(le.IDGenerator)
 		return nil
 	}
 }

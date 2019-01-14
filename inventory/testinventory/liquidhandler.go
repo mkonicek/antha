@@ -112,34 +112,27 @@ func makeLHForTest(tipList []string) *liquidhandling.LHProperties {
 }
 
 func SetUpTipsFor(lhp *liquidhandling.LHProperties, tipList []string) *liquidhandling.LHProperties {
-	inList := func(s string, sa []string) bool {
-		for _, ss := range sa {
-			if s == ss {
-				return true
-			}
-		}
-		return false
+	inList := make(map[string]bool, len(tipList))
+	for _, tipType := range tipList {
+		inList[tipType] = true
 	}
 
 	seen := make(map[string]bool)
 
-	for _, tb := range testinventory.GetTipboxes() {
+	tipboxes := make([]*wtype.LHTipbox, 0, len(inList))
+	for _, tb := range GetTipboxes() {
 		if tb.Mnfr == lhp.Mnfr || lhp.Mnfr == "MotherNature" {
-			// ignore tips not in the list
-
-			if !inList(tb.Tiptype.Type, tipList) {
-				continue
-			}
 			tip := tb.Tips[0][0]
 			str := tip.Mnfr + tip.Type + tip.MinVol.ToString() + tip.MaxVol.ToString()
-			if seen[str] {
-				continue
-			}
 
-			seen[str] = true
-			lhp.Tips = append(lhp.Tips, tb.Tips[0][0])
+			if inList[tip.Type] && !seen[str] {
+				seen[str] = true
+				tipboxes = append(tipboxes, tb)
+			}
 		}
 	}
+
+	lhp.TipFactory = liquidhandling.NewTipFactory(tipboxes, []*wtype.LHTipwaste{makeGilsonTipWaste()})
 	return lhp
 }
 

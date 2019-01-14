@@ -34,6 +34,7 @@ import (
 	"github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/simulator"
+	"github.com/antha-lang/antha/utils"
 )
 
 const arbitraryZOffset = 4.0
@@ -77,22 +78,22 @@ func NewVirtualLiquidHandler(props *liquidhandling.LHProperties, settings *Simul
 
 	//Make the deck
 	deck := wtype.NewLHDeck("simulated deck", props.Mnfr, props.Model)
-	for name, pos := range props.Layout {
+	for name, pos := range props.Positions {
 		//size not given un LHProperties, assuming standard 96well size
-		deck.AddSlot(name, pos, wtype.Coordinates{X: 127.76, Y: 85.48, Z: 0})
+		deck.AddSlot(name, pos.Location, wtype.Coordinates{X: 127.76, Y: 85.48, Z: 0})
 		//deck.SetSlotAccepts(name, "riser")
 	}
 
-	for _, name := range props.Tip_preferences {
+	for _, name := range props.Preferences.Tipboxes {
 		deck.SetSlotAccepts(name, "tipbox")
 	}
-	for _, name := range props.Input_preferences {
+	for _, name := range props.Preferences.Inputs {
 		deck.SetSlotAccepts(name, "plate")
 	}
-	for _, name := range props.Output_preferences {
+	for _, name := range props.Preferences.Outputs {
 		deck.SetSlotAccepts(name, "plate")
 	}
-	for _, name := range props.Tipwaste_preferences {
+	for _, name := range props.Preferences.Tipwastes {
 		deck.SetSlotAccepts(name, "tipwaste")
 	}
 
@@ -243,33 +244,20 @@ func (self *VirtualLiquidHandler) validateProperties(props *liquidhandling.LHPro
 	check_prop := func(l []string, name string) error {
 		//all locations defined
 		for _, loc := range l {
-			if _, ok := props.Layout[loc]; !ok {
-				return errors.Errorf("undefined location \"%s\" referenced in %s", loc, name)
+			if !props.Exists(loc) {
+				return errors.Errorf(`unknown location "%s" found in %s preferences`, loc, name)
 			}
 		}
 		return nil
 	}
-
-	if err := check_prop(props.Tip_preferences, "tip preferences"); err != nil {
-		return err
-	}
-	if err := check_prop(props.Input_preferences, "input preferences"); err != nil {
-		return err
-	}
-	if err := check_prop(props.Output_preferences, "output preferences"); err != nil {
-		return err
-	}
-	if err := check_prop(props.Tipwaste_preferences, "tipwaste preferences"); err != nil {
-		return err
-	}
-	if err := check_prop(props.Wash_preferences, "wash preferences"); err != nil {
-		return err
-	}
-	if err := check_prop(props.Waste_preferences, "waste preferences"); err != nil {
-		return err
-	}
-
-	return nil
+	return utils.ErrorSlice{
+		check_prop(props.Preferences.Tipboxes, "tipbox"),
+		check_prop(props.Preferences.Inputs, "input"),
+		check_prop(props.Preferences.Outputs, "output"),
+		check_prop(props.Preferences.Tipwastes, "tipwaste"),
+		check_prop(props.Preferences.Wastes, "waste"),
+		check_prop(props.Preferences.Washes, "wash"),
+	}.Pack()
 }
 
 //testSliceLength test that a bunch of slices are the correct length

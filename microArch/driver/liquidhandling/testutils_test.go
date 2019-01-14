@@ -61,7 +61,7 @@ func getLVConfig() *wtype.LHChannelParameter {
 func makeGilsonForTest(ctx context.Context, tipList []string) *LHProperties {
 	// gilson pipetmax
 
-	layout := make(map[string]wtype.Coordinates)
+	layout := make(map[string]*wtype.LHPosition)
 	i := 0
 	x0 := 3.886
 	y0 := 3.513
@@ -74,37 +74,25 @@ func makeGilsonForTest(ctx context.Context, tipList []string) *LHProperties {
 	for y := 0; y < 3; y++ {
 		xp = x0
 		for x := 0; x < 3; x++ {
-			posname := fmt.Sprintf("position_%d", i+1)
-			crds := wtype.Coordinates{X: xp, Y: yp, Z: zp}
-			layout[posname] = crds
+			pos := wtype.NewLHPosition(fmt.Sprintf("position_%d", i+1), wtype.Coordinates{X: xp, Y: yp, Z: zp})
+			layout[pos.Name] = pos
 			i += 1
 			xp += xi
 		}
 		yp += yi
 	}
-	lhp := NewLHProperties(9, "Pipetmax", "Gilson", LLLiquidHandler, DisposableTips, layout)
+	lhp := NewLHProperties("Pipetmax", "Gilson", LLLiquidHandler, DisposableTips, layout)
 	// get tips permissible from the factory
 	SetUpTipsFor(ctx, lhp, tipList)
 
-	lhp.Tip_preferences = []string{"position_2", "position_3", "position_6", "position_9", "position_8", "position_5", "position_4", "position_7"}
-	//lhp.Tip_preferences = []string{"position_2", "position_3", "position_6", "position_9", "position_8", "position_5", "position_7"}
-
-	//lhp.Tip_preferences = []string{"position_9", "position_6", "position_3", "position_5", "position_2"} //jmanart i cut it down to 5, as it was hardcoded in the liquidhandler getInputs call before
-
-	// original preferences
-	lhp.Input_preferences = []string{"position_4", "position_5", "position_6", "position_9", "position_8", "position_3"}
-	lhp.Output_preferences = []string{"position_8", "position_9", "position_6", "position_5", "position_3", "position_1"}
-
-	// use these new preferences for gel loading: this is needed because outplate overlaps inplate otherwise so move inplate to position 5 rather than 4 (pos 4 deleted)
-	//lhp.Input_preferences = []string{"position_5", "position_6", "position_9", "position_8", "position_3"}
-	//lhp.Output_preferences = []string{"position_9", "position_8", "position_7", "position_6", "position_5", "position_3"}
-
-	lhp.Wash_preferences = []string{"position_8"}
-	lhp.Tipwaste_preferences = []string{"position_1", "position_7"}
-	lhp.Waste_preferences = []string{"position_9"}
-	//	lhp.Tip_preferences = []int{2, 3, 6, 9, 5, 8, 4, 7}
-	//	lhp.Input_preferences = []int{24, 25, 26, 29, 28, 23}
-	//	lhp.Output_preferences = []int{10, 11, 12, 13, 14, 15}
+	lhp.Preferences = &LayoutOpt{
+		Tipboxes:  Addresses{"position_2", "position_3", "position_6", "position_9", "position_8", "position_5", "position_4", "position_7"},
+		Inputs:    Addresses{"position_4", "position_5", "position_6", "position_9", "position_8", "position_3"},
+		Outputs:   Addresses{"position_8", "position_9", "position_6", "position_5", "position_3", "position_1"},
+		Washes:    Addresses{"position_8"},
+		Tipwastes: Addresses{"position_1", "position_7"},
+		Wastes:    Addresses{"position_9"},
+	}
 
 	hvconfig := getHVConfig()
 	hvadaptor := wtype.NewLHAdaptor("DummyAdaptor", "Gilson", hvconfig)

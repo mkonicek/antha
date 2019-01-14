@@ -13,3 +13,19 @@ func (es ErrorSlice) Error() string {
 	}
 	return strings.Join(strs, "\n")
 }
+
+// Pack returns a new ErrorSlice containing only the non-nill errors, or nil if there are none
+// suitable for returning directly
+func (es ErrorSlice) Pack() error {
+	res := make(ErrorSlice, 0, len(es))
+	for _, err := range es {
+		if err != nil {
+			res = append(res, err)
+		}
+	}
+	if len(res) > 0 {
+		return res
+	} else {
+		return nil
+	}
+}

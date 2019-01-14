@@ -25,6 +25,7 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
+	"github.com/pkg/errors"
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -48,9 +49,8 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 	plate_lookup := make(map[string]string, 5)
 	//tip_lookup := make([]*wtype.LHTipbox, 0, 5)
 
-	//	tip_preferences := params.Tip_preferences
-	input_preferences := params.Input_preferences
-	output_preferences := params.Output_preferences
+	input_preferences := params.Preferences.Inputs
+	output_preferences := params.Preferences.Outputs
 
 	// how do we set the below?
 	// we don't know how many tips we need until we generate
@@ -204,9 +204,8 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 		setup[position] = p
 		plate_lookup[p.ID] = position
 
-		err := params.AddPlateTo(position, p)
-		if err != nil {
-			return request, err
+		if err := params.AddPlateTo(position, p); err != nil {
+			return request, errors.WithMessage(err, "while setting up output plates")
 		}
 	}
 
@@ -232,9 +231,8 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 
 		setup[position] = p
 		plate_lookup[p.ID] = position
-		err := params.AddPlateTo(position, p)
-		if err != nil {
-			return request, err
+		if err := params.AddPlateTo(position, p); err != nil {
+			return request, errors.WithMessage(err, "while setting up input plates")
 		}
 		fmt.Println(fmt.Sprintf("Input plate of type %s in position %s", p.Type, position))
 	}

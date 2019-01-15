@@ -50,7 +50,11 @@ func (test *PlanningTest) run(ctx context.Context, t *testing.T) {
 	request.OutputPlatetypes = append(request.OutputPlatetypes, test.OutputPlates...)
 
 	if test.Liquidhandler == nil {
-		test.Liquidhandler = GetLiquidHandlerForTest(ctx)
+		if lh, err := GetLiquidHandlerForTest([]string{"Gilson20", "Gilson200"}); err != nil {
+			t.Fatal(err)
+		} else {
+			test.Liquidhandler = lh
+		}
 	}
 
 	if err := test.Liquidhandler.Plan(ctx, request); !test.expected(err) {

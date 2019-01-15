@@ -33,7 +33,7 @@ func getLVConfig() *wtype.LHChannelParameter {
 	return wtype.NewLHChannelParameter("LVconfig", "GilsonPipetmax", newminvol, newmaxvol, newminspd, newmaxspd, 8, false, wtype.LHVChannel, 1)
 }
 
-func MakeLHForTest(tipList []string) *LHProperties {
+func MakeLHForTest(tipList []string) (*LHProperties, error) {
 	// gilson pipetmax
 
 	layout := make(map[string]*wtype.LHPosition)
@@ -58,7 +58,9 @@ func MakeLHForTest(tipList []string) *LHProperties {
 	}
 	lhp := NewLHProperties("Pipetmax", "Gilson", LLLiquidHandler, DisposableTips, layout)
 	// get tips permissible from the factory
-	SetUpTipsFor(lhp, tipList)
+	if _, err := SetUpTipsFor(lhp, tipList); err != nil {
+		return nil, err
+	}
 
 	lhp.Preferences = &LayoutOpt{
 		Tipboxes:  []string{"position_2", "position_3", "position_6", "position_9", "position_8", "position_5", "position_4", "position_7"},
@@ -88,29 +90,36 @@ func MakeLHForTest(tipList []string) *LHProperties {
 	lhp.Adaptors = append(lhp.Adaptors, hvadaptor, lvadaptor)
 	lhp.HeadAssemblies = append(lhp.HeadAssemblies, ha)
 
-	return lhp
+	return lhp, nil
 }
 
-func SetUpTipsFor(lhp *LHProperties, tipList []string) *LHProperties {
-	listed := make(map[string]bool, len(tipList))
+func SetUpTipsFor(lhp *LHProperties, tipList []string) (*LHProperties, error) {
+	allTipboxes := make([]*wtype.LHTipbox, 0, len(tipList))
+	inv := testinventory.GetInventoryForTest()
 	for _, tipName := range tipList {
-		listed[tipName] = true
+		if tb, err := inv.NewTipbox(tipName); err != nil {
+			return nil, err
+		} else {
+			allTipboxes = append(allTipboxes, tb)
+		}
 	}
 
-	allTipboxes := testinventory.GetTipboxesByType()
 	tipboxes := make([]*wtype.LHTipbox, 0, len(allTipboxes))
 	for _, tb := range allTipboxes {
-		if (tb.Mnfr == lhp.Mnfr || lhp.Mnfr == "MotherNature") && listed[tb.Tiptype.Type] {
+		if tb.Mnfr == lhp.Mnfr || lhp.Mnfr == "MotherNature" {
 			tipboxes = append(tipboxes, tb)
 		}
 	}
 
 	lhp.TipFactory = NewTipFactory(tipboxes, []*wtype.LHTipwaste{testinventory.MakeTestTipWaste()})
-	return lhp
+	return lhp, nil
 }
 
 func MakeLHWithTipboxesForTest() (*LHProperties, error) {
-	params := MakeLHForTest([]string{"Gilson20", "Gilson200"})
+	params, err := MakeLHForTest([]string{"Gilson20", "Gilson200"})
+	if err != nil {
+		return nil, err
+	}
 
 	if tw, err := params.TipFactory.NewTipwaste("Gilsontipwaste"); err != nil {
 		return nil, err

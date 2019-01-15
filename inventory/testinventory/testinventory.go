@@ -10,21 +10,25 @@ import (
 	"sync"
 )
 
-type testInventory struct {
+type TestInventory struct {
 	componentByName map[string]*wtype.Liquid
 	plateByType     map[string]*wtype.Plate
+	tipboxByType    map[string]*wtype.LHTipbox
+	tipwasteByType  map[string]*wtype.LHTipwaste
 	lock            *sync.Mutex
 }
 
-func newTestInventory() *testInventory {
-	return &testInventory{
-		componentByName: GetComponentsByType(),
-		plateByType:     GetPlatesByType(),
+func newTestInventory() *TestInventory {
+	return &TestInventory{
+		componentByName: getComponentsByType(),
+		plateByType:     getPlatesByType(),
+		tipboxByType:    getTipboxesByType(),
+		tipwasteByType:  getTipwastesByType(),
 		lock:            &sync.Mutex{},
 	}
 }
 
-func (i *testInventory) NewComponent(name string) (*wtype.Liquid, error) {
+func (i *TestInventory) NewComponent(name string) (*wtype.Liquid, error) {
 	i.lock.Lock()
 	defer i.lock.Unlock()
 
@@ -36,12 +40,56 @@ func (i *testInventory) NewComponent(name string) (*wtype.Liquid, error) {
 	return c.Cp(), nil
 }
 
-func (i *testInventory) NewPlate(typ string) (*wtype.Plate, error) {
+func (i *TestInventory) Components() []*wtype.Liquid {
+	i.lock.Lock()
+	defer i.lock.Unlock()
+
+	ret := make([]*wtype.Liquid, 0, len(i.componentByName))
+	for _, c := range i.componentByName {
+		ret = append(ret, c.Cp())
+	}
+	return ret
+}
+
+func (i *TestInventory) NewPlate(typ string) (*wtype.Plate, error) {
 	i.lock.Lock()
 	defer i.lock.Unlock()
 
 	if p, ok := i.plateByType[typ]; !ok {
 		return nil, fmt.Errorf("%s: invalid plate: %s", inventory.ErrUnknownType, typ)
+	} else {
+		return p.Dup(), nil
+	}
+}
+
+func (i *TestInventory) Plates() []*wtype.Plate {
+	i.lock.Lock()
+	defer i.lock.Unlock()
+
+	ret := make([]*wtype.Plate, 0, len(i.plateByType))
+	for _, plate := range i.plateByType {
+		ret = append(ret, plate.Dup())
+	}
+	return ret
+}
+
+func (i *TestInventory) NewTipbox(typ string) (*wtype.LHTipbox, error) {
+	i.lock.Lock()
+	defer i.lock.Unlock()
+
+	if p, ok := i.tipboxByType[typ]; !ok {
+		return nil, fmt.Errorf("%s: invalid tipbox: %s", inventory.ErrUnknownType, typ)
+	} else {
+		return p.Dup(), nil
+	}
+}
+
+func (i *TestInventory) NewTipwaste(typ string) (*wtype.LHTipwaste, error) {
+	i.lock.Lock()
+	defer i.lock.Unlock()
+
+	if p, ok := i.tipwasteByType[typ]; !ok {
+		return nil, fmt.Errorf("%s: invalid tipwaste: %s", inventory.ErrUnknownType, typ)
 	} else {
 		return p.Dup(), nil
 	}
@@ -53,9 +101,9 @@ func NewContext(ctx context.Context) context.Context {
 }
 
 // invForTest a single inventory to be shared for testing, threadsafe and read only
-var invForTest *testInventory
+var invForTest *TestInventory
 
-func GetInventoryForTest() inventory.Inventory {
+func GetInventoryForTest() *TestInventory {
 	if invForTest == nil {
 		invForTest = newTestInventory()
 	}
@@ -66,8 +114,8 @@ func NewContextForTest(ctx context.Context) context.Context {
 	return inventory.NewContext(ctx, GetInventoryForTest())
 }
 
-// GetTipboxesByType returns the test tipboxes
-func GetTipboxesByType() map[string]*wtype.LHTipbox {
+// getTipboxesByType returns the test tipboxes
+func getTipboxesByType() map[string]*wtype.LHTipbox {
 	tbs := makeTipboxes()
 	ret := make(map[string]*wtype.LHTipbox, len(tbs))
 	for _, tb := range tbs {
@@ -82,7 +130,7 @@ func GetTipboxesByType() map[string]*wtype.LHTipbox {
 	return ret
 }
 
-func GetPlatesByType() map[string]*wtype.Plate {
+func getPlatesByType() map[string]*wtype.Plate {
 	if serialPlateArr, err := getPlatesFromSerial(); err != nil {
 		panic(err)
 	} else {
@@ -98,8 +146,8 @@ func GetPlatesByType() map[string]*wtype.Plate {
 	}
 }
 
-// GetComponentsByType returns the test components
-func GetComponentsByType() map[string]*wtype.Liquid {
+// getComponentsByType returns the test components
+func getComponentsByType() map[string]*wtype.Liquid {
 	components := makeComponents()
 	ret := make(map[string]*wtype.Liquid, len(components))
 	for _, c := range components {
@@ -111,8 +159,8 @@ func GetComponentsByType() map[string]*wtype.Liquid {
 	return ret
 }
 
-// GetTipwastesByType returns the test tipwastes
-func GetTipwastesByType() map[string]*wtype.LHTipwaste {
+// getTipwastesByType returns the test tipwastes
+func getTipwastesByType() map[string]*wtype.LHTipwaste {
 	tipwastes := makeTipwastes()
 	ret := make(map[string]*wtype.LHTipwaste, len(tipwastes))
 	for _, tw := range tipwastes {

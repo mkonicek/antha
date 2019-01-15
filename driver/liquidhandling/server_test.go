@@ -316,7 +316,10 @@ func (gc *LLGetCapabilities) GetCapabilities() (liquidhandling.LHProperties, dri
 }
 
 func TestGetCapabilities(t *testing.T) {
-	expected := liquidhandling.MakeLHWithPlatesAndTipboxesForTest("")
+	expected, err := liquidhandling.MakeLHWithPlatesAndTipboxesForTest("")
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	go func() {
 		if srv, err := server.NewLowLevelServer(&LLGetCapabilities{Props: expected}); err != nil {

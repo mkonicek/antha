@@ -45,14 +45,16 @@ func GetComponentForTest(ctx context.Context, name string, vol wunit.Volume) *wt
 }
 
 func GetItHere(ctx context.Context) (*Liquidhandler, *LHRequest, error) {
-	lh := GetLiquidHandlerForTest(ctx)
+	lh, err := GetLiquidHandlerForTest(nil)
+	if err != nil {
+		return nil, nil, err
+	}
 	rq := GetLHRequestForTest()
 	configure_request_quitebig(ctx, rq)
 	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
 	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
 
-	err := lh.Plan(ctx, rq)
-	if err != nil {
+	if err := lh.Plan(ctx, rq); err != nil {
 		return nil, nil, err
 	}
 	return lh, rq, nil

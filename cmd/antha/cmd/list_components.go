@@ -71,7 +71,7 @@ func listComponents(cmd *cobra.Command, args []string) error {
 	}
 
 	var cs simpleComponents
-	for _, c := range testinventory.GetComponentsByType() {
+	for _, c := range testinventory.GetInventoryForTest().Components() {
 		cs = append(cs, simpleComponent{
 			Name:       c.CName,
 			LiquidType: c.TypeName(),

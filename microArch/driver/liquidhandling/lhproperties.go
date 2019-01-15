@@ -732,7 +732,7 @@ func (lhp *LHProperties) getCleanTipSubset(tipParams TipSubset, usetiptracking b
 
 	if !foundit {
 		// try adding a new tip box
-		bx, err := lhp.TipFactory.NewTipbox(tipParams.TipType)
+		bx, err := lhp.TipFactory.NewTipboxByTipType(tipParams.TipType)
 
 		if err != nil {
 			return nil, nil, nil, wtype.LHError(wtype.LH_ERR_NO_TIPS, fmt.Sprintf("No tipbox of type %s found: %s", tipParams.TipType, err))

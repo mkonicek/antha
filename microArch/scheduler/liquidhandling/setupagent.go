@@ -156,7 +156,7 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 	}
 
 	if len(request.TipTypes) != 0 {
-		params.TipFactory.ConstrainTipboxTypes(request.TipTypes)
+		params.TipFactory.ConstrainTipTypes(request.TipTypes)
 	}
 
 	setup := make(map[string]interface{})

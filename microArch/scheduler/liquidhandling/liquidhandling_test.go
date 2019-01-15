@@ -35,14 +35,13 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil/text"
-	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/testinventory"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/sampletracker"
 )
 
 func GetContextForTest() context.Context {
-	return sampletracker.NewContext(testinventory.NewContext(context.Background()))
+	return sampletracker.NewContext(testinventory.NewContextForTest(context.Background()))
 }
 
 func GetPlateForTest() *wtype.Plate {
@@ -145,19 +144,11 @@ func configureTransferRequestForZTest(policyName string, transferVol wunit.Volum
 	ctx := GetContextForTest()
 
 	// make liquid handler
-	lh := GetLiquidHandlerForTest(ctx)
-
-	// make some tipboxes
-	var tipBoxes []*wtype.LHTipbox
-	tpHigh, err := inventory.NewTipbox(ctx, "Gilson200")
+	tipTypes := []string{"Gilson200", "Gilson20"}
+	lh, err := GetLiquidHandlerForTest(tipTypes)
 	if err != nil {
-		return rq, err
+		return nil, err
 	}
-	tpLow, err := inventory.NewTipbox(ctx, "Gilson20")
-	if err != nil {
-		return rq, err
-	}
-	tipBoxes = append(tipBoxes, tpHigh, tpLow)
 
 	//initialise request
 	rq = GetLHRequestForTest()
@@ -193,7 +184,7 @@ func configureTransferRequestForZTest(policyName string, transferVol wunit.Volum
 	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
 	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
 
-	rq.Tips = tipBoxes
+	rq.TipTypes = tipTypes
 
 	if err := lh.Plan(ctx, rq); err != nil {
 		return rq, fmt.Errorf("Got an error planning with no inputs: %s", err.Error())
@@ -222,19 +213,11 @@ func configureTransferRequestMutliSamplesTest(policyName string, samples ...*wty
 	ctx := GetContextForTest()
 
 	// make liquid handler
-	lh := GetLiquidHandlerForTest(ctx)
-
-	// make some tipboxes
-	var tipBoxes []*wtype.LHTipbox
-	tpHigh, err := inventory.NewTipbox(ctx, "Gilson200")
+	tipTypes := []string{"Gilson200", "Gilson20"}
+	lh, err := GetLiquidHandlerForTest(tipTypes)
 	if err != nil {
-		return rq, err
+		return nil, err
 	}
-	tpLow, err := inventory.NewTipbox(ctx, "Gilson20")
-	if err != nil {
-		return rq, err
-	}
-	tipBoxes = append(tipBoxes, tpHigh, tpLow)
 
 	//initialise request
 	rq = GetLHRequestForTest()
@@ -243,7 +226,7 @@ func configureTransferRequestMutliSamplesTest(policyName string, samples ...*wty
 	inPlate := GetPlateForTest()
 	rq.InputPlatetypes = append(rq.InputPlatetypes, inPlate)
 	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
-	rq.Tips = tipBoxes
+	rq.TipTypes = tipTypes
 
 	it := wtype.NewAddressIterator(inPlate, wtype.RowWise, wtype.TopToBottom, wtype.LeftToRight, false)
 
@@ -458,19 +441,11 @@ func makeMultiTestRequest() (multiRq *LHRequest, err error) {
 	ctx := GetContextForTest()
 
 	// make liquid handler
-	lh := GetLiquidHandlerForTest(ctx)
-
-	// make some tipboxes
-	var tipBoxes []*wtype.LHTipbox
-	tpHigh, err := inventory.NewTipbox(ctx, "Gilson200")
+	tipTypes := []string{"Gilson200", "Gilson20"}
+	lh, err := GetLiquidHandlerForTest(tipTypes)
 	if err != nil {
-		return
+		return nil, err
 	}
-	tpLow, err := inventory.NewTipbox(ctx, "Gilson20")
-	if err != nil {
-		return
-	}
-	tipBoxes = append(tipBoxes, tpHigh, tpLow)
 
 	// set up multi
 
@@ -483,7 +458,7 @@ func makeMultiTestRequest() (multiRq *LHRequest, err error) {
 	multiRq.InputPlatetypes = append(multiRq.InputPlatetypes, GetPlateForTest())
 	multiRq.OutputPlatetypes = append(multiRq.OutputPlatetypes, GetPlateForTest())
 
-	multiRq.Tips = tipBoxes
+	multiRq.TipTypes = tipTypes
 
 	if err := lh.Plan(ctx, multiRq); err != nil {
 		return multiRq, fmt.Errorf("Got an error planning with no inputs: %s", err)
@@ -496,19 +471,11 @@ func makeSingleTestRequest() (singleRq *LHRequest, err error) {
 	ctx := GetContextForTest()
 
 	// make liquid handler
-	lh := GetLiquidHandlerForTest(ctx)
-
-	// make some tipboxes
-	var tipBoxes []*wtype.LHTipbox
-	tpHigh, err := inventory.NewTipbox(ctx, "Gilson200")
+	tipTypes := []string{"Gilson200", "Gilson20"}
+	lh, err := GetLiquidHandlerForTest(tipTypes)
 	if err != nil {
-		return
+		return nil, err
 	}
-	tpLow, err := inventory.NewTipbox(ctx, "Gilson20")
-	if err != nil {
-		return
-	}
-	tipBoxes = append(tipBoxes, tpHigh, tpLow)
 
 	// set up single channel
 
@@ -521,7 +488,7 @@ func makeSingleTestRequest() (singleRq *LHRequest, err error) {
 	singleRq.InputPlatetypes = append(singleRq.InputPlatetypes, GetPlateForTest())
 	singleRq.OutputPlatetypes = append(singleRq.OutputPlatetypes, GetPlateForTest())
 
-	singleRq.Tips = tipBoxes
+	singleRq.TipTypes = tipTypes
 
 	if err := lh.Plan(ctx, singleRq); err != nil {
 		return singleRq, fmt.Errorf("Got an error planning with no inputs: %s", err)
@@ -629,20 +596,18 @@ func TestMultiZOffset(t *testing.T) {
 func TestTipOverridePositive(t *testing.T) {
 	ctx := GetContextForTest()
 
-	lh := GetLiquidHandlerForTest(ctx)
+	// liquidhandler supports both tips
+	lh, err := GetLiquidHandlerForTest([]string{"Gilson20", "Gilson200"})
+	if err != nil {
+		t.Fatal(err)
+	}
 	rq := GetLHRequestForTest()
 	configure_request_simple(ctx, rq)
 	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
 	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
 
-	var tpz []*wtype.LHTipbox
-	tp, err := inventory.NewTipbox(ctx, "Gilson20")
-	if err != nil {
-		t.Fatal(err)
-	}
-	tpz = append(tpz, tp)
-
-	rq.Tips = tpz
+	// user requests only smaller tips
+	rq.TipTypes = []string{"Gilson20"}
 
 	if err := lh.Plan(ctx, rq); err != nil {
 		t.Fatalf("Got an error planning with no inputs: %s", err)
@@ -652,39 +617,38 @@ func TestTipOverridePositive(t *testing.T) {
 func TestTipOverrideNegative(t *testing.T) {
 	ctx := GetContextForTest()
 
-	lh := GetLiquidHandlerForTest(ctx)
+	tipTypes := []string{"Gilson200", "Gilson20"} // liquidhandler supports both tips
+	lh, err := GetLiquidHandlerForTest(tipTypes)
+	if err != nil {
+		t.Fatal(err)
+	}
 	rq := GetLHRequestForTest()
 	configure_request_simple(ctx, rq)
 	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
 	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
-	var tpz []*wtype.LHTipbox
-	tp, err := inventory.NewTipbox(ctx, "Gilson200")
-	if err != nil {
-		t.Fatal(err)
-	}
-	tpz = append(tpz, tp)
 
-	rq.Tips = tpz
+	rq.TipTypes = []string{"Gilson200"} // user requests only the higher volume tips
 
 	err = lh.Plan(ctx, rq)
 
-	if e, f := "7 (LH_ERR_VOL) : volume error : No tip chosen: Volume 8 ul is too low to be accurately moved by the liquid handler (configured minimum 10 ul). Low volume tips may not be available and / or the robot may need to be configured differently", err.Error(); e != f {
-		t.Fatalf("expecting error %q found %q", e, f)
+	if e, f := "7 (LH_ERR_VOL) : volume error : No tip chosen: Volume 8 ul is too low to be accurately moved by the liquid handler (configured minimum 20 ul). Low volume tips may not be available and / or the robot may need to be configured differently", err.Error(); e != f {
+		t.Fatalf("Errors mismatched:\n e: %q\n g: %q", e, f)
 	}
 }
 
 func TestPlateReuse(t *testing.T) {
 	ctx := GetContextForTest()
 
-	lh := GetLiquidHandlerForTest(ctx)
+	lh, err := GetLiquidHandlerForTest([]string{"Gilson200", "Gilson20"})
+	if err != nil {
+		t.Fatal(err)
+	}
 	rq := GetLHRequestForTest()
 	configure_request_simple(ctx, rq)
 	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
 	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
 
-	err := lh.Plan(ctx, rq)
-
-	if err != nil {
+	if err := lh.Plan(ctx, rq); err != nil {
 		t.Fatal(fmt.Sprint("Got an error planning with no inputs: ", err))
 	}
 
@@ -713,10 +677,11 @@ func TestPlateReuse(t *testing.T) {
 	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
 	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
 
-	lh = GetLiquidHandlerForTest(ctx)
-	err = lh.Plan(ctx, rq)
-
+	lh, err = GetLiquidHandlerForTest([]string{"Gilson20", "Gilson200"})
 	if err != nil {
+		t.Fatal(err)
+	}
+	if err := lh.Plan(ctx, rq); err != nil {
 		t.Fatal(fmt.Sprint("Got error resimulating: ", err))
 	}
 
@@ -757,7 +722,10 @@ func TestPlateReuse(t *testing.T) {
 	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
 	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
 
-	lh = GetLiquidHandlerForTest(ctx)
+	lh, err = GetLiquidHandlerForTest([]string{"Gilson20", "Gilson200"})
+	if err != nil {
+		t.Fatal(err)
+	}
 	err = lh.Plan(ctx, rq)
 
 	if err != nil {
@@ -772,6 +740,17 @@ func TestPlateReuse(t *testing.T) {
 
 func TestExecutionPlanning(t *testing.T) {
 	ctx := GetContextForTest()
+
+	getILH := func(tipTypes []string) *Liquidhandler {
+		ilh, err := GetIndependentLiquidHandlerForTest(tipTypes)
+		if err != nil {
+			t.Fatal(err)
+			return nil
+		} else {
+			return ilh
+		}
+	}
+
 	PlanningTests{
 		{
 			Name: "simple planning",
@@ -1059,7 +1038,7 @@ func TestExecutionPlanning(t *testing.T) {
 		},
 		{
 			Name:          "multi channel independent",
-			Liquidhandler: GetIndependentLiquidHandlerForTest(ctx),
+			Liquidhandler: getILH([]string{"Gilson20", "Gilson200"}),
 			Instructions: Mixes("pcrplate_skirted_riser", TestMixComponents{
 				{
 					LiquidName:    "water",
@@ -1197,14 +1176,16 @@ func assertCoordsEq(lhs, rhs []wtype.Coordinates) bool {
 
 func TestAddWellTargets(t *testing.T) {
 
-	ctx := GetContextForTest()
-	lh := GetLiquidHandlerForTest(ctx)
+	lh, err := GetLiquidHandlerForTest(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	plate := GetPlateForTest()
 	lh.Properties.AddPlateTo("position_4", plate)
 
 	tipwaste := GetTipwasteForTest()
-	lh.Properties.AddTipWasteTo("position_1", tipwaste)
+	lh.Properties.AddTipwasteTo("position_1", tipwaste)
 
 	trough := GetTroughForTest()
 	lh.Properties.AddPlateTo("position_5", trough)
@@ -1237,9 +1218,7 @@ func TestAddWellTargets(t *testing.T) {
 }
 
 func TestShouldSetWellTargets(t *testing.T) {
-	ctx := GetContextForTest()
-
-	for _, plate := range testinventory.GetPlates(ctx) {
+	for _, plate := range testinventory.GetInventoryForTest().Plates() {
 		e := !plate.IsSpecial()
 		//IsSpecial is irrelevant for plates with 8 rows or more
 		if plate.NRows() >= 8 {

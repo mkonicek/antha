@@ -8,7 +8,6 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/testinventory"
 	"github.com/antha-lang/antha/meta"
 )
@@ -25,7 +24,7 @@ func unmarshal(ctx context.Context, obj interface{}, data []byte) error {
 }
 
 func TestString(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := testinventory.NewContextForTest(context.Background())
 
 	type Value string
 	var x Value
@@ -39,7 +38,7 @@ func TestString(t *testing.T) {
 }
 
 func TestInt(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := testinventory.NewContextForTest(context.Background())
 
 	type Value int
 	var x Value
@@ -52,7 +51,7 @@ func TestInt(t *testing.T) {
 }
 
 func TestStruct(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := testinventory.NewContextForTest(context.Background())
 
 	type Value struct {
 		A string
@@ -69,7 +68,7 @@ func TestStruct(t *testing.T) {
 }
 
 func TestMap(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := testinventory.NewContextForTest(context.Background())
 
 	type Elem struct {
 		A string
@@ -89,7 +88,7 @@ func TestMap(t *testing.T) {
 }
 
 func TestSlice(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := testinventory.NewContextForTest(context.Background())
 
 	type Elem struct {
 		A string
@@ -109,20 +108,20 @@ func TestSlice(t *testing.T) {
 }
 
 func TestConstruct(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := testinventory.NewContextForTest(context.Background())
 
-	var x wtype.LHTipbox
-	if err := unmarshal(ctx, &x, []byte(`"CyBio250Tipbox"`)); err != nil {
+	var x wtype.LHPlate
+	if err := unmarshal(ctx, &x, []byte(`"pcrplate_semi_skirted"`)); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestConstructMapFailure(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := testinventory.NewContextForTest(context.Background())
 
 	type Elem struct {
 		A string
-		T *wtype.LHTipbox
+		T *wtype.LHPlate
 	}
 	type Value map[string]Elem
 	var x Value
@@ -132,32 +131,32 @@ func TestConstructMapFailure(t *testing.T) {
 }
 
 func TestConstructMap(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := testinventory.NewContextForTest(context.Background())
 
 	type Value map[string]interface{}
 	x := Value{
-		"A": &wtype.LHTipbox{},
+		"A": &wtype.LHPlate{},
 		"B": 0,
 		"C": "",
 	}
-	tb, ok := testinventory.GetTipboxesByType()["CyBio250Tipbox"]
-	if !ok {
-		t.Fatal("couldn't find tipbox")
+	tb, err := testinventory.GetInventoryForTest().NewPlate("pcrplate_semi_skirted")
+	if err != nil {
+		t.Fatal(err)
 	}
 	golden := Value{
 		"A": tb,
 		"B": 1,
 		"C": "hello",
 	}
-	if err := unmarshal(ctx, &x, []byte(`{"A": "CyBio250Tipbox", "B": 1, "C": "hello" }`)); err != nil {
+	if err := unmarshal(ctx, &x, []byte(`{"A": "pcrplate_semi_skirted", "B": 1, "C": "hello" }`)); err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(x["B"], golden["B"]) {
 		t.Errorf("expecting %v but got %v instead", golden, x)
 	} else if !reflect.DeepEqual(x["C"], golden["C"]) {
 		t.Errorf("expecting %v but got %v instead", golden, x)
-	} else if aa, ok := golden["A"].(*wtype.LHTipbox); !ok {
+	} else if aa, ok := golden["A"].(*wtype.Plate); !ok {
 		t.Errorf("expecting %v but got %v instead", golden, x)
-	} else if bb, ok := x["A"].(*wtype.LHTipbox); !ok {
+	} else if bb, ok := x["A"].(*wtype.Plate); !ok {
 		t.Errorf("expecting %v but got %v instead", golden, x)
 	} else if aa.Type != bb.Type {
 		t.Errorf("expecting %v but got %v instead", golden, x)
@@ -165,18 +164,18 @@ func TestConstructMap(t *testing.T) {
 }
 
 func TestConstructSlice(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := testinventory.NewContextForTest(context.Background())
 
 	type Value []interface{}
 	x := Value{
-		&wtype.LHTipbox{},
+		&wtype.Plate{},
 		&wtype.Plate{},
 	}
-	tb1, ok := testinventory.GetTipboxesByType()["CyBio250Tipbox"]
-	if !ok {
-		t.Fatal("couldn't find tipbox")
+	tb1, err := testinventory.GetInventoryForTest().NewPlate("pcrplate_semi_skirted")
+	if err != nil {
+		t.Fatal(err)
 	}
-	tb2, err := inventory.NewPlate(ctx, "pcrplate_with_cooler")
+	tb2, err := testinventory.GetInventoryForTest().NewPlate("pcrplate_with_cooler")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -184,13 +183,13 @@ func TestConstructSlice(t *testing.T) {
 		tb1,
 		tb2,
 	}
-	if err := unmarshal(ctx, &x, []byte(`[ "CyBio250Tipbox", "pcrplate_with_cooler" ]`)); err != nil {
+	if err := unmarshal(ctx, &x, []byte(`[ "pcrplate_semi_skirted", "pcrplate_with_cooler" ]`)); err != nil {
 		t.Fatal(err)
 	} else if len(x) != 2 {
 		t.Errorf("expecting %v but got %v instead", golden, x)
-	} else if aa, ok := golden[0].(*wtype.LHTipbox); !ok {
+	} else if aa, ok := golden[0].(*wtype.Plate); !ok {
 		t.Errorf("expecting %v but got %v instead", golden, x)
-	} else if bb, ok := x[0].(*wtype.LHTipbox); !ok {
+	} else if bb, ok := x[0].(*wtype.Plate); !ok {
 		t.Errorf("expecting %v but got %v instead", golden, x)
 	} else if aa.Type != bb.Type {
 		t.Errorf("expecting %v but got %v instead", golden, x)
@@ -204,7 +203,7 @@ func TestConstructSlice(t *testing.T) {
 }
 
 func TestTime(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := testinventory.NewContextForTest(context.Background())
 
 	type Value map[string]interface{}
 	x := Value{
@@ -223,7 +222,7 @@ func TestTime(t *testing.T) {
 }
 
 func TestConstructFile(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := testinventory.NewContextForTest(context.Background())
 	var x wtype.File
 
 	if err := unmarshal(ctx, &x, []byte(`{"name":"mytest","bytes":{"bytes":"aGVsbG8="}}`)); err != nil {

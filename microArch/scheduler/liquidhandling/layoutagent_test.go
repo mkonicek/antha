@@ -5,6 +5,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/inventory"
+	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"testing"
 )
 
@@ -23,7 +24,10 @@ func (self layoutAgentTest) Run(ctx context.Context, t *testing.T) {
 		self.Request.InstructionChain = ichain
 		self.Request.OutputOrder = ichain.FlattenInstructionIDs()
 	}
-	params := makeGilson(ctx)
+	params, err := liquidhandling.MakeLHForTest(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	if self.TestPlateID {
 		for _, ins := range self.Request.LHInstructions {

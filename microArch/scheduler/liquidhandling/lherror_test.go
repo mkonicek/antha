@@ -3,26 +3,33 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
-	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/testinventory"
+	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"testing"
 )
 
-func GetLiquidHandlerForTest(ctx context.Context) *Liquidhandler {
-	return Init(makeGilson(ctx))
+func GetLiquidHandlerForTest(tips []string) (*Liquidhandler, error) {
+	if lh, err := liquidhandling.MakeLHForTest(tips); err != nil {
+		return nil, err
+	} else {
+		return Init(lh), nil
+	}
 }
 
-func GetIndependentLiquidHandlerForTest(ctx context.Context) *Liquidhandler {
-	gilson := makeGilson(ctx)
-	for _, head := range gilson.Heads {
-		head.Params.Independent = true
-	}
+func GetIndependentLiquidHandlerForTest(tips []string) (*Liquidhandler, error) {
+	if gilson, err := liquidhandling.MakeLHForTest(tips); err != nil {
+		return nil, err
+	} else {
+		for _, head := range gilson.Heads {
+			head.Params.Independent = true
+		}
 
-	for _, adaptor := range gilson.Adaptors {
-		adaptor.Params.Independent = true
-	}
+		for _, adaptor := range gilson.Adaptors {
+			adaptor.Params.Independent = true
+		}
 
-	return Init(gilson)
+		return Init(gilson), nil
+	}
 }
 
 func GetLHRequestForTest() *LHRequest {
@@ -31,33 +38,32 @@ func GetLHRequestForTest() *LHRequest {
 }
 
 func TestNoInstructions(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := testinventory.NewContextForTest(context.Background())
 	req := GetLHRequestForTest()
-	lh := GetLiquidHandlerForTest(ctx)
-	err := lh.MakeSolutions(ctx, req)
-
-	if err.Error() != "9 (LH_ERR_OTHER) :  : Nil plan requested: no Mix Instructions present" {
+	if lh, err := GetLiquidHandlerForTest(nil); err != nil {
+		t.Fatal(err)
+	} else if err := lh.MakeSolutions(ctx, req); err.Error() != "9 (LH_ERR_OTHER) :  : Nil plan requested: no Mix Instructions present" {
 		t.Fatal(fmt.Sprint("Unexpected error: ", err.Error()))
 	}
 }
 
 func TestDeckSpace1(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	tipboxType := "Gilson200"
 
-	lh := GetLiquidHandlerForTest(ctx)
+	lh, err := GetLiquidHandlerForTest([]string{tipboxType})
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	for i := 0; i < len(lh.Properties.Preferences.Tipboxes); i++ {
-		tb, err := inventory.NewTipbox(ctx, lh.Properties.Tips[0].Type)
-		if err != nil {
+		if tb, err := lh.Properties.TipFactory.NewTipboxByTipType(tipboxType); err != nil {
 			t.Fatal(err)
-		}
-
-		if err := lh.Properties.AddTipBox(tb); err != nil {
+		} else if err := lh.Properties.AddTipBox(tb); err != nil {
 			t.Fatalf("Should be able to fill deck with tipboxes, only managed %d", i+1)
 		}
 	}
 
-	tb, err := inventory.NewTipbox(ctx, lh.Properties.Tips[0].Type)
+	tb, err := lh.Properties.TipFactory.NewTipboxByTipType(tipboxType)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,11 +74,14 @@ func TestDeckSpace1(t *testing.T) {
 }
 
 func TestDeckSpace2(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
-	lh := GetLiquidHandlerForTest(ctx)
+	inv := testinventory.GetInventoryForTest()
+	lh, err := GetLiquidHandlerForTest(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	for i := 0; i < len(lh.Properties.Preferences.Inputs); i++ {
-		plate, err := inventory.NewPlate(ctx, "pcrplate_skirted")
+		plate, err := inv.NewPlate("pcrplate_skirted")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -82,7 +91,7 @@ func TestDeckSpace2(t *testing.T) {
 		}
 	}
 
-	plate, err := inventory.NewPlate(ctx, "pcrplate_skirted")
+	plate, err := inv.NewPlate("pcrplate_skirted")
 	if err != nil {
 		t.Fatal(err)
 	}

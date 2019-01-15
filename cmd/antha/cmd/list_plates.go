@@ -76,7 +76,7 @@ func listPlates(cmd *cobra.Command, args []string) error {
 	}
 
 	var ps simplePlates
-	for _, p := range testinventory.GetPlatesByType() {
+	for _, p := range testinventory.GetInventoryForTest().Plates() {
 		ps = append(ps, simplePlate{
 			Type:          p.Type,
 			WellsX:        p.WellsX(),

@@ -89,7 +89,10 @@ func defaultTipList() []string {
 
 func TestDefaultChooser(t *testing.T) {
 	vols := getVols()
-	lhp := MakeLHForTest(defaultTipList())
+	lhp, err := MakeLHForTest(defaultTipList())
+	if err != nil {
+		t.Fatal(err)
+	}
 	minvols := getMinvols1()
 	maxvols := getMaxvols1()
 	types := getTypes1()
@@ -122,7 +125,10 @@ func TestDefaultChooser(t *testing.T) {
 }
 func TestHVHVHVLVChooser(t *testing.T) {
 	vols := getVols2()
-	lhp := MakeLHForTest([]string{"LVGilson200"})
+	lhp, err := MakeLHForTest([]string{"LVGilson200"})
+	if err != nil {
+		t.Fatal(err)
+	}
 	minvols := getMinvols2()
 	maxvols := getMaxvols2()
 	types := getTypes2()
@@ -155,7 +161,10 @@ func TestHVHVHVLVChooser(t *testing.T) {
 }
 
 func TestSmallVolumeError(t *testing.T) {
-	lhp := MakeLHForTest(defaultTipList())
+	lhp, err := MakeLHForTest(defaultTipList())
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	vol := wunit.NewVolume(0.47, "ul")
 

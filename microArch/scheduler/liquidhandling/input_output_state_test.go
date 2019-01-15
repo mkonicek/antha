@@ -38,8 +38,11 @@ func getComponents(ctx context.Context, t *testing.T) (cmp1, cmp2 *wtype.Liquid)
 /*
 func TestBeforeVsAfterUserPlateMixInPlace(t *testing.T) {
 	ctx := GetContextForTest()
-	rq := makeRequest()
-	lh := makeLiquidhandler(ctx)
+	rq := GetLHRequestForTest()
+	lh, err := GetLiquidHandlerForTest([]string{"Gilson20","Gilson200"})
+if err != nil {
+t.Fatal(err)
+}
 
 	cmp1, cmp2 := getComponents(ctx, t)
 
@@ -97,8 +100,11 @@ func TestBeforeVsAfterUserPlateMixInPlace(t *testing.T) {
 
 func TestBeforeVsAfterUserPlateDest(t *testing.T) {
 	ctx := GetContextForTest()
-	rq := makeRequest()
-	lh := makeLiquidhandler(ctx)
+	rq := GetLHRequestForTest()
+	lh, err := GetLiquidHandlerForTest([]string{"Gilson20", "Gilson200"})
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	cmp1, cmp2 := getComponents(ctx, t)
 
@@ -144,7 +150,9 @@ func TestBeforeVsAfterUserPlateDest(t *testing.T) {
 
 	rq.InputPlatetypes = append(rq.InputPlatetypes, pl)
 
-	lh.Plan(ctx, rq)
+	if err := lh.Plan(ctx, rq); err != nil {
+		t.Fatal(err)
+	}
 
 	expected := make(map[string][]initFinalCmp)
 
@@ -158,8 +166,11 @@ func TestBeforeVsAfterUserPlateDest(t *testing.T) {
 }
 func TestBeforeVsAfterUserPlateAutoDest(t *testing.T) {
 	ctx := GetContextForTest()
-	rq := makeRequest()
-	lh := makeLiquidhandler(ctx)
+	rq := GetLHRequestForTest()
+	lh, err := GetLiquidHandlerForTest([]string{"Gilson20", "Gilson200"})
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	cmp1, cmp2 := getComponents(ctx, t)
 
@@ -202,7 +213,9 @@ func TestBeforeVsAfterUserPlateAutoDest(t *testing.T) {
 
 	rq.AddUserPlate(pl2)
 
-	lh.Plan(ctx, rq)
+	if err := lh.Plan(ctx, rq); err != nil {
+		t.Fatal(err)
+	}
 
 	expected := make(map[string][]initFinalCmp)
 
@@ -217,8 +230,11 @@ func TestBeforeVsAfterUserPlateAutoDest(t *testing.T) {
 
 func TestBeforeVsAfterUserPlate(t *testing.T) {
 	ctx := GetContextForTest()
-	rq := makeRequest()
-	lh := makeLiquidhandler(ctx)
+	rq := GetLHRequestForTest()
+	lh, err := GetLiquidHandlerForTest([]string{"Gilson20", "Gilson200"})
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	cmp1, cmp2 := getComponents(ctx, t)
 
@@ -264,7 +280,9 @@ func TestBeforeVsAfterUserPlate(t *testing.T) {
 
 	rq.AddUserPlate(pl2)
 
-	lh.Plan(ctx, rq)
+	if err := lh.Plan(ctx, rq); err != nil {
+		t.Fatal(err)
+	}
 
 	expected := make(map[string][]initFinalCmp)
 
@@ -280,8 +298,11 @@ func TestBeforeVsAfterUserPlate(t *testing.T) {
 /*
 func TestBeforeVsAfterMixInPlace(t *testing.T) {
 	ctx := GetContextForTest()
-	rq := makeRequest()
-	lh := makeLiquidhandler(ctx)
+	rq := GetLHRequestForTest()
+	lh, err := GetLiquidHandlerForTest([]string{"Gilson20","Gilson200"})
+if err != nil {
+t.Fatal(err)
+}
 
 	cmp1, cmp2 := getComponents(ctx, t)
 
@@ -326,8 +347,11 @@ func TestBeforeVsAfterMixInPlace(t *testing.T) {
 */
 func TestBeforeVsAfterAutoAllocateDest(t *testing.T) {
 	ctx := GetContextForTest()
-	rq := makeRequest()
-	lh := makeLiquidhandler(ctx)
+	rq := GetLHRequestForTest()
+	lh, err := GetLiquidHandlerForTest([]string{"Gilson20", "Gilson200"})
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	cmp1, cmp2 := getComponents(ctx, t)
 
@@ -350,7 +374,9 @@ func TestBeforeVsAfterAutoAllocateDest(t *testing.T) {
 	rq.InputPlatetypes = append(rq.InputPlatetypes, pl)
 	rq.OutputPlatetypes = append(rq.OutputPlatetypes, pl.Dup())
 
-	lh.Plan(ctx, rq)
+	if err := lh.Plan(ctx, rq); err != nil {
+		t.Fatal(err)
+	}
 
 	expected := make(map[string][]initFinalCmp)
 
@@ -364,8 +390,11 @@ func TestBeforeVsAfterAutoAllocateDest(t *testing.T) {
 
 func TestBeforeVsAfterAutoAllocate(t *testing.T) {
 	ctx := GetContextForTest()
-	rq := makeRequest()
-	lh := makeLiquidhandler(ctx)
+	rq := GetLHRequestForTest()
+	lh, err := GetLiquidHandlerForTest([]string{"Gilson20", "Gilson200"})
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	cmp1, cmp2 := getComponents(ctx, t)
 
@@ -390,7 +419,9 @@ func TestBeforeVsAfterAutoAllocate(t *testing.T) {
 
 	rq.InputPlatetypes = append(rq.InputPlatetypes, pl)
 
-	lh.Plan(ctx, rq)
+	if err := lh.Plan(ctx, rq); err != nil {
+		t.Fatal(err)
+	}
 
 	expected := make(map[string][]initFinalCmp)
 
@@ -500,15 +531,4 @@ func compareInitFinalStates(t *testing.T, lh *Liquidhandler, expected map[string
 			}
 		}
 	}
-}
-
-func makeLiquidhandler(ctx context.Context) *Liquidhandler {
-	rbt := makeGilson(ctx)
-	lh := Init(rbt)
-	return lh
-}
-
-func makeRequest() *LHRequest {
-	rq := NewLHRequest()
-	return rq
 }

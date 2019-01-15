@@ -11,7 +11,11 @@ import (
 // TODO
 func TestInventoryLHPlateSerialize(t *testing.T) {
 	// output of serialize/deserialize
-	newPlateMap := testinventory.GetPlatesByType()
+	newPlates := testinventory.GetInventoryForTest().Plates()
+	newPlateMap := make(map[string]*wtype.Plate, len(newPlates))
+	for _, p := range newPlates {
+		newPlateMap[p.Type] = p
+	}
 
 	// make plates directly
 	oldPlates := makePlates()

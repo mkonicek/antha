@@ -2443,7 +2443,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 			override := SafeGetBool(pol, "MIX_VOLUME_OVERRIDE_TIP_MAX")
 
 			//does the tip have a filter?
-			if tb, err := prms.TipFactory.NewTipbox(ins.TipType); err != nil {
+			if tb, err := prms.TipFactory.NewTipboxByTipType(ins.TipType); err != nil {
 				return ret, wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("While getting tip %v", err))
 			} else {
 				//filter tips always override max volume

@@ -13,7 +13,10 @@ import (
 )
 
 func TestSavePlates(t *testing.T) {
-	lhp := MakeLHForTest(defaultTipList())
+	lhp, err := MakeLHForTest(defaultTipList())
+	if err != nil {
+		t.Fatal(err)
+	}
 	ctx := GetContextForTest()
 
 	p, err := inventory.NewPlate(ctx, "pcrplate_skirted")
@@ -87,7 +90,10 @@ func TestGetFirstDefined(t *testing.T) {
 }
 
 func TestLHPropertiesSane(t *testing.T) {
-	props := MakeLHForTest(defaultTipList())
+	props, err := MakeLHForTest(defaultTipList())
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	assertPropsSane(t, props)
 }

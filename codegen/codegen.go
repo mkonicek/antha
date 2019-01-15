@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"math"
 	"sort"
 	"strings"
 
@@ -353,23 +352,6 @@ func (a *ir) tryPlan(ctx context.Context) error {
 	}
 
 	return a.addImplicitInsts(runs)
-}
-
-// Find best device to move a component between two devices
-func findBestMoveDevice(t *target.Target, from, to ast.Node, fromD, toD *drun) target.Device {
-	// TODO: add movement constraints
-	var req ast.Request
-	var minD target.Device
-	minC := int64(math.MaxInt64)
-
-	for _, d := range t.CanCompile(req) {
-		c := toD.Device.MoveCost(d) + d.MoveCost(fromD.Device)
-		if c < minC {
-			minC = c
-			minD = d
-		}
-	}
-	return minD
 }
 
 // NB(ddn): Could blindly add edges from insts to head, but would like

@@ -354,33 +354,6 @@ func (a *ir) tryPlan(ctx context.Context) error {
 	return a.addImplicitInsts(runs)
 }
 
-// NB(ddn): Could blindly add edges from insts to head, but would like
-// Compile() to be able to introduce instructions that just depend on the start
-// or end (or neither) of a device run.
-//
-// From:
-//   head: h
-//   tail: t
-//   insts: [a <- ... <- b]
-// To:
-//   h <- a <-... <- b <- t
-func splice(head, tail target.Inst, insts []target.Inst) {
-	if len(insts) == 0 {
-		if head != nil && tail != nil && head != tail {
-			tail.AppendDependsOn(head)
-		}
-	} else {
-		oldH := insts[0]
-		oldT := insts[len(insts)-1]
-		if head != nil {
-			oldH.AppendDependsOn(head)
-		}
-		if tail != nil {
-			tail.AppendDependsOn(oldT)
-		}
-	}
-}
-
 // Add implied moves between devices
 func (a *ir) addMoves(ctx context.Context, t *target.Target) error {
 	a.DeviceDeps = graph.MakeQuotient(graph.MakeQuotientOpt{

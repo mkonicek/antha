@@ -12,13 +12,14 @@ import (
 type plateCache struct {
 	platesByType    map[string][]*wtype.Plate
 	platesFromCache map[string]bool
+	inv             inventory.Inventory
 }
 
-func (p *plateCache) NewComponent(ctx context.Context, name string) (*wtype.Liquid, error) {
-	return inventory.NewComponent(ctx, name)
+func (p *plateCache) NewComponent(name string) (*wtype.Liquid, error) {
+	return p.inv.NewComponent(name)
 }
 
-func (p *plateCache) NewPlate(ctx context.Context, typ string) (*wtype.Plate, error) {
+func (p *plateCache) NewPlate(typ string) (*wtype.Plate, error) {
 	plateList, ok := p.platesByType[typ]
 	if !ok {
 		plateList = make([]*wtype.Plate, 0)
@@ -31,7 +32,7 @@ func (p *plateCache) NewPlate(ctx context.Context, typ string) (*wtype.Plate, er
 		return plate, nil
 	}
 
-	plate, err := inventory.NewPlate(ctx, typ)
+	plate, err := p.inv.NewPlate(typ)
 	if err != nil {
 		return nil, err
 	}
@@ -40,8 +41,8 @@ func (p *plateCache) NewPlate(ctx context.Context, typ string) (*wtype.Plate, er
 	return plate, nil
 }
 
-func (p *plateCache) ReturnObject(ctx context.Context, obj interface{}) error {
-	if !p.IsFromCache(ctx, obj) {
+func (p *plateCache) ReturnObject(obj interface{}) error {
+	if !p.IsFromCache(obj) {
 		return fmt.Errorf("cannont return non cache object %s", wtype.NameOf(obj))
 	}
 	plate, ok := obj.(*wtype.Plate)
@@ -62,7 +63,7 @@ func (p *plateCache) ReturnObject(ctx context.Context, obj interface{}) error {
 	return nil
 }
 
-func (p *plateCache) IsFromCache(ctx context.Context, obj interface{}) bool {
+func (p *plateCache) IsFromCache(obj interface{}) bool {
 	_, ok := p.platesFromCache[wtype.IDOf(obj)]
 	return ok
 }
@@ -72,6 +73,7 @@ func NewContext(ctx context.Context) context.Context {
 	pc := &plateCache{
 		platesByType:    make(map[string][]*wtype.Plate),
 		platesFromCache: make(map[string]bool),
+		inv:             inventory.GetInventory(ctx),
 	}
 
 	return cache.NewContext(ctx, pc)

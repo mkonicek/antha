@@ -10,7 +10,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/driver/liquidhandling/client"
 	"github.com/antha-lang/antha/driver/liquidhandling/server"
-	"github.com/antha-lang/antha/inventory/testinventory"
 	"github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
@@ -317,7 +316,7 @@ func (gc *LLGetCapabilities) GetCapabilities() (liquidhandling.LHProperties, dri
 }
 
 func TestGetCapabilities(t *testing.T) {
-	expected := testinventory.MakeLHWithPlatesAndTipboxesForTest("")
+	expected := liquidhandling.MakeLHWithPlatesAndTipboxesForTest("")
 
 	go func() {
 		if srv, err := server.NewLowLevelServer(&LLGetCapabilities{Props: expected}); err != nil {

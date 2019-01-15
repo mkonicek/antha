@@ -1,15 +1,13 @@
 package liquidhandling
 
 import (
-	"context"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/inventory/testinventory"
 )
 
 func TestParallelSetGeneration(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := GetContextForTest()
 
 	// lazy way to get pre-prepared instructions
 	tb, dstp := getTransferBlock2Component(ctx) // defined in transferblock_test
@@ -26,7 +24,10 @@ func TestParallelSetGeneration(t *testing.T) {
 
 	tb.Inss = ins
 
-	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
+	rbt, err := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// allow independent multichannel activity
 	headsLoaded := rbt.GetLoadedHeads()

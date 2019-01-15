@@ -21,7 +21,7 @@ func NewTipFactory(tipboxes []*wtype.LHTipbox, tipwastes []*wtype.LHTipwaste) *T
 	}
 
 	for _, tb := range tipboxes {
-		ret.Tipboxes[tb.Tiptype.Type] = tb
+		ret.Tipboxes[tb.Type] = tb
 	}
 	for _, tw := range tipwastes {
 		ret.Tipwastes[tw.Type] = tw

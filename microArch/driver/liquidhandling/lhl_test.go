@@ -1198,6 +1198,11 @@ func TestAspWait(t *testing.T) {
 }
 
 func TestAspLLF(t *testing.T) {
+	rbt, err := MakeLHWithPlatesAndTipboxesForTest("pcrplate_skirted_riser18")
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	tests := []*PolicyTest{
 		{
 			Name: "asp withLLF",
@@ -1216,7 +1221,7 @@ func TestAspLLF(t *testing.T) {
 				},
 			},
 			Instruction:          getLLFTestSuck(getLVConfig(), 1, "Gilson20"),
-			Robot:                MakeGilsonWithPlatesAndTipboxesForTest("pcrplate_skirted_riser18"),
+			Robot:                rbt.Dup(),
 			ExpectedInstructions: "[SPS,SDS,MOV,ASP]",
 			Assertions: []*InstructionAssertion{
 				{
@@ -1244,7 +1249,7 @@ func TestAspLLF(t *testing.T) {
 				},
 			},
 			Instruction:          getLLFTestSuck(getLVConfig(), 8, "Gilson20"),
-			Robot:                MakeGilsonWithPlatesAndTipboxesForTest("pcrplate_skirted_riser18"),
+			Robot:                rbt.Dup(),
 			ExpectedInstructions: "[SPS,SDS,MOV,ASP]",
 			Assertions: []*InstructionAssertion{
 				{
@@ -1299,7 +1304,7 @@ func TestAspLLF(t *testing.T) {
 				},
 			},
 			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
-			Robot:                MakeGilsonWithPlatesAndTipboxesForTest("pcrplate_skirted_riser18"),
+			Robot:                rbt.Dup(),
 			ExpectedInstructions: "[SPS,SDS,MOV,ASP]",
 			Assertions: []*InstructionAssertion{
 				{
@@ -1318,6 +1323,11 @@ func TestAspLLF(t *testing.T) {
 }
 
 func TestDspLLF(t *testing.T) {
+	rbt, err := MakeLHWithPlatesAndTipboxesForTest("pcrplate_skirted_riser18")
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	tests := []*PolicyTest{
 		{
 			Name: "dsp with LLF",
@@ -1336,7 +1346,7 @@ func TestDspLLF(t *testing.T) {
 				},
 			},
 			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
-			Robot:                MakeGilsonWithPlatesAndTipboxesForTest("pcrplate_skirted_riser18"),
+			Robot:                rbt.Dup(),
 			ExpectedInstructions: "[SPS,SDS,MOV,DSP,MOV,BLO]",
 			Assertions: []*InstructionAssertion{
 				{

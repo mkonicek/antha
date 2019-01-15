@@ -108,7 +108,11 @@ func (self *PolicyTest) run(t *testing.T) {
 	ctx := GetContextForTest()
 
 	if self.Robot == nil {
-		self.Robot = MakeGilsonWithPlatesAndTipboxesForTest("")
+		if rbt, err := MakeLHWithPlatesAndTipboxesForTest(""); err != nil {
+			t.Fatal(err)
+		} else {
+			self.Robot = rbt
+		}
 	}
 
 	policySet, err := wtype.GetLHPolicyForTest()

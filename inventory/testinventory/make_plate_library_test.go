@@ -176,12 +176,11 @@ func TestDeviceMethods(t *testing.T) {
 
 func TestSetConstraints(t *testing.T) {
 	t.Skip()
-	ctx := NewContext(context.Background())
 
 	platform := "Pipetmax"
 	expectedpositions := []string{"position_1"}
 
-	for _, testplate := range GetPlates(ctx) {
+	for _, testplate := range GetPlatesByType() {
 		for _, device := range defaultDevices {
 
 			if device.GetConstraints() == nil {
@@ -250,7 +249,7 @@ func TestGetConstraints(t *testing.T) {
 
 	platform := "Pipetmax"
 	expectedpositions := []string{"position_1"}
-	for _, testplate := range GetPlates(ctx) {
+	for _, testplate := range GetPlatesByType() {
 		for _, device := range defaultDevices {
 
 			if device.GetConstraints() == nil {

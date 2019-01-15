@@ -1,10 +1,8 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/testinventory"
 	"strings"
 	"testing"
@@ -12,27 +10,18 @@ import (
 
 // TODO
 func TestInventoryLHPlateSerialize(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
-	newPlates, err := inventory.XXXNewPlates(ctx)
+	// output of serialize/deserialize
+	newPlateMap := testinventory.GetPlatesByType()
 
-	if err != nil {
-		t.Errorf("%v", err)
-	}
-
+	// make plates directly
 	oldPlates := makePlates()
-
-	if len(newPlates) != len(oldPlates) {
-		t.Errorf("Serialization error: %d plates made, only %d available from inventory (update the library in ../plate_library.go)", len(oldPlates), len(newPlates))
-	}
-
-	newPlateMap := make(map[string]*wtype.Plate)
-	for _, p := range newPlates {
-		newPlateMap[p.Type] = p
-	}
-
-	oldPlateMap := make(map[string]*wtype.Plate)
+	oldPlateMap := make(map[string]*wtype.Plate, len(oldPlates))
 	for _, p := range oldPlates {
 		oldPlateMap[p.Type] = p
+	}
+
+	if len(newPlateMap) != len(oldPlateMap) {
+		t.Errorf("Serialization error: %d plates made, only %d available from inventory (update the library in ../plate_library.go)", len(oldPlateMap), len(newPlateMap))
 	}
 
 	for name := range oldPlateMap {

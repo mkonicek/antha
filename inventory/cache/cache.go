@@ -14,8 +14,8 @@ type ctxKey string
 
 type Cache interface {
 	inventory.Inventory
-	ReturnObject(ctx context.Context, obj interface{}) error
-	IsFromCache(ctx context.Context, obj interface{}) bool
+	ReturnObject(obj interface{}) error
+	IsFromCache(obj interface{}) bool
 }
 
 func fromContext(ctx context.Context) Cache {
@@ -34,20 +34,20 @@ func GetCache(ctx context.Context) Cache {
 
 // NewComponent returns a new component of the given type
 func NewComponent(ctx context.Context, typ string) (*wtype.Liquid, error) {
-	return fromContext(ctx).NewComponent(ctx, typ)
+	return fromContext(ctx).NewComponent(typ)
 }
 
 // NewPlate returns a new plate of the given type
 func NewPlate(ctx context.Context, typ string) (*wtype.Plate, error) {
-	return fromContext(ctx).NewPlate(ctx, typ)
+	return fromContext(ctx).NewPlate(typ)
 }
 
 // ReturnObject return an object to the cache to be cleaned
 func ReturnObject(ctx context.Context, obj interface{}) error {
-	return fromContext(ctx).ReturnObject(ctx, obj)
+	return fromContext(ctx).ReturnObject(obj)
 }
 
 // IsFromCache returns true if the object is from the cache
 func IsFromCache(ctx context.Context, obj interface{}) bool {
-	return fromContext(ctx).IsFromCache(ctx, obj)
+	return fromContext(ctx).IsFromCache(obj)
 }

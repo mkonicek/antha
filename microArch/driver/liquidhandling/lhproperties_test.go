@@ -1,7 +1,6 @@
 package liquidhandling
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -9,14 +8,13 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/inventory"
-	"github.com/antha-lang/antha/inventory/testinventory"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestSavePlates(t *testing.T) {
-	lhp := MakeGilsonForTest(defaultTipList())
-	ctx := testinventory.NewContext(context.Background())
+	lhp := MakeLHForTest(defaultTipList())
+	ctx := GetContextForTest()
 
 	p, err := inventory.NewPlate(ctx, "pcrplate_skirted")
 	if err != nil {
@@ -89,7 +87,7 @@ func TestGetFirstDefined(t *testing.T) {
 }
 
 func TestLHPropertiesSane(t *testing.T) {
-	props := MakeGilsonForTest(defaultTipList())
+	props := MakeLHForTest(defaultTipList())
 
 	assertPropsSane(t, props)
 }
@@ -117,7 +115,11 @@ func assertPropsSane(t *testing.T, props *LHProperties) {
 }
 
 func TestLHPropertiesDup(t *testing.T) {
-	props := MakeGilsonWithPlatesAndTipboxesForTest("")
+	props, err := MakeLHWithPlatesAndTipboxesForTest("")
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	dprops := props.DupKeepIDs()
 	assertPropsSane(t, dprops)
 	AssertLHPropertiesEqual(t, props, dprops, "LHProperties")
@@ -181,11 +183,9 @@ func AssertLHPropertiesEqual(t *testing.T, e, g *LHProperties, msg string) {
 }
 
 func TestLHPropertiesSerialisation(t *testing.T) {
-	before := MakeGilsonWithPlatesAndTipboxesForTest("")
-
-	// we don't need to preserve this
-	for _, tip := range before.Tips {
-		tip.ClearParent()
+	before, err := MakeLHWithPlatesAndTipboxesForTest("")
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	var after LHProperties

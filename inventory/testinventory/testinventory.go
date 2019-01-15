@@ -4,20 +4,30 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sort"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/inventory"
+	"sync"
 )
 
 type testInventory struct {
 	componentByName map[string]*wtype.Liquid
-	plateByType     map[string]PlateForSerializing
-	tipboxByType    map[string]*wtype.LHTipbox
-	tipwasteByType  map[string]*wtype.LHTipwaste
+	plateByType     map[string]*wtype.Plate
+	lock            *sync.Mutex
 }
 
-func (i *testInventory) NewComponent(ctx context.Context, name string) (*wtype.Liquid, error) {
+func newTestInventory() *testInventory {
+	return &testInventory{
+		componentByName: GetComponentsByType(),
+		plateByType:     GetPlatesByType(),
+		lock:            &sync.Mutex{},
+	}
+}
+
+func (i *testInventory) NewComponent(name string) (*wtype.Liquid, error) {
+	i.lock.Lock()
+	defer i.lock.Unlock()
+
 	c, ok := i.componentByName[name]
 	if !ok {
 		return nil, fmt.Errorf("%s: invalid solution: %s", inventory.ErrUnknownType, name)
@@ -26,83 +36,53 @@ func (i *testInventory) NewComponent(ctx context.Context, name string) (*wtype.L
 	return c.Cp(), nil
 }
 
-func (i *testInventory) NewPlate(ctx context.Context, typ string) (*wtype.Plate, error) {
-	p, ok := i.plateByType[typ]
-	if !ok {
+func (i *testInventory) NewPlate(typ string) (*wtype.Plate, error) {
+	i.lock.Lock()
+	defer i.lock.Unlock()
+
+	if p, ok := i.plateByType[typ]; !ok {
 		return nil, fmt.Errorf("%s: invalid plate: %s", inventory.ErrUnknownType, typ)
+	} else {
+		return p.Dup(), nil
 	}
-	return p.LHPlate(), nil
-}
-func (i *testInventory) NewTipbox(ctx context.Context, typ string) (*wtype.LHTipbox, error) {
-	tb, ok := i.tipboxByType[typ]
-	if !ok {
-		return nil, inventory.ErrUnknownType
-	}
-	return tb.Dup(), nil
-}
-
-func (i *testInventory) NewTipwaste(ctx context.Context, typ string) (*wtype.LHTipwaste, error) {
-	tw, ok := i.tipwasteByType[typ]
-	if !ok {
-		return nil, inventory.ErrUnknownType
-	}
-	return tw.Dup(), nil
-}
-
-func (i *testInventory) XXXGetPlates(ctx context.Context) ([]*wtype.Plate, error) {
-	plates := GetPlates(ctx)
-	return plates, nil
 }
 
 // NewContext creates a new test inventory context
 func NewContext(ctx context.Context) context.Context {
-	inv := &testInventory{
-		componentByName: make(map[string]*wtype.Liquid),
-		plateByType:     getPlatesByType(),
-		tipboxByType:    make(map[string]*wtype.LHTipbox),
-		tipwasteByType:  make(map[string]*wtype.LHTipwaste),
-	}
+	return inventory.NewContext(ctx, newTestInventory())
+}
 
-	for _, c := range makeComponents() {
-		if _, seen := inv.componentByName[c.CName]; seen {
-			panic(fmt.Sprintf("component %s already added", c.CName))
-		}
-		inv.componentByName[c.CName] = c
-	}
+// invForTest a single inventory to be shared for testing, threadsafe and read only
+var invForTest *testInventory
 
-	for _, tb := range makeTipboxes() {
-		if _, seen := inv.tipboxByType[tb.Type]; seen {
+func GetInventoryForTest() inventory.Inventory {
+	if invForTest == nil {
+		invForTest = newTestInventory()
+	}
+	return invForTest
+}
+
+func NewContextForTest(ctx context.Context) context.Context {
+	return inventory.NewContext(ctx, GetInventoryForTest())
+}
+
+// GetTipboxesByType returns the test tipboxes
+func GetTipboxesByType() map[string]*wtype.LHTipbox {
+	tbs := makeTipboxes()
+	ret := make(map[string]*wtype.LHTipbox, len(tbs))
+	for _, tb := range tbs {
+		if _, seen := ret[tb.Type]; seen {
 			panic(fmt.Sprintf("tipbox %s already added", tb.Type))
-		}
-		if _, seen := inv.tipboxByType[tb.Tiptype.Type]; seen {
+		} else if _, seen := ret[tb.Tiptype.Type]; seen {
 			panic(fmt.Sprintf("tipbox %s already added", tb.Tiptype.Type))
 		}
-		inv.tipboxByType[tb.Type] = tb
-		inv.tipboxByType[tb.Tiptype.Type] = tb
+		ret[tb.Type] = tb
+		ret[tb.Tiptype.Type] = tb
 	}
-
-	for _, tw := range makeTipwastes() {
-		if _, seen := inv.tipwasteByType[tw.Type]; seen {
-			panic(fmt.Sprintf("tipwaste %s already added", tw.Type))
-		}
-		inv.tipwasteByType[tw.Type] = tw
-	}
-
-	return inventory.NewContext(ctx, inv)
+	return ret
 }
 
-// GetTipboxes returns the test tipboxes
-func GetTipboxes() []*wtype.LHTipbox {
-	tbs := makeTipboxes()
-
-	sort.Slice(tbs, func(i, j int) bool {
-		return tbs[i].Type < tbs[j].Type
-	})
-
-	return tbs
-}
-
-func getPlatesByType() map[string]*wtype.Plate {
+func GetPlatesByType() map[string]*wtype.Plate {
 	if serialPlateArr, err := getPlatesFromSerial(); err != nil {
 		panic(err)
 	} else {
@@ -114,37 +94,34 @@ func getPlatesByType() map[string]*wtype.Plate {
 			}
 			ret[p.PlateType] = p.LHPlate()
 		}
+		return ret
 	}
 }
 
-// GetPlates returns the plates in a test inventory context
-func GetPlates(ctx context.Context) []*wtype.Plate {
-	inv := inventory.GetInventory(ctx).(*testInventory)
-	var ps []*wtype.Plate
-	for _, p := range inv.plateByType {
-		ps = append(ps, p.LHPlate())
+// GetComponentsByType returns the test components
+func GetComponentsByType() map[string]*wtype.Liquid {
+	components := makeComponents()
+	ret := make(map[string]*wtype.Liquid, len(components))
+	for _, c := range components {
+		if _, seen := ret[c.CName]; seen {
+			panic(fmt.Sprintf("component %s already added", c.CName))
+		}
+		ret[c.CName] = c
 	}
-
-	sort.Slice(ps, func(i, j int) bool {
-		return ps[i].Type < ps[j].Type
-	})
-
-	return ps
+	return ret
 }
 
-// GetComponents returns the components in a test inventory context
-func GetComponents(ctx context.Context) []*wtype.Liquid {
-	inv := inventory.GetInventory(ctx).(*testInventory)
-	var cs []*wtype.Liquid
-	for _, c := range inv.componentByName {
-		cs = append(cs, c)
+// GetTipwastesByType returns the test tipwastes
+func GetTipwastesByType() map[string]*wtype.LHTipwaste {
+	tipwastes := makeTipwastes()
+	ret := make(map[string]*wtype.LHTipwaste, len(tipwastes))
+	for _, tw := range tipwastes {
+		if _, seen := ret[tw.Type]; seen {
+			panic(fmt.Sprintf("tipwaste %s already added", tw.Type))
+		}
+		ret[tw.Type] = tw
 	}
-
-	sort.Slice(cs, func(i, j int) bool {
-		return cs[i].Type < cs[j].Type
-	})
-
-	return cs
+	return ret
 }
 
 func getPlatesFromSerial() ([]PlateForSerializing, error) {

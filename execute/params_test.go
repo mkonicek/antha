@@ -140,9 +140,9 @@ func TestConstructMap(t *testing.T) {
 		"B": 0,
 		"C": "",
 	}
-	tb, err := inventory.NewTipbox(ctx, "CyBio250Tipbox")
-	if err != nil {
-		t.Fatal(err)
+	tb, ok := testinventory.GetTipboxesByType()["CyBio250Tipbox"]
+	if !ok {
+		t.Fatal("couldn't find tipbox")
 	}
 	golden := Value{
 		"A": tb,
@@ -172,9 +172,9 @@ func TestConstructSlice(t *testing.T) {
 		&wtype.LHTipbox{},
 		&wtype.Plate{},
 	}
-	tb1, err := inventory.NewTipbox(ctx, "CyBio250Tipbox")
-	if err != nil {
-		t.Fatal(err)
+	tb1, ok := testinventory.GetTipboxesByType()["CyBio250Tipbox"]
+	if !ok {
+		t.Fatal("couldn't find tipbox")
 	}
 	tb2, err := inventory.NewPlate(ctx, "pcrplate_with_cooler")
 	if err != nil {

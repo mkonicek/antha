@@ -23,7 +23,6 @@
 package cmd
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -71,10 +70,8 @@ func listComponents(cmd *cobra.Command, args []string) error {
 		return ansi.Color(x, "red")
 	}
 
-	ctx := testinventory.NewContext(context.Background())
-
 	var cs simpleComponents
-	for _, c := range testinventory.GetComponents(ctx) {
+	for _, c := range testinventory.GetComponentsByType() {
 		cs = append(cs, simpleComponent{
 			Name:       c.CName,
 			LiquidType: c.TypeName(),

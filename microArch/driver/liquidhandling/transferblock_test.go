@@ -13,7 +13,7 @@ import (
 )
 
 func GetContextForTest() context.Context {
-	ctx := testinventory.NewContext(context.Background())
+	ctx := testinventory.NewContextForTest(context.Background())
 	//also need to add a plateCache as we're not using the liquidhandler.Plan interface
 	ctx = plateCache.NewContext(ctx)
 	return ctx
@@ -97,24 +97,23 @@ func getTransferBlock2Component(ctx context.Context) (*TransferBlockInstruction,
 	return getTransferBlock(ctx, inss, "pcrplate_skirted_riser40")
 }
 
-func getTestRobot(ctx context.Context, dstp *wtype.Plate, platetype string) *LHProperties {
-	rbt, err := makeGilsonWithTipboxesForTest(ctx)
+func getTestRobot(ctx context.Context, dstp *wtype.Plate, platetype string) (*LHProperties, error) {
+	rbt, err := MakeLHWithTipboxesForTest()
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	// make a couple of plates
-
 	// src
 
 	p, err := inventory.NewPlate(ctx, platetype)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	c, err := inventory.NewComponent(ctx, inventory.WaterType)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	// add a columnsw'th
@@ -127,7 +126,7 @@ func getTestRobot(ctx context.Context, dstp *wtype.Plate, platetype string) *LHP
 
 	c, err = inventory.NewComponent(ctx, "tartrazine")
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	c.Vol = v
 	c.Vunit = "ul"
@@ -136,7 +135,7 @@ func getTestRobot(ctx context.Context, dstp *wtype.Plate, platetype string) *LHP
 
 	c, err = inventory.NewComponent(ctx, "ethanol")
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	c.Vol = v
 	c.Vunit = "ul"
@@ -148,7 +147,7 @@ func getTestRobot(ctx context.Context, dstp *wtype.Plate, platetype string) *LHP
 	// dst
 	rbt.AddPlateTo("position_8", dstp)
 
-	return rbt
+	return rbt, nil
 
 }
 
@@ -157,7 +156,10 @@ func TestMultichannelFailPolicy(t *testing.T) {
 
 	// policy disallows
 	tb, dstp := getTransferBlock2Component(ctx)
-	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
+	rbt, err := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	pol, err := wtype.GetLHPolicyForTest()
 	if err != nil {
@@ -178,7 +180,10 @@ func TestMultichannelSucceedSubset(t *testing.T) {
 
 	tb.Inss[0].Welladdress = "B2"
 
-	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
+	rbt, err := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
+	if err != nil {
+		t.Fatal(err)
+	}
 	pol, err := wtype.GetLHPolicyForTest()
 	if err != nil {
 		t.Error(err)
@@ -212,7 +217,10 @@ func TestMultichannelSucceedPair(t *testing.T) {
 	tb.Inss[6].Welladdress = "G4"
 	tb.Inss[7].Welladdress = "H4"
 
-	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
+	rbt, err := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
+	if err != nil {
+		t.Fatal(err)
+	}
 	pol, err := wtype.GetLHPolicyForTest()
 	if err != nil {
 		t.Error(err)
@@ -236,7 +244,10 @@ func TestMultichannelFailDest(t *testing.T) {
 		}
 	*/
 
-	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
+	rbt, err := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
+	if err != nil {
+		t.Fatal(err)
+	}
 	pol, err := wtype.GetLHPolicyForTest()
 	if err != nil {
 		t.Error(err)
@@ -267,7 +278,10 @@ func TestMultiChannelFailSrc(t *testing.T) {
 
 	// sources not aligned
 	tb, dstp := getTransferBlock2Component(ctx)
-	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
+	rbt, err := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// fix the plate
 
@@ -293,7 +307,10 @@ func TestMultiChannelFailComponent(t *testing.T) {
 
 	// components not same liquid type
 	tb, dstp := getTransferBlock2Component(ctx)
-	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
+	rbt, err := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
+	if err != nil {
+		t.Fatal(err)
+	}
 	pol, err := wtype.GetLHPolicyForTest()
 	if err != nil {
 		t.Error(err)
@@ -326,7 +343,10 @@ func TestMultichannelPositive(t *testing.T) {
 	ctx := GetContextForTest()
 
 	tb, dstp := getTransferBlock2Component(ctx)
-	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
+	rbt, err := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
+	if err != nil {
+		t.Fatal(err)
+	}
 	pol, err := wtype.GetLHPolicyForTest()
 	if err != nil {
 		t.Error(err)
@@ -371,7 +391,10 @@ func TestIndependentMultichannelPositive(t *testing.T) {
 
 	tb.Inss = ins
 
-	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
+	rbt, err := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// allow independent multichannel activity
 	headsLoaded := rbt.GetLoadedHeads()
@@ -409,7 +432,10 @@ func TestTroughMultichannelPositive(t *testing.T) {
 
 	tb, dstp := getTransferBlock2Component(ctx)
 
-	rbt := getTestRobot(ctx, dstp, "DWST12_riser40")
+	rbt, err := getTestRobot(ctx, dstp, "DWST12_riser40")
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	pol, err := wtype.GetLHPolicyForTest()
 	if err != nil {
@@ -444,7 +470,10 @@ func TestBigWellMultichannelPositive(t *testing.T) {
 
 	tb, dstp := getTransferBlock2Component(ctx)
 
-	rbt := getTestRobot(ctx, dstp, "falcon6wellAgar_riser40")
+	rbt, err := getTestRobot(ctx, dstp, "falcon6wellAgar_riser40")
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	pol, err := wtype.GetLHPolicyForTest()
 	if err != nil {
@@ -564,9 +593,12 @@ func generateRobotInstructions(t *testing.T, ctx context.Context, inss []*wtype.
 
 	tb, dstp := getTransferBlock(ctx, inss, "pcrplate_skirted_riser40")
 
-	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
-	var err error
+	rbt, err := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
+	if err != nil {
+		t.Fatal(err)
+	}
 	if pol == nil {
+		var err error
 		pol, err = wtype.GetLHPolicyForTest()
 		if err != nil {
 			t.Fatal(err)
@@ -771,15 +803,20 @@ func BenchmarkMultiChannelTipReuseUgly(b *testing.B) {
 			panic(err)
 		}
 
-		generateRobotInstructions2(ctx, inss, nil)
+		if _, err := generateRobotInstructions2(ctx, inss, nil); err != nil {
+			b.Fatal(err)
+		}
 	}
 }
 
-func generateRobotInstructions2(ctx context.Context, inss []*wtype.LHInstruction, pol *wtype.LHPolicyRuleSet) []RobotInstruction {
+func generateRobotInstructions2(ctx context.Context, inss []*wtype.LHInstruction, pol *wtype.LHPolicyRuleSet) ([]RobotInstruction, error) {
 
 	tb, dstp := getTransferBlock(ctx, inss, "pcrplate_skirted_riser40")
 
-	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
+	rbt, err := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
+	if err != nil {
+		return nil, err
+	}
 	if pol == nil {
 		pol, _ = wtype.GetLHPolicyForTest()
 		// allow multi
@@ -790,5 +827,5 @@ func generateRobotInstructions2(ctx context.Context, inss []*wtype.LHInstruction
 	instructionSet := NewRobotInstructionSet(tb)
 	ris2, _ := instructionSet.Generate(ctx, pol, rbt)
 
-	return ris2
+	return ris2, nil
 }

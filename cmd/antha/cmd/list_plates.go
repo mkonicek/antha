@@ -23,7 +23,6 @@
 package cmd
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -76,10 +75,8 @@ func listPlates(cmd *cobra.Command, args []string) error {
 		return ansi.Color(x, "red")
 	}
 
-	ctx := testinventory.NewContext(context.Background())
-
 	var ps simplePlates
-	for _, p := range testinventory.GetPlates(ctx) {
+	for _, p := range testinventory.GetPlatesByType() {
 		ps = append(ps, simplePlate{
 			Type:          p.Type,
 			WellsX:        p.WellsX(),

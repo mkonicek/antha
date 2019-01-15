@@ -89,7 +89,7 @@ func defaultTipList() []string {
 
 func TestDefaultChooser(t *testing.T) {
 	vols := getVols()
-	lhp := MakeGilsonForTest(defaultTipList())
+	lhp := MakeLHForTest(defaultTipList())
 	minvols := getMinvols1()
 	maxvols := getMaxvols1()
 	types := getTypes1()
@@ -122,7 +122,7 @@ func TestDefaultChooser(t *testing.T) {
 }
 func TestHVHVHVLVChooser(t *testing.T) {
 	vols := getVols2()
-	lhp := MakeGilsonForTest([]string{"LVGilson200"})
+	lhp := MakeLHForTest([]string{"LVGilson200"})
 	minvols := getMinvols2()
 	maxvols := getMaxvols2()
 	types := getTypes2()
@@ -155,7 +155,7 @@ func TestHVHVHVLVChooser(t *testing.T) {
 }
 
 func TestSmallVolumeError(t *testing.T) {
-	lhp := MakeGilsonForTest(defaultTipList())
+	lhp := MakeLHForTest(defaultTipList())
 
 	vol := wunit.NewVolume(0.47, "ul")
 

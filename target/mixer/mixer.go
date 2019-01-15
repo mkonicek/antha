@@ -76,7 +76,7 @@ func (a *Mixer) makeLhreq(labEffects *effects.LaboratoryEffects) (*lhreq, error)
 		if _, seen := req.InputPlates[ip.ID]; seen {
 			return fmt.Errorf("plate %q already added", ip.ID)
 		}
-		req.AddUserPlate(ip)
+		req.AddUserPlate(labEffects.IDGenerator, ip)
 		return nil
 	}
 
@@ -100,7 +100,7 @@ func (a *Mixer) makeLhreq(labEffects *effects.LaboratoryEffects) (*lhreq, error)
 		return nil, err
 	}
 
-	prop := a.properties.Dup()
+	prop := a.properties.Dup(labEffects.IDGenerator)
 	prop.Driver = a.properties.Driver
 	plan := planner.Init(prop)
 
@@ -424,7 +424,7 @@ func (a *Mixer) makeMix(labEffects *effects.LaboratoryEffects, mixes []*wtype.LH
 		r.LHRequest.Add_instruction(mix)
 	}
 
-	err = r.Liquidhandler.MakeSolutions(labEffects.IDGenerator, r.LHRequest)
+	err = r.Liquidhandler.MakeSolutions(labEffects, r.LHRequest)
 	// TODO: MIS unfortunately we need to make sure this stays up to date would
 	// be better to remove this and just use the ones the liquid handler holds
 	r.LHProperties = r.Liquidhandler.Properties

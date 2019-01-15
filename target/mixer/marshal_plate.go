@@ -6,10 +6,11 @@ import (
 	"strconv"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 // MarshalPlateCSV writes a plate to a CSV file
-func MarshalPlateCSV(plate *wtype.Plate) ([]byte, error) {
+func MarshalPlateCSV(idGen *id.IDGenerator, plate *wtype.Plate) ([]byte, error) {
 	var records [][]string
 	records = append(records, []string{
 		plate.Type,
@@ -20,7 +21,7 @@ func MarshalPlateCSV(plate *wtype.Plate) ([]byte, error) {
 		"Conc",
 		"Conc Unit",
 	})
-	for _, well := range plate.AllNonEmptyWells() {
+	for _, well := range plate.AllNonEmptyWells(idGen) {
 		comp := well.WContents
 		records = append(records, []string{
 			well.Crds.FormatA1(),

@@ -317,7 +317,7 @@ func parsePlateCSVWithValidationConfig(labEffects *effects.LaboratoryEffects, in
 			}
 		}
 		if wa, ok := plate.WellAt(well); ok {
-			err = wa.AddComponent(cmp)
+			err = wa.AddComponent(labEffects.IDGenerator, cmp)
 			if err != nil {
 				return nil, err
 			}
@@ -333,7 +333,7 @@ func parsePlateCSVWithValidationConfig(labEffects *effects.LaboratoryEffects, in
 		return nil, fmt.Errorf(strings.Join(fatalErrors, "\n"))
 	}
 
-	if err = plate.ValidateVolumes(); err != nil {
+	if err = plate.ValidateVolumes(labEffects.IDGenerator); err != nil {
 		return nil, err
 	}
 

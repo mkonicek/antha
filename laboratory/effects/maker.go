@@ -1,6 +1,7 @@
 package effects
 
 import (
+	"encoding/json"
 	"strings"
 	"sync"
 
@@ -11,8 +12,7 @@ import (
 type Maker struct {
 	lock sync.Mutex
 	// Map from old LHComponent id to new id after instruction (typically 1)
-	// AfterInst is the only thing we need to serialize hence it being the only thing that's public
-	AfterInst map[string][]string
+	afterInst map[string][]string
 	// Map from old LHComponent id to new id after sample
 	afterSample map[string][]string
 	// Map from from wtype world to ast world
@@ -22,11 +22,22 @@ type Maker struct {
 
 func NewMaker() *Maker {
 	return &Maker{
-		AfterInst:   make(map[string][]string),
+		afterInst:   make(map[string][]string),
 		afterSample: make(map[string][]string),
 		byComp:      make(map[*wtype.Liquid]*ast.UseComp),
 		byID:        make(map[string][]*ast.UseComp),
 	}
+}
+
+func (m *Maker) UnmarshalJSON(bs []byte) error {
+	m2 := NewMaker()
+	*m = *m2
+
+	return json.Unmarshal(bs, &m.afterInst)
+}
+
+func (m *Maker) MarshalJSON() ([]byte, error) {
+	return json.Marshal(m.afterInst)
 }
 
 func (a *Maker) makeComp(c *wtype.Liquid) *ast.UseComp {
@@ -116,7 +127,7 @@ func (a *Maker) removeMultiEdges() {
 func (a *Maker) UpdateAfterInst(oldID, newID string) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
-	a.AfterInst[oldID] = append(a.AfterInst[oldID], newID)
+	a.afterInst[oldID] = append(a.afterInst[oldID], newID)
 }
 
 // Normalize commands into well-formed AST
@@ -136,7 +147,7 @@ func (a *Maker) MakeNodes(insts []*CommandInst) ([]ast.Node, error) {
 	}
 
 	a.resolveReuses()
-	a.resolveUpdates(a.AfterInst)
+	a.resolveUpdates(a.afterInst)
 	a.resolveUpdates(a.afterSample)
 	a.removeMultiEdges()
 

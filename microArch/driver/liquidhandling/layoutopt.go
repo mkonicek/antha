@@ -100,8 +100,8 @@ func (lo *LayoutOpt) ApplyUserPreferences(user *LayoutOpt) (*LayoutOpt, error) {
 		override(&ret.Inputs, lo.Inputs, user.Inputs, "input plates"),
 		override(&ret.Outputs, lo.Outputs, user.Outputs, "output plates"),
 		override(&ret.Tipwastes, lo.Tipwastes, user.Tipwastes, "tipwastes"),
-		override(&ret.Wastes, lo.Wastes, user.Wastes, "wastes"),
-		override(&ret.Washes, lo.Washes, user.Washes, "washes"),
+		override(&ret.Wastes, lo.Wastes, user.Wastes, "liquid wastes"),
+		override(&ret.Washes, lo.Washes, user.Washes, "tip washes"),
 	}
 	return ret, errors.WithMessage(errs.Pack(), "invalid layout preferences")
 

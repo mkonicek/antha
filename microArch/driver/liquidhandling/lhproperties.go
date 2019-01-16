@@ -288,6 +288,7 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 	}
 
 	r.TipFactory = lhp.TipFactory.Dup()
+
 	r.Preferences = lhp.Preferences.Dup()
 
 	if lhp.CurrConf != nil {
@@ -429,8 +430,7 @@ func (lhp *LHProperties) AddTipwaste(tipwaste *wtype.LHTipwaste) error {
 			continue
 		}
 
-		err := lhp.AddTipwasteTo(addr, tipwaste)
-		return err
+		return lhp.AddTipwasteTo(addr, tipwaste)
 	}
 
 	return wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, "Trying to add tip waste")

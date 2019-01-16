@@ -81,12 +81,9 @@ func TestDeckSpace2(t *testing.T) {
 	}
 
 	for i := 0; i < len(lh.Properties.Preferences.Inputs); i++ {
-		plate, err := inv.NewPlate("pcrplate_skirted")
-		if err != nil {
+		if plate, err := inv.NewPlate("pcrplate_skirted"); err != nil {
 			t.Fatal(err)
-		}
-
-		if err := lh.Properties.AddPlateTo(lh.Properties.Preferences.Inputs[i], plate); err != nil {
+		} else if err := lh.Properties.AddPlateTo(lh.Properties.Preferences.Inputs[i], plate); err != nil {
 			t.Fatalf("position %s is full, should be empty", lh.Properties.Preferences.Inputs[i])
 		}
 	}

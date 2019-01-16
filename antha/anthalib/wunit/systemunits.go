@@ -436,6 +436,16 @@ func getSystemAliases() unitAliases {
 				Prefixes:   SIPrefixes,
 			},
 			{
+				BaseSymbol: "g/mL",
+				BaseTarget: "g/ml",
+				Prefixes:   SIPrefixes,
+			},
+			{
+				BaseSymbol: "g/uL",
+				BaseTarget: "g/ul",
+				Prefixes:   SIPrefixes,
+			},
+			{
 				BaseSymbol: "M",
 				BaseTarget: "Mol/l",
 				Prefixes:   SIPrefixes,

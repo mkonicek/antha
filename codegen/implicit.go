@@ -24,7 +24,7 @@ func (a *ir) getMixes() (ret []*target.Mix) {
 	return
 }
 
-func isIncubator(dev target.Device) bool {
+func isIncubator(dev ast.Device) bool {
 	incubates := dev.CanCompile(ast.Request{
 		Selector: []ast.NameValue{
 			target.DriverSelectorV1ShakerIncubator,
@@ -84,7 +84,7 @@ func (a *ir) addImplicitMixInsts() error {
 		)
 	}
 
-	seen := make(map[target.Device]bool)
+	seen := make(map[ast.Device]bool)
 	for d := range a.output {
 		if seen[d.Device] {
 			continue
@@ -134,7 +134,7 @@ func (a *ir) addIzers(deviceOrder []*drun) error {
 		}
 
 		for _, node := range order {
-			inst := node.(target.Inst)
+			inst := node.(ast.Inst)
 			init, ok := inst.(target.Initializer)
 			if ok {
 				a.initializers = append(a.initializers, init.GetInitializers()...)

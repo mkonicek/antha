@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"math"
 	"sort"
 	"strings"
 
@@ -15,10 +14,6 @@ import (
 	"github.com/antha-lang/antha/graph"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/human"
-)
-
-const (
-	useTreePartition = false
 )
 
 // Intermediate representation.
@@ -126,13 +121,6 @@ type drun struct {
 }
 
 func (a *ir) partition(opt graph.PartitionTreeOpt) (*graph.TreePartition, error) {
-	if useTreePartition {
-		if err := graph.IsTree(opt.Tree, opt.Root); err != nil {
-			return nil, err
-		}
-		return graph.PartitionTree(opt)
-	}
-
 	ret := &graph.TreePartition{
 		Parts: make(map[graph.Node]int),
 	}
@@ -366,132 +354,7 @@ func (a *ir) tryPlan(ctx context.Context) error {
 	return a.addImplicitInsts(runs)
 }
 
-// Find best device to move a component between two devices
-func findBestMoveDevice(t *target.Target, from, to ast.Node, fromD, toD *drun) target.Device {
-	// TODO: add movement constraints
-	var req ast.Request
-	var minD target.Device
-	minC := int64(math.MaxInt64)
-
-	for _, d := range t.CanCompile(req) {
-		c := toD.Device.MoveCost(d) + d.MoveCost(fromD.Device)
-		if c < minC {
-			minC = c
-			minD = d
-		}
-	}
-	return minD
-}
-
-// NB(ddn): Could blindly add edges from insts to head, but would like
-// Compile() to be able to introduce instructions that just depend on the start
-// or end (or neither) of a device run.
-//
-// From:
-//   head: h
-//   tail: t
-//   insts: [a <- ... <- b]
-// To:
-//   h <- a <-... <- b <- t
-func splice(head, tail target.Inst, insts []target.Inst) {
-	if len(insts) == 0 {
-		if head != nil && tail != nil && head != tail {
-			tail.AppendDependsOn(head)
-		}
-	} else {
-		oldH := insts[0]
-		oldT := insts[len(insts)-1]
-		if head != nil {
-			oldH.AppendDependsOn(head)
-		}
-		if tail != nil {
-			tail.AppendDependsOn(oldT)
-		}
-	}
-}
-
-// Create move of dependencies if necessary
-func (a *ir) addMove(ctx context.Context, t *target.Target, dnode graph.Node, run *drun) error {
-
-	rewrite := func(n ast.Node, cs []*ast.UseComp, move *ast.Move) {
-		m := make(map[ast.Node]bool)
-		for _, c := range cs {
-			m[c] = true
-		}
-		for i, inum := 0, a.Graph.NumOuts(n); i < inum; i++ {
-			out := a.Graph.Out(n, i).(ast.Node)
-			if m[out] {
-				a.Graph.SetOut(n, i, move)
-			}
-		}
-	}
-
-	newRuns := make(map[target.Device]*drun)
-	getRun := func(d target.Device) *drun {
-		r, ok := newRuns[d]
-		if !ok {
-			r = &drun{d}
-			newRuns[d] = r
-		}
-		return r
-	}
-
-	moves := make(map[target.Device][]ast.Node)
-	for i, inum := 0, a.DeviceDeps.NumOrigs(dnode); i < inum; i++ {
-		n := a.DeviceDeps.Orig(dnode, i).(ast.Node)
-		for j, jnum := 0, a.Commands.NumOuts(n); j < jnum; j++ {
-			out := a.Commands.Out(n, j).(ast.Node)
-			if run == a.assignment[out] {
-				continue
-			}
-			// Command has input dependence on a previous run
-			cs := a.reachingUses[out.(*ast.Command)]
-			if len(cs) == 0 {
-				// Nothing to move
-				continue
-			} else if dev := findBestMoveDevice(t, out, n, a.assignment[out], run); dev == nil {
-				return fmt.Errorf("cannot find any device to move inputs")
-			} else {
-				// Add move
-				m := &ast.Move{
-					From:  cs,
-					ToLoc: fmt.Sprintf("%v", dev),
-				}
-				moves[dev] = append(moves[dev], m)
-				a.assignment[m] = getRun(dev)
-				rewrite(n, cs, m)
-			}
-		}
-	}
-
-	if len(moves) == 0 {
-		return nil
-	}
-
-	head := &target.Wait{}
-	tail := &target.Wait{}
-	insts := append([]target.Inst{}, head, tail)
-
-	splice(head, tail, nil)
-	splice(tail, nil, a.output[run])
-
-	for dev, ms := range moves {
-		ins, err := dev.Compile(ctx, ms)
-		if err != nil {
-			return err
-		}
-
-		splice(head, tail, ins)
-		insts = append(insts, ins...)
-	}
-
-	a.output[run] = append(insts, a.output[run]...)
-
-	return nil
-}
-
-// Add implied moves between devices
-func (a *ir) addMoves(ctx context.Context, t *target.Target) error {
+func (a *ir) sortDevices(ctx context.Context, t *target.Target) error {
 	a.DeviceDeps = graph.MakeQuotient(graph.MakeQuotientOpt{
 		Graph: a.Commands,
 		Colorer: func(n graph.Node) interface{} {
@@ -499,30 +362,10 @@ func (a *ir) addMoves(ctx context.Context, t *target.Target) error {
 		},
 	})
 
-	order, err := graph.TopoSort(graph.TopoSortOpt{
+	_, err := graph.TopoSort(graph.TopoSortOpt{
 		Graph: a.DeviceDeps,
 	})
-	if err != nil {
-		return err
-	}
-
-	// Disable move pass because it is unused
-	if true {
-		return nil
-	}
-
-	for _, n := range order {
-		if a.DeviceDeps.NumOrigs(n) == 0 {
-			return fmt.Errorf("no instructions for node %q", n)
-		}
-		someNode := a.DeviceDeps.Orig(n, 0).(ast.Node)
-		run := a.assignment[someNode]
-		if err := a.addMove(ctx, t, n, run); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return err
 }
 
 func reverseInsts(insts []target.Inst) (ret []target.Inst) {
@@ -613,8 +456,8 @@ func Compile(ctx context.Context, t *target.Target, roots []ast.Node) ([]target.
 		return nil, fmt.Errorf("error planning: %s", err)
 	}
 
-	if err := ir.addMoves(ctx, t); err != nil {
-		return nil, fmt.Errorf("error adding moves: %s", err)
+	if err := ir.sortDevices(ctx, t); err != nil {
+		return nil, fmt.Errorf("error sorting devices: %s", err)
 	}
 
 	insts, err := ir.genInsts()

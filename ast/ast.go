@@ -76,18 +76,6 @@ func (a *Bundle) NodeString() string {
 	return ""
 }
 
-// A Move is a low-level move instruction
-type Move struct {
-	From   []*UseComp
-	ToLoc  Location
-	Output interface{}
-}
-
-// NodeString implements graph pretty printing
-func (a *Move) NodeString() string {
-	return ""
-}
-
 // A Graph is a view of the AST as a graph
 type Graph struct {
 	Nodes     []Node
@@ -112,8 +100,6 @@ func setOut(n Node, i, deps int, x Node) {
 		n.From[i] = x
 	case *Command:
 		n.From[i] = x
-	case *Move:
-		n.From[i] = x.(*UseComp)
 	default:
 		panic(fmt.Sprintf("ast.setOut: unknown node type %T", n))
 	}
@@ -127,8 +113,6 @@ func getOut(n Node, i, deps int) Node {
 		return n.From[i]
 	case *Command:
 		return n.From[i]
-	case *Move:
-		return n.From[i]
 	default:
 		panic(fmt.Sprintf("ast.getOut: unknown node type %T", n))
 	}
@@ -141,8 +125,6 @@ func numOuts(n Node, deps int) int {
 	case *Bundle:
 		return len(n.From)
 	case *Command:
-		return len(n.From)
-	case *Move:
 		return len(n.From)
 	default:
 		panic(fmt.Sprintf("ast.numOuts: unknown node type %T", n))

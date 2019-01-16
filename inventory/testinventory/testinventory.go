@@ -18,7 +18,7 @@ type TestInventory struct {
 	lock            *sync.Mutex
 }
 
-func newTestInventory() *TestInventory {
+func NewTestInventory() *TestInventory {
 	return &TestInventory{
 		componentByName: getComponentsByType(),
 		plateByType:     getPlatesByType(),
@@ -97,7 +97,7 @@ func (i *TestInventory) NewTipwaste(typ string) (*wtype.LHTipwaste, error) {
 
 // NewContext creates a new test inventory context
 func NewContext(ctx context.Context) context.Context {
-	return inventory.NewContext(ctx, newTestInventory())
+	return inventory.NewContext(ctx, NewTestInventory())
 }
 
 // invForTest a single inventory to be shared for testing, threadsafe and read only
@@ -105,7 +105,7 @@ var invForTest *TestInventory
 
 func GetInventoryForTest() *TestInventory {
 	if invForTest == nil {
-		invForTest = newTestInventory()
+		invForTest = NewTestInventory()
 	}
 	return invForTest
 }

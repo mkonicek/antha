@@ -354,8 +354,7 @@ func (a *ir) tryPlan(ctx context.Context) error {
 	return a.addImplicitInsts(runs)
 }
 
-// Add implied moves between devices
-func (a *ir) addMoves(ctx context.Context, t *target.Target) error {
+func (a *ir) sortDevices(ctx context.Context, t *target.Target) error {
 	a.DeviceDeps = graph.MakeQuotient(graph.MakeQuotientOpt{
 		Graph: a.Commands,
 		Colorer: func(n graph.Node) interface{} {
@@ -457,8 +456,8 @@ func Compile(ctx context.Context, t *target.Target, roots []ast.Node) ([]target.
 		return nil, fmt.Errorf("error planning: %s", err)
 	}
 
-	if err := ir.addMoves(ctx, t); err != nil {
-		return nil, fmt.Errorf("error adding moves: %s", err)
+	if err := ir.sortDevices(ctx, t); err != nil {
+		return nil, fmt.Errorf("error sorting devices: %s", err)
 	}
 
 	insts, err := ir.genInsts()

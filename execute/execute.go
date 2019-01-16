@@ -18,7 +18,7 @@ import (
 type Result struct {
 	Workflow *workflow.Workflow
 	Input    []ast.Node
-	Insts    []target.Inst
+	Insts    []ast.Inst
 }
 
 // An Opt are options for Run.

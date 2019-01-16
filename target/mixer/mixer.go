@@ -21,7 +21,7 @@ import (
 )
 
 var (
-	_ target.Device = &Mixer{}
+	_ ast.Device = &Mixer{}
 )
 
 // A Mixer is a device plugin for mixer devices
@@ -51,7 +51,7 @@ func (a *Mixer) CanCompile(req ast.Request) bool {
 }
 
 // MoveCost implements a Device
-func (a *Mixer) MoveCost(from target.Device) int64 {
+func (a *Mixer) MoveCost(from ast.Device) int64 {
 	if from == a {
 		return 0
 	}
@@ -226,7 +226,7 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 }
 
 // Compile implements a Device
-func (a *Mixer) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, error) {
+func (a *Mixer) Compile(ctx context.Context, nodes []ast.Node) ([]ast.Inst, error) {
 	var mixes []*wtype.LHInstruction
 	for _, node := range nodes {
 		if c, ok := node.(*ast.Command); !ok {
@@ -243,7 +243,7 @@ func (a *Mixer) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, e
 		return nil, err
 	}
 
-	return []target.Inst{mix}, nil
+	return []ast.Inst{mix}, nil
 }
 
 func (a *Mixer) saveFile(name string) ([]byte, error) {

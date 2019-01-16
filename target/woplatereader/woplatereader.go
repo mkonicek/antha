@@ -8,7 +8,6 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/ast"
-	"github.com/antha-lang/antha/codegen"
 	"github.com/antha-lang/antha/driver"
 	platereader "github.com/antha-lang/antha/driver/antha_platereader_v1"
 	"github.com/antha-lang/antha/target"
@@ -18,7 +17,7 @@ import (
 type WOPlateReader struct{}
 
 // Ensure satisfies Device interface
-var _ target.Device = (*WOPlateReader)(nil)
+var _ ast.Device = (*WOPlateReader)(nil)
 
 // returns a new Write-Only Plate Reader Used by antha-runner
 func New() *WOPlateReader {
@@ -33,12 +32,12 @@ func (a *WOPlateReader) CanCompile(req ast.Request) bool {
 }
 
 // MoveCost implements a Device
-func (a *WOPlateReader) MoveCost(from target.Device) int64 {
+func (a *WOPlateReader) MoveCost(from ast.Device) int64 {
 	return 0
 }
 
 // Compile implements a Device
-func (a *WOPlateReader) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, error) {
+func (a *WOPlateReader) Compile(ctx context.Context, nodes []ast.Node) ([]ast.Inst, error) {
 
 	// Find the LHComponentID for the samples to measure. We'll then search
 	// for these later.
@@ -71,7 +70,7 @@ func (a *WOPlateReader) Compile(ctx context.Context, nodes []ast.Node) ([]target
 
 	// Look for the sample locations
 	for _, cmd := range ast.FindReachingCommands(nodes) {
-		insts := cmd.Output.(*codegen.Result).Insts
+		insts := cmd.Output
 		for _, inst := range insts {
 			mix, ok := inst.(*target.Mix)
 			if !ok {
@@ -102,11 +101,11 @@ func prKey(inst *wtype.PRInstruction) (string, error) {
 }
 
 // Merge PRInstructions
-func (a *WOPlateReader) mergePRInsts(prInsts []*wtype.PRInstruction, wellLocs map[string]string, plateLocs map[string]string) ([]target.Inst, error) {
+func (a *WOPlateReader) mergePRInsts(prInsts []*wtype.PRInstruction, wellLocs map[string]string, plateLocs map[string]string) ([]ast.Inst, error) {
 
 	// Simple case
 	if len(prInsts) == 0 {
-		return []target.Inst{}, nil
+		return []ast.Inst{}, nil
 	}
 
 	// Check for only 1 plate (for now)
@@ -115,7 +114,7 @@ func (a *WOPlateReader) mergePRInsts(prInsts []*wtype.PRInstruction, wellLocs ma
 		plateLocUnique[plateID] = true
 	}
 	if len(plateLocUnique) > 1 {
-		return []target.Inst{}, errors.New("current only supports single plate")
+		return []ast.Inst{}, errors.New("current only supports single plate")
 	}
 
 	// Group instructions by PRInstruction
@@ -152,7 +151,7 @@ func (a *WOPlateReader) mergePRInsts(prInsts []*wtype.PRInstruction, wellLocs ma
 		calls = append(calls, call)
 	}
 
-	insts := target.Insts{
+	insts := ast.Insts{
 		&target.Prompt{
 			Message: "Please put plate(s) into plate reader and click ok to start plate reader",
 		},

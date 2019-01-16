@@ -19,7 +19,7 @@ var (
 // A GenericHandler is a configurable version of a Handler suitable for mixins
 type GenericHandler struct {
 	Labels             []ast.NameValue
-	GenFunc            func(cmd interface{}) ([]target.Inst, error)
+	GenFunc            func(cmd interface{}) ([]ast.Inst, error)
 	FilterFieldsForKey func(interface{}) (interface{}, error)
 }
 
@@ -33,7 +33,7 @@ func (a *GenericHandler) CanCompile(req ast.Request) bool {
 }
 
 // MoveCost implements a Device
-func (a *GenericHandler) MoveCost(target.Device) int64 {
+func (a *GenericHandler) MoveCost(ast.Device) int64 {
 	return 0
 }
 
@@ -98,13 +98,13 @@ func (a GenericHandler) merge(nodes []ast.Node) (*ast.Command, error) {
 }
 
 // Compile implements a Device
-func (a *GenericHandler) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, error) {
+func (a *GenericHandler) Compile(ctx context.Context, nodes []ast.Node) ([]ast.Inst, error) {
 	g := ast.Deps(nodes)
 
 	entry := &target.Wait{}
 	exit := &target.Wait{}
-	var insts []target.Inst
-	inst := make(map[ast.Node][]target.Inst)
+	var insts []ast.Inst
+	inst := make(map[ast.Node][]ast.Inst)
 
 	insts = append(insts, entry)
 

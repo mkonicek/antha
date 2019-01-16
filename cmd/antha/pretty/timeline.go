@@ -6,6 +6,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/execute"
 	"github.com/antha-lang/antha/graph"
 	"github.com/antha-lang/antha/target"
@@ -24,7 +25,7 @@ func Timeline(out io.Writer, a *auto.Auto, result *execute.Result) error {
 		lines = append(lines, fmt.Sprintf("== Round %2d:\n", round))
 		var next []graph.Node
 		for _, n := range dag.Roots {
-			inst := n.(target.Inst)
+			inst := n.(ast.Inst)
 			lines = append(lines, fmt.Sprintf("    * %s\n", a.Pretty(inst)))
 			next = append(next, dag.Visit(n)...)
 		}

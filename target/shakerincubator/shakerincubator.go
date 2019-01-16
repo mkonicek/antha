@@ -89,15 +89,15 @@ func (a *ShakerIncubator) shakeStart(rate wunit.Rate, length wunit.Length) drive
 	}
 }
 
-func (a *ShakerIncubator) generate(cmd interface{}) ([]target.Inst, error) {
+func (a *ShakerIncubator) generate(cmd interface{}) ([]ast.Inst, error) {
 	inc, ok := cmd.(*ast.IncubateInst)
 	if !ok {
 		return nil, fmt.Errorf("expecting %T found %T instead", inc, cmd)
 	}
 
-	var initializers []target.Inst
-	var finalizers []target.Inst
-	var insts target.Insts
+	var initializers []ast.Inst
+	var finalizers []ast.Inst
+	var insts ast.Insts
 
 	initializers = append(initializers, &target.Run{
 		Dev:   a,

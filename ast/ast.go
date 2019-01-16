@@ -37,7 +37,7 @@ type Command struct {
 	From     []Node      // Inputs
 	Requests []Request   // Requirements for device selection
 	Inst     interface{} // Command-specific data
-	Output   interface{} // Output from compilation
+	Output   []Inst      // Output from compilation
 }
 
 // NodeString implements graph pretty printing

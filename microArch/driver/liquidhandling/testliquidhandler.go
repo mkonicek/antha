@@ -84,8 +84,12 @@ func MakeLHForTest(tipList []string) (*LHProperties, error) {
 	ha := wtype.NewLHHeadAssembly(nil)
 	ha.AddPosition(wtype.Coordinates{X: 0, Y: -18.08, Z: 0})
 	ha.AddPosition(wtype.Coordinates{X: 0, Y: 0, Z: 0})
-	ha.LoadHead(hvhead)
-	ha.LoadHead(lvhead)
+
+	if err := ha.LoadHead(hvhead); err != nil {
+		return nil, err
+	} else if err := ha.LoadHead(lvhead); err != nil {
+		return nil, err
+	}
 	lhp.Heads = append(lhp.Heads, hvhead, lvhead)
 	lhp.Adaptors = append(lhp.Adaptors, hvadaptor, lvadaptor)
 	lhp.HeadAssemblies = append(lhp.HeadAssemblies, ha)
@@ -123,20 +127,20 @@ func MakeLHWithTipboxesForTest() (*LHProperties, error) {
 
 	if tw, err := params.TipFactory.NewTipwaste("Gilsontipwaste"); err != nil {
 		return nil, err
-	} else {
-		params.AddTipwaste(tw)
+	} else if err := params.AddTipwaste(tw); err != nil {
+		return nil, err
 	}
 
 	if tb, err := params.TipFactory.NewTipbox("DL10 Tip Rack (PIPETMAX 8x20)"); err != nil {
 		return nil, err
-	} else {
-		params.AddTipBox(tb)
+	} else if err := params.AddTipBox(tb); err != nil {
+		return nil, err
 	}
 
 	if tb, err := params.TipFactory.NewTipbox("D200 Tip Rack (PIPETMAX 8x200)"); err != nil {
 		return nil, err
-	} else {
-		params.AddTipBox(tb)
+	} else if err := params.AddTipBox(tb); err != nil {
+		return nil, err
 	}
 
 	return params, nil
@@ -175,7 +179,9 @@ func makeTestInputPlate(inputPlateType string) (*wtype.Plate, error) {
 		c.Type = wtype.LTWater
 		c.Smax = 9999
 		c.Vol = 5000.0 // ul
-		p.AddComponent(c, true)
+		if _, err := p.AddComponent(c, true); err != nil {
+			return nil, err
+		}
 		return p, nil
 	}
 }

@@ -10,8 +10,6 @@ import (
 var (
 	// ErrUnknownType is returned if type is not in inventory
 	ErrUnknownType = errors.New("unknown type requested from inventory")
-
-	errCannotListPlates = errors.New("cannot list plates")
 )
 
 const (

@@ -142,9 +142,8 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 	}
 
 	if p := a.opt.TipTypes; len(p) != 0 {
-		for _, t := range p {
-			req.TipTypes = append(req.TipTypes, t)
-		}
+		req.TipTypes = make([]string, len(p))
+		copy(req.TipTypes, p)
 	}
 
 	if p := a.opt.InputPlateData; len(p) != 0 {

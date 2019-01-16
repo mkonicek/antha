@@ -237,8 +237,8 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 
 			if tipwaste == nil {
 				return request, wtype.LHErrorf(wtype.LH_ERR_TIP_WASTE, "no tipwaste available for device %s %s", params.Mnfr, params.Model)
-			} else {
-				params.AddTipwaste(tipwaste)
+			} else if err := params.AddTipwaste(tipwaste); err != nil {
+				return request, err
 			}
 		}
 	}

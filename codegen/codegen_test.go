@@ -50,13 +50,6 @@ func (a *incubator) Compile(ctx context.Context, nodes []ast.Node) ([]ast.Inst, 
 	return []ast.Inst{&incubateInst{}}, nil
 }
 
-func (a *incubator) MoveCost(from ast.Device) int64 {
-	if a == from {
-		return 0
-	}
-	return human.HumanByXCost - 1
-}
-
 func TestWellFormed(t *testing.T) {
 	ctx := context.Background()
 

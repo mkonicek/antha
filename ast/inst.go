@@ -21,8 +21,7 @@ type Inst interface {
 
 // A Device is a scheduling plugin
 type Device interface {
-	CanCompile(Request) bool    // Can this device compile this request
-	MoveCost(from Device) int64 // A non-negative cost to move to this device
+	CanCompile(Request) bool // Can this device compile this request
 
 	// Compile produces a single-entry, single-exit DAG of instructions where
 	// insts[0] is the entry point and insts[len(insts)-1] is the exit point

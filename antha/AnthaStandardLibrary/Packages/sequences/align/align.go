@@ -378,9 +378,9 @@ func dnaFWDAlignment(template, query wtype.DNASequence, alignmentMatrix ScoringM
 	seq1, seq2 := template, query
 
 	fsa := &linear.Seq{Seq: alphabet.BytesToLetters([]byte(seq1.Sequence()))}
-	fsa.Alpha = alphabet.DNAgapped
+	fsa.Alpha = alphabet.DNAredundant
 	fsb := &linear.Seq{Seq: alphabet.BytesToLetters([]byte(seq2.Sequence()))}
-	fsb.Alpha = alphabet.DNAgapped
+	fsb.Alpha = alphabet.DNAredundant
 
 	aln, err := alignmentMatrix.Align(fsa, fsb)
 	if err == nil {
@@ -434,9 +434,9 @@ func dnaFWDAlignment(template, query wtype.DNASequence, alignmentMatrix ScoringM
 		seq1.Seq = tempseq
 
 		fsa = &linear.Seq{Seq: alphabet.BytesToLetters([]byte(seq1.Sequence()))}
-		fsa.Alpha = alphabet.DNAgapped
+		fsa.Alpha = alphabet.DNAredundant
 		fsb = &linear.Seq{Seq: alphabet.BytesToLetters([]byte(seq2.Sequence()))}
-		fsb.Alpha = alphabet.DNAgapped
+		fsb.Alpha = alphabet.DNAredundant
 		aln, err := alignmentMatrix.Align(fsa, fsb)
 		if err == nil {
 			var rawAlignments []RawAlignment

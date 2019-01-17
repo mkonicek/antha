@@ -363,16 +363,6 @@ func DNA(seq1, seq2 wtype.DNASequence, alignmentMatrix ScoringMatrix) (alignment
 
 func dnaFWDAlignment(template, query wtype.DNASequence, alignmentMatrix ScoringMatrix) (alignment Result, err error) {
 
-	if containsN(template) {
-		err = fmt.Errorf("template sequence %s contains N values. Please replace these with - before running alignment", template.Name())
-		return
-	}
-
-	if containsN(query) {
-		err = fmt.Errorf("query sequence %s contains N values. Please replace these with - before running alignment", query.Name())
-		return
-	}
-
 	var errs []string
 
 	seq1, seq2 := template, query

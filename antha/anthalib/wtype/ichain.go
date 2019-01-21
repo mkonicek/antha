@@ -100,21 +100,6 @@ func (it *IChain) ValueIDs() []string {
 	return r
 }
 
-func (it *IChain) Add(ins *LHInstruction) {
-	if it.Depth < ins.Generation() {
-		it.GetChild().Add(ins)
-	} else {
-		it.Values = append(it.Values, ins)
-	}
-}
-
-func (it *IChain) GetChild() *IChain {
-	if it.Child == nil {
-		it.Child = NewIChain(it)
-	}
-	return it.Child
-}
-
 func (it *IChain) Print() {
 	fmt.Println("****")
 	fmt.Println("\tPARENT NIL: ", it.Parent == nil)

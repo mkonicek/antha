@@ -11,6 +11,7 @@ import (
 	"github.com/antha-lang/antha/execute"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/target"
+	"github.com/go-test/deep"
 )
 
 // A TestOpt is an option for running a test
@@ -31,6 +32,7 @@ type MixTaskResult struct {
 	Instructions liquidhandling.SetOfRobotInstructions
 	Outputs      map[string]*wtype.Plate
 	TimeEstimate time.Duration
+	TipEstimate  []wtype.TipEstimate
 }
 
 func generaliseInstructions(insIn []liquidhandling.TerminalRobotInstruction) []liquidhandling.RobotInstruction {
@@ -83,6 +85,13 @@ func CompareTestResults(runResult *execute.Result, opt TestOpt) error {
 				timeEstimatePrecisionFactor); err != nil {
 				errstr += err.Error() + "\n"
 			}
+
+			if err := compareTipEstimates(
+				opt.Results.MixTaskResults[i].TipEstimate,
+				mixTasks[i].Request.TipsUsed); err != nil {
+				errstr += err.Error() + "\n"
+			}
+
 		} else if opt.CompareOutputs {
 			ssss := compareOutputs(opt.Results.MixTaskResults[i].Outputs, mixTasks[i].FinalProperties.Plates, opt)
 			if ssss != "" {
@@ -93,6 +102,12 @@ func CompareTestResults(runResult *execute.Result, opt TestOpt) error {
 				opt.Results.MixTaskResults[i].TimeEstimate.Seconds(),
 				mixTasks[i].Request.TimeEstimate,
 				timeEstimatePrecisionFactor); err != nil {
+				errstr += err.Error() + "\n"
+			}
+
+			if err := compareTipEstimates(
+				opt.Results.MixTaskResults[i].TipEstimate,
+				mixTasks[i].Request.TipsUsed); err != nil {
 				errstr += err.Error() + "\n"
 			}
 		}
@@ -122,6 +137,15 @@ func compareTimeEstimates(expectedTimeInSecs, testTimeInSecs, precisionFactor fl
 	return nil
 }
 
+func compareTipEstimates(expected, got []wtype.TipEstimate) error {
+	if difs := deep.Equal(expected, got); difs != nil {
+		return fmt.Errorf(
+			"tip estimate differences detected between expected results and simulation results: \n %s",
+			strings.Join(difs, "\n"))
+	}
+	return nil
+}
+
 // SaveTestOutputs extracts a TestOpt from an execution result
 func SaveTestOutputs(runResult *execute.Result, comparisonOptions string) TestOpt {
 	// get mix tasks
@@ -139,6 +163,7 @@ func SaveTestOutputs(runResult *execute.Result, comparisonOptions string) TestOp
 			// We're ok with truncating to the nearest second by casting into an int64;
 			// this is much more precise than the required precision.
 			TimeEstimate: time.Duration(time.Duration(mixTasks[i].Request.TimeEstimate) * time.Second),
+			TipEstimate:  mixTasks[i].Request.TipsUsed,
 		}
 	}
 

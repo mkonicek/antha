@@ -270,13 +270,6 @@ func (ch *IChain) SwapForChain(newch *IChain) *IChain {
 	return nil
 }
 
-func (ic *IChain) hasMixAndSplitOnly() bool {
-	/// true iff we have exactly two types of node: split and mix
-	insTypes := ic.getInstructionTypes()
-
-	return len(insTypes) == 2 && insTypes[InsNames[LHIMIX]] && insTypes[InsNames[LHISPL]]
-}
-
 func (self *IChain) getInstructionTypes() map[string]bool {
 	types := make(map[string]bool, len(self.Values))
 	for _, v := range self.Values {

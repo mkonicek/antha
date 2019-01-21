@@ -32,11 +32,6 @@ func (a *GenericHandler) CanCompile(req ast.Request) bool {
 	return can.Contains(req)
 }
 
-// MoveCost implements a Device
-func (a *GenericHandler) MoveCost(ast.Device) int64 {
-	return 0
-}
-
 func (a GenericHandler) serialize(obj interface{}) (string, error) {
 	type hasGetID interface {
 		GetID() string

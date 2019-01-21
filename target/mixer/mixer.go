@@ -17,7 +17,6 @@ import (
 	"github.com/antha-lang/antha/microArch/sampletracker"
 	planner "github.com/antha-lang/antha/microArch/scheduler/liquidhandling"
 	"github.com/antha-lang/antha/target"
-	"github.com/antha-lang/antha/target/human"
 )
 
 var (
@@ -48,14 +47,6 @@ func (a *Mixer) CanCompile(req ast.Request) bool {
 		can.Selector = append(can.Selector, target.DriverSelectorV1Prompter)
 	}
 	return can.Contains(req)
-}
-
-// MoveCost implements a Device
-func (a *Mixer) MoveCost(from ast.Device) int64 {
-	if from == a {
-		return 0
-	}
-	return human.HumanByXCost + 1
 }
 
 // FileType returns the file type for generated files

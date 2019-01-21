@@ -31,11 +31,6 @@ func (a *WOPlateReader) CanCompile(req ast.Request) bool {
 	return can.Contains(req)
 }
 
-// MoveCost implements a Device
-func (a *WOPlateReader) MoveCost(from ast.Device) int64 {
-	return 0
-}
-
 // Compile implements a Device
 func (a *WOPlateReader) Compile(ctx context.Context, nodes []ast.Node) ([]ast.Inst, error) {
 

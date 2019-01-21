@@ -222,7 +222,7 @@ func (a *ir) assignDevices(t *target.Target) error {
 			return
 		},
 		EdgeWeight: func(a, b int) int64 {
-			return devices[a].MoveCost(devices[b])
+			return 0
 		},
 	})
 	if err != nil {

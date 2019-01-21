@@ -34,11 +34,6 @@ func (a *QPCRDevice) CanCompile(req ast.Request) bool {
 	return can.Contains(req)
 }
 
-// MoveCost implements a Device
-func (a *QPCRDevice) MoveCost(from ast.Device) int64 {
-	return 0
-}
-
 func (dev *QPCRDevice) transform(inst *ast.QPCRInstruction) (ast.Inst, error) {
 	if inst.Definition == "" {
 		return nil, errors.New("Blank experiment file for qPCR instruction.")

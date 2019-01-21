@@ -10,13 +10,6 @@ import (
 	"github.com/antha-lang/antha/target/handler"
 )
 
-const (
-	// HumanByHumanCost is the cost of manually moving from another human device
-	HumanByHumanCost = 50
-	// HumanByXCost is the cost of manually moving from any non-human device
-	HumanByXCost = 100
-)
-
 var (
 	_ ast.Device = &Human{}
 )
@@ -67,14 +60,6 @@ func (a *Human) CanCompile(req ast.Request) bool {
 	}
 
 	return can.Contains(req)
-}
-
-// MoveCost implements target.device MoveCost
-func (a *Human) MoveCost(from ast.Device) int64 {
-	if _, ok := from.(*Human); ok {
-		return HumanByHumanCost
-	}
-	return HumanByXCost
 }
 
 // Compile implements target.device Compile

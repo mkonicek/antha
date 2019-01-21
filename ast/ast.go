@@ -34,20 +34,20 @@ type Node interface {
 
 // A Command is high-level instruction.
 type Command struct {
-	From     []Node      // Inputs
-	Requests []Request   // Requirements for device selection
-	Inst     interface{} // Command-specific data
-	Output   []Inst      // Output from compilation
+	From    []Node      // Inputs
+	Request Request     // Requirements for device selection
+	Inst    interface{} // Command-specific data
+	Output  []Inst      // Output from compilation
 }
 
 // NodeString implements graph pretty printing
 func (a *Command) NodeString() string {
 	return fmt.Sprintf("%+v", struct {
-		Requests interface{}
-		Inst     string
+		Request interface{}
+		Inst    string
 	}{
-		Requests: a.Requests,
-		Inst:     fmt.Sprintf("%T", a.Inst),
+		Request: a.Request,
+		Inst:    fmt.Sprintf("%T", a.Inst),
 	})
 }
 

@@ -168,7 +168,7 @@ func (a *ir) assignDevices(t *target.Target) error {
 		for i, inum := 0, a.Commands.NumOuts(n); i < inum; i++ {
 			kid := a.Commands.Out(n, i)
 			if c, ok := kid.(*ast.Command); ok {
-				reqs = append(reqs, c.Requests...)
+				reqs = append(reqs, c.Request)
 			}
 		}
 		return
@@ -180,7 +180,7 @@ func (a *ir) assignDevices(t *target.Target) error {
 		var reqs []ast.Request
 		isBundle := false
 		if c, ok := n.(*ast.Command); ok {
-			reqs = c.Requests
+			reqs = append(reqs, c.Request)
 		} else if b, ok := n.(*ast.Bundle); ok {
 			// Try to find device that can do everything
 			reqs = bundleReqs(b)

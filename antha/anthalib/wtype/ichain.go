@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"sort"
 	"strings"
-
-	"github.com/antha-lang/antha/graph"
 )
 
 type IChain struct {
@@ -270,52 +268,6 @@ func (ch *IChain) SwapForChain(newch *IChain) *IChain {
 	}
 
 	return nil
-}
-
-type icGraph struct {
-	edges map[graph.Node][]graph.Node
-	nodes []graph.Node
-}
-
-func (g icGraph) NumNodes() int {
-	return len(g.nodes)
-}
-
-func (g icGraph) Node(i int) graph.Node {
-	return g.nodes[i]
-}
-
-func (g icGraph) NumOuts(n graph.Node) int {
-	a, ok := g.edges[n]
-
-	if ok {
-		return len(a)
-	} else {
-		return 0
-	}
-}
-
-func (g icGraph) Out(n graph.Node, i int) graph.Node {
-	return g.edges[n][i]
-}
-
-//AsGraph returns the chain in graph form, unidirectional only
-func (ic *IChain) AsGraph() graph.Graph {
-	edges := make(map[graph.Node][]graph.Node)
-	nodes := make([]graph.Node, 0, 1)
-	n := 1
-	for curr := ic; curr != nil; curr = curr.Child {
-		nodes = append(nodes, curr)
-		if curr.Child != nil {
-			edges[graph.Node(curr)] = []graph.Node{graph.Node(curr.Child)}
-		}
-		n += 1
-	}
-
-	return icGraph{
-		edges: edges,
-		nodes: nodes,
-	}
 }
 
 func (ic *IChain) hasMixAndSplitOnly() bool {

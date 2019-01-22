@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/wutil/text"
 	"github.com/antha-lang/antha/execute"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/target"
@@ -153,7 +154,9 @@ func compareTipEstimates(expected, got []wtype.TipEstimate) error {
 	sortTipEstimates(got)
 	if difs := deep.Equal(expected, got); difs != nil {
 		return fmt.Errorf(
-			"tip estimate differences detected between expected results and simulation results: \n %s",
+			"Expected tip estimate: \n %s \n Got: \n %s \n Differences: \n %s",
+			text.PrettyPrint(expected),
+			text.PrettyPrint(got),
 			strings.Join(difs, "\n"))
 	}
 	return nil

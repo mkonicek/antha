@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"sort"
 	"strings"
 	"time"
 
@@ -137,7 +138,19 @@ func compareTimeEstimates(expectedTimeInSecs, testTimeInSecs, precisionFactor fl
 	return nil
 }
 
+type tipSorter []wtype.TipEstimate
+
+func (s tipSorter) Len() int           { return len(s) }
+func (s tipSorter) Less(i, j int) bool { return s[i].TipType < s[j].TipType }
+func (s tipSorter) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+
+func sortTipEstimates(input []wtype.TipEstimate) {
+	sort.Sort(tipSorter(input))
+}
+
 func compareTipEstimates(expected, got []wtype.TipEstimate) error {
+	sortTipEstimates(expected)
+	sortTipEstimates(got)
 	if difs := deep.Equal(expected, got); difs != nil {
 		return fmt.Errorf(
 			"tip estimate differences detected between expected results and simulation results: \n %s",

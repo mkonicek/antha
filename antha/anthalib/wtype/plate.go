@@ -706,18 +706,6 @@ func (lhp *Plate) dup(keep_ids bool) *Plate {
 	return ret
 }
 
-func (p *Plate) ProtectAllWells() {
-	for _, v := range p.Wellcoords {
-		v.Protect()
-	}
-}
-
-func (p *Plate) UnProtectAllWells() {
-	for _, v := range p.Wellcoords {
-		v.UnProtect()
-	}
-}
-
 func Initialize_Wells(plate *Plate) {
 	wells := (*plate).HWells
 	newwells := make(map[string]*LHWell, len(wells))

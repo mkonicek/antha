@@ -743,7 +743,7 @@ func (p *Antha) validateMessages(messages []*Message) error {
 			for _, field := range msg.Fields {
 
 				if _, seen := p.tokenByParamName[field.Name]; seen {
-					return fmt.Errorf("%s already declared", name)
+					return fmt.Errorf("%s already declared: %s", name, field.Name)
 				}
 				p.tokenByParamName[field.Name] = msg.Kind
 			}

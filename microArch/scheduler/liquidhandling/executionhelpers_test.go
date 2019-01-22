@@ -1,10 +1,11 @@
 package liquidhandling
 
 import (
+	"testing"
+
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"testing"
 )
 
 func GetMixForTest(id string, input ...*wtype.Liquid) (*wtype.LHInstruction, *wtype.Liquid) {
@@ -43,7 +44,7 @@ func GetPromptForTest(message string, inputs ...*wtype.Liquid) (*wtype.LHInstruc
 	for _, input := range inputs {
 		output := input.Cp()
 		output.ParentID = input.ID
-		input.DaughterID = output.ID
+		input.DaughtersID = map[string]struct{}{output.ID: {}}
 		ret.AddInput(input)
 		ret.AddOutput(output)
 	}

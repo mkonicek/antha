@@ -92,7 +92,10 @@ func runCompile(cmd *cobra.Command, args []string) error {
 
 			// Collect errors processing errors
 			if err := processFile(root, path, outdir); err != nil {
-				errs = append(errs, err)
+				errs = append(
+					errs,
+					fmt.Errorf("error processing file: %s \n Error: %s", path, err),
+				)
 			}
 
 			return nil

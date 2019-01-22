@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"sort"
 	"strings"
-
-	"github.com/antha-lang/antha/graph"
 )
 
 type IChain struct {
@@ -100,21 +98,6 @@ func (it *IChain) ValueIDs() []string {
 		r = append(r, v.ID)
 	}
 	return r
-}
-
-func (it *IChain) Add(ins *LHInstruction) {
-	if it.Depth < ins.Generation() {
-		it.GetChild().Add(ins)
-	} else {
-		it.Values = append(it.Values, ins)
-	}
-}
-
-func (it *IChain) GetChild() *IChain {
-	if it.Child == nil {
-		it.Child = NewIChain(it)
-	}
-	return it.Child
 }
 
 func (it *IChain) Print() {
@@ -270,59 +253,6 @@ func (ch *IChain) SwapForChain(newch *IChain) *IChain {
 	}
 
 	return nil
-}
-
-type icGraph struct {
-	edges map[graph.Node][]graph.Node
-	nodes []graph.Node
-}
-
-func (g icGraph) NumNodes() int {
-	return len(g.nodes)
-}
-
-func (g icGraph) Node(i int) graph.Node {
-	return g.nodes[i]
-}
-
-func (g icGraph) NumOuts(n graph.Node) int {
-	a, ok := g.edges[n]
-
-	if ok {
-		return len(a)
-	} else {
-		return 0
-	}
-}
-
-func (g icGraph) Out(n graph.Node, i int) graph.Node {
-	return g.edges[n][i]
-}
-
-//AsGraph returns the chain in graph form, unidirectional only
-func (ic *IChain) AsGraph() graph.Graph {
-	edges := make(map[graph.Node][]graph.Node)
-	nodes := make([]graph.Node, 0, 1)
-	n := 1
-	for curr := ic; curr != nil; curr = curr.Child {
-		nodes = append(nodes, curr)
-		if curr.Child != nil {
-			edges[graph.Node(curr)] = []graph.Node{graph.Node(curr.Child)}
-		}
-		n += 1
-	}
-
-	return icGraph{
-		edges: edges,
-		nodes: nodes,
-	}
-}
-
-func (ic *IChain) hasMixAndSplitOnly() bool {
-	/// true iff we have exactly two types of node: split and mix
-	insTypes := ic.getInstructionTypes()
-
-	return len(insTypes) == 2 && insTypes[InsNames[LHIMIX]] && insTypes[InsNames[LHISPL]]
 }
 
 func (self *IChain) getInstructionTypes() map[string]bool {

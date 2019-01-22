@@ -32,7 +32,13 @@ type Node interface {
 	NodeString() string
 }
 
-// A Command is high-level instruction.
+// A Command is high-level instruction. Both UseComp and Bundles are
+// currently issued only by the ast, maker, and codegen areas of
+// code. Command is different: the instruction trace is populated by
+// commandInst objects, each of which contain a Command
+// object. However, at that stage some of the fields of Command are
+// not correctly populated, and so these are modified by the maker at
+// the same point at which UseComp objects are issued.
 type Command struct {
 	From    []Node      // Inputs
 	Request Request     // Requirements for device selection

@@ -1,8 +1,6 @@
 package execute
 
 import (
-	"strings"
-
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/ast"
 )
@@ -123,7 +121,7 @@ func (a *maker) MakeNodes(insts []*commandInst) ([]ast.Node, error) {
 
 	for comp := range a.byComp {
 		// Contains all descendents rather then direct ones
-		for _, kid := range strings.Split(comp.DaughterID, "_") {
+		for kid := range comp.DaughtersID {
 			if comp.ID != kid {
 				a.afterSample[comp.ID] = append(a.afterSample[comp.ID], kid)
 			}

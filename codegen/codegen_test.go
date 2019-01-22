@@ -56,11 +56,9 @@ func TestWellFormed(t *testing.T) {
 	var nodes []ast.Node
 	for idx := 0; idx < 4; idx++ {
 		m := &ast.Command{
-			Requests: []ast.Request{
-				{
-					Selector: []ast.NameValue{
-						target.DriverSelectorV1Mixer,
-					},
+			Request: ast.Request{
+				Selector: []ast.NameValue{
+					target.DriverSelectorV1Mixer,
 				},
 			},
 			Inst: &wtype.LHInstruction{},
@@ -74,11 +72,9 @@ func TestWellFormed(t *testing.T) {
 		u.From = append(u.From, m)
 
 		i := &ast.Command{
-			Requests: []ast.Request{
-				{
-					Selector: []ast.NameValue{
-						target.DriverSelectorV1ShakerIncubator,
-					},
+			Request: ast.Request{
+				Selector: []ast.NameValue{
+					target.DriverSelectorV1ShakerIncubator,
 				},
 			},
 			Inst: &ast.IncubateInst{},

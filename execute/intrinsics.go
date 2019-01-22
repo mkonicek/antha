@@ -80,17 +80,13 @@ func Incubate(ctx context.Context, in *wtype.Liquid, opt IncubateOpt) *wtype.Liq
 		result: []*wtype.Liquid{newCompFromComp(ctx, in)},
 		Command: &ast.Command{
 			Inst: innerInst,
+			Request: ast.Request{
+				Selector: []ast.NameValue{
+					target.DriverSelectorV1ShakerIncubator,
+				},
+			},
 		},
 	}
-
-	// TODO: revisit when ast.Request architecture is removed as this command
-	// cannot be assigned independently. It needs to be linked with a previous
-	// Incubate. For now assume just one incubator and use explicit selector
-	inst.Command.Requests = append(inst.Command.Requests, ast.Request{
-		Selector: []ast.NameValue{
-			target.DriverSelectorV1ShakerIncubator,
-		},
-	})
 
 	Issue(ctx, inst)
 	return inst.result[0]
@@ -134,14 +130,13 @@ func Prompt(ctx context.Context, in *wtype.Liquid, message string) *wtype.Liquid
 			Inst: &ast.PromptInst{
 				Message: message,
 			},
+			Request: ast.Request{
+				Selector: []ast.NameValue{
+					target.DriverSelectorV1Human,
+				},
+			},
 		},
 	}
-
-	inst.Command.Requests = append(inst.Command.Requests, ast.Request{
-		Selector: []ast.NameValue{
-			target.DriverSelectorV1Human,
-		},
-	})
 
 	Issue(ctx, inst)
 	return inst.result[0]
@@ -160,11 +155,9 @@ func mixerPrompt(ctx context.Context, opts mixerPromptOpts) *commandInst {
 		result: []*wtype.Liquid{opts.Component},
 		Command: &ast.Command{
 			Inst: inst,
-			Requests: []ast.Request{
-				{
-					Selector: []ast.NameValue{
-						target.DriverSelectorV1Prompter,
-					},
+			Request: ast.Request{
+				Selector: []ast.NameValue{
+					target.DriverSelectorV1Prompter,
 				},
 			},
 		},
@@ -192,7 +185,7 @@ func handle(ctx context.Context, opt HandleOpt) *commandInst {
 
 				Calls: opt.Calls,
 			},
-			Requests: []ast.Request{{Selector: sels}},
+			Request: ast.Request{Selector: sels},
 		},
 	}
 }
@@ -231,11 +224,9 @@ func readPlate(ctx context.Context, opts PlateReadOpts) *commandInst {
 		result: []*wtype.Liquid{inst.ComponentOut},
 		Command: &ast.Command{
 			Inst: inst,
-			Requests: []ast.Request{
-				{
-					Selector: []ast.NameValue{
-						target.DriverSelectorV1WriteOnlyPlateReader,
-					},
+			Request: ast.Request{
+				Selector: []ast.NameValue{
+					target.DriverSelectorV1WriteOnlyPlateReader,
 				},
 			},
 		},
@@ -275,11 +266,9 @@ func runQPCR(ctx context.Context, opts QPCROptions, command string) *commandInst
 		result: inst.ComponentOut,
 		Command: &ast.Command{
 			Inst: inst,
-			Requests: []ast.Request{
-				{
-					Selector: []ast.NameValue{
-						target.DriverSelectorV1QPCRDevice,
-					},
+			Request: ast.Request{
+				Selector: []ast.NameValue{
+					target.DriverSelectorV1QPCRDevice,
 				},
 			},
 		},
@@ -325,17 +314,11 @@ func mix(ctx context.Context, inst *wtype.LHInstruction) *commandInst {
 	//result.BlockID = inst.BlockID // DELETEME
 
 	mx := 0
-	var reqs []ast.Request
 	// from the protocol POV components need to be passed by value
 	for i, c := range wtype.CopyComponentArray(inst.Inputs) {
 		if c.CName == "" {
 			panic("Nameless Component used in Mix - this is not permitted")
 		}
-		reqs = append(reqs, ast.Request{
-			Selector: []ast.NameValue{
-				target.DriverSelectorV1Mixer,
-			},
-		})
 		c.Order = i
 
 		//result.MixPreserveTvol(c)
@@ -352,8 +335,12 @@ func mix(ctx context.Context, inst *wtype.LHInstruction) *commandInst {
 	return &commandInst{
 		Args: inst.Inputs,
 		Command: &ast.Command{
-			Requests: reqs,
-			Inst:     inst,
+			Inst: inst,
+			Request: ast.Request{
+				Selector: []ast.NameValue{
+					target.DriverSelectorV1Mixer,
+				},
+			},
 		},
 		result: []*wtype.Liquid{result},
 	}
@@ -448,12 +435,12 @@ func splitSample(ctx context.Context, component *wtype.Liquid, volume wunit.Volu
 	inst := &commandInst{
 		Args: []*wtype.Liquid{component},
 		Command: &ast.Command{
-			Requests: []ast.Request{{
+			Inst: split,
+			Request: ast.Request{
 				Selector: []ast.NameValue{
 					target.DriverSelectorV1Mixer,
-				}},
+				},
 			},
-			Inst: split,
 		},
 		result: []*wtype.Liquid{cmpMoving, cmpStaying},
 	}

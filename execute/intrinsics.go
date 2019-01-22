@@ -428,8 +428,8 @@ func splitSample(ctx context.Context, component *wtype.Liquid, volume wunit.Volu
 	//the ID of the component that is staying has been updated
 	sampletracker.FromContext(ctx).UpdateIDOf(component.ID, cmpStaying.ID)
 
-	split.Outputs = append(split.Outputs, cmpMoving)
-	split.Outputs = append(split.Outputs, cmpStaying)
+	split.AddOutput(cmpMoving)
+	split.AddOutput(cmpStaying)
 
 	// Create Instruction
 	inst := &commandInst{

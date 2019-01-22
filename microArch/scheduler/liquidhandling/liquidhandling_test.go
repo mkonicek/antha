@@ -1258,7 +1258,8 @@ func getTestSplitSample(ctx context.Context, component *wtype.Liquid, volume flo
 	cmpMoving, cmpStaying := mixer.SplitSample(component, wunit.NewVolume(volume, "ul"))
 	sampletracker.FromContext(ctx).UpdateIDOf(component.ID, cmpStaying.ID)
 
-	ret.Outputs = append(ret.Outputs, cmpMoving, cmpStaying)
+	ret.AddOutput(cmpMoving)
+	ret.AddOutput(cmpStaying)
 
 	return ret
 }

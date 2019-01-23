@@ -3,10 +3,10 @@ package auto
 import (
 	"context"
 
-	"github.com/antha-lang/antha/ast"
 	driver "github.com/antha-lang/antha/driver/antha_driver_v1"
 	runner "github.com/antha-lang/antha/driver/antha_runner_v1"
 	lhclient "github.com/antha-lang/antha/driver/liquidhandling/client"
+	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/target/handler"
 	"github.com/antha-lang/antha/target/human"
 	"github.com/antha-lang/antha/target/mixer"
@@ -51,7 +51,7 @@ func (a *tryer) AddDriver(ctx context.Context, conn *grpc.ClientConn, arg interf
 
 	default:
 		h := handler.New(
-			[]ast.NameValue{
+			[]effects.NameValue{
 				{
 					Name:  "antha.driver.v1.TypeReply.type",
 					Value: reply.Type,

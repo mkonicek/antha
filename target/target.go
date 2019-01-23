@@ -5,7 +5,7 @@ package target
 import (
 	"errors"
 
-	"github.com/antha-lang/antha/ast"
+	"github.com/antha-lang/antha/laboratory/effects"
 )
 
 var (
@@ -20,31 +20,31 @@ const (
 
 // Well known device plugins (drivers) selectors
 var (
-	DriverSelectorV1Human = ast.NameValue{
+	DriverSelectorV1Human = effects.NameValue{
 		Name:  DriverSelectorV1Name,
 		Value: "antha.human.v1.Human",
 	}
-	DriverSelectorV1ShakerIncubator = ast.NameValue{
+	DriverSelectorV1ShakerIncubator = effects.NameValue{
 		Name:  DriverSelectorV1Name,
 		Value: "antha.shakerincubator.v1.ShakerIncubator",
 	}
-	DriverSelectorV1Mixer = ast.NameValue{
+	DriverSelectorV1Mixer = effects.NameValue{
 		Name:  DriverSelectorV1Name,
 		Value: "antha.mixer.v1.Mixer",
 	}
-	DriverSelectorV1Prompter = ast.NameValue{
+	DriverSelectorV1Prompter = effects.NameValue{
 		Name:  DriverSelectorV1Name,
 		Value: "antha.prompter.v1.Prompter",
 	}
-	DriverSelectorV1DataSource = ast.NameValue{
+	DriverSelectorV1DataSource = effects.NameValue{
 		Name:  DriverSelectorV1Name,
 		Value: "antha.datasource.v1.DataSource",
 	}
-	DriverSelectorV1WriteOnlyPlateReader = ast.NameValue{
+	DriverSelectorV1WriteOnlyPlateReader = effects.NameValue{
 		Name:  DriverSelectorV1Name,
 		Value: "antha.platereader.v1.PlateReader",
 	}
-	DriverSelectorV1QPCRDevice = ast.NameValue{
+	DriverSelectorV1QPCRDevice = effects.NameValue{
 		Name:  DriverSelectorV1Name,
 		Value: "antha.quantstudio.v1.QuantStudioService",
 	}
@@ -56,7 +56,7 @@ const theTargetKey targetKey = 0
 
 // Target for execution (collection of devices).
 type Target struct {
-	devices []Device
+	devices []effects.Device
 }
 
 // New creates a new target
@@ -64,7 +64,7 @@ func New() *Target {
 	return &Target{}
 }
 
-func (a *Target) canCompile(d Device, reqs ...ast.Request) bool {
+func (a *Target) canCompile(d effects.Device, reqs ...effects.Request) bool {
 	for _, req := range reqs {
 		if !d.CanCompile(req) {
 			return false
@@ -74,7 +74,7 @@ func (a *Target) canCompile(d Device, reqs ...ast.Request) bool {
 }
 
 // CanCompile returns the devices that can compile the given set of requests
-func (a *Target) CanCompile(reqs ...ast.Request) (r []Device) {
+func (a *Target) CanCompile(reqs ...effects.Request) (r []effects.Device) {
 	for _, d := range a.devices {
 		if a.canCompile(d, reqs...) {
 			r = append(r, d)
@@ -84,6 +84,6 @@ func (a *Target) CanCompile(reqs ...ast.Request) (r []Device) {
 }
 
 // AddDevice adds a device to the target configuration
-func (a *Target) AddDevice(d Device) {
+func (a *Target) AddDevice(d effects.Device) {
 	a.devices = append(a.devices, d)
 }

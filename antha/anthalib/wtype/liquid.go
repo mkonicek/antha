@@ -44,7 +44,7 @@ type LHComponent = Liquid
 type Liquid struct {
 	ID                 string
 	BlockID            BlockID
-	DaughterID         string
+	DaughtersID        map[string]struct{}
 	ParentID           string
 	Inst               string
 	Order              int
@@ -480,8 +480,9 @@ func (lhc *Liquid) HasParent(s string) bool {
 	return strings.Contains(lhc.ParentID, s)
 }
 
-func (lhc *Liquid) HasDaughter(s string) bool {
-	return strings.Contains(lhc.DaughterID, s)
+func (lhc *Liquid) HasDaughter(id string) bool {
+	_, found := lhc.DaughtersID[id]
+	return found
 }
 
 // Name returns the component name as a string
@@ -615,7 +616,10 @@ func (lhc *Liquid) Dup(idGen *id.IDGenerator) *Liquid {
 		c.Loc = lhc.Loc
 		c.Destination = lhc.Destination
 		c.ParentID = lhc.ParentID
-		c.DaughterID = lhc.DaughterID
+		c.DaughtersID = make(map[string]struct{}, len(lhc.DaughtersID))
+		for k, v := range lhc.DaughtersID {
+			c.DaughtersID[k] = v
+		}
 	}
 	return c
 }
@@ -667,18 +671,16 @@ func (cmp *Liquid) AddParentComponent(cmp2 *Liquid) {
 }
 
 func (cmp *Liquid) AddDaughterComponent(cmp2 *Liquid) {
-	if cmp.DaughterID != "" {
-		cmp.DaughterID += "_"
+	if cmp.DaughtersID == nil {
+		cmp.DaughtersID = make(map[string]struct{})
 	}
-
-	//cmp.DaughterID += cmp2.String()
-
-	cmp.DaughterID += cmp2.ID
+	cmp.DaughtersID[cmp2.ID] = struct{}{}
 }
 
 func (cmp *Liquid) ReplaceDaughterID(ID1, ID2 string) {
-	if cmp.DaughterID != "" {
-		cmp.DaughterID = strings.Replace(cmp.DaughterID, ID1, ID2, 1)
+	if _, found := cmp.DaughtersID[ID1]; found {
+		delete(cmp.DaughtersID, ID1)
+		cmp.DaughtersID[ID2] = struct{}{}
 	}
 }
 
@@ -800,18 +802,19 @@ func (lhc *Liquid) GetType() string {
 }
 
 func NewLHComponent(idGen *id.IDGenerator) *Liquid {
-	var lhc Liquid
-	lhc.ID = idGen.NextID()
-	lhc.Vunit = "ul"
-	lhc.Policy = make(map[string]interface{})
-	lhc.Extra = make(map[string]interface{})
-	return &lhc
+	return &Liquid{
+		ID:          idGen.NextID(),
+		DaughtersID: make(map[string]struct{}),
+		Vunit:       "ul",
+		Policy:      make(map[string]interface{}),
+		Extra:       make(map[string]interface{}),
+	}
 }
 
 //Clean the component to its initial state
 func (cmp *Liquid) Clean() {
 	cmp.Vunit = "ul"
-	cmp.DaughterID = ""
+	cmp.DaughtersID = make(map[string]struct{})
 	cmp.ParentID = ""
 	cmp.Inst = ""
 	cmp.Order = 0

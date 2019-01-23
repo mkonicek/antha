@@ -2,6 +2,7 @@ package codegen
 
 import (
 	"github.com/antha-lang/antha/graph"
+	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/target"
 )
 
@@ -10,19 +11,19 @@ import (
 // where we can't depend on target.Graph because we are using this to build the
 // initial DependsOn relation.
 type instGraph struct {
-	insts     []target.Inst
-	added     map[target.Inst]bool
-	dependsOn map[target.Inst][]target.Inst
-	entry     map[graph.Node]target.Inst
-	exit      map[graph.Node]target.Inst
+	insts     []effects.Inst
+	added     map[effects.Inst]bool
+	dependsOn map[effects.Inst][]effects.Inst
+	entry     map[graph.Node]effects.Inst
+	exit      map[graph.Node]effects.Inst
 }
 
 func newInstGraph() *instGraph {
 	return &instGraph{
-		added:     make(map[target.Inst]bool),
-		entry:     make(map[graph.Node]target.Inst),
-		exit:      make(map[graph.Node]target.Inst),
-		dependsOn: make(map[target.Inst][]target.Inst),
+		added:     make(map[effects.Inst]bool),
+		entry:     make(map[graph.Node]effects.Inst),
+		exit:      make(map[graph.Node]effects.Inst),
+		dependsOn: make(map[effects.Inst][]effects.Inst),
 	}
 }
 
@@ -35,15 +36,15 @@ func (a *instGraph) Node(i int) graph.Node {
 }
 
 func (a *instGraph) NumOuts(n graph.Node) int {
-	return len(a.dependsOn[n.(target.Inst)])
+	return len(a.dependsOn[n.(effects.Inst)])
 }
 
 func (a *instGraph) Out(n graph.Node, i int) graph.Node {
-	return a.dependsOn[n.(target.Inst)][i]
+	return a.dependsOn[n.(effects.Inst)][i]
 }
 
 // addInsts adds instructions to the graph
-func (a *instGraph) addInsts(insts target.Insts) {
+func (a *instGraph) addInsts(insts effects.Insts) {
 	// Add dependencies
 	for _, in := range insts {
 		a.dependsOn[in] = append(a.dependsOn[in], in.DependsOn()...)
@@ -68,7 +69,7 @@ func (a *instGraph) addInsts(insts target.Insts) {
 	}
 }
 
-func (a *instGraph) addInitializers(insts target.Insts) {
+func (a *instGraph) addInitializers(insts effects.Insts) {
 	if len(insts) == 0 {
 		return
 	}
@@ -84,7 +85,7 @@ func (a *instGraph) addInitializers(insts target.Insts) {
 	a.addInsts(insts)
 }
 
-func (a *instGraph) addFinalizers(insts target.Insts) {
+func (a *instGraph) addFinalizers(insts effects.Insts) {
 	if len(insts) == 0 {
 		return
 	}
@@ -98,7 +99,7 @@ func (a *instGraph) addFinalizers(insts target.Insts) {
 }
 
 // addRootedInsts adds instructions that correspond to a particular graph Node
-func (a *instGraph) addRootedInsts(root graph.Node, insts target.Insts) {
+func (a *instGraph) addRootedInsts(root graph.Node, insts effects.Insts) {
 	exit := &target.Wait{}
 	entry := &target.Wait{}
 
@@ -113,6 +114,6 @@ func (a *instGraph) addRootedInsts(root graph.Node, insts target.Insts) {
 		exit.AppendDependsOn(last)
 	}
 
-	newInsts := append(target.Insts{entry, exit}, insts...)
+	newInsts := append(effects.Insts{entry, exit}, insts...)
 	a.addInsts(newInsts)
 }

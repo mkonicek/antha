@@ -1,4 +1,4 @@
-package ast
+package effects
 
 import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"

@@ -3,7 +3,7 @@ package handler
 import (
 	"fmt"
 
-	"github.com/antha-lang/antha/ast"
+	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/target"
 )
 
@@ -12,12 +12,12 @@ type Handler struct {
 	*GenericHandler
 }
 
-func (h *Handler) generate(cmd interface{}) ([]target.Inst, error) {
-	hinst, ok := cmd.(*ast.HandleInst)
+func (h *Handler) generate(cmd interface{}) ([]effects.Inst, error) {
+	hinst, ok := cmd.(*effects.HandleInst)
 	if !ok {
 		return nil, fmt.Errorf("expecting %T found %T instead", hinst, cmd)
 	}
-	return []target.Inst{
+	return []effects.Inst{
 		&target.Run{
 			Dev:   h,
 			Label: hinst.Group,
@@ -27,17 +27,17 @@ func (h *Handler) generate(cmd interface{}) ([]target.Inst, error) {
 }
 
 // New creates a new handler for the given selector labels
-func New(labels []ast.NameValue) *Handler {
+func New(labels []effects.NameValue) *Handler {
 	h := &Handler{}
 	h.GenericHandler = &GenericHandler{
 		Labels:  labels,
 		GenFunc: h.generate,
 		FilterFieldsForKey: func(cmd interface{}) (interface{}, error) {
-			h, ok := cmd.(*ast.HandleInst)
+			h, ok := cmd.(*effects.HandleInst)
 			if !ok {
 				return nil, fmt.Errorf("expecting %T found %T instead", h, cmd)
 			}
-			return &ast.HandleInst{
+			return &effects.HandleInst{
 				Calls: h.Calls,
 				Group: h.Group,
 			}, nil

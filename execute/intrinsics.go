@@ -4,7 +4,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/driver"
 	"github.com/antha-lang/antha/laboratory"
 	"github.com/antha-lang/antha/laboratory/effects"
@@ -53,7 +52,7 @@ func newCompFromComp(lab *laboratory.Laboratory, in *wtype.Liquid) *wtype.Liquid
 // Incubate incubates a component
 func Incubate(lab *laboratory.Laboratory, in *wtype.Liquid, opt IncubateOpt) *wtype.Liquid {
 	// nolint: gosimple
-	innerInst := &ast.IncubateInst{
+	innerInst := &effects.IncubateInst{
 		Time:           opt.Time,
 		Temp:           opt.Temp,
 		ShakeRate:      opt.ShakeRate,
@@ -67,19 +66,15 @@ func Incubate(lab *laboratory.Laboratory, in *wtype.Liquid, opt IncubateOpt) *wt
 	inst := &effects.CommandInst{
 		Args:   []*wtype.Liquid{in},
 		Result: []*wtype.Liquid{newCompFromComp(lab, in)},
-		Command: &ast.Command{
+		Command: &effects.Command{
 			Inst: innerInst,
+			Request: effects.Request{
+				Selector: []effects.NameValue{
+					target.DriverSelectorV1ShakerIncubator,
+				},
+			},
 		},
 	}
-
-	// TODO: revisit when ast.Request architecture is removed as this command
-	// cannot be assigned independently. It needs to be linked with a previous
-	// Incubate. For now assume just one incubator and use explicit selector
-	inst.Command.Requests = append(inst.Command.Requests, ast.Request{
-		Selector: []ast.NameValue{
-			target.DriverSelectorV1ShakerIncubator,
-		},
-	})
 
 	lab.Trace.Issue(inst)
 	return inst.Result[0]
@@ -119,18 +114,17 @@ func Prompt(lab *laboratory.Laboratory, in *wtype.Liquid, message string) *wtype
 	inst := &effects.CommandInst{
 		Args:   []*wtype.Liquid{in},
 		Result: []*wtype.Liquid{newCompFromComp(lab, in)},
-		Command: &ast.Command{
-			Inst: &ast.PromptInst{
+		Command: &effects.Command{
+			Inst: &effects.PromptInst{
 				Message: message,
+			},
+			Request: effects.Request{
+				Selector: []effects.NameValue{
+					target.DriverSelectorV1Human,
+				},
 			},
 		},
 	}
-
-	inst.Command.Requests = append(inst.Command.Requests, ast.Request{
-		Selector: []ast.NameValue{
-			target.DriverSelectorV1Human,
-		},
-	})
 
 	lab.Trace.Issue(inst)
 	return inst.Result[0]
@@ -147,13 +141,11 @@ func mixerPrompt(lab *laboratory.Laboratory, opts mixerPromptOpts) *effects.Comm
 	return &effects.CommandInst{
 		Args:   []*wtype.Liquid{opts.ComponentIn},
 		Result: []*wtype.Liquid{opts.Component},
-		Command: &ast.Command{
+		Command: &effects.Command{
 			Inst: inst,
-			Requests: []ast.Request{
-				{
-					Selector: []ast.NameValue{
-						target.DriverSelectorV1Prompter,
-					},
+			Request: effects.Request{
+				Selector: []effects.NameValue{
+					target.DriverSelectorV1Prompter,
 				},
 			},
 		},
@@ -163,25 +155,25 @@ func mixerPrompt(lab *laboratory.Laboratory, opts mixerPromptOpts) *effects.Comm
 func handle(lab *laboratory.Laboratory, opt HandleOpt) *effects.CommandInst {
 	comp := newCompFromComp(lab, opt.Component)
 
-	var sels []ast.NameValue
+	var sels []effects.NameValue
 
 	if len(opt.Selector) == 0 {
 		sels = append(sels, target.DriverSelectorV1Human)
 	} else {
 		for n, v := range opt.Selector {
-			sels = append(sels, ast.NameValue{Name: n, Value: v})
+			sels = append(sels, effects.NameValue{Name: n, Value: v})
 		}
 	}
 
 	return &effects.CommandInst{
 		Args:   []*wtype.Liquid{opt.Component},
 		Result: []*wtype.Liquid{comp},
-		Command: &ast.Command{
-			Inst: &ast.HandleInst{
+		Command: &effects.Command{
+			Inst: &effects.HandleInst{
 
 				Calls: opt.Calls,
 			},
-			Requests: []ast.Request{{Selector: sels}},
+			Request: effects.Request{Selector: sels},
 		},
 	}
 }
@@ -218,13 +210,11 @@ func readPlate(lab *laboratory.Laboratory, opts PlateReadOpts) *effects.CommandI
 	return &effects.CommandInst{
 		Args:   []*wtype.Liquid{opts.Sample},
 		Result: []*wtype.Liquid{inst.ComponentOut},
-		Command: &ast.Command{
+		Command: &effects.Command{
 			Inst: inst,
-			Requests: []ast.Request{
-				{
-					Selector: []ast.NameValue{
-						target.DriverSelectorV1WriteOnlyPlateReader,
-					},
+			Request: effects.Request{
+				Selector: []effects.NameValue{
+					target.DriverSelectorV1WriteOnlyPlateReader,
 				},
 			},
 		},
@@ -247,7 +237,7 @@ type QPCROptions struct {
 }
 
 func runQPCR(lab *laboratory.Laboratory, opts QPCROptions, command string) *effects.CommandInst {
-	inst := &ast.QPCRInstruction{ID: lab.IDGenerator.NextID()}
+	inst := &effects.QPCRInstruction{ID: lab.IDGenerator.NextID()}
 	inst.Command = command
 	inst.ComponentIn = opts.Reactions
 	inst.Definition = opts.Definition
@@ -262,13 +252,11 @@ func runQPCR(lab *laboratory.Laboratory, opts QPCROptions, command string) *effe
 	return &effects.CommandInst{
 		Args:   opts.Reactions,
 		Result: inst.ComponentOut,
-		Command: &ast.Command{
+		Command: &effects.Command{
 			Inst: inst,
-			Requests: []ast.Request{
-				{
-					Selector: []ast.NameValue{
-						target.DriverSelectorV1QPCRDevice,
-					},
+			Request: effects.Request{
+				Selector: []effects.NameValue{
+					target.DriverSelectorV1QPCRDevice,
 				},
 			},
 		},
@@ -314,17 +302,11 @@ func mix(lab *laboratory.Laboratory, inst *wtype.LHInstruction) *effects.Command
 	//result.BlockID = inst.BlockID // DELETEME
 
 	mx := 0
-	var reqs []ast.Request
 	// from the protocol POV components need to be passed by value
 	for i, c := range wtype.CopyComponentArray(lab.IDGenerator, inst.Inputs) {
 		if c.CName == "" {
 			panic("Nameless Component used in Mix - this is not permitted")
 		}
-		reqs = append(reqs, ast.Request{
-			Selector: []ast.NameValue{
-				target.DriverSelectorV1Mixer,
-			},
-		})
 		c.Order = i
 
 		//result.MixPreserveTvol(c)
@@ -340,9 +322,13 @@ func mix(lab *laboratory.Laboratory, inst *wtype.LHInstruction) *effects.Command
 
 	return &effects.CommandInst{
 		Args: inst.Inputs,
-		Command: &ast.Command{
-			Requests: reqs,
-			Inst:     inst,
+		Command: &effects.Command{
+			Inst: inst,
+			Request: effects.Request{
+				Selector: []effects.NameValue{
+					target.DriverSelectorV1Mixer,
+				},
+			},
 		},
 		Result: []*wtype.Liquid{result},
 	}
@@ -430,19 +416,19 @@ func splitSample(lab *laboratory.Laboratory, component *wtype.Liquid, volume wun
 	//the ID of the component that is staying has been updated
 	lab.SampleTracker.UpdateIDOf(component.ID, cmpStaying.ID)
 
-	split.Outputs = append(split.Outputs, cmpMoving)
-	split.Outputs = append(split.Outputs, cmpStaying)
+	split.AddOutput(cmpMoving)
+	split.AddOutput(cmpStaying)
 
 	// Create Instruction
 	inst := &effects.CommandInst{
 		Args: []*wtype.Liquid{component},
-		Command: &ast.Command{
-			Requests: []ast.Request{{
-				Selector: []ast.NameValue{
-					target.DriverSelectorV1Mixer,
-				}},
-			},
+		Command: &effects.Command{
 			Inst: split,
+			Request: effects.Request{
+				Selector: []effects.NameValue{
+					target.DriverSelectorV1Mixer,
+				},
+			},
 		},
 		Result: []*wtype.Liquid{cmpMoving, cmpStaying},
 	}

@@ -10,7 +10,6 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/codegen"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/target"
@@ -131,7 +130,7 @@ func (labBuild *LaboratoryBuilder) RunElements() error {
 	}
 }
 
-func (labBuild *LaboratoryBuilder) Compile(target *target.Target) ([]ast.Node, []target.Inst, error) {
+func (labBuild *LaboratoryBuilder) Compile(target *target.Target) ([]effects.Node, []effects.Inst, error) {
 	if nodes, err := labBuild.Maker.MakeNodes(labBuild.Trace.Instructions()); err != nil {
 		return nil, nil, err
 	} else if instrs, err := codegen.Compile(labBuild.LaboratoryEffects, target, nodes); err != nil {

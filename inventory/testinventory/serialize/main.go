@@ -3,10 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/inventory/testinventory"
 	"sort"
 	"strings"
+
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/inventory/testinventory"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 const (
@@ -18,7 +20,9 @@ const (
 func main() {
 	platesForSerializing := make([]testinventory.PlateForSerializing, 0, 1)
 
-	thePlates := makePlates()
+	idGen := id.NewIDGenerator("plateMaker")
+
+	thePlates := makePlates(idGen)
 
 	plateNames := make([]string, 0, len(thePlates))
 

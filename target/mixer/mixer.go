@@ -10,16 +10,14 @@ import (
 	"time"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/laboratory/effects"
 	driver "github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	planner "github.com/antha-lang/antha/microArch/scheduler/liquidhandling"
 	"github.com/antha-lang/antha/target"
-	"github.com/antha-lang/antha/target/human"
 )
 
 var (
-	_ target.Device = &Mixer{}
+	_ effects.Device = &Mixer{}
 )
 
 // A Mixer is a device plugin for mixer devices
@@ -34,10 +32,10 @@ func (a *Mixer) String() string {
 }
 
 // CanCompile implements a Device
-func (a *Mixer) CanCompile(req ast.Request) bool {
+func (a *Mixer) CanCompile(req effects.Request) bool {
 	// TODO: Add specific volume constraints
-	can := ast.Request{
-		Selector: []ast.NameValue{
+	can := effects.Request{
+		Selector: []effects.NameValue{
 			target.DriverSelectorV1Mixer,
 			target.DriverSelectorV1Prompter,
 		},
@@ -46,14 +44,6 @@ func (a *Mixer) CanCompile(req ast.Request) bool {
 		can.Selector = append(can.Selector, target.DriverSelectorV1Prompter)
 	}
 	return can.Contains(req)
-}
-
-// MoveCost implements a Device
-func (a *Mixer) MoveCost(from target.Device) int64 {
-	if from == a {
-		return 0
-	}
-	return human.HumanByXCost + 1
 }
 
 // FileType returns the file type for generated files
@@ -222,10 +212,10 @@ func (a *Mixer) makeLhreq(labEffects *effects.LaboratoryEffects) (*lhreq, error)
 }
 
 // Compile implements a Device
-func (a *Mixer) Compile(labEffects *effects.LaboratoryEffects, nodes []ast.Node) ([]target.Inst, error) {
+func (a *Mixer) Compile(labEffects *effects.LaboratoryEffects, nodes []effects.Node) ([]effects.Inst, error) {
 	var mixes []*wtype.LHInstruction
 	for _, node := range nodes {
-		if c, ok := node.(*ast.Command); !ok {
+		if c, ok := node.(*effects.Command); !ok {
 			return nil, fmt.Errorf("cannot compile %T", node)
 		} else if m, ok := c.Inst.(*wtype.LHInstruction); !ok {
 			return nil, fmt.Errorf("cannot compile %T", c.Inst)
@@ -239,7 +229,7 @@ func (a *Mixer) Compile(labEffects *effects.LaboratoryEffects, nodes []ast.Node)
 		return nil, err
 	}
 
-	return []target.Inst{mix}, nil
+	return []effects.Inst{mix}, nil
 }
 
 func (a *Mixer) saveFile(name string) ([]byte, error) {

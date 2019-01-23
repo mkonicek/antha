@@ -1,10 +1,13 @@
 package target
 
-import "github.com/antha-lang/antha/graph"
+import (
+	"github.com/antha-lang/antha/graph"
+	"github.com/antha-lang/antha/laboratory/effects"
+)
 
 // Graph is a view of instructions as a graph
 type Graph struct {
-	Insts []Inst
+	Insts []effects.Inst
 }
 
 // NumNodes implements a Graph
@@ -19,10 +22,10 @@ func (a *Graph) Node(i int) graph.Node {
 
 // NumOuts implements a Graph
 func (a *Graph) NumOuts(n graph.Node) int {
-	return len(n.(Inst).DependsOn())
+	return len(n.(effects.Inst).DependsOn())
 }
 
 // Out implements a Graph
 func (a *Graph) Out(n graph.Node, i int) graph.Node {
-	return n.(Inst).DependsOn()[i].(graph.Node)
+	return n.(effects.Inst).DependsOn()[i].(graph.Node)
 }

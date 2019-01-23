@@ -5,30 +5,19 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/driver"
+	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	lh "github.com/antha-lang/antha/microArch/scheduler/liquidhandling"
 )
 
-// An Inst is a instruction
-type Inst interface {
-	// Device that this instruction was generated for
-	Device() Device
-	// DependsOn returns instructions that this instruction depends on
-	DependsOn() []Inst
-	// SetDependsOn sets to the list of dependencies to only the args
-	SetDependsOn(...Inst)
-	// AppendDependsOn adds to the args to the existing list of dependencies
-	AppendDependsOn(...Inst)
-}
-
 // An Initializer is an instruction with initialization instructions
 type Initializer interface {
-	GetInitializers() []Inst
+	GetInitializers() []effects.Inst
 }
 
 // A Finalizer is an instruction with finalization instructions
 type Finalizer interface {
-	GetFinalizers() []Inst
+	GetFinalizers() []effects.Inst
 }
 
 // A TimeEstimator is an instruction that can estimate its own execution time
@@ -44,28 +33,28 @@ type TipEstimator interface {
 }
 
 type dependsMixin struct {
-	Depends []Inst
+	Depends []effects.Inst
 }
 
 // DependsOn implements an Inst
-func (a *dependsMixin) DependsOn() []Inst {
+func (a *dependsMixin) DependsOn() []effects.Inst {
 	return a.Depends
 }
 
 // SetDependsOn implements an Inst
-func (a *dependsMixin) SetDependsOn(x ...Inst) {
+func (a *dependsMixin) SetDependsOn(x ...effects.Inst) {
 	a.Depends = x
 }
 
 // AppendDependsOn implements an Inst
-func (a *dependsMixin) AppendDependsOn(x ...Inst) {
+func (a *dependsMixin) AppendDependsOn(x ...effects.Inst) {
 	a.Depends = append(a.Depends, x...)
 }
 
 type noDeviceMixin struct{}
 
 // Device implements an Inst
-func (a noDeviceMixin) Device() Device {
+func (a noDeviceMixin) Device() effects.Device {
 	return nil
 }
 
@@ -104,17 +93,17 @@ var (
 type Mix struct {
 	dependsMixin
 
-	Dev             Device
+	Dev             effects.Device
 	Request         *lh.LHRequest
 	Properties      *liquidhandling.LHProperties
 	FinalProperties *liquidhandling.LHProperties
 	Final           map[string]string // Map from ids in Properties to FinalProperties
 	Files           Files
-	Initializers    []Inst
+	Initializers    []effects.Inst
 }
 
 // Device implements an Inst
-func (a *Mix) Device() Device {
+func (a *Mix) Device() effects.Device {
 	return a.Dev
 }
 
@@ -142,7 +131,7 @@ func (a *Mix) GetTipEstimates() []wtype.TipEstimate {
 }
 
 // GetInitializers implements an Initializer
-func (a *Mix) GetInitializers() []Inst {
+func (a *Mix) GetInitializers() []effects.Inst {
 	return a.Initializers
 }
 
@@ -150,13 +139,13 @@ func (a *Mix) GetInitializers() []Inst {
 type Manual struct {
 	dependsMixin
 
-	Dev     Device
+	Dev     effects.Device
 	Label   string
 	Details string
 }
 
 // Device implements an Inst
-func (a *Manual) Device() Device {
+func (a *Manual) Device() effects.Device {
 	return a.Dev
 }
 
@@ -169,30 +158,30 @@ var (
 type Run struct {
 	dependsMixin
 
-	Dev     Device
+	Dev     effects.Device
 	Label   string
 	Details string
 	Calls   []driver.Call
 	// Additional instructions to add to beginning of instruction stream.
 	// Instructions are assumed to depend in FIFO order.
-	Initializers []Inst
+	Initializers []effects.Inst
 	// Additional instructions to add to end of instruction stream.
 	// Instructions are assumed to depend in LIFO order.
-	Finalizers []Inst
+	Finalizers []effects.Inst
 }
 
 // Device implements an Inst
-func (a *Run) Device() Device {
+func (a *Run) Device() effects.Device {
 	return a.Dev
 }
 
 // GetInitializers implements an Initializer instruction
-func (a *Run) GetInitializers() []Inst {
+func (a *Run) GetInitializers() []effects.Inst {
 	return a.Initializers
 }
 
 // GetFinalizers implements a Finalizer instruction
-func (a *Run) GetFinalizers() []Inst {
+func (a *Run) GetFinalizers() []effects.Inst {
 	return a.Finalizers
 }
 
@@ -217,18 +206,4 @@ type TimedWait struct {
 	noDeviceMixin
 
 	Duration time.Duration
-}
-
-type Insts []Inst
-
-// SequentialOrder takes a slice of instructions and modifies them
-// in-place, resetting to sequential dependencies.
-func (insts Insts) SequentialOrder() {
-	if len(insts) > 1 {
-		prev := insts[0]
-		for _, cur := range insts[1:] {
-			cur.SetDependsOn(prev)
-			prev = cur
-		}
-	}
 }

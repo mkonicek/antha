@@ -12,22 +12,22 @@ import (
 )
 
 type incubateInst struct {
-	Depends []target.Inst
+	Depends []ast.Inst
 }
 
-func (a *incubateInst) Device() target.Device {
+func (a *incubateInst) Device() ast.Device {
 	return nil
 }
 
-func (a *incubateInst) DependsOn() []target.Inst {
+func (a *incubateInst) DependsOn() []ast.Inst {
 	return a.Depends
 }
 
-func (a *incubateInst) SetDependsOn(xs ...target.Inst) {
+func (a *incubateInst) SetDependsOn(xs ...ast.Inst) {
 	a.Depends = xs
 }
 
-func (a *incubateInst) AppendDependsOn(xs ...target.Inst) {
+func (a *incubateInst) AppendDependsOn(xs ...ast.Inst) {
 	a.Depends = append(a.Depends, xs...)
 }
 
@@ -39,7 +39,7 @@ func (a *incubator) CanCompile(req ast.Request) bool {
 	return can.Contains(req)
 }
 
-func (a *incubator) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, error) {
+func (a *incubator) Compile(ctx context.Context, nodes []ast.Node) ([]ast.Inst, error) {
 	for _, n := range nodes {
 		if c, ok := n.(*ast.Command); !ok {
 			return nil, fmt.Errorf("unexpected node %T", n)
@@ -47,14 +47,7 @@ func (a *incubator) Compile(ctx context.Context, nodes []ast.Node) ([]target.Ins
 			return nil, fmt.Errorf("unexpected inst %T", c.Inst)
 		}
 	}
-	return []target.Inst{&incubateInst{}}, nil
-}
-
-func (a *incubator) MoveCost(from target.Device) int64 {
-	if a == from {
-		return 0
-	}
-	return human.HumanByXCost - 1
+	return []ast.Inst{&incubateInst{}}, nil
 }
 
 func TestWellFormed(t *testing.T) {
@@ -63,11 +56,9 @@ func TestWellFormed(t *testing.T) {
 	var nodes []ast.Node
 	for idx := 0; idx < 4; idx++ {
 		m := &ast.Command{
-			Requests: []ast.Request{
-				{
-					Selector: []ast.NameValue{
-						target.DriverSelectorV1Mixer,
-					},
+			Request: ast.Request{
+				Selector: []ast.NameValue{
+					target.DriverSelectorV1Mixer,
 				},
 			},
 			Inst: &wtype.LHInstruction{},
@@ -81,11 +72,9 @@ func TestWellFormed(t *testing.T) {
 		u.From = append(u.From, m)
 
 		i := &ast.Command{
-			Requests: []ast.Request{
-				{
-					Selector: []ast.NameValue{
-						target.DriverSelectorV1ShakerIncubator,
-					},
+			Request: ast.Request{
+				Selector: []ast.NameValue{
+					target.DriverSelectorV1ShakerIncubator,
 				},
 			},
 			Inst: &ast.IncubateInst{},

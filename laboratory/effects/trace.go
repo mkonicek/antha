@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/ast"
 )
 
 // a CommandInst is a generic intrinsic instruction
@@ -14,7 +13,7 @@ type CommandInst struct {
 	Args []*wtype.Liquid
 	// Components created by this command. Returned back to user code
 	Result  []*wtype.Liquid
-	Command *ast.Command
+	Command *Command
 }
 
 type Trace struct {

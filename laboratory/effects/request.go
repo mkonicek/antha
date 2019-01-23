@@ -1,4 +1,4 @@
-package ast
+package effects
 
 // A NameValue is a name-value pair
 type NameValue struct {

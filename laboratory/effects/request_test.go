@@ -1,4 +1,4 @@
-package ast
+package effects
 
 import "testing"
 

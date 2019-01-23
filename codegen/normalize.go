@@ -3,12 +3,12 @@ package codegen
 import (
 	"fmt"
 
-	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/graph"
+	"github.com/antha-lang/antha/laboratory/effects"
 )
 
 // Build rooted graph
-func makeRoot(nodes []ast.Node) (ast.Node, error) {
+func makeRoot(nodes []effects.Node) (effects.Node, error) {
 	someNode := func(g graph.Graph, m map[graph.Node]bool) graph.Node {
 		for i, inum := 0, g.NumNodes(); i < inum; i++ {
 			n := g.Node(i)
@@ -19,7 +19,7 @@ func makeRoot(nodes []ast.Node) (ast.Node, error) {
 		return nil
 	}
 
-	g := ast.ToGraph(ast.ToGraphOpt{
+	g := effects.ToGraph(effects.ToGraphOpt{
 		Roots: nodes,
 	})
 
@@ -46,15 +46,15 @@ func makeRoot(nodes []ast.Node) (ast.Node, error) {
 		return nil, fmt.Errorf("cycle containing %T", someNode(g, seen))
 	}
 
-	ret := &ast.Bundle{}
+	ret := &effects.Bundle{}
 	for _, r := range roots {
-		ret.From = append(ret.From, r.(ast.Node))
+		ret.From = append(ret.From, r.(effects.Node))
 	}
 	return ret, nil
 }
 
 // What is the set of UseComps that reach each command
-func buildReachingUses(g graph.Graph) map[ast.Node][]*ast.UseComp {
+func buildReachingUses(g graph.Graph) map[effects.Node][]*effects.UseComp {
 	// Simple fixpoint:
 	//   Value: set of use comps,
 	//   Merge: union
@@ -62,16 +62,16 @@ func buildReachingUses(g graph.Graph) map[ast.Node][]*ast.UseComp {
 	//     - Command c -> { }
 	//     - UseComp u -> {u}
 
-	values := make(map[ast.Node][]*ast.UseComp)
+	values := make(map[effects.Node][]*effects.UseComp)
 
-	merge := func(n ast.Node) []*ast.UseComp {
-		var vs []*ast.UseComp
+	merge := func(n effects.Node) []*effects.UseComp {
+		var vs []*effects.UseComp
 		for i, inum := 0, g.NumOuts(n); i < inum; i++ {
-			pred := g.Out(n, i).(ast.Node)
+			pred := g.Out(n, i).(effects.Node)
 			switch pred := pred.(type) {
-			case *ast.Command:
+			case *effects.Command:
 				// Kill
-			case *ast.UseComp:
+			case *effects.UseComp:
 				vs = append(vs, values[pred]...)
 				vs = append(vs, pred)
 			default:
@@ -86,8 +86,8 @@ func buildReachingUses(g graph.Graph) map[ast.Node][]*ast.UseComp {
 	for len(dag.Roots) > 0 {
 		var next []graph.Node
 		for _, n := range dag.Roots {
-			n := n.(ast.Node)
-			seen := make(map[*ast.UseComp]bool)
+			n := n.(effects.Node)
+			seen := make(map[*effects.UseComp]bool)
 
 			for _, v := range merge(n) {
 				if seen[v] {
@@ -125,14 +125,14 @@ func simplifyWithDeps(g graph.Graph, in func(n graph.Node) bool) (graph.Graph, e
 }
 
 // Build IR
-func build(root ast.Node) (*ir, error) {
-	g := ast.ToGraph(ast.ToGraphOpt{
-		Roots: []ast.Node{root},
+func build(root effects.Node) (*ir, error) {
+	g := effects.ToGraph(effects.ToGraphOpt{
+		Roots: []effects.Node{root},
 	})
 
 	// Remove UseComps primarily. They may be locally cyclic.
 	ct, err := simplifyWithDeps(g, func(n graph.Node) bool {
-		c, ok := n.(*ast.Command)
+		c, ok := n.(*effects.Command)
 		return (ok && c.Output == nil) || n == root
 	})
 

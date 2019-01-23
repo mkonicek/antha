@@ -2,11 +2,9 @@ package effects
 
 import (
 	"encoding/json"
-	"strings"
 	"sync"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/ast"
 )
 
 type Maker struct {
@@ -16,16 +14,16 @@ type Maker struct {
 	// Map from old LHComponent id to new id after sample
 	afterSample map[string][]string
 	// Map from from wtype world to ast world
-	byComp map[*wtype.Liquid]*ast.UseComp
-	byID   map[string][]*ast.UseComp
+	byComp map[*wtype.Liquid]*UseComp
+	byID   map[string][]*UseComp
 }
 
 func NewMaker() *Maker {
 	return &Maker{
 		afterInst:   make(map[string][]string),
 		afterSample: make(map[string][]string),
-		byComp:      make(map[*wtype.Liquid]*ast.UseComp),
-		byID:        make(map[string][]*ast.UseComp),
+		byComp:      make(map[*wtype.Liquid]*UseComp),
+		byID:        make(map[string][]*UseComp),
 	}
 }
 
@@ -40,10 +38,10 @@ func (m *Maker) MarshalJSON() ([]byte, error) {
 	return json.Marshal(m.afterInst)
 }
 
-func (a *Maker) makeComp(c *wtype.Liquid) *ast.UseComp {
+func (a *Maker) makeComp(c *wtype.Liquid) *UseComp {
 	u, ok := a.byComp[c]
 	if !ok {
-		u = &ast.UseComp{
+		u = &UseComp{
 			Value: c,
 		}
 		a.byComp[c] = u
@@ -54,7 +52,7 @@ func (a *Maker) makeComp(c *wtype.Liquid) *ast.UseComp {
 	return u
 }
 
-func (a *Maker) makeCommand(in *CommandInst) ast.Node {
+func (a *Maker) makeCommand(in *CommandInst) Node {
 	for _, arg := range in.Args {
 		in.Command.From = append(in.Command.From, a.makeComp(arg))
 	}
@@ -71,8 +69,8 @@ func (a *Maker) resolveReuses() {
 		// dependencies are tracked individually
 
 		// Make sure we don't introduce any loops
-		seen := make(map[*ast.UseComp]bool)
-		var us []*ast.UseComp
+		seen := make(map[*UseComp]bool)
+		var us []*UseComp
 		for _, u := range uses {
 			if seen[u] {
 				continue
@@ -111,8 +109,8 @@ func (a *Maker) resolveUpdates(m map[string][]string) {
 
 func (a *Maker) removeMultiEdges() {
 	for _, use := range a.byComp {
-		var filtered []ast.Node
-		seen := make(map[ast.Node]bool)
+		var filtered []Node
+		seen := make(map[Node]bool)
 		for _, from := range use.From {
 			if seen[from] {
 				continue
@@ -131,15 +129,15 @@ func (a *Maker) UpdateAfterInst(oldID, newID string) {
 }
 
 // Normalize commands into well-formed AST
-func (a *Maker) MakeNodes(insts []*CommandInst) ([]ast.Node, error) {
-	var nodes []ast.Node
+func (a *Maker) MakeNodes(insts []*CommandInst) ([]Node, error) {
+	var nodes []Node
 	for _, inst := range insts {
 		nodes = append(nodes, a.makeCommand(inst))
 	}
 
 	for comp := range a.byComp {
 		// Contains all descendents rather then direct ones
-		for _, kid := range strings.Split(comp.DaughterID, "_") {
+		for kid := range comp.DaughtersID {
 			if comp.ID != kid {
 				a.afterSample[comp.ID] = append(a.afterSample[comp.ID], kid)
 			}

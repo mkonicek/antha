@@ -7,6 +7,7 @@ import (
 	"errors"
 
 	runner "github.com/antha-lang/antha/driver/antha_runner_v1"
+	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/human"
 	"google.golang.org/grpc"
@@ -33,7 +34,7 @@ type Auto struct {
 	Target  *target.Target
 	Conns   []*grpc.ClientConn
 	runners map[string][]runner.RunnerClient
-	handler map[target.Device]*grpc.ClientConn
+	handler map[effects.Device]*grpc.ClientConn
 }
 
 // Close releases any resources like network connections associated
@@ -55,7 +56,7 @@ func New(opt Opt) (ret *Auto, err error) {
 	ret = &Auto{
 		Target:  target.New(),
 		runners: make(map[string][]runner.RunnerClient),
-		handler: make(map[target.Device]*grpc.ClientConn),
+		handler: make(map[effects.Device]*grpc.ClientConn),
 	}
 
 	defer func() {

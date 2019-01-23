@@ -6,37 +6,26 @@ package codegen
 import (
 	"fmt"
 	"io"
-	"math"
 	"sort"
 	"strings"
 
-	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/graph"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/human"
 )
 
-const (
-	useTreePartition = false
-)
-
 // Intermediate representation.
 type ir struct {
-	Root         ast.Node
-	Graph        *ast.Graph                  // Graph of ast.Nodes
-	Commands     graph.Graph                 // DAG of ast.Commands (and potentially BundleExpr root)
-	DeviceDeps   graph.QGraph                // Dependencies of druns
-	reachingUses map[ast.Node][]*ast.UseComp // Reaching comps
-	assignment   map[ast.Node]*drun          // From Commands/Root to device runs
-	output       map[*drun][]target.Inst     // Output of device-specific planners
-	initializers []target.Inst               // Intializers
-	finalizers   []target.Inst               // Finalizers in reverse order
-}
-
-// Result is result of compiling a set of ast.Nodes
-type Result struct {
-	Insts []target.Inst
+	Root         effects.Node
+	Graph        *effects.Graph                      // Graph of effects.Nodes
+	Commands     graph.Graph                         // DAG of effects.Commands (and potentially BundleExpr root)
+	DeviceDeps   graph.QGraph                        // Dependencies of druns
+	reachingUses map[effects.Node][]*effects.UseComp // Reaching comps
+	assignment   map[effects.Node]*drun              // From Commands/Root to device runs
+	output       map[*drun][]effects.Inst            // Output of device-specific planners
+	initializers []effects.Inst                      // Intializers
+	finalizers   []effects.Inst                      // Finalizers in reverse order
 }
 
 // Print out IR for debugging
@@ -50,25 +39,25 @@ func (a *ir) Print(g graph.Graph, out io.Writer) error {
 
 	labelers := []func(interface{}) string{
 		func(x interface{}) string {
-			c, ok := x.(*ast.Command)
+			c, ok := x.(*effects.Command)
 			if !ok {
 				return ""
 			}
 			return fmt.Sprintf("%T", c.Inst)
 		},
 		func(x interface{}) string {
-			c, ok := x.(*ast.Command)
+			c, ok := x.(*effects.Command)
 			if !ok {
 				return ""
 			}
-			h, ok := c.Inst.(*ast.HandleInst)
+			h, ok := c.Inst.(*effects.HandleInst)
 			if !ok {
 				return ""
 			}
 			return h.Group
 		},
 		func(x interface{}) string {
-			n, ok := x.(ast.Node)
+			n, ok := x.(effects.Node)
 			if !ok {
 				return ""
 			}
@@ -79,12 +68,12 @@ func (a *ir) Print(g graph.Graph, out io.Writer) error {
 			return ""
 		},
 		func(x interface{}) string {
-			n, ok := x.(ast.Node)
+			n, ok := x.(effects.Node)
 			if !ok {
 				return ""
 			}
 
-			u, ok := n.(*ast.UseComp)
+			u, ok := n.(*effects.UseComp)
 			if !ok {
 				return ""
 			}
@@ -122,17 +111,10 @@ func (a *ir) Print(g graph.Graph, out io.Writer) error {
 
 // Run of a device.
 type drun struct {
-	Device target.Device
+	Device effects.Device
 }
 
 func (a *ir) partition(opt graph.PartitionTreeOpt) (*graph.TreePartition, error) {
-	if useTreePartition {
-		if err := graph.IsTree(opt.Tree, opt.Root); err != nil {
-			return nil, err
-		}
-		return graph.PartitionTree(opt)
-	}
-
 	ret := &graph.TreePartition{
 		Parts: make(map[graph.Node]int),
 	}
@@ -145,7 +127,7 @@ func (a *ir) partition(opt graph.PartitionTreeOpt) (*graph.TreePartition, error)
 }
 
 // Partition a slice into non-human devices followed by human ones
-type partitionByHuman []target.Device
+type partitionByHuman []effects.Device
 
 func (a partitionByHuman) Len() int {
 	return len(a)
@@ -156,8 +138,8 @@ func (a partitionByHuman) Swap(i, j int) {
 }
 
 func (a partitionByHuman) Less(i, j int) bool {
-	req := ast.Request{
-		Selector: []ast.NameValue{
+	req := effects.Request{
+		Selector: []effects.NameValue{
 			target.DriverSelectorV1Human,
 		},
 	}
@@ -181,24 +163,24 @@ func (a partitionByHuman) Less(i, j int) bool {
 // device run.
 func (a *ir) assignDevices(t *target.Target) error {
 	// A bundle's requests is the sum of its children
-	bundleReqs := func(n *ast.Bundle) (reqs []ast.Request) {
+	bundleReqs := func(n *effects.Bundle) (reqs []effects.Request) {
 		for i, inum := 0, a.Commands.NumOuts(n); i < inum; i++ {
 			kid := a.Commands.Out(n, i)
-			if c, ok := kid.(*ast.Command); ok {
-				reqs = append(reqs, c.Requests...)
+			if c, ok := kid.(*effects.Command); ok {
+				reqs = append(reqs, c.Request)
 			}
 		}
 		return
 	}
 
-	colors := make(map[ast.Node][]target.Device)
+	colors := make(map[effects.Node][]effects.Device)
 	for i, inum := 0, a.Commands.NumNodes(); i < inum; i++ {
-		n := a.Commands.Node(i).(ast.Node)
-		var reqs []ast.Request
+		n := a.Commands.Node(i).(effects.Node)
+		var reqs []effects.Request
 		isBundle := false
-		if c, ok := n.(*ast.Command); ok {
-			reqs = c.Requests
-		} else if b, ok := n.(*ast.Bundle); ok {
+		if c, ok := n.(*effects.Command); ok {
+			reqs = append(reqs, c.Request)
+		} else if b, ok := n.(*effects.Bundle); ok {
 			// Try to find device that can do everything
 			reqs = bundleReqs(b)
 			isBundle = true
@@ -211,15 +193,15 @@ func (a *ir) assignDevices(t *target.Target) error {
 			if isBundle {
 				devices = append(devices, human.New(human.Opt{}))
 			} else {
-				return fmt.Errorf("no device can handle constraints %v", ast.Meet(reqs...))
+				return fmt.Errorf("no device can handle constraints %v", effects.Meet(reqs...))
 			}
 		}
 		sort.Stable(partitionByHuman(devices))
 		colors[n] = devices
 	}
 
-	var devices []target.Device
-	d2c := make(map[target.Device]int)
+	var devices []effects.Device
+	d2c := make(map[effects.Device]int)
 	for _, ds := range colors {
 		for _, d := range ds {
 			if _, seen := d2c[d]; !seen {
@@ -233,22 +215,22 @@ func (a *ir) assignDevices(t *target.Target) error {
 		Tree: a.Commands,
 		Root: a.Root,
 		Colors: func(n graph.Node) (r []int) {
-			for _, d := range colors[n.(ast.Node)] {
+			for _, d := range colors[n.(effects.Node)] {
 				r = append(r, d2c[d])
 			}
 			return
 		},
 		EdgeWeight: func(a, b int) int64 {
-			return devices[a].MoveCost(devices[b])
+			return 0
 		},
 	})
 	if err != nil {
 		return err
 	}
 
-	ret := make(map[ast.Node]target.Device)
+	ret := make(map[effects.Node]effects.Device)
 	for n, idx := range r.Parts {
-		ret[n.(ast.Node)] = devices[idx]
+		ret[n.(effects.Node)] = devices[idx]
 	}
 
 	a.coalesceDevices(ret)
@@ -257,13 +239,13 @@ func (a *ir) assignDevices(t *target.Target) error {
 }
 
 // Coalesce adjacent devices into the same run of a device
-func (a *ir) coalesceDevices(device map[ast.Node]target.Device) {
-	run := make(map[ast.Node]*drun)
+func (a *ir) coalesceDevices(device map[effects.Node]effects.Device) {
+	run := make(map[effects.Node]*drun)
 
-	kidRun := func(n ast.Node) *drun {
+	kidRun := func(n effects.Node) *drun {
 		m := make(map[*drun]bool)
 		for i, inum := 0, a.Commands.NumOuts(n); i < inum; i++ {
-			kid := a.Commands.Out(n, i).(ast.Node)
+			kid := a.Commands.Out(n, i).(effects.Node)
 			m[run[kid]] = true
 			if device[kid] != device[n] {
 				return nil
@@ -282,9 +264,9 @@ func (a *ir) coalesceDevices(device map[ast.Node]target.Device) {
 
 	for len(dag.Roots) > 0 {
 		var next []graph.Node
-		newRuns := make(map[target.Device]*drun)
+		newRuns := make(map[effects.Device]*drun)
 		for _, n := range dag.Roots {
-			n := n.(ast.Node)
+			n := n.(effects.Node)
 
 			myRun := kidRun(n)
 			if myRun == nil {
@@ -312,7 +294,7 @@ func (a *ir) tryPlan(labEffects *effects.LaboratoryEffects) error {
 	dg := graph.MakeQuotient(graph.MakeQuotientOpt{
 		Graph: a.Commands,
 		Colorer: func(n graph.Node) interface{} {
-			return a.assignment[n.(ast.Node)]
+			return a.assignment[n.(effects.Node)]
 		},
 	})
 
@@ -322,9 +304,9 @@ func (a *ir) tryPlan(labEffects *effects.LaboratoryEffects) error {
 	// TODO: When splitting a mix sequence, adjust LHInstructions to place
 	// output samples on the same plate
 
-	cmds := make(map[*drun][]ast.Node)
+	cmds := make(map[*drun][]effects.Node)
 	for n, d := range a.assignment {
-		c, ok := n.(*ast.Command)
+		c, ok := n.(*effects.Command)
 		if !ok {
 			continue
 		}
@@ -340,24 +322,21 @@ func (a *ir) tryPlan(labEffects *effects.LaboratoryEffects) error {
 	}
 	var runs []*drun
 	for _, n := range order {
-		n := dg.Orig(n, 0).(ast.Node)
+		n := dg.Orig(n, 0).(effects.Node)
 		run := a.assignment[n]
 		runs = append(runs, run)
 	}
 
-	a.output = make(map[*drun][]target.Inst)
+	a.output = make(map[*drun][]effects.Inst)
 	for _, d := range runs {
 		insts, err := d.Device.Compile(labEffects, cmds[d])
 		if err != nil {
 			return err
 		}
 
-		result := &Result{
-			Insts: insts,
-		}
 		for _, n := range cmds[d] {
-			c := n.(*ast.Command)
-			c.Output = result
+			c := n.(*effects.Command)
+			c.Output = insts
 		}
 
 		a.output[d] = insts
@@ -366,166 +345,21 @@ func (a *ir) tryPlan(labEffects *effects.LaboratoryEffects) error {
 	return a.addImplicitInsts(runs)
 }
 
-// Find best device to move a component between two devices
-func findBestMoveDevice(t *target.Target, from, to ast.Node, fromD, toD *drun) target.Device {
-	// TODO: add movement constraints
-	var req ast.Request
-	var minD target.Device
-	minC := int64(math.MaxInt64)
-
-	for _, d := range t.CanCompile(req) {
-		c := toD.Device.MoveCost(d) + d.MoveCost(fromD.Device)
-		if c < minC {
-			minC = c
-			minD = d
-		}
-	}
-	return minD
-}
-
-// NB(ddn): Could blindly add edges from insts to head, but would like
-// Compile() to be able to introduce instructions that just depend on the start
-// or end (or neither) of a device run.
-//
-// From:
-//   head: h
-//   tail: t
-//   insts: [a <- ... <- b]
-// To:
-//   h <- a <-... <- b <- t
-func splice(head, tail target.Inst, insts []target.Inst) {
-	if len(insts) == 0 {
-		if head != nil && tail != nil && head != tail {
-			tail.AppendDependsOn(head)
-		}
-	} else {
-		oldH := insts[0]
-		oldT := insts[len(insts)-1]
-		if head != nil {
-			oldH.AppendDependsOn(head)
-		}
-		if tail != nil {
-			tail.AppendDependsOn(oldT)
-		}
-	}
-}
-
-// Create move of dependencies if necessary
-func (a *ir) addMove(labEffects *effects.LaboratoryEffects, t *target.Target, dnode graph.Node, run *drun) error {
-
-	rewrite := func(n ast.Node, cs []*ast.UseComp, move *ast.Move) {
-		m := make(map[ast.Node]bool)
-		for _, c := range cs {
-			m[c] = true
-		}
-		for i, inum := 0, a.Graph.NumOuts(n); i < inum; i++ {
-			out := a.Graph.Out(n, i).(ast.Node)
-			if m[out] {
-				a.Graph.SetOut(n, i, move)
-			}
-		}
-	}
-
-	newRuns := make(map[target.Device]*drun)
-	getRun := func(d target.Device) *drun {
-		r, ok := newRuns[d]
-		if !ok {
-			r = &drun{d}
-			newRuns[d] = r
-		}
-		return r
-	}
-
-	moves := make(map[target.Device][]ast.Node)
-	for i, inum := 0, a.DeviceDeps.NumOrigs(dnode); i < inum; i++ {
-		n := a.DeviceDeps.Orig(dnode, i).(ast.Node)
-		for j, jnum := 0, a.Commands.NumOuts(n); j < jnum; j++ {
-			out := a.Commands.Out(n, j).(ast.Node)
-			if run == a.assignment[out] {
-				continue
-			}
-			// Command has input dependence on a previous run
-			cs := a.reachingUses[out.(*ast.Command)]
-			if len(cs) == 0 {
-				// Nothing to move
-				continue
-			} else if dev := findBestMoveDevice(t, out, n, a.assignment[out], run); dev == nil {
-				return fmt.Errorf("cannot find any device to move inputs")
-			} else {
-				// Add move
-				m := &ast.Move{
-					From:  cs,
-					ToLoc: fmt.Sprintf("%v", dev),
-				}
-				moves[dev] = append(moves[dev], m)
-				a.assignment[m] = getRun(dev)
-				rewrite(n, cs, m)
-			}
-		}
-	}
-
-	if len(moves) == 0 {
-		return nil
-	}
-
-	head := &target.Wait{}
-	tail := &target.Wait{}
-	insts := append([]target.Inst{}, head, tail)
-
-	splice(head, tail, nil)
-	splice(tail, nil, a.output[run])
-
-	for dev, ms := range moves {
-		ins, err := dev.Compile(labEffects, ms)
-		if err != nil {
-			return err
-		}
-
-		splice(head, tail, ins)
-		insts = append(insts, ins...)
-	}
-
-	a.output[run] = append(insts, a.output[run]...)
-
-	return nil
-}
-
-// Add implied moves between devices
-func (a *ir) addMoves(labEffects *effects.LaboratoryEffects, t *target.Target) error {
+func (a *ir) sortDevices(labEffects *effects.LaboratoryEffects, t *target.Target) error {
 	a.DeviceDeps = graph.MakeQuotient(graph.MakeQuotientOpt{
 		Graph: a.Commands,
 		Colorer: func(n graph.Node) interface{} {
-			return a.assignment[n.(ast.Node)]
+			return a.assignment[n.(effects.Node)]
 		},
 	})
 
-	order, err := graph.TopoSort(graph.TopoSortOpt{
+	_, err := graph.TopoSort(graph.TopoSortOpt{
 		Graph: a.DeviceDeps,
 	})
-	if err != nil {
-		return err
-	}
-
-	// Disable move pass because it is unused
-	if true {
-		return nil
-	}
-
-	for _, n := range order {
-		if a.DeviceDeps.NumOrigs(n) == 0 {
-			return fmt.Errorf("no instructions for node %q", n)
-		}
-		someNode := a.DeviceDeps.Orig(n, 0).(ast.Node)
-		run := a.assignment[someNode]
-		if err := a.addMove(labEffects, t, n, run); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return err
 }
 
-func reverseInsts(insts []target.Inst) (ret []target.Inst) {
+func reverseInsts(insts []effects.Inst) (ret []effects.Inst) {
 	for idx := len(insts) - 1; idx >= 0; idx-- {
 		ret = append(ret, insts[idx])
 	}
@@ -533,13 +367,13 @@ func reverseInsts(insts []target.Inst) (ret []target.Inst) {
 }
 
 // Lower plan to instructions
-func (a *ir) genInsts() ([]target.Inst, error) {
+func (a *ir) genInsts() ([]effects.Inst, error) {
 	ig := newInstGraph()
 
 	// Insert instructions
 	for i, inum := 0, a.DeviceDeps.NumNodes(); i < inum; i++ {
 		n := a.DeviceDeps.Node(i)
-		someNode := a.DeviceDeps.Orig(n, 0).(ast.Node)
+		someNode := a.DeviceDeps.Orig(n, 0).(effects.Node)
 		run := a.assignment[someNode]
 		insts := a.output[run]
 		ig.addRootedInsts(n, insts)
@@ -576,12 +410,12 @@ func (a *ir) genInsts() ([]target.Inst, error) {
 		return nil, err
 	}
 
-	var insts []target.Inst
+	var insts []effects.Inst
 	for _, n := range order {
-		in := n.(target.Inst)
+		in := n.(effects.Inst)
 		in.SetDependsOn() // reset to empty first
 		for j, jnum := 0, sg.NumOuts(n); j < jnum; j++ {
-			in.AppendDependsOn(sg.Out(n, j).(target.Inst))
+			in.AppendDependsOn(sg.Out(n, j).(effects.Inst))
 		}
 		insts = append(insts, in)
 	}
@@ -593,7 +427,7 @@ func (a *ir) genInsts() ([]target.Inst, error) {
 // configuration. This supports incremental compilation, so roots may refer to
 // nodes that have already been compiled, in which case, the result may refer
 // to previously generated instructions.
-func Compile(labEffects *effects.LaboratoryEffects, t *target.Target, roots []ast.Node) ([]target.Inst, error) {
+func Compile(labEffects *effects.LaboratoryEffects, t *target.Target, roots []effects.Node) ([]effects.Inst, error) {
 	if len(roots) == 0 {
 		return nil, nil
 	}
@@ -613,8 +447,8 @@ func Compile(labEffects *effects.LaboratoryEffects, t *target.Target, roots []as
 		return nil, fmt.Errorf("error planning: %s", err)
 	}
 
-	if err := ir.addMoves(labEffects, t); err != nil {
-		return nil, fmt.Errorf("error adding moves: %s", err)
+	if err := ir.sortDevices(labEffects, t); err != nil {
+		return nil, fmt.Errorf("error sorting devices: %s", err)
 	}
 
 	insts, err := ir.genInsts()

@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/driver"
 	shakerincubator "github.com/antha-lang/antha/driver/antha_shakerincubator_v1"
+	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/handler"
 )
@@ -21,7 +21,7 @@ type ShakerIncubator struct {
 func New() *ShakerIncubator {
 	ret := &ShakerIncubator{}
 	ret.GenericHandler = handler.GenericHandler{
-		Labels: []ast.NameValue{
+		Labels: []effects.NameValue{
 			target.DriverSelectorV1ShakerIncubator,
 		},
 		GenFunc: ret.generate,
@@ -89,15 +89,15 @@ func (a *ShakerIncubator) shakeStart(rate wunit.Rate, length wunit.Length) drive
 	}
 }
 
-func (a *ShakerIncubator) generate(cmd interface{}) ([]target.Inst, error) {
-	inc, ok := cmd.(*ast.IncubateInst)
+func (a *ShakerIncubator) generate(cmd interface{}) ([]effects.Inst, error) {
+	inc, ok := cmd.(*effects.IncubateInst)
 	if !ok {
 		return nil, fmt.Errorf("expecting %T found %T instead", inc, cmd)
 	}
 
-	var initializers []target.Inst
-	var finalizers []target.Inst
-	var insts target.Insts
+	var initializers []effects.Inst
+	var finalizers []effects.Inst
+	var insts effects.Insts
 
 	initializers = append(initializers, &target.Run{
 		Dev:   a,

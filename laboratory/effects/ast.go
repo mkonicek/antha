@@ -1,4 +1,4 @@
-package ast
+package effects
 
 import (
 	"fmt"
@@ -32,22 +32,28 @@ type Node interface {
 	NodeString() string
 }
 
-// A Command is high-level instruction.
+// A Command is high-level instruction. Both UseComp and Bundles are
+// currently issued only by the ast, maker, and codegen areas of
+// code. Command is different: the instruction trace is populated by
+// commandInst objects, each of which contain a Command
+// object. However, at that stage some of the fields of Command are
+// not correctly populated, and so these are modified by the maker at
+// the same point at which UseComp objects are issued.
 type Command struct {
-	From     []Node      // Inputs
-	Requests []Request   // Requirements for device selection
-	Inst     interface{} // Command-specific data
-	Output   interface{} // Output from compilation
+	From    []Node      // Inputs
+	Request Request     // Requirements for device selection
+	Inst    interface{} // Command-specific data
+	Output  []Inst      // Output from compilation
 }
 
 // NodeString implements graph pretty printing
 func (a *Command) NodeString() string {
 	return fmt.Sprintf("%+v", struct {
-		Requests interface{}
-		Inst     string
+		Request interface{}
+		Inst    string
 	}{
-		Requests: a.Requests,
-		Inst:     fmt.Sprintf("%T", a.Inst),
+		Request: a.Request,
+		Inst:    fmt.Sprintf("%T", a.Inst),
 	})
 }
 
@@ -76,18 +82,6 @@ func (a *Bundle) NodeString() string {
 	return ""
 }
 
-// A Move is a low-level move instruction
-type Move struct {
-	From   []*UseComp
-	ToLoc  Location
-	Output interface{}
-}
-
-// NodeString implements graph pretty printing
-func (a *Move) NodeString() string {
-	return ""
-}
-
 // A Graph is a view of the AST as a graph
 type Graph struct {
 	Nodes     []Node
@@ -112,8 +106,6 @@ func setOut(n Node, i, deps int, x Node) {
 		n.From[i] = x
 	case *Command:
 		n.From[i] = x
-	case *Move:
-		n.From[i] = x.(*UseComp)
 	default:
 		panic(fmt.Sprintf("ast.setOut: unknown node type %T", n))
 	}
@@ -127,8 +119,6 @@ func getOut(n Node, i, deps int) Node {
 		return n.From[i]
 	case *Command:
 		return n.From[i]
-	case *Move:
-		return n.From[i]
 	default:
 		panic(fmt.Sprintf("ast.getOut: unknown node type %T", n))
 	}
@@ -141,8 +131,6 @@ func numOuts(n Node, deps int) int {
 	case *Bundle:
 		return len(n.From)
 	case *Command:
-		return len(n.From)
-	case *Move:
 		return len(n.From)
 	default:
 		panic(fmt.Sprintf("ast.numOuts: unknown node type %T", n))

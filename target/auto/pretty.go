@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/target"
 )
 
 // Pretty returns a human description of instruction
-func (a *Auto) Pretty(inst target.Inst) string {
+func (a *Auto) Pretty(inst effects.Inst) string {
 	switch inst := inst.(type) {
 	case *target.Mix:
 		return prettyMix(inst)

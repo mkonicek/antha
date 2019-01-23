@@ -204,35 +204,6 @@ Extra     : %v,
 	)
 }
 
-func (w *LHWell) Protected() bool {
-	if w.Extra == nil {
-		return false
-	}
-
-	p, ok := w.Extra["protected"]
-
-	if !ok || !(p.(bool)) {
-		return false
-	}
-
-	return true
-}
-
-func (w *LHWell) Protect() {
-	if w.Extra == nil {
-		w.Extra = make(map[string]interface{}, 3)
-	}
-
-	w.Extra["protected"] = true
-}
-
-func (w *LHWell) UnProtect() {
-	if w.Extra == nil {
-		w.Extra = make(map[string]interface{}, 3)
-	}
-	w.Extra["protected"] = false
-}
-
 func (w *LHWell) Contents() *Liquid {
 	if w == nil {
 		return nil
@@ -959,7 +930,7 @@ func (w *LHWell) UpdateContentID(IDBefore string, after *Liquid) bool {
 
 // CheckExtraKey checks if the key is a reserved name
 func (w LHWell) CheckExtraKey(s string) error {
-	reserved := []string{"protected", "afvfunc", "temporary", "autoallocated", "UserAllocated", "ll_model"}
+	reserved := []string{"afvfunc", "temporary", "autoallocated", "UserAllocated", "ll_model"}
 
 	if wutil.StrInStrArray(s, reserved) {
 		return fmt.Errorf("%s is a system key used by plates", s)

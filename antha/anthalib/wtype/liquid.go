@@ -1016,34 +1016,6 @@ func (lhc *Liquid) GetPolicies() (*LHPolicyRuleSet, error) {
 	return &rs, err
 }
 
-func (lhc *Liquid) IsValuable() bool {
-	if lhc.Extra == nil {
-		return false
-	}
-
-	v, ok := lhc.Extra["valuable"]
-
-	if !ok {
-		return false
-	}
-
-	b, ok := v.(bool)
-
-	if !ok {
-		return false
-	}
-
-	return b
-}
-
-func (lhc *Liquid) SetValue(b bool) {
-	if lhc.Extra == nil {
-		lhc.Extra = make(map[string]interface{})
-	}
-
-	lhc.Extra["valuable"] = b
-}
-
 const instanceMarker = "INSTANCE"
 
 func (lhc *Liquid) DeclareInstance() {

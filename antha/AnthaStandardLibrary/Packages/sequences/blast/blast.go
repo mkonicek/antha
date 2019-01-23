@@ -266,6 +266,7 @@ func AllExactMatches(hits []blast.Hit) (exactmatches []blast.Hit, summary string
 	return
 }
 
+// MegaBlastP performs a blastn call against the nr database with Megablast default parameters
 func MegaBlastP(query string) (hits []blast.Hit, err error) {
 
 	putparams = blast.PutParameters{Program: "blastp", Megablast: true, Database: "nr"}
@@ -281,6 +282,7 @@ func MegaBlastP(query string) (hits []blast.Hit, err error) {
 	return
 }
 
+// MegaBlastN performs a blastn call against the nr database with Megablast default parameters
 func MegaBlastN(query string) (hits []blast.Hit, err error) {
 	putparams = blast.PutParameters{Program: "blastn", Megablast: true, Database: "nr"}
 
@@ -295,8 +297,15 @@ func MegaBlastN(query string) (hits []blast.Hit, err error) {
 	return
 }
 
+// SimpleBlast performs a blast call with pre-set query parameters
 func SimpleBlast(query string) (o *blast.Output, err error) {
-	r, err := blast.Put(query, &putparams, tool, email)
+	o, err = BLAST(query, &putparams)
+	return
+}
+
+// BLAST performs a blast call for specified query parameters
+func BLAST(query string, p *blast.PutParameters) (o *blast.Output, err error) {
+	r, err := blast.Put(query, p, tool, email)
 	fmt.Println("RID=", r.String())
 	fmt.Println("Submitting request to BLAST server, please wait")
 	//var o *Output

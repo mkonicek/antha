@@ -1,4 +1,4 @@
-package main
+package plates
 
 import (
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/devices"

@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"sort"
 
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/compile"
 	"github.com/antha-lang/antha/utils"
 	git "gopkg.in/src-d/go-git.v4"
@@ -25,6 +26,8 @@ type Workflow struct {
 	ElementInstancesParameters  ElementInstancesParameters  `json:"ElementInstancesParameters"`
 	ElementInstancesConnections ElementInstancesConnections `json:"ElementInstancesConnections"`
 
+	Inventories Inventories `json:Inventories`
+
 	typeNames map[ElementTypeName]*ElementType
 }
 
@@ -35,6 +38,10 @@ func newWorkflow() *Workflow {
 		ElementInstances:            make(ElementInstances),
 		ElementInstancesParameters:  make(ElementInstancesParameters),
 		ElementInstancesConnections: make(ElementInstancesConnections, 0),
+
+		Inventories: Inventories{
+			Plates: make(Plates),
+		},
 	}
 }
 
@@ -145,6 +152,44 @@ type ElementSocket struct {
 	ParameterName   ElementParameterName `json:"ParameterName"`
 }
 
+type Inventories struct {
+	Plates Plates `json:"Plates"`
+	/* Currently only Plates can be set but it's clear how to extend this:
+	Components Components `json:"Components"`
+	TipBoxes   TipBoxes   `json:"TipBoxes"`
+	TipWastes  TipWastes  `json:"TipWastes"`
+	*/
+}
+
+type Plates map[PlateType]Plate
+
+type PlateType string
+
+type Plate struct {
+	PlateType    PlateType              // name of plate type, potentially including riser
+	Manufacturer string                 // name of plate manufacturer
+	WellShape    string                 // Name of well shape, one of "cylinder", "box", "trapezoid"
+	WellH        float64                // size of well in X direction (long side of plate)
+	WellW        float64                // size of well in Y direction (short side of plate)
+	WellD        float64                // size of well in Z direction (vertical from plane of plate)
+	MaxVol       float64                // maximum volume well can hold in microlitres
+	MinVol       float64                // residual volume of well in microlitres
+	BottomType   wtype.WellBottomType   // shape of well bottom, one of "flat","U", "V"
+	BottomH      float64                // offset from well bottom to rest of well in mm (i.e. height of U or V - 0 if flat)
+	WellX        float64                // size of well in X direction (long side of plate)
+	WellY        float64                // size of well in Y direction (short side of plate)
+	WellZ        float64                // size of well in Z direction (vertical from plane of plate)
+	ColSize      int                    // number of wells in a column
+	RowSize      int                    // number of wells in a row
+	Height       float64                // size of plate in Z direction (vertical from plane of plate)
+	WellXOffset  float64                // distance between adjacent well centres in X direction (long side)
+	WellYOffset  float64                // distance between adjacent well centres in Y direction (short side)
+	WellXStart   float64                // offset from top-left corner of plate to centre of top-leftmost well in X direction (long side)
+	WellYStart   float64                // offset from top-left corner of plate to centre of top-leftmost well in Y direction (short side)
+	WellZStart   float64                // offset from top of plate to well bottom
+	Extra        map[string]interface{} // container for additional well properties such as constraints
+}
+
 func (wf *Workflow) TypeNames() map[ElementTypeName]*ElementType {
 	if wf.typeNames == nil {
 		tn := make(map[ElementTypeName]*ElementType, len(wf.ElementTypes))
@@ -173,6 +218,7 @@ func (a *Workflow) merge(b *Workflow) error {
 		a.ElementInstances.merge(b.ElementInstances),
 		a.ElementInstancesParameters.merge(b.ElementInstancesParameters),
 		a.ElementInstancesConnections.merge(b.ElementInstancesConnections),
+		a.Inventories.merge(b.Inventories),
 	}
 	if err := errs.Pack(); err != nil {
 		return err
@@ -287,6 +333,23 @@ func (a *ElementInstancesConnections) merge(b ElementInstancesConnections) error
 	return nil
 }
 
+func (a *Inventories) merge(b Inventories) error {
+	return a.Plates.merge(b.Plates)
+}
+
+func (a Plates) merge(b Plates) error {
+	// May need revising: currently we error if there's any
+	// overlap. Equality between Plates can't be based on simple
+	// structural equality due to the Extra field being a map.
+	for pt, p := range b {
+		if _, found := a[pt]; found {
+			return fmt.Errorf("PlateType %v is redefined", pt)
+		}
+		a[pt] = p
+	}
+	return nil
+}
+
 func (wf *Workflow) validate() error {
 	if wf.JobId == "" {
 		return errors.New("Workflow has empty JobId")
@@ -297,6 +360,7 @@ func (wf *Workflow) validate() error {
 			wf.ElementInstances.validate(wf),
 			wf.ElementInstancesParameters.validate(wf),
 			wf.ElementInstancesConnections.validate(wf),
+			wf.Inventories.validate(wf),
 		}
 		if err := errs.Pack(); err != nil {
 			return err
@@ -402,4 +466,12 @@ func (soc ElementSocket) validate(wf *Workflow) error {
 	} else {
 		return nil
 	}
+}
+
+func (inv Inventories) validate(wf *Workflow) error {
+	return inv.Plates.validate(wf)
+}
+
+func (p Plates) validate(wf *Workflow) error {
+	return nil
 }

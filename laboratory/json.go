@@ -8,7 +8,6 @@ import (
 	"reflect"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/ugorji/go/codec"
 )
 
@@ -103,18 +102,4 @@ func (labBuild *LaboratoryBuilder) Save() error {
 	} else {
 		return nil
 	}
-}
-
-func (labBuild *LaboratoryBuilder) SetEffectsFromPath(path string) error {
-	jh := &codec.JsonHandle{}
-	labBuild.RegisterJsonExtensions(jh)
-
-	inFH, err := os.Open(path)
-	if err != nil {
-		return err
-	}
-	defer inFH.Close()
-
-	labBuild.LaboratoryEffects = &effects.LaboratoryEffects{}
-	return codec.NewDecoder(inFH, jh).Decode(labBuild.LaboratoryEffects)
 }

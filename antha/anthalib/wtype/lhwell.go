@@ -43,7 +43,11 @@ const (
 	VWellBottom
 )
 
-var WellBottomNames []string = []string{"flat", "U", "V"}
+var WellBottomNames []string = []string{
+	FlatWellBottom: "flat",
+	UWellBottom:    "U",
+	VWellBottom:    "V",
+}
 
 func (bt WellBottomType) String() string {
 	return WellBottomNames[bt]

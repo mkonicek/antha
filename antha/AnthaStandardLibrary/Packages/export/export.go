@@ -34,6 +34,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"text/template"
+	"time"
 
 	anthapath "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/AnthaPath"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
@@ -303,6 +305,152 @@ func FastaSerialfromMultipleAssemblies(dirname string, multipleassemblyparameter
 	}
 
 	return FastaSerial(ANTHAPATH, dirname, seqs)
+}
+
+// GenbankSerial exports multiple sequences into a multi-record Genbank format file
+// The makeinanthapath argument specifies whether a copy of the file should be saved locally or to the anthapath in a specified sub directory directory.
+func GenbankSerial(makeinanthapath bool, dir string, seqs []wtype.DNASequence) (wtype.File, string, error) {
+
+	var anthafile wtype.File
+
+	// Template for multi-record Genbank file
+	// https://www.ncbi.nlm.nih.gov/Sitemap/samplerecord.html
+	// http://www.insdc.org/documents/feature_table.html
+	tmplStr := `{{ range $i, $s := . -}}
+LOCUS       {{ $s.Nm }}               {{ length $s }} bp ds-DNA     {{ if $s.Plasmid }}circular{{ else }}linear{{ end }} SYN {{ date }}
+DEFINITION  Exported from Antha OS
+ACCESSION   
+VERSION     
+KEYWORDS    
+SOURCE      synthetic DNA construct
+FEATURES             Location/Qualifiers
+     source          1..{{ length . }}
+                     /organism="synthetic DNA construct"
+                     /mol_type="other DNA"
+{{- range $j, $f := $s.Features }}
+     {{  keyf $f  }} {{ location $s $f }}
+                     /label="{{ $f.Name }}"
+{{- end }}
+ORIGIN
+{{- range $j, $line := origin $s }}
+{{ $line }}
+{{- end }}
+//
+{{ end }}`
+
+	tmpl, err := template.New("genbank").Funcs(template.FuncMap{
+		"date": func() string {
+			t := time.Now()
+			return t.Format("2-JAN-2006")
+		},
+		"length": func(seq wtype.DNASequence) int {
+			return len(seq.Sequence())
+		},
+		// Formatted feature key
+		// http://www.insdc.org/documents/feature_table.html#3.1
+		"keyf": func(feat wtype.Feature) string {
+			return fmt.Sprintf("%-15s", strings.TrimSpace(feat.Class))
+		},
+		"location": func(seq wtype.DNASequence, feat wtype.Feature) string {
+			var ret string
+			if seq.Plasmid {
+				if feat.Start() > feat.End() {
+					if feat.Reverse {
+						ret = fmt.Sprintf("complement(%d..%d)", feat.End(), feat.Start())
+					} else {
+						ret = fmt.Sprintf("join(%d..%d,%d..%d)", feat.Start(), len(seq.Sequence()), 1, feat.End())
+					}
+				} else {
+					if feat.Reverse {
+						ret = fmt.Sprintf("complement(join(%d..%d,%d..%d))", feat.End(), len(seq.Sequence()), 1, feat.Start())
+					} else {
+						ret = fmt.Sprintf("%d..%d", feat.Start(), feat.End())
+					}
+				}
+			} else {
+				if feat.Start() > feat.End() {
+					if feat.Reverse {
+						ret = fmt.Sprintf("complement(%d..%d)", feat.End(), feat.Start())
+					} else {
+						ret = "ERROR"
+					}
+				} else {
+					if feat.Reverse {
+						ret = "ERROR"
+					} else {
+						ret = fmt.Sprintf("%d..%d", feat.Start(), feat.End())
+					}
+				}
+			}
+			return ret
+		},
+		"origin": func(seq wtype.DNASequence) []string {
+			bases := seq.Sequence()
+			lines := []string{}
+			for pos := 0; pos < len(bases); pos += 60 {
+				frags := []string{}
+				frags = append(frags, fmt.Sprintf("%9d ", pos+1))
+				for inner := pos; inner < pos+60 && inner < len(bases); inner += 10 {
+					last := inner + 10
+					if last > len(bases) {
+						last = len(bases)
+					}
+					frags = append(frags, bases[inner:last])
+				}
+				joined := strings.Join(frags, " ")
+				lines = append(lines, joined)
+			}
+			return lines
+		},
+	}).Parse(tmplStr)
+
+	if err != nil {
+		return anthafile, "", err
+	}
+
+	var filename string
+	if makeinanthapath {
+		filename = filepath.Join(anthapath.Path(), fmt.Sprintf("%s.gbk", dir))
+	} else {
+		filename = filepath.Join(fmt.Sprintf("%s.gbk", dir))
+	}
+	if err := os.MkdirAll(filepath.Dir(filename), 0644); err != nil {
+		return anthafile, "", err
+	}
+
+	f, err := os.Create(filename)
+	if err != nil {
+		return anthafile, "", err
+	}
+
+	defer closeReader(f)
+
+	var buf bytes.Buffer
+
+	err = tmpl.Execute(&buf, seqs)
+	if err != nil {
+		return anthafile, "", err
+	}
+
+	allbytes, err := streamToByte(&buf)
+	if err != nil {
+		return anthafile, "", err
+	}
+
+	_, err = io.Copy(f, &buf)
+
+	if err != nil {
+		return anthafile, "", err
+	}
+
+	if len(allbytes) == 0 {
+		return anthafile, "", fmt.Errorf("empty Otnol file created for seqs")
+	}
+
+	anthafile.Name = filename
+	err = anthafile.WriteAll(allbytes)
+
+	return anthafile, filename, err
 }
 
 // TextFile exports data in the format of a set of strings to a file.

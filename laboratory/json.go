@@ -3,7 +3,6 @@ package laboratory
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"reflect"
 
@@ -21,7 +20,7 @@ func (lj *liquidJson) ConvertExt(v interface{}) interface{} {
 
 func (lj *liquidJson) UpdateExt(dst interface{}, src interface{}) {
 	if name, ok := src.(string); ok {
-		if liquid, err := lj.labBuild.Inventory.NewComponent(name); err != nil {
+		if liquid, err := lj.labBuild.Inventory.Components.NewComponent(name); err != nil {
 			lj.labBuild.Fatal(err)
 		} else {
 			// nb dst is *always* a pointer (so *Liquid in this case)
@@ -43,7 +42,7 @@ func (pj *plateJson) ConvertExt(v interface{}) interface{} {
 
 func (pj *plateJson) UpdateExt(dst interface{}, src interface{}) {
 	if name, ok := src.(string); ok {
-		if plate, err := pj.labBuild.Inventory.NewPlate(name); err != nil {
+		if plate, err := pj.labBuild.Inventory.PlateTypes.NewPlate(name); err != nil {
 			pj.labBuild.Fatal(err)
 		} else {
 			dstPlate := dst.(*wtype.Plate)
@@ -64,7 +63,7 @@ func (tj *tipboxJson) ConvertExt(v interface{}) interface{} {
 
 func (tj *tipboxJson) UpdateExt(dst interface{}, src interface{}) {
 	if name, ok := src.(string); ok {
-		if tipbox, err := tj.labBuild.Inventory.NewTipbox(name); err != nil {
+		if tipbox, err := tj.labBuild.Inventory.TipBoxes.NewTipbox(name); err != nil {
 			tj.labBuild.Fatal(err)
 		} else {
 			dstTipBox := dst.(*wtype.LHTipbox)
@@ -85,19 +84,8 @@ func (labBuild *LaboratoryBuilder) RegisterJsonExtensions(jh *codec.JsonHandle) 
 	}
 }
 
-func (labBuild *LaboratoryBuilder) Save() error {
-	jh := &codec.JsonHandle{}
-	labBuild.RegisterJsonExtensions(jh)
-
-	outFH, err := os.OpenFile(filepath.Join(labBuild.outDir, "effects.json"), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0400)
-	if err != nil {
-		return err
-	}
-	defer outFH.Close()
-
-	if err := codec.NewEncoder(outFH, jh).Encode(labBuild.LaboratoryEffects); err != nil {
-		return err
-	} else if len(labBuild.errors) != 0 {
+func (labBuild *LaboratoryBuilder) SaveErrors() error {
+	if len(labBuild.errors) != 0 {
 		return ioutil.WriteFile(filepath.Join(labBuild.outDir, "errors.txt"), []byte(labBuild.errors.Pack().Error()), 0400)
 	} else {
 		return nil

@@ -24,8 +24,9 @@ package liquidhandling
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"strings"
+
+	"github.com/pkg/errors"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/laboratory/effects"
@@ -247,15 +248,15 @@ func BasicSetupAgent(labEffects *effects.LaboratoryEffects, request *LHRequest, 
 			// representation of the liquid handler
 			switch params.Model {
 			case "Pipetmax":
-				waste, err = labEffects.Inventory.NewTipwaste("GilsonTipChute")
+				waste, err = labEffects.Inventory.TipWastes.NewTipwaste("GilsonTipChute")
 			case "GeneTheatre":
 				fallthrough
 			case "Felix":
-				waste, err = labEffects.Inventory.NewTipwaste("CyBiotipwaste")
+				waste, err = labEffects.Inventory.TipWastes.NewTipwaste("CyBiotipwaste")
 			case "Human":
-				waste, err = labEffects.Inventory.NewTipwaste("Manualtipwaste")
+				waste, err = labEffects.Inventory.TipWastes.NewTipwaste("Manualtipwaste")
 			case "Evo":
-				waste, err = labEffects.Inventory.NewTipwaste("Tecantipwaste")
+				waste, err = labEffects.Inventory.TipWastes.NewTipwaste("Tecantipwaste")
 			default:
 				return nil, wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("tip waste not handled for type: %s", params.Model))
 			}

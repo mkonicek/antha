@@ -115,7 +115,9 @@ func (r *Repository) fetchFilesFromGitBranch(et *ElementType) (map[string][]byte
 	} else if ch, err := r.gitRepo.ResolveRevision(plumbing.Revision(branch.Merge)); err != nil {
 		return nil, err
 	} else {
+		// we switch from branch to commit
 		r.Commit = ch.String()
+		r.Branch = ""
 		return r.fetchFilesFromGitCommit(et)
 	}
 }

@@ -1,10 +1,12 @@
 package effects
 
 import (
-	"encoding/json"
+	"fmt"
+	"time"
 
+	"github.com/antha-lang/antha/composer"
+	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/cache/plateCache"
-	"github.com/antha-lang/antha/inventory/testinventory"
 	"github.com/antha-lang/antha/laboratory/effects/id"
 	"github.com/antha-lang/antha/microArch/sampletracker"
 )
@@ -15,60 +17,34 @@ type LaboratoryEffects struct {
 	Trace         *Trace
 	Maker         *Maker
 	SampleTracker *sampletracker.SampleTracker
-	Inventory     *testinventory.TestInventory
-	PlateCache    *plateCache.PlateCache
-	IDGenerator   *id.IDGenerator
+	Inventory     *inventory.Inventory
+	// TODO the plate cache should go away and the use sites should be rewritten around plate types.
+	PlateCache  *plateCache.PlateCache
+	IDGenerator *id.IDGenerator
 }
 
-func NewLaboratoryEffects(jobId string) *LaboratoryEffects {
+func NewLaboratoryEffects(jobId string, wf *composer.Workflow) *LaboratoryEffects {
 	idGen := id.NewIDGenerator(jobId)
 	le := &LaboratoryEffects{
 		JobId:         jobId,
 		Trace:         NewTrace(),
 		Maker:         NewMaker(),
 		SampleTracker: sampletracker.NewSampleTracker(),
-		Inventory:     testinventory.NewInventory(idGen),
+		Inventory:     inventory.NewInventory(idGen),
 		IDGenerator:   idGen,
 	}
-	le.PlateCache = plateCache.NewPlateCache(le.Inventory)
-	return le
-}
+	le.PlateCache = plateCache.NewPlateCache(le.Inventory.PlateTypes)
 
-type laboratoryEffectsJSON struct {
-	JobId         string
-	Trace         *Trace
-	Maker         *Maker
-	SampleTracker *sampletracker.SampleTracker
-	// Inventory is part of plate cache, so we don't encode it.
-	PlateCache  *plateCache.PlateCache
-	IDGenerator *id.IDGenerator
-}
-
-func (le *LaboratoryEffects) MarshalJSON() ([]byte, error) {
-	return json.Marshal(&laboratoryEffectsJSON{
-		JobId:         le.JobId,
-		Trace:         le.Trace,
-		Maker:         le.Maker,
-		SampleTracker: le.SampleTracker,
-		PlateCache:    le.PlateCache,
-		IDGenerator:   le.IDGenerator,
-	})
-}
-
-func (le *LaboratoryEffects) UnmarshalJSON(bs []byte) error {
-	lej := &laboratoryEffectsJSON{}
-	if err := json.Unmarshal(bs, lej); err != nil {
-		return err
+	// TODO: discuss this: not sure if we want to do this based off
+	// zero plate types defined, or if we want an explicit flag or
+	// something?
+	if len(wf.Inventory.PlateTypes) == 0 {
+		start := time.Now()
+		le.Inventory.PlateTypes.LoadLibrary()
+		fmt.Println("Loaded default plate types in", time.Now().Sub(start))
 	} else {
-		le.JobId = lej.JobId
-		le.Trace = lej.Trace
-		le.Maker = lej.Maker
-		le.SampleTracker = lej.SampleTracker
-		le.PlateCache = lej.PlateCache
-		le.IDGenerator = lej.IDGenerator
-		// Just need to do a little rewiring:
-		le.Inventory = le.PlateCache.Inventory
-		le.Inventory.SetIDGenerator(le.IDGenerator)
-		return nil
+		le.Inventory.PlateTypes.SetPlateTypes(wf.Inventory.PlateTypes)
 	}
+
+	return le
 }

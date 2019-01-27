@@ -737,7 +737,7 @@ func (lhp *LHProperties) getCleanTipSubset(labEffects *effects.LaboratoryEffects
 
 	if !foundit {
 		// try adding a new tip box
-		bx, err := labEffects.Inventory.NewTipbox(tipParams.TipType)
+		bx, err := labEffects.Inventory.TipBoxes.NewTipbox(tipParams.TipType)
 
 		if err != nil {
 			return nil, nil, nil, wtype.LHError(wtype.LH_ERR_NO_TIPS, fmt.Sprintf("No tipbox of type %s found: %s", tipParams.TipType, err))

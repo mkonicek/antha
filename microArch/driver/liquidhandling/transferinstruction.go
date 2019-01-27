@@ -265,7 +265,7 @@ func (ins *TransferInstruction) validateParallelSet(labEffects *effects.Laborato
 		return false
 	}
 
-	err = labEffects.PlateCache.ReturnObject(fromPlate)
+	err = labEffects.PlateCache.ReturnPlate(fromPlate)
 	if err != nil {
 		panic(err)
 	}
@@ -286,7 +286,7 @@ func (ins *TransferInstruction) validateParallelSet(labEffects *effects.Laborato
 		return false
 	}
 
-	err = labEffects.PlateCache.ReturnObject(toPlate)
+	err = labEffects.PlateCache.ReturnPlate(toPlate)
 	if err != nil {
 		panic(err)
 	}

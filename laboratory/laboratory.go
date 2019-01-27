@@ -11,6 +11,7 @@ import (
 	"sync/atomic"
 
 	"github.com/antha-lang/antha/codegen"
+	"github.com/antha-lang/antha/composer"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/utils"
@@ -27,7 +28,8 @@ type Element interface {
 }
 
 type LaboratoryBuilder struct {
-	outDir string
+	outDir   string
+	workflow *composer.Workflow
 
 	elemLock   sync.Mutex
 	elemsUnrun int64
@@ -46,7 +48,7 @@ type LaboratoryBuilder struct {
 	*effects.LaboratoryEffects
 }
 
-func NewLaboratoryBuilder(jobId string) *LaboratoryBuilder {
+func NewLaboratoryBuilder(jobId string, wfPath string) *LaboratoryBuilder {
 	labBuild := &LaboratoryBuilder{
 		elements:  make(map[Element]*ElementBase),
 		Errored:   make(chan struct{}),
@@ -54,9 +56,20 @@ func NewLaboratoryBuilder(jobId string) *LaboratoryBuilder {
 
 		lineMapManager: NewLineMapManager(),
 		Logger:         NewLogger(),
-
-		LaboratoryEffects: effects.NewLaboratoryEffects(jobId),
 	}
+
+	if fh, err := os.Open(wfPath); err != nil {
+		labBuild.Fatal(err)
+	} else {
+		defer fh.Close()
+		if wf, err := composer.WorkflowFromReaders(fh); err != nil {
+			labBuild.Fatal(err)
+		} else {
+			labBuild.workflow = wf
+		}
+	}
+
+	labBuild.LaboratoryEffects = effects.NewLaboratoryEffects(jobId, labBuild.workflow)
 
 	flag.StringVar(&labBuild.outDir, "outdir", "", "Path to directory in which to write output files")
 	flag.Parse()
@@ -88,7 +101,7 @@ func (labBuild *LaboratoryBuilder) InstallElement(e Element) {
 	labBuild.elemsUnrun++
 }
 
-func (labBuild *LaboratoryBuilder) AddLink(src, dst Element, fun func()) error {
+func (labBuild *LaboratoryBuilder) AddConnection(src, dst Element, fun func()) error {
 	if ebSrc, found := labBuild.elements[src]; !found {
 		return fmt.Errorf("Unknown src element: %v", src)
 	} else if ebDst, found := labBuild.elements[dst]; !found {

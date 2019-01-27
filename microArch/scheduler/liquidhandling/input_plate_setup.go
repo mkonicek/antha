@@ -174,7 +174,7 @@ func input_plate_setup(labEffects *effects.LaboratoryEffects, request *LHRequest
 				curr_plate = plates_in_play[platetype.Type]
 
 				if curr_plate == nil {
-					p, err := labEffects.Inventory.NewPlate(platetype.Type)
+					p, err := labEffects.Inventory.PlateTypes.NewPlate(platetype.Type)
 					if err != nil {
 						return nil, err
 					}

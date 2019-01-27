@@ -19,7 +19,7 @@
 // Synthace Ltd. The London Bioscience Innovation Centre
 // 2 Royal College St, London NW1 0NH UK
 
-package testinventory
+package components
 
 import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"

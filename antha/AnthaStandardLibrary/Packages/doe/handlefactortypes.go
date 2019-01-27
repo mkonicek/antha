@@ -31,7 +31,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
-	"github.com/antha-lang/antha/inventory/testinventory"
+	"github.com/antha-lang/antha/inventory/components"
 	"github.com/antha-lang/antha/laboratory"
 )
 
@@ -100,12 +100,12 @@ func HandleComponentWithConcentration(lab *laboratory.Laboratory, header string,
 
 	componentName := solutions.NormaliseName(header)
 
-	component, err = lab.Inventory.NewComponent(componentName)
+	component, err = lab.Inventory.Components.NewComponent(componentName)
 
 	if err == nil {
 		// continue
-	} else if strings.Contains(err.Error(), testinventory.ErrUnknownType.Error()) {
-		component, err = lab.Inventory.NewComponent(testinventory.WaterType)
+	} else if components.IsComponentNotExist(err) {
+		component, err = lab.Inventory.Components.NewComponent(components.WaterType)
 		if err != nil {
 			return
 		}
@@ -194,13 +194,13 @@ func HandleLHComponentFactor(lab *laboratory.Laboratory, header string, value in
 		return nil, fmt.Errorf("value %T is not a string", value)
 	}
 
-	component, err := lab.Inventory.NewComponent(str)
+	component, err := lab.Inventory.Components.NewComponent(str)
 	if err == nil {
 		return component, nil
 	}
 
-	if strings.Contains(err.Error(), testinventory.ErrUnknownType.Error()) {
-		component, err = lab.Inventory.NewComponent(testinventory.WaterType)
+	if components.IsComponentNotExist(err) {
+		component, err = lab.Inventory.Components.NewComponent(components.WaterType)
 		component.CName = str
 		return component, err
 	}
@@ -224,7 +224,7 @@ func HandleLHPlateFactor(lab *laboratory.Laboratory, header string, value interf
 		return nil, fmt.Errorf("value %T is not a string", value)
 	}
 
-	return lab.Inventory.NewPlate(str)
+	return lab.Inventory.PlateTypes.NewPlate(str)
 }
 
 // HandleTemperatureFactor parses a factor name and value and returns an antha Temperature.

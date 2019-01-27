@@ -2445,7 +2445,7 @@ func (ins *BlowInstruction) Generate(labEffects *effects.LaboratoryEffects, poli
 			override := SafeGetBool(pol, "MIX_VOLUME_OVERRIDE_TIP_MAX")
 
 			//does the tip have a filter?
-			tb, err := labEffects.Inventory.NewTipbox(ins.TipType)
+			tb, err := labEffects.Inventory.TipBoxes.NewTipbox(ins.TipType)
 			if err != nil {
 				return ret, wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("While getting tip %v", err))
 			}

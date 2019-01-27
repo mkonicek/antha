@@ -734,7 +734,7 @@ func assertWellNotOverfilled(labEffects *effects.LaboratoryEffects, request *LHR
 				plate = p
 			}
 		} else if ins.Platetype != "" {
-			if p, err := labEffects.Inventory.NewPlate(ins.Platetype); err != nil {
+			if p, err := labEffects.Inventory.PlateTypes.NewPlate(ins.Platetype); err != nil {
 				continue
 			} else {
 				plate = p
@@ -1013,7 +1013,7 @@ func (this *Liquidhandler) GetPlates(labEffects *effects.LaboratoryEffects, plat
 		// assign new plates
 		for i := 0; i < len(major_layouts); i++ {
 			//newplate := wtype.New_Plate(ptype)
-			newplate, err := labEffects.Inventory.NewPlate(ptype.Type)
+			newplate, err := labEffects.Inventory.PlateTypes.NewPlate(ptype.Type)
 			if err != nil {
 				return nil, err
 			}

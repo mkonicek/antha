@@ -24,7 +24,9 @@ package wtype
 
 import (
 	"encoding/json"
+
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/composer"
 	"github.com/pkg/errors"
 )
 
@@ -194,7 +196,7 @@ type LHWellType struct {
 	Vunit     string
 	Rvol      float64
 	ShapeName string
-	Bottom    WellBottomType
+	Bottom    composer.WellBottomType
 	Xdim      float64
 	Ydim      float64
 	Zdim      float64

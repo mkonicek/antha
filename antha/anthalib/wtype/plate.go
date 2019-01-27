@@ -34,6 +34,7 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"github.com/antha-lang/antha/composer"
 	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
@@ -654,6 +655,21 @@ func NewLHPlate(idGen *id.IDGenerator, platetype, mfr string, nrows, ncols int, 
 	lhp.Rows = rowarr
 
 	return &lhp
+}
+
+func LHPlateFromType(idGen *id.IDGenerator, pt *composer.PlateType) *LHPlate {
+	newWellShape := NewShape(ShapeTypeID(pt.WellShape), "mm", pt.WellH, pt.WellW, pt.WellD)
+
+	newWelltype := NewLHWell(idGen, "ul", pt.MaxVol, pt.MinVol, newWellShape, pt.BottomType, pt.WellX, pt.WellY, pt.WellZ, pt.BottomH, "mm")
+
+	plate := NewLHPlate(idGen, string(pt.Name), pt.Manufacturer, pt.ColSize, pt.RowSize,
+		//standard X/Y size for 96 well plates
+		Coordinates{X: 127.76, Y: 85.48, Z: pt.Height},
+		newWelltype, pt.WellXOffset, pt.WellYOffset, pt.WellXStart, pt.WellYStart, pt.WellZStart)
+
+	plate.Welltype.Extra = pt.Extra
+
+	return plate
 }
 
 func (lhp *Plate) Dup(idGen *id.IDGenerator) *Plate {

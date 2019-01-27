@@ -472,7 +472,7 @@ func MakeLivingColor(lab *laboratory.Laboratory, ID string, color *color.NRGBA, 
 	DNASequence := wtype.MakeLinearDNASequence("ColorDNA", seq)
 
 	//use water as LHComponent
-	component, err := lab.Inventory.NewComponent("dna")
+	component, err := lab.Inventory.Components.NewComponent("dna")
 	if err != nil {
 		panic(err)
 	}

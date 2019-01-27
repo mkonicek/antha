@@ -279,7 +279,7 @@ func RunQPCRFromTemplate(lab *laboratory.Laboratory, opt QPCROptions) []*wtype.L
 
 // NewComponent returns a new component given a component type
 func NewComponent(lab *laboratory.Laboratory, typ string) *wtype.Liquid {
-	c, err := lab.Inventory.NewComponent(typ)
+	c, err := lab.Inventory.Components.NewComponent(typ)
 	if err != nil {
 		lab.Errorf("cannot make component %s: %s", typ, err)
 	}
@@ -288,7 +288,7 @@ func NewComponent(lab *laboratory.Laboratory, typ string) *wtype.Liquid {
 
 // NewPlate returns a new plate given a plate type
 func NewPlate(lab *laboratory.Laboratory, typ string) *wtype.Plate {
-	p, err := lab.Inventory.NewPlate(typ)
+	p, err := lab.Inventory.PlateTypes.NewPlate(typ)
 	if err != nil {
 		lab.Errorf("cannot make plate %s: %s", typ, err)
 	}

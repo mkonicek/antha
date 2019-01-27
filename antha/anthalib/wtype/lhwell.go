@@ -32,26 +32,9 @@ import (
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/eng"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"github.com/antha-lang/antha/composer"
 	"github.com/antha-lang/antha/laboratory/effects/id"
 )
-
-type WellBottomType int
-
-const (
-	FlatWellBottom WellBottomType = iota
-	UWellBottom
-	VWellBottom
-)
-
-var WellBottomNames []string = []string{
-	FlatWellBottom: "flat",
-	UWellBottom:    "U",
-	VWellBottom:    "V",
-}
-
-func (bt WellBottomType) String() string {
-	return WellBottomNames[bt]
-}
 
 // structure representing a well on a microplate - description of a destination
 type LHWell struct {
@@ -62,7 +45,7 @@ type LHWell struct {
 	WContents *Liquid
 	Rvol      float64 //Residual volume which can't be removed from the well
 	WShape    *Shape
-	Bottom    WellBottomType
+	Bottom    composer.WellBottomType
 	Bounds    BBox
 	Bottomh   float64
 	Extra     map[string]interface{}
@@ -200,7 +183,7 @@ Extra     : %v,
 		w.WContents,
 		w.Rvol,
 		w.WShape,
-		WellBottomNames[w.Bottom],
+		w.Bottom.String(),
 		w.GetSize().X,
 		w.GetSize().Y,
 		w.GetSize().Z,
@@ -616,7 +599,7 @@ func (lhw *LHWell) CalculateMaxVolume() (vol wunit.Volume, err error) {
 		return wunit.ZeroVolume(), fmt.Errorf("Nil well has no max volume")
 	}
 
-	if lhw.Bottom == FlatWellBottom { // flat
+	if lhw.Bottom == composer.FlatWellBottom { // flat
 		vol, err = lhw.Shape().Volume()
 	} /*else if lhw.Bottom == UWellBottom { // round
 		vol, err = lhw.Shape().Volume()
@@ -630,7 +613,7 @@ func (lhw *LHWell) CalculateMaxVolume() (vol wunit.Volume, err error) {
 }
 
 // make a new well structure
-func NewLHWell(idGen *id.IDGenerator, vunit string, vol, rvol float64, shape *Shape, bott WellBottomType, xdim, ydim, zdim, bottomh float64, dunit string) *LHWell {
+func NewLHWell(idGen *id.IDGenerator, vunit string, vol, rvol float64, shape *Shape, bott composer.WellBottomType, xdim, ydim, zdim, bottomh float64, dunit string) *LHWell {
 	var well LHWell
 
 	well.Plate = nil

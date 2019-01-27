@@ -110,7 +110,7 @@ func (a *Mixer) makeLhreq(labEffects *effects.LaboratoryEffects) (*lhreq, error)
 
 	if p := a.opt.InputPlateTypes; len(p) != 0 {
 		for _, v := range p {
-			p, err := labEffects.Inventory.NewPlate(v)
+			p, err := labEffects.Inventory.PlateTypes.NewPlate(v)
 			if err != nil {
 				return nil, err
 			}
@@ -121,7 +121,7 @@ func (a *Mixer) makeLhreq(labEffects *effects.LaboratoryEffects) (*lhreq, error)
 
 	if p := a.opt.OutputPlateTypes; len(p) != 0 {
 		for _, v := range p {
-			p, err := labEffects.Inventory.NewPlate(v)
+			p, err := labEffects.Inventory.PlateTypes.NewPlate(v)
 			if err != nil {
 				return nil, err
 			}
@@ -131,7 +131,7 @@ func (a *Mixer) makeLhreq(labEffects *effects.LaboratoryEffects) (*lhreq, error)
 
 	if p := a.opt.TipTypes; len(p) != 0 {
 		for _, v := range p {
-			t, err := labEffects.Inventory.NewTipbox(v)
+			t, err := labEffects.Inventory.TipBoxes.NewTipbox(v)
 			if err != nil {
 				return nil, err
 			}
@@ -404,7 +404,7 @@ func (a *Mixer) makeMix(labEffects *effects.LaboratoryEffects, mixes []*wtype.LH
 
 	for _, mix := range mixes {
 		if len(mix.Platetype) != 0 && !hasPlate(r.LHRequest.OutputPlatetypes, mix.Platetype, mix.PlateID) {
-			p, err := labEffects.Inventory.NewPlate(mix.Platetype)
+			p, err := labEffects.Inventory.PlateTypes.NewPlate(mix.Platetype)
 			if err != nil {
 				return nil, err
 			}

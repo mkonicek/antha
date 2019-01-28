@@ -81,10 +81,7 @@ func EstimatePathLength(plate *wtype.Plate, volume wunit.Volume) (pathlength wun
 func PathLengthCorrect(pathlength wunit.Length, reading *wtype.Absorbance) (pathlengthcorrected *wtype.Absorbance, err error) {
 	pathlengthcorrected = reading.Dup()
 	err = pathlengthcorrected.PathLengthCorrect(pathlength)
-	if err != nil {
-		return pathlengthcorrected, err
-	}
-	return pathlengthcorrected, nil
+	return pathlengthcorrected, err
 }
 
 // based on Beer Lambert law A = ε l c

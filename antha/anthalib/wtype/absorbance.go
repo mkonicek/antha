@@ -25,9 +25,9 @@ package wtype
 import (
 	"fmt"
 	"math"
-	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/utils"
 	"github.com/pkg/errors"
 )
 
@@ -85,7 +85,7 @@ type Absorbance struct {
 //
 func (a Absorbance) WavelengthToNearestNm() int {
 	// necessary to use int64 here in order to conveniently evaluate size.
-	if int64(toNM(a.Wavelength)) > math.MaxInt64 {
+	if int(toNM(a.Wavelength)) > math.MaxInt64 {
 		panic(errors.Errorf("the value for wavelength %v cannot be safely converted to an integer value", a.Wavelength))
 	}
 	return int(toNM(a.Wavelength))
@@ -111,12 +111,12 @@ func (a Absorbance) IsPathLengthCorrected() bool {
 	return false
 }
 
-// AddSource associates the Absorbance sample to the liquid which it corresponds to.
+// SetSource associates the Absorbance sample to the liquid which it corresponds to.
 // This is the actual sample that was measured rather than the original parent
 // sample which may have been diluted.
-func (a *Absorbance) AddSource(l *Liquid) error {
+func (a *Absorbance) SetSource(l *Liquid) error {
 	if a.Source != nil {
-		return errors.New("error adding source liquid to absorbance reading; reading already has a source")
+		return errors.New("error setting source liquid to absorbance reading; reading already has a source")
 	}
 	a.Source = l
 	return nil
@@ -150,7 +150,7 @@ func (sample *Absorbance) Dup() *Absorbance {
 // BlankCorrect subtracts the blank reading from the sample absorbance.
 // If the blank sample is not equivalent to the sample, based on wavelength and pathlength, an error is returned.
 func (sample *Absorbance) BlankCorrect(blanks ...*Absorbance) error {
-	var errs []string
+	var errs []error
 	for _, blank := range blanks {
 
 		// decimal places for relevant SI scale precision
@@ -165,7 +165,7 @@ func (sample *Absorbance) BlankCorrect(blanks ...*Absorbance) error {
 			}
 		} else {
 			errs = append(errs,
-				fmt.Sprintf(
+				fmt.Errorf(
 					`cannot pathlength correct as Absorbance readings for 
 			sample (%+v) and blank (%+v) are incompatible due to 
 			either wavelength, pathlength or reader differences.`,
@@ -177,7 +177,7 @@ func (sample *Absorbance) BlankCorrect(blanks ...*Absorbance) error {
 	}
 
 	if len(errs) > 0 {
-		return errors.Errorf(strings.Join(errs, ";"))
+		return utils.ErrorSlice(errs)
 	}
 	return nil
 }

@@ -1,4 +1,4 @@
-package laboratory
+package composer
 
 import (
 	"os"
@@ -36,4 +36,9 @@ func NewLogger() *Logger {
 func (l Logger) With(keyvals ...interface{}) *Logger {
 	logger := kitlog.With(l.Logger, keyvals...)
 	return &Logger{Logger: logger}
+}
+
+func (l Logger) Fatal(err error) {
+	l.Log("fatal", err.Error())
+	os.Exit(1)
 }

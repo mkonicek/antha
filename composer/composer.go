@@ -3,7 +3,6 @@ package composer
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 )
@@ -14,6 +13,7 @@ import (
 // - transpiling those elements and writing them out to the right place
 // - generating a suitable main.go from the workflow
 type Composer struct {
+	Logger   *Logger
 	OutDir   string
 	Workflow *Workflow
 
@@ -21,12 +21,12 @@ type Composer struct {
 	worklist     []*ElementType
 }
 
-func NewComposer(outDir string, wf *Workflow) (*Composer, error) {
+func NewComposer(logger *Logger, outDir string, wf *Workflow) (*Composer, error) {
 	if outDir == "" {
 		if d, err := ioutil.TempDir("", fmt.Sprintf("antha-%s", wf.JobId)); err != nil {
 			return nil, err
 		} else {
-			log.Printf("Using '%s' for output.", d)
+			logger.Log("msg", fmt.Sprintf("Using '%s' for output.", d))
 			outDir = d
 		}
 	}
@@ -36,6 +36,7 @@ func NewComposer(outDir string, wf *Workflow) (*Composer, error) {
 	}
 
 	return &Composer{
+		Logger:   logger,
 		OutDir:   outDir,
 		Workflow: wf,
 
@@ -62,6 +63,7 @@ func (c *Composer) EnsureElementType(et *ElementType) {
 }
 
 func (c *Composer) Transpile() error {
+	c.Logger.Log("progress", "transpiling")
 	for idx := 0; idx < len(c.worklist); idx++ {
 		if err := c.worklist[idx].Transpile(c); err != nil {
 			return err
@@ -71,6 +73,7 @@ func (c *Composer) Transpile() error {
 }
 
 func (c *Composer) GenerateMain() error {
+	c.Logger.Log("progress", "generating workflow main")
 	if fh, err := os.OpenFile(filepath.Join(c.OutDir, "workflow", "main.go"), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600); err != nil {
 		return err
 	} else {

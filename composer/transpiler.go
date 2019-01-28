@@ -33,6 +33,7 @@ func (et *ElementType) Transpile(c *Composer) error {
 		}
 
 		if filepath.Ext(fullPath) == ".an" {
+			c.Logger.Log("transpiling", fullPath)
 			if et.transpiler != nil {
 				return fmt.Errorf("Multiple .an files found in %v", elemDir)
 			} else if src, err := parser.ParseFile(fSet, fullPath, content, parser.ParseComments); err != nil {

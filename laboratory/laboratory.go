@@ -43,7 +43,7 @@ type LaboratoryBuilder struct {
 	Completed chan struct{}
 
 	*lineMapManager
-	Logger      *Logger
+	Logger      *composer.Logger
 	FileManager *FileManager
 
 	*effects.LaboratoryEffects
@@ -56,7 +56,7 @@ func NewLaboratoryBuilder(jobId string, fh io.Reader) *LaboratoryBuilder {
 		Completed: make(chan struct{}),
 
 		lineMapManager: NewLineMapManager(),
-		Logger:         NewLogger(),
+		Logger:         composer.NewLogger(),
 	}
 
 	if wf, err := composer.WorkflowFromReaders(fh); err != nil {
@@ -170,8 +170,7 @@ func (labBuild *LaboratoryBuilder) recordError(err error) {
 }
 
 func (labBuild *LaboratoryBuilder) Fatal(err error) {
-	labBuild.Logger.Log("fatal", err.Error())
-	os.Exit(1)
+	labBuild.Logger.Fatal(err)
 }
 
 func (labBuild *LaboratoryBuilder) Errors() error {
@@ -188,7 +187,7 @@ func (labBuild *LaboratoryBuilder) Errors() error {
 type Laboratory struct {
 	*LaboratoryBuilder
 	element Element
-	Logger  *Logger
+	Logger  *composer.Logger
 }
 
 func (labBuild *LaboratoryBuilder) makeLab(e Element) *Laboratory {

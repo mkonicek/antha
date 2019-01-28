@@ -1,10 +1,10 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
-	"log"
 	"os"
 
 	"github.com/antha-lang/antha/composer"
@@ -21,9 +21,11 @@ func main() {
 	flag.StringVar(&outdir, "outdir", "", "Directory to write to (default: a temporary directory will be created)")
 	flag.Parse()
 
+	logger := composer.NewLogger()
+
 	workflows := flag.Args()
 	if len(workflows) == 0 {
-		log.Fatal("No workflow files provided (use - to read from stdin).")
+		logger.Fatal(errors.New("No workflow files provided (use - to read from stdin)."))
 	}
 
 	stdinUnused := true
@@ -34,12 +36,12 @@ func main() {
 				stdinUnused = false
 				rs[idx] = os.Stdin
 			} else {
-				log.Fatal("Workflow can only be read from stdin once")
+				logger.Fatal(errors.New("Workflow can only be read from stdin once"))
 			}
 
 		} else {
 			if fh, err := os.Open(wfPath); err != nil {
-				log.Fatal(err)
+				logger.Fatal(err)
 			} else {
 				defer fh.Close()
 				rs[idx] = fh
@@ -47,20 +49,19 @@ func main() {
 		}
 	}
 
-	wf, err := composer.WorkflowFromReaders(rs...)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if comp, err := composer.NewComposer(outdir, wf); err != nil {
-		log.Fatal(err)
+	if wf, err := composer.WorkflowFromReaders(rs...); err != nil {
+		logger.Fatal(err)
+	} else if comp, err := composer.NewComposer(logger, outdir, wf); err != nil {
+		logger.Fatal(err)
 	} else if err := comp.FindWorkflowElementTypes(); err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	} else if err := comp.Transpile(); err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	} else if err := comp.GenerateMain(); err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	} else if err := comp.SaveWorkflow(); err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
+	} else if err := comp.CompileWorkflow(); err != nil {
+		logger.Fatal(err)
 	}
 }

@@ -40,6 +40,8 @@ func runAndLogCommand(cmd *exec.Cmd, logger *Logger) error {
 		stdout.Close()
 		return err
 	} else {
+		defer stderr.Close()
+		defer stdout.Close()
 		go drainToLogger(logger, stdout, "stdout")
 		go drainToLogger(logger, stderr, "stderr")
 		return cmd.Run()

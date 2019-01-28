@@ -46,7 +46,7 @@ func NewComposer(logger *Logger, outDir string, wf *Workflow) (*Composer, error)
 
 func (c *Composer) FindWorkflowElementTypes() error {
 	for _, et := range c.Workflow.ElementTypes {
-		if _, err := c.Workflow.Repositories.FetchFiles(et); err != nil {
+		if err := c.Workflow.Repositories.CloneRepository(et, filepath.Join(c.OutDir, "src")); err != nil {
 			return err
 		} else {
 			c.EnsureElementType(et)
@@ -75,7 +75,7 @@ func (c *Composer) Transpile() error {
 func (c *Composer) GenerateMain() error {
 	path := filepath.Join(c.OutDir, "workflow", "main.go")
 	c.Logger.Log("progress", "generating workflow main", "path", path)
-	if fh, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600); err != nil {
+	if fh, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0400); err != nil {
 		return err
 	} else {
 		defer fh.Close()

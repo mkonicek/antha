@@ -5,7 +5,6 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -15,45 +14,41 @@ import (
 )
 
 func (et *ElementType) Transpile(c *Composer) error {
-	baseDir := filepath.FromSlash(path.Join(c.OutDir, "src", et.ImportPath()))
+	baseDir := filepath.Join(c.OutDir, "src", filepath.FromSlash(et.ImportPath()))
 
 	fSet := token.NewFileSet()
 	anthaFiles := compile.NewAnthaFiles()
 
-	for leafPath, content := range et.files {
-		fullPath := filepath.Join(baseDir, filepath.FromSlash(leafPath))
-		elemDir := filepath.Dir(fullPath)
-
-		if err := os.MkdirAll(elemDir, 0700); err != nil {
+	if err := filepath.Walk(baseDir, func(p string, info os.FileInfo, err error) error {
+		if err != nil || !info.Mode().IsRegular() || filepath.Ext(p) != ".an" {
 			return err
 		}
-
-		if err := ioutil.WriteFile(fullPath, content, 0600); err != nil {
+		c.Logger.Log("transpiling", p)
+		if et.transpiler != nil {
+			return fmt.Errorf("Multiple .an files found in %v", baseDir)
+		} else if bs, err := ioutil.ReadFile(p); err != nil {
 			return err
-		}
-
-		if filepath.Ext(fullPath) == ".an" {
-			c.Logger.Log("transpiling", fullPath)
-			if et.transpiler != nil {
-				return fmt.Errorf("Multiple .an files found in %v", elemDir)
-			} else if src, err := parser.ParseFile(fSet, fullPath, content, parser.ParseComments); err != nil {
-				return err
-			} else if antha, err := compile.NewAntha(fSet, src); err != nil {
-				return err
-			} else {
-				for _, ipt := range antha.ImportReqs {
-					if err := et.maybeRewriteImport(c, ipt); err != nil {
-						return err
-					}
-				}
-				if err := antha.Transform(anthaFiles); err != nil {
+		} else if src, err := parser.ParseFile(fSet, p, bs, parser.ParseComments); err != nil {
+			return err
+		} else if antha, err := compile.NewAntha(fSet, src); err != nil {
+			return err
+		} else {
+			for _, ipt := range antha.ImportReqs {
+				if err := et.maybeRewriteImport(c, ipt); err != nil {
 					return err
 				}
+			}
+			if err := antha.Transform(anthaFiles); err != nil {
+				return err
+			} else {
 				et.transpiler = antha
+				return nil
 			}
 		}
+	}); err != nil {
+		return err
 	}
-	return writeAnthaFiles(anthaFiles, baseDir)
+	return writeAnthaFiles(anthaFiles, filepath.Dir(baseDir))
 }
 
 func (et *ElementType) maybeRewriteImport(c *Composer, ipt *compile.ImportReq) error {
@@ -70,7 +65,7 @@ func (et *ElementType) maybeRewriteImport(c *Composer, ipt *compile.ImportReq) e
 		RepositoryPrefix: repoPrefix,
 		ElementPath:      ElementPath(strings.TrimPrefix(ipt.Path, string(repoPrefix))),
 	}
-	if _, err := repo.FetchFiles(et2); err != nil {
+	if err := repo.Clone(filepath.Join(c.OutDir, "src")); err != nil {
 		return err
 	}
 	ipt.Path = et2.ImportPath()
@@ -81,7 +76,7 @@ func (et *ElementType) maybeRewriteImport(c *Composer, ipt *compile.ImportReq) e
 
 func writeAnthaFiles(files *compile.AnthaFiles, baseDir string) error {
 	for _, file := range files.Files() {
-		outFile := filepath.Join(filepath.Dir(baseDir), filepath.FromSlash(file.Name))
+		outFile := filepath.Join(baseDir, filepath.FromSlash(file.Name))
 		if err := writeAnthaFile(outFile, file); err != nil {
 			return err
 		}
@@ -91,7 +86,7 @@ func writeAnthaFiles(files *compile.AnthaFiles, baseDir string) error {
 }
 
 func writeAnthaFile(outFile string, file *compile.AnthaFile) error {
-	dst, err := os.OpenFile(outFile, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
+	dst, err := os.OpenFile(outFile, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0400)
 	if err != nil {
 		return err
 	}

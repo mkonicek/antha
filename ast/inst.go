@@ -1,9 +1,46 @@
 package ast
 
 import (
+	"context"
+
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/driver"
 )
+
+// An Inst is a instruction
+type Inst interface {
+	// Device that this instruction was generated for
+	Device() Device
+	// DependsOn returns instructions that this instruction depends on
+	DependsOn() []Inst
+	// SetDependsOn sets to the list of dependencies to only the args
+	SetDependsOn(...Inst)
+	// AppendDependsOn adds to the args to the existing list of dependencies
+	AppendDependsOn(...Inst)
+}
+
+// A Device is a scheduling plugin
+type Device interface {
+	CanCompile(Request) bool // Can this device compile this request
+
+	// Compile produces a single-entry, single-exit DAG of instructions where
+	// insts[0] is the entry point and insts[len(insts)-1] is the exit point
+	Compile(ctx context.Context, cmds []Node) (insts []Inst, err error)
+}
+
+type Insts []Inst
+
+// SequentialOrder takes a slice of instructions and modifies them
+// in-place, resetting to sequential dependencies.
+func (insts Insts) SequentialOrder() {
+	if len(insts) > 1 {
+		prev := insts[0]
+		for _, cur := range insts[1:] {
+			cur.SetDependsOn(prev)
+			prev = cur
+		}
+	}
+}
 
 // An IncubateInst is a high-level command to incubate a component
 type IncubateInst struct {

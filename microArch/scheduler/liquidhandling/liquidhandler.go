@@ -25,11 +25,12 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
 	"math"
 	"reflect"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -37,9 +38,7 @@ import (
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/cache"
 	"github.com/antha-lang/antha/inventory/cache/plateCache"
-	"github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
-	"github.com/antha-lang/antha/microArch/logger"
 	"github.com/antha-lang/antha/microArch/simulator"
 	simulator_lh "github.com/antha-lang/antha/microArch/simulator/liquidhandling"
 )
@@ -267,7 +266,7 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 	for i, err := range vlh.GetErrors() {
 		logLines = append(logLines, fmt.Sprintf(fmtString, i+1, err.Error()))
 	}
-	logger.Info(strings.Join(logLines, "\n"))
+	fmt.Println(strings.Join(logLines, "\n"))
 
 	//return the worst error if it's actually an error
 	if simErr := vlh.GetFirstError(simulator.SeverityError); simErr != nil {
@@ -338,7 +337,7 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 		}
 	}
 
-	logger.Debug(fmt.Sprintf("Total time estimate: %s", d.String()))
+	fmt.Printf("Total time estimate: %s\n", d.String())
 	request.TimeEstimate = d.Round(time.Second).Seconds()
 
 	return nil
@@ -611,14 +610,9 @@ func (this *Liquidhandler) get_setup_instructions(rq *LHRequest) []liquidhandlin
 }
 
 func (this *Liquidhandler) update_metadata(rq *LHRequest) error {
-
-	if _, ok := this.Properties.Driver.(liquidhandling.LowLevelLiquidhandlingDriver); ok {
-		stat := this.Properties.Driver.(liquidhandling.LowLevelLiquidhandlingDriver).UpdateMetaData(this.Properties)
-		if stat.Errorcode == driver.ERR {
-			return wtype.LHError(wtype.LH_ERR_DRIV, stat.Msg)
-		}
+	if drv, ok := this.Properties.Driver.(liquidhandling.LowLevelLiquidhandlingDriver); ok {
+		return drv.UpdateMetaData(this.Properties).GetError()
 	}
-
 	return nil
 }
 
@@ -1085,34 +1079,34 @@ func (this *Liquidhandler) ExecutionPlan(ctx context.Context, request *LHRequest
 }
 
 func OutputSetup(robot *liquidhandling.LHProperties) {
-	logger.Debug("DECK SETUP INFO")
-	logger.Debug("Tipboxes: ")
+	fmt.Println("DECK SETUP INFO")
+	fmt.Println("Tipboxes: ")
 
 	for k, v := range robot.Tipboxes {
-		logger.Debug(fmt.Sprintf("%s %s: %s", k, robot.PlateIDLookup[k], v.Type))
+		fmt.Printf("%s %s: %s\n", k, robot.PlateIDLookup[k], v.Type)
 	}
 
-	logger.Debug("Plates:")
+	fmt.Println("Plates:")
 
 	for k, v := range robot.Plates {
 
-		logger.Debug(fmt.Sprintf("%s %s: %s %s", k, robot.PlateIDLookup[k], v.PlateName, v.Type))
+		fmt.Printf("%s %s: %s %s\n", k, robot.PlateIDLookup[k], v.PlateName, v.Type)
 
 		//TODO Deprecate
 		if strings.Contains(v.GetName(), "Input") {
 			_, err := wtype.AutoExportPlateCSV(v.GetName()+".csv", v)
 			if err != nil {
-				logger.Debug(fmt.Sprintf("export plate csv (deprecated): %s", err.Error()))
+				fmt.Printf("export plate csv (deprecated): %s\n", err.Error())
 			}
 		}
 
 		v.OutputLayout()
 	}
 
-	logger.Debug("Tipwastes: ")
+	fmt.Println("Tipwastes: ")
 
 	for k, v := range robot.Tipwastes {
-		logger.Debug(fmt.Sprintf("%s %s: %s capacity %d", k, robot.PlateIDLookup[k], v.Type, v.Capacity))
+		fmt.Printf("%s %s: %s capacity %d\n", k, robot.PlateIDLookup[k], v.Type, v.Capacity)
 	}
 
 }
@@ -1234,7 +1228,7 @@ const adaptorSpacing = 9.0
 
 func addWellTargetsPlate(adaptor *wtype.LHAdaptor, plate *wtype.Plate) {
 	if adaptor.Manufacturer != "Gilson" {
-		logger.Info("Not adding well target data for non-gilson adaptor")
+		fmt.Println("Not adding well target data for non-gilson adaptor")
 		return
 	}
 

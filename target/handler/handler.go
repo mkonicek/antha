@@ -12,12 +12,12 @@ type Handler struct {
 	*GenericHandler
 }
 
-func (h *Handler) generate(cmd interface{}) ([]target.Inst, error) {
+func (h *Handler) generate(cmd interface{}) ([]ast.Inst, error) {
 	hinst, ok := cmd.(*ast.HandleInst)
 	if !ok {
 		return nil, fmt.Errorf("expecting %T found %T instead", hinst, cmd)
 	}
-	return []target.Inst{
+	return []ast.Inst{
 		&target.Run{
 			Dev:   h,
 			Label: hinst.Group,

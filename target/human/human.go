@@ -3,21 +3,15 @@ package human
 import (
 	"context"
 	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/handler"
 )
 
-const (
-	// HumanByHumanCost is the cost of manually moving from another human device
-	HumanByHumanCost = 50
-	// HumanByXCost is the cost of manually moving from any non-human device
-	HumanByXCost = 100
-)
-
 var (
-	_ target.Device = &Human{}
+	_ ast.Device = &Human{}
 )
 
 // A Human is a device that can do anything
@@ -68,22 +62,14 @@ func (a *Human) CanCompile(req ast.Request) bool {
 	return can.Contains(req)
 }
 
-// MoveCost implements target.device MoveCost
-func (a *Human) MoveCost(from target.Device) int64 {
-	if _, ok := from.(*Human); ok {
-		return HumanByHumanCost
-	}
-	return HumanByXCost
-}
-
 // Compile implements target.device Compile
-func (a *Human) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, error) {
+func (a *Human) Compile(ctx context.Context, nodes []ast.Node) ([]ast.Inst, error) {
 	return a.impl.Compile(ctx, nodes)
 }
 
-func (a *Human) generate(cmd interface{}) ([]target.Inst, error) {
+func (a *Human) generate(cmd interface{}) ([]ast.Inst, error) {
 
-	var insts []target.Inst
+	var insts []ast.Inst
 
 	switch cmd := cmd.(type) {
 

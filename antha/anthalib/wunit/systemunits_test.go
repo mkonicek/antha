@@ -34,6 +34,29 @@ func TestMililitresPerMinute(t *testing.T) {
 	}
 }
 
+func TestPercentVperV(t *testing.T) {
+	reg := makeGlobalUnitRegistry()
+
+	percentvpervValue, err := reg.NewMeasurement(60.0, "% v/v")
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	vperv, err := reg.GetUnit("v/v")
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if vpervValue, err := percentvpervValue.InUnit(vperv); err != nil {
+		t.Error(err)
+	} else if vpervValue.RawValue() != 0.6 {
+		t.Errorf("converting %v to %v: got %g expected %g", percentvpervValue, vpervValue, 0.6, vpervValue.RawValue())
+	}
+
+}
+
 func TestBadUnitConversion(t *testing.T) {
 
 	type TestCase struct {

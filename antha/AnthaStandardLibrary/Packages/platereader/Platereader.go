@@ -78,7 +78,7 @@ func EstimatePathLength(plate *wtype.Plate, volume wunit.Volume) (pathlength wun
 // PathLengthCorrect normalises an absorbance reading
 // to a standard reference pathlength of 1cm.
 // 1cm is the pathlength used to normalise absorbance readings to OD.
-func PathlengthCorrect(pathlength wunit.Length, reading *wtype.Absorbance) (pathlengthcorrected *wtype.Absorbance, err error) {
+func PathLengthCorrect(pathlength wunit.Length, reading *wtype.Absorbance) (pathlengthcorrected *wtype.Absorbance, err error) {
 	pathlengthcorrected = reading.Dup()
 	err = pathlengthcorrected.PathLengthCorrect(pathlength)
 	if err != nil {

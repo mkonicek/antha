@@ -63,7 +63,7 @@ func (c *Composer) EnsureElementType(et *ElementType) {
 }
 
 func (c *Composer) Transpile() error {
-	c.Logger.Log("progress", "transpiling")
+	c.Logger.Log("progress", "transpiling Antha elements")
 	for idx := 0; idx < len(c.worklist); idx++ {
 		if err := c.worklist[idx].Transpile(c); err != nil {
 			return err
@@ -73,8 +73,9 @@ func (c *Composer) Transpile() error {
 }
 
 func (c *Composer) GenerateMain() error {
-	c.Logger.Log("progress", "generating workflow main")
-	if fh, err := os.OpenFile(filepath.Join(c.OutDir, "workflow", "main.go"), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600); err != nil {
+	path := filepath.Join(c.OutDir, "workflow", "main.go")
+	c.Logger.Log("progress", "generating workflow main", "path", path)
+	if fh, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600); err != nil {
 		return err
 	} else {
 		defer fh.Close()

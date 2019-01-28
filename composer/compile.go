@@ -25,7 +25,12 @@ func (c *Composer) goGenerate() error {
 func (c *Composer) goBuild() error {
 	cmd := exec.Command("go", "build")
 	cmd.Dir = filepath.Join(c.OutDir, "workflow")
-	return runAndLogCommand(cmd, c.Logger.With("cmd", "build", "cwd", cmd.Dir))
+	if err := runAndLogCommand(cmd, c.Logger.With("cmd", "build", "cwd", cmd.Dir)); err != nil {
+		return err
+	} else {
+		c.Logger.Log("compilation", "successful", "binary", filepath.Join(cmd.Dir, "workflow"))
+		return nil
+	}
 }
 
 func runAndLogCommand(cmd *exec.Cmd, logger *Logger) error {

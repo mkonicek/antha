@@ -63,5 +63,7 @@ func main() {
 		logger.Fatal(err)
 	} else if err := comp.CompileWorkflow(); err != nil {
 		logger.Fatal(err)
+	} else {
+		logger.Log("progress", "complete")
 	}
 }

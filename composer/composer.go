@@ -1,6 +1,9 @@
 package composer
 
 import (
+	"fmt"
+	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 )
@@ -18,13 +21,26 @@ type Composer struct {
 	worklist     []*ElementType
 }
 
-func NewComposer(outDir string, workflow *Workflow) *Composer {
+func NewComposer(outDir string, wf *Workflow) (*Composer, error) {
+	if outDir == "" {
+		if d, err := ioutil.TempDir("", fmt.Sprintf("antha-%s", wf.JobId)); err != nil {
+			return nil, err
+		} else {
+			log.Printf("Using '%s' for output.", d)
+			outDir = d
+		}
+	}
+
+	if err := os.MkdirAll(filepath.Join(outDir, "workflow", "data"), 0700); err != nil {
+		return nil, err
+	}
+
 	return &Composer{
 		OutDir:   outDir,
-		Workflow: workflow,
+		Workflow: wf,
 
 		elementTypes: make(map[ElementTypeName]*ElementType),
-	}
+	}, nil
 }
 
 func (c *Composer) FindWorkflowElementTypes() error {
@@ -55,10 +71,14 @@ func (c *Composer) Transpile() error {
 }
 
 func (c *Composer) GenerateMain() error {
-	if fh, err := os.OpenFile(filepath.Join(c.OutDir, "main.go"), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600); err != nil {
+	if fh, err := os.OpenFile(filepath.Join(c.OutDir, "workflow", "main.go"), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600); err != nil {
 		return err
 	} else {
 		defer fh.Close()
 		return newMainRenderer(c).render(fh)
 	}
+}
+
+func (c *Composer) SaveWorkflow() error {
+	return c.Workflow.WriteToFile(filepath.Join(c.OutDir, "workflow", "data", "workflow.json"))
 }

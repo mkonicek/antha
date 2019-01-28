@@ -4,10 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
-	"path/filepath"
 
 	"github.com/antha-lang/antha/composer"
 )
@@ -26,15 +24,6 @@ func main() {
 	workflows := flag.Args()
 	if len(workflows) == 0 {
 		log.Fatal("No workflow files provided (use - to read from stdin).")
-	}
-
-	if outdir == "" {
-		if d, err := ioutil.TempDir("", "antha"); err != nil {
-			log.Fatal(err)
-		} else {
-			log.Printf("Using '%s' for output.", d)
-			outdir = d
-		}
 	}
 
 	stdinUnused := true
@@ -63,14 +52,15 @@ func main() {
 		log.Fatal(err)
 	}
 
-	comp := composer.NewComposer(outdir, wf)
-	if err := comp.FindWorkflowElementTypes(); err != nil {
+	if comp, err := composer.NewComposer(outdir, wf); err != nil {
+		log.Fatal(err)
+	} else if err := comp.FindWorkflowElementTypes(); err != nil {
 		log.Fatal(err)
 	} else if err := comp.Transpile(); err != nil {
 		log.Fatal(err)
 	} else if err := comp.GenerateMain(); err != nil {
 		log.Fatal(err)
-	} else if err := wf.WriteToFile(filepath.Join(outdir, "workflow.json")); err != nil {
+	} else if err := comp.SaveWorkflow(); err != nil {
 		log.Fatal(err)
 	}
 }

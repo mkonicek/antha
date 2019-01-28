@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -48,7 +49,7 @@ type LaboratoryBuilder struct {
 	*effects.LaboratoryEffects
 }
 
-func NewLaboratoryBuilder(jobId string, wfPath string) *LaboratoryBuilder {
+func NewLaboratoryBuilder(jobId string, fh io.Reader) *LaboratoryBuilder {
 	labBuild := &LaboratoryBuilder{
 		elements:  make(map[Element]*ElementBase),
 		Errored:   make(chan struct{}),
@@ -58,15 +59,10 @@ func NewLaboratoryBuilder(jobId string, wfPath string) *LaboratoryBuilder {
 		Logger:         NewLogger(),
 	}
 
-	if fh, err := os.Open(wfPath); err != nil {
+	if wf, err := composer.WorkflowFromReaders(fh); err != nil {
 		labBuild.Fatal(err)
 	} else {
-		defer fh.Close()
-		if wf, err := composer.WorkflowFromReaders(fh); err != nil {
-			labBuild.Fatal(err)
-		} else {
-			labBuild.workflow = wf
-		}
+		labBuild.workflow = wf
 	}
 
 	labBuild.LaboratoryEffects = effects.NewLaboratoryEffects(jobId, labBuild.workflow)

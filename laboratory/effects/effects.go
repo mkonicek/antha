@@ -1,9 +1,6 @@
 package effects
 
 import (
-	"fmt"
-	"time"
-
 	"github.com/antha-lang/antha/composer"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/cache/plateCache"
@@ -39,9 +36,7 @@ func NewLaboratoryEffects(jobId string, wf *composer.Workflow) *LaboratoryEffect
 	// zero plate types defined, or if we want an explicit flag or
 	// something?
 	if len(wf.Inventory.PlateTypes) == 0 {
-		start := time.Now()
 		le.Inventory.PlateTypes.LoadLibrary()
-		fmt.Println("Loaded default plate types in", time.Now().Sub(start))
 	} else {
 		le.Inventory.PlateTypes.SetPlateTypes(wf.Inventory.PlateTypes)
 	}

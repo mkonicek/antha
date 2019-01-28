@@ -34,7 +34,7 @@ import (
 
 // BlankCorrect subtracts the blank reading from the sample absorbance.
 // If the blank sample is not equivalent to the sample, based on wavelength and pathlength, an error is returned.
-func Blankcorrect(sample *wtype.Absorbance, blank *wtype.Absorbance) (blankcorrected *wtype.Absorbance, err error) {
+func BlankCorrect(sample *wtype.Absorbance, blank *wtype.Absorbance) (blankcorrected *wtype.Absorbance, err error) {
 
 	blankcorrected = sample.Dup()
 
@@ -78,13 +78,13 @@ func EstimatePathLength(plate *wtype.Plate, volume wunit.Volume) (pathlength wun
 // PathLengthCorrect normalises an absorbance reading
 // to a standard reference pathlength of 1cm.
 // 1cm is the pathlength used to normalise absorbance readings to OD.
-func PathlengthCorrect(pathlength wunit.Length, reading *wtype.Absorbance) (pathlengthcorrected *wtype.Absorbance) {
+func PathlengthCorrect(pathlength wunit.Length, reading *wtype.Absorbance) (pathlengthcorrected *wtype.Absorbance, err error) {
 	pathlengthcorrected = reading.Dup()
-	err := pathlengthcorrected.PathLengthCorrect(pathlength)
+	err = pathlengthcorrected.PathLengthCorrect(pathlength)
 	if err != nil {
-		panic(err)
+		return pathlengthcorrected, err
 	}
-	return pathlengthcorrected
+	return pathlengthcorrected, nil
 }
 
 // based on Beer Lambert law A = ε l c

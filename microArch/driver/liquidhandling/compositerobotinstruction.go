@@ -783,7 +783,6 @@ func (ins *MultiChannelTransferInstruction) Generate(ctx context.Context, policy
 	if len(ins.Volume) == 0 {
 		return ret, nil
 	}
-
 	// make the instructions
 
 	suckinstruction := NewSuckInstruction()

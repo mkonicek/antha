@@ -479,6 +479,17 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 			if well.IsAutoallocated() {
 				vol.Add(well.ResidualVolume())
 
+				if vol.GreaterThan(well.MaxVolume()) {
+					v := vol.Dup()
+					v.Subtract(well.MaxVolume())
+					if v.LessThan(well.ResidualVolume()) {
+						// don't exceed the well maximum by a trivial amount
+						vol = well.MaxVolume()
+					} else {
+						return fmt.Errorf("Error autogenerating stock %s at plate %s (type %s) well %s: Volume requested (%s) over well capacity (%s)", well2.Contents().CName, plate2.Name(), plate2.Type, crd, vol.ToString(), well.MaxVolume().ToString())
+					}
+				}
+
 				well2Contents := well2.Contents().Dup()
 				well2Contents.SetVolume(vol)
 				err := well2.SetContents(well2Contents)
@@ -936,7 +947,7 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		return err
 	}
 
-	//find what liquids are explicitely provided by the user
+	//find what liquids are explicitly provided by the user
 	solutionsFromPlates, err := request.GetSolutionsFromInputPlates()
 	if err != nil {
 		return err

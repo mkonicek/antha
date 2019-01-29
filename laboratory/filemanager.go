@@ -27,13 +27,14 @@ func (fm *FileManager) ReadAll(f wtype.File) ([]byte, error) {
 	fm.lock.Lock()
 	defer fm.lock.Unlock()
 
-	bs, found := fm.contents[f.Path]
+	path := f.Path()
+	bs, found := fm.contents[path]
 	if !found {
-		if content, err := ioutil.ReadFile(filepath.FromSlash(f.Path)); err != nil {
+		if content, err := ioutil.ReadFile(filepath.FromSlash(path)); err != nil {
 			return nil, err
 		} else {
 			bs = content
-			fm.contents[f.Path] = content
+			fm.contents[path] = content
 		}
 	}
 	bsCopy := make([]byte, len(bs))
@@ -52,7 +53,7 @@ func (fm *FileManager) WriteAll(bs []byte) (*wtype.File, error) {
 	} else {
 		p2 := filepath.ToSlash(p)
 		fm.contents[p2] = bs
-		return &wtype.File{Path: p2}, nil
+		return wtype.NewFile(p), nil
 	}
 }
 

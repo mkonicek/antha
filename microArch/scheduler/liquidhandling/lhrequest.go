@@ -25,6 +25,7 @@ package liquidhandling
 
 import (
 	"context"
+	"fmt"
 	"github.com/pkg/errors"
 	"strings"
 
@@ -146,24 +147,6 @@ func (req *LHRequest) GetSolutionsFromInputPlates() (map[string][]*wtype.Liquid,
 	}
 
 	return inputs, nil
-}
-
-// this function checks requests so we can see early on whether or not they
-// are going to cause problems
-func ValidateLHRequest(rq *LHRequest) (bool, string) {
-	if rq.OutputPlatetypes == nil || len(rq.OutputPlatetypes) == 0 {
-		return false, "No output plate type specified"
-	}
-
-	if len(rq.InputPlatetypes) == 0 {
-		return false, "No input plate types specified"
-	}
-
-	if rq.Policies() == nil {
-		return false, "No policies specified"
-	}
-
-	return true, "OK"
 }
 
 func columnWiseIterator(a wtype.Addressable) wtype.AddressIterator {
@@ -429,6 +412,112 @@ func (rq *LHRequest) assertNoTemporaryPlates(ctx context.Context) error {
 
 	if len(ids) > 0 {
 		return wtype.LHErrorf(wtype.LH_ERR_DIRE, "found a temporary plate(s) being returned in the request: ids %s", strings.Join(ids, ", "))
+	}
+	return nil
+}
+
+func (rq *LHRequest) removeDummyInstructions() {
+	toRemove := make(map[string]bool, len(rq.LHInstructions))
+	for _, ins := range rq.LHInstructions {
+		if ins.IsDummy() {
+			toRemove[ins.ID] = true
+		}
+	}
+
+	if len(toRemove) > 0 {
+
+		oo := make([]string, 0, len(rq.OutputOrder)-len(toRemove))
+
+		for _, ins := range rq.OutputOrder {
+			if toRemove[ins] {
+				continue
+			} else {
+				oo = append(oo, ins)
+			}
+		}
+
+		if len(oo) != len(rq.OutputOrder)-len(toRemove) {
+			panic(fmt.Sprintf("Dummy instruction prune failed: before %d dummies %d after %d", len(rq.OutputOrder), len(toRemove), len(oo)))
+		}
+
+		rq.OutputOrder = oo
+
+		// prune instructionChain
+		rq.InstructionChain.PruneOut(toRemove)
+	}
+}
+
+func (req *LHRequest) MergedInputOutputPlates() map[string]*wtype.Plate {
+	m := make(map[string]*wtype.Plate, len(req.InputPlates)+len(req.OutputPlates))
+	addToMap(m, req.InputPlates)
+	addToMap(m, req.OutputPlates)
+	return m
+}
+
+func addToMap(m, a map[string]*wtype.Plate) {
+	for k, v := range a {
+		m[k] = v
+	}
+}
+
+func (rq *LHRequest) fixDuplicatePlateNames() {
+	seen := make(map[string]int, 1)
+	fixNames := func(sa []string, pm map[string]*wtype.Plate) {
+		for _, id := range sa {
+			p, foundPlate := pm[id]
+
+			if !foundPlate {
+				panic(fmt.Sprintf("Inconsistency in plate order / map for plate ID %s ", id))
+			}
+
+			n, ok := seen[p.PlateName]
+
+			if ok {
+				newName := fmt.Sprintf("%s_%d", p.PlateName, n)
+				seen[p.PlateName] += 1
+				p.PlateName = newName
+			} else {
+				seen[p.PlateName] = 1
+			}
+		}
+	}
+
+	fixNames(rq.InputPlateOrder, rq.InputPlates)
+	fixNames(rq.OutputPlateOrder, rq.OutputPlates)
+}
+
+// Validate catch errors early
+func (request *LHRequest) Validate() error {
+	if len(request.LHInstructions) == 0 {
+		return wtype.LHError(wtype.LH_ERR_OTHER, "Nil plan requested: no Mix Instructions present")
+	}
+
+	// no component can have all three of Conc, Vol and TVol set to 0:
+
+	for _, ins := range request.LHInstructions {
+		// the check below makes sense only for mixes
+		if ins.Type != wtype.LHIMIX {
+			continue
+		}
+		for i, cmp := range ins.Inputs {
+			if cmp.Vol == 0.0 && cmp.Conc == 0.0 && cmp.Tvol == 0.0 {
+				errstr := fmt.Sprintf("Nil mix (no volume, concentration or total volume) requested: %d : ", i)
+
+				for j := 0; j < len(ins.Inputs); j++ {
+					ss := ins.Inputs[i].CName
+					if j == i {
+						ss = strings.ToUpper(ss)
+					}
+
+					if j != len(ins.Inputs)-1 {
+						ss += ", "
+					}
+
+					errstr += ss
+				}
+				return wtype.LHError(wtype.LH_ERR_OTHER, errstr)
+			}
+		}
 	}
 	return nil
 }

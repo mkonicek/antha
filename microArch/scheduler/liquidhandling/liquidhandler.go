@@ -99,57 +99,18 @@ func (this *Liquidhandler) PlateIDMap() map[string]string {
 	return ret
 }
 
-// catch errors early
-func ValidateRequest(request *LHRequest) error {
-	if len(request.LHInstructions) == 0 {
-		return wtype.LHError(wtype.LH_ERR_OTHER, "Nil plan requested: no Mix Instructions present")
-	}
-
-	// no component can have all three of Conc, Vol and TVol set to 0:
-
-	for _, ins := range request.LHInstructions {
-		// the check below makes sense only for mixes
-		if ins.Type != wtype.LHIMIX {
-			continue
-		}
-		for i, cmp := range ins.Inputs {
-			if cmp.Vol == 0.0 && cmp.Conc == 0.0 && cmp.Tvol == 0.0 {
-				errstr := fmt.Sprintf("Nil mix (no volume, concentration or total volume) requested: %d : ", i)
-
-				for j := 0; j < len(ins.Inputs); j++ {
-					ss := ins.Inputs[i].CName
-					if j == i {
-						ss = strings.ToUpper(ss)
-					}
-
-					if j != len(ins.Inputs)-1 {
-						ss += ", "
-					}
-
-					errstr += ss
-				}
-				return wtype.LHError(wtype.LH_ERR_OTHER, errstr)
-			}
-		}
-	}
-	return nil
-}
-
 // high-level function which requests planning and execution for an incoming set of
 // solutions
 func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest) error {
-	err := ValidateRequest(request)
-	if err != nil {
+	if err := request.Validate(); err != nil {
 		return err
 	}
 
-	err = this.Plan(ctx, request)
-	if err != nil {
+	if err := this.Plan(ctx, request); err != nil {
 		return err
 	}
 
-	err = this.AddSetupInstructions(request)
-	if err != nil {
+	if err := this.AddSetupInstructions(request); err != nil {
 		return err
 	}
 
@@ -158,13 +119,11 @@ func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest
 		fmt.Printf("  %v\n", tipEstimate)
 	}
 
-	err = this.Simulate(request)
-	if err != nil && !request.Options.IgnorePhysicalSimulation {
+	if err := this.Simulate(request); err != nil && !request.Options.IgnorePhysicalSimulation {
 		return errors.WithMessage(err, "during physical simulation")
 	}
 
-	err = this.Execute(request)
-	if err != nil {
+	if err := this.Execute(request); err != nil {
 		return err
 	}
 
@@ -688,7 +647,7 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		return err
 	}
 
-	// make sure instructions don't share *Liquids
+	// make sure instructions don't share pointers to inputs or outputs
 	request.LHInstructions.DupLiquids()
 
 	if err := request.LHInstructions.AssertVolumesNonNegative(); err != nil {
@@ -962,37 +921,6 @@ func (lh *Liquidhandler) updateComponentNames(rq *LHRequest) error {
 	return nil
 }
 
-func (rq *LHRequest) removeDummyInstructions() {
-	toRemove := make(map[string]bool, len(rq.LHInstructions))
-	for _, ins := range rq.LHInstructions {
-		if ins.IsDummy() {
-			toRemove[ins.ID] = true
-		}
-	}
-
-	if len(toRemove) > 0 {
-
-		oo := make([]string, 0, len(rq.OutputOrder)-len(toRemove))
-
-		for _, ins := range rq.OutputOrder {
-			if toRemove[ins] {
-				continue
-			} else {
-				oo = append(oo, ins)
-			}
-		}
-
-		if len(oo) != len(rq.OutputOrder)-len(toRemove) {
-			panic(fmt.Sprintf("Dummy instruction prune failed: before %d dummies %d after %d", len(rq.OutputOrder), len(toRemove), len(oo)))
-		}
-
-		rq.OutputOrder = oo
-
-		// prune instructionChain
-		rq.InstructionChain.PruneOut(toRemove)
-	}
-}
-
 //addWellTargets for all the adaptors and plates available
 func (lh *Liquidhandler) addWellTargets() error {
 	for _, head := range lh.Properties.Heads {
@@ -1082,43 +1010,4 @@ func getWellTargetYStart(wy int) (float64, int) {
 	}
 
 	return 0.0, 0
-}
-
-func (req *LHRequest) MergedInputOutputPlates() map[string]*wtype.Plate {
-	m := make(map[string]*wtype.Plate, len(req.InputPlates)+len(req.OutputPlates))
-	addToMap(m, req.InputPlates)
-	addToMap(m, req.OutputPlates)
-	return m
-}
-
-func addToMap(m, a map[string]*wtype.Plate) {
-	for k, v := range a {
-		m[k] = v
-	}
-}
-
-func (rq *LHRequest) fixDuplicatePlateNames() {
-	seen := make(map[string]int, 1)
-	fixNames := func(sa []string, pm map[string]*wtype.Plate) {
-		for _, id := range sa {
-			p, foundPlate := pm[id]
-
-			if !foundPlate {
-				panic(fmt.Sprintf("Inconsistency in plate order / map for plate ID %s ", id))
-			}
-
-			n, ok := seen[p.PlateName]
-
-			if ok {
-				newName := fmt.Sprintf("%s_%d", p.PlateName, n)
-				seen[p.PlateName] += 1
-				p.PlateName = newName
-			} else {
-				seen[p.PlateName] = 1
-			}
-		}
-	}
-
-	fixNames(rq.InputPlateOrder, rq.InputPlates)
-	fixNames(rq.OutputPlateOrder, rq.OutputPlates)
 }

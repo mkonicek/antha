@@ -1,7 +1,6 @@
 package effects
 
 import (
-	"github.com/antha-lang/antha/composer"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/cache/plateCache"
 	"github.com/antha-lang/antha/laboratory/effects/id"
@@ -20,7 +19,7 @@ type LaboratoryEffects struct {
 	IDGenerator *id.IDGenerator
 }
 
-func NewLaboratoryEffects(jobId string, wf *composer.Workflow) *LaboratoryEffects {
+func NewLaboratoryEffects(jobId string) *LaboratoryEffects {
 	idGen := id.NewIDGenerator(jobId)
 	le := &LaboratoryEffects{
 		JobId:         jobId,
@@ -31,15 +30,6 @@ func NewLaboratoryEffects(jobId string, wf *composer.Workflow) *LaboratoryEffect
 		IDGenerator:   idGen,
 	}
 	le.PlateCache = plateCache.NewPlateCache(le.Inventory.PlateTypes)
-
-	// TODO: discuss this: not sure if we want to do this based off
-	// zero plate types defined, or if we want an explicit flag or
-	// something?
-	if len(wf.Inventory.PlateTypes) == 0 {
-		le.Inventory.PlateTypes.LoadLibrary()
-	} else {
-		le.Inventory.PlateTypes.SetPlateTypes(wf.Inventory.PlateTypes)
-	}
 
 	return le
 }

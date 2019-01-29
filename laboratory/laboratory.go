@@ -49,7 +49,7 @@ type LaboratoryBuilder struct {
 	*effects.LaboratoryEffects
 }
 
-func NewLaboratoryBuilder(jobId string, fh io.Reader) *LaboratoryBuilder {
+func NewLaboratoryBuilder(fh io.Reader) *LaboratoryBuilder {
 	labBuild := &LaboratoryBuilder{
 		elements:  make(map[Element]*ElementBase),
 		Errored:   make(chan struct{}),
@@ -65,13 +65,22 @@ func NewLaboratoryBuilder(jobId string, fh io.Reader) *LaboratoryBuilder {
 		labBuild.workflow = wf
 	}
 
-	labBuild.LaboratoryEffects = effects.NewLaboratoryEffects(jobId, labBuild.workflow)
+	labBuild.LaboratoryEffects = effects.NewLaboratoryEffects(string(labBuild.workflow.JobId))
+
+	// TODO: discuss this: not sure if we want to do this based off
+	// zero plate types defined, or if we want an explicit flag or
+	// something?
+	if len(labBuild.workflow.Inventory.PlateTypes) == 0 {
+		labBuild.Inventory.PlateTypes.LoadLibrary()
+	} else {
+		labBuild.Inventory.PlateTypes.SetPlateTypes(labBuild.workflow.Inventory.PlateTypes)
+	}
 
 	flag.StringVar(&labBuild.outDir, "outdir", "", "Path to directory in which to write output files")
 	flag.Parse()
 
 	if labBuild.outDir == "" {
-		if d, err := ioutil.TempDir("", fmt.Sprintf("antha-run-%s", jobId)); err != nil {
+		if d, err := ioutil.TempDir("", fmt.Sprintf("antha-run-%s", labBuild.workflow.JobId)); err != nil {
 			labBuild.Fatal(err)
 		} else {
 			labBuild.outDir = d

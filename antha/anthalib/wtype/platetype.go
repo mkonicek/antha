@@ -1,5 +1,10 @@
 package wtype
 
+import "fmt"
+
+// These types are used by composer and directly define the definition
+// of plate types in the workflow.
+
 type PlateTypes map[PlateTypeName]*PlateType
 
 type PlateTypeName string
@@ -45,4 +50,25 @@ var WellBottomNames []string = []string{
 
 func (bt WellBottomType) String() string {
 	return WellBottomNames[bt]
+}
+
+func (a PlateTypes) Merge(b PlateTypes) error {
+	// May need revising: currently we error if there's any
+	// overlap. Equality between PlateTypes can't be based on simple
+	// structural equality due to the Extra field being a map.
+	for ptn, pt := range b {
+		if _, found := a[ptn]; found {
+			return fmt.Errorf("PlateType %v is redefined", ptn)
+		}
+		a[ptn] = pt
+	}
+	return nil
+}
+
+func (p PlateTypes) Validate() error {
+	// not a validation step really, more just consistency
+	for ptn, pt := range p {
+		pt.Name = ptn
+	}
+	return nil
 }

@@ -12,7 +12,9 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/compile"
+	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/utils"
 	git "gopkg.in/src-d/go-git.v4"
 )
@@ -28,6 +30,8 @@ type Workflow struct {
 
 	Inventory Inventory `json:Inventory`
 
+	Config Config `json:Config`
+
 	typeNames map[ElementTypeName]*ElementType
 }
 
@@ -40,7 +44,7 @@ func newWorkflow() *Workflow {
 		ElementInstancesConnections: make(ElementInstancesConnections, 0),
 
 		Inventory: Inventory{
-			PlateTypes: make(PlateTypes),
+			PlateTypes: make(wtype.PlateTypes),
 		},
 	}
 }
@@ -140,7 +144,7 @@ type ElementSocket struct {
 }
 
 type Inventory struct {
-	PlateTypes PlateTypes `json:"PlateTypes"`
+	PlateTypes wtype.PlateTypes `json:"PlateTypes"`
 	/* Currently only PlateTypes can be set but it's clear how to extend this:
 	Components Components `json:"Components"`
 	TipBoxes   TipBoxes   `json:"TipBoxes"`
@@ -148,51 +152,39 @@ type Inventory struct {
 	*/
 }
 
-type PlateTypes map[PlateTypeName]*PlateType
-
-type PlateTypeName string
-
-type PlateType struct {
-	Name         PlateTypeName          // name of plate type, potentially including riser
-	Manufacturer string                 // name of plate manufacturer
-	WellShape    string                 // Name of well shape, one of "cylinder", "box", "trapezoid"
-	WellH        float64                // size of well in X direction (long side of plate)
-	WellW        float64                // size of well in Y direction (short side of plate)
-	WellD        float64                // size of well in Z direction (vertical from plane of plate)
-	MaxVol       float64                // maximum volume well can hold in microlitres
-	MinVol       float64                // residual volume of well in microlitres
-	BottomType   WellBottomType         // shape of well bottom, one of "flat","U", "V"
-	BottomH      float64                // offset from well bottom to rest of well in mm (i.e. height of U or V - 0 if flat)
-	WellX        float64                // size of well in X direction (long side of plate)
-	WellY        float64                // size of well in Y direction (short side of plate)
-	WellZ        float64                // size of well in Z direction (vertical from plane of plate)
-	ColSize      int                    // number of wells in a column
-	RowSize      int                    // number of wells in a row
-	Height       float64                // size of plate in Z direction (vertical from plane of plate)
-	WellXOffset  float64                // distance between adjacent well centres in X direction (long side)
-	WellYOffset  float64                // distance between adjacent well centres in Y direction (short side)
-	WellXStart   float64                // offset from top-left corner of plate to centre of top-leftmost well in X direction (long side)
-	WellYStart   float64                // offset from top-left corner of plate to centre of top-leftmost well in Y direction (short side)
-	WellZStart   float64                // offset from top of plate to well bottom
-	Extra        map[string]interface{} // container for additional well properties such as constraints
+type Config struct {
+	GilsonPipetMax GilsonPipetMaxConfig `json:"GilsonPipetMax"`
+	GlobalMixer    GlobalMixerConfig    `json:"GlobalMixer"`
 }
 
-type WellBottomType uint8
+type DeviceInstanceID string
 
-const (
-	FlatWellBottom WellBottomType = iota
-	UWellBottom
-	VWellBottom
-)
-
-var WellBottomNames []string = []string{
-	FlatWellBottom: "flat",
-	UWellBottom:    "U",
-	VWellBottom:    "V",
+type GilsonPipetMaxConfig struct {
+	Defaults *GilsonPipetMaxInstanceConfig                      `json:"Defaults,omitempty"`
+	Devices  map[DeviceInstanceID]*GilsonPipetMaxInstanceConfig `json:"Devices"`
 }
 
-func (bt WellBottomType) String() string {
-	return WellBottomNames[bt]
+type GilsonPipetMaxInstanceConfig struct {
+	LayoutPreferences    *liquidhandling.LayoutOpt `json:"layoutPreferences,omitempty"`
+	OutputFileName       string                    `json:"outputFileName,omitempty"` // Specify file name in the instruction stream of any driver generated file
+	MaxPlates            *float64                  `json:"maxPlates,omitempty"`
+	MaxWells             *float64                  `json:"maxWells,omitempty"`
+	ResidualVolumeWeight *float64                  `json:"residualVolumeWeight,omitempty"`
+	InputPlateTypes      []wtype.PlateTypeName     `json:"inputPlateTypes,omitempty"`
+	OutputPlateTypes     []wtype.PlateTypeName     `json:"outputPlateTypes,omitempty"`
+	TipTypes             []string                  `json:"tipTypes,omitempty"`
+}
+
+type GlobalMixerConfig struct {
+	PrintInstructions        bool `json:"printInstructions"`
+	UseDriverTipTracking     bool `json:"useDriverTipTracking"`
+	IgnorePhysicalSimulation bool `json:"ignorePhysicalSimulation"` //ignore errors in physical simulation
+
+	// Direct specification of input and output plates
+	InputPlates  []*wtype.Plate `json:"inputPlates,omitempty"`
+	OutputPlates []*wtype.Plate `json:"outputPlates,omitempty"`
+
+	CustomPolicyRuleSet *wtype.LHPolicyRuleSet `json:"customPolicyRuleSet,omitempty"`
 }
 
 func (wf *Workflow) TypeNames() map[ElementTypeName]*ElementType {
@@ -214,22 +206,18 @@ func (a *Workflow) merge(b *Workflow) error {
 	if a.JobId == "" {
 		a.JobId = b.JobId
 	} else if b.JobId != "" && a.JobId != b.JobId {
-		return fmt.Errorf("Cannot merge with different JobIds: %v vs %v", a.JobId, b.JobId)
+		return fmt.Errorf("Cannot merge: different JobIds: %v vs %v", a.JobId, b.JobId)
 	}
 
-	errs := utils.ErrorSlice{
+	return utils.ErrorSlice{
 		a.Repositories.merge(b.Repositories),
 		a.ElementTypes.merge(b.ElementTypes),
 		a.ElementInstances.merge(b.ElementInstances),
 		a.ElementInstancesParameters.merge(b.ElementInstancesParameters),
 		a.ElementInstancesConnections.merge(b.ElementInstancesConnections),
 		a.Inventory.merge(b.Inventory),
-	}
-	if err := errs.Pack(); err != nil {
-		return err
-	} else {
-		return nil
-	}
+		a.Config.merge(b.Config),
+	}.Pack()
 }
 
 func (a Repositories) merge(b Repositories) error {
@@ -339,18 +327,61 @@ func (a *ElementInstancesConnections) merge(b ElementInstancesConnections) error
 }
 
 func (a *Inventory) merge(b Inventory) error {
-	return a.PlateTypes.merge(b.PlateTypes)
+	return a.PlateTypes.Merge(b.PlateTypes)
 }
 
-func (a PlateTypes) merge(b PlateTypes) error {
-	// May need revising: currently we error if there's any
-	// overlap. Equality between PlateTypes can't be based on simple
-	// structural equality due to the Extra field being a map.
-	for ptn, pt := range b {
-		if _, found := a[ptn]; found {
-			return fmt.Errorf("PlateType %v is redefined", ptn)
+func (a *Config) merge(b Config) error {
+	return utils.ErrorSlice{
+		a.GilsonPipetMax.merge(b.GilsonPipetMax),
+		a.GlobalMixer.merge(b.GlobalMixer),
+	}.Pack()
+}
+
+func (a *GilsonPipetMaxConfig) merge(b GilsonPipetMaxConfig) error {
+	// simplest: we merge iff device ids are distinct
+	for id, cfg := range b.Devices {
+		if _, found := a.Devices[id]; found {
+			return fmt.Errorf("Cannot merge: GilsonPipetMax device '%s' redefined", id)
 		}
-		a[ptn] = pt
+		a.Devices[id] = cfg
+	}
+	// for defaults, we just hope one of them is nil
+	switch {
+	case a.Defaults == nil:
+		a.Defaults = b.Defaults
+	case b.Defaults != nil:
+		return errors.New("Cannot merge: GilsonPipetMax defaults redefined")
+	}
+	return nil
+}
+
+func (a *GlobalMixerConfig) merge(b GlobalMixerConfig) error {
+	// disjunction of bools - this seems sensible
+	a.PrintInstructions = a.PrintInstructions || b.PrintInstructions
+	a.UseDriverTipTracking = a.UseDriverTipTracking || b.UseDriverTipTracking
+	a.IgnorePhysicalSimulation = a.IgnorePhysicalSimulation || b.IgnorePhysicalSimulation
+
+	// but we can't allow input or output plates to be speficied multiple times:
+	switch inAEmpty, inBEmpty := len(a.InputPlates) == 0, len(b.InputPlates) == 0; {
+	case inAEmpty:
+		a.InputPlates = b.InputPlates
+	case !inBEmpty: // by implication, also !inAEmpty
+		return errors.New("Cannot merge: Config.GlobalMixer.InputPlates specified in multiple workflows. This is illegal")
+	}
+
+	switch outAEmpty, outBEmpty := len(a.OutputPlates) == 0, len(b.OutputPlates) == 0; {
+	case outAEmpty:
+		a.OutputPlates = b.OutputPlates
+	case !outBEmpty: // by implication, also !outAEmpty
+		return errors.New("Cannot merge: Config.GlobalMixer.OutputPlates specified in multiple workflows. This is illegal")
+	}
+
+	// for LHPolicyRuleSets, there's already a merge function!
+	switch {
+	case a.CustomPolicyRuleSet == nil:
+		a.CustomPolicyRuleSet = b.CustomPolicyRuleSet
+	case b.CustomPolicyRuleSet != nil:
+		a.CustomPolicyRuleSet.MergeWith(b.CustomPolicyRuleSet)
 	}
 	return nil
 }
@@ -359,19 +390,15 @@ func (wf *Workflow) validate() error {
 	if wf.JobId == "" {
 		return errors.New("Workflow has empty JobId")
 	} else {
-		errs := utils.ErrorSlice{
+		return utils.ErrorSlice{
 			wf.Repositories.validate(),
 			wf.ElementTypes.validate(wf),
 			wf.ElementInstances.validate(wf),
 			wf.ElementInstancesParameters.validate(wf),
 			wf.ElementInstancesConnections.validate(wf),
-			wf.Inventory.validate(wf),
-		}
-		if err := errs.Pack(); err != nil {
-			return err
-		} else {
-			return nil
-		}
+			wf.Inventory.validate(),
+			wf.Config.validate(wf),
+		}.Pack()
 	}
 }
 
@@ -494,10 +521,62 @@ func (soc ElementSocket) validate(wf *Workflow) error {
 	}
 }
 
-func (inv Inventory) validate(wf *Workflow) error {
-	return inv.PlateTypes.validate(wf)
+func (inv Inventory) validate() error {
+	return inv.PlateTypes.Validate()
 }
 
-func (p PlateTypes) validate(wf *Workflow) error {
+func (cfg Config) validate(wf *Workflow) error {
+	return utils.ErrorSlice{
+		cfg.GilsonPipetMax.validate(wf),
+		cfg.GlobalMixer.validate(wf),
+	}.Pack()
+}
+
+func (gilson GilsonPipetMaxConfig) validate(wf *Workflow) error {
+	if err := gilson.Defaults.validate("Defaults", wf); err != nil {
+		return err
+	}
+	for name, cfg := range gilson.Devices {
+		if err := cfg.validate(string(name), wf); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (gilson GilsonPipetMaxInstanceConfig) validate(name string, wf *Workflow) error {
+	switch {
+	case gilson.MaxPlates != nil && *gilson.MaxPlates <= 0:
+		return fmt.Errorf("GilsonPipetMax '%s': MaxPlates must be > 0", name)
+	case gilson.MaxWells != nil && *gilson.MaxWells <= 0:
+		return fmt.Errorf("GilsonPipetMax '%s': MaxWells must be > 0", name)
+	case gilson.ResidualVolumeWeight != nil && *gilson.ResidualVolumeWeight < 0:
+		return fmt.Errorf("GilsonPipetMax '%s': ResidualVolumeWeight must be >= 0", name)
+	}
+
+	for _, names := range [][]wtype.PlateTypeName{gilson.InputPlateTypes, gilson.OutputPlateTypes} {
+		for _, ptn := range names {
+			if _, found := wf.Inventory.PlateTypes[ptn]; !found {
+				return fmt.Errorf("GilsonPipetMax '%s': Unknown Plate Type Name '%s'", name, string(ptn))
+			}
+		}
+	}
+	/* Argh, so this is where it becomes totally obvious that we need
+	/* to delay some of this validation until we have the inventories
+	/* loaded.
+		for _, ttn := range gilson.TipTypes {
+		}
+	*/
+	return nil
+}
+
+func (global GlobalMixerConfig) validate(wf *Workflow) error {
+	for _, plates := range [][]*wtype.Plate{global.InputPlates, global.OutputPlates} {
+		for _, p := range plates {
+			if _, found := wf.Inventory.PlateTypes[wtype.PlateTypeName(p.Type)]; !found {
+				return fmt.Errorf("GlobalMixer.InputPlates: plate type '%v' not found in inventory", p.Type)
+			}
+		}
+	}
 	return nil
 }

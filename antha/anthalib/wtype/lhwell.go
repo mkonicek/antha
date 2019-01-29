@@ -32,7 +32,6 @@ import (
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/eng"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
-	"github.com/antha-lang/antha/composer"
 	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
@@ -45,7 +44,7 @@ type LHWell struct {
 	WContents *Liquid
 	Rvol      float64 //Residual volume which can't be removed from the well
 	WShape    *Shape
-	Bottom    composer.WellBottomType
+	Bottom    WellBottomType
 	Bounds    BBox
 	Bottomh   float64
 	Extra     map[string]interface{}
@@ -599,7 +598,7 @@ func (lhw *LHWell) CalculateMaxVolume() (vol wunit.Volume, err error) {
 		return wunit.ZeroVolume(), fmt.Errorf("Nil well has no max volume")
 	}
 
-	if lhw.Bottom == composer.FlatWellBottom { // flat
+	if lhw.Bottom == FlatWellBottom { // flat
 		vol, err = lhw.Shape().Volume()
 	} /*else if lhw.Bottom == UWellBottom { // round
 		vol, err = lhw.Shape().Volume()
@@ -613,7 +612,7 @@ func (lhw *LHWell) CalculateMaxVolume() (vol wunit.Volume, err error) {
 }
 
 // make a new well structure
-func NewLHWell(idGen *id.IDGenerator, vunit string, vol, rvol float64, shape *Shape, bott composer.WellBottomType, xdim, ydim, zdim, bottomh float64, dunit string) *LHWell {
+func NewLHWell(idGen *id.IDGenerator, vunit string, vol, rvol float64, shape *Shape, bott WellBottomType, xdim, ydim, zdim, bottomh float64, dunit string) *LHWell {
 	var well LHWell
 
 	well.Plate = nil

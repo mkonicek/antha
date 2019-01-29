@@ -96,7 +96,7 @@ import (
 {{end}}{{end}})
 
 func main() {
-	labBuild := laboratory.NewLaboratoryBuilder({{printf "%q" .JobId}}, bytes.NewBuffer(MustAsset("data/workflow.json")))
+	labBuild := laboratory.NewLaboratoryBuilder(bytes.NewBuffer(MustAsset("data/workflow.json")))
 	jh := &codec.JsonHandle{}
 	labBuild.RegisterJsonExtensions(jh)
 

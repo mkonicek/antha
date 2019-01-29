@@ -23,7 +23,6 @@ package tipwastes
 
 import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/composer"
 	"github.com/antha-lang/antha/inventory/tipboxes"
 	"github.com/antha-lang/antha/laboratory/effects/id"
 )
@@ -43,7 +42,7 @@ func makeGilsonTipWaste(idGen *id.IDGenerator) *wtype.LHTipwaste {
 //makeGilsonTipChute this is the chute for position 1 from direct measurements
 func makeGilsonTipChute(idGen *id.IDGenerator) *wtype.LHTipwaste {
 	shp := wtype.NewShape("box", "mm", 50.0, 63.8, 82.98)
-	w := wtype.NewLHWell(idGen, "ul", 800000.0, 800000.0, shp, composer.FlatWellBottom, 50.0, 63.8, 82.98, 0.0, "mm")
+	w := wtype.NewLHWell(idGen, "ul", 800000.0, 800000.0, shp, wtype.FlatWellBottom, 50.0, 63.8, 82.98, 0.0, "mm")
 	lht := wtype.NewLHTipwaste(idGen, 6000, "GilsonTipChute", "gilson", wtype.Coordinates{X: tipboxes.SbsX, Y: tipboxes.SbsY, Z: 50.0}, w, tipboxes.SbsX/2.0, tipboxes.SbsY/2.0, 0.0)
 	return lht
 }

@@ -24,11 +24,16 @@
 package liquidhandling
 
 import (
+	"context"
 	"github.com/pkg/errors"
+	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/inventory"
+	"github.com/antha-lang/antha/inventory/cache"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
+	"github.com/antha-lang/antha/utils"
 )
 
 // structure for defining a request to the liquid handler
@@ -36,7 +41,7 @@ type LHRequest struct {
 	ID                    string
 	BlockID               wtype.BlockID
 	BlockName             string
-	LHInstructions        map[string]*wtype.LHInstruction
+	LHInstructions        wtype.LHInstructions
 	Plates                map[string]*wtype.Plate
 	Tips                  []*wtype.LHTipbox
 	InstructionSet        *liquidhandling.RobotInstructionSet
@@ -366,4 +371,64 @@ func (rq *LHRequest) updateWithNewLHInstructions(sorted []*wtype.LHInstruction) 
 			rq.LHInstructions[ins.ID] = ins
 		}
 	}
+}
+
+//assertWellNotOverfilled checks that mix instructions aren't going to overfill the wells when a plate is specified
+//assumes assertMixResultsCorrect returns nil
+func (rq *LHRequest) assertWellNotOverfilled(ctx context.Context) error {
+	errs := make(utils.ErrorSlice, 0, len(rq.Instructions))
+
+	for _, ins := range rq.LHInstructions {
+		if ins.Type != wtype.LHIMIX {
+			continue
+		}
+
+		resultVolume := ins.Outputs[0].Volume()
+
+		var plate *wtype.Plate
+		if ins.OutPlate != nil {
+			plate = ins.OutPlate
+		} else if ins.PlateID != "" {
+			if p, ok := rq.GetPlate(ins.PlateID); !ok {
+				continue
+			} else {
+				plate = p
+			}
+		} else if ins.Platetype != "" {
+			if p, err := inventory.NewPlate(ctx, ins.Platetype); err != nil {
+				continue
+			} else {
+				plate = p
+			}
+		} else {
+			//couldn't find an appropriate plate
+			continue
+		}
+
+		if maxVol := plate.Welltype.MaxVolume(); maxVol.LessThan(resultVolume) {
+			//ignore if this is just numerical precision (#campainforintegervolume)
+			delta := wunit.SubtractVolumes(resultVolume, maxVol)
+			if delta.IsZero() {
+				continue
+			}
+			errs = append(errs, wtype.LHErrorf(wtype.LH_ERR_VOL, "volume of resulting mix (%v) exceeds the well maximum (%v) for instruction:\n%s",
+				resultVolume, maxVol, ins.Summarize(1)))
+		}
+	}
+	return errs.Pack()
+}
+
+//check that none of the plates we're returning came from the cache
+func (rq *LHRequest) assertNoTemporaryPlates(ctx context.Context) error {
+	ids := make([]string, 0, len(rq.Plates))
+	for id, plate := range rq.Plates {
+		if cache.IsFromCache(ctx, plate) {
+			ids = append(ids, id)
+		}
+	}
+
+	if len(ids) > 0 {
+		return wtype.LHErrorf(wtype.LH_ERR_DIRE, "found a temporary plate(s) being returned in the request: ids %s", strings.Join(ids, ", "))
+	}
+	return nil
 }

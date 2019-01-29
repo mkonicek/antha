@@ -896,7 +896,7 @@ func TestExecutionPlanning(t *testing.T) {
 			}),
 			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
 			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
-			ErrorPrefix:  "7 (LH_ERR_VOL) : volume error : invalid total volume for component \"water\" in instruction:",
+			ErrorPrefix:  "during solution setup: 7 (LH_ERR_VOL) : volume error : invalid total volume for component \"water\" in instruction:",
 		},
 		{
 			Name: "test dummy instruction removal",
@@ -1165,7 +1165,7 @@ func TestFixDuplicatePlateNames(t *testing.T) {
 		rq.OutputPlates[p.ID] = p
 	}
 
-	rq = fixDuplicatePlateNames(rq)
+	rq.fixDuplicatePlateNames()
 
 	found := make(map[string]int)
 

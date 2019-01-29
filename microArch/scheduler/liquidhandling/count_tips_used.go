@@ -7,11 +7,11 @@ import (
 	driver "github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
-func (lh Liquidhandler) countTipsUsed(rq *LHRequest) (*LHRequest, error) {
+func (lh Liquidhandler) countTipsUsed(insts []driver.TerminalRobotInstruction) ([]wtype.TipEstimate, error) {
 	teHash := make(map[string]wtype.TipEstimate)
 
 	var err error
-	for _, ins := range rq.Instructions {
+	for _, ins := range insts {
 		ins.Visit(driver.RobotInstructionBaseVisitor{
 			HandleLoadTips: func(ins *driver.LoadTipsInstruction) {
 				for i := 0; i < len(ins.Pos); i++ {
@@ -44,7 +44,7 @@ func (lh Liquidhandler) countTipsUsed(rq *LHRequest) (*LHRequest, error) {
 	}
 
 	// output to the request
-
+	ret := make([]wtype.TipEstimate, 0, len(teHash))
 	for _, te := range teHash {
 		if te.NTips == 0 {
 			// should not be possible but I don't want to generate confusion
@@ -61,19 +61,8 @@ func (lh Liquidhandler) countTipsUsed(rq *LHRequest) (*LHRequest, error) {
 			te.NTipBoxes += 1
 		}
 
-		rq.TipsUsed = append(rq.TipsUsed, te)
+		ret = append(ret, te)
 	}
 
-	return rq, nil
+	return ret, nil
 }
-
-//func countWellMulti(sa []string) int {
-//	r := 0
-//	for _, s := range sa {
-//		if s != "" {
-//			r += 1
-//		}
-//	}
-
-// 	return r
-// }

@@ -185,7 +185,7 @@ func (rq *LHRequest) inputPlateSetup(ctx context.Context) error {
 
 					plates_in_play[platetype.Type] = p
 					curr_plate = plates_in_play[platetype.Type]
-					platename := getSafeInputPlateName(rq, curplaten)
+					platename := rq.getSafeInputPlateName(curplaten)
 					curr_plate.PlateName = platename
 					curplaten += 1
 					curr_plate.DeclareTemporary()
@@ -271,15 +271,15 @@ func isInstance(s string) bool {
 }
 
 // returns a unique plate name
-func getSafeInputPlateName(request *LHRequest, curplaten int) string {
-	return getSafePlateName(request, "auto_input_plate", "_", curplaten)
+func (rq *LHRequest) getSafeInputPlateName(curplaten int) string {
+	return rq.getSafePlateName("auto_input_plate", "_", curplaten)
 }
 
-func getSafePlateName(request *LHRequest, prefix, sep string, curplaten int) string {
+func (rq *LHRequest) getSafePlateName(prefix, sep string, curplaten int) string {
 	trialPlateName := randomPlateName(prefix, sep, curplaten)
 
 	for {
-		if request.HasPlateNamed(trialPlateName) {
+		if rq.HasPlateNamed(trialPlateName) {
 			trialPlateName = randomPlateName(prefix, sep, curplaten)
 
 		} else {

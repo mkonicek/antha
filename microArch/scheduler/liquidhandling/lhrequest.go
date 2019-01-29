@@ -218,7 +218,7 @@ func (lhr *LHRequest) AddUserPlate(p *wtype.Plate) {
 	// impose sanity
 
 	if p.PlateName == "" {
-		p.PlateName = getSafePlateName(lhr, "user_plate", "_", lhr.NUserPlates+1)
+		p.PlateName = lhr.getSafePlateName("user_plate", "_", lhr.NUserPlates+1)
 		lhr.NUserPlates += 1
 	}
 

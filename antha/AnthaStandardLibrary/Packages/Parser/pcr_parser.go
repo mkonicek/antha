@@ -24,7 +24,7 @@ func ParsePCRExcel(lab *laboratory.Laboratory, designfile wtype.File) ([]pcr.Rea
 	} else {
 
 		switch {
-		case filepath.Ext(designfile.Path) == ".xlsx":
+		case filepath.Ext(designfile.Name) == ".xlsx":
 			csvfile1, err := xlsxparserBinary(data, 0, "Sheet2")
 			if err != nil {
 				return nil, err
@@ -41,7 +41,7 @@ func ParsePCRExcel(lab *laboratory.Laboratory, designfile wtype.File) ([]pcr.Rea
 		//	pcrreaction = pcrReactionfromcsv(designfile.Name)
 		//	return pcrreaction, err
 
-		case filepath.Ext(designfile.Path) != ".xlsx": //".csv" && filepath.Ext(designfile.Name) != ".xlsx":
+		case filepath.Ext(designfile.Name) != ".xlsx": //".csv" && filepath.Ext(designfile.Name) != ".xlsx":
 			err = fmt.Errorf("File format not supported please use .xlsx file. ")
 			return nil, err
 		}

@@ -41,7 +41,7 @@ func DNAFileToDNASequence(lab *laboratory.Laboratory, sequenceFile wtype.File) (
 	var seqs []wtype.DNASequence
 	var seq wtype.DNASequence
 
-	switch fn := sequenceFile.Path; {
+	switch fn := sequenceFile.Name; {
 	case filepath.Ext(fn) == ".gdx":
 		seqs, err = gdx.GDXToDNASequence(lab, sequenceFile)
 		sequences = append(sequences, seqs...)

@@ -80,7 +80,7 @@ func (fs FileSet) GetSequences(lab *laboratory.Laboratory) (partslist []wtype.DN
 
 	for _, file := range fs {
 
-		filename := file.Path
+		filename := file.Name
 		if strings.EqualFold(filepath.Ext(filename), ".fasta") || strings.EqualFold(filepath.Ext(filename), ".fa") {
 			sequences, err := fasta.FastaToDNASequences(lab, file)
 			if err != nil {

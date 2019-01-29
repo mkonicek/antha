@@ -24,6 +24,18 @@ func (cv ComponentVector) DeleteAllBelowVolume(vol wunit.Volume) {
 	}
 }
 
+func (cv ComponentVector) SubtractVolume(vol wunit.Volume) {
+	for i := 0; i < len(cv); i++ {
+		v := cv[i].Volume()
+		v.Subtract(vol)
+		if !v.IsPositive() {
+			cv[i] = nil
+		} else {
+			cv[i].SetVolume(v)
+		}
+	}
+}
+
 func (cv ComponentVector) Dup() ComponentVector {
 	ret := make(ComponentVector, len(cv))
 

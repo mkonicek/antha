@@ -18,7 +18,10 @@ func main() {
 	}
 
 	var outdir string
+	var keep, run bool
 	flag.StringVar(&outdir, "outdir", "", "Directory to write to (default: a temporary directory will be created)")
+	flag.BoolVar(&keep, "keep", false, "Keep build environment if compilation is successful")
+	flag.BoolVar(&run, "run", true, "Run the workflow if compilation is successful")
 	flag.Parse()
 
 	logger := composer.NewLogger()
@@ -51,7 +54,7 @@ func main() {
 
 	if wf, err := composer.WorkflowFromReaders(rs...); err != nil {
 		logger.Fatal(err)
-	} else if comp, err := composer.NewComposer(logger, outdir, wf); err != nil {
+	} else if comp, err := composer.NewComposer(logger, wf, outdir, keep, run); err != nil {
 		logger.Fatal(err)
 	} else if err := comp.FindWorkflowElementTypes(); err != nil {
 		logger.Fatal(err)
@@ -62,6 +65,8 @@ func main() {
 	} else if err := comp.SaveWorkflow(); err != nil {
 		logger.Fatal(err)
 	} else if err := comp.CompileWorkflow(); err != nil {
+		logger.Fatal(err)
+	} else if err := comp.RunWorkflow(); err != nil {
 		logger.Fatal(err)
 	} else {
 		logger.Log("progress", "complete")

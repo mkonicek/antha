@@ -71,7 +71,7 @@ func NewLaboratoryBuilder(jobId string, fh io.Reader) *LaboratoryBuilder {
 	flag.Parse()
 
 	if labBuild.outDir == "" {
-		if d, err := ioutil.TempDir("", fmt.Sprintf("antha-%s", jobId)); err != nil {
+		if d, err := ioutil.TempDir("", fmt.Sprintf("antha-run-%s", jobId)); err != nil {
 			labBuild.Fatal(err)
 		} else {
 			labBuild.outDir = d

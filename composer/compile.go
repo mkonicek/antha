@@ -4,9 +4,11 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 )
 
 func (c *Composer) CompileWorkflow() error {
@@ -32,7 +34,7 @@ func (c *Composer) goGenerate() error {
 		cmd.Env = []string{}
 	}
 
-	return runAndLogCommand(cmd, c.Logger.With("cmd", "generate", "cwd", cmd.Dir))
+	return runAndLogCommand(cmd, c.Logger.With("cmd", "generate").Log)
 }
 
 func (c *Composer) goBuild() error {
@@ -45,7 +47,7 @@ func (c *Composer) goBuild() error {
 	}
 	cmd.Env = []string{"GOPATH=" + gopath}
 
-	if err := runAndLogCommand(cmd, c.Logger.With("cmd", "build", "cwd", cmd.Dir)); err != nil {
+	if err := runAndLogCommand(cmd, c.Logger.With("cmd", "build").Log); err != nil {
 		return err
 	} else {
 		c.Logger.Log("compilation", "successful", "binary", outBin)
@@ -53,7 +55,44 @@ func (c *Composer) goBuild() error {
 	}
 }
 
-func runAndLogCommand(cmd *exec.Cmd, logger *Logger) error {
+func (c *Composer) cleanOutDir() error {
+	if c.Keep {
+		c.Logger.Log("msg", "-keep set; not cleaning up", "path", c.OutDir)
+		return nil
+	}
+	for _, leaf := range []string{"src", "workflow"} {
+		if err := os.RemoveAll(filepath.Join(c.OutDir, leaf)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *Composer) RunWorkflow() error {
+	if !c.Run {
+		c.Logger.Log("msg", "running workflow disabled by flags")
+		return nil
+	}
+
+	runOutDir, err := ioutil.TempDir(c.OutDir, fmt.Sprintf("antha-run-%s", c.Workflow.JobId))
+	if err != nil {
+		return err
+	}
+	c.Logger.Log("progress", "running compiled workflow", "outdir", runOutDir)
+	outBin := filepath.Join(c.OutDir, "bin", string(c.Workflow.JobId))
+	cmd := exec.Command(outBin, "-outdir", runOutDir)
+	cmd.Env = []string{}
+
+	// the workflow uses as proper logger these days so we don't need to do any wrapping
+	logFunc := func(vals ...interface{}) error {
+		// we are guaranteed len(vals) == 2, and that at [0] we have the key, which we ignore here
+		fmt.Println(vals[1])
+		return nil
+	}
+	return runAndLogCommand(cmd, logFunc)
+}
+
+func runAndLogCommand(cmd *exec.Cmd, logger func(...interface{}) error) error {
 	if stdout, err := cmd.StdoutPipe(); err != nil {
 		return err
 	} else if stderr, err := cmd.StderrPipe(); err != nil {
@@ -62,26 +101,22 @@ func runAndLogCommand(cmd *exec.Cmd, logger *Logger) error {
 	} else {
 		go drainToLogger(logger, stdout, "stdout")
 		go drainToLogger(logger, stderr, "stderr")
+		// lock to the current thread to ensure that thread state is
+		// predictably inherited (eg namespaces etc) (see docs in
+		// cmd.Run())
+		runtime.LockOSThread()
+		defer runtime.UnlockOSThread()
 		return cmd.Run()
 	}
 }
 
-func drainToLogger(logger *Logger, fh io.ReadCloser, key string) {
+func drainToLogger(logger func(...interface{}) error, fh io.ReadCloser, key string) {
 	defer fh.Close()
 	scanner := bufio.NewScanner(fh)
 	for scanner.Scan() {
-		logger.Log(key, scanner.Text())
+		logger(key, scanner.Text())
 	}
 	if err := scanner.Err(); err != nil {
-		logger.Log("error", err.Error())
+		logger("error", err.Error())
 	}
-}
-
-func (c *Composer) cleanOutDir() error {
-	for _, leaf := range []string{"src", "workflow"} {
-		if err := os.RemoveAll(filepath.Join(c.OutDir, leaf)); err != nil {
-			return err
-		}
-	}
-	return nil
 }

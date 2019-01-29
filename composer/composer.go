@@ -14,16 +14,19 @@ import (
 // - generating a suitable main.go from the workflow
 type Composer struct {
 	Logger   *Logger
-	OutDir   string
 	Workflow *Workflow
+
+	OutDir string
+	Keep   bool
+	Run    bool
 
 	elementTypes map[ElementTypeName]*ElementType
 	worklist     []*ElementType
 }
 
-func NewComposer(logger *Logger, outDir string, wf *Workflow) (*Composer, error) {
+func NewComposer(logger *Logger, wf *Workflow, outDir string, keep, run bool) (*Composer, error) {
 	if outDir == "" {
-		if d, err := ioutil.TempDir("", fmt.Sprintf("antha-%s", wf.JobId)); err != nil {
+		if d, err := ioutil.TempDir("", fmt.Sprintf("antha-build-%s", wf.JobId)); err != nil {
 			return nil, err
 		} else {
 			logger.Log("msg", fmt.Sprintf("Using '%s' for output.", d))
@@ -37,8 +40,11 @@ func NewComposer(logger *Logger, outDir string, wf *Workflow) (*Composer, error)
 
 	return &Composer{
 		Logger:   logger,
-		OutDir:   outDir,
 		Workflow: wf,
+
+		OutDir: outDir,
+		Keep:   keep,
+		Run:    run,
 
 		elementTypes: make(map[ElementTypeName]*ElementType),
 	}, nil

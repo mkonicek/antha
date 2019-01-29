@@ -354,11 +354,14 @@ ORIGIN
 		"origin": func(seq wtype.DNASequence) []string {
 			bases := seq.Sequence()
 			lines := []string{}
-			for pos := 0; pos < len(bases); pos += 60 {
+			// Format per https://www.ncbi.nlm.nih.gov/Sitemap/samplerecord.html
+			const BASES_PER_LINE = 60
+			const BASES_PER_BLOC = 10
+			for pos := 0; pos < len(bases); pos += BASES_PER_LINE {
 				frags := []string{}
 				frags = append(frags, fmt.Sprintf("%9d ", pos+1))
-				for inner := pos; inner < pos+60 && inner < len(bases); inner += 10 {
-					last := inner + 10
+				for inner := pos; inner < pos+BASES_PER_LINE && inner < len(bases); inner += BASES_PER_BLOC {
+					last := inner + BASES_PER_BLOC
 					if last > len(bases) {
 						last = len(bases)
 					}

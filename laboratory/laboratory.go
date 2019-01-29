@@ -194,7 +194,7 @@ func (labBuild *LaboratoryBuilder) makeLab(e Element) *Laboratory {
 	return &Laboratory{
 		LaboratoryBuilder: labBuild,
 		element:           e,
-		Logger:            labBuild.Logger, //.With("name", e.Name(), "type", e.TypeName()),
+		Logger:            labBuild.Logger.With("name", e.Name(), "type", e.TypeName()),
 	}
 }
 
@@ -268,6 +268,7 @@ func (eb *ElementBase) Run(lab *Laboratory, funs ...func(*Laboratory)) {
 
 	select {
 	case <-eb.InputsReady:
+		lab.Logger.Log("progress", "starting")
 		for _, fun := range funs {
 			select {
 			case <-lab.Errored:
@@ -285,6 +286,7 @@ func (eb *ElementBase) Completed(lab *Laboratory) {
 	if err := eb.Save(lab); err != nil {
 		lab.Error(err)
 	}
+	lab.Logger.Log("progress", "completed")
 	funs := eb.onExit
 	eb.onExit = nil
 	for _, fun := range funs {

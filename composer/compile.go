@@ -83,7 +83,7 @@ func (c *Composer) RunWorkflow() error {
 	cmd := exec.Command(outBin, "-outdir", runOutDir)
 	cmd.Env = []string{}
 
-	// the workflow uses as proper logger these days so we don't need to do any wrapping
+	// the workflow uses a proper logger these days so we don't need to do any wrapping
 	logFunc := func(vals ...interface{}) error {
 		// we are guaranteed len(vals) == 2, and that at [0] we have the key, which we ignore here
 		fmt.Println(vals[1])

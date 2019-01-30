@@ -758,7 +758,7 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 
 	// make the instructions for executing this request
 	this.FinalProperties = this.Properties.Dup()
-	if root, err := ExecutionPlanner3(request.InstructionChain); err != nil {
+	if root, err := liquidhandling.NewITreeRoot(request.InstructionChain); err != nil {
 		return err
 	} else if err := root.Generate(ctx, request.Policies(), this.Properties); err != nil {
 		return err

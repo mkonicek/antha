@@ -38,6 +38,74 @@ func NewITree(p RobotInstruction) *ITree {
 	return &ITree{instruction: p}
 }
 
+func allSplits(inss []*wtype.LHInstruction) bool {
+	for _, ins := range inss {
+		if ins.Type != wtype.LHISPL {
+			return false
+		}
+	}
+	return true
+}
+
+func hasSplit(inss []*wtype.LHInstruction) bool {
+	for _, ins := range inss {
+		if ins.Type == wtype.LHISPL {
+			return true
+		}
+	}
+	return false
+}
+
+// NewITreeRoot create the root layer of the instruction tree
+func NewITreeRoot(ch *wtype.IChain) (*ITree, error) {
+
+	root := NewITree(nil)
+
+	// first thing is always to initialize the liquidhandler
+	root.AddChild(NewInitializeInstruction())
+
+	for {
+		if ch == nil {
+			break
+		}
+
+		if ch.Values[0].Type == wtype.LHIPRM {
+			prm := NewMessageInstruction(ch.Values[0])
+			root.AddChild(prm)
+		} else if hasSplit(ch.Values) {
+			if !allSplits(ch.Values) {
+				insTypes := func(inss []*wtype.LHInstruction) string {
+					s := ""
+					for _, ins := range inss {
+						s += ins.InsType() + " "
+					}
+
+					return s
+				}
+				return nil, fmt.Errorf("Internal error: Failure in instruction sorting - got types %s in layer starting with split", insTypes(ch.Values))
+			}
+
+			splitBlock := NewSplitBlockInstruction(ch.Values)
+			root.AddChild(splitBlock)
+		} else {
+			// otherwise...
+			// make a transfer block instruction out of the incoming instructions
+			// -- essentially each node of the topological graph is passed wholesale
+			// into the instruction generator to be teased apart as appropriate
+
+			tfb := NewTransferBlockInstruction(ch.Values)
+
+			root.AddChild(tfb)
+		}
+		ch = ch.Child
+	}
+
+	// last thing is always to finalize the liquidhandler
+	root.AddChild(NewFinalizeInstruction())
+
+	return root, nil
+}
+
 // AddChild add a child to this node of the tree
 func (tree *ITree) AddChild(ins RobotInstruction) {
 	tree.children = append(tree.children, NewITree(ins))

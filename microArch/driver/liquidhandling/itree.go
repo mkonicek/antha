@@ -111,8 +111,17 @@ func (tree *ITree) AddChild(ins RobotInstruction) {
 	tree.children = append(tree.children, NewITree(ins))
 }
 
-// Generate generate the tree of instructions, returning an error on failure
-func (tree *ITree) Generate(ctx context.Context, lhpr *wtype.LHPolicyRuleSet, lhpm *LHProperties) error {
+// Build the tree of instructions, starting from the root, discarding any existing children
+// returns the final state and does not alter the initial state
+func (tree *ITree) Build(ctx context.Context, lhpr *wtype.LHPolicyRuleSet, initial *LHProperties) (*LHProperties, error) {
+	final := initial.DupKeepIDs()
+	err := tree.addChildren(ctx, lhpr, final)
+	return final, err
+}
+
+// addChildren recursively Generate() the children of this instruction, adding them to the tree.
+// the effects of the generated instructions are applied to lhpm
+func (tree *ITree) addChildren(ctx context.Context, lhpr *wtype.LHPolicyRuleSet, lhpm *LHProperties) error {
 
 	// the root node (instruction == nil) already has children set
 	if tree.instruction != nil {
@@ -127,7 +136,7 @@ func (tree *ITree) Generate(ctx context.Context, lhpr *wtype.LHPolicyRuleSet, lh
 
 	// call generate on the children recursively
 	for _, child := range tree.children {
-		if err := child.Generate(ctx, lhpr, lhpm); err != nil {
+		if err := child.addChildren(ctx, lhpr, lhpm); err != nil {
 			return err
 		}
 	}

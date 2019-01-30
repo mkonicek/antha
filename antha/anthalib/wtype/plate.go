@@ -731,22 +731,6 @@ func (p *Plate) RemoveComponent(well string, vol wunit.Volume) *Liquid {
 	return cmp
 }
 
-func (p *Plate) DeclareTemporary() {
-	for _, w := range p.Wellcoords {
-		w.DeclareTemporary()
-	}
-}
-
-func (p *Plate) IsTemporary() bool {
-	for _, w := range p.Wellcoords {
-		if !w.IsTemporary() {
-			return false
-		}
-	}
-
-	return true
-}
-
 func (p *Plate) DeclareAutoallocated() {
 	for _, w := range p.Wellcoords {
 		w.DeclareAutoallocated()

@@ -188,7 +188,6 @@ func (rq *LHRequest) inputPlateSetup(ctx context.Context) error {
 					platename := rq.getSafeInputPlateName(curplaten)
 					curr_plate.PlateName = platename
 					curplaten += 1
-					curr_plate.DeclareTemporary()
 					//curr_plate.DeclareAutoallocated()
 				}
 

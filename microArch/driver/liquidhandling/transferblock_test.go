@@ -578,10 +578,10 @@ func generateRobotInstructions(t *testing.T, ctx context.Context, inss []*wtype.
 	}
 
 	//generate the low level instructions
-	instructionSet := NewRobotInstructionSet(tb)
-	if err := instructionSet.Generate(ctx, pol, rbt); err != nil {
+	tree := NewITree(tb)
+	if err := tree.Generate(ctx, pol, rbt); err != nil {
 		t.Fatal(err)
-	} else if ris, err := instructionSet.Leaves(); err != nil {
+	} else if ris, err := tree.Leaves(); err != nil {
 		t.Fatal(err)
 	} else {
 		ret := make([]RobotInstruction, 0, len(ris))
@@ -795,10 +795,10 @@ func generateRobotInstructions2(ctx context.Context, inss []*wtype.LHInstruction
 	}
 
 	//generate the low level instructions
-	instructionSet := NewRobotInstructionSet(tb)
-	if err := instructionSet.Generate(ctx, pol, rbt); err != nil {
+	tree := NewITree(tb)
+	if err := tree.Generate(ctx, pol, rbt); err != nil {
 		panic(err)
-	} else if tri, err := instructionSet.Leaves(); err != nil {
+	} else if tri, err := tree.Leaves(); err != nil {
 		panic(err)
 	} else {
 		ret := make([]RobotInstruction, 0, len(tri))

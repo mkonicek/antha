@@ -765,7 +765,7 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	} else if tri, err := root.Leaves(); err != nil {
 		return err
 	} else {
-		request.InstructionSet = root
+		request.InstructionTree = root
 		request.Instructions = tri
 	}
 

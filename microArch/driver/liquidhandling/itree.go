@@ -1,4 +1,4 @@
-// /anthalib/driver/liquidhandling/robotinstructionset.go: Part of the Antha language
+// /anthalib/driver/liquidhandling/itree.go: Part of the Antha language
 // Copyright (C) 2015 The Antha authors. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or
@@ -29,36 +29,36 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
-type RobotInstructionSet struct {
-	parent   RobotInstruction
-	children []*RobotInstructionSet
+type ITree struct {
+	instruction RobotInstruction
+	children    []*ITree
 }
 
-func NewRobotInstructionSet(p RobotInstruction) *RobotInstructionSet {
-	return &RobotInstructionSet{parent: p}
+func NewITree(p RobotInstruction) *ITree {
+	return &ITree{instruction: p}
 }
 
 // AddChild add a child to this node of the tree
-func (ri *RobotInstructionSet) AddChild(ins RobotInstruction) {
-	ri.children = append(ri.children, NewRobotInstructionSet(ins))
+func (tree *ITree) AddChild(ins RobotInstruction) {
+	tree.children = append(tree.children, NewITree(ins))
 }
 
 // Generate generate the tree of instructions, returning an error on failure
-func (ri *RobotInstructionSet) Generate(ctx context.Context, lhpr *wtype.LHPolicyRuleSet, lhpm *LHProperties) error {
+func (tree *ITree) Generate(ctx context.Context, lhpr *wtype.LHPolicyRuleSet, lhpm *LHProperties) error {
 
-	// the root node (parent == nil) already has children set
-	if ri.parent != nil {
-		if children, err := ri.parent.Generate(ctx, lhpr, lhpm); err != nil {
+	// the root node (instruction == nil) already has children set
+	if tree.instruction != nil {
+		if children, err := tree.instruction.Generate(ctx, lhpr, lhpm); err != nil {
 			return err
 		} else {
 			for _, child := range children {
-				ri.AddChild(child)
+				tree.AddChild(child)
 			}
 		}
 	}
 
 	// call generate on the children recursively
-	for _, child := range ri.children {
+	for _, child := range tree.children {
 		if err := child.Generate(ctx, lhpr, lhpm); err != nil {
 			return err
 		}
@@ -68,12 +68,12 @@ func (ri *RobotInstructionSet) Generate(ctx context.Context, lhpr *wtype.LHPolic
 }
 
 // Len returns the number of leaves at the bottom of the tree
-func (ri *RobotInstructionSet) Len() int {
-	if len(ri.children) == 0 {
+func (tree *ITree) Len() int {
+	if len(tree.children) == 0 {
 		return 1
 	} else {
 		ret := 0
-		for _, child := range ri.children {
+		for _, child := range tree.children {
 			ret += child.Len()
 		}
 		return ret
@@ -81,21 +81,21 @@ func (ri *RobotInstructionSet) Len() int {
 }
 
 // Leaves returns the leaves of the tree - i.e. the TerminalRobotInstructions
-func (ri *RobotInstructionSet) Leaves() ([]TerminalRobotInstruction, error) {
-	return ri.addLeaves(make([]TerminalRobotInstruction, 0, ri.Len()))
+func (tree *ITree) Leaves() ([]TerminalRobotInstruction, error) {
+	return tree.addLeaves(make([]TerminalRobotInstruction, 0, tree.Len()))
 }
 
 // addLeaves add the leaves to the accumulator
-func (ri *RobotInstructionSet) addLeaves(acc []TerminalRobotInstruction) ([]TerminalRobotInstruction, error) {
-	if len(ri.children) == 0 {
+func (tree *ITree) addLeaves(acc []TerminalRobotInstruction) ([]TerminalRobotInstruction, error) {
+	if len(tree.children) == 0 {
 		// i am leaf (on the wind)
 		// ignore instructions which aren't terminal instructions, these are probably things like split which don't
 		// actually generate terminal instructions at all
-		if tri, ok := ri.parent.(TerminalRobotInstruction); ok {
+		if tri, ok := tree.instruction.(TerminalRobotInstruction); ok {
 			return append(acc, tri), nil
 		}
 	} else {
-		for _, child := range ri.children {
+		for _, child := range tree.children {
 			if nac, err := child.addLeaves(acc); err != nil {
 				return nac, err
 			} else {
@@ -106,12 +106,12 @@ func (ri *RobotInstructionSet) addLeaves(acc []TerminalRobotInstruction) ([]Term
 	return acc, nil
 }
 
-func (ri *RobotInstructionSet) ToString(level int) string {
+func (tree *ITree) ToString(level int) string {
 
 	name := ""
 
-	if ri.parent != nil {
-		name = ri.parent.Type().Name
+	if tree.instruction != nil {
+		name = tree.instruction.Type().Name
 	}
 	s := ""
 	for i := 0; i < level-1; i++ {
@@ -122,7 +122,7 @@ func (ri *RobotInstructionSet) ToString(level int) string {
 		s += fmt.Sprintf("\t")
 	}
 	s += fmt.Sprintf("{\n")
-	for _, ins := range ri.children {
+	for _, ins := range tree.children {
 		s += ins.ToString(level + 1)
 	}
 	for i := 0; i < level; i++ {

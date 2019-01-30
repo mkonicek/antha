@@ -120,8 +120,8 @@ func (self *PolicyTest) run(t *testing.T) {
 		rule.AddToPolicy(policySet)
 	}
 
-	set := NewRobotInstructionSet(self.Instruction)
-	if err := set.Generate(ctx, policySet, self.Robot); err != nil {
+	tree := NewITree(self.Instruction)
+	if err := tree.Generate(ctx, policySet, self.Robot); err != nil {
 		if self.Error == "" {
 			err = errors.Wrapf(err, "%s: unexpected error", self.Name)
 			t.Error(err)
@@ -133,7 +133,7 @@ func (self *PolicyTest) run(t *testing.T) {
 
 	if self.Error != "" {
 		t.Errorf("error not generated: expected \"%s\"", self.Error)
-	} else if ris, err := set.Leaves(); err != nil {
+	} else if ris, err := tree.Leaves(); err != nil {
 		t.Error(err)
 	} else if g := stringInstructions(ris); self.ExpectedInstructions != g {
 		t.Errorf("instruction types don't match\n  g: %s\n  e: %s", g, self.ExpectedInstructions)

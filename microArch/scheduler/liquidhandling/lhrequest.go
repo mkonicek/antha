@@ -45,7 +45,7 @@ type LHRequest struct {
 	LHInstructions        wtype.LHInstructions
 	Plates                map[string]*wtype.Plate
 	Tips                  []*wtype.LHTipbox
-	InstructionSet        *liquidhandling.RobotInstructionSet
+	InstructionTree       *liquidhandling.ITree
 	Instructions          []liquidhandling.TerminalRobotInstruction
 	InstructionText       string
 	InputAssignments      map[string][]string
@@ -158,7 +158,7 @@ func NewLHRequest() *LHRequest {
 		ID:                wtype.GetUUID(),
 		LHInstructions:    make(map[string]*wtype.LHInstruction),
 		Plates:            make(map[string]*wtype.Plate),
-		InstructionSet:    liquidhandling.NewRobotInstructionSet(nil),
+		InstructionTree:   liquidhandling.NewITree(nil),
 		InputAssignments:  make(map[string][]string),
 		OutputAssignments: make(map[string][]string),
 		InputPlates:       make(map[string]*wtype.Plate),

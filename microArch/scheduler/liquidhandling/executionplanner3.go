@@ -48,9 +48,9 @@ func hasSplit(inss []*wtype.LHInstruction) bool {
 }
 
 // ExecutionPlanner create the instruction tree
-func ExecutionPlanner3(ch *wtype.IChain) (*liquidhandling.RobotInstructionSet, error) {
+func ExecutionPlanner3(ch *wtype.IChain) (*liquidhandling.ITree, error) {
 
-	root := liquidhandling.NewRobotInstructionSet(nil)
+	root := liquidhandling.NewITree(nil)
 
 	// first thing is always to initialize the liquidhandler
 	root.AddChild(liquidhandling.NewInitializeInstruction())

@@ -249,7 +249,7 @@ func (ins *TransferInstruction) validateParallelSet(labEffects *effects.Laborato
 		return false
 	}
 
-	fromPlateType := firstNonEmpty(ins.Transfers[which].FPlateType())
+	fromPlateType := wtype.PlateTypeName(firstNonEmpty(ins.Transfers[which].FPlateType()))
 	fromPlate, err := labEffects.PlateCache.NewPlate(fromPlateType)
 	if err != nil {
 		panic(err)
@@ -270,7 +270,7 @@ func (ins *TransferInstruction) validateParallelSet(labEffects *effects.Laborato
 		panic(err)
 	}
 
-	toPlateType := firstNonEmpty(ins.Transfers[which].TPlateType())
+	toPlateType := wtype.PlateTypeName(firstNonEmpty(ins.Transfers[which].TPlateType()))
 	toPlate, err := labEffects.PlateCache.NewPlate(toPlateType)
 	if err != nil {
 		panic(err)

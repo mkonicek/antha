@@ -13,7 +13,7 @@ import (
 func MarshalPlateCSV(idGen *id.IDGenerator, plate *wtype.Plate) ([]byte, error) {
 	var records [][]string
 	records = append(records, []string{
-		plate.Type,
+		string(plate.Type),
 		plate.PlateName,
 		"LiquidType",
 		"Vol",

@@ -288,7 +288,7 @@ func LayoutStage(labEffects *effects.LaboratoryEffects, request *LHRequest, para
 }
 
 type PlateChoice struct {
-	Platetype string
+	Platetype wtype.PlateTypeName
 	Assigned  []string
 	ID        string
 	Wells     []string
@@ -595,7 +595,7 @@ func uniquePlateName(namein string, seen map[string]bool, maxtries int) string {
 	return nm
 }
 
-func assignmentWithType(pt string, pc []PlateChoice) int {
+func assignmentWithType(pt wtype.PlateTypeName, pc []PlateChoice) int {
 	r := -1
 
 	if pt == "" {
@@ -618,7 +618,7 @@ func assignmentWithType(pt string, pc []PlateChoice) int {
 	return r
 }
 
-func chooseAPlate(request *LHRequest, ins *wtype.LHInstruction) string {
+func chooseAPlate(request *LHRequest, ins *wtype.LHInstruction) wtype.PlateTypeName {
 	// for now we ignore ins and just choose the First Output Platetype
 	return request.OutputPlatetypes[0].Type
 }
@@ -755,7 +755,7 @@ func markWellUsed(idGen *id.IDGenerator, well *wtype.LHWell) error {
 
 //findPlateWithWellFree looks in our array of plate choices to see if there already exists a plate of this type with this well free
 // optionally we can specify a name
-func findPlateWithWellFree(plateChoices []PlateChoice, plateType, wellAddress, plateName string) int {
+func findPlateWithWellFree(plateChoices []PlateChoice, plateType wtype.PlateTypeName, wellAddress, plateName string) int {
 	// -1 indicates not found
 	ret := -1
 

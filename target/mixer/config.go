@@ -21,6 +21,8 @@ func (cfg *GlobalMixerConfig) validate(inv *inventory.Inventory) error {
 	return nil
 }
 
+// TODO revise these: I'm not a fan of magic numbers in code - ideally
+// should be brought out into some config file.
 var (
 	defaultMaxPlates            = 4.5
 	defaultMaxWells             = 278.0
@@ -81,6 +83,14 @@ func (cfg *GilsonPipetMaxInstanceConfig) validate(inv *inventory.Inventory) erro
 			if _, err := inv.PlateTypes.NewPlateType(ptn); err != nil {
 				return err
 			}
+		}
+	}
+
+	// TODO: this check waste type creating first new tip boxes that we
+	// throw away. We should have a tip box type.
+	for _, tt := range cfg.TipTypes {
+		if _, err := inv.TipBoxes.NewTipbox(tt); err != nil {
+			return err
 		}
 	}
 	return nil

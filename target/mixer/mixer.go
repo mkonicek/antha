@@ -24,7 +24,7 @@ var (
 type Mixer struct {
 	driver     driver.LiquidhandlingDriver
 	properties *driver.LHProperties // Prototype to create fresh properties
-	opt        Opt
+	cfg        *GlobalMixerConfig
 }
 
 func (a *Mixer) String() string {
@@ -72,21 +72,11 @@ func (a *Mixer) makeLhreq(labEffects *effects.LaboratoryEffects) (*lhreq, error)
 
 	req := planner.NewLHRequest(labEffects.IDGenerator)
 
-	if data := a.opt.CustomPolicyData; len(data) > 0 {
-		lhpr := wtype.NewLHPolicyRuleSet()
-
-		lhpr, err := wtype.AddUniversalRules(lhpr, data)
-		if err != nil {
-			return nil, err
-		}
-		req.AddUserPolicies(lhpr)
-	}
-
-	if set := a.opt.CustomPolicyRuleSet; set != nil {
+	if set := a.cfg.CustomPolicyRuleSet; set != nil {
 		req.AddUserPolicies(set)
 	}
 
-	if err := req.PolicyManager.SetOption("USE_DRIVER_TIP_TRACKING", a.opt.UseDriverTipTracking); err != nil {
+	if err := req.PolicyManager.SetOption("USE_DRIVER_TIP_TRACKING", a.cfg.UseDriverTipTracking); err != nil {
 		return nil, err
 	}
 
@@ -94,6 +84,7 @@ func (a *Mixer) makeLhreq(labEffects *effects.LaboratoryEffects) (*lhreq, error)
 	prop.Driver = a.properties.Driver
 	plan := planner.Init(prop)
 
+	/* TODO
 	if p := a.opt.MaxPlates; p != nil {
 		req.InputSetupWeights["MAX_N_PLATES"] = *p
 	}
@@ -138,24 +129,7 @@ func (a *Mixer) makeLhreq(labEffects *effects.LaboratoryEffects) (*lhreq, error)
 			req.Tips = append(req.Tips, t)
 		}
 	}
-
-	if p := a.opt.InputPlateData; len(p) != 0 {
-		for idx, bs := range p {
-			buf := bytes.NewBuffer(bs)
-			r, err := ParsePlateCSV(labEffects, buf)
-			if err != nil {
-				return nil, fmt.Errorf("cannot parse data at idx %d: %s", idx, err)
-			}
-
-			if len(r.Warnings) != 0 {
-				return nil, fmt.Errorf("cannot parse data at idx %d: %s", idx, strings.Join(r.Warnings, " "))
-			}
-
-			if err := addPlate(req, r.Plate); err != nil {
-				return nil, err
-			}
-		}
-	}
+	*/
 
 	if ips := a.opt.InputPlates; len(ips) != 0 {
 		for _, ip := range ips {
@@ -166,43 +140,18 @@ func (a *Mixer) makeLhreq(labEffects *effects.LaboratoryEffects) (*lhreq, error)
 	}
 
 	// add plates requested via protocol
-
-	parr := labEffects.SampleTracker.GetInputPlates()
-
-	for _, p := range parr {
+	for _, p := range labEffects.SampleTracker.GetInputPlates() {
 		if err := addPlate(req, p); err != nil {
 			return nil, err
 		}
 
 	}
 
-	// try to do better multichannel execution planning?
-
-	req.Options.ExecutionPlannerVersion = a.opt.PlanningVersion
-
 	// print instructions?
-
-	req.Options.PrintInstructions = a.opt.PrintInstructions
-
-	// model evaporation?
-
-	req.Options.ModelEvaporation = a.opt.ModelEvaporation
-
-	// deal with output sorting
-
-	req.Options.OutputSort = a.opt.OutputSort
-
-	// legacy volume use
-
-	req.Options.LegacyVolume = a.opt.LegacyVolume
-
-	// volume fix
-
-	req.Options.FixVolumes = a.opt.FixVolumes
+	req.Options.PrintInstructions = a.cfg.PrintInstructions
 
 	//physical simulation override
-
-	req.Options.IgnorePhysicalSimulation = a.opt.IgnorePhysicalSimulation
+	req.Options.IgnorePhysicalSimulation = a.cfg.IgnorePhysicalSimulation
 
 	return &lhreq{
 		LHRequest:     req,
@@ -450,7 +399,7 @@ func (a *Mixer) makeMix(labEffects *effects.LaboratoryEffects, mixes []*wtype.LH
 }
 
 // New creates a new Mixer
-func New(opt Opt, d driver.LiquidhandlingDriver) (*Mixer, error) {
+func New(cfg *GlobalMixerConfig, d driver.LiquidhandlingDriver) (*Mixer, error) {
 	userPreferences := &driver.LayoutOpt{
 		Tipboxes:  driver.Addresses(opt.DriverSpecificTipPreferences),
 		Inputs:    driver.Addresses(opt.DriverSpecificInputPreferences),
@@ -465,6 +414,6 @@ func New(opt Opt, d driver.LiquidhandlingDriver) (*Mixer, error) {
 		return nil, err
 	} else {
 		p.Driver = d
-		return &Mixer{driver: d, properties: &p, opt: opt}, nil
+		return &Mixer{driver: d, properties: &p, cfg: cfg}, nil
 	}
 }

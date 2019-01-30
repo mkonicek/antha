@@ -32,8 +32,8 @@ func (inv *Inventory) SetPlateTypes(pts wtype.PlateTypes) {
 	inv.plateTypeByType = pts
 }
 
-func (inv *Inventory) NewPlate(typ string) (*wtype.Plate, error) {
-	if pt, err := inv.NewPlateType(wtype.PlateTypeName(typ)); err != nil {
+func (inv *Inventory) NewPlate(typ wtype.PlateTypeName) (*wtype.Plate, error) {
+	if pt, err := inv.NewPlateType(typ); err != nil {
 		return nil, err
 	} else {
 		return wtype.LHPlateFromType(inv.idGen, pt), nil

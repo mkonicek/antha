@@ -16,19 +16,19 @@ type PlateCache struct {
 	lock sync.Mutex
 
 	inventory       *plates.Inventory
-	platesByType    map[string][]*wtype.Plate
+	platesByType    map[wtype.PlateTypeName][]*wtype.Plate
 	platesFromCache map[string]struct{}
 }
 
 func NewPlateCache(inv *plates.Inventory) *PlateCache {
 	return &PlateCache{
 		inventory:       inv,
-		platesByType:    make(map[string][]*wtype.Plate),
+		platesByType:    make(map[wtype.PlateTypeName][]*wtype.Plate),
 		platesFromCache: make(map[string]struct{}),
 	}
 }
 
-func (pc *PlateCache) NewPlate(typ string) (*wtype.Plate, error) {
+func (pc *PlateCache) NewPlate(typ wtype.PlateTypeName) (*wtype.Plate, error) {
 	pc.lock.Lock()
 	defer pc.lock.Unlock()
 
@@ -63,7 +63,7 @@ func (pc *PlateCache) ReturnPlate(plate *wtype.Plate) error {
 
 	plate.Clean()
 
-	typ := string(plate.Type)
+	typ := plate.Type
 
 	if plates, found := pc.platesByType[typ]; !found {
 		panic(fmt.Errorf("Impossible: plate is from cache, but plates slice not found! %v", typ))

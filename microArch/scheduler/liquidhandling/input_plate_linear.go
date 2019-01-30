@@ -70,7 +70,7 @@ func choosePlateAssignments(idGen *id.IDGenerator, component_volumes map[string]
 	//
 
 	ppt := make([]*wtype.Plate, 0, len(plate_types))
-	h := make(map[string]bool, len(plate_types))
+	h := make(map[wtype.PlateTypeName]bool, len(plate_types))
 
 	fmt.Println("Autoallocate plates available:")
 	for _, p := range plate_types {

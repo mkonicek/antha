@@ -38,7 +38,7 @@ type LHInstruction struct {
 	ContainerType    string
 	Welladdress      string
 	PlateID          string
-	Platetype        string
+	Platetype        PlateTypeName
 	Vol              float64
 	Type             int
 	Conc             float64

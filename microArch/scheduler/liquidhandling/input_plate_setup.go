@@ -130,7 +130,7 @@ func input_plate_setup(labEffects *effects.LaboratoryEffects, request *LHRequest
 
 	input_assignments := make(map[string][]string, len(well_count_assignments))
 
-	plates_in_play := make(map[string]*wtype.Plate)
+	plates_in_play := make(map[wtype.PlateTypeName]*wtype.Plate)
 
 	curplaten := 1
 	for _, cname := range input_order {

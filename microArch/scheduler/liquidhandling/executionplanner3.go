@@ -23,7 +23,6 @@
 package liquidhandling
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -48,9 +47,13 @@ func hasSplit(inss []*wtype.LHInstruction) bool {
 	return false
 }
 
-// robot here should be a copy... this routine will be destructive of state
-func ExecutionPlanner3(ctx context.Context, request *LHRequest, robot *liquidhandling.LHProperties) (*LHRequest, error) {
-	ch := request.InstructionChain
+// ExecutionPlanner create the instruction tree
+func ExecutionPlanner3(ch *wtype.IChain) (*liquidhandling.RobotInstructionSet, error) {
+
+	root := liquidhandling.NewRobotInstructionSet(nil)
+
+	// first thing is always to initialize the liquidhandler
+	root.AddChild(liquidhandling.NewInitializeInstruction())
 
 	for {
 		if ch == nil {
@@ -59,7 +62,7 @@ func ExecutionPlanner3(ctx context.Context, request *LHRequest, robot *liquidhan
 
 		if ch.Values[0].Type == wtype.LHIPRM {
 			prm := liquidhandling.NewMessageInstruction(ch.Values[0])
-			request.InstructionSet.Add(prm)
+			root.AddChild(prm)
 		} else if hasSplit(ch.Values) {
 			if !allSplits(ch.Values) {
 				insTypes := func(inss []*wtype.LHInstruction) string {
@@ -74,7 +77,7 @@ func ExecutionPlanner3(ctx context.Context, request *LHRequest, robot *liquidhan
 			}
 
 			splitBlock := liquidhandling.NewSplitBlockInstruction(ch.Values)
-			request.InstructionSet.Add(splitBlock)
+			root.AddChild(splitBlock)
 		} else {
 			// otherwise...
 			// make a transfer block instruction out of the incoming instructions
@@ -83,31 +86,13 @@ func ExecutionPlanner3(ctx context.Context, request *LHRequest, robot *liquidhan
 
 			tfb := liquidhandling.NewTransferBlockInstruction(ch.Values)
 
-			request.InstructionSet.Add(tfb)
+			root.AddChild(tfb)
 		}
 		ch = ch.Child
 	}
 
-	inx, err := request.InstructionSet.Generate(ctx, request.Policies(), robot)
+	// last thing is always to finalize the liquidhandler
+	root.AddChild(liquidhandling.NewFinalizeInstruction())
 
-	if err != nil {
-		return nil, err
-	}
-
-	instrx := make([]liquidhandling.TerminalRobotInstruction, 0, len(inx))
-	for i := 0; i < len(inx); i++ {
-		_, ok := inx[i].(liquidhandling.TerminalRobotInstruction)
-
-		if !ok {
-			fmt.Println("ERROR: Instruction wrong type (", inx[i].Type().Name, ")")
-			continue
-		}
-
-		instrx = append(instrx, inx[i].(liquidhandling.TerminalRobotInstruction))
-	}
-	request.Instructions = instrx
-
-	// TODO -- pass evaporation info back up to request
-
-	return request, nil
+	return root, nil
 }

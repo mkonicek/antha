@@ -30,76 +30,80 @@ import (
 )
 
 type RobotInstructionSet struct {
-	parent       RobotInstruction
-	instructions []*RobotInstructionSet
+	parent   RobotInstruction
+	children []*RobotInstructionSet
 }
 
 func NewRobotInstructionSet(p RobotInstruction) *RobotInstructionSet {
-	var ret RobotInstructionSet
-	ret.instructions = make([]*RobotInstructionSet, 0)
-	ret.parent = p
-	return &ret
+	return &RobotInstructionSet{parent: p}
 }
 
-func (ri *RobotInstructionSet) Add(ins RobotInstruction) {
-	ris := NewRobotInstructionSet(ins)
-	ri.instructions = append(ri.instructions, ris)
+// AddChild add a child to this node of the tree
+func (ri *RobotInstructionSet) AddChild(ins RobotInstruction) {
+	ri.children = append(ri.children, NewRobotInstructionSet(ins))
 }
 
-func (ri *RobotInstructionSet) Generate(ctx context.Context, lhpr *wtype.LHPolicyRuleSet, lhpm *LHProperties) ([]RobotInstruction, error) {
-	ret := make([]RobotInstruction, 0, 1)
+// Generate generate the tree of instructions, returning an error on failure
+func (ri *RobotInstructionSet) Generate(ctx context.Context, lhpr *wtype.LHPolicyRuleSet, lhpm *LHProperties) error {
 
+	// the root node (parent == nil) already has children set
 	if ri.parent != nil {
-		arr, err := ri.parent.Generate(ctx, lhpr, lhpm)
-
-		if err != nil {
-			return ret, err
-		}
-
-		// if the parent doesn't generate anything then it is our return - bottom out here
-		// assuming it's a Terminal
-		if len(arr) == 0 {
-			_, ok := ri.parent.(TerminalRobotInstruction)
-			if ok {
-				ret = append(ret, ri.parent)
-				return ret, nil
-			}
+		if children, err := ri.parent.Generate(ctx, lhpr, lhpm); err != nil {
+			return err
 		} else {
-			for _, ins := range arr {
-				ri.Add(ins)
+			for _, child := range children {
+				ri.AddChild(child)
 			}
 		}
 	}
 
-	for _, ins := range ri.instructions {
-		arr, err := ins.Generate(ctx, lhpr, lhpm)
-
-		if err != nil {
-			return arr, err
+	// call generate on the children recursively
+	for _, child := range ri.children {
+		if err := child.Generate(ctx, lhpr, lhpm); err != nil {
+			return err
 		}
-		ret = append(ret, arr...)
 	}
 
-	if ri.parent == nil {
-		// add the initialize and finalize instructions
-		ini := NewInitializeInstruction()
-		newret := make([]RobotInstruction, 0, len(ret)+2)
-		newret = append(newret, ini)
-		newret = append(newret, ret...)
-		fin := NewFinalizeInstruction()
-		newret = append(newret, fin)
-		ret = newret
-	}
+	return nil
+}
 
-	// might need to do this instead of current version
-	/*
-		else if ri.parent.Type == TFR {
-			// update the vols
-			prms.Evaporate()
+// Len returns the number of leaves at the bottom of the tree
+func (ri *RobotInstructionSet) Len() int {
+	if len(ri.children) == 0 {
+		return 1
+	} else {
+		ret := 0
+		for _, child := range ri.children {
+			ret += child.Len()
 		}
-	*/
+		return ret
+	}
+}
 
-	return ret, nil
+// Leaves returns the leaves of the tree - i.e. the TerminalRobotInstructions
+func (ri *RobotInstructionSet) Leaves() ([]TerminalRobotInstruction, error) {
+	return ri.addLeaves(make([]TerminalRobotInstruction, 0, ri.Len()))
+}
+
+// addLeaves add the leaves to the accumulator
+func (ri *RobotInstructionSet) addLeaves(acc []TerminalRobotInstruction) ([]TerminalRobotInstruction, error) {
+	if len(ri.children) == 0 {
+		// i am leaf (on the wind)
+		// ignore instructions which aren't terminal instructions, these are probably things like split which don't
+		// actually generate terminal instructions at all
+		if tri, ok := ri.parent.(TerminalRobotInstruction); ok {
+			return append(acc, tri), nil
+		}
+	} else {
+		for _, child := range ri.children {
+			if nac, err := child.addLeaves(acc); err != nil {
+				return nac, err
+			} else {
+				acc = nac
+			}
+		}
+	}
+	return acc, nil
 }
 
 func (ri *RobotInstructionSet) ToString(level int) string {
@@ -118,7 +122,7 @@ func (ri *RobotInstructionSet) ToString(level int) string {
 		s += fmt.Sprintf("\t")
 	}
 	s += fmt.Sprintf("{\n")
-	for _, ins := range ri.instructions {
+	for _, ins := range ri.children {
 		s += ins.ToString(level + 1)
 	}
 	for i := 0; i < level; i++ {

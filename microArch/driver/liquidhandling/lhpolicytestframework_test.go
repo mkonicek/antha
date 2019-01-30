@@ -63,7 +63,7 @@ type InstructionAssertion struct {
 	Values      map[InstructionParameter]interface{}
 }
 
-func (self *InstructionAssertion) Assert(t *testing.T, ris []RobotInstruction) {
+func (self *InstructionAssertion) Assert(t *testing.T, ris []TerminalRobotInstruction) {
 	if self.Instruction < 0 || self.Instruction >= len(ris) {
 		t.Errorf("test error: assertion on instruction %d, but only %d instructions", self.Instruction, len(ris))
 		return
@@ -88,7 +88,7 @@ type PolicyTest struct {
 	Error                string
 }
 
-func stringInstructions(inss []RobotInstruction) string {
+func stringInstructions(inss []TerminalRobotInstruction) string {
 	s := make([]string, len(inss))
 	for i, ins := range inss {
 		s[i] = ins.Type().Name
@@ -121,8 +121,7 @@ func (self *PolicyTest) run(t *testing.T) {
 	}
 
 	set := NewRobotInstructionSet(self.Instruction)
-	ris, err := set.Generate(ctx, policySet, self.Robot)
-	if err != nil {
+	if err := set.Generate(ctx, policySet, self.Robot); err != nil {
 		if self.Error == "" {
 			err = errors.Wrapf(err, "%s: unexpected error", self.Name)
 			t.Error(err)
@@ -134,15 +133,13 @@ func (self *PolicyTest) run(t *testing.T) {
 
 	if self.Error != "" {
 		t.Errorf("error not generated: expected \"%s\"", self.Error)
-		return
-	}
-
-	if g := stringInstructions(ris); self.ExpectedInstructions != g {
+	} else if ris, err := set.Leaves(); err != nil {
+		t.Error(err)
+	} else if g := stringInstructions(ris); self.ExpectedInstructions != g {
 		t.Errorf("instruction types don't match\n  g: %s\n  e: %s", g, self.ExpectedInstructions)
-		return
-	}
-
-	for _, a := range self.Assertions {
-		a.Assert(t, ris)
+	} else {
+		for _, a := range self.Assertions {
+			a.Assert(t, ris)
+		}
 	}
 }

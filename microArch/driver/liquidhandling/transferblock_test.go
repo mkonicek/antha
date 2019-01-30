@@ -579,12 +579,18 @@ func generateRobotInstructions(t *testing.T, ctx context.Context, inss []*wtype.
 
 	//generate the low level instructions
 	instructionSet := NewRobotInstructionSet(tb)
-	ris2, err := instructionSet.Generate(ctx, pol, rbt)
-	if err != nil {
+	if err := instructionSet.Generate(ctx, pol, rbt); err != nil {
 		t.Fatal(err)
+	} else if ris, err := instructionSet.Leaves(); err != nil {
+		t.Fatal(err)
+	} else {
+		ret := make([]RobotInstruction, 0, len(ris))
+		for _, ti := range ris {
+			ret = append(ret, ti.(RobotInstruction))
+		}
+		return ret
 	}
-
-	return ris2
+	panic("unreachable")
 }
 
 func assertNumTipsUsed(t *testing.T, instructions []RobotInstruction, expectedTips int) {
@@ -790,9 +796,17 @@ func generateRobotInstructions2(ctx context.Context, inss []*wtype.LHInstruction
 
 	//generate the low level instructions
 	instructionSet := NewRobotInstructionSet(tb)
-	ris2, _ := instructionSet.Generate(ctx, pol, rbt)
-
-	return ris2
+	if err := instructionSet.Generate(ctx, pol, rbt); err != nil {
+		panic(err)
+	} else if tri, err := instructionSet.Leaves(); err != nil {
+		panic(err)
+	} else {
+		ret := make([]RobotInstruction, 0, len(tri))
+		for _, ti := range tri {
+			ret = append(ret, ti.(RobotInstruction))
+		}
+		return ret
+	}
 }
 
 // regression test for issue with additional transfers being

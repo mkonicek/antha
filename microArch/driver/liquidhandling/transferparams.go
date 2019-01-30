@@ -32,8 +32,8 @@ func (tp TransferParams) ToString() string {
 	return fmt.Sprintf("%s %s %s %s %s %s %s %s %s %s %s %s %d %d %d %d %s %+v", tp.What, tp.PltFrom, tp.PltTo, tp.WellFrom, tp.WellTo, tp.Volume.ToString(), tp.FPlateType, tp.TPlateType, tp.FVolume.ToString(), tp.TVolume.ToString(), tp.Channel, tp.TipType, tp.FPlateWX, tp.FPlateWY, tp.TPlateWX, tp.TPlateWY, tp.Component, tp.Policy)
 }
 
-func (tp TransferParams) Zero() bool {
-	return tp.What == ""
+func (tp TransferParams) IsZero() bool {
+	return tp.What == "" || tp.Volume.IsZero()
 }
 
 func (tp TransferParams) Dup() TransferParams {
@@ -67,8 +67,26 @@ type MultiTransferParams struct {
 func (mtp MultiTransferParams) RemoveInitialBlanks() MultiTransferParams {
 	r := NewMultiTransferParams(mtp.Multi)
 
+	started := false
+
+	for _, tp := range mtp.Transfers {
+		if !tp.IsZero() {
+			started = true
+		}
+
+		if started {
+			r.Transfers = append(r.Transfers, tp)
+		}
+	}
+
+	return r
+}
+
+func (mtp MultiTransferParams) RemoveBlanks() MultiTransferParams {
+	r := NewMultiTransferParams(mtp.Multi)
+
 	for _, tf := range mtp.Transfers {
-		if !tf.Zero() {
+		if !tf.IsZero() {
 			r.Transfers = append(r.Transfers, tf)
 		}
 	}
@@ -81,7 +99,7 @@ func (mtp MultiTransferParams) RemoveVolumes(vols []wunit.Volume) {
 	for i, t := range mtp.Transfers {
 		if i >= len(vols) {
 			break
-		} else if !t.Zero() {
+		} else if !t.IsZero() {
 			t.Volume.Subtract(vols[i])
 		}
 	}
@@ -92,7 +110,7 @@ func (mtp MultiTransferParams) RemoveFVolumes(vols []wunit.Volume) {
 	for i, t := range mtp.Transfers {
 		if i >= len(vols) {
 			break
-		} else if !t.Zero() {
+		} else if !t.IsZero() {
 			t.FVolume.Subtract(vols[i])
 		}
 	}
@@ -103,7 +121,7 @@ func (mtp MultiTransferParams) AddTVolumes(vols []wunit.Volume) {
 	for i, t := range mtp.Transfers {
 		if i >= len(vols) {
 			break
-		} else if !t.Zero() {
+		} else if !t.IsZero() {
 			t.TVolume.Add(vols[i])
 		}
 	}

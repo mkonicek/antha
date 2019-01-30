@@ -756,7 +756,13 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		return err
 	}
 
-	// make the instructions for executing this request
+	// make the instructions for executing this request by first building the ITree root, then generating the lower level instructions
+	// nb. there is significant potential for confusion here:
+	//    root.Generate(..., props LHProperties) is *destructive of state*, and leaves it's argument in the final state
+	//    therefore from here until reviseVolumes is called,
+	//      > this.Properties contains the final properties
+	//      > this.FinalProperties contains the initial properties
+	//    which cannot be changed until reviseVolumes is refactored
 	this.FinalProperties = this.Properties.Dup()
 	if root, err := liquidhandling.NewITreeRoot(request.InstructionChain); err != nil {
 		return err

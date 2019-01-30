@@ -27,7 +27,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
-	"time"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -873,17 +872,6 @@ func (lhp *LHProperties) GetEnvironment() wtype.Environment {
 		Humidity:            0.35,
 		MeanAirFlowVelocity: wunit.NewVelocity(0, "m/s"),
 	}
-}
-
-func (lhp *LHProperties) Evaporate(t time.Duration) []wtype.VolumeCorrection {
-	// TODO: proper environmental calls
-	env := lhp.GetEnvironment()
-	ret := make([]wtype.VolumeCorrection, 0, 5)
-	for _, v := range lhp.Plates {
-		ret = append(ret, v.Evaporate(t, env)...)
-	}
-
-	return ret
 }
 
 // ApplyUserPreferences merge in the layout preferences given by the user.

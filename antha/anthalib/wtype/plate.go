@@ -31,7 +31,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
@@ -1032,22 +1031,6 @@ func (self *Plate) GetPointIntersections(point Coordinates) []LHObject {
 
 	if len(ret) == 0 && self.Bounds.IntersectsPoint(point) {
 		ret = append(ret, self)
-	}
-	return ret
-}
-
-func (p *Plate) Evaporate(time time.Duration, env Environment) []VolumeCorrection {
-	ret := make([]VolumeCorrection, 0, 10)
-	if p == nil {
-		return ret
-	}
-	for _, w := range p.Wellcoords {
-		if !w.IsEmpty() {
-			vc := w.Evaporate(time, env)
-			if vc.Type != "" {
-				ret = append(ret, vc)
-			}
-		}
 	}
 	return ret
 }

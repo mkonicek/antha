@@ -27,9 +27,7 @@ import (
 	"fmt"
 	"math"
 	"strings"
-	"time"
 
-	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/eng"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
@@ -810,37 +808,6 @@ func (well *LHWell) IsAutoallocated() bool {
 		fmt.Println("Warning: Attempt to access nil well in IsAutoallocated()")
 	}
 	return false
-}
-
-func (well *LHWell) Evaporate(time time.Duration, env Environment) VolumeCorrection {
-	var ret VolumeCorrection
-
-	// don't let this happen
-	if well == nil {
-		return ret
-	}
-
-	if well.IsEmpty() {
-		return ret
-	}
-
-	// we need to use the evaporation calculator
-	// we should likely decorate wells since we have different capabilities
-	// for different well types
-
-	vol := eng.EvaporationVolume(env.Temperature, "water", env.Humidity, time.Seconds(), env.MeanAirFlowVelocity, well.AreaForVolume(), env.Pressure)
-
-	r, _ := well.RemoveVolume(vol)
-
-	if r == nil {
-		well.WContents.Vol = 0.0
-	}
-
-	ret.Type = "Evaporation"
-	ret.Volume = vol.Dup()
-	ret.Location = well.WContents.Loc
-
-	return ret
 }
 
 func (w *LHWell) ResetPlateID(newID string) {

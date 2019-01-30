@@ -12,10 +12,11 @@ import (
 	"sync/atomic"
 
 	"github.com/antha-lang/antha/codegen"
-	"github.com/antha-lang/antha/composer"
 	"github.com/antha-lang/antha/laboratory/effects"
+	"github.com/antha-lang/antha/logger"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/utils"
+	"github.com/antha-lang/antha/workflow"
 )
 
 type Element interface {
@@ -30,7 +31,7 @@ type Element interface {
 
 type LaboratoryBuilder struct {
 	outDir   string
-	workflow *composer.Workflow
+	workflow *workflow.Workflow
 
 	elemLock   sync.Mutex
 	elemsUnrun int64
@@ -43,7 +44,7 @@ type LaboratoryBuilder struct {
 	Completed chan struct{}
 
 	*lineMapManager
-	Logger      *composer.Logger
+	Logger      *logger.Logger
 	FileManager *FileManager
 
 	*effects.LaboratoryEffects
@@ -56,13 +57,14 @@ func NewLaboratoryBuilder(fh io.Reader) *LaboratoryBuilder {
 		Completed: make(chan struct{}),
 
 		lineMapManager: NewLineMapManager(),
-		Logger:         composer.NewLogger(),
+		Logger:         logger.NewLogger(),
 	}
 
-	if wf, err := composer.WorkflowFromReaders(fh); err != nil {
+	if wf, err := workflow.WorkflowFromReaders(fh); err != nil {
 		labBuild.Fatal(err)
 	} else {
 		labBuild.workflow = wf
+		labBuild.Logger = labBuild.Logger.With("jobId", wf.JobId)
 	}
 
 	labBuild.LaboratoryEffects = effects.NewLaboratoryEffects(string(labBuild.workflow.JobId))
@@ -196,7 +198,7 @@ func (labBuild *LaboratoryBuilder) Errors() error {
 type Laboratory struct {
 	*LaboratoryBuilder
 	element Element
-	Logger  *composer.Logger
+	Logger  *logger.Logger
 }
 
 func (labBuild *LaboratoryBuilder) makeLab(e Element) *Laboratory {

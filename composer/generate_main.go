@@ -6,18 +6,20 @@ import (
 	"strings"
 	"text/template"
 	"unicode"
+
+	"github.com/antha-lang/antha/workflow"
 )
 
 type mainRenderer struct {
 	composer *Composer
 	varCount uint64
-	varMemo  map[ElementInstanceName]string
+	varMemo  map[workflow.ElementInstanceName]string
 }
 
 func newMainRenderer(c *Composer) *mainRenderer {
 	return &mainRenderer{
 		composer: c,
-		varMemo:  make(map[ElementInstanceName]string),
+		varMemo:  make(map[workflow.ElementInstanceName]string),
 	}
 }
 
@@ -34,7 +36,7 @@ func (mr *mainRenderer) render(w io.Writer) error {
 	}
 }
 
-func (mr *mainRenderer) varName(name ElementInstanceName) string {
+func (mr *mainRenderer) varName(name workflow.ElementInstanceName) string {
 	if res, found := mr.varMemo[name]; found {
 		return res
 	}
@@ -63,11 +65,11 @@ func (mr *mainRenderer) varName(name ElementInstanceName) string {
 	return resStr
 }
 
-func (mr *mainRenderer) elementTypes() map[ElementTypeName]*ElementType {
+func (mr *mainRenderer) elementTypes() map[workflow.ElementTypeName]*TranspilableElementType {
 	return mr.composer.elementTypes
 }
 
-func (mr *mainRenderer) token(elem ElementInstanceName, param ElementParameterName) string {
+func (mr *mainRenderer) token(elem workflow.ElementInstanceName, param workflow.ElementParameterName) string {
 	if elemInstance, found := mr.composer.Workflow.ElementInstances[elem]; !found {
 		return ""
 	} else if elemType, found := mr.composer.elementTypes[elemInstance.ElementTypeName]; !found {

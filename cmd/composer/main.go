@@ -8,6 +8,8 @@ import (
 	"os"
 
 	"github.com/antha-lang/antha/composer"
+	"github.com/antha-lang/antha/logger"
+	"github.com/antha-lang/antha/workflow"
 )
 
 func main() {
@@ -24,7 +26,7 @@ func main() {
 	flag.BoolVar(&run, "run", true, "Run the workflow if compilation is successful")
 	flag.Parse()
 
-	logger := composer.NewLogger()
+	logger := logger.NewLogger()
 
 	workflows := flag.Args()
 	if len(workflows) == 0 {
@@ -52,7 +54,7 @@ func main() {
 		}
 	}
 
-	if wf, err := composer.WorkflowFromReaders(rs...); err != nil {
+	if wf, err := workflow.WorkflowFromReaders(rs...); err != nil {
 		logger.Fatal(err)
 	} else if comp, err := composer.NewComposer(logger, wf, outdir, keep, run); err != nil {
 		logger.Fatal(err)

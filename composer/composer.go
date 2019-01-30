@@ -5,6 +5,9 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/antha-lang/antha/logger"
+	"github.com/antha-lang/antha/workflow"
 )
 
 // The composer manages the whole operation:
@@ -13,18 +16,18 @@ import (
 // - transpiling those elements and writing them out to the right place
 // - generating a suitable main.go from the workflow
 type Composer struct {
-	Logger   *Logger
-	Workflow *Workflow
+	Logger   *logger.Logger
+	Workflow *workflow.Workflow
 
 	OutDir string
 	Keep   bool
 	Run    bool
 
-	elementTypes map[ElementTypeName]*ElementType
-	worklist     []*ElementType
+	elementTypes map[workflow.ElementTypeName]*TranspilableElementType
+	worklist     []*TranspilableElementType
 }
 
-func NewComposer(logger *Logger, wf *Workflow, outDir string, keep, run bool) (*Composer, error) {
+func NewComposer(logger *logger.Logger, wf *workflow.Workflow, outDir string, keep, run bool) (*Composer, error) {
 	if outDir == "" {
 		if d, err := ioutil.TempDir("", fmt.Sprintf("antha-build-%s", wf.JobId)); err != nil {
 			return nil, err
@@ -46,7 +49,7 @@ func NewComposer(logger *Logger, wf *Workflow, outDir string, keep, run bool) (*
 		Keep:   keep,
 		Run:    run,
 
-		elementTypes: make(map[ElementTypeName]*ElementType),
+		elementTypes: make(map[workflow.ElementTypeName]*TranspilableElementType),
 	}, nil
 }
 
@@ -55,13 +58,13 @@ func (c *Composer) FindWorkflowElementTypes() error {
 		if err := c.Workflow.Repositories.CloneRepository(et, filepath.Join(c.OutDir, "src")); err != nil {
 			return err
 		} else {
-			c.EnsureElementType(et)
+			c.EnsureElementType(NewTranspilableElementType(et))
 		}
 	}
 	return nil
 }
 
-func (c *Composer) EnsureElementType(et *ElementType) {
+func (c *Composer) EnsureElementType(et *TranspilableElementType) {
 	if _, found := c.elementTypes[et.Name()]; !found {
 		c.elementTypes[et.Name()] = et
 		c.worklist = append(c.worklist, et)

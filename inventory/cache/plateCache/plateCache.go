@@ -63,7 +63,7 @@ func (pc *PlateCache) ReturnPlate(plate *wtype.Plate) error {
 
 	plate.Clean()
 
-	typ := plate.Type
+	typ := string(plate.Type)
 
 	if plates, found := pc.platesByType[typ]; !found {
 		panic(fmt.Errorf("Impossible: plate is from cache, but plates slice not found! %v", typ))

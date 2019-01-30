@@ -418,7 +418,7 @@ type plateConstraints struct {
 
 type plateWithConstraint struct {
 	// Name of the plate which has a riser constraint
-	Name string
+	Name wtype.PlateTypeName
 	// Any plate specific offset, in mm, which should be added to the riser height.
 	// For example, if the riser is a tube rack and the specified plate
 	// has very narrow tubes which sit low in the riser then a special offset can be added here to adjust for this.

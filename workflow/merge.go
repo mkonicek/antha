@@ -163,12 +163,12 @@ func (a *Inventory) merge(b Inventory) error {
 
 func (a *Config) merge(b Config) error {
 	return utils.ErrorSlice{
-		a.GilsonPipetMax.merge(b.GilsonPipetMax),
-		a.GlobalMixer.merge(b.GlobalMixer),
+		a.GilsonPipetMax.Merge(b.GilsonPipetMax),
+		a.GlobalMixer.Merge(b.GlobalMixer),
 	}.Pack()
 }
 
-func (a *GilsonPipetMaxConfig) merge(b GilsonPipetMaxConfig) error {
+func (a *GilsonPipetMaxConfig) Merge(b GilsonPipetMaxConfig) error {
 	// simplest: we merge iff device ids are distinct
 	for id, cfg := range b.Devices {
 		if _, found := a.Devices[id]; found {
@@ -186,7 +186,7 @@ func (a *GilsonPipetMaxConfig) merge(b GilsonPipetMaxConfig) error {
 	return nil
 }
 
-func (a *GlobalMixerConfig) merge(b GlobalMixerConfig) error {
+func (a *GlobalMixerConfig) Merge(b GlobalMixerConfig) error {
 	// disjunction of bools - this seems sensible
 	a.PrintInstructions = a.PrintInstructions || b.PrintInstructions
 	a.UseDriverTipTracking = a.UseDriverTipTracking || b.UseDriverTipTracking

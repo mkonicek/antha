@@ -238,7 +238,7 @@ func makeTransfers(labEffects *effects.LaboratoryEffects, parallelTransfer Paral
 			return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: input plate ID not found on robot (#2) - please report this error to the authors")
 		}
 
-		ptf[ci] = srcPlate.Type
+		ptf[ci] = string(srcPlate.Type)
 
 		// destination plate type
 
@@ -248,7 +248,7 @@ func makeTransfers(labEffects *effects.LaboratoryEffects, parallelTransfer Paral
 			return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: destination plate ID not found on robot - please report this error to the authors")
 		}
 
-		ptt[ci] = dstPlate.Type
+		ptt[ci] = string(dstPlate.Type)
 
 		// volume being moved
 

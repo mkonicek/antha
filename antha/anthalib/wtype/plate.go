@@ -49,7 +49,7 @@ type Plate struct {
 	Inst        string
 	Loc         string             // location of plate
 	PlateName   string             // user-definable plate name
-	Type        string             // plate type
+	Type        PlateTypeName      // plate type
 	Mnfr        string             // manufacturer
 	WlsX        int                // wells along long axis
 	WlsY        int                // wells along short axis
@@ -525,7 +525,7 @@ func (lhp *Plate) GetType() string {
 	if lhp == nil {
 		return "<nil>"
 	}
-	return lhp.Type
+	return string(lhp.Type)
 }
 
 func (self *Plate) GetClass() string {
@@ -591,12 +591,12 @@ func (lhp *Plate) NextEmptyWell(idGen *id.IDGenerator, it AddressIterator) WellC
 	return ZeroWellCoords()
 }
 
-func NewLHPlate(idGen *id.IDGenerator, platetype, mfr string, nrows, ncols int, size Coordinates, welltype *LHWell, wellXOffset, wellYOffset, wellXStart, wellYStart, wellZStart float64) *Plate {
+func NewLHPlate(idGen *id.IDGenerator, platetype PlateTypeName, mfr string, nrows, ncols int, size Coordinates, welltype *LHWell, wellXOffset, wellYOffset, wellXStart, wellYStart, wellZStart float64) *Plate {
 	var lhp Plate
 	lhp.Type = platetype
 	//lhp.ID = "plate-" + GetUUID()
 	lhp.ID = idGen.NextID()
-	lhp.PlateName = fmt.Sprintf("%s_%s", platetype, lhp.ID[1:len(lhp.ID)-2])
+	lhp.PlateName = fmt.Sprintf("%v_%s", platetype, lhp.ID[1:len(lhp.ID)-2])
 	lhp.Mnfr = mfr
 	lhp.WlsX = ncols
 	lhp.WlsY = nrows
@@ -661,7 +661,7 @@ func LHPlateFromType(idGen *id.IDGenerator, pt *PlateType) *LHPlate {
 
 	newWelltype := NewLHWell(idGen, "ul", pt.MaxVol, pt.MinVol, newWellShape, pt.BottomType, pt.WellX, pt.WellY, pt.WellZ, pt.BottomH, "mm")
 
-	plate := NewLHPlate(idGen, string(pt.Name), pt.Manufacturer, pt.ColSize, pt.RowSize,
+	plate := NewLHPlate(idGen, pt.Name, pt.Manufacturer, pt.ColSize, pt.RowSize,
 		//standard X/Y size for 96 well plates
 		Coordinates{X: 127.76, Y: 85.48, Z: pt.Height},
 		newWelltype, pt.WellXOffset, pt.WellYOffset, pt.WellXStart, pt.WellYStart, pt.WellZStart)
@@ -790,7 +790,7 @@ func ExportPlateCSV(outputFileName string, plate *Plate, plateName string, wells
 	}
 
 	records := make([][]string, 0)
-	headerrecord := []string{plate.Type, plateName, "LiquidType", "Vol", "Vol Unit", "Conc", "Conc Unit"}
+	headerrecord := []string{string(plate.Type), plateName, "LiquidType", "Vol", "Vol Unit", "Conc", "Conc Unit"}
 	var includeSubComponentsHeader bool
 
 	for i, well := range wells {

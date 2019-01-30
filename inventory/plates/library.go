@@ -46,7 +46,7 @@ func makePlateTypes(idGen *id.IDGenerator) wtype.PlateTypes {
 	plateTypes := make(wtype.PlateTypes)
 
 	for _, p := range plates {
-		plateTypeName := wtype.PlateTypeName(p.Type)
+		plateTypeName := p.Type
 		pt := &wtype.PlateType{
 			Name:         plateTypeName,
 			Manufacturer: p.Mnfr,
@@ -72,7 +72,7 @@ func makePlateTypes(idGen *id.IDGenerator) wtype.PlateTypes {
 			Extra:        p.Welltype.Extra,
 		}
 
-		if !strings.Contains(p.Type, "FromSpec") {
+		if !strings.Contains(string(p.Type), "FromSpec") {
 			// add offset values to WellX,Y,ZStart
 			reviseWellStarts(pt, xStartOffset, yStartOffset, zStartOffset)
 		}
@@ -101,13 +101,13 @@ var platespecificoffset = map[string]float64{
 }
 */
 
-var platespecificoffset = map[string]float64{}
+var platespecificoffset = map[wtype.PlateTypeName]float64{}
 
 // function to check if a platename already contains a riser
 func containsRiser(plate *wtype.Plate) bool {
 	for _, dev := range defaultDevices {
 		for _, synonym := range dev.GetSynonyms() {
-			if strings.Contains(plate.Type, "_"+synonym) {
+			if strings.Contains(string(plate.Type), "_"+synonym) {
 				return true
 			}
 		}
@@ -134,7 +134,7 @@ func addRiser(idGen *id.IDGenerator, plate *wtype.Plate, riser device) (plates [
 
 		newplate.WellZStart = plate.WellZStart + riserheight
 		newplate.Bounds.SetSize(plate.GetSize().Add(wtype.Coordinates{X: 0.0, Y: 0.0, Z: riserheight}))
-		newname := plate.Type + "_" + risername
+		newname := plate.Type + wtype.PlateTypeName("_"+risername)
 		newplate.Type = newname
 		if riser.GetConstraints() != nil {
 			// duplicate well before adding constraint to prevent applying
@@ -779,7 +779,7 @@ func makeNunc96UPlate(idGen *id.IDGenerator) *wtype.Plate {
 	xstartOffsetCorrection := 11.25
 	ystartOffsetCorrection := 7.75
 
-	plateName := "nunc_96_U_PS_Clear"
+	plateName := wtype.PlateTypeName("nunc_96_U_PS_Clear")
 	manufacturer := "Nunc"
 
 	numberOfRows := 8
@@ -850,7 +850,7 @@ func makeFluidX700ulPlate(idGen *id.IDGenerator) *wtype.Plate {
 	xstartOffsetCorrection := 11.25
 	ystartOffsetCorrection := 7.75
 
-	plateName := "FluidX700ulTubes"
+	plateName := wtype.PlateTypeName("FluidX700ulTubes")
 
 	manufacturer := "FluidX"
 
@@ -875,7 +875,7 @@ func makeGreinerFlatBottomBlackPlate(idGen *id.IDGenerator) *wtype.Plate {
 	// shallow round well flat bottom 96
 	rwshp := wtype.NewShape(wtype.CylinderShape, "mm", 8.2, 8.2, 11)
 	roundwell96 := wtype.NewLHWell(idGen, "ul", 340, 25, rwshp, 0, 8.2, 8.2, 11, 1.0, "mm")
-	plate := wtype.NewLHPlate(idGen, "greiner96Black", "greiner", 8, 12, makePlateCoords(15), roundwell96, 9, 9, 0.0, 0.0, 2.0)
+	plate := wtype.NewLHPlate(idGen, wtype.PlateTypeName("greiner96Black"), "greiner", 8, 12, makePlateCoords(15), roundwell96, 9, 9, 0.0, 0.0, 2.0)
 	return plate
 }
 
@@ -898,7 +898,7 @@ func makeHighResplateforPicking(idGen *id.IDGenerator) *wtype.Plate {
 	welltype3150 := wtype.NewLHWell(idGen, "ul", 5, 0.5, square3150, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 
 	// greiner one well with 50ml of agar in
-	plate := wtype.NewLHPlate(idGen, "Agarplateforpicking3150", "Unknown", 45, 70, makePlateCoords(7), welltype3150, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate := wtype.NewLHPlate(idGen, wtype.PlateTypeName("Agarplateforpicking3150"), "Unknown", 45, 70, makePlateCoords(7), welltype3150, wellxoffset, wellyoffset, xstart, ystart, zstart)
 
 	return plate
 }
@@ -912,7 +912,7 @@ func make96DeepWellLowVolumePlate(idGen *id.IDGenerator) *wtype.Plate {
 	ystartOffsetCorrection := 11.50
 	zstartOffsetCorrection := 2.5
 
-	plateName := "Nunc_96_deepwell_1ml"
+	plateName := wtype.PlateTypeName("Nunc_96_deepwell_1ml")
 	manufacturer := "Thermo Fisher"
 
 	numberOfRows := 8
@@ -962,7 +962,7 @@ func makeLabcyte384PPStdV(idGen *id.IDGenerator) *wtype.Plate {
 	ystartOffsetCorrection := 11.50
 	zstartOffsetCorrection := 2.5
 
-	plateName := "Labcyte_384PP_StdV"
+	plateName := wtype.PlateTypeName("Labcyte_384PP_StdV")
 	manufacturer := "Labcyte"
 
 	numberOfRows := 16
@@ -1010,7 +1010,7 @@ func make384wellplateAppliedBiosystems(idGen *id.IDGenerator) *wtype.Plate {
 	//zstartOffsetCorrection := 2.25
 	zstartOffsetCorrection := 0.7 // MIS revised post fix -- still arbitrary because of later correction
 
-	plateName := "AppliedBiosystems_384_MicroAmp_Optical"
+	plateName := wtype.PlateTypeName("AppliedBiosystems_384_MicroAmp_Optical")
 	manufacturer := "Applied Biosystems"
 
 	numberOfRows := 16
@@ -1058,7 +1058,7 @@ func makeAcroPrep384NoFilter(idGen *id.IDGenerator) *wtype.Plate {
 	xstartOffsetCorrection := 14.38
 	ystartOffsetCorrection := 11.24
 
-	plateName := "AcroPrep384NoFilter"
+	plateName := wtype.PlateTypeName("AcroPrep384NoFilter")
 	manufacturer := "Pall"
 
 	numberOfRows := 16
@@ -1108,7 +1108,7 @@ func makeAcroPrep384WithFilter(idGen *id.IDGenerator) *wtype.Plate {
 	xstartOffsetCorrection := 14.38
 	ystartOffsetCorrection := 11.24
 
-	plateName := "AcroPrep384WithFilter"
+	plateName := wtype.PlateTypeName("AcroPrep384WithFilter")
 	manufacturer := "Pall"
 
 	numberOfRows := 16
@@ -1149,7 +1149,7 @@ func makeAcroPrep384WithFilter(idGen *id.IDGenerator) *wtype.Plate {
 
 // VbottomGreiner
 func makeGreinerVFromSpec(idGen *id.IDGenerator) *wtype.LHPlate {
-	plateName := "GreinerV96FromSpec"
+	plateName := wtype.PlateTypeName("GreinerV96FromSpec")
 	manufacturer := "Greiner"
 
 	numberOfRows := 8
@@ -1189,7 +1189,7 @@ func makeGreinerVFromSpec(idGen *id.IDGenerator) *wtype.LHPlate {
 
 // pcrplate
 func make4TitudePcrPlateFromSpec(idGen *id.IDGenerator) *wtype.LHPlate {
-	plateName := "pcrplate_skirted_FromSpec"
+	plateName := wtype.PlateTypeName("pcrplate_skirted_FromSpec")
 	manufacturer := "4titude"
 
 	numberOfRows := 8

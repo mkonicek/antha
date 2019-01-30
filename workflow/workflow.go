@@ -146,8 +146,8 @@ type GlobalMixerConfig struct {
 	IgnorePhysicalSimulation bool `json:"ignorePhysicalSimulation"` //ignore errors in physical simulation
 
 	// Direct specification of input and output plates
-	InputPlates  []*wtype.Plate `json:"inputPlates,omitempty"`
-	OutputPlates []*wtype.Plate `json:"outputPlates,omitempty"`
+	InputPlates  []wtype.Plate `json:"inputPlates,omitempty"`
+	OutputPlates []wtype.Plate `json:"outputPlates,omitempty"`
 
 	CustomPolicyRuleSet *wtype.LHPolicyRuleSet `json:"customPolicyRuleSet,omitempty"`
 }

@@ -22,7 +22,7 @@ func (wf *Workflow) validate() error {
 			wf.ElementInstancesParameters.validate(wf),
 			wf.ElementInstancesConnections.validate(wf),
 			wf.Inventory.validate(),
-			wf.Config.validate(wf),
+			wf.Config.validate(),
 		}.Pack()
 	}
 }
@@ -150,26 +150,26 @@ func (inv Inventory) validate() error {
 	return inv.PlateTypes.Validate()
 }
 
-func (cfg Config) validate(wf *Workflow) error {
+func (cfg Config) validate() error {
 	return utils.ErrorSlice{
-		cfg.GilsonPipetMax.validate(wf),
-		cfg.GlobalMixer.validate(wf),
+		cfg.GilsonPipetMax.validate(),
+		cfg.GlobalMixer.validate(),
 	}.Pack()
 }
 
-func (gilson GilsonPipetMaxConfig) validate(wf *Workflow) error {
-	if err := gilson.Defaults.validate("Defaults", wf); err != nil {
+func (gilson GilsonPipetMaxConfig) validate() error {
+	if err := gilson.Defaults.validate("Defaults"); err != nil {
 		return err
 	}
 	for name, cfg := range gilson.Devices {
-		if err := cfg.validate(string(name), wf); err != nil {
+		if err := cfg.validate(string(name)); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (gilson *GilsonPipetMaxInstanceConfig) validate(name string, wf *Workflow) error {
+func (gilson *GilsonPipetMaxInstanceConfig) validate(name string) error {
 	switch {
 	case gilson == nil: // should only happen when name == Defaults
 		return nil
@@ -187,7 +187,7 @@ func (gilson *GilsonPipetMaxInstanceConfig) validate(name string, wf *Workflow) 
 	return nil
 }
 
-func (global GlobalMixerConfig) validate(wf *Workflow) error {
+func (global GlobalMixerConfig) validate() error {
 	// Again, we cannot validate plates and plate types until we have a
 	// working inventory system.
 	return nil

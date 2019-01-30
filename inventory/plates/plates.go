@@ -33,19 +33,19 @@ func (inv *Inventory) SetPlateTypes(pts wtype.PlateTypes) {
 }
 
 func (inv *Inventory) NewPlate(typ string) (*wtype.Plate, error) {
-	if pt, err := inv.NewPlateType(typ); err != nil {
+	if pt, err := inv.NewPlateType(wtype.PlateTypeName(typ)); err != nil {
 		return nil, err
 	} else {
 		return wtype.LHPlateFromType(inv.idGen, pt), nil
 	}
 }
 
-func (inv *Inventory) NewPlateType(typ string) (*wtype.PlateType, error) {
+func (inv *Inventory) NewPlateType(typ wtype.PlateTypeName) (*wtype.PlateType, error) {
 	inv.lock.Lock()
 	defer inv.lock.Unlock()
 
-	if pt, found := inv.plateTypeByType[wtype.PlateTypeName(typ)]; !found {
-		return nil, fmt.Errorf("Unknown plate type: %s", typ)
+	if pt, found := inv.plateTypeByType[typ]; !found {
+		return nil, fmt.Errorf("Unknown plate type: %v", typ)
 	} else {
 		return pt, nil
 	}

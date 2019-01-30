@@ -98,7 +98,7 @@ type SLHPlate struct {
 	Inst        string
 	Loc         string
 	Name        string
-	Type        string
+	Type        PlateTypeName
 	Mnfr        string
 	WellsX      int
 	WellsY      int

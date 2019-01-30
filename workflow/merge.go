@@ -9,13 +9,14 @@ import (
 )
 
 func (a *Workflow) merge(b *Workflow) error {
-	if a == nil || b == nil {
-		return errors.New("Attempt to merge nil workflow")
-	}
-
-	if a.JobId == "" {
+	switch {
+	case a == nil:
+		return errors.New("Cannot merge into a nil Workflow")
+	case b == nil:
+		return nil
+	case a.JobId == "":
 		a.JobId = b.JobId
-	} else if b.JobId != "" && a.JobId != b.JobId {
+	case a.JobId != b.JobId && b.JobId != "":
 		return fmt.Errorf("Cannot merge: different JobIds: %v vs %v", a.JobId, b.JobId)
 	}
 
@@ -30,13 +31,21 @@ func (a *Workflow) merge(b *Workflow) error {
 	}.Pack()
 }
 
-func (a Repositories) merge(b Repositories) error {
-	// It's an error iff a and b contain the same prefix with different definitions.
+func (a *Repository) equals(b *Repository) bool {
+	return a.Directory == b.Directory && a.Branch == b.Branch && a.Commit == b.Commit
+}
+
+func (a *Repositories) merge(b Repositories) error {
+	// It's an error if a and b contain the same prefix and they're not equal
+	if *a == nil {
+		*a = make(Repositories)
+	}
+	aMap := *a
 	for prefix, repoB := range b {
-		if repoA, found := a[prefix]; found && repoA != repoB {
+		if repoA, found := aMap[prefix]; found && !repoA.equals(repoB) {
 			return fmt.Errorf("Cannot merge: repository with prefix '%v' redefined.", prefix)
 		} else if !found {
-			a[prefix] = repoB
+			aMap[prefix] = repoB
 		}
 	}
 	return nil
@@ -58,6 +67,9 @@ func (a *ElementType) equals(b *ElementType) bool {
 }
 
 func (a *ElementTypes) merge(b ElementTypes) error {
+	// for convenience, it's perfectly reasonable to have the same
+	// element types defined in multiple places, and we just need to
+	// check that duplicates are truly equal
 	all := make(ElementTypes, 0, len(*a)+len(b))
 	all = append(all, *a...)
 	all = append(all, b...)
@@ -77,25 +89,33 @@ func (a *ElementTypes) merge(b ElementTypes) error {
 	return nil
 }
 
-func (a ElementInstances) merge(b ElementInstances) error {
+func (a *ElementInstances) merge(b ElementInstances) error {
 	// Element instances from different workflows must be entirely distinct
+	if *a == nil {
+		*a = make(ElementInstances)
+	}
+	aMap := *a
 	for name, elemB := range b {
-		if _, found := a[name]; found {
+		if _, found := aMap[name]; found {
 			return fmt.Errorf("Cannot merge: element instance '%v' exists in both workflows", name)
 		} else {
-			a[name] = elemB
+			aMap[name] = elemB
 		}
 	}
 	return nil
 }
 
-func (a ElementInstancesParameters) merge(b ElementInstancesParameters) error {
+func (a *ElementInstancesParameters) merge(b ElementInstancesParameters) error {
 	// Just like element instances, these should be completely distinct
+	if *a == nil {
+		*a = make(ElementInstancesParameters)
+	}
+	aMap := *a
 	for name, paramSetB := range b {
-		if _, found := a[name]; found {
+		if _, found := aMap[name]; found {
 			return fmt.Errorf("Cannot merge: element parameters '%v' exists in both workflows", name)
 		} else {
-			a[name] = paramSetB
+			aMap[name] = paramSetB
 		}
 	}
 	return nil

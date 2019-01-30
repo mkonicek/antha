@@ -52,15 +52,19 @@ func (bt WellBottomType) String() string {
 	return WellBottomNames[bt]
 }
 
-func (a PlateTypes) Merge(b PlateTypes) error {
+func (a *PlateTypes) Merge(b PlateTypes) error {
+	if *a == nil {
+		*a = make(PlateTypes)
+	}
+	aMap := *a
 	// May need revising: currently we error if there's any
 	// overlap. Equality between PlateTypes can't be based on simple
 	// structural equality due to the Extra field being a map.
 	for ptn, pt := range b {
-		if _, found := a[ptn]; found {
-			return fmt.Errorf("PlateType %v is redefined", ptn)
+		if _, found := aMap[ptn]; found {
+			return fmt.Errorf("Cannot merge: PlateType '%v' is redefined", ptn)
 		}
-		a[ptn] = pt
+		aMap[ptn] = pt
 	}
 	return nil
 }

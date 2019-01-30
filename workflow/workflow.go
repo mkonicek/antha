@@ -27,22 +27,8 @@ type Workflow struct {
 	typeNames map[ElementTypeName]*ElementType
 }
 
-func newWorkflow() *Workflow {
-	return &Workflow{
-		Repositories:                make(Repositories),
-		ElementTypes:                make(ElementTypes, 0),
-		ElementInstances:            make(ElementInstances),
-		ElementInstancesParameters:  make(ElementInstancesParameters),
-		ElementInstancesConnections: make(ElementInstancesConnections, 0),
-
-		Inventory: Inventory{
-			PlateTypes: make(wtype.PlateTypes),
-		},
-	}
-}
-
 func WorkflowFromReaders(rs ...io.Reader) (*Workflow, error) {
-	acc := newWorkflow()
+	acc := &Workflow{}
 	for _, r := range rs {
 		wf := &Workflow{}
 		dec := json.NewDecoder(r)

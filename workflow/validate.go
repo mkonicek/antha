@@ -13,7 +13,7 @@ import (
 
 func (wf *Workflow) validate() error {
 	if wf.JobId == "" {
-		return errors.New("Workflow has empty JobId")
+		return errors.New("Validation error: Workflow has empty JobId")
 	} else {
 		return utils.ErrorSlice{
 			wf.Repositories.validate(),
@@ -29,7 +29,7 @@ func (wf *Workflow) validate() error {
 
 func (rs Repositories) validate() error {
 	if len(rs) == 0 {
-		return errors.New("Workflow has no Repositories")
+		return errors.New("Validation error: Workflow has no Repositories")
 	} else {
 		// Until we switch to go modules, we have to enforce that all
 		// repositories are not only unique, but that no one repository
@@ -47,7 +47,7 @@ func (rs Repositories) validate() error {
 		for idx, prefix := range prefixes {
 			for _, later := range prefixes[idx+1:] {
 				if strings.HasPrefix(later, prefix) {
-					return fmt.Errorf("Two repositories found where one is a prefix of the other. This is not allowed, sorry. '%s' is a prefix of '%s'", prefix, later)
+					return fmt.Errorf("Validation error: Two repositories found where one is a prefix of the other. This is not allowed, sorry. '%s' is a prefix of '%s'", prefix, later)
 				}
 			}
 		}
@@ -65,9 +65,9 @@ func (r Repository) validate() error {
 	if info, err := os.Stat(filepath.FromSlash(r.Directory)); err != nil {
 		return err
 	} else if !info.Mode().IsDir() {
-		return fmt.Errorf("Repository Directory is not a directory: '%s'", r.Directory)
+		return fmt.Errorf("Validation error: Repository Directory is not a directory: '%s'", r.Directory)
 	} else if bEmpty, cEmpty := r.Branch == "", r.Commit == ""; !bEmpty && !cEmpty {
-		return fmt.Errorf("Repository cannot have both Branch and Commit specified. At most one. ('%s', '%s')", r.Branch, r.Commit)
+		return fmt.Errorf("Validation error: Repository cannot have both Branch and Commit specified. At most one. ('%s', '%s')", r.Branch, r.Commit)
 	} else {
 		return nil
 	}
@@ -81,7 +81,7 @@ func (ets ElementTypes) validate(wf *Workflow) error {
 		if err := et.validate(wf); err != nil {
 			return err
 		} else if ep, found := namesToPath[et.Name()]; found {
-			return fmt.Errorf("ElementType '%v' is ambiguous (ElementPaths '%v' and '%v')", et.Name(), et.ElementPath, ep)
+			return fmt.Errorf("Validation error: ElementType '%v' is ambiguous (ElementPaths '%v' and '%v')", et.Name(), et.ElementPath, ep)
 		} else {
 			namesToPath[et.Name()] = et.ElementPath
 		}
@@ -91,7 +91,7 @@ func (ets ElementTypes) validate(wf *Workflow) error {
 
 func (et ElementType) validate(wf *Workflow) error {
 	if _, found := wf.Repositories[et.RepositoryPrefix]; !found {
-		return fmt.Errorf("ElementType uses unknown RepositoryPrefix: '%s'", et.RepositoryPrefix)
+		return fmt.Errorf("Validation error: ElementType uses unknown RepositoryPrefix: '%s'", et.RepositoryPrefix)
 	} else {
 		return nil
 	}
@@ -100,7 +100,7 @@ func (et ElementType) validate(wf *Workflow) error {
 func (eis ElementInstances) validate(wf *Workflow) error {
 	for name, ei := range eis {
 		if name == "" {
-			return errors.New("ElementInstance cannot have an empty name")
+			return errors.New("Validation error: ElementInstance cannot have an empty name")
 		} else if err := ei.validate(wf); err != nil {
 			return err
 		}
@@ -110,7 +110,7 @@ func (eis ElementInstances) validate(wf *Workflow) error {
 
 func (ei ElementInstance) validate(wf *Workflow) error {
 	if _, found := wf.TypeNames()[ei.ElementTypeName]; !found {
-		return fmt.Errorf("ElementInstance with ElementTypeName '%v' is unknown", ei.ElementTypeName)
+		return fmt.Errorf("Validation error: ElementInstance with ElementTypeName '%v' is unknown", ei.ElementTypeName)
 	} else {
 		return nil
 	}
@@ -119,7 +119,7 @@ func (ei ElementInstance) validate(wf *Workflow) error {
 func (eps ElementInstancesParameters) validate(wf *Workflow) error {
 	for name, _ := range eps {
 		if _, found := wf.ElementInstances[name]; !found {
-			return fmt.Errorf("ElementInstancesParameters provided for unknown ElementInstance '%v'", name)
+			return fmt.Errorf("Validation error: ElementInstancesParameters provided for unknown ElementInstance '%v'", name)
 		}
 	}
 	return nil
@@ -138,9 +138,9 @@ func (conns ElementInstancesConnections) validate(wf *Workflow) error {
 
 func (soc ElementSocket) validate(wf *Workflow) error {
 	if _, found := wf.ElementInstances[soc.ElementInstance]; !found {
-		return fmt.Errorf("ElementConnection uses ElementInstance '%v' which does not exist.", soc.ElementInstance)
+		return fmt.Errorf("Validation error: ElementConnection uses ElementInstance '%v' which does not exist.", soc.ElementInstance)
 	} else if soc.ParameterName == "" {
-		return fmt.Errorf("ElementConnection using ElementInstance '%v' must specify a ParameterName.", soc.ElementInstance)
+		return fmt.Errorf("Validation error: ElementConnection using ElementInstance '%v' must specify a ParameterName.", soc.ElementInstance)
 	} else {
 		return nil
 	}
@@ -174,11 +174,11 @@ func (gilson *GilsonPipetMaxInstanceConfig) validate(name string, wf *Workflow) 
 	case gilson == nil: // should only happen when name == Defaults
 		return nil
 	case gilson.MaxPlates != nil && *gilson.MaxPlates <= 0:
-		return fmt.Errorf("GilsonPipetMax '%s': MaxPlates must be > 0", name)
+		return fmt.Errorf("Validation error: GilsonPipetMax '%s': MaxPlates must be > 0", name)
 	case gilson.MaxWells != nil && *gilson.MaxWells <= 0:
-		return fmt.Errorf("GilsonPipetMax '%s': MaxWells must be > 0", name)
+		return fmt.Errorf("Validation error: GilsonPipetMax '%s': MaxWells must be > 0", name)
 	case gilson.ResidualVolumeWeight != nil && *gilson.ResidualVolumeWeight < 0:
-		return fmt.Errorf("GilsonPipetMax '%s': ResidualVolumeWeight must be >= 0", name)
+		return fmt.Errorf("Validation error: GilsonPipetMax '%s': ResidualVolumeWeight must be >= 0", name)
 	}
 
 	// We cannot validate plates at this point because the real plate

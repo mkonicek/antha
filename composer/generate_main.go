@@ -69,17 +69,20 @@ func (mr *mainRenderer) elementTypes() map[workflow.ElementTypeName]*Transpilabl
 	return mr.composer.elementTypes
 }
 
-func (mr *mainRenderer) token(elem workflow.ElementInstanceName, param workflow.ElementParameterName) string {
+func (mr *mainRenderer) token(elem workflow.ElementInstanceName, param workflow.ElementParameterName) (string, error) {
 	if elemInstance, found := mr.composer.Workflow.ElementInstances[elem]; !found {
-		return ""
+		return "", fmt.Errorf("No such element instance with name '%v'", elem)
 	} else if elemType, found := mr.composer.elementTypes[elemInstance.ElementTypeName]; !found {
-		return ""
+		return "", fmt.Errorf("No such element type with name '%v' (element instance '%v')",
+			elemInstance.ElementTypeName, elem)
 	} else if elemType.transpiler == nil {
-		return ""
+		return "", fmt.Errorf("The element type '%v' does not appear to contain an Antha element",
+			elemInstance.ElementTypeName)
 	} else if tok, found := elemType.transpiler.TokenByParamName[string(param)]; !found {
-		return ""
+		return "", fmt.Errorf("The element type '%v' has no parameter named '%v' (element instance '%v')",
+			elemInstance.ElementTypeName, param, elem)
 	} else {
-		return tok.String()
+		return tok.String(), nil
 	}
 }
 

@@ -10,6 +10,7 @@ message TypeRequest {}
 
 message TypeReply {
   string type = 1;
+  repeated string subtypes = 2;
 }
 
 message HttpHeader {

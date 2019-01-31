@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	drv "github.com/antha-lang/antha/driver/antha_driver_v1"
 	pb "github.com/antha-lang/antha/driver/liquidhandling/pb"
 	driver "github.com/antha-lang/antha/microArch/driver"
 	liquidhandling "github.com/antha-lang/antha/microArch/driver/liquidhandling"
@@ -30,6 +32,7 @@ func commandStatus(r *pb.CommandReply) driver.CommandStatus {
 
 type LowLevelClient struct {
 	client pb.LowLevelLiquidhandlingDriverClient
+	driver drv.DriverClient
 }
 
 // NewLowLevelClient create a client for connecting with a remote low level
@@ -46,6 +49,7 @@ func NewLowLevelClient(address string) (*LowLevelClient, error) {
 func NewLowLevelClientFromConn(conn *grpc.ClientConn) *LowLevelClient {
 	return &LowLevelClient{
 		client: pb.NewLowLevelLiquidhandlingDriverClient(conn),
+		driver: drv.NewDriverClient(conn),
 	}
 }
 
@@ -54,6 +58,14 @@ func (llc *LowLevelClient) handleCommandReply(reply *pb.CommandReply, err error)
 		return driver.CommandError(err.Error())
 	} else {
 		return commandStatus(reply)
+	}
+}
+
+func (llc *LowLevelClient) DriverType() ([]string, error) {
+	if reply, err := llc.driver.DriverType(context.Background(), &drv.TypeRequest{}); err != nil {
+		return nil, err
+	} else {
+		return append([]string{reply.GetType()}, reply.GetSubtypes()...), nil
 	}
 }
 

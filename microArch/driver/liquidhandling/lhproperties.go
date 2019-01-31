@@ -502,6 +502,45 @@ func (lhp *LHProperties) RemovePlateWithID(id string) {
 	delete(lhp.Plates, addr)
 }
 
+// UpdateID update the id of the object with currID, returning the new ID
+// and an error if no such object was found
+func (lhp *LHProperties) UpdateID(currID string) (string, error) {
+	if thing, ok := lhp.PlateLookup[currID]; !ok {
+		return "", wtype.LHErrorf(wtype.LH_ERR_DIRE, "while updating id: no object with id %s found", currID)
+	} else if addr, ok := lhp.PlateIDLookup[currID]; !ok {
+		return "", wtype.LHErrorf(wtype.LH_ERR_DIRE, "while updating id: no position found for object with id %s", currID)
+	} else if obj, ok := thing.(wtype.LHObject); !ok {
+		return "", wtype.LHErrorf(wtype.LH_ERR_DIRE, "while updating id: object with id %s not of type LHObject", currID)
+	} else {
+		// make a copy of the object with a new ID
+		newObj := obj.Duplicate(false)
+
+		// update references to the old plate and ID
+		delete(lhp.PlateLookup, currID)
+		delete(lhp.PlateIDLookup, currID)
+		lhp.PlateLookup[wtype.IDOf(newObj)] = newObj
+		lhp.PlateIDLookup[wtype.IDOf(newObj)] = addr
+		lhp.PosLookup[addr] = wtype.IDOf(newObj)
+
+		switch o := newObj.(type) {
+		case *wtype.Plate:
+			lhp.Plates[addr] = o
+			if _, ok := lhp.Wastes[addr]; ok {
+				lhp.Wastes[addr] = o
+			}
+			if _, ok := lhp.Washes[addr]; ok {
+				lhp.Washes[addr] = o
+			}
+		case *wtype.LHTipbox:
+			lhp.Tipboxes[addr] = o
+		case *wtype.LHTipwaste:
+			lhp.Tipwastes[addr] = o
+		}
+
+		return wtype.IDOf(newObj), nil
+	}
+}
+
 func (lhp *LHProperties) RemovePlateAtPosition(addr string) {
 	id := lhp.PosLookup[addr]
 	delete(lhp.PosLookup, addr)

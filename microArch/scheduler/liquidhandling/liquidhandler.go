@@ -372,8 +372,7 @@ func (this *Liquidhandler) reviseVolumes(rq *LHRequest) error {
 	// second, set volumes for each autoallocated input as calculated
 	for initialWell, volUsed := range vols {
 		if initialWell.IsAutoallocated() {
-			// one carry volume can be taken from the residual volume
-			remainingVolume := wunit.SubtractVolumes(initialWell.ResidualVolume(), rq.CarryVolume)
+			remainingVolume := initialWell.ResidualVolume()
 			initialVolume := wunit.AddVolumes(volUsed, remainingVolume)
 
 			if initialVolume.GreaterThan(initialWell.MaxVolume()) {
@@ -452,25 +451,30 @@ func (this *Liquidhandler) reviseVolumes(rq *LHRequest) error {
 	return nil
 }
 
-func (this *Liquidhandler) setPlateIDMap() error {
-	// maps initial to final IDs, assuming the location remains constant
-	this.plateIDMap = make(map[string]string, len(this.Properties.Plates))
-	for pos := range this.Properties.Positions {
-		initial, ok1 := this.Properties.PlateLookup[pos]
-		final, ok2 := this.FinalProperties.PlateLookup[pos]
+// updateIDs
+func (this *Liquidhandler) updateIDs() error {
 
-		if ok1 != ok2 {
-			if ok1 {
-				return wtype.LHErrorf(wtype.LH_ERR_DIRE, "%s disappeared from position %s", wtype.ClassOf(initial), pos)
-			} else {
-				return wtype.LHErrorf(wtype.LH_ERR_DIRE, "%s appeared at position %s", wtype.ClassOf(final), pos)
-			}
-		}
-
-		if ok1 && ok2 {
-			this.plateIDMap[wtype.IDOf(initial)] = wtype.IDOf(final)
+	// keep track of object ID changes
+	this.plateIDMap = make(map[string]string, len(this.Properties.PlateLookup))
+	for id := range this.Properties.PlateIDLookup {
+		if newID, err := this.FinalProperties.UpdateID(id); err != nil {
+			return err
+		} else {
+			this.plateIDMap[id] = newID
 		}
 	}
+
+	// update component IDs
+	for _, plate := range this.FinalProperties.Plates {
+		for _, row := range plate.Wells() {
+			for _, well := range row {
+				if !well.IsEmpty() {
+					well.Contents().ID = wtype.GetUUID()
+				}
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -678,13 +682,13 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	} else {
 		request.InstructionTree = root
 		request.Instructions = tri
-		this.FinalProperties = final.Dup() // dup changes all the plate IDs
+		this.FinalProperties = final
 	}
 
 	// tipboxes are added during the tree building, so only exist in the final state
 	// copy them accross to the initial properties
 	for pos, tb := range this.FinalProperties.Tipboxes {
-		initialTb := tb.Dup()
+		initialTb := tb.DupKeepIDs()
 		initialTb.Refresh()
 		this.Properties.AddTipBoxTo(pos, initialTb)
 	}
@@ -694,8 +698,8 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		return err
 	}
 
-	// map from objects in initial state to final state
-	if err := this.setPlateIDMap(); err != nil {
+	// make certain the IDs have been changed by the liquidhandling step
+	if err := this.updateIDs(); err != nil {
 		return err
 	}
 

@@ -75,6 +75,8 @@ func (a *tryer) AddMixer(ctx context.Context, conn *grpc.ClientConn, arg interfa
 	switch {
 	case len(subtypes) > 0 && subtypes[0] == "GilsonPipetmax":
 		return a.addLowLevelMixer(ctx, conn, arg)
+	case len(subtypes) > 0 && subtypes[0] == "oojamaflip":
+		return a.addHighLevelMixer(ctx, conn, arg)
 	default:
 		return fmt.Errorf("Unknown mixer device: %v", subtypes)
 	}

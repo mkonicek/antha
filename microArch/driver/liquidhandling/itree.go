@@ -29,11 +29,15 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
+// ITree the Instruction Tree - takes a high level liquid handling instruction
+// and calls Generate() recursively to produce a tree of instructions with the
+// lowest level "Terminal" robot instructions at the bottom
 type ITree struct {
 	instruction RobotInstruction
 	children    []*ITree
 }
 
+// NewITree initialize a new tree with the given parent instruction
 func NewITree(p RobotInstruction) *ITree {
 	return &ITree{instruction: p}
 }
@@ -56,7 +60,9 @@ func hasSplit(inss []*wtype.LHInstruction) bool {
 	return false
 }
 
-// NewITreeRoot create the root layer of the instruction tree
+// NewITreeRoot create the root layer of the instruction tree. The root layer
+// has a nil instruction with children which correspond to each layer of the
+// IChain
 func NewITreeRoot(ch *wtype.IChain) (*ITree, error) {
 
 	root := NewITree(nil)
@@ -70,8 +76,7 @@ func NewITreeRoot(ch *wtype.IChain) (*ITree, error) {
 		}
 
 		if ch.Values[0].Type == wtype.LHIPRM {
-			prm := NewMessageInstruction(ch.Values[0])
-			root.AddChild(prm)
+			root.AddChild(NewMessageInstruction(ch.Values[0]))
 		} else if hasSplit(ch.Values) {
 			if !allSplits(ch.Values) {
 				insTypes := func(inss []*wtype.LHInstruction) string {
@@ -85,17 +90,14 @@ func NewITreeRoot(ch *wtype.IChain) (*ITree, error) {
 				return nil, fmt.Errorf("Internal error: Failure in instruction sorting - got types %s in layer starting with split", insTypes(ch.Values))
 			}
 
-			splitBlock := NewSplitBlockInstruction(ch.Values)
-			root.AddChild(splitBlock)
+			root.AddChild(NewSplitBlockInstruction(ch.Values))
 		} else {
 			// otherwise...
 			// make a transfer block instruction out of the incoming instructions
 			// -- essentially each node of the topological graph is passed wholesale
 			// into the instruction generator to be teased apart as appropriate
 
-			tfb := NewTransferBlockInstruction(ch.Values)
-
-			root.AddChild(tfb)
+			root.AddChild(NewTransferBlockInstruction(ch.Values))
 		}
 		ch = ch.Child
 	}
@@ -106,7 +108,7 @@ func NewITreeRoot(ch *wtype.IChain) (*ITree, error) {
 	return root, nil
 }
 
-// AddChild add a child to this node of the tree
+// AddChild add a child to this node of the ITree
 func (tree *ITree) AddChild(ins RobotInstruction) {
 	tree.children = append(tree.children, NewITree(ins))
 }
@@ -144,14 +146,14 @@ func (tree *ITree) addChildren(ctx context.Context, lhpr *wtype.LHPolicyRuleSet,
 	return nil
 }
 
-// Len returns the number of leaves at the bottom of the tree
-func (tree *ITree) Len() int {
+// NumLeaves returns the number of leaves at the bottom of the tree
+func (tree *ITree) NumLeaves() int {
 	if len(tree.children) == 0 {
 		return 1
 	} else {
 		ret := 0
 		for _, child := range tree.children {
-			ret += child.Len()
+			ret += child.NumLeaves()
 		}
 		return ret
 	}
@@ -159,7 +161,7 @@ func (tree *ITree) Len() int {
 
 // Leaves returns the leaves of the tree - i.e. the TerminalRobotInstructions
 func (tree *ITree) Leaves() ([]TerminalRobotInstruction, error) {
-	return tree.addLeaves(make([]TerminalRobotInstruction, 0, tree.Len()))
+	return tree.addLeaves(make([]TerminalRobotInstruction, 0, tree.NumLeaves()))
 }
 
 // addLeaves add the leaves to the accumulator
@@ -183,7 +185,14 @@ func (tree *ITree) addLeaves(acc []TerminalRobotInstruction) ([]TerminalRobotIns
 	return acc, nil
 }
 
-func (tree *ITree) ToString(level int) string {
+// String return a multi-line representation of the ITree showing instructions types
+func (tree *ITree) String() string {
+	return tree.toString(0)
+}
+
+// toString return a multi-line representation of the tree below this node, starting
+// at the given indentation level
+func (tree *ITree) toString(level int) string {
 
 	name := ""
 
@@ -200,7 +209,7 @@ func (tree *ITree) ToString(level int) string {
 	}
 	s += fmt.Sprintf("{\n")
 	for _, ins := range tree.children {
-		s += ins.ToString(level + 1)
+		s += ins.toString(level + 1)
 	}
 	for i := 0; i < level; i++ {
 		s += fmt.Sprintf("\t")

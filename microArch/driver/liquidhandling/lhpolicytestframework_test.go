@@ -58,11 +58,21 @@ func (self *Rule) AddToPolicy(pol *wtype.LHPolicyRuleSet) {
 	pol.AddRule(rule, policy)
 }
 
+// InstructionAssertion make assertions about properties of the terminal instructions
+// generated under a specific policy, e.g.
+//   InstructionAssertion{
+//      Instruction: 5,
+//      Values: map[InstructionParameter]interface{}{
+//      	"CYCLES": []int{5},
+//      },
+//   }
+// asserts that the fifth terminal instruction has the property CYCLES = 5
 type InstructionAssertion struct {
 	Instruction int
 	Values      map[InstructionParameter]interface{}
 }
 
+// Assert test that the assertion is valid, call t.Error if not
 func (self *InstructionAssertion) Assert(t *testing.T, ris []TerminalRobotInstruction) {
 	if self.Instruction < 0 || self.Instruction >= len(ris) {
 		t.Errorf("test error: assertion on instruction %d, but only %d instructions", self.Instruction, len(ris))

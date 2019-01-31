@@ -184,6 +184,10 @@ func (lhp *LHProperties) DupKeepIDs() *LHProperties {
 }
 
 func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
+	if lhp == nil {
+		return nil
+	}
+
 	pos := make(map[string]*wtype.LHPosition, len(lhp.Positions))
 	for k, v := range lhp.Positions {
 		// be sure to copy the data

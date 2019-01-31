@@ -59,7 +59,7 @@ func (test *ITreeTest) Run(t *testing.T) {
 		root.AddChild(ins)
 	}
 
-	if err := root.Generate(context.Background(), nil, nil); err != nil {
+	if _, err := root.Build(context.Background(), nil, nil); err != nil {
 		t.Fatal(err)
 	}
 

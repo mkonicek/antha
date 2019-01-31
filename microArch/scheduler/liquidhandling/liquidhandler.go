@@ -296,7 +296,9 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 	return nil
 }
 
-func (this *Liquidhandler) reviseVolumes(rq *LHRequest) error {
+// shrinkVolumes reduce autoallocated volumes to the amount we actually need, removing
+// any unused wells or plates
+func (this *Liquidhandler) shrinkVolumes(rq *LHRequest) error {
 
 	// first, iterate through the generated instructions and count up how much
 	// of each autoallocated liquid was actually used
@@ -667,12 +669,6 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	}
 
 	// make the instructions for executing this request by first building the ITree root, then generating the lower level instructions
-	// nb. there is significant potential for confusion here:
-	//    root.Generate(..., props LHProperties) is *destructive of state*, and leaves it's argument in the final state
-	//    therefore from here until reviseVolumes is called,
-	//      > this.Properties contains the final properties
-	//      > this.FinalProperties contains the initial properties
-	//    which cannot be changed until reviseVolumes is refactored
 	if root, err := liquidhandling.NewITreeRoot(request.InstructionChain); err != nil {
 		return err
 	} else if final, err := root.Build(ctx, request.Policies(), this.Properties); err != nil {
@@ -694,7 +690,7 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	}
 
 	// revise the volumes - this makes sure the volumes requested are correct
-	if err := this.reviseVolumes(request); err != nil {
+	if err := this.shrinkVolumes(request); err != nil {
 		return err
 	}
 

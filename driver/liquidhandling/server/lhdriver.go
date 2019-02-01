@@ -3,8 +3,10 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"errors"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	drv "github.com/antha-lang/antha/driver/antha_driver_v1"
 	"github.com/antha-lang/antha/driver/liquidhandling/pb"
 	"github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
@@ -20,6 +22,16 @@ func makeCommandReply(cs driver.CommandStatus) *pb.CommandReply {
 // liquidHandlingServer implements functionality common to low and high level servers
 type liquidHandlingServer struct {
 	driver liquidhandling.LiquidhandlingDriver
+}
+
+func (lhs *liquidHandlingServer) DriverType(_ context.Context, req *drv.TypeRequest) (*drv.TypeReply, error) {
+	if strs, err := lhs.driver.DriverType(); err != nil {
+		return nil, err
+	} else if len(strs) == 0 {
+		return nil, errors.New("DriverType() returned no values")
+	} else {
+		return &drv.TypeReply{Type: strs[0], Subtypes: strs[1:]}, nil
+	}
 }
 
 func (lhs *liquidHandlingServer) AddPlateTo(ctx context.Context, req *pb.AddPlateToRequest) (*pb.CommandReply, error) {

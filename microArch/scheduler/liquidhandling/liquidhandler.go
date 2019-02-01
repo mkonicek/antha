@@ -350,6 +350,8 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 
 	vols := make(map[string]map[string]wunit.Volume)
 
+	rawvols := make(map[string]map[string]wunit.Volume)
+
 	for _, ins := range rq.Instructions {
 		ins.Visit(liquidhandling.RobotInstructionBaseVisitor{
 			HandleMove: func(ins *liquidhandling.MoveInstruction) {
@@ -385,6 +387,7 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 
 					if !ok {
 						vols[lp] = make(map[string]wunit.Volume)
+						rawvols[lp] = make(map[string]wunit.Volume)
 					}
 
 					v, ok := vols[lp][lw]
@@ -392,12 +395,15 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 					if !ok {
 						v = wunit.NewVolume(0.0, "ul")
 						vols[lp][lw] = v
+						rawvols[lp][lw] = v.Dup()
 					}
 					//v.Add(ins.Volume[i])
 
 					insvols := ins.Volume
 					v.Add(insvols[i])
 					v.Add(rq.CarryVolume)
+
+					rawvols[lp][lw].Add(insvols[i])
 				}
 			},
 			HandleTransfer: func(ins *liquidhandling.TransferInstruction) {
@@ -476,13 +482,21 @@ func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
 			well := plate.Wellcoords[crd]
 			well2 := plate2.Wellcoords[crd]
 
+			// this logic is a bit complicated and questionable, however we need to
+			// improve on how carry volumes are handled before it can be removed
+			//
+			// the idea is that if the total volume requested is greater than the
+			// maximum the well can hold only because of carry volumes we round down
+			// to the maximum the well can hold and hope for the best. This is a rare
+			// case but still we should ideally be stricter
+			//
 			if well.IsAutoallocated() {
 				vol.Add(well.ResidualVolume())
 
 				if vol.GreaterThan(well.MaxVolume()) {
-					v := vol.Dup()
-					v.Subtract(well.MaxVolume())
-					if v.LessThan(well.ResidualVolume()) {
+					rv := rawvols[plateID][crd]
+
+					if rv.LessThan(well.MaxVolume()) || rv.EqualTo(well.MaxVolume()) {
 						// don't exceed the well maximum by a trivial amount
 						vol = well.MaxVolume()
 					} else {

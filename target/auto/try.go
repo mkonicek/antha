@@ -2,6 +2,7 @@ package auto
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/antha-lang/antha/ast"
@@ -70,15 +71,21 @@ func (a *tryer) Try(ctx context.Context, conn *grpc.ClientConn, arg interface{})
 	}
 }
 
+var mixerMap = map[string]func(*tryer, context.Context, *grpc.ClientConn, interface{}) error{
+	"GilsonPipetmax": (*tryer).addLowLevelMixer,
+	"CyBio":          (*tryer).addLowLevelMixer,
+	"TecanEvo":       (*tryer).addLowLevelMixer,
+	"LabCyteEcho":    (*tryer).addHighLevelMixer,
+}
+
 // AddMixer queries a mixer driver and adds the corresponding device to the target
 func (a *tryer) AddMixer(ctx context.Context, conn *grpc.ClientConn, arg interface{}, subtypes []string) error {
-	switch {
-	case len(subtypes) > 0 && subtypes[0] == "GilsonPipetmax":
-		return a.addLowLevelMixer(ctx, conn, arg)
-	case len(subtypes) > 0 && subtypes[0] == "oojamaflip":
-		return a.addHighLevelMixer(ctx, conn, arg)
-	default:
+	if len(subtypes) == 0 {
+		return errors.New("Cannot add mixer: no subtypes provided")
+	} else if fun, found := mixerMap[subtypes[0]]; !found {
 		return fmt.Errorf("Unknown mixer device: %v", subtypes)
+	} else {
+		return fun(a, ctx, conn, arg)
 	}
 }
 

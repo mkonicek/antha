@@ -305,6 +305,7 @@ func getAndCompleteAssignments(st *sampletracker.SampleTracker, request *LHReque
 	// inconsistent plate types will be assigned randomly!
 	x := 0
 	for _, k := range order {
+		fmt.Println(k)
 		x += 1
 		v := request.LHInstructions[k]
 
@@ -315,6 +316,7 @@ func getAndCompleteAssignments(st *sampletracker.SampleTracker, request *LHReque
 
 		// if plate ID set
 		if v.PlateID != "" {
+			fmt.Println(`  v.PlateID != ""`)
 			//MixInto
 			i := defined(v.PlateID, s)
 
@@ -334,6 +336,7 @@ func getAndCompleteAssignments(st *sampletracker.SampleTracker, request *LHReque
 			}
 
 		} else if v.Majorlayoutgroup != -1 || v.PlateName != "" {
+			fmt.Println(`  v.Majorlayoutgroup != -1 || v.PlateName != ""`)
 			//MixTo / MixNamed
 			nm := "Output_plate"
 			mlg := fmt.Sprintf("%d", v.Majorlayoutgroup)
@@ -383,6 +386,7 @@ func getAndCompleteAssignments(st *sampletracker.SampleTracker, request *LHReque
 				s[i].Output = append(s[i].Output, true)
 			}
 		} else if v.IsMixInPlace() {
+			fmt.Printf("  v.IsMixInPlace() (dummy = %t)\n", v.IsDummy())
 			// the first component sets the destination
 			// and now it should indeed be set
 

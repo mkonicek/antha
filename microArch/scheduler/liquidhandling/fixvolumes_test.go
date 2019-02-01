@@ -37,7 +37,6 @@ func TestFixVolumes(t *testing.T) {
 		Parent: nil,
 		Child:  nil,
 		Values: []*wtype.LHInstruction{ins},
-		Depth:  0,
 	}
 
 	req.InstructionChain = ic
@@ -64,7 +63,7 @@ func TestFixVolumes(t *testing.T) {
 		inss = append(inss, ins)
 	}
 
-	ic.Child = &wtype.IChain{Parent: ic, Child: nil, Values: inss, Depth: 1}
+	ic.Child = &wtype.IChain{Parent: ic, Child: nil, Values: inss}
 
 	// try fixing the volumes
 
@@ -98,7 +97,7 @@ func TestFixVolumes2(t *testing.T) {
 
 	inss := []*wtype.LHInstruction{ins}
 
-	ch := &wtype.IChain{Parent: nil, Child: nil, Values: inss, Depth: 0}
+	ch := &wtype.IChain{Parent: nil, Child: nil, Values: inss}
 
 	want := make(map[string]wunit.Volume, 1)
 
@@ -136,7 +135,6 @@ func TestFixVolumes3(t *testing.T) {
 		Parent: nil,
 		Child:  nil,
 		Values: []*wtype.LHInstruction{ins},
-		Depth:  0,
 	}
 
 	req.InstructionChain = ic
@@ -155,7 +153,6 @@ func TestFixVolumes3(t *testing.T) {
 		Parent: req.InstructionChain,
 		Child:  nil,
 		Values: []*wtype.LHInstruction{ins},
-		Depth:  1,
 	}
 
 	req.InstructionChain.Child = ic
@@ -182,7 +179,7 @@ func TestFixVolumes3(t *testing.T) {
 		inss = append(inss, ins)
 	}
 
-	ic.Child = &wtype.IChain{Parent: ic, Child: nil, Values: inss, Depth: 2}
+	ic.Child = &wtype.IChain{Parent: ic, Child: nil, Values: inss}
 
 	// try fixing the volumes
 
@@ -219,7 +216,6 @@ func TestFixVolumes4(t *testing.T) {
 		Parent: nil,
 		Child:  nil,
 		Values: []*wtype.LHInstruction{ins},
-		Depth:  0,
 	}
 
 	req.InstructionChain = ic
@@ -234,7 +230,6 @@ func TestFixVolumes4(t *testing.T) {
 		Parent: ic,
 		Child:  nil,
 		Values: []*wtype.LHInstruction{ins},
-		Depth:  1,
 	}
 
 	ins = wtype.NewLHMixInstruction()
@@ -249,7 +244,6 @@ func TestFixVolumes4(t *testing.T) {
 		Parent: ic.Child,
 		Child:  nil,
 		Values: []*wtype.LHInstruction{ins},
-		Depth:  2,
 	}
 
 	_, err := FixVolumes(req)
@@ -280,7 +274,6 @@ func TestFixVolumesSplitSample(t *testing.T) {
 		Parent: nil,
 		Child:  nil,
 		Values: []*wtype.LHInstruction{ins},
-		Depth:  0,
 	}
 
 	req.InstructionChain = ic
@@ -317,8 +310,8 @@ func TestFixVolumesSplitSample(t *testing.T) {
 		splInss = append(splInss, splitIns)
 	}
 
-	ic.Child = &wtype.IChain{Parent: ic, Child: nil, Values: splInss, Depth: 1}
-	ic.Child.Child = &wtype.IChain{Parent: ic.Child, Child: nil, Values: mixInss, Depth: 2}
+	ic.Child = &wtype.IChain{Parent: ic, Child: nil, Values: splInss}
+	ic.Child.Child = &wtype.IChain{Parent: ic.Child, Child: nil, Values: mixInss}
 
 	// try fixing the volumes
 

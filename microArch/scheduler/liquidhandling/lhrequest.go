@@ -415,37 +415,6 @@ func (rq *LHRequest) assertNoTemporaryPlates(ctx context.Context) error {
 	return nil
 }
 
-func (rq *LHRequest) removeDummyInstructions() {
-	toRemove := make(map[string]bool, len(rq.LHInstructions))
-	for _, ins := range rq.LHInstructions {
-		if ins.IsDummy() {
-			toRemove[ins.ID] = true
-		}
-	}
-
-	if len(toRemove) > 0 {
-
-		oo := make([]string, 0, len(rq.OutputOrder)-len(toRemove))
-
-		for _, ins := range rq.OutputOrder {
-			if toRemove[ins] {
-				continue
-			} else {
-				oo = append(oo, ins)
-			}
-		}
-
-		if len(oo) != len(rq.OutputOrder)-len(toRemove) {
-			panic(fmt.Sprintf("Dummy instruction prune failed: before %d dummies %d after %d", len(rq.OutputOrder), len(toRemove), len(oo)))
-		}
-
-		rq.OutputOrder = oo
-
-		// prune instructionChain
-		rq.InstructionChain.PruneOut(toRemove)
-	}
-}
-
 func (req *LHRequest) MergedInputOutputPlates() map[string]*wtype.Plate {
 	m := make(map[string]*wtype.Plate, len(req.InputPlates)+len(req.OutputPlates))
 	addToMap(m, req.InputPlates)

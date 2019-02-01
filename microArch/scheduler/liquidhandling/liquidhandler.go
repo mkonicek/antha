@@ -540,11 +540,9 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	ctx = plateCache.NewContext(ctx)
 
 	// figure out the ordering for the high level instructions
-	if ichain, err := buildInstructionChain(request.LHInstructions); err != nil {
+	if ichain, err := buildInstructionChain(request.LHInstructions, request.Options.OutputSort); err != nil {
 		return err
 	} else {
-		//sort the instructions within each link of the instruction chain
-		ichain.SortInstructions(request.Options.OutputSort)
 		request.InstructionChain = ichain
 		request.updateWithNewLHInstructions(ichain.GetOrderedLHInstructions())
 		request.OutputOrder = ichain.FlattenInstructionIDs()
@@ -659,9 +657,6 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 
 	// final insurance that plate names will be safe
 	request.fixDuplicatePlateNames()
-
-	// remove dummy mix-in-place instructions
-	request.removeDummyInstructions()
 
 	//set the well targets
 	if err := this.addWellTargets(); err != nil {

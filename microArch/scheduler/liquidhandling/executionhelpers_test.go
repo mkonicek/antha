@@ -75,14 +75,11 @@ func (self *setOutputOrderTest) Run(t *testing.T) {
 		insMap[instruction.ID] = instruction
 	}
 
-	ichain, err := buildInstructionChain(insMap)
+	ichain, err := buildInstructionChain(insMap, self.OutputSort)
 	if encounteredError := err != nil; self.ExpectingError != encounteredError {
 		t.Fatalf("ExpectingError: %t, Encountered Error: %v", self.ExpectingError, err)
 		return
 	}
-
-	//sort the instructions within each link of the chain
-	ichain.SortInstructions(self.OutputSort)
 
 	if e, g := self.ChainHeight, ichain.Height(); e != g {
 		t.Fatalf("Instruction chain length mismatch, e: %d, g: %d", e, g)

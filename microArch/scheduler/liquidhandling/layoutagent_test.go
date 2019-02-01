@@ -15,10 +15,9 @@ type layoutAgentTest struct {
 }
 
 func (self layoutAgentTest) Run(ctx context.Context, t *testing.T) {
-	if ichain, err := buildInstructionChain(self.Request.LHInstructions); err != nil {
+	if ichain, err := buildInstructionChain(self.Request.LHInstructions, self.Request.Options.OutputSort); err != nil {
 		t.Fatal(err)
 	} else {
-		ichain.SortInstructions(self.Request.Options.OutputSort)
 		self.Request.updateWithNewLHInstructions(ichain.GetOrderedLHInstructions())
 		self.Request.InstructionChain = ichain
 		self.Request.OutputOrder = ichain.FlattenInstructionIDs()

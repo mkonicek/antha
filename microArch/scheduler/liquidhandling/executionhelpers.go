@@ -204,7 +204,7 @@ func aggregatePromptsWithSameMessage(inss []*wtype.LHInstruction, topolGraph gra
 
 //buildInstructionChain guarantee all nodes are dependency-ordered
 //in order to aggregate without introducing cycles
-func buildInstructionChain(unsorted map[string]*wtype.LHInstruction) (*wtype.IChain, error) {
+func buildInstructionChain(unsorted map[string]*wtype.LHInstruction, sortByComponent bool) (*wtype.IChain, error) {
 
 	unsortedSlice := make([]*wtype.LHInstruction, 0, len(unsorted))
 	for _, instruction := range unsorted {
@@ -248,6 +248,10 @@ func buildInstructionChain(unsorted map[string]*wtype.LHInstruction) (*wtype.ICh
 	// make into equivalence classes and sort according to defined order
 	ic := convertToInstructionChain(sorted, tg)
 
+	//sort the instructions within each link of the instruction chain
+	ic.SortInstructions(sortByComponent)
+
+	//return ic.RemoveDummyInstructions(), nil
 	return ic, nil
 }
 

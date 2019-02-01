@@ -10,7 +10,6 @@ type IChain struct {
 	Parent *IChain
 	Child  *IChain
 	Values []*LHInstruction
-	Depth  int
 }
 
 func NewIChain(parent *IChain) *IChain {
@@ -18,7 +17,6 @@ func NewIChain(parent *IChain) *IChain {
 	it.Parent = parent
 	it.Values = make([]*LHInstruction, 0, 1)
 	if parent != nil {
-		it.Depth = parent.Depth + 1
 		parent.Child = &it
 	}
 	return &it
@@ -33,42 +31,35 @@ func (it *IChain) Height() int {
 	return it.Child.Height() + 1
 }
 
-func (it *IChain) PruneOut(Remove map[string]bool) *IChain {
-	if it == nil || len(Remove) == 0 || len(it.Values) == 0 {
-		return it
+// RemoveDummyInstructions get rid of instructions which don't have an actual effect other than instruction ordering
+// also removes any empty links in the chain that result from this action
+func (it *IChain) RemoveDummyInstructions() *IChain {
+	if it == nil {
+		return nil
 	}
 
-	it.Child = it.Child.PruneOut(Remove)
+	it.Child = it.Child.RemoveDummyInstructions()
+	if it.Child != nil {
+		it.Child.Parent = it
+	}
 
 	newValues := make([]*LHInstruction, 0, len(it.Values))
-
-	for _, v := range it.Values {
-		if Remove[v.ID] {
-			continue
+	for _, ins := range it.Values {
+		if !ins.IsDummy() {
+			newValues = append(newValues, ins)
 		}
-		newValues = append(newValues, v)
-		delete(Remove, v.ID)
 	}
+	it.Values = newValues
 
-	// if we've removed a whole layer, get rid of it
-
-	if len(newValues) == 0 {
-
+	if len(it.Values) == 0 {
+		// this link needs to go
 		if it.Child != nil {
-			it.Child.Parent = it.Parent
+			it.Child.Parent = nil
 		}
-
-		if it.Parent != nil {
-			it.Parent.Child = it.Child
-		}
-
 		return it.Child
-
 	} else {
-		it.Values = newValues
 		return it
 	}
-
 }
 
 func (it *IChain) AsList(ica []*IChain) []*IChain {
@@ -267,17 +258,17 @@ func (self *IChain) getInstructionTypes() map[string]bool {
 //AssertInstructionsSeparate check that there's only one type of instruction
 //in each link of the chain
 func (self *IChain) AssertInstructionsSeparate() error {
+	return self.assertInstructionsSeparate(0)
+}
+
+func (self *IChain) assertInstructionsSeparate(depth int) error {
 	if self == nil {
 		return nil
+	} else if types := self.getInstructionTypes(); len(types) != 1 {
+		return fmt.Errorf("Only one instruction type per stage is allowed, found %v at stage %d, %v", len(types), depth, types)
+	} else {
+		return self.Child.assertInstructionsSeparate(depth + 1)
 	}
-
-	types := self.getInstructionTypes()
-
-	if len(types) != 1 {
-		return fmt.Errorf("Only one instruction type per stage is allowed, found %v at stage %d, %v", len(types), self.Depth, types)
-	}
-
-	return self.Child.AssertInstructionsSeparate()
 }
 
 type ByColumn []*LHInstruction

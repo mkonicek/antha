@@ -86,6 +86,10 @@ func (hltd *HighLevelTestDriver) Transfer(what, platefrom, wellfrom, plateto, we
 	return hltd.testDriver.call(fmt.Sprintf("Transfer(%v, %v, %v, %v, %v, %v)", what, platefrom, wellfrom, plateto, wellto, volume))
 }
 
+func (hltd *HighLevelTestDriver) DriverType() ([]string, error) {
+	return []string{"antha.mixer.v1.Mixer", "HighLevelTestDriver"}, nil
+}
+
 type LowLevelTestDriver struct {
 	testDriver
 }
@@ -132,6 +136,10 @@ func (lltd *LowLevelTestDriver) ResetPistons(head, channel int) driver.CommandSt
 
 func (lltd *LowLevelTestDriver) UpdateMetaData(props *liquidhandling.LHProperties) driver.CommandStatus {
 	return lltd.testDriver.call(fmt.Sprintf("UpdateMetaData(props)")) //props serialisation should be tested in liquidhandlign package
+}
+
+func (lltd *LowLevelTestDriver) DriverType() ([]string, error) {
+	return []string{"antha.mixer.v1.Mixer", "LowLevelTestDriver"}, nil
 }
 
 type HighLevelConnectionTest struct {

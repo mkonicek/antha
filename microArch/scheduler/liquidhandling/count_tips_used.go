@@ -46,10 +46,6 @@ func (lh Liquidhandler) countTipsUsed(insts []driver.TerminalRobotInstruction) (
 	// output to the request
 	ret := make([]wtype.TipEstimate, 0, len(teHash))
 	for _, te := range teHash {
-		if te.NTips == 0 {
-			// should not be possible but I don't want to generate confusion
-			continue
-		}
 		// above we have recorded the total number of tips in a box of lh type
 		// in NTipBoxes, here we use it to determine how many boxes are needed
 		dv := te.NTips / te.NTipBoxes

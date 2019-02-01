@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	drv "github.com/antha-lang/antha/driver/antha_driver_v1"
 	pb "github.com/antha-lang/antha/driver/liquidhandling/pb"
 	driver "github.com/antha-lang/antha/microArch/driver"
 	liquidhandling "github.com/antha-lang/antha/microArch/driver/liquidhandling"
@@ -15,6 +17,7 @@ import (
 
 type HighLevelClient struct {
 	client pb.HighLevelLiquidhandlingDriverClient
+	driver drv.DriverClient
 }
 
 // NewHighLevelClient create a client for connecting with a remote high level
@@ -31,6 +34,15 @@ func NewHighLevelClient(address string) (*HighLevelClient, error) {
 func NewHighLevelClientFromConn(conn *grpc.ClientConn) *HighLevelClient {
 	return &HighLevelClient{
 		client: pb.NewHighLevelLiquidhandlingDriverClient(conn),
+		driver: drv.NewDriverClient(conn),
+	}
+}
+
+func (hlc *HighLevelClient) DriverType() ([]string, error) {
+	if reply, err := hlc.driver.DriverType(context.Background(), &drv.TypeRequest{}); err != nil {
+		return nil, err
+	} else {
+		return append([]string{reply.GetType()}, reply.GetSubtypes()...), nil
 	}
 }
 

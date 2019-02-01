@@ -3,9 +3,11 @@ package server
 import (
 	"context"
 	"fmt"
-	grpc "google.golang.org/grpc"
 	"net"
 
+	grpc "google.golang.org/grpc"
+
+	drv "github.com/antha-lang/antha/driver/antha_driver_v1"
 	"github.com/antha-lang/antha/driver/liquidhandling/pb"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
@@ -36,6 +38,7 @@ func (lhs *HighLevelServer) Listen(port int) error {
 
 		s := grpc.NewServer()
 		pb.RegisterHighLevelLiquidhandlingDriverServer(s, lhs)
+		drv.RegisterDriverServer(s, lhs)
 		return s.Serve(lis)
 	}
 }

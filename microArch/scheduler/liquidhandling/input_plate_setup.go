@@ -74,17 +74,17 @@ func (is InputSorter) Less(i, j int) bool {
 	return ss.Less(i, j)
 }
 
-//  TASK: 	Map inputs to input plates
+// inputPlateSetup map input liquids to input plates
 // INPUT: 	"input_platetype", "inputs"
 //OUTPUT: 	"input_plates"      -- these each have components in wells
 //		"input_assignments" -- map with arrays of assignment strings, i.e. {tea: [plate1:A:1, plate1:A:2...] }etc.
-func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, error) {
+func (rq *LHRequest) inputPlateSetup(ctx context.Context) error {
 	st := sampletracker.FromContext(ctx)
-	// I think this might need moving too
-	input_platetypes := request.InputPlatetypes
+
+	input_platetypes := rq.InputPlatetypes
 
 	// we assume that input_plates is set if any locs are set
-	input_plates := request.InputPlates
+	input_plates := rq.InputPlates
 
 	if len(input_plates) == 0 {
 		input_plates = make(map[string]*wtype.Plate, 3)
@@ -94,15 +94,15 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 
 	var curr_plate *wtype.Plate
 
-	inputs := request.InputSolutions.Solutions
+	inputs := rq.InputSolutions.Solutions
 
-	input_order := make([]string, len(request.InputSolutions.Order))
-	copy(input_order, request.InputSolutions.Order)
+	input_order := make([]string, len(rq.InputSolutions.Order))
+	copy(input_order, rq.InputSolutions.Order)
 
 	// this needs to be passed in via the request... must specify how much of inputs cannot
 	// be satisfied by what's already passed in
 
-	input_volumes := request.InputSolutions.VolumesWanting
+	input_volumes := rq.InputSolutions.VolumesWanting
 
 	// sort to make deterministic
 	// we sort by a) volume (descending) b) name (alphabetically)
@@ -113,7 +113,7 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 
 	input_order = isrt.Ordered
 
-	weights_constraints := request.InputSetupWeights
+	weights_constraints := rq.InputSetupWeights
 
 	// get the assignment
 
@@ -122,13 +122,13 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 	if len(input_volumes) != 0 {
 		// If any input solutions need to be set up then we now check if there any input plate types set.
 		if len(input_platetypes) == 0 {
-			return nil, fmt.Errorf("no input plate set: \n  - Please upload plate file or select at least one input plate type in Configuration > Preferences > inputPlateTypes. \n - Important: Please add a riser to the plate choice for low profile plates such as PCR plates, 96 and 384 well plates. ")
+			return fmt.Errorf("no input plate set: \n  - Please upload plate file or select at least one input plate type in Configuration > Preferences > inputPlateTypes. \n - Important: Please add a riser to the plate choice for low profile plates such as PCR plates, 96 and 384 well plates. ")
 		}
 		var err error
 		well_count_assignments, err = choosePlateAssignments(input_volumes, input_platetypes, weights_constraints)
 
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
 
@@ -158,7 +158,7 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 
 		// check here
 		if isInstance(cname) && len(well_assignments) != 1 {
-			return request, fmt.Errorf("Error: Autoallocated mix-in-place components cannot be spread across multiple wells")
+			return fmt.Errorf("Error: Autoallocated mix-in-place components cannot be spread across multiple wells")
 		}
 
 		var curr_well *wtype.LHWell
@@ -180,12 +180,12 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 				if curr_plate == nil {
 					p, err := inventory.NewPlate(ctx, platetype.Type)
 					if err != nil {
-						return nil, err
+						return err
 					}
 
 					plates_in_play[platetype.Type] = p
 					curr_plate = plates_in_play[platetype.Type]
-					platename := getSafeInputPlateName(request, curplaten)
+					platename := rq.getSafeInputPlateName(curplaten)
 					curr_plate.PlateName = platename
 					curplaten += 1
 					curr_plate.DeclareTemporary()
@@ -224,7 +224,7 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 
 					//usefulVolume is the most we can get from the well assuming one transfer
 					usefulVolume := curr_well.CurrentWorkingVolume()
-					usefulVolume.Subtract(request.CarryVolume)
+					usefulVolume.Subtract(rq.CarryVolume)
 					volume.Subtract(usefulVolume)
 				}
 
@@ -232,7 +232,7 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 
 				err := curr_well.AddComponent(newcomponent)
 				if err != nil {
-					return nil, wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Input plate setup : %s", err.Error()))
+					return wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Input plate setup : %s", err.Error()))
 				}
 				curr_well.DeclareAutoallocated()
 				input_plates[curr_plate.ID] = curr_plate
@@ -255,11 +255,10 @@ func input_plate_setup(ctx context.Context, request *LHRequest) (*LHRequest, err
 		}
 	}
 
-	request.InputPlates = input_plates
-	request.InputAssignments = input_assignments
+	rq.InputPlates = input_plates
+	rq.InputAssignments = input_assignments
 
-	//return input_plates, input_assignments
-	return request, nil
+	return nil
 }
 
 func isInstance(s string) bool {
@@ -272,15 +271,15 @@ func isInstance(s string) bool {
 }
 
 // returns a unique plate name
-func getSafeInputPlateName(request *LHRequest, curplaten int) string {
-	return getSafePlateName(request, "auto_input_plate", "_", curplaten)
+func (rq *LHRequest) getSafeInputPlateName(curplaten int) string {
+	return rq.getSafePlateName("auto_input_plate", "_", curplaten)
 }
 
-func getSafePlateName(request *LHRequest, prefix, sep string, curplaten int) string {
+func (rq *LHRequest) getSafePlateName(prefix, sep string, curplaten int) string {
 	trialPlateName := randomPlateName(prefix, sep, curplaten)
 
 	for {
-		if request.HasPlateNamed(trialPlateName) {
+		if rq.HasPlateNamed(trialPlateName) {
 			trialPlateName = randomPlateName(prefix, sep, curplaten)
 
 		} else {

@@ -2,6 +2,8 @@ package auto
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	driver "github.com/antha-lang/antha/driver/antha_driver_v1"
 	runner "github.com/antha-lang/antha/driver/antha_runner_v1"
@@ -21,16 +23,16 @@ type tryer struct {
 	HumanOpt  human.Opt
 }
 
-// AddDriver queries a driver and adds the corresponding device to the target
+// Try queries a driver and adds the corresponding device to the target
 // based on the query response
-func (a *tryer) AddDriver(ctx context.Context, conn *grpc.ClientConn, arg interface{}) error {
+func (a *tryer) Try(ctx context.Context, conn *grpc.ClientConn, arg interface{}) error {
 	c := driver.NewDriverClient(conn)
 	reply, err := c.DriverType(ctx, &driver.TypeRequest{})
 	if err != nil {
 		return err
 	}
 
-	switch reply.Type {
+	switch reply.GetType() {
 
 	case "antha.runner.v1.Runner":
 		r := runner.NewRunnerClient(conn)
@@ -41,6 +43,7 @@ func (a *tryer) AddDriver(ctx context.Context, conn *grpc.ClientConn, arg interf
 		for _, typ := range reply.Types {
 			a.Auto.runners[typ] = append(a.Auto.runners[typ], r)
 		}
+		return nil
 
 	case "antha.shakerincubator.v1.ShakerIncubator":
 		s := &shakerincubator.ShakerIncubator{}
@@ -48,6 +51,9 @@ func (a *tryer) AddDriver(ctx context.Context, conn *grpc.ClientConn, arg interf
 		a.Auto.handler[s] = conn
 		a.Auto.Target.AddDevice(s)
 		return nil
+
+	case "antha.mixer.v1.Mixer":
+		return a.AddMixer(ctx, conn, arg, reply.GetSubtypes())
 
 	default:
 		h := handler.New(
@@ -63,27 +69,24 @@ func (a *tryer) AddDriver(ctx context.Context, conn *grpc.ClientConn, arg interf
 		a.Auto.Target.AddDevice(h)
 		return nil
 	}
+}
 
-	return nil
+var mixerMap = map[string]func(*tryer, context.Context, *grpc.ClientConn, interface{}) error{
+	"GilsonPipetmax": (*tryer).addLowLevelMixer,
+	"CyBio":          (*tryer).addLowLevelMixer,
+	"TecanEvo":       (*tryer).addLowLevelMixer,
+	"LabCyteEcho":    (*tryer).addHighLevelMixer,
 }
 
 // AddMixer queries a mixer driver and adds the corresponding device to the target
-func (a *tryer) AddMixer(ctx context.Context, conn *grpc.ClientConn, arg interface{}) error {
-	err := a.addHighLevelMixer(ctx, conn, arg)
-
-	if err == nil {
-		return nil
+func (a *tryer) AddMixer(ctx context.Context, conn *grpc.ClientConn, arg interface{}, subtypes []string) error {
+	if len(subtypes) == 0 {
+		return errors.New("Cannot add mixer: no subtypes provided")
+	} else if fun, found := mixerMap[subtypes[0]]; !found {
+		return fmt.Errorf("Unknown mixer device: %v", subtypes)
+	} else {
+		return fun(a, ctx, conn, arg)
 	}
-
-	err = a.addLowLevelMixer(ctx, conn, arg)
-
-	if err == nil {
-		return nil
-	}
-
-	err = a.addHighLevelMixer(ctx, conn, arg)
-
-	return err
 }
 
 func (a *tryer) addHighLevelMixer(ctx context.Context, conn *grpc.ClientConn, arg interface{}) error {
@@ -123,17 +126,4 @@ func getMixerOpt(maybeArgs []interface{}) (ret mixer.Opt) {
 		}
 	}
 	return
-}
-
-func (a *tryer) Try(ctx context.Context, conn *grpc.ClientConn, arg interface{}) error {
-	var tries []func(context.Context, *grpc.ClientConn, interface{}) error
-	tries = append(tries, a.AddDriver, a.AddMixer)
-
-	for _, t := range tries {
-		if err := t(ctx, conn, arg); err == nil {
-			return nil
-		}
-	}
-
-	return errNoMatch
 }

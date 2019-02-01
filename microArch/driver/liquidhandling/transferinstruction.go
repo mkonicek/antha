@@ -467,7 +467,9 @@ func (ins *TransferInstruction) Generate(labEffects *effects.LaboratoryEffects, 
 			if !mci.Prms.Independent {
 				if maxvol := vols.MaxMultiTransferVolume(prms.MinPossibleVolume()); !maxvol.IsZero() {
 					for i := range vols {
-						vols[i] = wunit.CopyVolume(maxvol)
+						if vols[i].IsPositive() {
+							vols[i] = wunit.CopyVolume(maxvol)
+						}
 					}
 				} else {
 					// we can't transfer any volumes with the non-independent head so move on to the next parallelset
@@ -475,9 +477,19 @@ func (ins *TransferInstruction) Generate(labEffects *effects.LaboratoryEffects, 
 				}
 			}
 
+			// ISSUE: Duplicating here doesn't account for the possibility of one or more of these becoming zero
+			// 	  need to ensure there are no non-contiguous zeroes
+
+			if vols.NonContiguous() && !mci.Prms.Independent {
+				//must be done single channel
+				break
+			}
+
 			tp := ins.Transfers[set].Dup(labEffects.IDGenerator)
 			for i := 0; i < len(tp.Transfers); i++ {
-				tp.Transfers[i].Volume = vols[i].Dup()
+				if vols[i].IsPositive() {
+					tp.Transfers[i].Volume = vols[i].Dup()
+				}
 			}
 
 			ins.Transfers[set].RemoveVolumes(vols)
@@ -487,6 +499,15 @@ func (ins *TransferInstruction) Generate(labEffects *effects.LaboratoryEffects, 
 			ins.Transfers[set].AddTVolumes(vols)
 
 			mci.Multi = len(vols)
+
+			// the following call removes all zero-volume transfers. Since we have checked
+			// that the set is contiguously positive this amounts to removing all leading
+			// and trailing zeroes. We need to do this to prevent accidentally carrying over
+			// extra transfers when going from, e.g., multichanneling 4 to 3
+			if !mci.Prms.Independent {
+				tp = tp.RemoveBlanks()
+			}
+
 			mci.AddTransferParams(tp)
 		}
 
@@ -522,7 +543,6 @@ func (ins *TransferInstruction) Generate(labEffects *effects.LaboratoryEffects, 
 	if len(sci.Volume) > 0 {
 		ret = append(ret, sci)
 	}
-
 	return ret, nil
 }
 

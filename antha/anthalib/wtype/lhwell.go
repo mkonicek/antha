@@ -212,6 +212,7 @@ func (w *LHWell) SetContents(idGen *id.IDGenerator, newContents *Liquid) error {
 		//HJK: Disabling overflow errors until CarryVolume issues are resolved
 		//return LHError(LH_ERR_VOL,
 		//	fmt.Sprintf("Cannot set %s as contents of well %s as maximum volume is %s", newContents.GetName(), w.GetName(), maxVol)s
+
 		fmt.Printf("setting %s as contents of well %s even though maximum volume is %s\n", newContents.GetName(), w.GetName(), maxVol)
 	}
 
@@ -235,6 +236,7 @@ func (w *LHWell) CurrentWorkingVolume(idGen *id.IDGenerator) wunit.Volume {
 	}
 	v := w.CurrentVolume(idGen)
 	v.Subtract(w.ResidualVolume())
+
 	if v.LessThan(wunit.ZeroVolume()) {
 		return wunit.ZeroVolume()
 	}

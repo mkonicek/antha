@@ -4,17 +4,12 @@ package auto
 
 import (
 	"context"
-	"errors"
 
 	runner "github.com/antha-lang/antha/driver/antha_runner_v1"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/human"
 	"google.golang.org/grpc"
-)
-
-var (
-	errNoMatch = errors.New("no match")
 )
 
 // An Endpoint is a network address of a device plugin (driver)

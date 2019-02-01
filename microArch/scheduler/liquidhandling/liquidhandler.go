@@ -348,6 +348,8 @@ func (this *Liquidhandler) revise_volumes(idGen *id.IDGenerator, rq *LHRequest) 
 
 	vols := make(map[string]map[string]wunit.Volume)
 
+	rawvols := make(map[string]map[string]wunit.Volume)
+
 	for _, ins := range rq.Instructions {
 		ins.Visit(liquidhandling.RobotInstructionBaseVisitor{
 			HandleMove: func(ins *liquidhandling.MoveInstruction) {
@@ -383,6 +385,7 @@ func (this *Liquidhandler) revise_volumes(idGen *id.IDGenerator, rq *LHRequest) 
 
 					if !ok {
 						vols[lp] = make(map[string]wunit.Volume)
+						rawvols[lp] = make(map[string]wunit.Volume)
 					}
 
 					v, ok := vols[lp][lw]
@@ -390,12 +393,15 @@ func (this *Liquidhandler) revise_volumes(idGen *id.IDGenerator, rq *LHRequest) 
 					if !ok {
 						v = wunit.NewVolume(0.0, "ul")
 						vols[lp][lw] = v
+						rawvols[lp][lw] = v.Dup()
 					}
 					//v.Add(ins.Volume[i])
 
 					insvols := ins.Volume
 					v.Add(insvols[i])
 					v.Add(rq.CarryVolume)
+
+					rawvols[lp][lw].Add(insvols[i])
 				}
 			},
 			HandleTransfer: func(ins *liquidhandling.TransferInstruction) {
@@ -474,8 +480,27 @@ func (this *Liquidhandler) revise_volumes(idGen *id.IDGenerator, rq *LHRequest) 
 			well := plate.Wellcoords[crd]
 			well2 := plate2.Wellcoords[crd]
 
+			// this logic is a bit complicated and questionable, however we need to
+			// improve on how carry volumes are handled before it can be removed
+			//
+			// the idea is that if the total volume requested is greater than the
+			// maximum the well can hold only because of carry volumes we round down
+			// to the maximum the well can hold and hope for the best. This is a rare
+			// case but still we should ideally be stricter
+			//
 			if well.IsAutoallocated() {
 				vol.Add(well.ResidualVolume())
+
+				if vol.GreaterThan(well.MaxVolume()) {
+					rv := rawvols[plateID][crd]
+
+					if rv.LessThan(well.MaxVolume()) || rv.EqualTo(well.MaxVolume()) {
+						// don't exceed the well maximum by a trivial amount
+						vol = well.MaxVolume()
+					} else {
+						return fmt.Errorf("Error autogenerating stock %s at plate %s (type %s) well %s: Volume requested (%s) over well capacity (%s)", well2.Contents(idGen).CName, plate2.Name(), plate2.Type, crd, vol.ToString(), well.MaxVolume().ToString())
+					}
+				}
 
 				well2Contents := well2.Contents(idGen).Dup(idGen)
 				well2Contents.SetVolume(vol)
@@ -930,7 +955,7 @@ func (this *Liquidhandler) Plan(labEffects *effects.LaboratoryEffects, request *
 		return err
 	}
 
-	//find what liquids are explicitely provided by the user
+	//find what liquids are explicitly provided by the user
 	solutionsFromPlates, err := request.GetSolutionsFromInputPlates(labEffects.IDGenerator)
 	if err != nil {
 		return err

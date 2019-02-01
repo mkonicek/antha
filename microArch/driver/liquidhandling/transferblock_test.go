@@ -3,9 +3,11 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/cache/plateCache"
@@ -791,4 +793,163 @@ func generateRobotInstructions2(ctx context.Context, inss []*wtype.LHInstruction
 	ris2, _ := instructionSet.Generate(ctx, pol, rbt)
 
 	return ris2
+}
+
+// regression test for issue with additional transfers being
+// generated with sequential, different-length multichannel
+// operations and non-independent heads
+func TestMultiTransferError(t *testing.T) {
+	ctx := GetContextForTest()
+
+	// transfer two waters at volumes 50.0, 40.0
+	inss, err := getMixInstructions(ctx, 2, []string{inventory.WaterType}, []float64{50.0})
+
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+
+	inss[1].Inputs[0].Vol = 40.0
+
+	tb, p := getTransferBlock(ctx, inss, "pcrplate_skirted_riser18")
+
+	rbt := getTestRobot(ctx, p, "pcrplate_skirted_riser40")
+
+	pol, err := wtype.GetLHPolicyForTest()
+	if err != nil {
+		t.Error(err)
+	}
+
+	pol.Policies["water"]["CAN_MULTI"] = true
+
+	ris, err := tb.Generate(ctx, pol, rbt)
+	if err != nil {
+		t.Error(err)
+	}
+
+	rr, err := ris[0].Generate(ctx, pol, rbt)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if len(rr) != 1 {
+		t.Errorf("Expected 1 instruction got %d", len(rr))
+	}
+
+	mcb, ok := rr[0].(*MultiChannelBlockInstruction)
+
+	if !ok {
+		t.Errorf("Expected *MultiChannelBlockInstruction, got %T", rr)
+	}
+
+	if len(mcb.What) != 2 {
+		t.Errorf("Expected 2 transfers, got %d", len(mcb.What))
+	}
+
+	// we expect 50ul, 40ul to be transferred
+
+	volSums := []wunit.Volume{wunit.ZeroVolume(), wunit.ZeroVolume()}
+
+	for i := 0; i < len(mcb.What); i++ {
+		for j := 0; j < 2; j++ {
+			volSums[j].Add(mcb.Volume[i][j])
+		}
+	}
+
+	fiftyul := wunit.NewVolume(50.0, "ul")
+	fortyul := wunit.NewVolume(40.0, "ul")
+
+	if !reflect.DeepEqual(volSums, []wunit.Volume{fiftyul, fortyul}) {
+		t.Errorf("Volumes inconsistent: expected %v got %v", []wunit.Volume{fiftyul, fortyul}, volSums)
+	}
+
+}
+
+// ensure that gapped transfers are correctly handled
+// i.e. [A1:50, B1:40, C1:50] should be done as
+//      [A1:40, B1:40, C1:40], [A1:10], [C1:10]
+// on a non-independent liquid handler
+func TestGappedTransfer(t *testing.T) {
+	ctx := GetContextForTest()
+
+	// transfer three waters at volumes 50.0, 40.0, 50.0
+	inss, err := getMixInstructions(ctx, 3, []string{inventory.WaterType}, []float64{50.0})
+
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+
+	inss[1].Inputs[0].Vol = 40.0
+
+	tb, p := getTransferBlock(ctx, inss, "pcrplate_skirted_riser18")
+
+	rbt := getTestRobot(ctx, p, "pcrplate_skirted_riser40")
+
+	pol, err := wtype.GetLHPolicyForTest()
+	if err != nil {
+		t.Error(err)
+	}
+
+	pol.Policies["water"]["CAN_MULTI"] = true
+
+	ris, err := tb.Generate(ctx, pol, rbt)
+	if err != nil {
+		t.Error(err)
+	}
+
+	rr, err := ris[0].Generate(ctx, pol, rbt)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if len(rr) != 2 {
+		t.Errorf("Expected 2 instructions got %d", len(rr))
+	}
+
+	mcb, ok := rr[0].(*MultiChannelBlockInstruction)
+
+	if !ok {
+		t.Errorf("Expected *MultiChannelBlockInstruction, got %T", rr)
+	}
+
+	if len(mcb.What) != 1 {
+		t.Errorf("Expected 1 transfer, got %d", len(mcb.What))
+	}
+
+	// we expect 50ul, 40ul, 50ul to be transferred
+
+	volSums := []wunit.Volume{wunit.ZeroVolume(), wunit.ZeroVolume(), wunit.ZeroVolume()}
+
+	for i := 0; i < len(mcb.What); i++ {
+		for j := 0; j < 3; j++ {
+			volSums[j].Add(mcb.Volume[i][j])
+		}
+	}
+
+	if len(rr) == 2 {
+		scb, ok := rr[1].(*SingleChannelBlockInstruction)
+
+		if !ok {
+			t.Errorf("Expected *SingleChannelBlockInstruction, got %T", rr[1])
+		}
+
+		if len(scb.What) != 2 {
+			t.Errorf("Expected 2 transfers in single channel block, got %d", len(scb.What))
+		}
+
+		if !reflect.DeepEqual(scb.WellTo, []string{"A1", "C1"}) {
+			t.Errorf("Expected WellTo in single channel block to be %v, got %v", []string{"A1", "C1"}, scb.WellTo)
+		}
+
+		volSums[0].Add(scb.Volume[0])
+		volSums[2].Add(scb.Volume[1])
+	}
+
+	fiftyul := wunit.NewVolume(50.0, "ul")
+	fortyul := wunit.NewVolume(40.0, "ul")
+
+	if !reflect.DeepEqual(volSums, []wunit.Volume{fiftyul, fortyul, fiftyul}) {
+		t.Errorf("Volumes inconsistent: expected %v got %v", []wunit.Volume{fiftyul, fortyul, fiftyul}, volSums)
+	}
 }

@@ -1833,3 +1833,7 @@ func (self *VirtualLiquidHandler) GetOutputFile() ([]byte, driver.CommandStatus)
 	self.AddWarning("not yet implemented")
 	return []byte("You forgot to say 'please'"), driver.CommandOk()
 }
+
+func (self *VirtualLiquidHandler) DriverType() ([]string, error) {
+	return []string{"antha.mixer.v1.Mixer", "PreciousVirtualLiquidHandler"}, nil
+}

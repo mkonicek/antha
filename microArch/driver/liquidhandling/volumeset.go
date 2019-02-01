@@ -14,6 +14,28 @@ func NewVolumeSet(n int) VolumeSet {
 	return vs
 }
 
+// NonContiguous looks for volumes of the pattern X 0+ Y
+// where X, Y are non zero. These are incompatible with
+// non-independent volume heads
+func (vols VolumeSet) NonContiguous() bool {
+	seenZeroAfterPositive := false
+	seenPositive := false
+	for _, v := range vols {
+		if v.IsPositive() {
+			if seenZeroAfterPositive {
+				return true
+			}
+			seenPositive = true
+		} else {
+			if seenPositive {
+				seenZeroAfterPositive = true
+			}
+		}
+	}
+
+	return false
+}
+
 // Add behaves inconsistently with Sub... this is a design error
 func (vs VolumeSet) Add(v wunit.Volume) {
 	for i := 0; i < len(vs); i++ {

@@ -318,15 +318,15 @@ func (insts LHInstructions) DupLiquids() {
 // AssertNoPointerReuse make certain that inputs and outputs are not shared among LHInstructions
 // as should be ensured by calling DupLiquids()
 func (insts LHInstructions) AssertNoPointerReuse() error {
-	p := map[*Liquid]*LHInstruction{}
+	seen := map[*Liquid]*LHInstruction{}
 	errs := make(utils.ErrorSlice, 0, len(insts))
 
 	for _, ins := range insts {
 		for _, c := range append(ins.Inputs, ins.Outputs...) {
-			if ins2, ok := p[c]; ok {
-				errs = append(errs, fmt.Errorf("POINTER REUSE: Instructions %s %s for component %s %s", ins.ID, ins2.ID, c.ID, c.CName))
+			if ins2, ok := seen[c]; ok {
+				errs = append(errs, fmt.Errorf("POINTER REUSE: Instructions share *Liquid(%p): %s\n\tA: %s\n\tB: %s", c, c.CNID(), ins, ins2))
 			}
-			p[c] = ins
+			seen[c] = ins
 		}
 	}
 
@@ -361,7 +361,7 @@ func (insts LHInstructions) AssertVolumesNonNegative() error {
 		}
 
 		for _, cmp := range ins.Inputs {
-			if cmp.Volume().LessThan(wunit.ZeroVolume()) {
+			if cmp.Volume().IsNegative() {
 				errs = append(errs, LHErrorf(LH_ERR_VOL, "negative volume for component \"%s\" in instruction:\n%s", cmp.CName, ins.Summarize(1)))
 			}
 		}
@@ -411,7 +411,7 @@ func (insts LHInstructions) AssertMixResultsCorrect() error {
 		}
 
 		if len(ins.Outputs) != 1 {
-			errs = append(errs, LHErrorf(LH_ERR_DIRE, "mix instruction has %d results specified, expecting one at instruction:\n%s",
+			errs = append(errs, LHErrorf(LH_ERR_DIRE, "mix instruction has %d results specified, expecting 1 at instruction:\n%s",
 				len(ins.Outputs), ins.Summarize(1)))
 		} else if resultVolume := ins.Outputs[0].Volume(); !totalVolume.IsZero() && !totalVolume.EqualTo(resultVolume) {
 			errs = append(errs, LHErrorf(LH_ERR_VOL, "total volume (%v) does not match resulting volume (%v) for instruction:\n%s",

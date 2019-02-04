@@ -15,6 +15,7 @@ import (
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/logger"
 	"github.com/antha-lang/antha/target"
+	"github.com/antha-lang/antha/target/mixer"
 	"github.com/antha-lang/antha/utils"
 	"github.com/antha-lang/antha/workflow"
 )
@@ -68,6 +69,12 @@ func NewLaboratoryBuilder(fh io.Reader) *LaboratoryBuilder {
 	}
 
 	labBuild.LaboratoryEffects = effects.NewLaboratoryEffects(string(labBuild.workflow.JobId))
+	tgt := target.New()
+	if instances, err := mixer.GilsonPipetMaxInstancesFromWorkflow(labBuild.workflow); err != nil {
+		labBuild.Fatal(err)
+	} else if err := insts.Connect(); err != nil {
+		labBuild.Fatal(err)
+	}
 
 	// TODO: discuss this: not sure if we want to do this based off
 	// zero plate types defined, or if we want an explicit flag or

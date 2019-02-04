@@ -151,6 +151,8 @@ func (inv Inventory) validate() error {
 }
 
 func (cfg Config) validate() error {
+	// NB the validation here is purely static - i.e. we're not
+	// attempting to connect to any device plugins at this stage.
 	return utils.ErrorSlice{
 		cfg.GilsonPipetMax.validate(),
 		cfg.GlobalMixer.validate(),

@@ -2,6 +2,7 @@ package mixer
 
 import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/driver/liquidhandling/client"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/workflow"
 )
@@ -39,6 +40,10 @@ type GilsonPipetMaxInstanceConfig struct {
 	ResidualVolumeWeight float64
 
 	*workflow.GilsonPipetMaxInstanceConfig
+
+	base *BaseMixer
+
+	Driver *client.LowLevelClient
 }
 
 func GilsonPipetMaxInstancesFromWorkflow(wf *workflow.Workflow, inv *inventory.Inventory) (GilsonPipetMaxInstances, error) {
@@ -68,8 +73,9 @@ func GilsonPipetMaxInstancesFromWorkflow(wf *workflow.Workflow, inv *inventory.I
 			ResidualVolumeWeight: floatValue(cfgWf.MaxPlates, &defaults.MaxPlates),
 
 			GilsonPipetMaxInstanceConfig: cfgWf,
+			base:                         NewBaseMixer(cfgWf.Connection, "GilsonPipetmax"),
 		}
-		if err := cfg.validate(inv); err != nil {
+		if err := cfg.validate(id, inv); err != nil {
 			return nil, err
 		}
 		res[id] = cfg
@@ -77,7 +83,20 @@ func GilsonPipetMaxInstancesFromWorkflow(wf *workflow.Workflow, inv *inventory.I
 	return res, nil
 }
 
-func (cfg *GilsonPipetMaxInstanceConfig) validate(inv *inventory.Inventory) error {
+func (insts GilsonPipetMaxInstances) Connect() error {
+	for _, cfg := range insts {
+		if err := cfg.Connect(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (cfg *GilsonPipetMaxInstanceConfig) validate(id workflow.DeviceInstanceID, inv *inventory.Inventory) error {
+	if err := cfg.base.Validate(id); err != nil {
+		return err
+	}
+
 	for _, ptns := range [][]wtype.PlateTypeName{cfg.InputPlateTypes, cfg.OutputPlateTypes} {
 		for _, ptn := range ptns {
 			if _, err := inv.PlateTypes.NewPlateType(ptn); err != nil {
@@ -91,6 +110,17 @@ func (cfg *GilsonPipetMaxInstanceConfig) validate(inv *inventory.Inventory) erro
 	for _, tt := range cfg.TipTypes {
 		if _, err := inv.TipBoxes.NewTipbox(tt); err != nil {
 			return err
+		}
+	}
+	return nil
+}
+
+func (cfg *GilsonPipetMaxInstanceConfig) Connect() error {
+	if cfg.Driver == nil {
+		if conn, err := cfg.base.ConnectInit(); err != nil {
+			return err
+		} else {
+			cfg.Driver = client.NewLowLevelClientFromConn(conn)
 		}
 	}
 	return nil

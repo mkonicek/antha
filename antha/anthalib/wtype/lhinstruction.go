@@ -320,7 +320,6 @@ func (insts LHInstructions) DupLiquids() {
 func (insts LHInstructions) AssertNoPointerReuse() error {
 	seen := map[*Liquid]*LHInstruction{}
 	errs := make(utils.ErrorSlice, 0, len(insts))
-
 	for _, ins := range insts {
 		for _, c := range append(ins.Inputs, ins.Outputs...) {
 			if ins2, ok := seen[c]; ok {

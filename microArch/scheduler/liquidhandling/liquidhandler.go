@@ -54,7 +54,6 @@ import (
 // The three functions define
 // - setup (SetupAgent): How sources are assigned to plates and plates to positions
 // - layout (LayoutAgent): how experiments are assigned to outputs
-// - execution (ExecutionPlanner): generates instructions to implement the required plan
 //
 // The general mechanism by which requests which refer to specific items as opposed to
 // those which only state that an item of a particular kind is required is by the definition
@@ -67,13 +66,12 @@ import (
 // send it in as an argument
 
 type Liquidhandler struct {
-	Properties       *liquidhandling.LHProperties
-	FinalProperties  *liquidhandling.LHProperties
-	SetupAgent       func(context.Context, *LHRequest, *liquidhandling.LHProperties) (*LHRequest, error)
-	LayoutAgent      func(context.Context, *LHRequest, *liquidhandling.LHProperties) (*LHRequest, error)
-	ExecutionPlanner func(context.Context, *LHRequest, *liquidhandling.LHProperties) (*LHRequest, error)
-	PolicyManager    *LHPolicyManager
-	plateIDMap       map[string]string // which plates are before / after versions
+	Properties      *liquidhandling.LHProperties
+	FinalProperties *liquidhandling.LHProperties
+	SetupAgent      func(context.Context, *LHRequest, *liquidhandling.LHProperties) (*LHRequest, error)
+	LayoutAgent     func(context.Context, *LHRequest, *liquidhandling.LHProperties) (*LHRequest, error)
+	PolicyManager   *LHPolicyManager
+	plateIDMap      map[string]string // which plates are before / after versions
 }
 
 // initialize the liquid handling structure
@@ -81,8 +79,6 @@ func Init(properties *liquidhandling.LHProperties) *Liquidhandler {
 	lh := Liquidhandler{}
 	lh.SetupAgent = BasicSetupAgent
 	lh.LayoutAgent = ImprovedLayoutAgent
-	//lh.ExecutionPlanner = ImprovedExecutionPlanner
-	lh.ExecutionPlanner = ExecutionPlanner3
 	lh.Properties = properties
 	lh.FinalProperties = properties
 	lh.plateIDMap = make(map[string]string)
@@ -760,11 +756,23 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		return err
 	}
 
-	// now make instructions
-	if rq, err := this.ExecutionPlan(ctx, request); err != nil {
+	// make the instructions for executing this request by first building the ITree root, then generating the lower level instructions
+	// nb. there is significant potential for confusion here:
+	//    root.Generate(..., props LHProperties) is *destructive of state*, and leaves it's argument in the final state
+	//    therefore from here until reviseVolumes is called,
+	//      > this.Properties contains the final properties
+	//      > this.FinalProperties contains the initial properties
+	//    which cannot be changed until reviseVolumes is refactored
+	this.FinalProperties = this.Properties.Dup()
+	if root, err := liquidhandling.NewITreeRoot(request.InstructionChain); err != nil {
+		return err
+	} else if err := root.Generate(ctx, request.Policies(), this.Properties); err != nil {
+		return err
+	} else if tri, err := root.Leaves(); err != nil {
 		return err
 	} else {
-		request = rq
+		request.InstructionTree = root
+		request.Instructions = tri
 	}
 
 	// counts tips used in this run -- reads instructions generated above so must happen
@@ -841,29 +849,6 @@ func (this *Liquidhandler) Layout(ctx context.Context, request *LHRequest) (*LHR
 	// again needs to be parameterized
 
 	return this.LayoutAgent(ctx, request, this.Properties)
-}
-
-// make the instructions for executing this request
-func (this *Liquidhandler) ExecutionPlan(ctx context.Context, request *LHRequest) (*LHRequest, error) {
-	// necessary??
-	this.FinalProperties = this.Properties.Dup()
-	temprobot := this.Properties.Dup()
-	//saved_plates := this.Properties.SaveUserPlates()
-
-	var rq *LHRequest
-	var err error
-
-	if request.Options.ExecutionPlannerVersion == "ep3" {
-		rq, err = ExecutionPlanner3(ctx, request, this.Properties)
-	} else {
-		rq, err = this.ExecutionPlanner(ctx, request, this.Properties)
-	}
-
-	this.FinalProperties = temprobot
-
-	//this.Properties.RestoreUserPlates(saved_plates)
-
-	return rq, err
 }
 
 func OutputSetup(robot *liquidhandling.LHProperties) {

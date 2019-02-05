@@ -3,6 +3,7 @@ package workflow
 import (
 	"errors"
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"sort"
@@ -154,43 +155,37 @@ func (cfg Config) validate() error {
 	// NB the validation here is purely static - i.e. we're not
 	// attempting to connect to any device plugins at this stage.
 	return utils.ErrorSlice{
-		cfg.GilsonPipetMax.validate(),
 		cfg.GlobalMixer.validate(),
+		cfg.GilsonPipetMax.validate(),
 	}.Pack()
+}
+
+func (global GlobalMixerConfig) validate() error {
+	// Again, we cannot validate plates and plate types until we have a
+	// working inventory system.
+	return nil
 }
 
 func (gilson GilsonPipetMaxConfig) validate() error {
 	if err := gilson.Defaults.validate("Defaults"); err != nil {
 		return err
 	}
-	for name, cfg := range gilson.Devices {
-		if err := cfg.validate(string(name)); err != nil {
+	for id, cfg := range gilson.Devices {
+		if err := cfg.validate(id); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (gilson *GilsonPipetMaxInstanceConfig) validate(name string) error {
-	switch {
-	case gilson == nil: // should only happen when name == Defaults
-		return nil
-	case gilson.MaxPlates != nil && *gilson.MaxPlates <= 0:
-		return fmt.Errorf("Validation error: GilsonPipetMax '%s': MaxPlates must be > 0", name)
-	case gilson.MaxWells != nil && *gilson.MaxWells <= 0:
-		return fmt.Errorf("Validation error: GilsonPipetMax '%s': MaxWells must be > 0", name)
-	case gilson.ResidualVolumeWeight != nil && *gilson.ResidualVolumeWeight < 0:
-		return fmt.Errorf("Validation error: GilsonPipetMax '%s': ResidualVolumeWeight must be >= 0", name)
+func (gdc *GenericDeviceConfig) validate(id DeviceInstanceID) error {
+	if gdc.Connection != "" {
+		if _, _, err := net.SplitHostPort(gdc.Connection); err != nil {
+			return fmt.Errorf("Cannot parse connection string in device config for %v - '%s': %v", id, gdc.Connection, err)
+		}
 	}
-
 	// We cannot validate plates at this point because the real plate
 	// type inventory may not be loaded. So that gets validated later
 	// on.
-	return nil
-}
-
-func (global GlobalMixerConfig) validate() error {
-	// Again, we cannot validate plates and plate types until we have a
-	// working inventory system.
 	return nil
 }

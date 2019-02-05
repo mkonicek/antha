@@ -69,12 +69,7 @@ func NewLaboratoryBuilder(fh io.Reader) *LaboratoryBuilder {
 	}
 
 	labBuild.LaboratoryEffects = effects.NewLaboratoryEffects(string(labBuild.workflow.JobId))
-	tgt := target.New()
-	if instances, err := mixer.GilsonPipetMaxInstancesFromWorkflow(labBuild.workflow); err != nil {
-		labBuild.Fatal(err)
-	} else if err := insts.Connect(); err != nil {
-		labBuild.Fatal(err)
-	}
+	tgt, err := labBuild.connectDevices()
 
 	// TODO: discuss this: not sure if we want to do this based off
 	// zero plate types defined, or if we want an explicit flag or
@@ -104,6 +99,17 @@ func NewLaboratoryBuilder(fh io.Reader) *LaboratoryBuilder {
 	labBuild.FileManager = NewFileManager(filepath.Join(labBuild.outDir, "data"))
 
 	return labBuild
+}
+
+func (labBuild *LaboratoryBuilder) connectDevices() (*target.Target, error) {
+	tgt := target.New()
+	if insts, err := mixer.GilsonPipetMaxInstancesFromWorkflow(labBuild.workflow); err != nil {
+		return nil, err
+	} else if err := insts.Connect(); err != nil {
+		return nil, err
+	} else {
+		return tgt, nil
+	}
 }
 
 // Only use this before you call run.

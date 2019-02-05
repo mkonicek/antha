@@ -3,10 +3,8 @@ package mixer
 import (
 	"context"
 	"fmt"
-	"net"
 
 	driver "github.com/antha-lang/antha/driver/antha_driver_v1"
-	"github.com/antha-lang/antha/workflow"
 	"google.golang.org/grpc"
 )
 
@@ -20,15 +18,6 @@ func NewBaseMixer(connection string, subTypes ...string) *BaseMixer {
 		connection:       connection,
 		expectedSubTypes: subTypes,
 	}
-}
-
-func (bm *BaseMixer) Validate(id workflow.DeviceInstanceID) error {
-	if bm.connection != "" {
-		if _, _, err := net.SplitHostPort(bm.connection); err != nil {
-			return fmt.Errorf("Cannot parse connection string in device config for %v - '%s': %v", id, bm.connection, err)
-		}
-	}
-	return nil
 }
 
 func (bm *BaseMixer) ConnectInit() (*grpc.ClientConn, error) {

@@ -172,7 +172,7 @@ func (a *GilsonPipetMaxConfig) Merge(b GilsonPipetMaxConfig) error {
 	// simplest: we merge iff device ids are distinct
 	for id, cfg := range b.Devices {
 		if _, found := a.Devices[id]; found {
-			return fmt.Errorf("Cannot merge: GilsonPipetMax device '%s' redefined", id)
+			return fmt.Errorf("Cannot merge: GilsonPipetMax device '%v' redefined", id)
 		}
 		a.Devices[id] = cfg
 	}

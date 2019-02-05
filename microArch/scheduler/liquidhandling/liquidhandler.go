@@ -921,22 +921,6 @@ func (this *Liquidhandler) Plan(labEffects *effects.LaboratoryEffects, request *
 	// assert: all instructions should now be assigned specific plate IDs, types and wells
 	checkDestinationSanity(request)
 
-	if request.Options.FixVolumes {
-		// see if volumes can be corrected
-		request, err = FixVolumes(request)
-
-		if err != nil {
-			return err
-		}
-		if request.Options.PrintInstructions {
-			fmt.Println("")
-			fmt.Println("Instructions Post Volume Fix")
-			for _, insID := range request.OutputOrder {
-				fmt.Println(request.LHInstructions[insID])
-			}
-		}
-	}
-
 	if err := assertVolumesNonNegative(request); err != nil {
 		return err
 	}
@@ -1084,11 +1068,7 @@ func (this *Liquidhandler) ExecutionPlan(labEffects *effects.LaboratoryEffects, 
 	var rq *LHRequest
 	var err error
 
-	if request.Options.ExecutionPlannerVersion == "ep3" {
-		rq, err = ExecutionPlanner3(labEffects, request, this.Properties)
-	} else {
-		rq, err = this.ExecutionPlanner(labEffects, request, this.Properties)
-	}
+	rq, err = this.ExecutionPlanner(labEffects, request, this.Properties)
 
 	this.FinalProperties = temprobot
 

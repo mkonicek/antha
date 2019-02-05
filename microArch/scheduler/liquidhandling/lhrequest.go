@@ -240,11 +240,6 @@ func (lhr *LHRequest) AddUserPlate(idGen *id.IDGenerator, p *wtype.Plate) {
 	lhr.InputPlates[p.ID] = p
 }
 
-func (lhr *LHRequest) UseLegacyVolume() bool {
-	// magically create extra volumes for intermediates?
-	return lhr.Options.LegacyVolume
-}
-
 func (lhr *LHRequest) GetPolicyManager() *LHPolicyManager {
 	return lhr.PolicyManager
 }

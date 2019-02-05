@@ -1,6 +1,8 @@
 package mixer
 
 import (
+	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/driver/liquidhandling/client"
 	"github.com/antha-lang/antha/inventory"
@@ -22,96 +24,49 @@ func (cfg *GlobalMixerConfig) validate(inv *inventory.Inventory) error {
 	return nil
 }
 
-// TODO revise these: I'm not a fan of magic numbers in code - ideally
-// should be brought out into some config file.
-var (
-	defaultMaxPlates            = 4.5
-	defaultMaxWells             = 278.0
-	defaultResidualVolumeWeight = 1.0
-)
-
 type GilsonPipetMaxInstances map[workflow.DeviceInstanceID]*GilsonPipetMaxInstanceConfig
 
 type GilsonPipetMaxInstanceConfig struct {
-	*GlobalMixerConfig
-
-	MaxPlates            float64
-	MaxWells             float64
-	ResidualVolumeWeight float64
-
 	*workflow.GilsonPipetMaxInstanceConfig
-
-	base *BaseMixer
-
+	base   *BaseMixer
 	Driver *client.LowLevelClient
 }
 
-func GilsonPipetMaxInstancesFromWorkflow(wf *workflow.Workflow, inv *inventory.Inventory) (GilsonPipetMaxInstances, error) {
-	global := &GlobalMixerConfig{
-		GlobalMixerConfig: &wf.Config.GlobalMixer,
-	}
-	if err := global.validate(inv); err != nil {
-		return nil, err
-	}
+func GilsonPipetMaxInstancesFromWorkflow(wf *workflow.Workflow) (GilsonPipetMaxInstances, error) {
+	devices := wf.Config.GilsonPipetMax.Devices
 
-	devices := wf.Config.GilsonPipetMax
-
-	defaults := &GilsonPipetMaxInstanceConfig{
-		MaxPlates:                    floatValue(devices.Defaults.MaxPlates, &defaultMaxPlates),
-		MaxWells:                     floatValue(devices.Defaults.MaxWells, &defaultMaxWells),
-		ResidualVolumeWeight:         floatValue(devices.Defaults.ResidualVolumeWeight, &defaultResidualVolumeWeight),
-		GilsonPipetMaxInstanceConfig: devices.Defaults,
-	}
-
-	res := make(GilsonPipetMaxInstances, len(devices.Devices))
-	for id, cfgWf := range devices.Devices {
+	res := make(GilsonPipetMaxInstances, len(devices))
+	for id, cfgWf := range devices {
 		cfg := &GilsonPipetMaxInstanceConfig{
-			GlobalMixerConfig: global,
-
-			MaxPlates:            floatValue(cfgWf.MaxPlates, &defaults.MaxPlates),
-			MaxWells:             floatValue(cfgWf.MaxWells, &defaults.MaxWells),
-			ResidualVolumeWeight: floatValue(cfgWf.MaxPlates, &defaults.MaxPlates),
-
 			GilsonPipetMaxInstanceConfig: cfgWf,
 			base:                         NewBaseMixer(cfgWf.Connection, "GilsonPipetmax"),
 		}
-		if err := cfg.validate(id, inv); err != nil {
-			return nil, err
+		if err := cfg.Connect(); err != nil {
+			return nil, fmt.Errorf("Error when connecting to GilsonPipetmax at %s: %v", cfgWf.Connection, err)
 		}
 		res[id] = cfg
 	}
 	return res, nil
 }
 
-func (insts GilsonPipetMaxInstances) Connect() error {
-	for _, cfg := range insts {
-		if err := cfg.Connect(); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func (cfg *GilsonPipetMaxInstanceConfig) validate(id workflow.DeviceInstanceID, inv *inventory.Inventory) error {
-	if err := cfg.base.Validate(id); err != nil {
-		return err
-	}
+	/*
+		for _, ptns := range [][]wtype.PlateTypeName{cfg.InputPlateTypes, cfg.OutputPlateTypes} {
+			for _, ptn := range ptns {
+				if _, err := inv.PlateTypes.NewPlateType(ptn); err != nil {
+					return err
+				}
+			}
+		}
 
-	for _, ptns := range [][]wtype.PlateTypeName{cfg.InputPlateTypes, cfg.OutputPlateTypes} {
-		for _, ptn := range ptns {
-			if _, err := inv.PlateTypes.NewPlateType(ptn); err != nil {
+		// TODO: this check waste type creating first new tip boxes that we
+		// throw away. We should have a tip box type.
+		for _, tt := range cfg.TipTypes {
+			if _, err := inv.TipBoxes.NewTipbox(tt); err != nil {
 				return err
 			}
 		}
-	}
-
-	// TODO: this check waste type creating first new tip boxes that we
-	// throw away. We should have a tip box type.
-	for _, tt := range cfg.TipTypes {
-		if _, err := inv.TipBoxes.NewTipbox(tt); err != nil {
-			return err
-		}
-	}
+	*/
 	return nil
 }
 
@@ -119,17 +74,9 @@ func (cfg *GilsonPipetMaxInstanceConfig) Connect() error {
 	if cfg.Driver == nil {
 		if conn, err := cfg.base.ConnectInit(); err != nil {
 			return err
-		} else {
+		} else if conn != nil {
 			cfg.Driver = client.NewLowLevelClientFromConn(conn)
 		}
 	}
 	return nil
-}
-
-func floatValue(a, b *float64) float64 {
-	if a != nil {
-		return *a
-	} else {
-		return *b
-	}
 }

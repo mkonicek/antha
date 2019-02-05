@@ -81,7 +81,6 @@ func (a *Mixer) makeLhreq(labEffects *effects.LaboratoryEffects) (*lhreq, error)
 	}
 
 	prop := a.properties.Dup(labEffects.IDGenerator)
-	prop.Driver = a.properties.Driver
 	plan := planner.Init(prop)
 
 	/* TODO

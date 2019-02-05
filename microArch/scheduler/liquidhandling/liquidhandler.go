@@ -75,13 +75,13 @@ type Liquidhandler struct {
 
 // initialize the liquid handling structure
 func Init(properties *liquidhandling.LHProperties) *Liquidhandler {
-	lh := Liquidhandler{}
-	lh.SetupAgent = BasicSetupAgent
-	lh.LayoutAgent = ImprovedLayoutAgent
-	lh.Properties = properties
-	lh.FinalProperties = properties
-	lh.plateIDMap = make(map[string]string)
-	return &lh
+	return &Liquidhandler{
+		Properties:      properties,
+		FinalProperties: properties,
+		SetupAgent:      BasicSetupAgent,
+		LayoutAgent:     ImprovedLayoutAgent,
+		plateIDMap:      make(map[string]string),
+	}
 }
 
 func (this *Liquidhandler) PlateIDMap() map[string]string {

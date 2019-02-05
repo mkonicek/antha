@@ -33,6 +33,7 @@ type GilsonPipetMaxInstanceConfig struct {
 }
 
 func GilsonPipetMaxInstancesFromWorkflow(wf *workflow.Workflow) (GilsonPipetMaxInstances, error) {
+	defaults := wf.Config.GilsonPipetMax.Defaults
 	devices := wf.Config.GilsonPipetMax.Devices
 
 	res := make(GilsonPipetMaxInstances, len(devices))
@@ -43,6 +44,8 @@ func GilsonPipetMaxInstancesFromWorkflow(wf *workflow.Workflow) (GilsonPipetMaxI
 		}
 		if err := cfg.Connect(); err != nil {
 			return nil, fmt.Errorf("Error when connecting to GilsonPipetmax at %s: %v", cfgWf.Connection, err)
+		} else if props, status := cfg.Driver.Configure(defaults.Data, cfgWf.Data); !status.Ok() {
+			return nil, status.GetError()
 		}
 		res[id] = cfg
 	}

@@ -69,7 +69,6 @@ type Liquidhandler struct {
 	FinalProperties *liquidhandling.LHProperties
 	SetupAgent      func(*effects.LaboratoryEffects, *LHRequest, *liquidhandling.LHProperties) (*LHRequest, error)
 	LayoutAgent     func(*effects.LaboratoryEffects, *LHRequest, *liquidhandling.LHProperties) (*LHRequest, error)
-	PolicyManager   *LHPolicyManager
 	plateIDMap      map[string]string // which plates are before / after versions
 }
 

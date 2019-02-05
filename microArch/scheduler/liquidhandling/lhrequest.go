@@ -24,12 +24,17 @@
 package liquidhandling
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/pkg/errors"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/laboratory/effects/id"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
+	"github.com/antha-lang/antha/utils"
 )
 
 // structure for defining a request to the liquid handler
@@ -37,10 +42,10 @@ type LHRequest struct {
 	ID                    string
 	BlockID               wtype.BlockID
 	BlockName             string
-	LHInstructions        map[string]*wtype.LHInstruction
+	LHInstructions        wtype.LHInstructions
 	Plates                map[string]*wtype.Plate
 	Tips                  []*wtype.LHTipbox
-	InstructionSet        *liquidhandling.RobotInstructionSet
+	InstructionTree       *liquidhandling.ITree
 	Instructions          []liquidhandling.TerminalRobotInstruction
 	InstructionText       string
 	InputAssignments      map[string][]string
@@ -144,24 +149,6 @@ func (req *LHRequest) GetSolutionsFromInputPlates(idGen *id.IDGenerator) (map[st
 	return inputs, nil
 }
 
-// this function checks requests so we can see early on whether or not they
-// are going to cause problems
-func ValidateLHRequest(rq *LHRequest) (bool, string) {
-	if rq.OutputPlatetypes == nil || len(rq.OutputPlatetypes) == 0 {
-		return false, "No output plate type specified"
-	}
-
-	if len(rq.InputPlatetypes) == 0 {
-		return false, "No input plate types specified"
-	}
-
-	if rq.Policies() == nil {
-		return false, "No policies specified"
-	}
-
-	return true, "OK"
-}
-
 func columnWiseIterator(a wtype.Addressable) wtype.AddressIterator {
 	return wtype.NewAddressIterator(a, wtype.ColumnWise, wtype.TopToBottom, wtype.LeftToRight, false)
 }
@@ -171,7 +158,7 @@ func NewLHRequest(idGen *id.IDGenerator) *LHRequest {
 		ID:                idGen.NextID(),
 		LHInstructions:    make(map[string]*wtype.LHInstruction),
 		Plates:            make(map[string]*wtype.Plate),
-		InstructionSet:    liquidhandling.NewRobotInstructionSet(nil),
+		InstructionTree:   liquidhandling.NewITree(nil),
 		InputAssignments:  make(map[string][]string),
 		OutputAssignments: make(map[string][]string),
 		InputPlates:       make(map[string]*wtype.Plate),
@@ -231,7 +218,7 @@ func (lhr *LHRequest) AddUserPlate(idGen *id.IDGenerator, p *wtype.Plate) {
 	// impose sanity
 
 	if p.PlateName == "" {
-		p.PlateName = getSafePlateName(lhr, "user_plate", "_", lhr.NUserPlates+1)
+		p.PlateName = lhr.getSafePlateName("user_plate", "_", lhr.NUserPlates+1)
 		lhr.NUserPlates += 1
 	}
 
@@ -362,4 +349,170 @@ func (rq *LHRequest) updateWithNewLHInstructions(sorted []*wtype.LHInstruction) 
 			rq.LHInstructions[ins.ID] = ins
 		}
 	}
+}
+
+//assertWellNotOverfilled checks that mix instructions aren't going to overfill the wells when a plate is specified
+//assumes assertMixResultsCorrect returns nil
+func (rq *LHRequest) assertWellNotOverfilled(labEffects *effects.LaboratoryEffects) error {
+	errs := make(utils.ErrorSlice, 0, len(rq.Instructions))
+
+	for _, ins := range rq.LHInstructions {
+		if ins.Type != wtype.LHIMIX {
+			continue
+		}
+
+		resultVolume := ins.Outputs[0].Volume()
+
+		var plate *wtype.Plate
+		if ins.OutPlate != nil {
+			plate = ins.OutPlate
+		} else if ins.PlateID != "" {
+			if p, ok := rq.GetPlate(ins.PlateID); !ok {
+				continue
+			} else {
+				plate = p
+			}
+		} else if ins.Platetype != "" {
+			if p, err := labEffects.Inventory.PlateTypes.NewPlate(ins.Platetype); err != nil {
+				continue
+			} else {
+				plate = p
+			}
+		} else {
+			//couldn't find an appropriate plate
+			continue
+		}
+
+		if maxVol := plate.Welltype.MaxVolume(); maxVol.LessThan(resultVolume) {
+			//ignore if this is just numerical precision (#campainforintegervolume)
+			delta := wunit.SubtractVolumes(resultVolume, maxVol)
+			if delta.IsZero() {
+				continue
+			}
+			errs = append(errs, wtype.LHErrorf(wtype.LH_ERR_VOL, "volume of resulting mix (%v) exceeds the well maximum (%v) for instruction:\n%s",
+				resultVolume, maxVol, ins.Summarize(1)))
+		}
+	}
+	return errs.Pack()
+}
+
+//check that none of the plates we're returning came from the cache
+func (rq *LHRequest) assertNoTemporaryPlates(labEffects *effects.LaboratoryEffects) error {
+	ids := make([]string, 0, len(rq.Plates))
+	for id, plate := range rq.Plates {
+		if labEffects.PlateCache.IsFromCache(plate) {
+			ids = append(ids, id)
+		}
+	}
+
+	if len(ids) > 0 {
+		return wtype.LHErrorf(wtype.LH_ERR_DIRE, "found a temporary plate(s) being returned in the request: ids %s", strings.Join(ids, ", "))
+	}
+	return nil
+}
+
+func (rq *LHRequest) removeDummyInstructions() {
+	toRemove := make(map[string]bool, len(rq.LHInstructions))
+	for _, ins := range rq.LHInstructions {
+		if ins.IsDummy() {
+			toRemove[ins.ID] = true
+		}
+	}
+
+	if len(toRemove) > 0 {
+
+		oo := make([]string, 0, len(rq.OutputOrder)-len(toRemove))
+
+		for _, ins := range rq.OutputOrder {
+			if toRemove[ins] {
+				continue
+			} else {
+				oo = append(oo, ins)
+			}
+		}
+
+		if len(oo) != len(rq.OutputOrder)-len(toRemove) {
+			panic(fmt.Sprintf("Dummy instruction prune failed: before %d dummies %d after %d", len(rq.OutputOrder), len(toRemove), len(oo)))
+		}
+
+		rq.OutputOrder = oo
+
+		// prune instructionChain
+		rq.InstructionChain.PruneOut(toRemove)
+	}
+}
+
+func (req *LHRequest) MergedInputOutputPlates() map[string]*wtype.Plate {
+	m := make(map[string]*wtype.Plate, len(req.InputPlates)+len(req.OutputPlates))
+	addToMap(m, req.InputPlates)
+	addToMap(m, req.OutputPlates)
+	return m
+}
+
+func addToMap(m, a map[string]*wtype.Plate) {
+	for k, v := range a {
+		m[k] = v
+	}
+}
+
+func (rq *LHRequest) fixDuplicatePlateNames() {
+	seen := make(map[string]int, 1)
+	fixNames := func(sa []string, pm map[string]*wtype.Plate) {
+		for _, id := range sa {
+			p, foundPlate := pm[id]
+
+			if !foundPlate {
+				panic(fmt.Sprintf("Inconsistency in plate order / map for plate ID %s ", id))
+			}
+
+			n, ok := seen[p.PlateName]
+
+			if ok {
+				newName := fmt.Sprintf("%s_%d", p.PlateName, n)
+				seen[p.PlateName] += 1
+				p.PlateName = newName
+			} else {
+				seen[p.PlateName] = 1
+			}
+		}
+	}
+
+	fixNames(rq.InputPlateOrder, rq.InputPlates)
+	fixNames(rq.OutputPlateOrder, rq.OutputPlates)
+}
+
+// Validate catch errors early
+func (request *LHRequest) Validate() error {
+	if len(request.LHInstructions) == 0 {
+		return wtype.LHError(wtype.LH_ERR_OTHER, "Nil plan requested: no Mix Instructions present")
+	}
+
+	// no component can have all three of Conc, Vol and TVol set to 0:
+
+	for _, ins := range request.LHInstructions {
+		// the check below makes sense only for mixes
+		if ins.Type != wtype.LHIMIX {
+			continue
+		}
+		for i, cmp := range ins.Inputs {
+			if cmp.Vol == 0.0 && cmp.Conc == 0.0 && cmp.Tvol == 0.0 {
+				errstr := fmt.Sprintf("Nil mix (no volume, concentration or total volume) requested: %d : ", i)
+
+				for j := 0; j < len(ins.Inputs); j++ {
+					ss := ins.Inputs[i].CName
+					if j == i {
+						ss = strings.ToUpper(ss)
+					}
+
+					if j != len(ins.Inputs)-1 {
+						ss += ", "
+					}
+
+					errstr += ss
+				}
+				return wtype.LHError(wtype.LH_ERR_OTHER, errstr)
+			}
+		}
+	}
+	return nil
 }

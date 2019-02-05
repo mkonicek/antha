@@ -3,8 +3,7 @@ package liquidhandling
 import "github.com/antha-lang/antha/laboratory/effects/id"
 
 // no longer need to supply tipboxes after the fact
-func (lh *Liquidhandler) Refresh_tipboxes_tipwastes(idGen *id.IDGenerator, rq *LHRequest) {
-
+func (lh *Liquidhandler) refreshTipboxesTipwastes(idGen *id.IDGenerator) {
 	// dead simple
 
 	lh.FinalProperties.RemoveTipBoxes()

@@ -5,6 +5,6 @@
 //go:generate protoc -I${GOPATH}/src ${GOPATH}/src/github.com/antha-lang/antha/driver/antha_platereader_v1/platereader.proto --go_out=plugins=grpc:${GOPATH}/src
 //go:generate protoc -I${GOPATH}/src ${GOPATH}/src/github.com/antha-lang/antha/driver/antha_framework_v1/framework.proto --go_out=plugins=grpc:${GOPATH}/src
 //go:generate protoc -I${GOPATH}/src ${GOPATH}/src/github.com/antha-lang/antha/driver/antha_quantstudio_v1/quantstudio.proto --go_out=plugins=grpc:${GOPATH}/src
-//go:generate protoc -I. lh/lh.proto --go_out=plugins=grpc:pb
+//go:generate protoc -I${GOPATH}/src ${GOPATH}/src/github.com/antha-lang/antha/driver/liquidhandling/pb/lh.proto --go_out=plugins=grpc:${GOPATH}/src
 
 package driver

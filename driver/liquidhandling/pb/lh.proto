@@ -4,7 +4,7 @@ package pb;
 service LowLevelLiquidhandlingDriver{
     rpc AddPlateTo (AddPlateToRequest) returns (CommandReply) {}
     rpc Finalize (FinalizeRequest) returns (CommandReply) {}
-    rpc GetCapabilities (GetCapabilitiesRequest) returns (GetCapabilitiesReply) {}
+    rpc Configure (ConfigureRequest) returns (ConfigureReply) {}
     rpc GetOutputFile(GetOutputFileRequest) returns (GetOutputFileReply) {}
     rpc Initialize (InitializeRequest) returns (CommandReply) {}
     rpc Message (MessageRequest) returns (CommandReply) {}
@@ -26,7 +26,7 @@ service LowLevelLiquidhandlingDriver{
 service HighLevelLiquidhandlingDriver{
     rpc AddPlateTo (AddPlateToRequest) returns (CommandReply) {}
     rpc Finalize (FinalizeRequest) returns (CommandReply) {}
-    rpc GetCapabilities (GetCapabilitiesRequest) returns (GetCapabilitiesReply) {}
+    rpc Configure (ConfigureRequest) returns (ConfigureReply) {}
     rpc GetOutputFile(GetOutputFileRequest) returns (GetOutputFileReply) {}
     rpc Initialize (InitializeRequest) returns (CommandReply) {}
     rpc Message (MessageRequest) returns (CommandReply) {}
@@ -43,7 +43,9 @@ message AddPlateToRequest {
 
 message FinalizeRequest {}
 
-message GetCapabilitiesRequest {}
+message ConfigureRequest {
+    repeated bytes data = 1;
+}
 
 message GetOutputFileRequest {}
 
@@ -160,7 +162,7 @@ message CommandReply {
    string msg = 3;
 }
     
-message GetCapabilitiesReply {
+message ConfigureReply {
     string LH_properties_JSON = 1;
     CommandReply status = 2;
 }

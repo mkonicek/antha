@@ -115,13 +115,13 @@ func (hlc *HighLevelClient) GetOutputFile() ([]byte, driver.CommandStatus) {
 	}
 }
 
-func (hlc *HighLevelClient) GetCapabilities() (liquidhandling.LHProperties, driver.CommandStatus) {
-	if r, err := hlc.client.GetCapabilities(context.Background(), &pb.GetCapabilitiesRequest{}); err != nil {
-		return liquidhandling.LHProperties{}, driver.CommandError(err.Error())
+func (hlc *HighLevelClient) Configure(data ...[]byte) (*liquidhandling.LHProperties, driver.CommandStatus) {
+	if r, err := hlc.client.Configure(context.Background(), &pb.ConfigureRequest{Data: data}); err != nil {
+		return nil, driver.CommandError(err.Error())
 	} else {
-		var ret liquidhandling.LHProperties
-		if err := json.Unmarshal([]byte(r.LHProperties_JSON), &ret); err != nil {
-			return ret, driver.CommandError(err.Error())
+		ret := &liquidhandling.LHProperties{}
+		if err := json.Unmarshal([]byte(r.LHProperties_JSON), ret); err != nil {
+			return nil, driver.CommandError(err.Error())
 		}
 		return ret, commandStatus(r.Status)
 	}

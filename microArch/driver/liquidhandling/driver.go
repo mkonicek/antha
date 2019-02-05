@@ -42,7 +42,7 @@ type LiquidhandlingDriver interface {
 	Finalize() driver.CommandStatus
 	Message(level int, title, text string, showcancel bool) driver.CommandStatus
 	GetOutputFile() ([]byte, driver.CommandStatus)
-	GetCapabilities() (LHProperties, driver.CommandStatus)
+	Configure([][]byte) (*LHProperties, driver.CommandStatus)
 }
 
 type LowLevelLiquidhandlingDriver interface {

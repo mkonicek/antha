@@ -46,15 +46,15 @@ func (lhs *liquidHandlingServer) Finalize(context.Context, *pb.FinalizeRequest) 
 	return makeCommandReply(lhs.driver.Finalize()), nil
 }
 
-func (lhs *liquidHandlingServer) GetCapabilities(context.Context, *pb.GetCapabilitiesRequest) (*pb.GetCapabilitiesReply, error) {
-	props, cs := lhs.driver.GetCapabilities()
+func (lhs *liquidHandlingServer) Configure(ctx context.Context, req *pb.ConfigureRequest) (*pb.ConfigureReply, error) {
+	props, cs := lhs.driver.Configure(req.GetData())
 
 	if propsJSON, err := json.Marshal(&props); err != nil {
-		return &pb.GetCapabilitiesReply{
+		return &pb.ConfigureReply{
 			Status: makeCommandReply(cs),
 		}, err
 	} else {
-		return &pb.GetCapabilitiesReply{
+		return &pb.ConfigureReply{
 			LHProperties_JSON: string(propsJSON),
 			Status:            makeCommandReply(cs),
 		}, nil

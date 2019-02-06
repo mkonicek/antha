@@ -40,20 +40,20 @@ import (
 //	etc.
 //
 
-func ConvertInstructions(ctx context.Context, inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool, policy *wtype.LHPolicyRuleSet) ([]*TransferInstruction, error) {
+func ConvertInstructions(ctx context.Context, inssIn LHIVector, robot *LHProperties, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool, policy *wtype.LHPolicyRuleSet) ([]*TransferInstruction, error) {
 	// we call convertInstructions twice because
 	// 1) calling convertInstructions with multi = 8 when there are no actual multichannel instructions causes
 	//    undesirable source volume selection, see tests "TestExecutionPlanning/single_channel_well_use", and
 	//    "TestExecutionPlanning/single_channel_auto_allocation"
 	// 2) convertInstructions makes changes to robot, meaning that it must be called exactly once with the the copy of robot passed to the function
-	if transfers, err := convertInstructions(inssIn, robot.DupKeepIDs(), carryvol, channelprms, multi, legacyVolume); err != nil {
+	if transfers, err := convertInstructions(inssIn, robot.DupKeepIDs(), channelprms, multi, legacyVolume); err != nil {
 		return nil, err
 	} else if hasMCB, err := hasMultiChannelBlock(ctx, transfers, robot, policy); err != nil {
 		return nil, err
 	} else if hasMCB {
-		return convertInstructions(inssIn, robot, carryvol, channelprms, multi, legacyVolume)
+		return convertInstructions(inssIn, robot, channelprms, multi, legacyVolume)
 	} else {
-		return convertInstructions(inssIn, robot, carryvol, channelprms, 1, legacyVolume)
+		return convertInstructions(inssIn, robot, channelprms, 1, legacyVolume)
 	}
 }
 
@@ -75,7 +75,7 @@ func hasMultiChannelBlock(ctx context.Context, tfrs []*TransferInstruction, rbt 
 	return false, nil
 }
 
-func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool) ([]*TransferInstruction, error) {
+func convertInstructions(inssIn LHIVector, robot *LHProperties, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool) ([]*TransferInstruction, error) {
 
 	insOut := make([]*TransferInstruction, 0, 1)
 
@@ -144,7 +144,6 @@ func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 		parallelTransfers, err := robot.GetComponents(
 			GetComponentsOptions{
 				Cmps:         componentsToMove[i],
-				Carryvol:     carryvol,
 				Ori:          orientation,
 				Multi:        multi,
 				Independent:  independent,
@@ -156,7 +155,7 @@ func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 		}
 
 		for _, t := range parallelTransfers.Transfers {
-			transfers, err := makeTransfers(t, componentsToMove[i], robot, instructionsToUse[i], carryvol)
+			transfers, err := makeTransfers(t, componentsToMove[i], robot, instructionsToUse[i])
 
 			if err != nil {
 				return nil, err
@@ -170,7 +169,7 @@ func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 	return insOut, nil
 }
 
-func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.Liquid, robot *LHProperties, inssIn []*wtype.LHInstruction, carryvol wunit.Volume) ([]*TransferInstruction, error) {
+func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.Liquid, robot *LHProperties, inssIn []*wtype.LHInstruction) ([]*TransferInstruction, error) {
 	fromPlateIDs := parallelTransfer.PlateIDs
 	fromWells := parallelTransfer.WellCoords
 	vols := parallelTransfer.Vols
@@ -291,7 +290,7 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.Liquid, robo
 		}
 
 		// silently remove the carry
-		wellFrom.RemoveCarry(carryvol)
+		wellFrom.RemoveCarry(robot.CarryVolume())
 
 		err = wellTo.AddComponent(cmpFrom)
 		if err != nil {

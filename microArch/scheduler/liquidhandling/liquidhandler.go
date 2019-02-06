@@ -336,7 +336,7 @@ func (this *Liquidhandler) shrinkVolumes(rq *LHRequest) error {
 			HandleAspirate: func(ins *liquidhandling.AspirateInstruction) {
 				for i, lastWell := range lastWells {
 					if lastWell.IsAutoallocated() && i < len(ins.Volume) {
-						useVol(lastWell, ins.Volume[i], rq.CarryVolume)
+						useVol(lastWell, ins.Volume[i], this.Properties.CarryVolume())
 					}
 				}
 			},
@@ -614,7 +614,7 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 
 	if request.Options.FixVolumes {
 		// see if volumes can be corrected
-		if rq, err := FixVolumes(request); err != nil {
+		if rq, err := FixVolumes(request, this.Properties.CarryVolume()); err != nil {
 			return err
 		} else {
 			request = rq
@@ -638,14 +638,14 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	}
 
 	// looks at liquids provided, calculates liquids required
-	if inputSolutions, err := request.getInputs(); err != nil {
+	if inputSolutions, err := request.getInputs(this.Properties.CarryVolume()); err != nil {
 		return err
 	} else {
 		request.InputSolutions = inputSolutions
 	}
 
 	// define the input plates
-	if err := request.inputPlateSetup(ctx); err != nil {
+	if err := request.inputPlateSetup(ctx, this.Properties.CarryVolume()); err != nil {
 		return errors.WithMessage(err, "while setting up input plates")
 	}
 

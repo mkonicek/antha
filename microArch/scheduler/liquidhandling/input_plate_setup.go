@@ -78,7 +78,7 @@ func (is InputSorter) Less(i, j int) bool {
 // INPUT: 	"input_platetype", "inputs"
 //OUTPUT: 	"input_plates"      -- these each have components in wells
 //		"input_assignments" -- map with arrays of assignment strings, i.e. {tea: [plate1:A:1, plate1:A:2...] }etc.
-func (rq *LHRequest) inputPlateSetup(ctx context.Context) error {
+func (rq *LHRequest) inputPlateSetup(ctx context.Context, carryVolume wunit.Volume) error {
 	st := sampletracker.FromContext(ctx)
 
 	input_platetypes := rq.InputPlatetypes
@@ -223,7 +223,7 @@ func (rq *LHRequest) inputPlateSetup(ctx context.Context) error {
 
 					//usefulVolume is the most we can get from the well assuming one transfer
 					usefulVolume := curr_well.CurrentWorkingVolume()
-					usefulVolume.Subtract(rq.CarryVolume)
+					usefulVolume.Subtract(carryVolume)
 					volume.Subtract(usefulVolume)
 				}
 

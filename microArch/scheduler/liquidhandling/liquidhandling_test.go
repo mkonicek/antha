@@ -1124,9 +1124,9 @@ func TestExecutionPlanning(t *testing.T) {
 			InputPlates:  []*wtype.LHPlate{GetPlateForTest()},
 			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
 			Assertions: Assertions{
-				NumberOfAssertion(liquidhandling.ASP, 8),                                           //no multichanneling
-				InputLayoutAssertion(map[string]string{"A1": "water"}),                             // should all be in the same well since no multichanneling
-				InitialInputVolumesAssertion(0.001, map[string]float64{"A1": (8.0+0.5)*8.0 + 5.0}), // volume plus carry per transfer plus residual
+				NumberOfAssertion(liquidhandling.ASP, 8),                                                                          //no multichanneling
+				InputLayoutAssertion(map[string]string{"A1": "water"}),                                                            // should all be in the same well since no multichanneling
+				InitialInputVolumesAssertion(0.001, map[string]float64{"A1": (8.0+wtype.GLOBALCARRYVOLUME.RawValue())*8.0 + 5.0}), // volume plus carry per transfer plus residual
 				FinalInputVolumesAssertion(0.001, map[string]float64{"A1": 5.0}),
 			},
 		},
@@ -1349,7 +1349,6 @@ func (test *ShrinkVolumesTest) run(t *testing.T) {
 	// initialise the request
 	rq := &LHRequest{
 		Instructions:    test.Instructions,
-		CarryVolume:     test.CarryVolume,
 		InputPlateOrder: inputPlateOrder,
 	}
 

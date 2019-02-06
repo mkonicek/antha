@@ -1068,3 +1068,7 @@ func (p *LHProperties) DeckSummary() string {
 	}
 	return s
 }
+
+func (p *LHProperties) CarryVolume() wunit.Volume {
+	return wtype.GLOBALCARRYVOLUME
+}

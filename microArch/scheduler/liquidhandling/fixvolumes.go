@@ -15,7 +15,7 @@ import (
 // conventions in component naming to distinguish virtual from non-virtual components
 // and additionally needs to ensure it treats stationary components differently since
 // these do not need adjusting for carry volume or residual
-func FixVolumes(request *LHRequest) (*LHRequest, error) {
+func FixVolumes(request *LHRequest, carryVolume wunit.Volume) (*LHRequest, error) {
 	// we go up through the chain
 	// first find the end
 
@@ -27,7 +27,7 @@ func FixVolumes(request *LHRequest) (*LHRequest, error) {
 
 		switch chainEnd.Values[0].Type {
 		case wtype.LHIMIX:
-			stageVolumes, err := findUpdateInstructionVolumes(chainEnd, wantedVolumes, request.MergedInputOutputPlates(), request.CarryVolume)
+			stageVolumes, err := findUpdateInstructionVolumes(chainEnd, wantedVolumes, request.MergedInputOutputPlates(), carryVolume)
 
 			if err != nil {
 				return request, err

@@ -134,6 +134,7 @@ func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest
 	OutputSetup(this.FinalProperties)
 
 	if !request.Options.IgnoreLogicalSimulation {
+		fmt.Println("COMPARING RESULTS!")
 		// compare the declared output to what the simulator has found
 		errs := simulator.CompareStateToDeclaredOutput(this.FinalProperties)
 
@@ -145,6 +146,7 @@ func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest
 
 			return fmt.Errorf("%s", line)
 		}
+		fmt.Println("Results OK")
 	}
 
 	return nil

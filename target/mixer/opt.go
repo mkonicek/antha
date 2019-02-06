@@ -55,7 +55,8 @@ type Opt struct {
 	UseDriverTipTracking     bool `json:"useDriverTipTracking"`
 	LegacyVolume             bool `json:"legacyVolume"`             // Don't track volumes for intermediates
 	FixVolumes               bool `json:"fixVolumes"`               // Aim to revise requested volumes to service requirements
-	IgnorePhysicalSimulation bool `json:"ignorePhysicalSimulation"` //ignore errors in physical simulation
+	IgnorePhysicalSimulation bool `json:"ignorePhysicalSimulation"` //ignore errors in physical simulation i.e. collisions
+	IgnoreLogicalSimulation  bool `json:"ignoreLogicalSimulation"`  //ignore errors in logical simulation i.e. volume errors
 
 	// Two ways to set user liquid policies rule set
 	CustomPolicyData    map[string]wtype.LHPolicy `json:"customPolicyData,omitempty"`    // Set rule set from policies

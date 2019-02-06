@@ -58,12 +58,22 @@ func (self *Rule) AddToPolicy(pol *wtype.LHPolicyRuleSet) {
 	pol.AddRule(rule, policy)
 }
 
+// InstructionAssertion make assertions about properties of the terminal instructions
+// generated under a specific policy, e.g.
+//   InstructionAssertion{
+//      Instruction: 5,
+//      Values: map[InstructionParameter]interface{}{
+//      	"CYCLES": []int{5},
+//      },
+//   }
+// asserts that the fifth terminal instruction has the property CYCLES = 5
 type InstructionAssertion struct {
 	Instruction int
 	Values      map[InstructionParameter]interface{}
 }
 
-func (self *InstructionAssertion) Assert(t *testing.T, ris []RobotInstruction) {
+// Assert test that the assertion is valid, call t.Error if not
+func (self *InstructionAssertion) Assert(t *testing.T, ris []TerminalRobotInstruction) {
 	if self.Instruction < 0 || self.Instruction >= len(ris) {
 		t.Errorf("test error: assertion on instruction %d, but only %d instructions", self.Instruction, len(ris))
 		return
@@ -88,7 +98,7 @@ type PolicyTest struct {
 	Error                string
 }
 
-func stringInstructions(inss []RobotInstruction) string {
+func stringInstructions(inss []TerminalRobotInstruction) string {
 	s := make([]string, len(inss))
 	for i, ins := range inss {
 		s[i] = ins.Type().Name
@@ -120,9 +130,8 @@ func (self *PolicyTest) run(t *testing.T) {
 		rule.AddToPolicy(policySet)
 	}
 
-	set := NewRobotInstructionSet(self.Instruction)
-	ris, err := set.Generate(ctx, policySet, self.Robot)
-	if err != nil {
+	tree := NewITree(self.Instruction)
+	if err := tree.Generate(ctx, policySet, self.Robot); err != nil {
 		if self.Error == "" {
 			err = errors.Wrapf(err, "%s: unexpected error", self.Name)
 			t.Error(err)
@@ -134,15 +143,13 @@ func (self *PolicyTest) run(t *testing.T) {
 
 	if self.Error != "" {
 		t.Errorf("error not generated: expected \"%s\"", self.Error)
-		return
-	}
-
-	if g := stringInstructions(ris); self.ExpectedInstructions != g {
+	} else if ris, err := tree.Leaves(); err != nil {
+		t.Error(err)
+	} else if g := stringInstructions(ris); self.ExpectedInstructions != g {
 		t.Errorf("instruction types don't match\n  g: %s\n  e: %s", g, self.ExpectedInstructions)
-		return
-	}
-
-	for _, a := range self.Assertions {
-		a.Assert(t, ris)
+	} else {
+		for _, a := range self.Assertions {
+			a.Assert(t, ris)
+		}
 	}
 }

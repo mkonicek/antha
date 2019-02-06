@@ -28,19 +28,15 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil/text"
-	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
-// determines how to
-// fulfil the requirements for making
-// instructions to specifications
-
-func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[string]*wtype.LHInstruction, map[string]wunit.Concentration, error) {
+// solutionSetup determines how to fulfil the requirements for making instructions to specifications
+func (rq *LHRequest) solutionSetup() (wtype.LHInstructions, map[string]wunit.Concentration, error) {
 
 	// set this from extra or calculate, but skip for now
 	var skipSampleForConcentrationCalc bool = true
 
-	instructions := request.LHInstructions
+	instructions := rq.LHInstructions
 
 	// index of components used to make up to a total volume, along with the required total
 	mtvols := make(map[string][]wunit.Volume, 10)
@@ -209,7 +205,7 @@ func solution_setup(request *LHRequest, prms *liquidhandling.LHProperties) (map[
 
 	// make an array for the new instructions
 
-	newInstructions := make(map[string]*wtype.LHInstruction, len(instructions))
+	newInstructions := make(wtype.LHInstructions, len(instructions))
 
 	for _, instruction := range instructions {
 		components := instruction.Inputs

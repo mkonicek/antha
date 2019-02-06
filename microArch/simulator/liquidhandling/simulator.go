@@ -24,10 +24,11 @@ package liquidhandling
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"math"
 	"sort"
 	"strings"
+
+	"github.com/pkg/errors"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -2000,4 +2001,8 @@ func (self *VirtualLiquidHandler) Message(level int, title, text string, showcan
 func (self *VirtualLiquidHandler) GetOutputFile() ([]byte, driver.CommandStatus) {
 	self.AddWarning("not yet implemented")
 	return []byte("You forgot to say 'please'"), driver.CommandOk()
+}
+
+func (self *VirtualLiquidHandler) DriverType() ([]string, error) {
+	return []string{"antha.mixer.v1.Mixer", "PreciousVirtualLiquidHandler"}, nil
 }

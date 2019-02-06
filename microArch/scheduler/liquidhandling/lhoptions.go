@@ -8,6 +8,7 @@ type LHOptions struct {
 	LegacyVolume             bool
 	FixVolumes               bool
 	IgnorePhysicalSimulation bool
+	IgnoreLogicalSimulation  bool
 }
 
 func NewLHOptions() LHOptions {

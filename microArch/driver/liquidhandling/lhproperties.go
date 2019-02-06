@@ -398,9 +398,7 @@ func (lhp *LHProperties) TipWastesMounted() int {
 	r := 0
 	// go looking for tipwastes
 	for _, addr := range lhp.Preferences.Tipwastes {
-		if _, ok := lhp.Tipwastes[addr]; !ok {
-			fmt.Printf("Position %s claims to have a tipbox but is empty\n", addr)
-		} else {
+		if _, ok := lhp.Tipwastes[addr]; ok {
 			r += 1
 		}
 	}

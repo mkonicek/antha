@@ -5,6 +5,7 @@ import (
 	"io"
 	"io/ioutil"
 	"path"
+	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	git "gopkg.in/src-d/go-git.v4"
@@ -13,15 +14,17 @@ import (
 type Workflow struct {
 	JobId JobId `json:"JobId"`
 
+	Meta Meta `json:"Meta"`
+
 	Repositories                Repositories                `json:"Repositories"`
 	ElementTypes                ElementTypes                `json:"ElementTypes"`
 	ElementInstances            ElementInstances            `json:"ElementInstances"`
 	ElementInstancesParameters  ElementInstancesParameters  `json:"ElementInstancesParameters"`
 	ElementInstancesConnections ElementInstancesConnections `json:"ElementInstancesConnections"`
 
-	Inventory Inventory `json:Inventory`
+	Inventory Inventory `json:"Inventory"`
 
-	Config Config `json:Config`
+	Config Config `json:"Config"`
 
 	typeNames map[ElementTypeName]*ElementType
 }
@@ -50,6 +53,40 @@ func (wf *Workflow) WriteToFile(p string) error {
 	} else {
 		return ioutil.WriteFile(p, bs, 0400)
 	}
+}
+
+type Meta struct {
+	Name string                 `json:"Name"`
+	Rest map[string]interface{} `json:"-"`
+}
+
+func (m *Meta) UnmarshalJSON(bs []byte) error {
+	all := make(map[string]interface{})
+	if err := json.Unmarshal(bs, &all); err != nil {
+		return err
+	}
+	// belt and braces due to Go's json support being case insensitive
+	for key, val := range all {
+		if strings.ToLower(key) == "name" {
+			if valStr, ok := val.(string); ok {
+				m.Name = valStr
+			}
+			delete(all, key)
+		}
+	}
+	m.Rest = all
+	return nil
+}
+
+func (m *Meta) MarshalJSON() ([]byte, error) {
+	all := make(map[string]interface{}, len(m.Rest)+1)
+	for key, val := range m.Rest {
+		if strings.ToLower(key) != "name" {
+			all[key] = val
+		}
+	}
+	all["Name"] = m.Name
+	return json.Marshal(all)
 }
 
 type JobId string

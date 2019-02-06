@@ -399,18 +399,8 @@ func (a *Mixer) makeMix(labEffects *effects.LaboratoryEffects, mixes []*wtype.LH
 
 // New creates a new Mixer
 func New(cfg *GlobalMixerConfig, d driver.LiquidhandlingDriver) (*Mixer, error) {
-	userPreferences := &driver.LayoutOpt{
-		Tipboxes:  driver.Addresses(opt.DriverSpecificTipPreferences),
-		Inputs:    driver.Addresses(opt.DriverSpecificInputPreferences),
-		Outputs:   driver.Addresses(opt.DriverSpecificOutputPreferences),
-		Tipwastes: driver.Addresses(opt.DriverSpecificTipWastePreferences),
-		Washes:    driver.Addresses(opt.DriverSpecificWashPreferences),
-	}
-
 	if p, status := d.GetCapabilities(); !status.Ok() {
 		return nil, status.GetError()
-	} else if err := p.ApplyUserPreferences(userPreferences); err != nil {
-		return nil, err
 	} else {
 		p.Driver = d
 		return &Mixer{driver: d, properties: &p, cfg: cfg}, nil

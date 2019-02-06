@@ -13,6 +13,7 @@ import (
 	pb "github.com/antha-lang/antha/driver/liquidhandling/pb"
 	driver "github.com/antha-lang/antha/microArch/driver"
 	liquidhandling "github.com/antha-lang/antha/microArch/driver/liquidhandling"
+	"github.com/antha-lang/antha/workflow"
 )
 
 func toInt32(i []int) []int32 {
@@ -122,8 +123,14 @@ func (llc *LowLevelClient) GetOutputFile() ([]byte, driver.CommandStatus) {
 	}
 }
 
-func (llc *LowLevelClient) Configure(data ...[]byte) (*liquidhandling.LHProperties, driver.CommandStatus) {
-	if r, err := llc.client.Configure(context.Background(), &pb.ConfigureRequest{Data: data}); err != nil {
+func (llc *LowLevelClient) Configure(jobId workflow.JobId, jobName string, devId workflow.DeviceInstanceID, data ...[]byte) (*liquidhandling.LHProperties, driver.CommandStatus) {
+	req := &pb.ConfigureRequest{
+		JobId:            string(jobId),
+		JobName:          jobName,
+		DeviceInstanceId: string(devId),
+		Data:             data,
+	}
+	if r, err := llc.client.Configure(context.Background(), req); err != nil {
 		return nil, driver.CommandError(err.Error())
 	} else {
 		ret := &liquidhandling.LHProperties{}

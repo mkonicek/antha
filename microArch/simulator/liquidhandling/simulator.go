@@ -37,6 +37,7 @@ import (
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/simulator"
 	"github.com/antha-lang/antha/utils"
+	"github.com/antha-lang/antha/workflow"
 )
 
 const arbitraryZOffset = 4.0
@@ -1741,9 +1742,9 @@ func (self *VirtualLiquidHandler) SetPositionState(position string, state driver
 }
 
 //GetCapabilites - used
-func (self *VirtualLiquidHandler) GetCapabilities() (liquidhandling.LHProperties, driver.CommandStatus) {
+func (self *VirtualLiquidHandler) Configure(workflow.JobId, string, workflow.DeviceInstanceID, ...[]byte) (*liquidhandling.LHProperties, driver.CommandStatus) {
 	self.AddWarning("not yet implemented")
-	return liquidhandling.LHProperties{}, driver.CommandOk()
+	return nil, driver.CommandOk()
 }
 
 //GetCurrentPosition - unused

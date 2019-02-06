@@ -10,6 +10,7 @@ import (
 	"github.com/antha-lang/antha/driver/liquidhandling/pb"
 	"github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
+	"github.com/antha-lang/antha/workflow"
 )
 
 func makeCommandReply(cs driver.CommandStatus) *pb.CommandReply {
@@ -47,7 +48,8 @@ func (lhs *liquidHandlingServer) Finalize(context.Context, *pb.FinalizeRequest) 
 }
 
 func (lhs *liquidHandlingServer) Configure(ctx context.Context, req *pb.ConfigureRequest) (*pb.ConfigureReply, error) {
-	props, cs := lhs.driver.Configure(req.GetData())
+	props, cs := lhs.driver.Configure(
+		workflow.JobId(req.GetJobId()), req.GetJobName(), workflow.DeviceInstanceID(req.GetDeviceInstanceId()), req.GetData()...)
 
 	if propsJSON, err := json.Marshal(&props); err != nil {
 		return &pb.ConfigureReply{

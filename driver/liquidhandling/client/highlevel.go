@@ -13,6 +13,7 @@ import (
 	pb "github.com/antha-lang/antha/driver/liquidhandling/pb"
 	driver "github.com/antha-lang/antha/microArch/driver"
 	liquidhandling "github.com/antha-lang/antha/microArch/driver/liquidhandling"
+	"github.com/antha-lang/antha/workflow"
 )
 
 type HighLevelClient struct {
@@ -115,8 +116,14 @@ func (hlc *HighLevelClient) GetOutputFile() ([]byte, driver.CommandStatus) {
 	}
 }
 
-func (hlc *HighLevelClient) Configure(data ...[]byte) (*liquidhandling.LHProperties, driver.CommandStatus) {
-	if r, err := hlc.client.Configure(context.Background(), &pb.ConfigureRequest{Data: data}); err != nil {
+func (hlc *HighLevelClient) Configure(jobId workflow.JobId, jobName string, devId workflow.DeviceInstanceID, data ...[]byte) (*liquidhandling.LHProperties, driver.CommandStatus) {
+	req := &pb.ConfigureRequest{
+		JobId:            string(jobId),
+		JobName:          jobName,
+		DeviceInstanceId: string(devId),
+		Data:             data,
+	}
+	if r, err := hlc.client.Configure(context.Background(), req); err != nil {
 		return nil, driver.CommandError(err.Error())
 	} else {
 		ret := &liquidhandling.LHProperties{}

@@ -157,7 +157,16 @@ func (cfg Config) validate() error {
 	return utils.ErrorSlice{
 		cfg.GlobalMixer.validate(),
 		cfg.GilsonPipetMax.validate(),
+		cfg.assertOnlyOneMixer(),
 	}.Pack()
+}
+
+func (cfg Config) assertOnlyOneMixer() error {
+	// remove / revise when we get better
+	if len(cfg.GilsonPipetMax.Devices) > 1 {
+		return fmt.Errorf("Currently a maximum of one mixer can be used per workflow. You have %d configured.", len(cfg.GilsonPipetMax.Devices))
+	}
+	return nil
 }
 
 func (global GlobalMixerConfig) validate() error {

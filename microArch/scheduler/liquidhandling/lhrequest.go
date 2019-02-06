@@ -183,7 +183,7 @@ func NewLHRequest() *LHRequest {
 		PlateLookup:           make(map[string]string),
 		Stockconcs:            make(map[string]wunit.Concentration),
 		OutputIteratorFactory: columnWiseIterator,
-		CarryVolume:           wunit.NewVolume(0.5, "ul"),
+		CarryVolume:           wtype.CARRYVOL,
 		Options:               NewLHOptions(),
 	}
 	systemPolicies, _ := wtype.GetSystemLHPolicies()

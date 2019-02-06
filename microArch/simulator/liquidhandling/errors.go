@@ -269,3 +269,11 @@ func (self *CollisionError) setCollisionDescription(objectsColliding []wtype.LHO
 
 	self.collisionDescription = fmt.Sprintf("%s and %s", strings.Join(adaptorStrings, " and "), strings.Join(objectStrings, " and "))
 }
+
+func LogicalSimulatorError(msg string) LiquidhandlingError {
+	return &GenericError{
+		severity:    simulator.SeverityError,
+		message:     msg,
+		instruction: driver.NewFinalizeInstruction(),
+	}
+}

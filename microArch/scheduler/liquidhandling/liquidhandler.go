@@ -159,7 +159,9 @@ func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest
 		fmt.Printf("  %v\n", tipEstimate)
 	}
 
-	err = this.Simulate(request)
+	var simulator *simulator_lh.VirtualLiquidHandler
+	err, simulator = this.Simulate(request)
+
 	if err != nil && !request.Options.IgnorePhysicalSimulation {
 		return errors.WithMessage(err, "during physical simulation")
 	}
@@ -175,6 +177,21 @@ func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest
 	// and after
 	fmt.Println("SETUP AFTER: ")
 	OutputSetup(this.FinalProperties)
+
+	// compare the declared output to what the simulator has found
+	fmt.Println("OUTPUT COMPARISON: ")
+	errs := simulator.CompareStateToDeclaredOutput(this.FinalProperties)
+
+	if len(errs) != 0 {
+		line := ""
+		for _, err := range errs {
+			line += err.Error() + "\n"
+		}
+
+		return fmt.Errorf("%s", line)
+	}
+
+	fmt.Println("OUTPUTS OK")
 
 	return nil
 }
@@ -196,11 +213,11 @@ func (this *Liquidhandler) AddSetupInstructions(request *LHRequest) error {
 }
 
 // run the request via the physical simulator
-func (this *Liquidhandler) Simulate(request *LHRequest) error {
+func (this *Liquidhandler) Simulate(request *LHRequest) (error, *simulator_lh.VirtualLiquidHandler) {
 
 	instructions := (*request).Instructions
 	if instructions == nil {
-		return wtype.LHError(wtype.LH_ERR_OTHER, "cannot simulate request: no instructions")
+		return wtype.LHError(wtype.LH_ERR_OTHER, "cannot simulate request: no instructions"), nil
 	}
 
 	// set up the simulator with default settings
@@ -220,14 +237,14 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 
 	vlh, err := simulator_lh.NewVirtualLiquidHandler(props, settings)
 	if err != nil {
-		return err
+		return err, vlh
 	}
 
 	triS := make([]liquidhandling.TerminalRobotInstruction, 0, len(instructions))
 	for i, ins := range instructions {
 		tri, ok := ins.(liquidhandling.TerminalRobotInstruction)
 		if !ok {
-			return fmt.Errorf("instruction %d not terminal", i)
+			return fmt.Errorf("instruction %d not terminal", i), vlh
 		}
 		triS = append(triS, tri)
 
@@ -243,13 +260,13 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 	}
 
 	if err := vlh.Simulate(triS); err != nil {
-		return err
+		return err, vlh
 	}
 
 	//if there were no errors or warnings
 	numErrors := vlh.CountErrors()
 	if numErrors == 0 {
-		return nil
+		return nil, vlh
 	}
 
 	//Output all the messages from the simulator in one logger call
@@ -276,10 +293,10 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 			errMsg += "\n\t" + strings.Replace(dErr.GetStateAtError(), "\n", "\n\t", -1)
 		}
 		return errors.Errorf("%s\n\tPhysical simulation can be overridden using the \"IgnorePhysicalSimulation\" configuration option.",
-			errMsg)
+			errMsg), vlh
 	}
 
-	return nil
+	return nil, vlh
 }
 
 // run the request via the driver

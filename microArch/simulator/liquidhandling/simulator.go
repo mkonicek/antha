@@ -48,6 +48,7 @@ type VirtualLiquidHandler struct {
 	settings           *SimulatorSettings
 	lastMove           string
 	lastTarget         wtype.LHObject
+	carryVol           wunit.Volume
 }
 
 //coneRadius hardcoded radius to assume for cones
@@ -59,6 +60,8 @@ func NewVirtualLiquidHandler(props *liquidhandling.LHProperties, settings *Simul
 	vlh.errors = make([]LiquidhandlingError, 0)
 	vlh.errorHistory = make([][]LiquidhandlingError, 0)
 	vlh.instructionHistory = make([]liquidhandling.TerminalRobotInstruction, 0)
+
+	vlh.carryVol = wtype.CARRYVOL
 
 	if settings == nil {
 		vlh.settings = DefaultSimulatorSettings()
@@ -104,7 +107,6 @@ func NewVirtualLiquidHandler(props *liquidhandling.LHProperties, settings *Simul
 
 //Simulate simulate the list of instructions
 func (self *VirtualLiquidHandler) Simulate(instructions []liquidhandling.TerminalRobotInstruction) error {
-
 	self.resetState()
 
 	for _, ins := range instructions {
@@ -176,6 +178,166 @@ func (self *VirtualLiquidHandler) GetFirstError(minimumSeverity simulator.ErrorS
 	}
 
 	return nil
+}
+
+func (self *VirtualLiquidHandler) CompareStateToDeclaredOutput(lhp *liquidhandling.LHProperties) []LiquidhandlingError {
+	ret := make([]LiquidhandlingError, 0, 1)
+
+	// we only compare LHPlates
+	for pos := range lhp.Positions {
+
+		plate, ok := lhp.Plates[pos]
+
+		if !ok || plate == nil {
+			// ignore non-plates
+			continue
+		}
+
+		simLHObject := self.GetObjectAt(pos)
+
+		if simLHObject == nil {
+			ret = append(ret, LogicalSimulatorError(fmt.Sprintf("Logical Simulation: Mysterious plate disappearance at position %s: expected plate %s of type %s, got nil", pos, plate.Name(), plate.Type)))
+			continue
+		}
+
+		simPlate, ok := simLHObject.(*wtype.Plate)
+
+		if !ok {
+			ret = append(ret, LogicalSimulatorError(fmt.Sprintf("Logical Simulation: object at position %s is plate in output, %T in simulator", pos, simLHObject)))
+			continue
+		}
+
+		if simPlate.Type != plate.Type {
+			ret = append(ret, LogicalSimulatorError(fmt.Sprintf("Logical Simulation: object at position %s is plate type %s in output, %s in simulator", pos, plate.Type, simPlate.Type)))
+			// if dimensions aren't too off we might compare here but simplest to assume plate type is identical below
+			// - difficult to imagine comparison would be very meaningful
+			continue
+		}
+
+		if simPlate.Name() != plate.Name() {
+			ret = append(ret, LogicalSimulatorError(fmt.Sprintf("Logical Simulation: object at position %s is plate of type %s in both output and simulator, but is named %s in output, %s in simulator", pos, plate.Type, plate.Name(), simPlate.Name())))
+			// differently named plates are almost certain to be entirely different, no point cluttering stuff up
+			continue
+		}
+
+		for x := 0; x < plate.WellsX(); x++ {
+			for y := 0; y < plate.WellsY(); y++ {
+				outputWell := plate.Cols[x][y]
+
+				// auto allocated wells have already been screwed with
+				if outputWell.IsAutoallocated() {
+					continue
+				}
+
+				simulatorWell := simPlate.Cols[x][y]
+
+				message, ok := compareWells(outputWell, simulatorWell)
+
+				if !ok {
+					ret = append(ret, LogicalSimulatorError(message))
+				}
+			}
+		}
+
+	}
+
+	return ret
+}
+
+func equalCName(l *wtype.Liquid, cname string) bool {
+	tx := strings.Split(cname, "+")
+	n := 0
+	m, err := l.GetSubComponents()
+
+	if err != nil {
+		return l.CName == cname
+	}
+
+	if len(tx) != len(m.Components) {
+		return false
+	}
+
+	for _, t := range tx {
+		if _, ok := m.Components[t]; ok {
+			n++
+		}
+	}
+
+	return n == len(m.Components)
+}
+
+func contents(liq *wtype.Liquid) []string {
+	r := []string{}
+
+	for c, n := range liq.SubComponents.Components {
+		r = append(r, fmt.Sprintf("'%s' - '%s',", c, n.ToString()))
+	}
+
+	return r
+}
+
+func keysEqual(a, b wtype.ComponentList) error {
+	diff := ""
+
+	e := false
+	for k := range a.Components {
+		if _, ok := b.Components[k]; !ok {
+			e = true
+			diff += k + ", "
+		}
+	}
+
+	if e {
+		diff += "in output but not in simulated version. "
+	}
+
+	e = false
+
+	for k := range b.Components {
+		if _, ok := a.Components[k]; !ok {
+			e = true
+			diff += k + ", "
+		}
+	}
+
+	if e {
+		diff += "in simulated version but not in output"
+	}
+
+	if len(diff) != 0 {
+		return fmt.Errorf("components %s", diff)
+	} else {
+		return nil
+	}
+}
+
+func compareWells(wellOutput, wellSimulator *wtype.LHWell) (string, bool) {
+	ret := ""
+
+	p := wellSimulator.Plate.(*wtype.Plate)
+	plateName := p.Name()
+	plateType := p.Type
+
+	//	if !equalCName(wellOutput.WContents, wellSimulator.WContents.CName) {
+	//if err := wtype.EqualLists(wellOutput.WContents.SubComponents, wellSimulator.WContents.SubComponents); err != nil {
+
+	if err := keysEqual(wellOutput.WContents.SubComponents, wellOutput.WContents.SubComponents); err != nil {
+		return fmt.Sprintf("LogicalSimulator: Wells in plate %s (type %s) at position %s have different contents: - %s", plateName, plateType, wellOutput.Crds.FormatA1(), err.Error()), false
+	}
+
+	// additive errors require that we are a bit liberal here
+
+	tolerance := 1.0 // ul
+	v1 := wellOutput.WContents.Volume().MustInStringUnit("ul").RawValue()
+	v2 := wellSimulator.WContents.Volume().MustInStringUnit("ul").RawValue()
+	dif := math.Abs(v1 - v2)
+
+	if dif > tolerance {
+		return fmt.Sprintf("LogicalSimulator: Wells in plate %s (type %s) at position %s have same contents (%s) different volumes: output %s simulator %s (difference %f tolerance %f)", plateName, plateType, wellOutput.Crds.FormatA1(), wellOutput.WContents.CName, wellOutput.WContents.Volume(), wellSimulator.WContents.Volume(), dif, tolerance), false
+
+	}
+
+	return ret, true
 }
 
 // ------------------------------------------------------------------------------- Useful Utilities
@@ -810,7 +972,7 @@ func (self *VirtualLiquidHandler) Aspirate(volume []float64, overstroke []bool, 
 
 		if wells[i] == nil {
 			no_well = append(no_well, i)
-		} else if wells[i].CurrentWorkingVolume().LessThan(v) {
+		} else if wells[i].CurrentWorkingVolume().LessThanRounded(v, 3) {
 			self.AddErrorf("%s: well %s only contains %s working volume",
 				describe(), wells[i].GetName(), wells[i].CurrentWorkingVolume())
 		} else if fv.GreaterThan(tip.MaxVol) {
@@ -819,8 +981,8 @@ func (self *VirtualLiquidHandler) Aspirate(volume []float64, overstroke []bool, 
 		} else if c, err := wells[i].RemoveVolume(v); err != nil {
 			self.AddErrorf("%s: unexpected well error \"%s\"", describe(), err.Error())
 		} else if fv.LessThan(tip.MinVol) {
-			self.AddWarningf("%s: minimum tip volume is %s",
-				describe(), tip.MinVol)
+			self.AddWarningf("%s: (actual volume moved reduced to %s) minimum tip volume is %s",
+				describe(), fv, tip.MinVol)
 			//will get an error here, but ignore it since we're already raising a warning
 			addComponent(tip, c) //nolint
 		} else if err := addComponent(tip, c); err != nil {
@@ -1604,6 +1766,16 @@ func (self *VirtualLiquidHandler) Mix(head int, volume []float64, platetype []st
 	for _, ch := range arg.channels {
 		v := wunit.NewVolume(volume[ch], "ul")
 		tip := arg.adaptor.GetChannel(ch).GetTip()
+
+		// if well is not able to provide volume required, we must modify it or
+		// fail
+
+		if wells[ch].IsEmpty() {
+			self.AddErrorf("Mix in empty well %s %s for channel %d", summarisePlates(wells, []int{ch}), summariseWells(wells, []int{ch}), ch)
+		} else if wells[ch].WContents.Volume().LessThan(v) {
+			self.AddWarningf("Mix to %s %s requires volume %s but well only contains %s; this is automatically reduced", summarisePlates(wells, []int{ch}), summariseWells(wells, []int{ch}), v.ToString(), wells[ch].WContents.Volume())
+			v = wells[ch].WContents.Volume()
+		}
 
 		//this is pretty pointless unless the tip already contained something
 		//it also makes sure the tip.Contents().Name() is set properly

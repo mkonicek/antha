@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/inventory"
 )
 
@@ -73,7 +72,7 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 		// aggregates across components
 		//TODO --> allow setting legacy volume if necessary
 
-		tfr, err = ConvertInstructions(ctx, insset, robot, wunit.NewVolume(0.5, "ul"), prm, prm.Multi, false, policy)
+		tfr, err = ConvertInstructions(ctx, insset, robot, wtype.CARRYVOL, prm, prm.Multi, false, policy)
 		if err != nil {
 			return inss, err
 		}
@@ -120,7 +119,7 @@ func (ti TransferBlockInstruction) Generate(ctx context.Context, policy *wtype.L
 
 		insset := []*wtype.LHInstruction{ins}
 
-		tfr, err = ConvertInstructions(ctx, insset, robot, wunit.NewVolume(0.5, "ul"), prm, 1, false, policy)
+		tfr, err = ConvertInstructions(ctx, insset, robot, wtype.CARRYVOL, prm, 1, false, policy)
 
 		if err != nil {
 			return inss, err

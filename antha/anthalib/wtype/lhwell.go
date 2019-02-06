@@ -321,6 +321,12 @@ func (w *LHWell) RemoveVolume(v wunit.Volume) (*Liquid, error) {
 	}
 
 	ret := w.Contents().Dup()
+
+	// prevent well from returning too much
+	if ret.Vol < v.ConvertToString(ret.Vunit) {
+		v = ret.Volume()
+	}
+
 	ret.Vol = v.ConvertToString("ul")
 
 	w.Contents().Remove(v)

@@ -31,7 +31,7 @@ func TestUniquePlateName(t *testing.T) {
 			rq.OutputPlates = dat.OutputPlates
 
 			for v := 0; v < 100; v++ {
-				nom := getSafeInputPlateName(rq, 1)
+				nom := rq.getSafeInputPlateName(1)
 
 				if rq.HasPlateNamed(nom) {
 					t.Errorf("Plate named %s returned by getSafePlateName - already defined by request", nom)

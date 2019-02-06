@@ -44,15 +44,23 @@ func (self *InputSolutions) String() string {
 	return strings.Join(ret, "\n")
 }
 
-//GetInputs calculate the volumes required for each input solution by looking
-//through the high level liquidhandling (LH) instructions.
-//inputSolutions gives the solutions explicitly provided to the protocol, and
-//is used to calculate the shortfall, i.e how much of each must be auto-allocated
-func GetInputs(
-	orderedInstructions []*wtype.LHInstruction,
-	inputSolutions map[string][]*wtype.Liquid,
-	carryVolume wunit.Volume,
-) (*InputSolutions, error) {
+// getInputs calculate the volumes required for each input solution by looking
+// through the high level liquidhandling (LH) instructions.
+// inputSolutions gives the solutions explicitly provided to the protocol, and
+// is used to calculate the shortfall, i.e how much of each must be auto-allocated
+func (rq *LHRequest) getInputs() (*InputSolutions, error) {
+
+	orderedInstructions, err := rq.GetOrderedLHInstructions()
+	if err != nil {
+		return nil, err
+	}
+
+	//find what liquids are explicitly provided by the user
+	inputSolutions, err := rq.GetSolutionsFromInputPlates()
+	if err != nil {
+		return nil, err
+	}
+
 	inputs := make(map[string][]*wtype.Liquid)
 	volsRequired := make(map[string]wunit.Volume)
 	var allinputs []string
@@ -108,7 +116,7 @@ func GetInputs(
 
 				// we have to add the carry volume here
 				// this is roughly per transfer so should be OK
-				v2a.Add(carryVolume)
+				v2a.Add(rq.CarryVolume)
 				vol.Add(v2a)
 
 				volsRequired[component.Kind()] = vol

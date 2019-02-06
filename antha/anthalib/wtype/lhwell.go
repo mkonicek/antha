@@ -720,54 +720,6 @@ func get_vol_left(well *LHWell) float64 {
 	return vol - (Currvol + total_carry_vol + rvol)
 }
 
-func (well *LHWell) DeclareTemporary() {
-	if well != nil {
-
-		if well.Extra == nil {
-			well.Extra = make(map[string]interface{})
-		}
-
-		well.Extra["temporary"] = true
-	} else {
-		fmt.Println("Warning: Attempt to access nil well in DeclareTemporary()")
-	}
-}
-
-func (well *LHWell) DeclareNotTemporary() {
-	if well != nil {
-		if well.Extra == nil {
-			well.Extra = make(map[string]interface{})
-		}
-		well.Extra["temporary"] = false
-	} else {
-		fmt.Println("Warning: Attempt to access nil well in DeclareTemporary()")
-	}
-}
-
-func (well *LHWell) IsTemporary() bool {
-	if well != nil {
-		if well.Extra == nil {
-			return false
-		}
-
-		// user allocated wells are never temporary
-
-		if well.IsUserAllocated() {
-			return false
-		}
-
-		t, ok := well.Extra["temporary"]
-
-		if !ok || !t.(bool) {
-			return false
-		}
-		return true
-	} else {
-		fmt.Println("Warning: Attempt to access nil well in IsTemporary()")
-	}
-	return false
-}
-
 func (well *LHWell) DeclareAutoallocated() {
 	if well != nil {
 

@@ -184,6 +184,10 @@ func (lhp *LHProperties) DupKeepIDs() *LHProperties {
 }
 
 func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
+	if lhp == nil {
+		return nil
+	}
+
 	pos := make(map[string]*wtype.LHPosition, len(lhp.Positions))
 	for k, v := range lhp.Positions {
 		// be sure to copy the data
@@ -502,12 +506,65 @@ func (lhp *LHProperties) RemovePlateWithID(id string) {
 	delete(lhp.Plates, addr)
 }
 
+// UpdateID update the id of the object with currID, returning the new ID
+// and an error if no such object was found
+func (lhp *LHProperties) UpdateID(currID string) (string, error) {
+	if thing, ok := lhp.PlateLookup[currID]; !ok {
+		return "", wtype.LHErrorf(wtype.LH_ERR_DIRE, "while updating id: no object with id %s found", currID)
+	} else if addr, ok := lhp.PlateIDLookup[currID]; !ok {
+		return "", wtype.LHErrorf(wtype.LH_ERR_DIRE, "while updating id: no position found for object with id %s", currID)
+	} else if obj, ok := thing.(wtype.LHObject); !ok {
+		return "", wtype.LHErrorf(wtype.LH_ERR_DIRE, "while updating id: object with id %s not of type LHObject", currID)
+	} else {
+		// make a copy of the object with a new ID
+		newObj := obj.Duplicate(false)
+
+		// update references to the old plate and ID
+		delete(lhp.PlateLookup, currID)
+		delete(lhp.PlateIDLookup, currID)
+		lhp.PlateLookup[wtype.IDOf(newObj)] = newObj
+		lhp.PlateIDLookup[wtype.IDOf(newObj)] = addr
+		lhp.PosLookup[addr] = wtype.IDOf(newObj)
+
+		switch o := newObj.(type) {
+		case *wtype.Plate:
+			lhp.Plates[addr] = o
+			if _, ok := lhp.Wastes[addr]; ok {
+				lhp.Wastes[addr] = o
+			}
+			if _, ok := lhp.Washes[addr]; ok {
+				lhp.Washes[addr] = o
+			}
+		case *wtype.LHTipbox:
+			lhp.Tipboxes[addr] = o
+		case *wtype.LHTipwaste:
+			lhp.Tipwastes[addr] = o
+		}
+
+		return wtype.IDOf(newObj), nil
+	}
+}
+
 func (lhp *LHProperties) RemovePlateAtPosition(addr string) {
 	id := lhp.PosLookup[addr]
 	delete(lhp.PosLookup, addr)
 	delete(lhp.PlateIDLookup, id)
 	delete(lhp.PlateLookup, id)
 	delete(lhp.Plates, addr)
+}
+
+func (lhp *LHProperties) AddWaste(waste *wtype.Plate) bool {
+	for _, addr := range lhp.Preferences.Wastes {
+		if !lhp.IsEmpty(addr) {
+			continue
+		}
+
+		lhp.AddWasteTo(addr, waste)
+		return true
+	}
+
+	fmt.Println("NO WASTE SPACES LEFT")
+	return false
 }
 
 func (lhp *LHProperties) AddWasteTo(addr string, waste *wtype.Plate) bool {
@@ -836,32 +893,6 @@ func (lhp *LHProperties) RemoveComponent(plateID string, well string, volume wun
 	*/
 
 	return true
-}
-
-// RemoveUnusedAutoallocatedComponents removes any autoallocated component wells
-// that didn't end up getting used
-// In direct translation to component states that
-// means any components that are temporary _and_ autoallocated.
-func (lhp *LHProperties) RemoveUnusedAutoallocatedComponents() {
-	ids := make([]string, 0, 1)
-	for _, p := range lhp.Plates {
-		if p.IsTemporary() && p.IsAutoallocated() {
-			ids = append(ids, p.ID)
-			continue
-		}
-
-		for _, w := range p.Wellcoords {
-			if w.IsTemporary() && w.IsAutoallocated() {
-				w.Clear()
-			}
-		}
-	}
-
-	for _, id := range ids {
-		lhp.RemovePlateWithID(id)
-	}
-
-	// good
 }
 
 // ApplyUserPreferences merge in the layout preferences given by the user.

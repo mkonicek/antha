@@ -579,7 +579,7 @@ func generateRobotInstructions(t *testing.T, ctx context.Context, inss []*wtype.
 
 	//generate the low level instructions
 	tree := NewITree(tb)
-	if err := tree.Generate(ctx, pol, rbt); err != nil {
+	if _, err := tree.Build(ctx, pol, rbt); err != nil {
 		t.Fatal(err)
 	} else if ris, err := tree.Leaves(); err != nil {
 		t.Fatal(err)
@@ -796,7 +796,7 @@ func generateRobotInstructions2(ctx context.Context, inss []*wtype.LHInstruction
 
 	//generate the low level instructions
 	tree := NewITree(tb)
-	if err := tree.Generate(ctx, pol, rbt); err != nil {
+	if _, err := tree.Build(ctx, pol, rbt); err != nil {
 		panic(err)
 	} else if tri, err := tree.Leaves(); err != nil {
 		panic(err)

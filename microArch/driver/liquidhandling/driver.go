@@ -23,6 +23,7 @@
 package liquidhandling
 
 import (
+	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/workflow"
 )
@@ -43,7 +44,7 @@ type LiquidhandlingDriver interface {
 	Finalize() driver.CommandStatus
 	Message(level int, title, text string, showcancel bool) driver.CommandStatus
 	GetOutputFile() ([]byte, driver.CommandStatus)
-	Configure(workflow.JobId, string, workflow.DeviceInstanceID, ...[]byte) (*LHProperties, driver.CommandStatus)
+	Configure(workflow.JobId, string, *inventory.Inventory, workflow.DeviceInstanceID, ...[]byte) (*LHProperties, driver.CommandStatus)
 }
 
 type LowLevelLiquidhandlingDriver interface {

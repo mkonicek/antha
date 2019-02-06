@@ -1,6 +1,7 @@
 package tipboxes
 
 import (
+	"encoding/json"
 	"fmt"
 	"sync"
 
@@ -16,11 +17,16 @@ type Inventory struct {
 }
 
 func NewInventory(idGen *id.IDGenerator) *Inventory {
-	inv := &Inventory{
+	return &Inventory{
 		idGen:        idGen,
 		tipboxByType: make(map[string]*wtype.LHTipbox),
 	}
-	for _, tb := range makeTipboxes(idGen) {
+}
+
+func (inv *Inventory) LoadLibrary() {
+	inv.lock.Lock()
+	defer inv.lock.Unlock()
+	for _, tb := range makeTipboxes(inv.idGen) {
 		if _, found := inv.tipboxByType[tb.Type]; found {
 			panic(fmt.Sprintf("tipbox %s already added", tb.Type))
 		}
@@ -30,16 +36,44 @@ func NewInventory(idGen *id.IDGenerator) *Inventory {
 		inv.tipboxByType[tb.Type] = tb
 		inv.tipboxByType[tb.Tiptype.Type] = tb
 	}
-	return inv
 }
 
 func (inv *Inventory) NewTipbox(typ string) (*wtype.LHTipbox, error) {
+	if tb, err := inv.FetchTipbox(typ); err != nil {
+		return nil, err
+	} else {
+		return tb.Dup(inv.idGen), nil
+	}
+}
+
+// Same as NewTipbox but does not Dup the result. Only use for
+// read-only access to the tip box inventory.
+func (inv *Inventory) FetchTipbox(typ string) (*wtype.LHTipbox, error) {
 	inv.lock.Lock()
 	defer inv.lock.Unlock()
 
 	if tb, found := inv.tipboxByType[typ]; !found {
 		return nil, fmt.Errorf("Unknown tip box type: '%s'", typ)
 	} else {
-		return tb.Dup(inv.idGen), nil
+		return tb, nil
+	}
+}
+
+func (inv *Inventory) MarshalJSON() ([]byte, error) {
+	inv.lock.Lock()
+	defer inv.lock.Unlock()
+
+	return json.Marshal(inv.tipboxByType)
+}
+
+func (inv *Inventory) UnmarshalJSON(bs []byte) error {
+	tbt := make(map[string]*wtype.LHTipbox)
+	if err := json.Unmarshal(bs, &tbt); err != nil {
+		return err
+	} else {
+		inv.lock.Lock()
+		defer inv.lock.Unlock()
+		inv.tipboxByType = tbt
+		return nil
 	}
 }

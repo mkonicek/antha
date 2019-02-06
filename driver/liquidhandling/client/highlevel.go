@@ -11,6 +11,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	drv "github.com/antha-lang/antha/driver/antha_driver_v1"
 	pb "github.com/antha-lang/antha/driver/liquidhandling/pb"
+	"github.com/antha-lang/antha/inventory"
 	driver "github.com/antha-lang/antha/microArch/driver"
 	liquidhandling "github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/workflow"
@@ -116,10 +117,15 @@ func (hlc *HighLevelClient) GetOutputFile() ([]byte, driver.CommandStatus) {
 	}
 }
 
-func (hlc *HighLevelClient) Configure(jobId workflow.JobId, jobName string, devId workflow.DeviceInstanceID, data ...[]byte) (*liquidhandling.LHProperties, driver.CommandStatus) {
+func (hlc *HighLevelClient) Configure(jobId workflow.JobId, jobName string, inv *inventory.Inventory, devId workflow.DeviceInstanceID, data ...[]byte) (*liquidhandling.LHProperties, driver.CommandStatus) {
+	invBs, err := json.Marshal(inv)
+	if err != nil {
+		return nil, driver.CommandError(err.Error())
+	}
 	req := &pb.ConfigureRequest{
 		JobId:            string(jobId),
 		JobName:          jobName,
+		InventoryJson:    invBs,
 		DeviceInstanceId: string(devId),
 		Data:             data,
 	}

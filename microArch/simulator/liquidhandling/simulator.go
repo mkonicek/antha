@@ -32,6 +32,7 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/laboratory/effects/id"
 	"github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
@@ -1742,7 +1743,7 @@ func (self *VirtualLiquidHandler) SetPositionState(position string, state driver
 }
 
 //GetCapabilites - used
-func (self *VirtualLiquidHandler) Configure(workflow.JobId, string, workflow.DeviceInstanceID, ...[]byte) (*liquidhandling.LHProperties, driver.CommandStatus) {
+func (self *VirtualLiquidHandler) Configure(workflow.JobId, string, *inventory.Inventory, workflow.DeviceInstanceID, ...[]byte) (*liquidhandling.LHProperties, driver.CommandStatus) {
 	self.AddWarning("not yet implemented")
 	return nil, driver.CommandOk()
 }

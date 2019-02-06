@@ -8,6 +8,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	drv "github.com/antha-lang/antha/driver/antha_driver_v1"
 	"github.com/antha-lang/antha/driver/liquidhandling/pb"
+	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/workflow"
@@ -48,13 +49,17 @@ func (lhs *liquidHandlingServer) Finalize(context.Context, *pb.FinalizeRequest) 
 }
 
 func (lhs *liquidHandlingServer) Configure(ctx context.Context, req *pb.ConfigureRequest) (*pb.ConfigureReply, error) {
+	// Gross.
+	inv := &inventory.Inventory{}
+	if err := json.Unmarshal(req.GetInventoryJson(), inv); err != nil {
+		return nil, err
+	}
+
 	props, cs := lhs.driver.Configure(
-		workflow.JobId(req.GetJobId()), req.GetJobName(), workflow.DeviceInstanceID(req.GetDeviceInstanceId()), req.GetData()...)
+		workflow.JobId(req.GetJobId()), req.GetJobName(), inv, workflow.DeviceInstanceID(req.GetDeviceInstanceId()), req.GetData()...)
 
 	if propsJSON, err := json.Marshal(&props); err != nil {
-		return &pb.ConfigureReply{
-			Status: makeCommandReply(cs),
-		}, err
+		return nil, err
 	} else {
 		return &pb.ConfigureReply{
 			LHProperties_JSON: string(propsJSON),

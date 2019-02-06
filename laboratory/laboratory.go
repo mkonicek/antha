@@ -79,6 +79,7 @@ func NewLaboratoryBuilder(fh io.Reader) *LaboratoryBuilder {
 	} else {
 		labBuild.Inventory.PlateTypes.SetPlateTypes(labBuild.workflow.Inventory.PlateTypes)
 	}
+	labBuild.Inventory.TipBoxes.LoadLibrary()
 
 	flag.StringVar(&labBuild.outDir, "outdir", "", "Path to directory in which to write output files")
 	flag.Parse()

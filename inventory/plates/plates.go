@@ -1,6 +1,7 @@
 package plates
 
 import (
+	"encoding/json"
 	"fmt"
 	"sync"
 
@@ -48,5 +49,22 @@ func (inv *Inventory) NewPlateType(typ wtype.PlateTypeName) (*wtype.PlateType, e
 		return nil, fmt.Errorf("Unknown plate type: %v", typ)
 	} else {
 		return pt, nil
+	}
+}
+
+func (inv *Inventory) MarshalJSON() ([]byte, error) {
+	inv.lock.Lock()
+	defer inv.lock.Unlock()
+
+	return json.Marshal(inv.plateTypeByType)
+}
+
+func (inv *Inventory) UnmarshalJSON(bs []byte) error {
+	pts := make(wtype.PlateTypes)
+	if err := json.Unmarshal(bs, &pts); err != nil {
+		return err
+	} else {
+		inv.SetPlateTypes(pts)
+		return nil
 	}
 }

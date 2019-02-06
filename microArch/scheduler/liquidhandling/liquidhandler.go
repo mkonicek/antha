@@ -393,29 +393,6 @@ func (this *Liquidhandler) reviseVolumes(rq *LHRequest) error {
 		})
 	}
 
-	// apply evaporation
-	for _, vc := range rq.Evaps {
-		loctox := strings.Split(vc.Location, ":")
-
-		// ignore anything where the location isn't properly set
-
-		if len(loctox) < 2 {
-			continue
-		}
-
-		plateID := loctox[0]
-		wellcrds := loctox[1]
-
-		wellmap, ok := vols[plateID]
-
-		if !ok {
-			continue
-		}
-
-		vol := wellmap[wellcrds]
-		vol.Add(vc.Volume)
-	}
-
 	// now go through and set the plates up appropriately
 
 	for plateID, wellmap := range vols {

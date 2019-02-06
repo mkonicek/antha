@@ -80,7 +80,6 @@ func (is InputSorter) Less(i, j int) bool {
 //		"input_assignments" -- map with arrays of assignment strings, i.e. {tea: [plate1:A:1, plate1:A:2...] }etc.
 func (rq *LHRequest) inputPlateSetup(ctx context.Context) error {
 	st := sampletracker.FromContext(ctx)
-
 	input_platetypes := rq.InputPlatetypes
 
 	// we assume that input_plates is set if any locs are set

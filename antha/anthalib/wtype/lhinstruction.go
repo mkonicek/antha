@@ -318,6 +318,7 @@ func (insts LHInstructions) DupLiquids() {
 // AssertNoPointerReuse make certain that inputs and outputs are not shared among LHInstructions
 // as should be ensured by calling DupLiquids()
 func (insts LHInstructions) AssertNoPointerReuse() error {
+
 	seen := map[*Liquid]*LHInstruction{}
 	errs := make(utils.ErrorSlice, 0, len(insts))
 	for _, ins := range insts {

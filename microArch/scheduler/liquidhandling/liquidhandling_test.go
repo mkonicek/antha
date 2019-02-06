@@ -30,6 +30,7 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -39,6 +40,7 @@ import (
 	"github.com/antha-lang/antha/inventory/testinventory"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/sampletracker"
+	"github.com/antha-lang/antha/utils"
 )
 
 func GetContextForTest() context.Context {
@@ -896,7 +898,7 @@ func TestExecutionPlanning(t *testing.T) {
 			}),
 			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
 			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
-			ErrorPrefix:  "7 (LH_ERR_VOL) : volume error : invalid total volume for component \"water\" in instruction:",
+			ErrorPrefix:  "during solution setup: 7 (LH_ERR_VOL) : volume error : invalid total volume for component \"water\" in instruction:",
 		},
 		{
 			Name: "test dummy instruction removal",
@@ -1122,9 +1124,9 @@ func TestExecutionPlanning(t *testing.T) {
 			InputPlates:  []*wtype.LHPlate{GetPlateForTest()},
 			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
 			Assertions: Assertions{
-				NumberOfAssertion(liquidhandling.ASP, 8),                                           //no multichanneling
-				InputLayoutAssertion(map[string]string{"A1": "water"}),                             // should all be in the same well since no multichanneling
-				InitialInputVolumesAssertion(0.001, map[string]float64{"A1": (8.0+0.5)*8.0 + 5.0}), // volume plus carry per transfer plus residual
+				NumberOfAssertion(liquidhandling.ASP, 8),                                                                          //no multichanneling
+				InputLayoutAssertion(map[string]string{"A1": "water"}),                                                            // should all be in the same well since no multichanneling
+				InitialInputVolumesAssertion(0.001, map[string]float64{"A1": (8.0+wtype.GLOBALCARRYVOLUME.RawValue())*8.0 + 5.0}), // volume plus carry per transfer plus residual
 				FinalInputVolumesAssertion(0.001, map[string]float64{"A1": 5.0}),
 			},
 		},
@@ -1165,7 +1167,7 @@ func TestFixDuplicatePlateNames(t *testing.T) {
 		rq.OutputPlates[p.ID] = p
 	}
 
-	rq = fixDuplicatePlateNames(rq)
+	rq.fixDuplicatePlateNames()
 
 	found := make(map[string]int)
 
@@ -1281,4 +1283,515 @@ func getTestMix(components []*wtype.Liquid, address string) *wtype.LHInstruction
 	mix.Outputs[0].DeclareInstance()
 
 	return mix
+}
+
+type ShrinkVolumesTest struct {
+	Name               string
+	PlateLocations     map[string]*wtype.LHPlate                 // map address of plate to plate type
+	AutoAllocatedWells map[string][]string                       // list wells in plates at each location which are autoallocated
+	Instructions       []liquidhandling.TerminalRobotInstruction // the list of instructions to analyse
+	CarryVolume        wunit.Volume
+	ExpectedPlates     []string                      // list of addresses which should still contain plates after shrinkVolumes
+	ExpectedVolumes    map[string]map[string]float64 // e.g. map[string]map[string]wunit.Volume{"pos_1": {"A1": 19.2}} -> assert plate at pos_1 has 19.2ul in well A1 afterwards
+}
+
+func (test *ShrinkVolumesTest) Run(t *testing.T) {
+	t.Run(test.Name, test.run)
+}
+
+func (test *ShrinkVolumesTest) run(t *testing.T) {
+	ctx := GetContextForTest()
+
+	// first, setup the test
+
+	// build the initial state
+	initial := makeGilson(ctx)
+
+	// add the plates
+	inputPlateOrder := make([]string, 0, len(test.PlateLocations))
+	for addr, plate := range test.PlateLocations {
+		// fill each and every well
+		for _, well := range plate.Wellcoords {
+			contents := GetComponentForTest(ctx, "water", well.MaxVolume())
+			if err := well.SetContents(contents); err != nil {
+				t.Fatal(err)
+			}
+		}
+		if err := initial.AddPlateTo(addr, plate); err != nil {
+			t.Fatal(err)
+		}
+		inputPlateOrder = append(inputPlateOrder, plate.ID)
+	}
+
+	// set autoallocated flags
+	for addr, wells := range test.AutoAllocatedWells {
+		if plate, ok := initial.Plates[addr]; !ok {
+			t.Fatalf("can't set AutoAllocated: no plate at address \"%s\"", addr)
+		} else {
+			for _, wellAddr := range wells {
+				if well, ok := plate.Wellcoords[wellAddr]; !ok {
+					t.Fatalf("can't set AutoAllocated: plate type %s at %s has no well %s", plate.GetType(), addr, wellAddr)
+				} else {
+					well.DeclareAutoallocated()
+				}
+			}
+		}
+	}
+
+	// initialise the liquidhandler
+	lh := &Liquidhandler{
+		Properties: initial,
+		// nb. in reality the volumes in FinalProperties will depend on the instructions in some way.
+		// however since shrinkVolumes should only depend on the CName and well type, lets just duplicate
+		FinalProperties: initial.DupKeepIDs(),
+	}
+
+	// initialise the request
+	rq := &LHRequest{
+		Instructions:    test.Instructions,
+		InputPlateOrder: inputPlateOrder,
+	}
+
+	// secondly, do the thing
+
+	if err := lh.shrinkVolumes(rq); err != nil {
+		// errors here are caused by bad config - users shouldn't be able to cause them
+		t.Fatal(err)
+	}
+
+	// finally, run some assertions
+
+	// check that only expected plates are present in before and after
+	assert.ElementsMatchf(t, test.ExpectedPlates, plateAddresses(lh.Properties), "initial properties plate addresses:\n e: %v\n g: %v", test.ExpectedPlates, plateAddresses(lh.Properties))
+	assert.ElementsMatchf(t, test.ExpectedPlates, plateAddresses(lh.FinalProperties), "initial properties plate addresses:\n e: %v\n g: %v", test.ExpectedPlates, plateAddresses(lh.FinalProperties))
+
+	// check that autoallocated flag has not been changed
+	if err := checkAutoAllocated(test.AutoAllocatedWells, lh.Properties); err != nil {
+		t.Errorf("in initial properties: %s", err)
+	}
+	if err := checkAutoAllocated(test.AutoAllocatedWells, lh.FinalProperties); err != nil {
+		t.Errorf("in final properties: %s", err)
+	}
+
+	// initial volume assertions
+	expectedInitialVolumes := make(map[string]map[string]float64, len(lh.Properties.Plates))
+	// add assertions for non-autoallocated wells, which should remain full
+	for addr, plate := range lh.Properties.Plates {
+		plateVols := make(map[string]float64, len(plate.Wellcoords))
+		eVol := plate.Welltype.MaxVolume().MustInStringUnit("ul").RawValue()
+		for wc, well := range plate.Wellcoords {
+			if !well.IsAutoallocated() {
+				plateVols[wc] = eVol
+			}
+		}
+		expectedInitialVolumes[addr] = plateVols
+	}
+	// overwrite with user assertions
+	for addr, wellMap := range test.ExpectedVolumes {
+		for wc, vol := range wellMap {
+			expectedInitialVolumes[addr][wc] = vol
+		}
+	}
+	if err := checkVols(expectedInitialVolumes, lh.Properties); err != nil {
+		t.Errorf("initial volumes incorrect: %s", err)
+	}
+
+	// final volume assertions
+	expectedFinalVolumes := make(map[string]map[string]float64, len(lh.Properties.Plates))
+	// non-autoallocated should remain full, autoallocated should be left with residual volume only
+	for addr, plate := range lh.Properties.Plates {
+		plateVols := make(map[string]float64, len(plate.Wellcoords))
+		maxVol := plate.Welltype.MaxVolume().MustInStringUnit("ul").RawValue()
+		rVol := plate.Welltype.ResidualVolume().MustInStringUnit("ul").RawValue()
+		for wc, well := range plate.Wellcoords {
+			if well.IsAutoallocated() {
+				if expectedInitialVolumes[addr][wc] == 0.0 {
+					// an empty well stays empty
+					plateVols[wc] = 0.0
+				} else {
+					plateVols[wc] = rVol
+				}
+			} else {
+				plateVols[wc] = maxVol
+			}
+		}
+		expectedFinalVolumes[addr] = plateVols
+	}
+	if err := checkVols(expectedFinalVolumes, lh.FinalProperties); err != nil {
+		t.Errorf("final volumes incorrect: %s", err)
+	}
+
+}
+
+func plateAddresses(props *liquidhandling.LHProperties) []string {
+	ret := make([]string, 0, len(props.Plates))
+	for addr := range props.Plates {
+		ret = append(ret, addr)
+	}
+	return ret
+}
+
+func checkAutoAllocated(autoAllocated map[string][]string, props *liquidhandling.LHProperties) error {
+	errs := make(utils.ErrorSlice, 0, len(props.Plates))
+
+	for addr, plate := range props.Plates {
+		aa := make(map[string]bool, len(autoAllocated[addr]))
+		for _, wc := range autoAllocated[addr] {
+			aa[wc] = true
+		}
+
+		set := make([]string, 0, len(plate.Wellcoords))
+		unset := make([]string, 0, len(plate.Wellcoords))
+
+		for wc, well := range plate.Wellcoords {
+			if aa[wc] && !well.IsAutoallocated() {
+				unset = append(unset, wc)
+			} else if !aa[wc] && well.IsAutoallocated() {
+				set = append(set, wc)
+			}
+		}
+
+		if len(set) > 0 || len(unset) > 0 {
+			errs = append(errs, errors.Errorf("plate at %s:\n  set at: %s\n  unset at: %s", addr, strings.Join(set, ", "), strings.Join(unset, ", ")))
+		}
+	}
+
+	return errors.WithMessage(errs.Pack(), "autoallocated flag changed")
+}
+
+func checkVols(expected map[string]map[string]float64, props *liquidhandling.LHProperties) error {
+	errs := make(utils.ErrorSlice, 0, len(props.Plates))
+
+	for addr, wellMap := range expected {
+		if plate, ok := props.Plates[addr]; !ok {
+			errs = append(errs, errors.Errorf("no plate at address %s", addr))
+		} else {
+			wrong := make([]string, 0, len(plate.Wellcoords))
+			for wc, volUl := range wellMap {
+				eVol := wunit.NewVolume(volUl, "ul")
+				if well, ok := plate.Wellcoords[wc]; !ok {
+					wrong = append(wrong, fmt.Sprintf("%s: no well at location", wc))
+				} else if !eVol.EqualToTolerance(well.CurrentVolume(), 1.0e-5) {
+					wrong = append(wrong, fmt.Sprintf("%s: expected %v, got %v", wc, eVol, well.CurrentVolume()))
+				}
+			}
+
+			if len(wrong) > 0 {
+				errs = append(errs, errors.Errorf("in plate at %s:\n  %s", addr, strings.Join(wrong, "\n  ")))
+			}
+		}
+	}
+
+	return errors.WithMessage(errs.Pack(), "auto-allocated volumes changed")
+}
+
+type ShrinkVolumesTests []ShrinkVolumesTest
+
+func (tests ShrinkVolumesTests) Run(t *testing.T) {
+	for _, test := range tests {
+		test.Run(t)
+	}
+}
+
+func TestShrinkVolumes(t *testing.T) {
+	var pcrplateResidual float64
+
+	ctx := GetContextForTest()
+	if plate, err := inventory.NewPlate(ctx, "pcrplate_skirted"); err != nil {
+		t.Fatal(err)
+	} else {
+		pcrplateResidual = plate.Welltype.ResidualVolume().MustInStringUnit("ul").RawValue()
+	}
+
+	defaultCarry := 0.5
+
+	ul := func(vols ...float64) []wunit.Volume {
+		ret := make([]wunit.Volume, 0, len(vols))
+		for _, v := range vols {
+			ret = append(ret, wunit.NewVolume(v, "ul"))
+		}
+		return ret
+	}
+
+	getPlate := func(plateType, idOverride string) *wtype.LHPlate {
+		if plate, err := inventory.NewPlate(ctx, plateType); err != nil {
+			t.Fatal(err)
+			return nil
+		} else {
+			if idOverride != "" {
+				plate.ID = idOverride
+			}
+			return plate
+		}
+	}
+
+	ShrinkVolumesTests{
+		{
+			Name: "simpleSingleChannel",
+			PlateLocations: map[string]*wtype.LHPlate{
+				"position_1": getPlate("pcrplate_skirted", ""),
+			},
+			AutoAllocatedWells: map[string][]string{
+				"position_1": {"A1"},
+			},
+			Instructions: []liquidhandling.TerminalRobotInstruction{
+				&liquidhandling.MoveInstruction{
+					Pos:  []string{"position_1"},
+					Well: []string{"A1"},
+				},
+				&liquidhandling.AspirateInstruction{
+					Volume: ul(20.0),
+				},
+			},
+			CarryVolume:    wunit.NewVolume(defaultCarry, "ul"),
+			ExpectedPlates: []string{"position_1"},
+			ExpectedVolumes: map[string]map[string]float64{
+				"position_1": {"A1": 20 + pcrplateResidual + defaultCarry},
+			},
+		},
+		{
+			Name: "don't change non-autoallocated",
+			PlateLocations: map[string]*wtype.LHPlate{
+				"position_1": getPlate("pcrplate_skirted", ""),
+			},
+			AutoAllocatedWells: map[string][]string{},
+			Instructions: []liquidhandling.TerminalRobotInstruction{
+				&liquidhandling.MoveInstruction{
+					Pos:  []string{"position_1"},
+					Well: []string{"A1"},
+				},
+				&liquidhandling.AspirateInstruction{
+					Volume: ul(20.0),
+				},
+			},
+			CarryVolume:     wunit.NewVolume(defaultCarry, "ul"),
+			ExpectedPlates:  []string{"position_1"},
+			ExpectedVolumes: map[string]map[string]float64{},
+		},
+		{
+			Name: "simpleSingleChannelTransfer",
+			PlateLocations: map[string]*wtype.LHPlate{
+				"position_1": getPlate("pcrplate_skirted", "plate1"),
+			},
+			AutoAllocatedWells: map[string][]string{
+				"position_1": {"A1"},
+			},
+			Instructions: []liquidhandling.TerminalRobotInstruction{
+				&liquidhandling.TransferInstruction{
+					Transfers: []liquidhandling.MultiTransferParams{
+						{
+							Transfers: []liquidhandling.TransferParams{
+								{
+									PltFrom:  "plate1",
+									WellFrom: "A1",
+									Volume:   wunit.NewVolume(20, "ul"),
+								},
+							},
+						},
+					},
+				},
+			},
+			CarryVolume:    wunit.NewVolume(defaultCarry, "ul"),
+			ExpectedPlates: []string{"position_1"},
+			ExpectedVolumes: map[string]map[string]float64{
+				"position_1": {"A1": 20 + pcrplateResidual}, // transfers instructions don't incurr a carry
+			},
+		},
+		{
+			Name: "simpleMultiChannel",
+			PlateLocations: map[string]*wtype.LHPlate{
+				"position_1": getPlate("pcrplate_skirted", ""),
+			},
+			AutoAllocatedWells: map[string][]string{
+				"position_1": {"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"},
+			},
+			Instructions: []liquidhandling.TerminalRobotInstruction{
+				&liquidhandling.MoveInstruction{
+					Pos:  []string{"position_1", "position_1", "position_1", "position_1", "position_1", "position_1", "position_1", "position_1"},
+					Well: []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"},
+				},
+				&liquidhandling.AspirateInstruction{
+					Volume: ul(20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0),
+				},
+			},
+			CarryVolume:    wunit.NewVolume(defaultCarry, "ul"),
+			ExpectedPlates: []string{"position_1"},
+			ExpectedVolumes: map[string]map[string]float64{
+				"position_1": {
+					"A1": 20 + pcrplateResidual + defaultCarry,
+					"B1": 20 + pcrplateResidual + defaultCarry,
+					"C1": 20 + pcrplateResidual + defaultCarry,
+					"D1": 20 + pcrplateResidual + defaultCarry,
+					"E1": 20 + pcrplateResidual + defaultCarry,
+					"F1": 20 + pcrplateResidual + defaultCarry,
+					"G1": 20 + pcrplateResidual + defaultCarry,
+					"H1": 20 + pcrplateResidual + defaultCarry,
+				},
+			},
+		},
+		{
+			Name: "simpleMultiChannelTransfer",
+			PlateLocations: map[string]*wtype.LHPlate{
+				"position_1": getPlate("pcrplate_skirted", "plate1"),
+			},
+			AutoAllocatedWells: map[string][]string{
+				"position_1": {"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"},
+			},
+			Instructions: []liquidhandling.TerminalRobotInstruction{
+				&liquidhandling.TransferInstruction{
+					Transfers: []liquidhandling.MultiTransferParams{
+						{
+							Transfers: []liquidhandling.TransferParams{
+								{
+									PltFrom:  "plate1",
+									WellFrom: "A1",
+									Volume:   wunit.NewVolume(20, "ul"),
+								},
+								{
+									PltFrom:  "plate1",
+									WellFrom: "B1",
+									Volume:   wunit.NewVolume(20, "ul"),
+								},
+								{
+									PltFrom:  "plate1",
+									WellFrom: "C1",
+									Volume:   wunit.NewVolume(20, "ul"),
+								},
+								{
+									PltFrom:  "plate1",
+									WellFrom: "D1",
+									Volume:   wunit.NewVolume(20, "ul"),
+								},
+								{
+									PltFrom:  "plate1",
+									WellFrom: "E1",
+									Volume:   wunit.NewVolume(20, "ul"),
+								},
+								{
+									PltFrom:  "plate1",
+									WellFrom: "F1",
+									Volume:   wunit.NewVolume(20, "ul"),
+								},
+								{
+									PltFrom:  "plate1",
+									WellFrom: "G1",
+									Volume:   wunit.NewVolume(20, "ul"),
+								},
+								{
+									PltFrom:  "plate1",
+									WellFrom: "H1",
+									Volume:   wunit.NewVolume(20, "ul"),
+								},
+							},
+						},
+					},
+				},
+			},
+			CarryVolume:    wunit.NewVolume(defaultCarry, "ul"),
+			ExpectedPlates: []string{"position_1"},
+			ExpectedVolumes: map[string]map[string]float64{
+				"position_1": {
+					"A1": 20 + pcrplateResidual,
+					"B1": 20 + pcrplateResidual,
+					"C1": 20 + pcrplateResidual,
+					"D1": 20 + pcrplateResidual,
+					"E1": 20 + pcrplateResidual,
+					"F1": 20 + pcrplateResidual,
+					"G1": 20 + pcrplateResidual,
+					"H1": 20 + pcrplateResidual,
+				},
+			},
+		},
+		{
+			Name: "removeUnusedWells",
+			PlateLocations: map[string]*wtype.LHPlate{
+				"position_1": getPlate("pcrplate_skirted", ""),
+			},
+			AutoAllocatedWells: map[string][]string{
+				"position_1": {"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"},
+			},
+			Instructions: []liquidhandling.TerminalRobotInstruction{
+				&liquidhandling.MoveInstruction{
+					Pos:  []string{"position_1", "position_1", "position_1", "position_1"},
+					Well: []string{"A1", "B1", "C1", "D1"},
+				},
+				&liquidhandling.AspirateInstruction{
+					Volume: ul(20.0, 20.0, 20.0, 20.0),
+				},
+			},
+			CarryVolume:    wunit.NewVolume(defaultCarry, "ul"),
+			ExpectedPlates: []string{"position_1"},
+			ExpectedVolumes: map[string]map[string]float64{
+				"position_1": {
+					"A1": 20 + pcrplateResidual + defaultCarry,
+					"B1": 20 + pcrplateResidual + defaultCarry,
+					"C1": 20 + pcrplateResidual + defaultCarry,
+					"D1": 20 + pcrplateResidual + defaultCarry,
+					"E1": 0,
+					"F1": 0,
+					"G1": 0,
+					"H1": 0,
+				},
+			},
+		},
+		{
+			Name: "removeUnusedPlate",
+			PlateLocations: map[string]*wtype.LHPlate{
+				"position_1": getPlate("pcrplate_skirted", ""),
+				"position_2": getPlate("reservoir", ""),
+			},
+			AutoAllocatedWells: map[string][]string{
+				"position_1": {"A1", "B1", "C1", "D1"},
+				"position_2": {"A1"},
+			},
+			Instructions: []liquidhandling.TerminalRobotInstruction{
+				&liquidhandling.MoveInstruction{
+					Pos:  []string{"position_1", "position_1", "position_1", "position_1"},
+					Well: []string{"A1", "B1", "C1", "D1"},
+				},
+				&liquidhandling.AspirateInstruction{
+					Volume: ul(20.0, 20.0, 20.0, 20.0),
+				},
+			},
+			CarryVolume:    wunit.NewVolume(defaultCarry, "ul"),
+			ExpectedPlates: []string{"position_1"},
+			ExpectedVolumes: map[string]map[string]float64{
+				"position_1": {
+					"A1": 20 + pcrplateResidual + defaultCarry,
+					"B1": 20 + pcrplateResidual + defaultCarry,
+					"C1": 20 + pcrplateResidual + defaultCarry,
+					"D1": 20 + pcrplateResidual + defaultCarry,
+				},
+			},
+		},
+		{
+			Name: "dont remove non-auto allocated plate",
+			PlateLocations: map[string]*wtype.LHPlate{
+				"position_1": getPlate("pcrplate_skirted", ""),
+				"position_2": getPlate("reservoir", ""),
+			},
+			AutoAllocatedWells: map[string][]string{
+				"position_1": {"A1", "B1", "C1", "D1"},
+			},
+			Instructions: []liquidhandling.TerminalRobotInstruction{
+				&liquidhandling.MoveInstruction{
+					Pos:  []string{"position_1", "position_1", "position_1", "position_1"},
+					Well: []string{"A1", "B1", "C1", "D1"},
+				},
+				&liquidhandling.AspirateInstruction{
+					Volume: ul(20.0, 20.0, 20.0, 20.0),
+				},
+			},
+			CarryVolume:    wunit.NewVolume(defaultCarry, "ul"),
+			ExpectedPlates: []string{"position_1", "position_2"},
+			ExpectedVolumes: map[string]map[string]float64{
+				"position_1": {
+					"A1": 20 + pcrplateResidual + defaultCarry,
+					"B1": 20 + pcrplateResidual + defaultCarry,
+					"C1": 20 + pcrplateResidual + defaultCarry,
+					"D1": 20 + pcrplateResidual + defaultCarry,
+				},
+			},
+		},
+	}.Run(t)
 }

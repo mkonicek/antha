@@ -335,36 +335,54 @@ var Algorithms map[string]ScoringMatrix = map[string]ScoringMatrix{
 // SWAffine: the affine gap penalty Smith-Waterman
 // Alignment of the reverse complement of the query sequence will also be attempted and if the number of matches is higher the reverse alignment is returned.
 // In the resulting alignment, mismatches are represented by lower case letters, gaps represented by the GAP character "-".
-func DNA(seq1, seq2 wtype.DNASequence, alignmentMatrix ScoringMatrix) (alignment Result, err error) {
+func DNA(template, query wtype.DNASequence, alignmentMatrix ScoringMatrix) (alignment Result, err error) {
 
-	fwdResult, err := dnaFWDAlignment(seq1, seq2, alignmentMatrix)
+	fwdResult, err := DNAFwd(template, query, alignmentMatrix)
 
 	if err != nil {
 		return
 	}
 
-	revQuery := seq2
-
-	revQuery.Seq = wtype.RevComp(seq2.Seq)
-
-	revResult, err := dnaFWDAlignment(seq1, revQuery, alignmentMatrix)
+	revResult, err := DNARev(template, query, alignmentMatrix)
 
 	if err != nil {
-		return fwdResult, fmt.Errorf(fmt.Sprintf("Error with aligning reverse complement of query sequence %s: %s", seq2.Nm, err.Error()))
+		return fwdResult, fmt.Errorf(fmt.Sprintf("Error with aligning reverse complement of query sequence %s: %s", query.Nm, err.Error()))
 	}
 
-	if len(seq2.Seq) > len(seq1.Seq) {
+	if len(query.Seq) > len(template.Seq) {
 		if err == nil {
 			err = fmt.Errorf("query sequence is larger than template, this may result in an unusual alignment")
 		}
 	}
 
 	if revResult.Matches() > fwdResult.Matches() {
-		revResult = correctForRevComp(revResult)
 		return revResult, err
 	}
 
 	return fwdResult, err
+}
+
+// DNAFwd returns an alignment of a query sequence to a template sequence in the forward frame of the template, using a specified scoring algorithm
+func DNAFwd(template, query wtype.DNASequence, alignmentMatrix ScoringMatrix) (Result, error) {
+	return dnaFWDAlignment(template, query, alignmentMatrix)
+}
+
+// DNARev returns the alignment of a query sequence to a template sequence in the reverse frame of the template, using a specified scoring algorithm
+func DNARev(template, query wtype.DNASequence, alignmentMatrix ScoringMatrix) (alignment Result, err error) {
+
+	revQuery := query
+
+	revQuery.Seq = wtype.RevComp(query.Seq)
+
+	alignment, err = dnaFWDAlignment(template, revQuery, alignmentMatrix)
+
+	if err != nil {
+		return
+	}
+
+	alignment = correctForRevComp(alignment)
+
+	return
 }
 
 type scorer interface {

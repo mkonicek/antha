@@ -232,3 +232,172 @@ func TestLHPropertiesSerialisation(t *testing.T) {
 	}
 
 }
+
+type UpdateIDTest struct {
+	Name      string
+	UpdateIDs []string // list of IDs to update
+	ErrorIDs  []string // ids that should produce an error
+}
+
+func (test *UpdateIDTest) Run(t *testing.T) {
+	t.Run(test.Name, test.run)
+}
+
+func (test *UpdateIDTest) run(t *testing.T) {
+	// this test is quite involved, mainly in order to make sure that wastes
+	// and washes aren't lost, as could sometimes be the case with the previous implementation
+	//
+	// strategy is to call UpdateID on a copy, then apply the ID mapping manually to
+	// the original and assert that everything matches
+
+	// build some properties to test with
+	rbt := MakeGilsonForTest(defaultTipList())
+	ctx := testinventory.NewContext(context.Background())
+
+	// add something for each object type
+	if plt, err := inventory.NewPlate(ctx, "pcrplate_skirted"); err != nil {
+		t.Fatal(err)
+	} else {
+		plt.ID = "initial_plate_id"
+		rbt.AddInputPlate(plt)
+	}
+	if plt, err := inventory.NewPlate(ctx, "pcrplate_skirted"); err != nil {
+		t.Fatal(err)
+	} else {
+		plt.ID = "initial_wash_id"
+		rbt.AddWash(plt)
+	}
+	if plt, err := inventory.NewPlate(ctx, "pcrplate_skirted"); err != nil {
+		t.Fatal(err)
+	} else {
+		plt.ID = "initial_waste_id"
+		rbt.AddWaste(plt)
+	}
+	if tb, err := inventory.NewTipbox(ctx, "Gilson20"); err != nil {
+		t.Fatal(err)
+	} else {
+		tb.ID = "initial_tipbox_id"
+		rbt.AddTipBox(tb)
+	}
+	if tw, err := inventory.NewTipwaste(ctx, "Gilsontipwaste"); err != nil {
+		t.Fatal(err)
+	} else {
+		tw.ID = "initial_tipwaste_id"
+		rbt.AddTipWaste(tw)
+	}
+
+	// update the IDs as required
+
+	beforeToAfter := make(map[string]string, len(test.UpdateIDs))
+	for id := range rbt.PlateLookup {
+		beforeToAfter[id] = id
+	}
+
+	final := rbt.DupKeepIDs()
+	errorIDs := make([]string, 0, len(test.UpdateIDs))
+	for _, id := range test.UpdateIDs {
+		if newID, err := final.UpdateID(id); err != nil {
+			errorIDs = append(errorIDs, id)
+		} else {
+			beforeToAfter[id] = newID
+		}
+	}
+	if !assert.ElementsMatch(t, test.ErrorIDs, errorIDs) || len(test.ErrorIDs) != 0 {
+		// don't continue testing if we were expecting an error
+		return
+	}
+
+	// update all the fields
+	pl := make(map[string]interface{}, len(rbt.PlateLookup))
+	for id, obj := range rbt.PlateLookup {
+		// rely on later to actually update obj.ID, where we have an object rather than interface
+		pl[beforeToAfter[id]] = obj
+	}
+	rbt.PlateLookup = pl
+
+	posL := make(map[string]string, len(rbt.PosLookup))
+	plateIDL := make(map[string]string, len(rbt.PosLookup))
+	for addr, id := range rbt.PosLookup {
+		posL[addr] = beforeToAfter[id]
+		plateIDL[beforeToAfter[id]] = addr
+	}
+	rbt.PosLookup = posL
+	rbt.PlateIDLookup = plateIDL
+
+	plates := make(map[string]*wtype.LHPlate, len(rbt.Plates))
+	for id, plate := range rbt.Plates {
+		plate.ID = beforeToAfter[id]
+		plates[beforeToAfter[id]] = plate
+	}
+	rbt.Plates = plates
+
+	tipboxes := make(map[string]*wtype.LHTipbox, len(rbt.Tipboxes))
+	for id, tipbox := range rbt.Tipboxes {
+		tipbox.ID = beforeToAfter[id]
+		tipboxes[beforeToAfter[id]] = tipbox
+	}
+	rbt.Tipboxes = tipboxes
+
+	tipwastes := make(map[string]*wtype.LHTipwaste, len(rbt.Tipwastes))
+	for id, tipwaste := range rbt.Tipwastes {
+		tipwaste.ID = beforeToAfter[id]
+		tipwastes[beforeToAfter[id]] = tipwaste
+	}
+	rbt.Tipwastes = tipwastes
+
+	wastes := make(map[string]*wtype.LHPlate, len(rbt.Wastes))
+	for id, waste := range rbt.Wastes {
+		wastes[beforeToAfter[id]] = waste
+	}
+	rbt.Wastes = wastes
+
+	washes := make(map[string]*wtype.LHPlate, len(rbt.Washes))
+	for id, wash := range rbt.Washes {
+		washes[beforeToAfter[id]] = wash
+	}
+	rbt.Washes = washes
+
+	AssertLHPropertiesEqual(t, rbt, final, "expected LHProperties differ")
+}
+
+type UpdateIDTests []UpdateIDTest
+
+func (tests UpdateIDTests) Run(t *testing.T) {
+	for _, test := range tests {
+		test.Run(t)
+	}
+}
+
+func TestUpdateID(t *testing.T) {
+	UpdateIDTests{
+		{
+			Name:      "Plate",
+			UpdateIDs: []string{"initial_plate_id"},
+		},
+		{
+			Name:      "Tipbox",
+			UpdateIDs: []string{"initial_tipbox_id"},
+		},
+		{
+			Name:      "Tipwaste",
+			UpdateIDs: []string{"initial_tipwaste_id"},
+		},
+		{
+			Name:      "Wash",
+			UpdateIDs: []string{"initial_wash_id"},
+		},
+		{
+			Name:      "Waste",
+			UpdateIDs: []string{"initial_waste_id"},
+		},
+		{
+			Name:      "All",
+			UpdateIDs: []string{"initial_plate_id", "initial_tipbox_id", "initial_tipwaste_id", "initial_wash_id", "initial_waste_id"},
+		},
+		{
+			Name:      "unknown id",
+			UpdateIDs: []string{"nonexistent_id"},
+			ErrorIDs:  []string{"nonexistent_id"},
+		},
+	}.Run(t)
+}

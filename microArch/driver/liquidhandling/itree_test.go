@@ -2,7 +2,6 @@ package liquidhandling
 
 import (
 	"context"
-	"fmt"
 	"reflect"
 	"testing"
 
@@ -59,17 +58,13 @@ func (test *ITreeTest) Run(t *testing.T) {
 		root.AddChild(ins)
 	}
 
-	if err := root.Generate(context.Background(), nil, nil); err != nil {
+	if _, err := root.Build(context.Background(), nil, nil); err != nil {
 		t.Fatal(err)
 	}
-
-	fmt.Println(root)
-	fmt.Printf("NumLeaves = %d\n", root.NumLeaves())
 
 	if leaves, err := root.Leaves(); err != nil {
 		t.Fatal(err)
 	} else {
-		fmt.Printf("len(leaves) = %d\n", len(leaves))
 		got := make([]string, 0, len(leaves))
 		for _, leaf := range leaves {
 			got = append(got, leaf.Type().Name)

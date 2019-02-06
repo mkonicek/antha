@@ -27,9 +27,7 @@ import (
 	"fmt"
 	"math"
 	"strings"
-	"time"
 
-	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/eng"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
@@ -728,54 +726,6 @@ func get_vol_left(well *LHWell) float64 {
 	return vol - (Currvol + total_carry_vol + rvol)
 }
 
-func (well *LHWell) DeclareTemporary() {
-	if well != nil {
-
-		if well.Extra == nil {
-			well.Extra = make(map[string]interface{})
-		}
-
-		well.Extra["temporary"] = true
-	} else {
-		fmt.Println("Warning: Attempt to access nil well in DeclareTemporary()")
-	}
-}
-
-func (well *LHWell) DeclareNotTemporary() {
-	if well != nil {
-		if well.Extra == nil {
-			well.Extra = make(map[string]interface{})
-		}
-		well.Extra["temporary"] = false
-	} else {
-		fmt.Println("Warning: Attempt to access nil well in DeclareTemporary()")
-	}
-}
-
-func (well *LHWell) IsTemporary() bool {
-	if well != nil {
-		if well.Extra == nil {
-			return false
-		}
-
-		// user allocated wells are never temporary
-
-		if well.IsUserAllocated() {
-			return false
-		}
-
-		t, ok := well.Extra["temporary"]
-
-		if !ok || !t.(bool) {
-			return false
-		}
-		return true
-	} else {
-		fmt.Println("Warning: Attempt to access nil well in IsTemporary()")
-	}
-	return false
-}
-
 func (well *LHWell) DeclareAutoallocated() {
 	if well != nil {
 
@@ -816,37 +766,6 @@ func (well *LHWell) IsAutoallocated() bool {
 		fmt.Println("Warning: Attempt to access nil well in IsAutoallocated()")
 	}
 	return false
-}
-
-func (well *LHWell) Evaporate(time time.Duration, env Environment) VolumeCorrection {
-	var ret VolumeCorrection
-
-	// don't let this happen
-	if well == nil {
-		return ret
-	}
-
-	if well.IsEmpty() {
-		return ret
-	}
-
-	// we need to use the evaporation calculator
-	// we should likely decorate wells since we have different capabilities
-	// for different well types
-
-	vol := eng.EvaporationVolume(env.Temperature, "water", env.Humidity, time.Seconds(), env.MeanAirFlowVelocity, well.AreaForVolume(), env.Pressure)
-
-	r, _ := well.RemoveVolume(vol)
-
-	if r == nil {
-		well.WContents.Vol = 0.0
-	}
-
-	ret.Type = "Evaporation"
-	ret.Volume = vol.Dup()
-	ret.Location = well.WContents.Loc
-
-	return ret
 }
 
 func (w *LHWell) ResetPlateID(newID string) {

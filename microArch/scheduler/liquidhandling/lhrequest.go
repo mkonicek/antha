@@ -64,9 +64,7 @@ type LHRequest struct {
 	OutputIteratorFactory func(wtype.Addressable) wtype.AddressIterator `json:"-"`
 	InstructionChain      *wtype.IChain
 	TimeEstimate          float64
-	CarryVolume           wunit.Volume
 	InstructionSets       [][]*wtype.LHInstruction
-	Evaps                 []wtype.VolumeCorrection
 	Options               LHOptions
 	NUserPlates           int
 	OutputSort            bool
@@ -171,7 +169,6 @@ func NewLHRequest() *LHRequest {
 		PlateLookup:           make(map[string]string),
 		Stockconcs:            make(map[string]wunit.Concentration),
 		OutputIteratorFactory: columnWiseIterator,
-		CarryVolume:           wtype.CARRYVOL,
 		Options:               NewLHOptions(),
 	}
 	systemPolicies, _ := wtype.GetSystemLHPolicies()

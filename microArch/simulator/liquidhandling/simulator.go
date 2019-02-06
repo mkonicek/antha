@@ -62,7 +62,7 @@ func NewVirtualLiquidHandler(props *liquidhandling.LHProperties, settings *Simul
 	vlh.errorHistory = make([][]LiquidhandlingError, 0)
 	vlh.instructionHistory = make([]liquidhandling.TerminalRobotInstruction, 0)
 
-	vlh.carryVol = wtype.CARRYVOL
+	vlh.carryVol = wtype.GLOBALCARRYVOLUME
 
 	if settings == nil {
 		vlh.settings = DefaultSimulatorSettings()

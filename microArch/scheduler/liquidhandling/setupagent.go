@@ -168,7 +168,6 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 			if tb == nil {
 				continue
 			}
-			//	params.Tips = append(params.Tips, tb.Tips[0][0])
 			tips = append(tips, tb.Tips[0][0])
 		}
 		params.Tips = tips

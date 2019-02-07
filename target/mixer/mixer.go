@@ -138,7 +138,7 @@ func (a *Mixer) makeLhreq(ctx context.Context) (*lhreq, error) {
 			if err != nil {
 				return nil, err
 			}
-			req.Tips = append(req.Tips, t)
+			req.TipBoxes = append(req.TipBoxes, t)
 		}
 	}
 

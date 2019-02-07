@@ -26,8 +26,9 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
 	"strings"
+
+	"github.com/pkg/errors"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -44,7 +45,7 @@ type LHRequest struct {
 	BlockName             string
 	LHInstructions        wtype.LHInstructions
 	Plates                map[string]*wtype.Plate
-	Tips                  []*wtype.LHTipbox
+	TipBoxes              []*wtype.LHTipbox
 	InstructionTree       *liquidhandling.ITree
 	Instructions          []liquidhandling.TerminalRobotInstruction
 	InstructionText       string

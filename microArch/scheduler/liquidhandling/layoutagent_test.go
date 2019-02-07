@@ -2,10 +2,11 @@ package liquidhandling
 
 import (
 	"context"
+	"testing"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/inventory"
-	"testing"
 )
 
 type layoutAgentTest struct {
@@ -33,15 +34,15 @@ func (self layoutAgentTest) Run(ctx context.Context, t *testing.T) {
 		}
 	}
 
-	req, err := ImprovedLayoutAgent(ctx, self.Request, params)
+	err := ImprovedLayoutAgent(ctx, self.Request, params)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	self.TestFn(t, req)
+	self.TestFn(t, self.Request)
 
 	if self.TestPlateID {
-		for _, ins := range req.LHInstructions {
+		for _, ins := range self.Request.LHInstructions {
 			if ins.OutPlate != nil && ins.PlateID != ins.OutPlate.ID {
 				t.Errorf("MixInto ID mismatch: expected %s got %s", ins.PlateID, ins.OutPlate.ID)
 			}

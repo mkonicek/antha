@@ -395,19 +395,17 @@ func (a *Mixer) makeMix(ctx context.Context, mixes []*wtype.LHInstruction) (*tar
 		return nil, err
 	}
 
-	for _, m := range mixes {
-		if m.OutPlate != nil {
-			p, ok := r.LHRequest.OutputPlates[m.OutPlate.ID]
-			if ok && p != m.OutPlate {
-				return nil, fmt.Errorf("Mix setup error: Plate %s already requested in different state for mix.", p.ID)
-			}
-			r.LHRequest.OutputPlates[m.OutPlate.ID] = m.OutPlate
-		}
-	}
-
 	r.LHRequest.BlockID = getID(mixes)
 
 	for _, mix := range mixes {
+		if mix.OutPlate != nil {
+			p, ok := r.LHRequest.OutputPlates[mix.OutPlate.ID]
+			if ok && p != mix.OutPlate {
+				return nil, fmt.Errorf("Mix setup error: Plate %s already requested in different state for mix.", p.ID)
+			}
+			r.LHRequest.OutputPlates[mix.OutPlate.ID] = mix.OutPlate
+		}
+
 		if len(mix.Platetype) != 0 && !hasPlate(r.LHRequest.OutputPlatetypes, mix.Platetype, mix.PlateID) {
 			p, err := inventory.NewPlate(ctx, mix.Platetype)
 			if err != nil {

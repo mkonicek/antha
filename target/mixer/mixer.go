@@ -72,14 +72,6 @@ func (a *Mixer) makeLhreq(labEffects *effects.LaboratoryEffects) (*lhreq, error)
 
 	req := planner.NewLHRequest(labEffects.IDGenerator)
 
-	if set := a.cfg.CustomPolicyRuleSet; set != nil {
-		req.AddUserPolicies(set)
-	}
-
-	if err := req.PolicyManager.SetOption("USE_DRIVER_TIP_TRACKING", a.cfg.UseDriverTipTracking); err != nil {
-		return nil, err
-	}
-
 	prop := a.properties.Dup(labEffects.IDGenerator)
 	plan := planner.Init(prop)
 
@@ -145,12 +137,6 @@ func (a *Mixer) makeLhreq(labEffects *effects.LaboratoryEffects) (*lhreq, error)
 		}
 
 	}
-
-	// print instructions?
-	req.Options.PrintInstructions = a.cfg.PrintInstructions
-
-	//physical simulation override
-	req.Options.IgnorePhysicalSimulation = a.cfg.IgnorePhysicalSimulation
 
 	return &lhreq{
 		LHRequest:     req,

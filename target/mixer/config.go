@@ -7,6 +7,7 @@ import (
 	"github.com/antha-lang/antha/driver/liquidhandling/client"
 	"github.com/antha-lang/antha/inventory"
 	driver "github.com/antha-lang/antha/microArch/driver/liquidhandling"
+	planner "github.com/antha-lang/antha/microArch/scheduler/liquidhandling"
 	"github.com/antha-lang/antha/workflow"
 )
 
@@ -26,14 +27,25 @@ func (cfg *GlobalMixerConfig) Validate(inv *inventory.Inventory) error {
 	return nil
 }
 
+func (cfg *GlobalMixerConfig) ApplyToLHRequest(req *planner.LHRequest) error {
+	if cfg.CustomPolicyRuleSet != nil {
+		req.AddUserPolicies(cfg.CustomPolicyRuleSet)
+	}
+	if err := req.PolicyManager.SetOption("USE_DRIVER_TIP_TRACKING", cfg.UseDriverTipTracking); err != nil {
+		return err
+	}
+	req.Options.PrintInstructions = cfg.PrintInstructions
+	req.Options.IgnorePhysicalSimulation = cfg.IgnorePhysicalSimulation
+	return nil
+}
+
 type GilsonPipetMaxInstances map[workflow.DeviceInstanceID]*GilsonPipetMaxInstanceConfig
 
 type GilsonPipetMaxInstanceConfig struct {
 	*workflow.GilsonPipetMaxInstanceConfig
 	base       *BaseMixer
 	driver     driver.LiquidhandlingDriver
-	properties *driver.LHProperties // Prototype to create fresh properties
-
+	properties *driver.LHProperties
 }
 
 func GilsonPipetMaxInstancesFromWorkflow(wf *workflow.Workflow, inv *inventory.Inventory) (GilsonPipetMaxInstances, error) {

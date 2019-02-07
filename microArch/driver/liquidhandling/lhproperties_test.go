@@ -173,8 +173,6 @@ func AssertLHPropertiesEqual(t *testing.T, e, g *LHProperties, msg string) {
 	assert.Equalf(t, e.LHType, g.LHType, "%s: LHType", msg)
 	assert.Equalf(t, e.TipType, g.TipType, "%s: TipType", msg)
 	assert.Equalf(t, e.Preferences, g.Preferences, "%s: Peferences", msg)
-	assert.Equalf(t, e.CurrConf, g.CurrConf, "%s: CurrConf", msg)
-	assert.Equalf(t, e.Cnfvol, g.Cnfvol, "%s: Cnfvol", msg)
 	assert.Equalf(t, e.Heads, g.Heads, "%s: Heads", msg)
 	assert.Equalf(t, e.Adaptors, g.Adaptors, "%s: Adaptors", msg)
 	assert.Equalf(t, e.HeadAssemblies, g.HeadAssemblies, "%s: HeadAssemblies", msg)

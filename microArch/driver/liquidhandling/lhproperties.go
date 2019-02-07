@@ -57,8 +57,6 @@ type LHProperties struct {
 	Tips           []*wtype.LHTip          // lists each type of tip available in the current configuration
 	Preferences    *LayoutOpt              // describes where different categories of objects are to be placed on the liquid handler
 	Driver         LiquidhandlingDriver    `gotopb:"-"`
-	CurrConf       *wtype.LHChannelParameter
-	Cnfvol         []*wtype.LHChannelParameter
 }
 
 func (lhp *LHProperties) MarshalJSON() ([]byte, error) {
@@ -302,12 +300,6 @@ func (lhp *LHProperties) dup(keepIDs bool) *LHProperties {
 	}
 
 	r.Preferences = lhp.Preferences.Dup()
-
-	if lhp.CurrConf != nil {
-		r.CurrConf = lhp.CurrConf.Dup()
-	}
-
-	copy(r.Cnfvol, lhp.Cnfvol)
 
 	// copy the driver
 	r.Driver = lhp.Driver

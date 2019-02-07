@@ -195,7 +195,7 @@ func configureTransferRequestForZTest(policyName string, transferVol wunit.Volum
 	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
 	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
 
-	rq.Tips = tipBoxes
+	rq.TipBoxes = tipBoxes
 
 	if err := lh.Plan(ctx, rq); err != nil {
 		return rq, fmt.Errorf("Got an error planning with no inputs: %s", err.Error())
@@ -245,7 +245,7 @@ func configureTransferRequestMutliSamplesTest(policyName string, samples ...*wty
 	inPlate := GetPlateForTest()
 	rq.InputPlatetypes = append(rq.InputPlatetypes, inPlate)
 	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
-	rq.Tips = tipBoxes
+	rq.TipBoxes = tipBoxes
 
 	it := wtype.NewAddressIterator(inPlate, wtype.RowWise, wtype.TopToBottom, wtype.LeftToRight, false)
 
@@ -485,7 +485,7 @@ func makeMultiTestRequest() (multiRq *LHRequest, err error) {
 	multiRq.InputPlatetypes = append(multiRq.InputPlatetypes, GetPlateForTest())
 	multiRq.OutputPlatetypes = append(multiRq.OutputPlatetypes, GetPlateForTest())
 
-	multiRq.Tips = tipBoxes
+	multiRq.TipBoxes = tipBoxes
 
 	if err := lh.Plan(ctx, multiRq); err != nil {
 		return multiRq, fmt.Errorf("Got an error planning with no inputs: %s", err)
@@ -523,7 +523,7 @@ func makeSingleTestRequest() (singleRq *LHRequest, err error) {
 	singleRq.InputPlatetypes = append(singleRq.InputPlatetypes, GetPlateForTest())
 	singleRq.OutputPlatetypes = append(singleRq.OutputPlatetypes, GetPlateForTest())
 
-	singleRq.Tips = tipBoxes
+	singleRq.TipBoxes = tipBoxes
 
 	if err := lh.Plan(ctx, singleRq); err != nil {
 		return singleRq, fmt.Errorf("Got an error planning with no inputs: %s", err)
@@ -644,7 +644,7 @@ func TestTipOverridePositive(t *testing.T) {
 	}
 	tpz = append(tpz, tp)
 
-	rq.Tips = tpz
+	rq.TipBoxes = tpz
 
 	if err := lh.Plan(ctx, rq); err != nil {
 		t.Fatalf("Got an error planning with no inputs: %s", err)
@@ -666,7 +666,7 @@ func TestTipOverrideNegative(t *testing.T) {
 	}
 	tpz = append(tpz, tp)
 
-	rq.Tips = tpz
+	rq.TipBoxes = tpz
 
 	err = lh.Plan(ctx, rq)
 

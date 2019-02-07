@@ -25,8 +25,9 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
 	"strings"
+
+	"github.com/pkg/errors"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/inventory"
@@ -157,21 +158,19 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 	}
 
 	// tips
-	tips := request.Tips
 
 	// just need to set the tip types
 	// these should be distinct... we should check really
 	// ...eventually
-	if len(tips) != 0 {
-		tipz := make([]*wtype.LHTip, len(tips))
-		for i, tb := range tips {
+	if len(request.TipBoxes) != 0 {
+		tips := make([]*wtype.LHTip, 0, len(request.TipBoxes))
+		for _, tb := range request.TipBoxes {
 			if tb == nil {
 				continue
 			}
-			//	params.Tips = append(params.Tips, tb.Tips[0][0])
-			tipz[i] = tb.Tips[0][0]
+			tips = append(tips, tb.Tips[0][0])
 		}
-		params.Tips = tipz
+		params.Tips = tips
 	}
 
 	setup := make(map[string]interface{})

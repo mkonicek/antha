@@ -295,8 +295,24 @@ func MegaBlastN(query string) (hits []blast.Hit, err error) {
 	return
 }
 
-func SimpleBlast(query string) (o *blast.Output, err error) {
-	r, err := blast.Put(query, &putparams, tool, email)
+// SimpleBlast performs a blast call with pre-set query parameters
+func SimpleBlast(query string) (*blast.Output, error) {
+	return BLAST(query, &putparams)
+}
+
+// BLAST performs a blast call for specified query parameters
+// For parameters see https://github.com/biogo/ncbi/blob/master/blast/blast.go
+// For documentation on settings see https://ncbi.github.io/blast-cloud/dev/api.html
+// Commonly used parameters include
+/*
+   Program       string      BLAST program to use (e.g. "blastp", "blastn")
+   Database      string      Target database name (e.g. "nr", "refseq_rna", "pdb")
+   EntrezQuery   string      Entrez results filter (e.g. "Homo sapiens[organism]")
+   Expect        *float64    Expect threshold
+   HitListSize   int         Number of target sequences to return
+*/
+func BLAST(query string, p *blast.PutParameters) (o *blast.Output, err error) {
+	r, err := blast.Put(query, p, tool, email)
 	fmt.Println("RID=", r.String())
 	fmt.Println("Submitting request to BLAST server, please wait")
 	//var o *Output

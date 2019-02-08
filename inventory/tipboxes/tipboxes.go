@@ -1,7 +1,6 @@
 package tipboxes
 
 import (
-	"encoding/json"
 	"fmt"
 	"sync"
 
@@ -56,24 +55,5 @@ func (inv *Inventory) FetchTipbox(typ string) (*wtype.LHTipbox, error) {
 		return nil, fmt.Errorf("Unknown tip box type: '%s'", typ)
 	} else {
 		return tb, nil
-	}
-}
-
-func (inv *Inventory) MarshalJSON() ([]byte, error) {
-	inv.lock.Lock()
-	defer inv.lock.Unlock()
-
-	return json.Marshal(inv.tipboxByType)
-}
-
-func (inv *Inventory) UnmarshalJSON(bs []byte) error {
-	tbt := make(map[string]*wtype.LHTipbox)
-	if err := json.Unmarshal(bs, &tbt); err != nil {
-		return err
-	} else {
-		inv.lock.Lock()
-		defer inv.lock.Unlock()
-		inv.tipboxByType = tbt
-		return nil
 	}
 }

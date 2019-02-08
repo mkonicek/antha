@@ -1,10 +1,11 @@
-package liquidhandling
+package workflow
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/antha-lang/antha/utils"
 	"github.com/pkg/errors"
-	"strings"
 )
 
 // Addresses an ordered list of names of positions within a liquidhandling device, as defined by the plugin for that device

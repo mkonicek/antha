@@ -31,6 +31,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/laboratory/effects/id"
+	"github.com/antha-lang/antha/workflow"
 )
 
 // describes a liquid handler, its capabilities and current state
@@ -54,7 +55,7 @@ type LHProperties struct {
 	Adaptors       []*wtype.LHAdaptor      // lists every adaptor (whether loaded or not) that is available for the machine
 	HeadAssemblies []*wtype.LHHeadAssembly // describes how each loaded head and adaptor is loaded into the machine
 	Tips           []*wtype.LHTip          // lists each type of tip available in the current configuration
-	Preferences    *LayoutOpt              // describes where different categories of objects are to be placed on the liquid handler
+	Preferences    *workflow.LayoutOpt     // describes where different categories of objects are to be placed on the liquid handler
 	Driver         LiquidhandlingDriver    `gotopb:"-"`
 }
 
@@ -892,10 +893,10 @@ func (lhp *LHProperties) RemoveComponent(idGen *id.IDGenerator, plateID string, 
 // which are don't exist in this liquid handler are silently ignored
 // such that passing a Gilson address e.g. "position_1" to a Hamilton driver has
 // no effect.
-func (lhp *LHProperties) ApplyUserPreferences(p *LayoutOpt) error {
+func (lhp *LHProperties) ApplyUserPreferences(p *workflow.LayoutOpt) error {
 	// ignore addresses that don't exist in this liquidhandler
-	filter := func(addresses Addresses) Addresses {
-		ret := make(Addresses, 0, len(addresses))
+	filter := func(addresses workflow.Addresses) workflow.Addresses {
+		ret := make(workflow.Addresses, 0, len(addresses))
 		for _, a := range addresses {
 			if lhp.Exists(a) {
 				ret = append(ret, a)
@@ -903,7 +904,7 @@ func (lhp *LHProperties) ApplyUserPreferences(p *LayoutOpt) error {
 		}
 		return ret
 	}
-	q := &LayoutOpt{
+	q := &workflow.LayoutOpt{
 		Tipboxes:  filter(p.Tipboxes),
 		Inputs:    filter(p.Inputs),
 		Outputs:   filter(p.Outputs),

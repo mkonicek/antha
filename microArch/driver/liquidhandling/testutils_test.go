@@ -8,6 +8,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/testinventory"
+	"github.com/antha-lang/antha/workflow"
 )
 
 const (
@@ -85,7 +86,7 @@ func makeGilsonForTest(ctx context.Context, tipList []string) *LHProperties {
 	// get tips permissible from the factory
 	SetUpTipsFor(ctx, lhp, tipList)
 
-	lhp.Preferences = &LayoutOpt{
+	lhp.Preferences = &workflow.LayoutOpt{
 		Tipboxes:  Addresses{"position_2", "position_3", "position_6", "position_9", "position_8", "position_5", "position_4", "position_7"},
 		Inputs:    Addresses{"position_4", "position_5", "position_6", "position_9", "position_8", "position_3"},
 		Outputs:   Addresses{"position_8", "position_9", "position_6", "position_5", "position_3", "position_1"},

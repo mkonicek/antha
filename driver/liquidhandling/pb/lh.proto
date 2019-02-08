@@ -47,8 +47,6 @@ message ConfigureRequest {
     string job_id = 1;
     string job_name = 2;
     string device_instance_id = 3;
-    bytes inventory_json = 4;
-    repeated bytes data = 5;
 }
 
 message GetOutputFileRequest {}

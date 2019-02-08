@@ -211,9 +211,12 @@ func (lhr *LHRequest) NewComponentsAdded() bool {
 	return len(lhr.InputSolutions.VolumesWanting) != 0
 }
 
-func (lhr *LHRequest) AddUserPlate(idGen *id.IDGenerator, p *wtype.Plate) {
-	// impose sanity
+func (lhr *LHRequest) AddUserPlate(idGen *id.IDGenerator, p *wtype.Plate) error {
+	if _, found := lhr.InputPlates[p.ID]; found {
+		return fmt.Errorf("Plate %q already added", p.ID)
+	}
 
+	// impose sanity
 	if p.PlateName == "" {
 		p.PlateName = lhr.getSafePlateName("user_plate", "_", lhr.NUserPlates+1)
 		lhr.NUserPlates += 1
@@ -222,6 +225,7 @@ func (lhr *LHRequest) AddUserPlate(idGen *id.IDGenerator, p *wtype.Plate) {
 	p.MarkNonEmptyWellsUserAllocated(idGen)
 
 	lhr.InputPlates[p.ID] = p
+	return nil
 }
 
 func (lhr *LHRequest) GetPolicyManager() *LHPolicyManager {
@@ -266,6 +270,8 @@ func (mgr *LHPolicyManager) MergePolicies(protocolpolicies *wtype.LHPolicyRuleSe
 	ret.MergeWith(protocolpolicies)
 	return ret
 }
+
+func (mgr *LHPolicyManager) 
 
 // HasPlateNamed checks if the request already contains a plate with the specified name
 func (request *LHRequest) HasPlateNamed(name string) bool {

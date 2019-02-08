@@ -170,31 +170,64 @@ func (cfg Config) assertOnlyOneMixer() error {
 }
 
 func (global GlobalMixerConfig) validate() error {
-	// Again, we cannot validate plates and plate types until we have a
+	for idx, p := range global.InputPlates {
+		if p == nil {
+			return fmt.Errorf("GlobalMixer contains illegal nil input plate at index %d", idx)
+		}
+	}
+	for idx, p := range global.OutputPlates {
+		if p == nil {
+			return fmt.Errorf("GlobalMixer contains illegal nil Output plate at index %d", idx)
+		}
+	}
+	// We cannot validate plates and plate types until we have a
 	// working inventory system.
 	return nil
 }
 
-func (gilson GilsonPipetMaxConfig) validate() error {
-	if err := gilson.Defaults.validate("Defaults"); err != nil {
+func (gilsons GilsonPipetMaxConfig) validate() error {
+	if err := gilsons.Defaults.validate("Defaults"); err != nil {
 		return err
 	}
-	for id, cfg := range gilson.Devices {
-		if err := cfg.validate(id); err != nil {
+	for id, inst := range gilsons.Devices {
+		if err := inst.validate(id); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (gdc *GenericDeviceConfig) validate(id DeviceInstanceID) error {
-	if gdc.Connection != "" {
-		if _, _, err := net.SplitHostPort(gdc.Connection); err != nil {
-			return fmt.Errorf("Cannot parse connection string in device config for %v - '%s': %v", id, gdc.Connection, err)
+func (inst *GilsonPipetMaxInstanceConfig) validate(id DeviceInstanceID) error {
+	if len(id) == 0 {
+		return errors.New("A device may not have an empty name")
+	}
+	if inst.Connection != "" {
+		if _, _, err := net.SplitHostPort(inst.Connection); err != nil {
+			return fmt.Errorf("Cannot parse connection string in device config for %v - '%s': %v", id, inst.Connection, err)
 		}
 	}
-	// We cannot validate plates at this point because the real plate
-	// type inventory may not be loaded. So that gets validated later
-	// on.
+	// We cannot validate plates or tipes at this point because the
+	// inventory may not be loaded. So those get validated later on.
+	return inst.LayoutPreferences.validate()
+}
+
+func (lo *LayoutOpt) validate() error {
+	if lo == nil {
+		return nil
+	}
+	return utils.ErrorSlice{
+		lo.Tipboxes.validate("Tipboxes"),
+		lo.Inputs.validate("Inputs"),
+		lo.Outputs.validate("Outputs"),
+		lo.Tipwastes.validate("Tipwastes"),
+		lo.Wastes.validate("Wastes"),
+		lo.Washes.validate("Washes"),
+	}.Pack()
+}
+
+func (a Addresses) validate(layoutOptionName string) error {
+	if len(a.Map()) != len(a) {
+		return fmt.Errorf("Layout option field %s has duplicate addresses: %v", layoutOptionName, a)
+	}
 	return nil
 }

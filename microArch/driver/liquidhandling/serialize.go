@@ -2,6 +2,7 @@ package liquidhandling
 
 import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/workflow"
 )
 
 type sProperties struct {
@@ -19,7 +20,7 @@ type sProperties struct {
 	Adaptors       []*wtype.LHAdaptor                // lists every adaptor (whether loaded or not) that is available for the machine
 	HeadAssemblies []*wtype.SerializableHeadAssembly // describes how each loaded head and adaptor is loaded into the machine
 	Tips           []*wtype.LHTip
-	Preferences    *LayoutOpt
+	Preferences    *workflow.LayoutOpt
 }
 
 func newSProperties(lhp *LHProperties) *sProperties {

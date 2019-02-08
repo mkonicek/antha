@@ -49,8 +49,7 @@ func (self *InputSolutions) String() string {
 // through the high level liquidhandling (LH) instructions.
 // inputSolutions gives the solutions explicitly provided to the protocol, and
 // is used to calculate the shortfall, i.e how much of each must be auto-allocated
-func (rq *LHRequest) getInputs(idGen *id.IDGenerator) (*InputSolutions, error) {
-
+func (rq *LHRequest) getInputs(idGen *id.IDGenerator, carryVolume wunit.Volume) (*InputSolutions, error) {
 	orderedInstructions, err := rq.GetOrderedLHInstructions()
 	if err != nil {
 		return nil, err
@@ -117,7 +116,7 @@ func (rq *LHRequest) getInputs(idGen *id.IDGenerator) (*InputSolutions, error) {
 
 				// we have to add the carry volume here
 				// this is roughly per transfer so should be OK
-				v2a.Add(rq.CarryVolume)
+				v2a.Add(carryVolume)
 				vol.Add(v2a)
 
 				volsRequired[component.Kind()] = vol

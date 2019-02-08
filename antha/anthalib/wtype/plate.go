@@ -30,7 +30,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
@@ -747,31 +746,17 @@ func (p *Plate) RemoveComponent(idGen *id.IDGenerator, well string, vol wunit.Vo
 	return cmp
 }
 
-func (p *Plate) DeclareTemporary() {
-	for _, w := range p.Wellcoords {
-		w.DeclareTemporary()
-	}
-}
-
-func (p *Plate) IsTemporary() bool {
-	for _, w := range p.Wellcoords {
-		if !w.IsTemporary() {
-			return false
-		}
-	}
-
-	return true
-}
-
 func (p *Plate) DeclareAutoallocated() {
 	for _, w := range p.Wellcoords {
 		w.DeclareAutoallocated()
 	}
 }
 
-func (p *Plate) IsAutoallocated() bool {
+// AllAutoallocated returns true if the plate only contains liquids which were autoallocated
+// i.e. nothing user-defined
+func (p *Plate) AllAutoallocated(idGen *id.IDGenerator) bool {
 	for _, w := range p.Wellcoords {
-		if !w.IsAutoallocated() {
+		if !w.IsAutoallocated() && !w.IsEmpty(idGen) {
 			return false
 		}
 	}
@@ -1022,22 +1007,6 @@ func (self *Plate) GetPointIntersections(point Coordinates) []LHObject {
 
 	if len(ret) == 0 && self.Bounds.IntersectsPoint(point) {
 		ret = append(ret, self)
-	}
-	return ret
-}
-
-func (p *Plate) Evaporate(idGen *id.IDGenerator, time time.Duration, env Environment) []VolumeCorrection {
-	ret := make([]VolumeCorrection, 0, 10)
-	if p == nil {
-		return ret
-	}
-	for _, w := range p.Wellcoords {
-		if !w.IsEmpty(idGen) {
-			vc := w.Evaporate(idGen, time, env)
-			if vc.Type != "" {
-				ret = append(ret, vc)
-			}
-		}
 	}
 	return ret
 }

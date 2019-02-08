@@ -19,9 +19,7 @@ type sProperties struct {
 	Adaptors       []*wtype.LHAdaptor                // lists every adaptor (whether loaded or not) that is available for the machine
 	HeadAssemblies []*wtype.SerializableHeadAssembly // describes how each loaded head and adaptor is loaded into the machine
 	Tips           []*wtype.LHTip
-	CurrConf       *wtype.LHChannelParameter
 	Preferences    *LayoutOpt
-	Cnfvol         []*wtype.LHChannelParameter
 }
 
 func newSProperties(lhp *LHProperties) *sProperties {
@@ -39,8 +37,6 @@ func newSProperties(lhp *LHProperties) *sProperties {
 		Adaptors:    lhp.Adaptors,
 		Tips:        lhp.Tips,
 		Preferences: lhp.Preferences,
-		CurrConf:    lhp.CurrConf,
-		Cnfvol:      lhp.Cnfvol,
 	}
 
 	headIndices := make(map[*wtype.LHHead]int, len(lhp.Heads))
@@ -78,8 +74,6 @@ func (slhp *sProperties) Fill(lhp *LHProperties) {
 	lhp.Adaptors = slhp.Adaptors
 	lhp.Tips = slhp.Tips
 	lhp.Preferences = slhp.Preferences
-	lhp.CurrConf = slhp.CurrConf
-	lhp.Cnfvol = slhp.Cnfvol
 
 	lhp.Heads = make([]*wtype.LHHead, 0, len(slhp.Heads))
 	for _, shead := range slhp.Heads {

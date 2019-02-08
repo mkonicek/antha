@@ -1,7 +1,5 @@
 package liquidhandling
 
-// func (lhp *LHProperties) GetComponents(cmps []*wtype.Liquid, carryvol wunit.Volume, ori, multi int, independent, legacyVolume bool) (plateIDs, wellCoords [][]string, vols [][]wunit.Volume, err error)
-
 import (
 	"fmt"
 
@@ -32,7 +30,6 @@ func (h ComponentVolumeHash) Dup() ComponentVolumeHash {
 
 type GetComponentsOptions struct {
 	Cmps            wtype.ComponentVector
-	Carryvol        wunit.Volume
 	Ori             wtype.ChannelOrientation
 	Multi           int
 	Independent     bool
@@ -101,7 +98,7 @@ func getPlateIterator(lhp *wtype.Plate, ori wtype.ChannelOrientation, multi int)
 	}
 }
 
-func (lhp *LHProperties) GetSourcesFor(idGen *id.IDGenerator, cmps wtype.ComponentVector, ori wtype.ChannelOrientation, multi int, minPossibleVolume wunit.Volume, ignoreInstances bool, carryVol wunit.Volume) []wtype.ComponentVector {
+func (lhp *LHProperties) GetSourcesFor(idGen *id.IDGenerator, cmps wtype.ComponentVector, ori wtype.ChannelOrientation, multi int, minPossibleVolume wunit.Volume, ignoreInstances bool) []wtype.ComponentVector {
 	ret := make([]wtype.ComponentVector, 0, 1)
 
 	for _, ipref := range lhp.OrderedMergedPlatePrefs() {
@@ -260,7 +257,7 @@ func (lhp *LHProperties) GetComponents(idGen *id.IDGenerator, opt GetComponentsO
 	rep := newReply()
 	// build list of possible sources -- this is a list of ComponentVectors
 
-	srcs := lhp.GetSourcesFor(idGen, opt.Cmps, opt.Ori, opt.Multi, lhp.MinPossibleVolume(), opt.IgnoreInstances, opt.Carryvol)
+	srcs := lhp.GetSourcesFor(idGen, opt.Cmps, opt.Ori, opt.Multi, lhp.MinPossibleVolume(), opt.IgnoreInstances)
 
 	// keep taking chunks until either we get everything or run out
 	// optimization options apply here as parameters for the next level down
@@ -321,7 +318,7 @@ func (lhp *LHProperties) GetComponents(idGen *id.IDGenerator, opt GetComponentsO
 		bestMatch = makeMatchSafe(currCmps, bestMatch, lhp.MinPossibleVolume())
 
 		// update sources
-		updateSources(bestSrc, bestMatch, opt.Carryvol, lhp.MinPossibleVolume())
+		updateSources(bestSrc, bestMatch, lhp.CarryVolume(), lhp.MinPossibleVolume())
 		lastCmps = currCmps.Dup(idGen)
 		updateDests(currCmps, bestMatch)
 		rep.Transfers = append(rep.Transfers, matchToParallelTransfer(bestMatch))

@@ -131,7 +131,7 @@ func (self *PolicyTest) run(t *testing.T) {
 	}
 
 	tree := NewITree(self.Instruction)
-	if err := tree.Generate(ctx, policySet, self.Robot); err != nil {
+	if _, err := tree.Build(ctx, policySet, self.Robot); err != nil {
 		if self.Error == "" {
 			err = errors.Wrapf(err, "%s: unexpected error", self.Name)
 			t.Error(err)

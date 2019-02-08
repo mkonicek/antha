@@ -33,7 +33,6 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/laboratory/effects/id"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
@@ -295,273 +294,186 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 	return nil
 }
 
-func (this *Liquidhandler) reviseVolumes(idGen *id.IDGenerator, rq *LHRequest) error {
-	// XXX -- HARD CODE 8 here
-	lastPlate := make([]string, 8)
-	lastWell := make([]string, 8)
+// shrinkVolumes reduce autoallocated volumes to the amount we actually need, removing
+// any unused wells or plates
+func (this *Liquidhandler) shrinkVolumes(idGen *id.IDGenerator, rq *LHRequest) error {
 
-	vols := make(map[string]map[string]wunit.Volume)
-
-	rawvols := make(map[string]map[string]wunit.Volume)
+	// first, iterate through the generated instructions and count up how much
+	// of each autoallocated liquid was actually used
+	var lastWells []*wtype.LHWell
+	vols := make(map[*wtype.LHWell]wunit.Volume)
+	rawVols := make(map[*wtype.LHWell]wunit.Volume)
+	useVol := func(well *wtype.LHWell, vol wunit.Volume, carry wunit.Volume) {
+		v, ok := vols[well]
+		r := rawVols[well]
+		if !ok {
+			v = wunit.NewVolume(0.0, "ul")
+			r = wunit.NewVolume(0.0, "ul")
+			vols[well] = v
+			rawVols[well] = r
+		}
+		v.Add(vol)
+		v.Add(carry)
+		r.Add(vol)
+	}
+	usedPlates := make(map[*wtype.LHPlate]bool)
 
 	for _, ins := range rq.Instructions {
 		ins.Visit(liquidhandling.RobotInstructionBaseVisitor{
 			HandleMove: func(ins *liquidhandling.MoveInstruction) {
-				lastPlate = make([]string, 8)
-
-				for i, p := range ins.Pos {
-					lastPlate[i] = this.Properties.PosLookup[p]
+				if len(ins.Pos) != len(lastWells) {
+					lastWells = make([]*wtype.LHWell, len(ins.Pos))
 				}
-
-				lastWell = ins.Well
+				for i, position := range ins.Pos {
+					plateID := this.Properties.PosLookup[position]
+					if plate, ok := this.Properties.PlateLookup[plateID].(*wtype.LHPlate); ok {
+						usedPlates[plate] = true
+						lastWells[i] = plate.Wellcoords[ins.Well[i]]
+					}
+				}
 			},
 			HandleAspirate: func(ins *liquidhandling.AspirateInstruction) {
-				for i := range lastPlate {
-					if i >= len(lastWell) {
-						break
+				for i, lastWell := range lastWells {
+					if lastWell.IsAutoallocated() && i < len(ins.Volume) {
+						useVol(lastWell, ins.Volume[i], this.Properties.CarryVolume())
 					}
-					lp := lastPlate[i]
-					lw := lastWell[i]
-
-					if lp == "" {
-						continue
-					}
-
-					ppp := this.Properties.PlateLookup[lp].(*wtype.Plate)
-
-					lwl := ppp.Wellcoords[lw]
-
-					if !lwl.IsAutoallocated() {
-						continue
-					}
-
-					_, ok := vols[lp]
-
-					if !ok {
-						vols[lp] = make(map[string]wunit.Volume)
-						rawvols[lp] = make(map[string]wunit.Volume)
-					}
-
-					v, ok := vols[lp][lw]
-
-					if !ok {
-						v = wunit.NewVolume(0.0, "ul")
-						vols[lp][lw] = v
-						rawvols[lp][lw] = v.Dup()
-					}
-					//v.Add(ins.Volume[i])
-
-					insvols := ins.Volume
-					v.Add(insvols[i])
-					v.Add(rq.CarryVolume)
-
-					rawvols[lp][lw].Add(insvols[i])
 				}
 			},
 			HandleTransfer: func(ins *liquidhandling.TransferInstruction) {
 				for _, mtf := range ins.Transfers {
 					for _, tf := range mtf.Transfers {
-						lpos, lw := tf.PltFrom, tf.WellFrom
-
-						lp := this.Properties.PosLookup[lpos]
-						ppp := this.Properties.PlateLookup[lp].(*wtype.Plate)
-						lwl := ppp.Wellcoords[lw]
-
-						if !lwl.IsAutoallocated() {
-							continue
+						if plate, ok := this.Properties.PlateLookup[tf.PltFrom].(*wtype.LHPlate); ok {
+							usedPlates[plate] = true
+							if well := plate.Wellcoords[tf.WellFrom]; well.IsAutoallocated() {
+								useVol(well, tf.Volume, wunit.ZeroVolume())
+							}
 						}
-
-						_, ok := vols[lp]
-
-						if !ok {
-							vols[lp] = make(map[string]wunit.Volume)
-						}
-
-						v, ok := vols[lp][lw]
-
-						if !ok {
-							v = wunit.NewVolume(0.0, "ul")
-							vols[lp][lw] = v
-						}
-						//v.Add(ins.Volume[i])
-
-						v.Add(tf.Volume)
 					}
 				}
 			},
 		})
 	}
 
-	// apply evaporation
-	for _, vc := range rq.Evaps {
-		loctox := strings.Split(vc.Location, ":")
-
-		// ignore anything where the location isn't properly set
-
-		if len(loctox) < 2 {
-			continue
+	getFinalWell := func(initialWell *wtype.LHWell) (*wtype.LHWell, error) {
+		// assumption: plate locations don't change
+		plateID := wtype.IDOf(initialWell.GetParent())
+		if platePos, ok := this.Properties.PlateIDLookup[plateID]; !ok {
+			return nil, errors.Errorf("couldn't find position of plate %s", plateID)
+		} else if finalPlate, ok := this.FinalProperties.Plates[platePos]; !ok {
+			return nil, errors.Errorf("couldn't find final plate for initial plate %s at %s", plateID, platePos)
+		} else if finalWell, ok := finalPlate.WellAt(initialWell.Crds); !ok {
+			return nil, errors.Errorf("couldn't find well %s in final plate at %s", initialWell.Crds.FormatA1(), platePos)
+		} else {
+			return finalWell, nil
 		}
 
-		plateID := loctox[0]
-		wellcrds := loctox[1]
-
-		wellmap, ok := vols[plateID]
-
-		if !ok {
-			continue
-		}
-
-		vol := wellmap[wellcrds]
-		vol.Add(vc.Volume)
 	}
 
-	// now go through and set the plates up appropriately
+	// second, set volumes for each autoallocated input as calculated
+	for initialWell, volUsed := range vols {
+		if initialWell.IsAutoallocated() {
+			remainingVolume := initialWell.ResidualVolume()
+			initialVolume := wunit.AddVolumes(volUsed, remainingVolume)
 
-	for plateID, wellmap := range vols {
-		plate, ok := this.FinalProperties.Plates[this.Properties.PlateIDLookup[plateID]]
-		plate2 := this.Properties.Plates[this.Properties.PlateIDLookup[plateID]]
+			if initialVolume.GreaterThan(initialWell.MaxVolume()) {
+				// this logic is a bit complicated and questionable, however we need to
+				// improve on how carry volumes are handled before it can be removed
+				//
+				// the idea is that if the total volume requested is greater than the
+				// maximum the well can hold only because of carry volumes we round down
+				// to the maximum the well can hold and hope for the best. This is a rare
+				// case but still we should ideally be stricter
+				//
+				rv := rawVols[initialWell]
+				if rv.LessThan(initialWell.MaxVolume()) || rv.EqualTo(initialWell.MaxVolume()) {
+					// don't exceed the well maximum by a trivial amount
+					initialVolume = initialWell.MaxVolume()
+				} else {
+					return fmt.Errorf("Error autogenerating stock %s at plate %s (type %s) well %s: Volume requested (%s) over well capacity (%s)",
+						initialWell.Contents(idGen).CName, wtype.NameOf(initialWell.Plate), wtype.TypeOf(initialWell.Plate), initialWell.Crds.FormatA1(),
+						initialVolume.ToString(), initialWell.MaxVolume().ToString())
+				}
+			}
 
-		if !ok {
-			err := wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("NO SUCH PLATE: ", plateID))
-			return err
+			initialContents := initialWell.Contents(idGen).Dup(idGen)
+			initialContents.SetVolume(initialVolume)
+			if err := initialWell.SetContents(idGen, initialContents); err != nil {
+				return err
+			}
+
+			// since we aren't yet re-generating the instructions, we need to update the final volume as well
+			finalContents := initialContents.Dup(idGen)
+			finalContents.SetVolume(remainingVolume)
+			if finalWell, err := getFinalWell(initialWell); err != nil {
+				return err
+			} else if err := finalWell.SetContents(idGen, finalContents); err != nil {
+				return err
+			}
 		}
+	}
 
-		// what's it like here?
+	// third, remove anything which was autoallocated but not used at all by instructions
+	toRemove := make([]string, 0, len(this.Properties.Plates))
+	for _, plate := range this.Properties.Plates {
+		if !usedPlates[plate] && plate.AllAutoallocated(idGen) {
+			toRemove = append(toRemove, plate.ID)
+		} else {
+			for _, initialWell := range plate.Wellcoords {
+				if _, used := vols[initialWell]; !used && initialWell.IsAutoallocated() {
+					initialWell.Clear(idGen)
 
-		for crd, unroundedvol := range wellmap {
-			rv, _ := wutil.Roundto(unroundedvol.RawValue(), 1)
-			vol := wunit.NewVolume(rv, unroundedvol.Unit().PrefixedSymbol())
-			well := plate.Wellcoords[crd]
-			well2 := plate2.Wellcoords[crd]
-
-			// this logic is a bit complicated and questionable, however we need to
-			// improve on how carry volumes are handled before it can be removed
-			//
-			// the idea is that if the total volume requested is greater than the
-			// maximum the well can hold only because of carry volumes we round down
-			// to the maximum the well can hold and hope for the best. This is a rare
-			// case but still we should ideally be stricter
-			//
-			if well.IsAutoallocated() {
-				vol.Add(well.ResidualVolume())
-
-				if vol.GreaterThan(well.MaxVolume()) {
-					rv := rawvols[plateID][crd]
-
-					if rv.LessThan(well.MaxVolume()) || rv.EqualTo(well.MaxVolume()) {
-						// don't exceed the well maximum by a trivial amount
-						vol = well.MaxVolume()
+					// as in step 2, we need to update the final well volume as well
+					if finalWell, err := getFinalWell(initialWell); err != nil {
+						return err
 					} else {
-						return fmt.Errorf("Error autogenerating stock %s at plate %s (type %s) well %s: Volume requested (%s) over well capacity (%s)", well2.Contents(idGen).CName, plate2.Name(), plate2.Type, crd, vol.ToString(), well.MaxVolume().ToString())
+						finalWell.Clear(idGen)
 					}
 				}
-
-				well2Contents := well2.Contents(idGen).Dup(idGen)
-				well2Contents.SetVolume(vol)
-				err := well2.SetContents(idGen, well2Contents)
-				if err != nil {
-					return err
-				}
-
-				wellContents := well.Contents(idGen).Dup(idGen)
-				wellContents.SetVolume(well.ResidualVolume())
-				wellContents.ID = idGen.NextID()
-				err = well.SetContents(idGen, wellContents)
-				if err != nil {
-					return err
-				}
-
-				well.DeclareNotTemporary()
-				well2.DeclareNotTemporary()
 			}
 		}
 	}
-
-	// finally get rid of any temporary stuff
-
-	this.Properties.RemoveUnusedAutoallocatedComponents(idGen)
-	this.FinalProperties.RemoveUnusedAutoallocatedComponents(idGen)
-
-	pidm := make(map[string]string, len(this.Properties.Plates))
-	for pos := range this.Properties.Plates {
-		p1, ok1 := this.Properties.Plates[pos]
-		p2, ok2 := this.FinalProperties.Plates[pos]
-
-		if (!ok1 && ok2) || (ok1 && !ok2) {
-
-			if ok1 {
-				fmt.Println("BEFORE HAS: ", p1)
-			}
-
-			if ok2 {
-				fmt.Println("AFTER  HAS: ", p2)
-			}
-
-			return (wtype.LHError(8, fmt.Sprintf("Plate disappeared from position %s", pos)))
-		}
-
-		if !(ok1 && ok2) {
-			continue
-		}
-
-		this.plateIDMap[p1.ID] = p2.ID
-		pidm[p2.ID] = p1.ID
-	}
-
-	// this is many shades of wrong but likely to save us a lot of time
-	for _, pos := range this.Properties.InputSearchPreferences() {
-		p1, ok1 := this.Properties.Plates[pos]
-		p2, ok2 := this.FinalProperties.Plates[pos]
-
-		if ok1 && ok2 {
-			for _, wa := range p1.Cols {
-				for _, w := range wa {
-					// copy the outputs to the correct side
-					// and remove the outputs from the initial state
-					if !w.IsEmpty(idGen) {
-						w2, ok := p2.Wellcoords[w.Crds.FormatA1()]
-						if ok {
-							// there's no strict separation between outputs and
-							// inputs here
-							if w.IsAutoallocated() {
-								continue
-							} else if w.IsUserAllocated() {
-								// swap old and new
-								c := w.WContents.Dup(idGen)
-								w.Clear(idGen)
-								c2 := w2.WContents.Dup(idGen)
-								w2.Clear(idGen)
-								err := w.AddComponent(idGen, c2)
-								if err != nil {
-									return wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Scheduler : %s", err.Error()))
-								}
-								err = w2.AddComponent(idGen, c)
-								if err != nil {
-									return wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Scheduler : %s", err.Error()))
-								}
-							} else {
-								// replace
-								w2.Clear(idGen)
-								err := w2.AddComponent(idGen, w.Contents(idGen))
-								if err != nil {
-									return wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Scheduler : %s", err.Error()))
-								}
-								w.Clear(idGen)
-							}
-						}
-					}
+	for _, removeID := range toRemove {
+		if platePos, ok := this.Properties.PlateIDLookup[removeID]; !ok {
+			return errors.Errorf("cannot remove plate that doesn't exist")
+		} else {
+			this.Properties.RemovePlateWithID(removeID)
+			this.FinalProperties.RemovePlateAtPosition(platePos)
+			ipo := make([]string, 0, len(rq.InputPlateOrder))
+			for _, id := range rq.InputPlateOrder {
+				if id != removeID {
+					ipo = append(ipo, id)
 				}
-
 			}
-
-			//fmt.Println(p2, " ", p1)
-			//fmt.Println("Plate ID Map: ", p2.ID, " --> ", p1.ID)
-
-			//	this.plateIDMap[p2.ID] = p1.ID
+			rq.InputPlateOrder = ipo
 		}
 	}
 
-	// all done
+	return nil
+}
+
+// updateIDs
+func (this *Liquidhandler) updateIDs(idGen *id.IDGenerator) error {
+
+	// keep track of object ID changes
+	this.plateIDMap = make(map[string]string, len(this.Properties.PlateLookup))
+	for id := range this.Properties.PlateIDLookup {
+		if newID, err := this.FinalProperties.UpdateID(idGen, id); err != nil {
+			return err
+		} else {
+			this.plateIDMap[id] = newID
+		}
+	}
+
+	// update component IDs
+	for _, plate := range this.FinalProperties.Plates {
+		for _, row := range plate.Wells() {
+			for _, well := range row {
+				if !well.IsEmpty(idGen) {
+					well.Contents(idGen).ID = idGen.NextID()
+				}
+			}
+		}
+	}
 
 	return nil
 }
@@ -694,8 +606,7 @@ func (this *Liquidhandler) Plan(labEffects *effects.LaboratoryEffects, request *
 		return errors.WithMessage(err, "some mix instructions missing destinations after layout")
 	}
 
-	// see if volumes can be corrected
-	if rq, err := FixVolumes(request); err != nil {
+	if rq, err := FixVolumes(request, this.Properties.CarryVolume()); err != nil {
 		return err
 	} else {
 		request = rq
@@ -718,14 +629,14 @@ func (this *Liquidhandler) Plan(labEffects *effects.LaboratoryEffects, request *
 	}
 
 	// looks at liquids provided, calculates liquids required
-	if inputSolutions, err := request.getInputs(labEffects.IDGenerator); err != nil {
+	if inputSolutions, err := request.getInputs(labEffects.IDGenerator, this.Properties.CarryVolume()); err != nil {
 		return err
 	} else {
 		request.InputSolutions = inputSolutions
 	}
 
 	// define the input plates
-	if err := request.inputPlateSetup(labEffects); err != nil {
+	if err := request.inputPlateSetup(labEffects, this.Properties.CarryVolume()); err != nil {
 		return errors.WithMessage(err, "while setting up input plates")
 	}
 
@@ -748,22 +659,34 @@ func (this *Liquidhandler) Plan(labEffects *effects.LaboratoryEffects, request *
 	}
 
 	// make the instructions for executing this request by first building the ITree root, then generating the lower level instructions
-	// nb. there is significant potential for confusion here:
-	//    root.Generate(..., props LHProperties) is *destructive of state*, and leaves it's argument in the final state
-	//    therefore from here until reviseVolumes is called,
-	//      > this.Properties contains the final properties
-	//      > this.FinalProperties contains the initial properties
-	//    which cannot be changed until reviseVolumes is refactored
-	this.FinalProperties = this.Properties.Dup(labEffects.IDGenerator)
 	if root, err := liquidhandling.NewITreeRoot(request.InstructionChain); err != nil {
 		return err
-	} else if err := root.Generate(labEffects, request.Policies(), this.Properties); err != nil {
+	} else if final, err := root.Build(labEffects, request.Policies(), this.Properties); err != nil {
 		return err
 	} else if tri, err := root.Leaves(); err != nil {
 		return err
 	} else {
 		request.InstructionTree = root
 		request.Instructions = tri
+		this.FinalProperties = final
+	}
+
+	// tipboxes are added during the tree building, so only exist in the final state
+	// copy them accross to the initial properties
+	for pos, tb := range this.FinalProperties.Tipboxes {
+		initialTb := tb.DupKeepIDs(labEffects.IDGenerator)
+		initialTb.Refresh(labEffects.IDGenerator)
+		this.Properties.AddTipBoxTo(pos, initialTb)
+	}
+
+	// revise the volumes - this makes sure the volumes requested are correct
+	if err := this.shrinkVolumes(labEffects.IDGenerator, request); err != nil {
+		return err
+	}
+
+	// make certain the IDs have been changed by the liquidhandling step
+	if err := this.updateIDs(labEffects.IDGenerator); err != nil {
+		return err
 	}
 
 	// counts tips used in this run -- reads instructions generated above so must happen
@@ -772,14 +695,6 @@ func (this *Liquidhandler) Plan(labEffects *effects.LaboratoryEffects, request *
 		return err
 	} else {
 		request.TipsUsed = estimate
-	}
-
-	// Ensures tip boxes and wastes are correct for initial and final robot states
-	this.refreshTipboxesTipwastes(labEffects.IDGenerator)
-
-	// revise the volumes - this makes sure the volumes requested are correct
-	if err := this.reviseVolumes(labEffects.IDGenerator, request); err != nil {
-		return err
 	}
 
 	// change component IDs in final state to be certain that all compoenent IDs were changed by the liquidhandling

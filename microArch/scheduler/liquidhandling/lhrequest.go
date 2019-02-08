@@ -44,7 +44,7 @@ type LHRequest struct {
 	BlockName             string
 	LHInstructions        wtype.LHInstructions
 	Plates                map[string]*wtype.Plate
-	Tips                  []*wtype.LHTipbox
+	TipBoxes              []*wtype.LHTipbox
 	InstructionTree       *liquidhandling.ITree
 	Instructions          []liquidhandling.TerminalRobotInstruction
 	InstructionText       string
@@ -64,9 +64,7 @@ type LHRequest struct {
 	OutputIteratorFactory func(wtype.Addressable) wtype.AddressIterator `json:"-"`
 	InstructionChain      *wtype.IChain
 	TimeEstimate          float64
-	CarryVolume           wunit.Volume
 	InstructionSets       [][]*wtype.LHInstruction
-	Evaps                 []wtype.VolumeCorrection
 	Options               LHOptions
 	NUserPlates           int
 	OutputSort            bool
@@ -171,7 +169,6 @@ func NewLHRequest(idGen *id.IDGenerator) *LHRequest {
 		PlateLookup:           make(map[string]string),
 		Stockconcs:            make(map[string]wunit.Concentration),
 		OutputIteratorFactory: columnWiseIterator,
-		CarryVolume:           wunit.NewVolume(0.5, "ul"),
 		Options:               NewLHOptions(),
 	}
 	systemPolicies, _ := wtype.GetSystemLHPolicies()

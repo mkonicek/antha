@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/laboratory/effects/id"
 )
@@ -73,7 +72,7 @@ func (ti TransferBlockInstruction) Generate(labEffects *effects.LaboratoryEffect
 		// aggregates across components
 		//TODO --> allow setting legacy volume if necessary
 
-		tfr, err = ConvertInstructions(labEffects, insset, robot, wunit.NewVolume(0.5, "ul"), prm, prm.Multi, false, policy)
+		tfr, err = ConvertInstructions(labEffects, insset, robot, prm, prm.Multi, false, policy)
 		if err != nil {
 			return inss, err
 		}
@@ -120,7 +119,7 @@ func (ti TransferBlockInstruction) Generate(labEffects *effects.LaboratoryEffect
 
 		insset := []*wtype.LHInstruction{ins}
 
-		tfr, err = ConvertInstructions(labEffects, insset, robot, wunit.NewVolume(0.5, "ul"), prm, 1, false, policy)
+		tfr, err = ConvertInstructions(labEffects, insset, robot, prm, 1, false, policy)
 
 		if err != nil {
 			return inss, err

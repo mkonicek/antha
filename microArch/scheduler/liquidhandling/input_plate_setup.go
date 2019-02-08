@@ -75,7 +75,7 @@ func (is InputSorter) Less(i, j int) bool {
 // INPUT: 	"input_platetype", "inputs"
 //OUTPUT: 	"input_plates"      -- these each have components in wells
 //		"input_assignments" -- map with arrays of assignment strings, i.e. {tea: [plate1:A:1, plate1:A:2...] }etc.
-func (rq *LHRequest) inputPlateSetup(labEffects *effects.LaboratoryEffects) error {
+func (rq *LHRequest) inputPlateSetup(labEffects *effects.LaboratoryEffects, carryVolume wunit.Volume) error {
 	input_platetypes := rq.InputPlatetypes
 
 	// we assume that input_plates is set if any locs are set
@@ -183,7 +183,6 @@ func (rq *LHRequest) inputPlateSetup(labEffects *effects.LaboratoryEffects) erro
 					platename := rq.getSafeInputPlateName(curplaten)
 					curr_plate.PlateName = platename
 					curplaten += 1
-					curr_plate.DeclareTemporary()
 					//curr_plate.DeclareAutoallocated()
 				}
 
@@ -219,7 +218,7 @@ func (rq *LHRequest) inputPlateSetup(labEffects *effects.LaboratoryEffects) erro
 
 					//usefulVolume is the most we can get from the well assuming one transfer
 					usefulVolume := curr_well.CurrentWorkingVolume(labEffects.IDGenerator)
-					usefulVolume.Subtract(rq.CarryVolume)
+					usefulVolume.Subtract(carryVolume)
 					volume.Subtract(usefulVolume)
 				}
 

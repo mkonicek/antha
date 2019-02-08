@@ -117,7 +117,7 @@ func (a *Mixer) makeLhreq(labEffects *effects.LaboratoryEffects) (*lhreq, error)
 			if err != nil {
 				return nil, err
 			}
-			req.Tips = append(req.Tips, t)
+			req.TipBoxes = append(req.TipBoxes, t)
 		}
 	}
 	*/

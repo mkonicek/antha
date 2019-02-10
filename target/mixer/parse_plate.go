@@ -200,14 +200,14 @@ func parsePlateCSVWithValidationConfig(labEffects *effects.LaboratoryEffects, in
 		return nil, fmt.Errorf("empty file")
 	}
 
-	var plateType string
+	var plateType wtype.PlateTypeName
 
 	if len(replaceConfigs) == 0 {
-		plateType = rec[0]
+		plateType = wtype.PlateTypeName(rec[0])
 	} else {
 		for _, replacer := range replaceConfigs {
 			if replacement, found := replacer.replaceField[plateTypeReplacementKey]; found {
-				plateType = replacement
+				plateType = wtype.PlateTypeName(replacement)
 				break
 			}
 		}

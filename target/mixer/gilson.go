@@ -158,8 +158,13 @@ func (inst *GilsonPipetMaxInstance) Compile(labEffects *effects.LaboratoryEffect
 }
 
 func (inst *GilsonPipetMaxInstance) mix(labEffects *effects.LaboratoryEffects, instrs []*wtype.LHInstruction) ([]effects.Inst, error) {
-	req := liquidhandling.NewLHRequest(labEffects.IDGenerator)
+	if len(instrs) == 0 {
+		return nil, errors.New("No instructions to mix!")
+	}
+
 	props := inst.properties.Dup(labEffects.IDGenerator)
+	req := liquidhandling.NewLHRequest(labEffects.IDGenerator)
+	req.BlockID = instrs[0].BlockID
 
 	if err := inst.global.ApplyToLHRequest(req); err != nil {
 		return nil, err
@@ -235,6 +240,10 @@ func (inst *GilsonPipetMaxInstance) mix(labEffects *effects.LaboratoryEffects, i
 	}
 
 	planner := liquidhandling.Init(props)
+
+	if err := planner.MakeSolutions(labEffects, req); err != nil {
+		return nil, err
+	}
 
 	return nil, nil
 }

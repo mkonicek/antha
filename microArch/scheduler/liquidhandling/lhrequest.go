@@ -271,8 +271,6 @@ func (mgr *LHPolicyManager) MergePolicies(protocolpolicies *wtype.LHPolicyRuleSe
 	return ret
 }
 
-func (mgr *LHPolicyManager) 
-
 // HasPlateNamed checks if the request already contains a plate with the specified name
 func (request *LHRequest) HasPlateNamed(name string) bool {
 	checkForPlateNamed := func(query string, subject map[string]*wtype.Plate) bool {

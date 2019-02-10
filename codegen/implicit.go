@@ -46,11 +46,11 @@ func findIncubationPlates(prop *liquidhandling.LHProperties) ([]*wtype.Plate, er
 	var ret []*wtype.Plate
 	for _, plate := range prop.Plates {
 		switch {
-		case strings.HasSuffix(plate.Type, "bioshake"):
+		case strings.HasSuffix(string(plate.Type), "bioshake"):
 			fallthrough
-		case strings.HasSuffix(plate.Type, "bioshake_96well_adaptor"):
+		case strings.HasSuffix(string(plate.Type), "bioshake_96well_adaptor"):
 			fallthrough
-		case strings.HasSuffix(plate.Type, "bioshake_standard_adaptor"):
+		case strings.HasSuffix(string(plate.Type), "bioshake_standard_adaptor"):
 			ret = append(ret, plate)
 		}
 	}

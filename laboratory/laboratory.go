@@ -49,6 +49,8 @@ type LaboratoryBuilder struct {
 	FileManager *FileManager
 
 	*effects.LaboratoryEffects
+
+	devices *target.Target
 }
 
 func NewLaboratoryBuilder(fh io.Reader) *LaboratoryBuilder {
@@ -100,18 +102,25 @@ func NewLaboratoryBuilder(fh io.Reader) *LaboratoryBuilder {
 
 	if tgt, err := labBuild.connectDevices(); err != nil {
 		labBuild.Fatal(err)
+	} else {
+		labBuild.devices = tgt
 	}
 
 	return labBuild
 }
 
 func (labBuild *LaboratoryBuilder) connectDevices() (*target.Target, error) {
-	tgt := target.New()
-	if insts, err := mixer.GilsonPipetMaxInstancesFromWorkflow(labBuild.workflow, labBuild.Inventory); err != nil {
+	if global, err := mixer.NewGlobalMixerConfig(labBuild.Inventory, &labBuild.workflow.Config.GlobalMixer); err != nil {
 		return nil, err
-	} else if err := insts.Connect(); err != nil {
+	} else if insts, err := mixer.NewGilsonPipetMaxInstances(labBuild.Inventory, global, labBuild.workflow.Config.GilsonPipetMax); err != nil {
+		return nil, err
+	} else if err := insts.Connect(labBuild.workflow); err != nil {
 		return nil, err
 	} else {
+		tgt := target.New()
+		for _, inst := range insts {
+			tgt.AddDevice(inst)
+		}
 		return tgt, nil
 	}
 }

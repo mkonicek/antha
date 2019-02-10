@@ -11,9 +11,14 @@ type GlobalMixerConfig struct {
 	*workflow.GlobalMixerConfig
 }
 
-func NewGlobalMixerConfig(cfg *workflow.GlobalMixerConfig) *GlobalMixerConfig {
-	return &GlobalMixerConfig{
+func NewGlobalMixerConfig(inv *inventory.Inventory, cfg *workflow.GlobalMixerConfig) (*GlobalMixerConfig, error) {
+	global := &GlobalMixerConfig{
 		GlobalMixerConfig: cfg,
+	}
+	if err := global.Validate(inv); err != nil {
+		return nil, err
+	} else {
+		return global, nil
 	}
 }
 

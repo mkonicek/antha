@@ -42,7 +42,7 @@ func (pj *plateJson) ConvertExt(v interface{}) interface{} {
 
 func (pj *plateJson) UpdateExt(dst interface{}, src interface{}) {
 	if name, ok := src.(string); ok {
-		if plate, err := pj.labBuild.Inventory.PlateTypes.NewPlate(name); err != nil {
+		if plate, err := pj.labBuild.Inventory.PlateTypes.NewPlate(wtype.PlateTypeName(name)); err != nil {
 			pj.labBuild.Fatal(err)
 		} else {
 			dstPlate := dst.(*wtype.Plate)

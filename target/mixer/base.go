@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	driver "github.com/antha-lang/antha/driver/antha_driver_v1"
@@ -136,4 +137,10 @@ const modifiedPolicySuffix = "_modified_"
 
 func makemodifiedTypeName(componentType wtype.LiquidType, number int) string {
 	return string(componentType) + modifiedPolicySuffix + strconv.Itoa(number)
+}
+
+// unModifyTypeName will trim a _modified_ suffix from a LiquidType in the CSV file.
+// These are added to LiquidType names when a Liquid is modified in an element.
+func unModifyTypeName(componentType string) string {
+	return strings.Split(componentType, modifiedPolicySuffix)[0]
 }

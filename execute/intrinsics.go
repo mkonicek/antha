@@ -7,7 +7,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/ast"
-	"github.com/antha-lang/antha/driver"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/microArch/sampletracker"
 	"github.com/antha-lang/antha/target"
@@ -162,47 +161,6 @@ func mixerPrompt(ctx context.Context, opts mixerPromptOpts) *commandInst {
 			},
 		},
 	}
-}
-
-func handle(ctx context.Context, opt HandleOpt) *commandInst {
-	comp := newCompFromComp(ctx, opt.Component)
-
-	var sels []ast.NameValue
-
-	if len(opt.Selector) == 0 {
-		sels = append(sels, target.DriverSelectorV1Human)
-	} else {
-		for n, v := range opt.Selector {
-			sels = append(sels, ast.NameValue{Name: n, Value: v})
-		}
-	}
-
-	return &commandInst{
-		Args:   []*wtype.Liquid{opt.Component},
-		result: []*wtype.Liquid{comp},
-		Command: &ast.Command{
-			Inst: &ast.HandleInst{
-
-				Calls: opt.Calls,
-			},
-			Request: ast.Request{Selector: sels},
-		},
-	}
-}
-
-// A HandleOpt are options to Handle
-type HandleOpt struct {
-	Component *wtype.Liquid
-	Label     string
-	Selector  map[string]string
-	Calls     []driver.Call
-}
-
-// Handle performs a low level instruction on a component
-func Handle(ctx context.Context, opt HandleOpt) *wtype.Liquid {
-	inst := handle(ctx, opt)
-	Issue(ctx, inst)
-	return inst.result[0]
 }
 
 // PlateReadOpts defines plate-reader absorbance options

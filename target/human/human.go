@@ -24,9 +24,6 @@ type Human struct {
 type Opt struct {
 	CanMix      bool
 	CanIncubate bool
-
-	// CanHandle is deprecated
-	CanHandle bool
 }
 
 // New returns a new human device
@@ -55,10 +52,6 @@ func (a *Human) CanCompile(req ast.Request) bool {
 		can.Selector = append(can.Selector, target.DriverSelectorV1Mixer)
 	}
 
-	if a.opt.CanHandle {
-		can.Selector = append(can.Selector, req.Selector...)
-	}
-
 	return can.Contains(req)
 }
 
@@ -85,12 +78,6 @@ func (a *Human) generate(cmd interface{}) ([]ast.Inst, error) {
 			Dev:     a,
 			Label:   "incubate",
 			Details: fmt.Sprintf("incubate at %s for %s", cmd.Temp.ToString(), cmd.Time.ToString()),
-		})
-
-	case *ast.HandleInst:
-		insts = append(insts, &target.Manual{
-			Dev:   a,
-			Label: cmd.Group,
 		})
 
 	case *ast.PromptInst:

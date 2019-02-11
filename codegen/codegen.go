@@ -47,17 +47,6 @@ func (a *ir) Print(g graph.Graph, out io.Writer) error {
 			return fmt.Sprintf("%T", c.Inst)
 		},
 		func(x interface{}) string {
-			c, ok := x.(*ast.Command)
-			if !ok {
-				return ""
-			}
-			h, ok := c.Inst.(*ast.HandleInst)
-			if !ok {
-				return ""
-			}
-			return h.Group
-		},
-		func(x interface{}) string {
 			n, ok := x.(ast.Node)
 			if !ok {
 				return ""

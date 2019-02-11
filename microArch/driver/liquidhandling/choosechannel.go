@@ -115,7 +115,7 @@ func ChooseChannel(vol wunit.Volume, prms *LHProperties) (*wtype.LHChannelParame
 	// just choose the best... need to iterate on this sometime though
 	// we don't consider head or adaptor changes now
 
-	//fmt.Println("There are ", len(prms.CountHeadsLoaded()), " heads loaded and ", len(prms.Tips), " Tip types available ")
+	// fmt.Println("There are ", prms.CountHeadsLoaded(), " heads loaded and ", len(prms.Tips), " Tip types available ")
 
 	for _, head := range prms.GetLoadedHeads() {
 		for _, tip := range prms.Tips {

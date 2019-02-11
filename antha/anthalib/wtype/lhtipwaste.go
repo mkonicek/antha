@@ -270,15 +270,15 @@ func (self *LHTipwaste) GetChildByAddress(c WellCoords) LHObject {
 	return self.AsWell
 }
 
-func (self *LHTipwaste) CoordsToWellCoords(r Coordinates) (WellCoords, Coordinates) {
+func (self *LHTipwaste) CoordsToWellCoords(idGen *id.IDGenerator, r Coordinates) (WellCoords, Coordinates) {
 	wc := WellCoords{0, 0}
 
-	c, _ := self.WellCoordsToCoords(wc, TopReference)
+	c, _ := self.WellCoordsToCoords(idGen, wc, TopReference)
 
 	return wc, r.Subtract(c)
 }
 
-func (self *LHTipwaste) WellCoordsToCoords(wc WellCoords, r WellReference) (Coordinates, bool) {
+func (self *LHTipwaste) WellCoordsToCoords(idGen *id.IDGenerator, wc WellCoords, r WellReference) (Coordinates, bool) {
 	if !self.AddressExists(wc) {
 		return Coordinates{}, false
 	}

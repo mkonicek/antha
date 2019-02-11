@@ -57,3 +57,15 @@ func (inv *Inventory) FetchTipbox(typ string) (*wtype.LHTipbox, error) {
 		return tb, nil
 	}
 }
+
+func (inv *Inventory) ForEach(fun func(wtype.LHTipbox) error) error {
+	inv.lock.Lock()
+	defer inv.lock.Unlock()
+
+	for _, tb := range inv.tipboxByType {
+		if err := fun(*tb); err != nil {
+			return err
+		}
+	}
+	return nil
+}

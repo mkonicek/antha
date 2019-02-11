@@ -894,6 +894,9 @@ func (lhp *LHProperties) RemoveComponent(idGen *id.IDGenerator, plateID string, 
 // such that passing a Gilson address e.g. "position_1" to a Hamilton driver has
 // no effect.
 func (lhp *LHProperties) ApplyUserPreferences(p *workflow.LayoutOpt) error {
+	if p == nil {
+		return nil
+	}
 	// ignore addresses that don't exist in this liquidhandler
 	filter := func(addresses workflow.Addresses) workflow.Addresses {
 		ret := make(workflow.Addresses, 0, len(addresses))

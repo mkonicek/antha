@@ -186,22 +186,29 @@ func (global GlobalMixerConfig) validate() error {
 }
 
 func (gilsons GilsonPipetMaxConfig) validate() error {
-	if err := gilsons.Defaults.validate("Defaults"); err != nil {
+	if err := gilsons.Defaults.validate("Defaults", true); err != nil {
 		return err
 	}
 	for id, inst := range gilsons.Devices {
-		if err := inst.validate(id); err != nil {
+		if err := inst.validate(id, false); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (inst *GilsonPipetMaxInstanceConfig) validate(id DeviceInstanceID) error {
+func (inst *GilsonPipetMaxInstanceConfig) validate(id DeviceInstanceID, isDefaults bool) error {
 	if len(id) == 0 {
-		return errors.New("A device may not have an empty name")
-	}
-	if inst.Connection != "" {
+		return errors.New("GilsonPipetMax: A device may not have an empty name.")
+	} else if inst == nil {
+		if isDefaults {
+			return nil
+		} else {
+			return fmt.Errorf("GilsonPipetMax device '%s' has no configuration!", id)
+		}
+	} else if !isDefaults && strings.ToLower(string(id)) == "defaults" {
+		return fmt.Errorf("Confusion: GilsonPipetMax device '%s' exists. Did you mean to set GilsonPipetMax.Defaults instead?")
+	} else if inst.Connection != "" {
 		if _, _, err := net.SplitHostPort(inst.Connection); err != nil {
 			return fmt.Errorf("Cannot parse connection string in device config for %v - '%s': %v", id, inst.Connection, err)
 		}

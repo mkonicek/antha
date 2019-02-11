@@ -39,6 +39,9 @@ type GilsonPipetMaxInstances []*GilsonPipetMaxInstance
 
 func NewGilsonPipetMaxInstances(inv *inventory.Inventory, global *GlobalMixerConfig, config workflow.GilsonPipetMaxConfig) (GilsonPipetMaxInstances, error) {
 	defaultsWF := config.Defaults
+	if defaultsWF == nil {
+		defaultsWF = &workflow.GilsonPipetMaxInstanceConfig{}
+	}
 
 	defaults := &GilsonPipetMaxInstance{
 		MaxPlates:                    floatValue(defaultsWF.MaxPlates, &defaultMaxPlates),
@@ -57,7 +60,7 @@ func NewGilsonPipetMaxInstances(inv *inventory.Inventory, global *GlobalMixerCon
 			ID:                           id,
 			MaxPlates:                    floatValue(instWF.MaxPlates, &defaults.MaxPlates),
 			MaxWells:                     floatValue(instWF.MaxWells, &defaults.MaxWells),
-			ResidualVolumeWeight:         floatValue(instWF.MaxPlates, &defaults.MaxPlates),
+			ResidualVolumeWeight:         floatValue(instWF.MaxPlates, &defaults.ResidualVolumeWeight),
 			global:                       global,
 			GilsonPipetMaxInstanceConfig: instWF,
 			base:                         NewBaseMixer(instWF.Connection, "GilsonPipetmax"),

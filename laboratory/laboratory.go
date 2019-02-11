@@ -76,10 +76,12 @@ func NewLaboratoryBuilder(fh io.Reader) *LaboratoryBuilder {
 	// zero plate types defined, or if we want an explicit flag or
 	// something?
 	if len(labBuild.workflow.Inventory.PlateTypes) == 0 {
+		labBuild.Logger.Log("PlateTypeInventory", "loading built in plate types")
 		labBuild.Inventory.PlateTypes.LoadLibrary()
 	} else {
 		labBuild.Inventory.PlateTypes.SetPlateTypes(labBuild.workflow.Inventory.PlateTypes)
 	}
+
 	labBuild.Inventory.TipBoxes.LoadLibrary()
 
 	flag.StringVar(&labBuild.outDir, "outdir", "", "Path to directory in which to write output files")
@@ -176,10 +178,10 @@ func (labBuild *LaboratoryBuilder) RunElements() error {
 	}
 }
 
-func (labBuild *LaboratoryBuilder) Compile(target *target.Target) ([]effects.Node, []effects.Inst, error) {
+func (labBuild *LaboratoryBuilder) Compile() ([]effects.Node, []effects.Inst, error) {
 	if nodes, err := labBuild.Maker.MakeNodes(labBuild.Trace.Instructions()); err != nil {
 		return nil, nil, err
-	} else if instrs, err := codegen.Compile(labBuild.LaboratoryEffects, target, nodes); err != nil {
+	} else if instrs, err := codegen.Compile(labBuild.LaboratoryEffects, labBuild.devices, nodes); err != nil {
 		return nil, nil, err
 	} else {
 		return nodes, instrs, nil

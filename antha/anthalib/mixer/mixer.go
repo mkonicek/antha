@@ -159,7 +159,7 @@ type MixOptions struct {
 	Instruction *wtype.LHInstruction // used to be LHSolution
 	Output      *wtype.Liquid        // the resultant component
 	Destination *wtype.Plate         // Destination plate; if nil, select one later
-	PlateType   string               // type of destination plate
+	PlateType   wtype.PlateTypeName  // type of destination plate
 	Address     string               // Well in destination to place result; if nil, select one later
 	PlateNum    int                  // which plate to stick these on
 	PlateName   string               // which (named) plate to stick these on
@@ -302,7 +302,7 @@ func MixInto(lab *laboratory.Laboratory, destination *wtype.Plate, address strin
 }
 
 // MixTo the specified wtype.LHComponents together into a plate of a particular type
-func MixTo(lab *laboratory.Laboratory, platetype string, address string, platenum int, inputs ...*wtype.Liquid) *wtype.Liquid {
+func MixTo(lab *laboratory.Laboratory, platetype wtype.PlateTypeName, address string, platenum int, inputs ...*wtype.Liquid) *wtype.Liquid {
 	r := GenericMix(lab.IDGenerator, MixOptions{
 		Inputs:    inputs,
 		PlateType: platetype,

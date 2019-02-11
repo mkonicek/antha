@@ -36,7 +36,7 @@ type LHInstruction struct {
 	BlockID          BlockID
 	Inputs           []*Liquid
 	Outputs          []*Liquid
-	ContainerType    string
+	ContainerType    PlateTypeName
 	Welladdress      string
 	PlateID          string
 	Platetype        PlateTypeName

@@ -287,7 +287,7 @@ func NewComponent(lab *laboratory.Laboratory, typ string) *wtype.Liquid {
 }
 
 // NewPlate returns a new plate given a plate type
-func NewPlate(lab *laboratory.Laboratory, typ string) *wtype.Plate {
+func NewPlate(lab *laboratory.Laboratory, typ wtype.PlateTypeName) *wtype.Plate {
 	p, err := lab.Inventory.PlateTypes.NewPlate(typ)
 	if err != nil {
 		lab.Errorf("cannot make plate %s: %s", typ, err)
@@ -363,7 +363,7 @@ func MixInto(lab *laboratory.Laboratory, outplate *wtype.Plate, address string, 
 }
 
 // MixNamed mixes components
-func MixNamed(lab *laboratory.Laboratory, outplatetype, address string, platename string, components ...*wtype.Liquid) *wtype.Liquid {
+func MixNamed(lab *laboratory.Laboratory, outplatetype wtype.PlateTypeName, address string, platename string, components ...*wtype.Liquid) *wtype.Liquid {
 	return genericMix(lab, mixer.GenericMix(lab.IDGenerator, mixer.MixOptions{
 		Inputs:    components,
 		PlateType: outplatetype,
@@ -375,7 +375,7 @@ func MixNamed(lab *laboratory.Laboratory, outplatetype, address string, platenam
 // MixTo mixes components
 //
 // TODO: Addresses break dependence information. Deprecated.
-func MixTo(lab *laboratory.Laboratory, outplatetype, address string, platenum int, components ...*wtype.Liquid) *wtype.Liquid {
+func MixTo(lab *laboratory.Laboratory, outplatetype wtype.PlateTypeName, address string, platenum int, components ...*wtype.Liquid) *wtype.Liquid {
 	return genericMix(lab, mixer.GenericMix(lab.IDGenerator, mixer.MixOptions{
 		Inputs:    components,
 		PlateType: outplatetype,

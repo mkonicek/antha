@@ -11,17 +11,18 @@ type Request struct {
 	Selector []NameValue
 }
 
-func makeNameValueMap(vs []NameValue) map[interface{}]int {
-	m := make(map[interface{}]int)
+func asSet(vs []NameValue) map[NameValue]struct{} {
+	m := make(map[NameValue]struct{})
 	for _, v := range vs {
-		m[v]++
+		m[v] = struct{}{}
 	}
 	return m
 }
 
-func mapContains(a, b map[interface{}]int) bool {
-	for k, v := range b {
-		if v > a[k] {
+// returns true iff a is a superset of b (i.e. everything in b must be in a)
+func isSuperset(a, b map[NameValue]struct{}) bool {
+	for k := range b {
+		if _, found := a[k]; !found {
 			return false
 		}
 	}
@@ -30,7 +31,7 @@ func mapContains(a, b map[interface{}]int) bool {
 
 // Contains returns if request A is greater than or equal to request B
 func (reqA Request) Contains(reqB Request) bool {
-	return mapContains(makeNameValueMap(reqA.Selector), makeNameValueMap(reqB.Selector))
+	return isSuperset(asSet(reqA.Selector), asSet(reqB.Selector))
 }
 
 // Meet computes greatest lower bound of a set of requests

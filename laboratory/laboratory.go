@@ -15,6 +15,7 @@ import (
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/logger"
 	"github.com/antha-lang/antha/target"
+	"github.com/antha-lang/antha/target/human"
 	"github.com/antha-lang/antha/target/mixer"
 	"github.com/antha-lang/antha/utils"
 	"github.com/antha-lang/antha/workflow"
@@ -105,6 +106,7 @@ func NewLaboratoryBuilder(fh io.Reader) *LaboratoryBuilder {
 	if tgt, err := labBuild.connectDevices(); err != nil {
 		labBuild.Fatal(err)
 	} else {
+		human.New().DetermineRole(tgt)
 		labBuild.devices = tgt
 	}
 

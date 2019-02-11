@@ -56,7 +56,7 @@ const theTargetKey targetKey = 0
 
 // Target for execution (collection of devices).
 type Target struct {
-	devices []effects.Device
+	Devices []effects.Device
 }
 
 // New creates a new target
@@ -75,7 +75,7 @@ func (a *Target) canCompile(d effects.Device, reqs ...effects.Request) bool {
 
 // CanCompile returns the devices that can compile the given set of requests
 func (a *Target) CanCompile(reqs ...effects.Request) (r []effects.Device) {
-	for _, d := range a.devices {
+	for _, d := range a.Devices {
 		if a.canCompile(d, reqs...) {
 			r = append(r, d)
 		}
@@ -85,5 +85,5 @@ func (a *Target) CanCompile(reqs ...effects.Request) (r []effects.Device) {
 
 // AddDevice adds a device to the target configuration
 func (a *Target) AddDevice(d effects.Device) {
-	a.devices = append(a.devices, d)
+	a.Devices = append(a.Devices, d)
 }

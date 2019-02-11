@@ -191,7 +191,11 @@ func (a *ir) assignDevices(t *target.Target) error {
 
 		if len(devices) == 0 {
 			if isBundle {
-				devices = append(devices, human.New(human.Opt{}))
+				// FIXME: this shouldn't happen - we should always have
+				// the human providing only what is needed, which means we
+				// should never be in a case where we have to suddenly
+				// invent and inject a new-born.
+				devices = append(devices, human.New())
 			} else {
 				return fmt.Errorf("no device can handle constraints %v", effects.Meet(reqs...))
 			}

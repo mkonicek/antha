@@ -52,6 +52,40 @@ func (a *Human) Compile(labEffects *effects.LaboratoryEffects, nodes []effects.N
 	return a.impl.Compile(labEffects, nodes)
 }
 
+func (a *Human) DetermineRole(tgt *target.Target) {
+	mixReq := effects.Request{
+		Selector: []effects.NameValue{
+			target.DriverSelectorV1Mixer,
+		},
+	}
+
+	incubateReq := effects.Request{
+		Selector: []effects.NameValue{
+			target.DriverSelectorV1ShakerIncubator,
+		},
+	}
+
+	mix := true
+	incubate := true
+	for _, dev := range tgt.Devices {
+		if mix && dev.CanCompile(mixReq) {
+			mix = false
+		}
+		if incubate && dev.CanCompile(incubateReq) {
+			incubate = false
+		}
+		if !(mix || incubate) {
+			break
+		}
+	}
+	a.canMix = mix
+	a.canIncubate = incubate
+
+	if a.canMix || a.canIncubate {
+		tgt.AddDevice(a)
+	}
+}
+
 func (a *Human) generate(cmd interface{}) ([]effects.Inst, error) {
 	instrs := make([]effects.Inst, 1)
 

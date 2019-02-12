@@ -1,0 +1,16 @@
+{
+    "Config": {
+        "GlobalMixer": {
+            "PrintInstructions": true,
+            "UseDriverTipTracking": true
+        },
+        "GilsonPipetMax": {
+            "Devices": {
+                "Gillian": {
+                    "Connection": "localhost:50051",
+                    "InputPlateTypes": ["pcrplate_skirted"]
+                }
+            }
+        }
+    }
+}

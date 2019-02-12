@@ -64,7 +64,7 @@ func New(opt Opt) (ret *Auto, err error) {
 	tryer := &tryer{
 		Auto:      ret,
 		MaybeArgs: opt.MaybeArgs,
-		HumanOpt:  human.Opt{CanMix: true, CanIncubate: true, CanHandle: true},
+		HumanOpt:  human.Opt{CanMix: true, CanIncubate: true},
 	}
 
 	ctx := context.Background()

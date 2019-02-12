@@ -5,11 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/antha-lang/antha/ast"
 	driver "github.com/antha-lang/antha/driver/antha_driver_v1"
 	runner "github.com/antha-lang/antha/driver/antha_runner_v1"
 	lhclient "github.com/antha-lang/antha/driver/liquidhandling/client"
-	"github.com/antha-lang/antha/target/handler"
 	"github.com/antha-lang/antha/target/human"
 	"github.com/antha-lang/antha/target/mixer"
 	"github.com/antha-lang/antha/target/shakerincubator"
@@ -56,17 +54,6 @@ func (a *tryer) Try(ctx context.Context, conn *grpc.ClientConn, arg interface{})
 		return a.AddMixer(ctx, conn, arg, reply.GetSubtypes())
 
 	default:
-		h := handler.New(
-			[]ast.NameValue{
-				{
-					Name:  "antha.driver.v1.TypeReply.type",
-					Value: reply.Type,
-				},
-			},
-		)
-		a.HumanOpt.CanHandle = false
-		a.Auto.handler[h] = conn
-		a.Auto.Target.AddDevice(h)
 		return nil
 	}
 }

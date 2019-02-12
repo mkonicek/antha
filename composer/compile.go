@@ -109,16 +109,12 @@ func (c *Composer) PrepareDrivers() error {
 				return err
 			}
 			defer src.Close()
-			dst, err := os.Create(outBin)
+			dst, err := os.OpenFile(outBin, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0700)
 			if err != nil {
 				return err
 			}
+			defer dst.Close()
 			if _, err = io.Copy(dst, src); err != nil {
-				dst.Close()
-				return err
-			}
-			dst.Close()
-			if err := os.Chmod(outBin, 0700); err != nil {
 				return err
 			}
 			cfg.ParsedConnection.ExecFile = outBin

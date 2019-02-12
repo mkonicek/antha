@@ -50,8 +50,6 @@ type LaboratoryBuilder struct {
 	FileManager *FileManager
 
 	*effects.LaboratoryEffects
-
-	devices *target.Target
 }
 
 func NewLaboratoryBuilder(fh io.Reader) *LaboratoryBuilder {
@@ -103,13 +101,6 @@ func NewLaboratoryBuilder(fh io.Reader) *LaboratoryBuilder {
 	}
 	labBuild.FileManager = NewFileManager(filepath.Join(labBuild.outDir, "data"))
 
-	if tgt, err := labBuild.connectDevices(); err != nil {
-		labBuild.Fatal(err)
-	} else {
-		human.New().DetermineRole(tgt)
-		labBuild.devices = tgt
-	}
-
 	return labBuild
 }
 
@@ -118,12 +109,14 @@ func (labBuild *LaboratoryBuilder) connectDevices() (*target.Target, error) {
 		return nil, err
 	} else if insts, err := mixer.NewGilsonPipetMaxInstances(labBuild.Inventory, global, labBuild.workflow.Config.GilsonPipetMax); err != nil {
 		return nil, err
-	} else if err := insts.Connect(labBuild.workflow); err != nil {
-		return nil, err
 	} else {
 		tgt := target.New()
 		for _, inst := range insts {
 			tgt.AddDevice(inst)
+		}
+		if err := tgt.Connect(labBuild.Logger, labBuild.workflow); err != nil {
+			tgt.Close()
+			return nil, err
 		}
 		return tgt, nil
 	}
@@ -181,12 +174,25 @@ func (labBuild *LaboratoryBuilder) RunElements() error {
 }
 
 func (labBuild *LaboratoryBuilder) Compile() ([]effects.Node, []effects.Inst, error) {
-	if nodes, err := labBuild.Maker.MakeNodes(labBuild.Trace.Instructions()); err != nil {
+	if devices, err := labBuild.connectDevices(); err != nil {
+		labBuild.Fatal(err)
 		return nil, nil, err
-	} else if instrs, err := codegen.Compile(labBuild.LaboratoryEffects, labBuild.devices, nodes); err != nil {
-		return nil, nil, err
+
 	} else {
-		return nodes, instrs, nil
+		defer devices.Close()
+
+		// We have to do this this late because we need the connections
+		// to the plugins established to eg figure out if the device
+		// supports prompting.
+		human.New().DetermineRole(devices)
+
+		if nodes, err := labBuild.Maker.MakeNodes(labBuild.Trace.Instructions()); err != nil {
+			return nil, nil, err
+		} else if instrs, err := codegen.Compile(labBuild.LaboratoryEffects, devices, nodes); err != nil {
+			return nil, nil, err
+		} else {
+			return nodes, instrs, nil
+		}
 	}
 }
 

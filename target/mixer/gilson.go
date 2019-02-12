@@ -8,6 +8,7 @@ import (
 	"github.com/antha-lang/antha/driver/liquidhandling/client"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/laboratory/effects"
+	"github.com/antha-lang/antha/logger"
 	driver "github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/scheduler/liquidhandling"
 	"github.com/antha-lang/antha/target"
@@ -63,7 +64,7 @@ func NewGilsonPipetMaxInstances(inv *inventory.Inventory, global *GlobalMixerCon
 			ResidualVolumeWeight:         floatValue(instWF.MaxPlates, &defaults.ResidualVolumeWeight),
 			global:                       global,
 			GilsonPipetMaxInstanceConfig: instWF,
-			base:                         NewBaseMixer(instWF.Connection, "GilsonPipetmax"),
+			base:                         NewBaseMixer(id, instWF.ParsedConnection, "GilsonPipetmax"),
 		}
 		if err := instance.Validate(inv); err != nil {
 			return nil, err
@@ -73,15 +74,6 @@ func NewGilsonPipetMaxInstances(inv *inventory.Inventory, global *GlobalMixerCon
 	}
 
 	return instances, nil
-}
-
-func (insts GilsonPipetMaxInstances) Connect(wf *workflow.Workflow) error {
-	for _, inst := range insts {
-		if err := inst.Connect(wf); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func (inst *GilsonPipetMaxInstance) Validate(inv *inventory.Inventory) error {
@@ -112,9 +104,9 @@ func (inst *GilsonPipetMaxInstance) Validate(inv *inventory.Inventory) error {
 	return nil
 }
 
-func (inst *GilsonPipetMaxInstance) Connect(wf *workflow.Workflow) error {
+func (inst *GilsonPipetMaxInstance) Connect(logger *logger.Logger, wf *workflow.Workflow) error {
 	if inst.driver == nil {
-		if conn, err := inst.base.ConnectInit(); err != nil {
+		if conn, err := inst.base.Connect(logger); err != nil {
 			return err
 		} else if conn != nil {
 			driver := client.NewLowLevelClientFromConn(conn)
@@ -130,6 +122,12 @@ func (inst *GilsonPipetMaxInstance) Connect(wf *workflow.Workflow) error {
 		}
 	}
 	return nil
+}
+
+func (inst *GilsonPipetMaxInstance) Close() {
+	inst.base.Close()
+	inst.driver = nil
+	inst.properties = nil
 }
 
 func (inst *GilsonPipetMaxInstance) CanCompile(req effects.Request) bool {

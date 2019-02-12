@@ -1,5 +1,10 @@
 package effects
 
+import (
+	"github.com/antha-lang/antha/logger"
+	"github.com/antha-lang/antha/workflow"
+)
+
 // A Device is a scheduling plugin
 type Device interface {
 	CanCompile(Request) bool // Can this device compile this request
@@ -7,6 +12,11 @@ type Device interface {
 	// Compile produces a single-entry, single-exit DAG of instructions where
 	// insts[0] is the entry point and insts[len(insts)-1] is the exit point
 	Compile(labEffects *LaboratoryEffects, cmds []Node) (insts []Inst, err error)
+
+	// Must be idempotent and thread safe
+	Connect(*logger.Logger, *workflow.Workflow) error
+	// Must be idempotent and thread safe
+	Close()
 }
 
 // An Inst is a instruction

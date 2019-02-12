@@ -17,7 +17,7 @@
     "ElementInstances": {
         "myFileOutput": {
             "ElementTypeName": "FileOutput",
-            "Metadata": {
+            "Meta": {
                 "x": 442,
                 "y": 256
             }

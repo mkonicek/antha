@@ -1,13 +1,13 @@
 {
     "Config": {
         "GlobalMixer": {
-            "PrintInstructions": true,
+            "PrintInstructions": false,
             "UseDriverTipTracking": true
         },
         "GilsonPipetMax": {
             "Devices": {
                 "Gillian": {
-                    "Connection": "localhost:50051",
+                    "Connection": "file:///home/matthew/src/Go_external_1.11/src/github.com/Synthace/PipetMaxDriver/server/server",
                     "InputPlateTypes": ["pcrplate_skirted"]
                 }
             }

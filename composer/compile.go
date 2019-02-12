@@ -34,7 +34,7 @@ func (c *Composer) goGenerate() error {
 		cmd.Env = []string{}
 	}
 
-	return runAndLogCommand(cmd, c.Logger.With("cmd", "generate").Log)
+	return RunAndLogCommand(cmd, c.Logger.With("cmd", "generate").Log)
 }
 
 func (c *Composer) goBuild() error {
@@ -47,7 +47,7 @@ func (c *Composer) goBuild() error {
 	}
 	cmd.Env = []string{"GOPATH=" + gopath}
 
-	if err := runAndLogCommand(cmd, c.Logger.With("cmd", "build").Log); err != nil {
+	if err := RunAndLogCommand(cmd, c.Logger.With("cmd", "build").Log); err != nil {
 		return err
 	} else {
 		c.Logger.Log("compilation", "successful", "binary", outBin)
@@ -89,10 +89,10 @@ func (c *Composer) RunWorkflow() error {
 		fmt.Println(vals[1])
 		return nil
 	}
-	return runAndLogCommand(cmd, logFunc)
+	return RunAndLogCommand(cmd, logFunc)
 }
 
-func runAndLogCommand(cmd *exec.Cmd, logger func(...interface{}) error) error {
+func RunAndLogCommand(cmd *exec.Cmd, logger func(...interface{}) error) error {
 	if stdout, err := cmd.StdoutPipe(); err != nil {
 		return err
 	} else if stderr, err := cmd.StderrPipe(); err != nil {

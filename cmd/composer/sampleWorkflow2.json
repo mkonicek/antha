@@ -11,7 +11,7 @@
     "ElementInstances": {
         "aliquot_A": {
             "ElementTypeName": "Aliquot_Liquid",
-            "Metadata": {
+            "Meta": {
                 "x": 140,
                 "y": 553
             }
@@ -19,7 +19,7 @@
 
         "aliquot_B": {
             "ElementTypeName": "Aliquot_Liquid",
-            "Metadata": {
+            "Meta": {
                 "x": 482,
                 "y": 399
             }
@@ -27,7 +27,7 @@
 
         "aliquot_C": {
             "ElementTypeName": "Aliquot_Liquid",
-            "Metadata": {
+            "Meta": {
                 "x": 451,
                 "y": 775
             }
@@ -35,7 +35,7 @@
 
         "aliquot_D": {
             "ElementTypeName": "Aliquot_Liquid",
-            "Metadata": {
+            "Meta": {
                 "x": 798,
                 "y": 557
             }

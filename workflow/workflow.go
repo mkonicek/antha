@@ -125,7 +125,7 @@ type ElementInstances map[ElementInstanceName]ElementInstance
 
 type ElementInstance struct {
 	ElementTypeName ElementTypeName `json:"ElementTypeName"`
-	Metadata        json.RawMessage `json:"Metadata"`
+	Meta            json.RawMessage `json:"Meta"`
 }
 
 type ElementInstancesParameters map[ElementInstanceName]ElementParameterSet

@@ -5,8 +5,10 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/laboratory/effects"
+	"github.com/antha-lang/antha/logger"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/handler"
+	"github.com/antha-lang/antha/workflow"
 )
 
 var (
@@ -83,6 +85,12 @@ func (hum *Human) DetermineRole(tgt *target.Target) {
 		tgt.AddDevice(hum)
 	}
 }
+
+func (hum *Human) Connect(*logger.Logger, *workflow.Workflow) error {
+	return nil
+}
+
+func (hum *Human) Close() {}
 
 func (hum *Human) generate(cmd interface{}) ([]effects.Inst, error) {
 	instrs := make([]effects.Inst, 1)

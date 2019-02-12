@@ -6,6 +6,8 @@ import (
 	"errors"
 
 	"github.com/antha-lang/antha/laboratory/effects"
+	"github.com/antha-lang/antha/logger"
+	"github.com/antha-lang/antha/workflow"
 )
 
 var (
@@ -86,4 +88,19 @@ func (a *Target) CanCompile(reqs ...effects.Request) (r []effects.Device) {
 // AddDevice adds a device to the target configuration
 func (a *Target) AddDevice(d effects.Device) {
 	a.Devices = append(a.Devices, d)
+}
+
+func (a *Target) Close() {
+	for _, dev := range a.Devices {
+		dev.Close()
+	}
+}
+
+func (a *Target) Connect(logger *logger.Logger, wf *workflow.Workflow) error {
+	for _, dev := range a.Devices {
+		if err := dev.Connect(logger, wf); err != nil {
+			return err
+		}
+	}
+	return nil
 }

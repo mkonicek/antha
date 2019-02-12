@@ -78,7 +78,7 @@ func (bm *BaseMixer) Connect(logger *logger.Logger) (*grpc.ClientConn, error) {
 			if err != nil {
 				logger.Log("error", err)
 			}
-			bm.Close()
+			bm.Close() // this is why Close() must be idempotent and thread safe!
 		}()
 		<-running
 	}
@@ -87,6 +87,7 @@ func (bm *BaseMixer) Connect(logger *logger.Logger) (*grpc.ClientConn, error) {
 		logger.Log("connection", bm.connection.HostPort)
 		conn, err := grpc.Dial(bm.connection.HostPort, grpc.WithInsecure())
 		if err != nil {
+			bm.Close()
 			return nil, err
 		}
 		bm.conn = conn

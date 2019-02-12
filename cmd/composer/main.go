@@ -64,6 +64,8 @@ func main() {
 		logger.Fatal(err)
 	} else if err := comp.GenerateMain(); err != nil {
 		logger.Fatal(err)
+	} else if err := comp.PrepareDrivers(); err != nil { // Must do this before SaveWorkflow!
+		logger.Fatal(err)
 	} else if err := comp.SaveWorkflow(); err != nil {
 		logger.Fatal(err)
 	} else if err := comp.CompileWorkflow(); err != nil {

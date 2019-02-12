@@ -25,14 +25,6 @@ func (c *Composer) CompileWorkflow() error {
 func (c *Composer) goGenerate() error {
 	cmd := exec.Command("go", "generate", "-x")
 	cmd.Dir = filepath.Join(c.OutDir, "workflow")
-	if path, _ := os.LookupEnv("PATH"); path != "" {
-		// because we don't know what other binaries go generate will
-		// end up calling (well, we do - go-bindata, but we don't know
-		// where that is)
-		cmd.Env = []string{"PATH=" + path}
-	} else {
-		cmd.Env = []string{}
-	}
 
 	return RunAndLogCommand(cmd, c.Logger.With("cmd", "generate").Log)
 }
@@ -41,11 +33,14 @@ func (c *Composer) goBuild() error {
 	outBin := filepath.Join(c.OutDir, "bin", string(c.Workflow.JobId))
 	cmd := exec.Command("go", "build", "-o", outBin)
 	cmd.Dir = filepath.Join(c.OutDir, "workflow")
-	gopath := c.OutDir
-	if cur, _ := os.LookupEnv("GOPATH"); cur != "" {
-		gopath = fmt.Sprintf("%s:%s", gopath, cur)
+
+	env := os.Environ()
+	for idx, s := range env {
+		if len(s) >= 7 && "GOPATH=" == s[:7] {
+			env[idx] = fmt.Sprintf("GOPATH=%s:%s", c.OutDir, s[7:])
+		}
 	}
-	cmd.Env = []string{"GOPATH=" + gopath}
+	cmd.Env = env
 
 	if err := RunAndLogCommand(cmd, c.Logger.With("cmd", "build").Log); err != nil {
 		return err
@@ -90,6 +85,46 @@ func (c *Composer) RunWorkflow() error {
 		return nil
 	}
 	return RunAndLogCommand(cmd, logFunc)
+}
+
+func (c *Composer) PrepareDrivers() error {
+	for id, cfg := range c.Workflow.Config.GilsonPipetMax.Devices {
+		outBin := filepath.Join(c.OutDir, "bin", "drivers", string(id))
+		if err := os.MkdirAll(filepath.Dir(outBin), 0700); err != nil {
+			return err
+
+		} else if cfg.ParsedConnection.CompileAndRun != "" {
+			c.Logger.Log("devicePlugin", string(id), "building", cfg.ParsedConnection.CompileAndRun)
+			cmd := exec.Command("go", "build", "-o", outBin, cfg.ParsedConnection.CompileAndRun)
+			cmd.Dir = filepath.Dir(outBin)
+			if err := RunAndLogCommand(cmd, c.Logger.With("cmd", "build", "devicePlugin", string(id)).Log); err != nil {
+				return err
+			}
+			cfg.ParsedConnection.ExecFile = outBin
+			cfg.ParsedConnection.CompileAndRun = ""
+
+		} else if cfg.ParsedConnection.ExecFile != "" {
+			src, err := os.Open(cfg.ParsedConnection.ExecFile)
+			if err != nil {
+				return err
+			}
+			defer src.Close()
+			dst, err := os.Create(outBin)
+			if err != nil {
+				return err
+			}
+			if _, err = io.Copy(dst, src); err != nil {
+				dst.Close()
+				return err
+			}
+			dst.Close()
+			if err := os.Chmod(outBin, 0700); err != nil {
+				return err
+			}
+			cfg.ParsedConnection.ExecFile = outBin
+		}
+	}
+	return nil
 }
 
 func RunAndLogCommand(cmd *exec.Cmd, logger func(...interface{}) error) error {

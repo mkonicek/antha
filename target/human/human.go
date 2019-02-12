@@ -30,17 +30,17 @@ func New() *Human {
 	return h
 }
 
-func (a *Human) CanCompile(req effects.Request) bool {
+func (hum *Human) CanCompile(req effects.Request) bool {
 	can := effects.Request{
 		Selector: []effects.NameValue{
 			target.DriverSelectorV1Human,
 		},
 	}
 
-	if a.canMix {
+	if hum.canMix {
 		can.Selector = append(can.Selector, target.DriverSelectorV1Mixer)
 	}
-	if a.canIncubate {
+	if hum.canIncubate {
 		can.Selector = append(can.Selector, target.DriverSelectorV1ShakerIncubator)
 	}
 
@@ -48,11 +48,11 @@ func (a *Human) CanCompile(req effects.Request) bool {
 }
 
 // Compile implements target.device Compile
-func (a *Human) Compile(labEffects *effects.LaboratoryEffects, nodes []effects.Node) ([]effects.Inst, error) {
-	return a.impl.Compile(labEffects, nodes)
+func (hum *Human) Compile(labEffects *effects.LaboratoryEffects, nodes []effects.Node) ([]effects.Inst, error) {
+	return hum.impl.Compile(labEffects, nodes)
 }
 
-func (a *Human) DetermineRole(tgt *target.Target) {
+func (hum *Human) DetermineRole(tgt *target.Target) {
 	mixReq := effects.Request{
 		Selector: []effects.NameValue{
 			target.DriverSelectorV1Mixer,
@@ -65,49 +65,47 @@ func (a *Human) DetermineRole(tgt *target.Target) {
 		},
 	}
 
-	mix := true
-	incubate := true
+	hum.canMix = true
+	hum.canIncubate = true
 	for _, dev := range tgt.Devices {
-		if mix && dev.CanCompile(mixReq) {
-			mix = false
+		if hum.canMix && dev.CanCompile(mixReq) {
+			hum.canMix = false
 		}
-		if incubate && dev.CanCompile(incubateReq) {
-			incubate = false
+		if hum.canIncubate && dev.CanCompile(incubateReq) {
+			hum.canIncubate = false
 		}
-		if !(mix || incubate) {
+		if !hum.canMix && !hum.canIncubate {
 			break
 		}
 	}
-	a.canMix = mix
-	a.canIncubate = incubate
 
-	if a.canMix || a.canIncubate {
-		tgt.AddDevice(a)
+	if hum.canMix || hum.canIncubate {
+		tgt.AddDevice(hum)
 	}
 }
 
-func (a *Human) generate(cmd interface{}) ([]effects.Inst, error) {
+func (hum *Human) generate(cmd interface{}) ([]effects.Inst, error) {
 	instrs := make([]effects.Inst, 1)
 
 	switch cmd := cmd.(type) {
 
 	case *wtype.LHInstruction:
 		instrs[0] = &target.Manual{
-			Dev:     a,
+			Dev:     hum,
 			Label:   "mix",
 			Details: prettyMixDetails(cmd),
 		}
 
 	case *effects.IncubateInst:
 		instrs[0] = &target.Manual{
-			Dev:     a,
+			Dev:     hum,
 			Label:   "incubate",
 			Details: fmt.Sprintf("incubate at %s for %s", cmd.Temp.ToString(), cmd.Time.ToString()),
 		}
 
 	case *effects.HandleInst:
 		instrs[0] = &target.Manual{
-			Dev:   a,
+			Dev:   hum,
 			Label: cmd.Group,
 		}
 
@@ -118,14 +116,14 @@ func (a *Human) generate(cmd interface{}) ([]effects.Inst, error) {
 
 	case *wtype.PRInstruction:
 		instrs[0] = &target.Manual{
-			Dev:     a,
+			Dev:     hum,
 			Label:   "plate-read",
 			Details: fmt.Sprintf("plate-read instruction. Options:'%s'", cmd.Options),
 		}
 
 	case *effects.QPCRInstruction:
 		instrs[0] = &target.Manual{
-			Dev:     a,
+			Dev:     hum,
 			Label:   "QPCR",
 			Details: fmt.Sprintf("QPCR request, definition %s, barcode %s", cmd.Definition, cmd.Barcode),
 		}

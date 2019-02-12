@@ -36,7 +36,7 @@ import (
 
 //ImprovedLayoutAgent assigns destinations to mix instructions
 //don't ask about how bad the original one (upon which the 'improvements' here were made) was...
-func ImprovedLayoutAgent(ctx context.Context, request *LHRequest, params *liquidhandling.LHProperties) (*LHRequest, error) {
+func ImprovedLayoutAgent(ctx context.Context, request *LHRequest, params *liquidhandling.LHProperties) error {
 	// do this multiply based on the order in the chain
 
 	ch := request.InstructionChain
@@ -53,11 +53,11 @@ func ImprovedLayoutAgent(ctx context.Context, request *LHRequest, params *liquid
 		if ch == nil {
 			break
 		}
-		request, pc, mp, err = LayoutStage(ctx, request, params, ch, pc, mp)
+		pc, mp, err = LayoutStage(ctx, request, params, ch, pc, mp)
 
 		k += 1
 		if err != nil {
-			return request, err
+			return err
 		}
 		ch = ch.Child
 	}
@@ -82,7 +82,7 @@ func ImprovedLayoutAgent(ctx context.Context, request *LHRequest, params *liquid
 
 	request.OutputAssignments = filtered
 
-	return request, err
+	return err
 }
 
 func map_in_user_plates(rq *LHRequest, pc []PlateChoice) []PlateChoice {
@@ -151,7 +151,7 @@ func getNameForID(pc []PlateChoice, id string) string {
 	return fmt.Sprintf("Output_plate_%s", id[0:6])
 }
 
-func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling.LHProperties, chain *wtype.IChain, plate_choices []PlateChoice, mapchoices map[string]string) (*LHRequest, []PlateChoice, map[string]string, error) {
+func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling.LHProperties, chain *wtype.IChain, plate_choices []PlateChoice, mapchoices map[string]string) ([]PlateChoice, map[string]string, error) {
 	// considering only plate assignments,
 	// we have three kinds of solution
 	// 1- ones going to a specific plate
@@ -166,13 +166,13 @@ func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling
 	// map choices maps layout groups to (temp)plate IDs
 
 	if err != nil {
-		return request, plate_choices, mapchoices, err
+		return nil, nil, err
 	}
 	// now we know what remains unassigned, we assign it
 
 	plate_choices, err = choose_plates(ctx, request, plate_choices, chain.ValueIDs())
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	// now we have solutions of type 1 & 2
@@ -181,7 +181,7 @@ func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling
 
 	remap, err := make_plates(ctx, request, chain.ValueIDs())
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	// I fix da map
@@ -206,7 +206,7 @@ func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling
 	// say where on each plate they will go
 	// this needs to set OutputAssignments
 	if err := make_layouts(ctx, request, plate_choices); err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	lkp := make(map[string][]*wtype.Liquid)
@@ -286,7 +286,7 @@ func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling
 		}
 	}
 
-	return request, plate_choices, mapchoices, nil
+	return plate_choices, mapchoices, nil
 }
 
 type PlateChoice struct {

@@ -67,8 +67,8 @@ import (
 type Liquidhandler struct {
 	Properties      *liquidhandling.LHProperties
 	FinalProperties *liquidhandling.LHProperties
-	SetupAgent      func(context.Context, *LHRequest, *liquidhandling.LHProperties) (*LHRequest, error)
-	LayoutAgent     func(context.Context, *LHRequest, *liquidhandling.LHProperties) (*LHRequest, error)
+	SetupAgent      func(context.Context, *LHRequest, *liquidhandling.LHProperties) error
+	LayoutAgent     func(context.Context, *LHRequest, *liquidhandling.LHProperties) error
 	plateIDMap      map[string]string // which plates are before / after versions
 }
 
@@ -138,7 +138,7 @@ func (this *Liquidhandler) AddSetupInstructions(request *LHRequest) error {
 		return wtype.LHError(wtype.LH_ERR_OTHER, "Cannot execute request: no instructions")
 	}
 
-	setup_insts := this.get_setup_instructions(request)
+	setup_insts := this.get_setup_instructions()
 	if request.Instructions[0].Type() == liquidhandling.INI {
 		request.Instructions = append(request.Instructions[:1], append(setup_insts, request.Instructions[1:]...)...)
 	} else {
@@ -150,8 +150,8 @@ func (this *Liquidhandler) AddSetupInstructions(request *LHRequest) error {
 // run the request via the physical simulator
 func (this *Liquidhandler) Simulate(request *LHRequest) error {
 
-	instructions := (*request).Instructions
-	if instructions == nil {
+	instructions := request.Instructions
+	if len(instructions) == 0 {
 		return wtype.LHError(wtype.LH_ERR_OTHER, "cannot simulate request: no instructions")
 	}
 
@@ -188,7 +188,7 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 	if request.Options.PrintInstructions {
 		fmt.Printf("Simulating %d instructions\n", len(instructions))
 		for i, ins := range instructions {
-			if (*request).Options.PrintInstructions {
+			if request.Options.PrintInstructions {
 				fmt.Printf("%d: %s\n", i, liquidhandling.InsToString(ins))
 			}
 		}
@@ -238,21 +238,21 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 func (this *Liquidhandler) Execute(request *LHRequest) error {
 	//robot setup now included in instructions
 
-	instructions := (*request).Instructions
+	instructions := request.Instructions
 
 	// some timing info for the log (only) for now
 
 	timer := this.Properties.GetTimer()
 	var d time.Duration
 
-	err := this.update_metadata(request)
+	err := this.update_metadata()
 	if err != nil {
 		return err
 	}
 
 	for _, ins := range instructions {
 
-		if (*request).Options.PrintInstructions {
+		if request.Options.PrintInstructions {
 			fmt.Println(liquidhandling.InsToString(ins))
 
 		}
@@ -479,7 +479,7 @@ func (this *Liquidhandler) updateIDs() error {
 	return nil
 }
 
-func (this *Liquidhandler) get_setup_instructions(rq *LHRequest) []liquidhandling.TerminalRobotInstruction {
+func (this *Liquidhandler) get_setup_instructions() []liquidhandling.TerminalRobotInstruction {
 	instructions := make([]liquidhandling.TerminalRobotInstruction, 0, 1+len(this.Properties.PosLookup))
 
 	//first instruction is always to remove all plates
@@ -499,7 +499,7 @@ func (this *Liquidhandler) get_setup_instructions(rq *LHRequest) []liquidhandlin
 	return instructions
 }
 
-func (this *Liquidhandler) update_metadata(rq *LHRequest) error {
+func (this *Liquidhandler) update_metadata() error {
 	if drv, ok := this.Properties.Driver.(liquidhandling.LowLevelLiquidhandlingDriver); ok {
 		return drv.UpdateMetaData(this.Properties).GetError()
 	}
@@ -596,10 +596,8 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 
 	// set up the mapping of the outputs
 	// tried moving here to see if we can use results in fixVolumes
-	if rq, err := this.Layout(ctx, request); err != nil {
+	if err := this.Layout(ctx, request); err != nil {
 		return err
-	} else {
-		request = rq
 	}
 
 	request.LHInstructions.DupLiquids()
@@ -614,10 +612,9 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 
 	if request.Options.FixVolumes {
 		// see if volumes can be corrected
-		if rq, err := FixVolumes(request, this.Properties.CarryVolume()); err != nil {
+		if err := FixVolumes(request, this.Properties.CarryVolume()); err != nil {
 			return err
 		} else {
-			request = rq
 			if request.Options.PrintInstructions {
 				fmt.Println("\nInstructions Post Volume Fix")
 				for _, insID := range request.OutputOrder {
@@ -650,10 +647,8 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 	}
 
 	// next we need to determine the liquid handler setup
-	if rq, err := this.Setup(ctx, request); err != nil {
+	if err := this.Setup(ctx, request); err != nil {
 		return err
-	} else {
-		request = rq
 	}
 
 	// final insurance that plate names will be safe
@@ -752,14 +747,14 @@ func (this *Liquidhandler) GetPlates(ctx context.Context, plates map[string]*wty
 }
 
 // generate setup for the robot
-func (this *Liquidhandler) Setup(ctx context.Context, request *LHRequest) (*LHRequest, error) {
+func (this *Liquidhandler) Setup(ctx context.Context, request *LHRequest) error {
 	// assign the plates to positions
 	// this needs to be parameterizable
 	return this.SetupAgent(ctx, request, this.Properties)
 }
 
 // generate the output layout
-func (this *Liquidhandler) Layout(ctx context.Context, request *LHRequest) (*LHRequest, error) {
+func (this *Liquidhandler) Layout(ctx context.Context, request *LHRequest) error {
 	// assign the results to destinations
 	// again needs to be parameterized
 

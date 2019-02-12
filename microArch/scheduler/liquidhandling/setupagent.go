@@ -37,7 +37,7 @@ import (
 // positioning in the face of constraints
 
 // default setup agent
-func BasicSetupAgent(labEffects *effects.LaboratoryEffects, request *LHRequest, params *liquidhandling.LHProperties) (*LHRequest, error) {
+func BasicSetupAgent(labEffects *effects.LaboratoryEffects, request *LHRequest, params *liquidhandling.LHProperties) error {
 	// this is quite tricky and requires extensive interaction with the liquid handling
 	// parameters
 
@@ -88,7 +88,7 @@ func BasicSetupAgent(labEffects *effects.LaboratoryEffects, request *LHRequest, 
 				}
 			}
 		} else if len(input_plate_order) > len(input_plates) {
-			return nil, wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("Plate number inconsistency: %d != %d (here: %d)", len(input_plate_order), len(input_plates), 89))
+			return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("Plate number inconsistency: %d != %d (here: %d)", len(input_plate_order), len(input_plates), 89))
 		}
 
 		request.InputPlateOrder = input_plate_order
@@ -128,7 +128,7 @@ func BasicSetupAgent(labEffects *effects.LaboratoryEffects, request *LHRequest, 
 		}
 
 		if len(output_plate_order) > len(output_plates) {
-			return nil, wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("Plate number inconsistency: %d != %d (here: %d)", len(output_plate_order), len(output_plates), 127))
+			return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("Plate number inconsistency: %d != %d (here: %d)", len(output_plate_order), len(output_plates), 127))
 		}
 
 		request.OutputPlateOrder = output_plate_order
@@ -153,7 +153,7 @@ func BasicSetupAgent(labEffects *effects.LaboratoryEffects, request *LHRequest, 
 		}
 
 		errStr += fmt.Sprintf(": %d positions total, %d available on platform %s %s", nPos, len(params.Positions), params.Mnfr, params.Model)
-		return nil, wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, errStr)
+		return wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, errStr)
 	}
 
 	// tips
@@ -196,14 +196,14 @@ func BasicSetupAgent(labEffects *effects.LaboratoryEffects, request *LHRequest, 
 		if position == "" {
 			//RaiseError("No positions left for output")
 			err := wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprint("No position left for output ", p.GetName(), " Type: ", p.Type, " Constrained: ", isConstrained, " allowed positions: ", allowed))
-			return request, err
+			return err
 		}
 
 		setup[position] = p
 		plate_lookup[p.ID] = position
 
 		if err := params.AddPlateTo(position, p); err != nil {
-			return request, errors.WithMessage(err, "while setting up output plates")
+			return errors.WithMessage(err, "while setting up output plates")
 		}
 	}
 
@@ -212,7 +212,7 @@ func BasicSetupAgent(labEffects *effects.LaboratoryEffects, request *LHRequest, 
 
 		if p == nil {
 			err := wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("Plate with id ", pid, " in input_plate_order does not exist in input_plates"))
-			return request, err
+			return err
 		}
 
 		allowed, isConstrained := p.IsConstrainedOn(params.Model)
@@ -224,13 +224,13 @@ func BasicSetupAgent(labEffects *effects.LaboratoryEffects, request *LHRequest, 
 		if position == "" {
 			//RaiseError("No positions left for input")
 			err := wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprint("No position left for input ", p.GetName(), " Type: ", p.Type, " Constrained: ", isConstrained, " allowed positions: ", allowed))
-			return request, err
+			return err
 		}
 
 		setup[position] = p
 		plate_lookup[p.ID] = position
 		if err := params.AddPlateTo(position, p); err != nil {
-			return request, errors.WithMessage(err, "while setting up input plates")
+			return errors.WithMessage(err, "while setting up input plates")
 		}
 		fmt.Println(fmt.Sprintf("Input plate of type %s in position %s", p.Type, position))
 	}
@@ -256,16 +256,16 @@ func BasicSetupAgent(labEffects *effects.LaboratoryEffects, request *LHRequest, 
 			case "Evo":
 				waste, err = labEffects.Inventory.TipWastes.NewTipwaste("Tecantipwaste")
 			default:
-				return nil, wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("tip waste not handled for type: %s", params.Model))
+				return wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("tip waste not handled for type: %s", params.Model))
 			}
 
 			if err != nil {
-				return nil, wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("error for liquid handler of model %s: %s", params.Model, err))
+				return wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("error for liquid handler of model %s: %s", params.Model, err))
 			}
 
 			err = params.AddTipWaste(waste)
 			if err != nil {
-				return nil, wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("error adding tip waste for model %s: %s", params.Model, err))
+				return wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("error adding tip waste for model %s: %s", params.Model, err))
 			}
 		}
 	}
@@ -274,7 +274,7 @@ func BasicSetupAgent(labEffects *effects.LaboratoryEffects, request *LHRequest, 
 
 	//request.Setup = setup
 	request.PlateLookup = plate_lookup
-	return request, nil
+	return nil
 }
 
 func get_first_available_preference(prefs []string, setup map[string]interface{}, allowed []string) string {

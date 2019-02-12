@@ -33,7 +33,6 @@ func (a *Mixer) saveFile(name string) ([]byte, error) {
 }
 
 func (a *Mixer) makeMix(ctx context.Context, mixes []*wtype.LHInstruction) (*target.Mix, error) {
-
 	err = r.Liquidhandler.MakeSolutions(ctx, r.LHRequest)
 	// TODO: MIS unfortunately we need to make sure this stays up to date would
 	// be better to remove this and just use the ones the liquid handler holds

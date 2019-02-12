@@ -2,7 +2,6 @@ package effects
 
 import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/driver"
 )
 
 // An IncubateInst is a high-level command to incubate a component
@@ -24,19 +23,6 @@ type IncubateInst struct {
 	PreShakeRate wunit.Rate
 	// Radius at which PreShakeRate is defined
 	PreShakeRadius wunit.Length
-}
-
-// An HandleInst is a high-level generic command to apply some device
-// specific action to a component
-type HandleInst struct {
-	Group    string
-	Selector map[string]string
-	Calls    []driver.Call
-}
-
-// GetID returns a custom key for generic grouping
-func (h *HandleInst) GetID() string {
-	return h.Group
 }
 
 // A PromptInst is a high-level command to prompt a human

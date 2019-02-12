@@ -103,12 +103,6 @@ func (hum *Human) generate(cmd interface{}) ([]effects.Inst, error) {
 			Details: fmt.Sprintf("incubate at %s for %s", cmd.Temp.ToString(), cmd.Time.ToString()),
 		}
 
-	case *effects.HandleInst:
-		instrs[0] = &target.Manual{
-			Dev:   hum,
-			Label: cmd.Group,
-		}
-
 	case *effects.PromptInst:
 		instrs[0] = &target.Prompt{
 			Message: cmd.Message,

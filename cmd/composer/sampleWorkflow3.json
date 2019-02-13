@@ -1,0 +1,30 @@
+{
+    "JobId": "abc",
+
+    "ElementTypes": [
+        {
+            "RepositoryPrefix": "repos.antha.com/antha-ninja/elements-westeros",
+            "ElementPath": "Elements/New-MVL/Aliquot_Liquid"
+        }
+    ],
+
+    "ElementInstances": {
+        "my_aliquot": {
+            "ElementTypeName": "Aliquot_Liquid",
+            "Meta": {
+                "x": 140,
+                "y": 553
+            }
+        }
+    },
+
+    "ElementInstancesParameters": {
+        "my_aliquot": {
+            "ByRow": false,
+            "LiquidToAliquot": "water",
+            "OutPlate": "SRWFB96_riser18",
+            "Replicates": 8,
+            "VolumePerAliquot": "50ul"
+        }
+    }
+}

@@ -1,7 +1,6 @@
 package effects
 
 import (
-	"github.com/antha-lang/antha/logger"
 	"github.com/antha-lang/antha/workflow"
 )
 
@@ -14,7 +13,7 @@ type Device interface {
 	Compile(labEffects *LaboratoryEffects, cmds []Node) (insts []Inst, err error)
 
 	// Must be idempotent and thread safe
-	Connect(*logger.Logger, *workflow.Workflow) error
+	Connect(*workflow.Workflow) error
 	// Must be idempotent and thread safe
 	Close()
 }

@@ -1,41 +1,42 @@
 package liquidhandling
 
 // consts for generic liquid handling types
-type LiquidHandlerLevel int
+type LiquidHandlerLevel uint8
 
 const (
 	LLLiquidHandler LiquidHandlerLevel = iota // requires detailed programming e.g. move, aspirate, move dispense etc.
 	HLLiquidHandler                           // can orchestrate liquid transfers itself
+	maxLiquidHandler
 )
 
-var lhLevels = map[LiquidHandlerLevel]string{
+var lhLevels = []string{
 	LLLiquidHandler: "low level",
 	HLLiquidHandler: "high level",
 }
 
 func (lhl LiquidHandlerLevel) String() string {
-	if r, ok := lhLevels[lhl]; ok {
-		return r
+	if lhl < maxLiquidHandler {
+		return lhLevels[lhl]
 	}
 	panic("unknown liquid handler level")
 }
 
 func (lhl LiquidHandlerLevel) IsValid() bool {
-	_, ok := lhLevels[lhl]
-	return ok
+	return lhl < maxLiquidHandler
 }
 
 // TipType types of tips used by liquid handlers
-type TipType int
+type TipType uint8
 
 const (
 	DisposableTips              TipType = iota // disposable system	-- needs tip boxes & waste
 	FixedTips                                  // fixed tip system	-- needs tip wash
 	MixedDisposableAndFixedTips                // both disposable and mixed	-- needs all of the above
 	NoTips                                     // does not use tips
+	maxTipTypes
 )
 
-var tipNames = map[TipType]string{
+var tipNames = []string{
 	DisposableTips:              "Disposable",
 	FixedTips:                   "Fixed",
 	MixedDisposableAndFixedTips: "Mixed",
@@ -43,13 +44,12 @@ var tipNames = map[TipType]string{
 }
 
 func (tt TipType) String() string {
-	if r, ok := tipNames[tt]; ok {
-		return r
+	if tt < maxTipTypes {
+		return tipNames[tt]
 	}
 	panic("unknown tip type")
 }
 
 func (tt TipType) IsValid() bool {
-	_, ok := tipNames[tt]
-	return ok
+	return tt < maxTipTypes
 }

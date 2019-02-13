@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/driver/liquidhandling/client"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/logger"
@@ -24,8 +23,7 @@ type GilsonPipetMaxInstance struct {
 	global *GlobalMixerConfig
 	*workflow.GilsonPipetMaxInstanceConfig
 
-	base   *BaseMixer
-	driver driver.LiquidhandlingDriver
+	base *BaseMixer
 	// these are the properties as returned by the driver
 	properties *driver.LHProperties
 }
@@ -38,7 +36,7 @@ var (
 
 type GilsonPipetMaxInstances []*GilsonPipetMaxInstance
 
-func NewGilsonPipetMaxInstances(inv *inventory.Inventory, global *GlobalMixerConfig, config workflow.GilsonPipetMaxConfig) (GilsonPipetMaxInstances, error) {
+func NewGilsonPipetMaxInstances(logger *logger.Logger, inv *inventory.Inventory, global *GlobalMixerConfig, config workflow.GilsonPipetMaxConfig) (GilsonPipetMaxInstances, error) {
 	defaultsWF := config.Defaults
 	if defaultsWF == nil {
 		defaultsWF = &workflow.GilsonPipetMaxInstanceConfig{}
@@ -64,7 +62,7 @@ func NewGilsonPipetMaxInstances(inv *inventory.Inventory, global *GlobalMixerCon
 			ResidualVolumeWeight:         floatValue(instWF.MaxPlates, &defaults.ResidualVolumeWeight),
 			global:                       global,
 			GilsonPipetMaxInstanceConfig: instWF,
-			base:                         NewBaseMixer(id, instWF.ParsedConnection, "GilsonPipetmax"),
+			base:                         NewBaseMixer(logger, id, instWF.ParsedConnection, GilsonPipetmaxSubType),
 		}
 		if err := instance.Validate(inv); err != nil {
 			return nil, err
@@ -104,21 +102,14 @@ func (inst *GilsonPipetMaxInstance) Validate(inv *inventory.Inventory) error {
 	return nil
 }
 
-func (inst *GilsonPipetMaxInstance) Connect(logger *logger.Logger, wf *workflow.Workflow) error {
-	if inst.driver == nil {
-		if conn, err := inst.base.Connect(logger); err != nil {
+func (inst *GilsonPipetMaxInstance) Connect(wf *workflow.Workflow) error {
+	if inst.properties == nil {
+		if props, err := inst.base.Connect(wf); err != nil {
 			return err
-		} else if conn != nil {
-			driver := client.NewLowLevelClientFromConn(conn)
-			if props, status := driver.Configure(wf.JobId, wf.Meta.Name, inst.ID); !status.Ok() {
-				return status.GetError()
-			} else if err := props.ApplyUserPreferences(inst.LayoutPreferences); err != nil {
-				return err
-			} else {
-				inst.driver = driver
-				props.Driver = driver
-				inst.properties = props
-			}
+		} else if err := props.ApplyUserPreferences(inst.LayoutPreferences); err != nil {
+			return err
+		} else {
+			inst.properties = props
 		}
 	}
 	return nil
@@ -126,7 +117,6 @@ func (inst *GilsonPipetMaxInstance) Connect(logger *logger.Logger, wf *workflow.
 
 func (inst *GilsonPipetMaxInstance) Close() {
 	inst.base.Close()
-	inst.driver = nil
 	inst.properties = nil
 }
 

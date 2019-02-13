@@ -14,36 +14,75 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/composer"
 	driver "github.com/antha-lang/antha/driver/antha_driver_v1"
+	"github.com/antha-lang/antha/driver/liquidhandling/client"
 	"github.com/antha-lang/antha/logger"
+	lhdriver "github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/scheduler/liquidhandling"
 	"github.com/antha-lang/antha/workflow"
 	"google.golang.org/grpc"
 )
 
-type BaseMixer struct {
-	id               workflow.DeviceInstanceID
-	connection       workflow.ParsedConnection
-	expectedSubTypes []string
+type MixerDriverSubType string
 
-	lock   sync.Mutex
-	cmd    *exec.Cmd
-	closed chan struct{}
-	conn   *grpc.ClientConn
+const (
+	GilsonPipetmaxSubType MixerDriverSubType = "GilsonPipetmax"
+)
+
+var subTypeToConnDriverFun = map[MixerDriverSubType](func(*grpc.ClientConn) lhdriver.LiquidhandlingDriver){
+	GilsonPipetmaxSubType: func(conn *grpc.ClientConn) lhdriver.LiquidhandlingDriver {
+		return client.NewLowLevelClientFromConn(conn)
+	},
 }
 
-func NewBaseMixer(id workflow.DeviceInstanceID, connection workflow.ParsedConnection, subTypes ...string) *BaseMixer {
+type BaseMixer struct {
+	id              workflow.DeviceInstanceID
+	connection      workflow.ParsedConnection
+	expectedSubType MixerDriverSubType
+
+	logger *logger.Logger
+
+	lock        sync.Mutex
+	cmd         *exec.Cmd
+	cmdFinished chan struct{}
+	conn        *grpc.ClientConn
+	properties  *lhdriver.LHProperties
+}
+
+func NewBaseMixer(logger *logger.Logger, id workflow.DeviceInstanceID, connection workflow.ParsedConnection, subType MixerDriverSubType) *BaseMixer {
 	return &BaseMixer{
-		id:               id,
-		connection:       connection,
-		expectedSubTypes: subTypes,
+		id:              id,
+		connection:      connection,
+		expectedSubType: subType,
+		logger:          logger.With("instructionPlugin", string(id)),
 	}
 }
 
-func (bm *BaseMixer) Connect(logger *logger.Logger) (*grpc.ClientConn, error) {
+func (bm *BaseMixer) Connect(wf *workflow.Workflow) (*lhdriver.LHProperties, error) {
+	if err := bm.maybeLinkedDriver(wf); err != nil {
+		bm.Close()
+		return nil, err
+	} else {
+		bm.maybeExec()
+		if err := bm.maybeDial(); err != nil {
+			bm.Close()
+			return nil, err
+		} else if err := bm.maybeConfigure(wf); err != nil {
+			bm.Close()
+			return nil, err
+		}
+	}
+	if bm.properties == nil {
+		return nil, fmt.Errorf("Unable to establish connection to mixer instructionPlugin for %v.", bm.id)
+	} else {
+		return bm.properties, nil
+	}
+}
+
+// async. Blocks only until error on exec, or some data received from
+// cmd's stdout or stderr, whichever is soonist.
+func (bm *BaseMixer) maybeExec() {
 	bm.lock.Lock()
 	defer bm.lock.Unlock()
-
-	logger = logger.With("devicePlugin", string(bm.id))
 
 	if bm.cmd == nil && bm.connection.ExecFile != "" {
 		rng := rand.New(rand.NewSource(time.Now().Unix()))
@@ -53,10 +92,10 @@ func (bm *BaseMixer) Connect(logger *logger.Logger) (*grpc.ClientConn, error) {
 		bm.connection.HostPort = "localhost:" + port
 
 		running := make(chan struct{})
-		bm.closed = make(chan struct{})
+		bm.cmdFinished = make(chan struct{})
 		// copy it out so we don't have a data race: we won't be holding
-		// the lock later in the go-routine when we close the closed chan.
-		closed := bm.closed
+		// the lock later in the go-routine when we close the cmdFinished chan.
+		cmdFinished := bm.cmdFinished
 		go func() {
 			// We have to be careful here: we want to wait until we get
 			// something out of either stdout or stderr, which of course
@@ -71,54 +110,69 @@ func (bm *BaseMixer) Connect(logger *logger.Logger) (*grpc.ClientConn, error) {
 				default:
 					close(running)
 				}
-				return logger.Log(pairs...)
+				return bm.logger.Log(pairs...)
 			}
 			err := composer.RunAndLogCommand(bm.cmd, logFun)
-			close(closed)
+			close(cmdFinished)
 			if err != nil {
-				logger.Log("error", err)
+				bm.logger.Log("error", err)
 			}
 			bm.Close() // this is why Close() must be idempotent and thread safe!
 		}()
 		<-running
 	}
+}
+
+func (bm *BaseMixer) maybeDial() error {
+	bm.lock.Lock()
+	defer bm.lock.Unlock()
 
 	if bm.conn == nil && bm.connection.HostPort != "" {
-		logger.Log("connection", bm.connection.HostPort)
+		bm.logger.Log("dialing", bm.connection.HostPort)
 		conn, err := grpc.Dial(bm.connection.HostPort, grpc.WithInsecure())
 		if err != nil {
-			bm.Close()
-			return nil, err
+			return err
 		}
 		bm.conn = conn
 		c := driver.NewDriverClient(conn)
 		ctx := context.Background()
 		if reply, err := c.DriverType(ctx, &driver.TypeRequest{}); err != nil {
-			bm.Close()
-			return nil, err
+			return err
 		} else if typ := reply.GetType(); typ != "antha.mixer.v1.Mixer" {
-			bm.Close()
-			return nil, fmt.Errorf("Expected to find a mixer driver at %s but instead found: %s", bm.connection, typ)
-		} else if subtypes := reply.GetSubtypes(); len(subtypes) != len(bm.expectedSubTypes) {
-			bm.Close()
-			return nil, fmt.Errorf("Expected to find a %v mixer driver at %s but instead found: %v", bm.expectedSubTypes, bm.connection, subtypes)
-		} else {
-			for idx, est := range bm.expectedSubTypes {
-				if subtypes[idx] != est {
-					bm.Close()
-					return nil, fmt.Errorf("Expected to find a %v mixer driver at %s but instead found: %v", bm.expectedSubTypes, bm.connection, subtypes)
-				}
-			}
-			return conn, nil
+			return fmt.Errorf("Expected to find a mixer instructionPlugin at %s but instead found: %s", bm.connection, typ)
+		} else if subtypes := reply.GetSubtypes(); len(subtypes) != 1 || subtypes[0] != string(bm.expectedSubType) {
+			return fmt.Errorf("Expected to find a [%v] mixer instructionPlugin at %s but instead found: %v", bm.expectedSubType, bm.connection, subtypes)
 		}
 	}
+	return nil
+}
 
-	return bm.conn, nil
+func (bm *BaseMixer) maybeConfigure(wf *workflow.Workflow) error {
+	bm.lock.Lock()
+	defer bm.lock.Unlock()
+
+	if bm.conn != nil && bm.properties == nil {
+		if fun, found := subTypeToConnDriverFun[bm.expectedSubType]; !found {
+			return fmt.Errorf("Unable to find connection function for mixer subtype %v", bm.expectedSubType)
+		} else {
+			driver := fun(bm.conn)
+			if props, status := driver.Configure(wf.JobId, wf.Meta.Name, bm.id); !status.Ok() {
+				return status.GetError()
+			} else {
+				props.Driver = driver
+				bm.properties = props
+				return nil
+			}
+		}
+	}
+	return nil
 }
 
 func (bm *BaseMixer) Close() {
 	bm.lock.Lock()
 	defer bm.lock.Unlock()
+
+	bm.properties = nil
 
 	if bm.conn != nil {
 		bm.conn.Close()
@@ -139,9 +193,9 @@ func (bm *BaseMixer) Close() {
 				proc.Kill()
 			}()
 		}
-		<-bm.closed
+		<-bm.cmdFinished
 		bm.cmd = nil
-		bm.closed = nil
+		bm.cmdFinished = nil
 	}
 }
 

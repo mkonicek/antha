@@ -5,7 +5,6 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/laboratory/effects"
-	"github.com/antha-lang/antha/logger"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/handler"
 	"github.com/antha-lang/antha/workflow"
@@ -86,7 +85,7 @@ func (hum *Human) DetermineRole(tgt *target.Target) {
 	}
 }
 
-func (hum *Human) Connect(*logger.Logger, *workflow.Workflow) error {
+func (hum *Human) Connect(*workflow.Workflow) error {
 	return nil
 }
 

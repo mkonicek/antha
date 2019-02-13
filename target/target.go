@@ -6,7 +6,6 @@ import (
 	"errors"
 
 	"github.com/antha-lang/antha/laboratory/effects"
-	"github.com/antha-lang/antha/logger"
 	"github.com/antha-lang/antha/workflow"
 )
 
@@ -96,9 +95,9 @@ func (a *Target) Close() {
 	}
 }
 
-func (a *Target) Connect(logger *logger.Logger, wf *workflow.Workflow) error {
+func (a *Target) Connect(wf *workflow.Workflow) error {
 	for _, dev := range a.Devices {
-		if err := dev.Connect(logger, wf); err != nil {
+		if err := dev.Connect(wf); err != nil {
 			return err
 		}
 	}

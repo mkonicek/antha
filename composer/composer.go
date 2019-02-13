@@ -19,15 +19,16 @@ type Composer struct {
 	Logger   *logger.Logger
 	Workflow *workflow.Workflow
 
-	OutDir string
-	Keep   bool
-	Run    bool
+	OutDir        string
+	Keep          bool
+	Run           bool
+	LinkedDrivers bool
 
 	elementTypes map[workflow.ElementTypeName]*TranspilableElementType
 	worklist     []*TranspilableElementType
 }
 
-func NewComposer(logger *logger.Logger, wf *workflow.Workflow, outDir string, keep, run bool) (*Composer, error) {
+func NewComposer(logger *logger.Logger, wf *workflow.Workflow, outDir string, keep, run, linkedDrivers bool) (*Composer, error) {
 	if outDir == "" {
 		if d, err := ioutil.TempDir("", fmt.Sprintf("antha-build-%s", wf.JobId)); err != nil {
 			return nil, err
@@ -45,9 +46,10 @@ func NewComposer(logger *logger.Logger, wf *workflow.Workflow, outDir string, ke
 		Logger:   logger,
 		Workflow: wf,
 
-		OutDir: outDir,
-		Keep:   keep,
-		Run:    run,
+		OutDir:        outDir,
+		Keep:          keep,
+		Run:           run,
+		LinkedDrivers: linkedDrivers,
 
 		elementTypes: make(map[workflow.ElementTypeName]*TranspilableElementType),
 	}, nil

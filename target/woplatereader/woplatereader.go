@@ -10,6 +10,7 @@ import (
 	platereader "github.com/antha-lang/antha/driver/antha_platereader_v1"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/target"
+	"github.com/antha-lang/antha/workflow"
 )
 
 // WOPlateReader defines the state of a write only plate-reader device
@@ -25,8 +26,11 @@ func New() *WOPlateReader {
 
 // CanCompile implements a Device
 func (a *WOPlateReader) CanCompile(req effects.Request) bool {
-	can := effects.Request{}
-	can.Selector = append(can.Selector, target.DriverSelectorV1WriteOnlyPlateReader)
+	can := effects.Request{
+		Selector: []effects.NameValue{
+			target.DriverSelectorV1WriteOnlyPlateReader,
+		},
+	}
 	return can.Contains(req)
 }
 
@@ -34,15 +38,17 @@ func (a *WOPlateReader) CanCompile(req effects.Request) bool {
 func (a *WOPlateReader) Compile(labEffects *effects.LaboratoryEffects, nodes []effects.Node) ([]effects.Inst, error) {
 	// Find the LHComponentID for the samples to measure. We'll then search
 	// for these later.
+	prInsts := make([]*wtype.PRInstruction, 0, len(nodes))
 	lhCmpIDs := make(map[string]bool)
 	for _, node := range nodes {
-		cmd := node.(*effects.Command)
-		inst, ok := cmd.Inst.(*wtype.PRInstruction)
-		if !ok {
-			return nil, fmt.Errorf("expected PRInstruction. Got: %T", cmd.Inst)
+		if cmd, ok := node.(*effects.Command); !ok {
+			return nil, fmt.Errorf("cannot compile %T", node)
+		} else if inst, ok := cmd.Inst.(*wtype.PRInstruction); !ok {
+			return nil, fmt.Errorf("cannot compile %T", cmd.Inst)
+		} else {
+			lhCmpIDs[inst.ComponentIn.GetID()] = true
+			prInsts = append(prInsts, inst)
 		}
-		lhID := inst.ComponentIn.GetID()
-		lhCmpIDs[lhID] = true
 	}
 
 	lhPlateLocations := make(map[string]string) // {cmpId: PlateId}
@@ -72,12 +78,6 @@ func (a *WOPlateReader) Compile(labEffects *effects.LaboratoryEffects, nodes []e
 			}
 			findComps(mix)
 		}
-	}
-
-	var prInsts []*wtype.PRInstruction
-	for _, node := range nodes {
-		cmd := node.(*effects.Command)
-		prInsts = append(prInsts, cmd.Inst.(*wtype.PRInstruction))
 	}
 
 	// Merge PR instructions
@@ -157,3 +157,9 @@ func (a *WOPlateReader) mergePRInsts(prInsts []*wtype.PRInstruction, wellLocs ma
 	insts.SequentialOrder()
 	return insts, nil
 }
+
+func (a *WOPlateReader) Connect(*workflow.Workflow) error {
+	return nil
+}
+
+func (a *WOPlateReader) Close() {}

@@ -9,6 +9,7 @@ import (
 	"github.com/antha-lang/antha/graph"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/target"
+	"github.com/antha-lang/antha/workflow"
 )
 
 var (
@@ -30,6 +31,12 @@ func (a *GenericHandler) CanCompile(req effects.Request) bool {
 
 	return can.Contains(req)
 }
+
+func (a *GenericHandler) Connect(*workflow.Workflow) error {
+	return nil
+}
+
+func (a *GenericHandler) Close() {}
 
 func (a GenericHandler) serialize(obj interface{}) (string, error) {
 	type hasGetID interface {

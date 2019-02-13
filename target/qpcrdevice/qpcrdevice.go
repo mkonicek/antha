@@ -10,6 +10,7 @@ import (
 	quantstudio "github.com/antha-lang/antha/driver/antha_quantstudio_v1"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/target"
+	"github.com/antha-lang/antha/workflow"
 	"github.com/golang/protobuf/proto"
 )
 
@@ -32,6 +33,12 @@ func (a *QPCRDevice) CanCompile(req effects.Request) bool {
 	}
 	return can.Contains(req)
 }
+
+func (a *QPCRDevice) Connect(*workflow.Workflow) error {
+	return nil
+}
+
+func (a *QPCRDevice) Close() {}
 
 func (dev *QPCRDevice) transform(inst *effects.QPCRInstruction) (effects.Inst, error) {
 	if inst.Definition == "" {
@@ -110,8 +117,11 @@ func (dev *QPCRDevice) Compile(labEffects *effects.LaboratoryEffects, nodes []ef
 
 	insts := make(effects.Insts, 0, 2*len(nodes))
 	for _, node := range nodes {
-		inst := node.(*effects.Command).Inst.(*effects.QPCRInstruction)
-		if call, err := dev.transform(inst); err != nil {
+		if cmd, ok := node.(*effects.Command); !ok {
+			return nil, fmt.Errorf("cannot compile %T", node)
+		} else if inst, ok := cmd.Inst.(*effects.QPCRInstruction); !ok {
+			return nil, fmt.Errorf("cannot compile %T", cmd.Inst)
+		} else if call, err := dev.transform(inst); err != nil {
 			return nil, err
 		} else {
 			insts = append(insts, dev.makePrompt(inst), call)

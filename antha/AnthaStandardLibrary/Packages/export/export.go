@@ -27,19 +27,17 @@ import (
 	"bytes"
 	"encoding/csv"
 	"fmt"
-	"io"
-	"os"
-	"path/filepath"
+	"path"
 	"strings"
 	"text/template"
 	"time"
 
-	anthapath "github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/AnthaPath"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes/lookup"
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"github.com/antha-lang/antha/laboratory"
 )
 
 // SequenceReport exports a standard report of sequence properties to a txt file.
@@ -176,16 +174,11 @@ func FastaSerialfromMultipleAssemblies(multipleassemblyparameters []enzymes.Asse
 		seqs = append(seqs, plasmidproductsfromXprimaryseq...)
 	}
 
-	return FastaSerial(ANTHAPATH, dirname, seqs)
+	return FastaSerial(seqs)
 }
 
-// FIXME rerevise this to sort out file handling
-
 // GenbankSerial exports multiple sequences into a multi-record Genbank format file
-// The makeinanthapath argument specifies whether a copy of the file should be saved locally or to the anthapath in a specified sub directory directory.
-func GenbankSerial(makeinanthapath bool, dir string, seqs []wtype.DNASequence) (wtype.File, string, error) {
-
-	var anthafile wtype.File
+func GenbankSerial(lab *laboratory.Laboratory, filename string, seqs []wtype.DNASequence) (*wtype.File, error) {
 
 	// Template for multi-record Genbank file
 	// https://www.ncbi.nlm.nih.gov/Sitemap/samplerecord.html
@@ -282,65 +275,45 @@ ORIGIN
 	}).Parse(tmplStr)
 
 	if err != nil {
-		return anthafile, "", err
+		return nil, err
 	}
-
-	var filename string
-	if makeinanthapath {
-		filename = filepath.Join(anthapath.Path(), fmt.Sprintf("%s.gbk", dir))
-	} else {
-		filename = filepath.Join(fmt.Sprintf("%s.gbk", dir))
-	}
-	if err := os.MkdirAll(filepath.Dir(filename), 0644); err != nil {
-		return anthafile, "", err
-	}
-
-	f, err := os.Create(filename)
-	if err != nil {
-		return anthafile, "", err
-	}
-
-	defer closeReader(f)
 
 	var buf bytes.Buffer
 
-	err = tmpl.Execute(&buf, seqs)
-	if err != nil {
-		return anthafile, "", err
+	if err := tmpl.Execute(&buf, seqs); err != nil {
+		return nil, err
+	} else if file, err := lab.FileManager.WriteAll(buf.Bytes()); err != nil {
+		return nil, err
+	} else {
+		if path.Ext(filename) == "" {
+			filename = filename + ".gbk"
+		}
+		file.Name = filename
+		return file, nil
 	}
-
-	allbytes, err := streamToByte(&buf)
-	if err != nil {
-		return anthafile, "", err
-	}
-
-	_, err = io.Copy(f, &buf)
-
-	if err != nil {
-		return anthafile, "", err
-	}
-
-	if len(allbytes) == 0 {
-		return anthafile, "", fmt.Errorf("empty Otnol file created for seqs")
-	}
-
-	anthafile.Name = filename
-	err = anthafile.WriteAll(allbytes)
-
-	return anthafile, filename, err
 }
 
 // TextFile exports data in the format of a set of strings to a file.
 // Each entry in the set of strings represents a line.
-func TextFile(filename string, lines []string) (wtype.File, error) {
-	var anthafile wtype.File
-
-	f, err := os.Create(filename)
-	if err != nil {
-		return anthafile, err
+func TextFile(lab *laboratory.Laboratory, filename string, lines []string) (*wtype.File, error) {
+	var sb strings.Builder
+	for idx, line := range lines {
+		if idx != 0 {
+			if _, err := sb.WriteRune('\n'); err != nil {
+				return nil, err
+			}
+		}
+		if _, err := sb.WriteString(line); err != nil {
+			return nil, err
+		}
 	}
 
-	return FastaSerial(seqs)
+	if file, err := lab.FileManager.WriteString(sb.String()); err != nil {
+		return nil, err
+	} else {
+		file.Name = filename
+		return file, nil
+	}
 }
 
 // CSV exports a matrix of string data as a csv file.

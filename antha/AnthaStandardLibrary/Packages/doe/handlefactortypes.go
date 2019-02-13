@@ -219,12 +219,11 @@ func HandleLHComponentFactor(lab *laboratory.Laboratory, header string, value in
 //
 // If the value cannot be converted to a valid component an error is returned.
 func HandleLHPlateFactor(lab *laboratory.Laboratory, header string, value interface{}) (*wtype.Plate, error) {
-	str, found := value.(string)
-	if !found {
+	if str, ok := value.(string); !ok {
 		return nil, fmt.Errorf("value %T is not a string", value)
+	} else {
+		return lab.Inventory.PlateTypes.NewPlate(wtype.PlateTypeName(str))
 	}
-
-	return lab.Inventory.PlateTypes.NewPlate(str)
 }
 
 // HandleTemperatureFactor parses a factor name and value and returns an antha Temperature.

@@ -203,21 +203,31 @@ func firstNonEmpty(types []string) string {
 	return ""
 }
 
-// add policies as argument to GetParallelSetsFor to check multichannelability
-func (ins *TransferInstruction) GetParallelSetsFor(ctx context.Context, robot *LHProperties, policy wtype.LHPolicy) []int {
-	r := make([]int, 0, len(ins.Transfers))
+func (ins *TransferInstruction) GetParallelSetsFor(ctx context.Context, robot *LHProperties, policy wtype.LHPolicy) ([]bool, []*wtype.LHChannelParameter) {
+	m := make([]bool, 0, len(ins.Transfers))
+	c := make([]*wtype.LHChannelParameter, 0, len(ins.Transfers))
 
 	for i := 0; i < len(ins.Transfers); i++ {
+		var channelPrm *wtype.LHChannelParameter
+
 		// a parallel transfer is valid if any robot head can do it
 		// TODO --> support head/adaptor changes. Maybe.
-		for _, head := range robot.GetLoadedHeads() {
-			if ins.validateParallelSet(ctx, robot, head, i, policy) {
-				r = append(r, i)
+		t := false
+		if policy["CAN_MULTI"].(bool) {
+			for _, head := range robot.GetLoadedHeads() {
+				if ins.validateParallelSet(ctx, robot, head, i, policy) {
+					t = true
+					channelPrm = head.Params
+					break
+				}
 			}
 		}
+
+		m = append(m, t)
+		c = append(c, channelPrm)
 	}
 
-	return r
+	return m, c
 }
 
 // add policies as argument to GetParallelSetsFor to check multichannelability
@@ -426,7 +436,6 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 
 	ins.ChooseChannels(prms)
 
-	// is this the part we need to change?
 	pol, err := GetPolicyFor(policy, ins)
 
 	if err != nil {
@@ -440,110 +449,100 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 		}
 	}
 
-	ret := make([]RobotInstruction, 0)
+	mci := NewChannelBlockInstruction()
 
 	headsLoaded := prms.GetLoadedHeads()
 
-	// if we can multi we do this first
-	if pol["CAN_MULTI"].(bool) {
-		// add policies as argument to GetParallelSetsFor to check multichannelability
-		parallelsets := ins.GetParallelSetsFor(ctx, prms, pol)
+	// this is a buffer system to improve tip use by allowing for
+	// compatible transfers to be kept together
 
-		mci := NewMultiChannelBlockInstruction()
-		mci.Prms = headsLoaded[0].Params // TODO Remove Hard code here
+	mcBuffer := make([]MultiTransferParams, 0, 1)
+	scBuffer := make([]MultiTransferParams, 0, 1)
+	oldSet := ins.Transfers[0].Component()
 
-		// to do below
-		//
-		//	- divide up transfer into multi and single transfers
-		//  	  in practice this means finding the maximum we can do
-		//	  then doing that as a transfer and generating single channel transfers
-		//	  to mop up the rest
-		//
+	setsSame := func(a, b []string) bool {
+		if len(a) == len(b) {
+			for i := range a {
+				if a[i] != b[i] {
+					return false
+				}
+			}
+		} else {
+			return false
+		}
 
-		for _, set := range parallelsets {
-			vols := VolumeSet(ins.Transfers[set].Volume())
+		return true
+	}
 
-			// non independent heads must have all volumes the same
-			if !mci.Prms.Independent {
-				if maxvol := vols.MaxMultiTransferVolume(prms.MinPossibleVolume()); !maxvol.IsZero() {
-					for i := range vols {
-						if vols[i].IsPositive() {
-							vols[i] = wunit.CopyVolume(maxvol)
-						}
+	flushBuffers := func(mB, sB []MultiTransferParams, ins *ChannelBlockInstruction) ([]MultiTransferParams, []MultiTransferParams) {
+		for _, b := range [][]MultiTransferParams{mB, sB} {
+			for _, mtp := range b {
+				mci.AddTransferParams(mtp)
+			}
+		}
+
+		return []MultiTransferParams{}, []MultiTransferParams{}
+	}
+
+	multis, channels := ins.GetParallelSetsFor(ctx, prms, pol)
+
+	for set, multi := range multis {
+		newSet := ins.Transfers[set].Component()
+
+		// this check is essentially on component identity (i.e. CNAME, not liquid type)
+		// - if we are not moving the same thing as last time we stop aggregating and
+		// flush both buffers
+		if !setsSame(newSet, oldSet) {
+			mcBuffer, scBuffer = flushBuffers(mcBuffer, scBuffer, mci)
+		}
+
+		vols := VolumeSet(ins.Transfers[set].Volume())
+		// logic required here:
+		// a) do biggest multichannel volume we can
+		// b) mop up single channel transfers
+
+		// non independent heads must have all volumes the same
+		if !headsLoaded[0].Params.Independent {
+			if maxvol := vols.MaxMultiTransferVolume(prms.MinPossibleVolume()); !maxvol.IsZero() {
+				for i := range vols {
+					if vols[i].IsZero() {
+						break
 					}
-				} else {
-					// we can't transfer any volumes with the non-independent head so move on to the next parallelset
-					continue
+					vols[i] = wunit.CopyVolume(maxvol)
 				}
+			} else {
+				multi = false
 			}
+		}
 
-			// ISSUE: Duplicating here doesn't account for the possibility of one or more of these becoming zero
-			// 	  need to ensure there are no non-contiguous zeroes
-
-			if vols.NonContiguous() && !mci.Prms.Independent {
-				//must be done single channel
-				break
-			}
-
-			tp := ins.Transfers[set].Dup()
-			for i := 0; i < len(tp.Transfers); i++ {
-				if vols[i].IsPositive() {
-					tp.Transfers[i].Volume = vols[i].Dup()
-				}
+		if multi {
+			mtp := ins.Transfers[set].Dup()
+			for i := 0; i < len(mtp.Transfers); i++ {
+				mtp.Transfers[i].Volume = vols[i].Dup()
+				mtp.Transfers[i].Channel = channels[set]
 			}
 
 			ins.Transfers[set].RemoveVolumes(vols)
-
-			// set the from and to volumes for the relevant part of the instruction
 			ins.Transfers[set].RemoveFVolumes(vols)
 			ins.Transfers[set].AddTVolumes(vols)
 
-			mci.Multi = len(vols)
-
-			// the following call removes all zero-volume transfers. Since we have checked
-			// that the set is contiguously positive this amounts to removing all leading
-			// and trailing zeroes. We need to do this to prevent accidentally carrying over
-			// extra transfers when going from, e.g., multichanneling 4 to 3
-			if !mci.Prms.Independent {
-				tp = tp.RemoveBlanks()
-			}
-
-			mci.AddTransferParams(tp)
+			mtp.Multi = len(vols)
+			mcBuffer = append(mcBuffer, mtp)
 		}
 
-		if len(parallelsets) > 0 && len(mci.Volume) > 0 {
-			ret = append(ret, mci)
-		}
-	}
-
-	// mop up all the single instructions which are left
-	sci := NewSingleChannelBlockInstruction()
-	sci.Prms = headsLoaded[0].Params // TODO Fix Hard Code Here
-
-	lastWhat := ""
-	for _, t := range ins.Transfers {
-		for _, tp := range t.Transfers {
+		for _, tp := range ins.Transfers[set].Transfers {
 			if !tp.Volume.IsPositive() {
 				continue
 			}
-
-			// TODO --> reorder instructions
-			if lastWhat != "" && tp.What != lastWhat {
-				if len(sci.Volume) > 0 {
-					ret = append(ret, sci)
-				}
-				sci = NewSingleChannelBlockInstruction()
-				sci.Prms = headsLoaded[0].Params
-			}
-
-			sci.AddTransferParams(tp)
-			lastWhat = tp.What
+			tp.Channel = headsLoaded[0].Params
+			scBuffer = append(scBuffer, MultiTransferParams{Multi: 1, Transfers: []TransferParams{tp}})
 		}
+
 	}
-	if len(sci.Volume) > 0 {
-		ret = append(ret, sci)
-	}
-	return ret, nil
+
+	flushBuffers(mcBuffer, scBuffer, mci)
+
+	return []RobotInstruction{mci}, nil
 }
 
 func (ins *TransferInstruction) ReviseTransferVolumes(prms *LHProperties) error {

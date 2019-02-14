@@ -47,7 +47,6 @@ func TestInputSampleAutoAllocate(t *testing.T) {
 		},
 		InputPlates: []*wtype.LHPlate{pl},
 		Assertions: Assertions{
-			DebugPrintInstructions(),
 			InitialComponentAssertion(map[string]float64{"water": 55.5, "dna_part": 30.5}),
 			NumberOfAssertion(liquidhandling.ASP, 2),
 			NumberOfAssertion(liquidhandling.DSP, 2),

@@ -48,247 +48,7 @@ const (
 	safetyZHeight = 0.05
 )
 
-type SingleChannelBlockInstruction struct {
-	BaseRobotInstruction
-	*InstructionType
-	What       []string
-	PltFrom    []string
-	PltTo      []string
-	WellFrom   []string
-	WellTo     []string
-	Volume     []wunit.Volume
-	FPlateType []string
-	TPlateType []string
-	FVolume    []wunit.Volume
-	TVolume    []wunit.Volume
-	Prms       *wtype.LHChannelParameter
-}
-
-func NewSingleChannelBlockInstruction() *SingleChannelBlockInstruction {
-	v := &SingleChannelBlockInstruction{
-		InstructionType: SCB,
-		What:            []string{},
-		PltFrom:         []string{},
-		PltTo:           []string{},
-		WellFrom:        []string{},
-		WellTo:          []string{},
-		Volume:          []wunit.Volume{},
-		FVolume:         []wunit.Volume{},
-		TVolume:         []wunit.Volume{},
-		FPlateType:      []string{},
-		TPlateType:      []string{},
-	}
-	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
-	return v
-}
-
-func (ins *SingleChannelBlockInstruction) Visit(visitor RobotInstructionVisitor) {
-	visitor.SingleChannelBlock(ins)
-}
-
-func (ins *SingleChannelBlockInstruction) AddTransferParams(mct TransferParams) {
-	ins.What = append(ins.What, mct.What)
-	ins.PltFrom = append(ins.PltFrom, mct.PltFrom)
-	ins.PltTo = append(ins.PltTo, mct.PltTo)
-	ins.WellFrom = append(ins.WellFrom, mct.WellFrom)
-	ins.WellTo = append(ins.WellTo, mct.WellTo)
-	ins.Volume = append(ins.Volume, mct.Volume)
-	ins.FPlateType = append(ins.FPlateType, mct.FPlateType)
-	ins.TPlateType = append(ins.TPlateType, mct.TPlateType)
-	ins.FVolume = append(ins.FVolume, mct.FVolume)
-	ins.TVolume = append(ins.TVolume, mct.TVolume)
-	ins.Prms = mct.Channel
-}
-
-func (ins *SingleChannelBlockInstruction) GetParameter(name InstructionParameter) interface{} {
-	switch name {
-	case LIQUIDCLASS:
-		return ins.What
-	case VOLUME:
-		return ins.Volume
-	case VOLUNT:
-		return nil
-	case FROMPLATETYPE:
-		return ins.FPlateType
-	case WELLFROMVOLUME:
-		return ins.FVolume
-	case POSFROM:
-		return ins.PltFrom
-	case POSTO:
-		return ins.PltTo
-	case WELLFROM:
-		return ins.WellFrom
-	case PARAMS:
-		return ins.Prms
-	case PLATFORM:
-		if ins.Prms == nil {
-			return ""
-		}
-		return ins.Prms.Platform
-	case WELLTO:
-		return ins.WellTo
-	case WELLTOVOLUME:
-		return ins.TVolume
-	case TOPLATETYPE:
-		return ins.TPlateType
-	default:
-		return ins.BaseRobotInstruction.GetParameter(name)
-	}
-}
-
-func tipArrays(multi int) ([]string, []*wtype.LHChannelParameter) {
-	// TODO --> mirroring
-	tt := make([]string, multi)
-	chanA := make([]*wtype.LHChannelParameter, multi)
-
-	return tt, chanA
-}
-
-func (ins *SingleChannelBlockInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
-	usetiptracking := SafeGetBool(policy.Options, "USE_DRIVER_TIP_TRACKING")
-
-	ret := make([]RobotInstruction, 0)
-	// get tips
-	channel, tipp, err := ChooseChannel(ins.Volume[0], prms)
-	if err != nil {
-		return ret, err
-	}
-
-	tiptype := tipp.Type
-
-	ins.Prms = channel
-	pol, err := GetPolicyFor(policy, ins)
-
-	if err != nil {
-		if _, ok := err.(ErrInvalidLiquidType); ok {
-			return ret, err
-		}
-		pol, err = GetDefaultPolicy(policy, ins)
-
-		if err != nil {
-			return ret, err
-		}
-	}
-
-	tt, chanA := tipArrays(channel.Multi)
-	tt[0] = tiptype
-	chanA[0] = channel
-
-	tipget, err := GetTips(ctx, tt, prms, chanA, usetiptracking)
-
-	if err != nil {
-		return ret, err
-	}
-
-	ret = append(ret, tipget...)
-	n_tip_uses := 0
-
-	var last_thing *wtype.Liquid
-	var dirty bool
-
-	for t := 0; t < len(ins.Volume); t++ {
-		newchannel, newtipp, err := ChooseChannel(ins.Volume[t], prms)
-		if err != nil {
-			return ret, err
-		}
-
-		newtiptype := newtipp.Type
-		mergedchannel := newchannel.MergeWithTip(newtipp)
-		tipp = newtipp
-
-		tvs, err := TransferVolumes(ins.Volume[t], mergedchannel.Minvol, mergedchannel.Maxvol)
-
-		if err != nil {
-			return ret, err
-		}
-		for _, vol := range tvs {
-			// determine whether to change tips
-			change_tips := n_tip_uses > pol["TIP_REUSE_LIMIT"].(int)
-			change_tips = change_tips || channel != newchannel
-			change_tips = change_tips || newtiptype != tiptype
-
-			this_thing := prms.Plates[ins.PltFrom[t]].Wellcoords[ins.WellFrom[t]].Contents()
-
-			if last_thing != nil {
-				if this_thing.CName != last_thing.CName {
-					change_tips = true
-				}
-			}
-
-			// finally ensure we don't contaminate sources
-			if dirty {
-				change_tips = true
-			}
-
-			if change_tips {
-				tipdrp, err := DropTips(tt, prms, chanA)
-				if err != nil {
-					return ret, err
-				}
-				ret = append(ret, tipdrp)
-
-				tt, chanA = tipArrays(newchannel.Multi)
-				tt[0] = newtiptype
-				chanA[0] = newchannel
-				tipget, err := GetTips(ctx, tt, prms, chanA, usetiptracking)
-
-				if err != nil {
-					return ret, err
-				}
-
-				ret = append(ret, tipget...)
-				tiptype = newtiptype
-				channel = newchannel
-				n_tip_uses = 0
-				last_thing = nil
-				dirty = false
-			}
-
-			stci := NewSingleChannelTransferInstruction()
-
-			stci.What = ins.What[t]
-			stci.PltFrom = ins.PltFrom[t]
-			stci.PltTo = ins.PltTo[t]
-			stci.WellFrom = ins.WellFrom[t]
-			stci.WellTo = ins.WellTo[t]
-			stci.Volume = vol
-			stci.FPlateType = ins.FPlateType[t]
-			stci.TPlateType = ins.TPlateType[t]
-			stci.FVolume = wunit.CopyVolume(ins.FVolume[t])
-			stci.TVolume = wunit.CopyVolume(ins.TVolume[t])
-			stci.Prms = channel.MergeWithTip(tipp)
-			stci.TipType = tiptype
-			ret = append(ret, stci)
-			last_thing = this_thing
-
-			// finally check if we are touching a bad liquid
-			// in future we will do this properly, for now we assume
-			// touching any liquid is bad
-
-			npre, premix := pol["PRE_MIX"]
-			npost, postmix := pol["POST_MIX"]
-
-			if pol["DSPREFERENCE"].(int) == 0 && !ins.TVolume[t].IsZero() || premix && npre.(int) > 0 || postmix && npost.(int) > 0 {
-				dirty = true
-			}
-
-			ins.FVolume[t].Subtract(vol)
-			ins.TVolume[t].Add(vol)
-			n_tip_uses += 1
-		}
-
-	}
-	tipdrp, err := DropTips(tt, prms, chanA)
-
-	if err != nil {
-		return ret, err
-	}
-	ret = append(ret, tipdrp)
-
-	return ret, nil
-}
-
-type MultiChannelBlockInstruction struct {
+type ChannelBlockInstruction struct {
 	BaseRobotInstruction
 	*InstructionType
 	What       [][]string
@@ -301,13 +61,14 @@ type MultiChannelBlockInstruction struct {
 	TPlateType [][]string
 	FVolume    [][]wunit.Volume
 	TVolume    [][]wunit.Volume
-	Multi      int
-	Prms       *wtype.LHChannelParameter
+	Component  [][]string                    // array of component name (i.e. Liquid's CName) by [transfer][channel]
+	Prms       [][]*wtype.LHChannelParameter // which channel properties apply to each transfer
+	Multi      []int
 }
 
-func NewMultiChannelBlockInstruction() *MultiChannelBlockInstruction {
-	v := &MultiChannelBlockInstruction{
-		InstructionType: MCB,
+func NewChannelBlockInstruction() *ChannelBlockInstruction {
+	v := &ChannelBlockInstruction{
+		InstructionType: CBI,
 		What:            [][]string{},
 		PltFrom:         [][]string{},
 		PltTo:           [][]string{},
@@ -318,16 +79,19 @@ func NewMultiChannelBlockInstruction() *MultiChannelBlockInstruction {
 		TPlateType:      [][]string{},
 		FVolume:         [][]wunit.Volume{},
 		TVolume:         [][]wunit.Volume{},
+		Component:       [][]string{},
+		Prms:            [][]*wtype.LHChannelParameter{},
+		Multi:           []int{},
 	}
 	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
 	return v
 }
 
-func (ins *MultiChannelBlockInstruction) Visit(visitor RobotInstructionVisitor) {
-	visitor.MultiChannelBlock(ins)
+func (ins *ChannelBlockInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.ChannelBlock(ins)
 }
 
-func (ins *MultiChannelBlockInstruction) AddTransferParams(mct MultiTransferParams) {
+func (ins *ChannelBlockInstruction) AddTransferParams(mct MultiTransferParams) {
 	ins.What = append(ins.What, mct.What())
 	ins.PltFrom = append(ins.PltFrom, mct.PltFrom())
 	ins.PltTo = append(ins.PltTo, mct.PltTo())
@@ -338,9 +102,12 @@ func (ins *MultiChannelBlockInstruction) AddTransferParams(mct MultiTransferPara
 	ins.TPlateType = append(ins.TPlateType, mct.TPlateType())
 	ins.FVolume = append(ins.FVolume, mct.FVolume())
 	ins.TVolume = append(ins.TVolume, mct.TVolume())
+	ins.Component = append(ins.Component, mct.Component())
+	ins.Prms = append(ins.Prms, mct.Channels())
+	ins.Multi = append(ins.Multi, mct.Multi)
 }
 
-func (ins *MultiChannelBlockInstruction) GetParameter(name InstructionParameter) interface{} {
+func (ins *ChannelBlockInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
 	case LIQUIDCLASS:
 		return ins.What
@@ -361,22 +128,36 @@ func (ins *MultiChannelBlockInstruction) GetParameter(name InstructionParameter)
 	case PARAMS:
 		return ins.Prms
 	case PLATFORM:
-		if ins.Prms == nil {
-			return ""
+		ret := []string{}
+		for _, p := range ins.Prms {
+			for _, ppp := range p {
+				var pp string
+
+				if ppp != nil {
+					pp = ppp.Platform
+					break
+				}
+
+				ret = append(ret, pp)
+			}
 		}
-		return ins.Prms.Platform
+		return ret
 	case WELLTO:
 		return ins.WellTo
 	case WELLTOVOLUME:
 		return ins.TVolume
 	case TOPLATETYPE:
 		return ins.TPlateType
+	case COMPONENT:
+		return ins.Component
+	case MULTI:
+		return ins.Multi
 	default:
 		return ins.BaseRobotInstruction.GetParameter(name)
 	}
 }
 
-func (ins *MultiChannelBlockInstruction) GetVolumes() []wunit.Volume {
+func (ins *ChannelBlockInstruction) GetVolumes() []wunit.Volume {
 	v := make([]wunit.Volume, 0, 1)
 	seen := make(map[string]bool)
 	for _, vv := range ins.Volume[0] {
@@ -387,6 +168,16 @@ func (ins *MultiChannelBlockInstruction) GetVolumes() []wunit.Volume {
 	}
 
 	return v
+}
+
+func (ins *ChannelBlockInstruction) MaxMulti() int {
+	mx := 0
+	for _, m := range ins.Multi {
+		if m > mx {
+			mx = m
+		}
+	}
+	return mx
 }
 
 func mergeTipsAndChannels(channels []*wtype.LHChannelParameter, tips []*wtype.LHTip) []*wtype.LHChannelParameter {
@@ -405,8 +196,8 @@ func mergeTipsAndChannels(channels []*wtype.LHChannelParameter, tips []*wtype.LH
 	return ret
 }
 
-// By the point at which the MultiChannelBlockInstruction is used by the Generate method all transfers will share the same policy.
-func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+// By the point at which the ChannelBlockInstruction is used by the Generate method all transfers will share the same policy.
+func (ins *ChannelBlockInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	usetiptracking := SafeGetBool(policy.Options, "USE_DRIVER_TIP_TRACKING")
 
 	pol, err := GetPolicyFor(policy, ins)
@@ -443,9 +234,14 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 	var dirty bool
 
 	for t := 0; t < len(ins.Volume); t++ {
-		tvols := NewVolumeSet(ins.Prms.Multi)
-		//		vols := NewVolumeSet(ins.Prms.Multi)
-		fvols := NewVolumeSet(ins.Prms.Multi)
+		if len(ins.What[t]) == 0 {
+			continue
+		}
+
+		prmSet := ins.Prms[t][0]
+
+		tvols := NewVolumeSet(prmSet.Multi)
+		fvols := NewVolumeSet(prmSet.Multi)
 		for i := range ins.Volume[t] {
 			fvols[i] = wunit.CopyVolume(ins.FVolume[t][i])
 			tvols[i] = wunit.CopyVolume(ins.TVolume[t][i])
@@ -511,7 +307,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 				last_thing = nil
 				dirty = false
 			}
-			mci := NewMultiChannelTransferInstruction()
+			mci := NewChannelTransferInstruction()
 			//vols.SetEqualTo(vol, ins.Multi)
 			mci.What = ins.What[t]
 			mci.Volume = vols.GetACopy()
@@ -523,6 +319,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 			mci.WellTo = ins.WellTo[t]
 			mci.FPlateType = ins.FPlateType[t]
 			mci.TPlateType = ins.TPlateType[t]
+			mci.Component = ins.Component[t]
 			mci.TipType = newtiptypes
 			//mci.Multi = ins.Multi
 			mci.Multi = countMulti(ins.PltFrom[t])
@@ -572,119 +369,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 	return ret, nil
 }
 
-type SingleChannelTransferInstruction struct {
-	BaseRobotInstruction
-	*InstructionType
-	What       string
-	PltFrom    string
-	PltTo      string
-	WellFrom   string
-	WellTo     string
-	Volume     wunit.Volume
-	FPlateType string
-	TPlateType string
-	FVolume    wunit.Volume
-	TVolume    wunit.Volume
-	Prms       *wtype.LHChannelParameter
-	TipType    string
-}
-
-func (scti *SingleChannelTransferInstruction) Params() TransferParams {
-	var tp TransferParams
-	tp.What = scti.What
-	tp.PltFrom = scti.PltFrom
-	tp.PltTo = scti.PltTo
-	tp.WellTo = scti.WellTo
-	tp.WellFrom = scti.WellFrom
-	tp.Volume = wunit.CopyVolume(scti.Volume)
-	tp.FPlateType = scti.FPlateType
-	tp.TPlateType = scti.TPlateType
-	tp.FVolume = wunit.CopyVolume(scti.FVolume)
-	tp.TVolume = wunit.CopyVolume(scti.TVolume)
-	tp.Channel = scti.Prms
-	tp.TipType = scti.TipType
-	return tp
-}
-
-func NewSingleChannelTransferInstruction() *SingleChannelTransferInstruction {
-	v := &SingleChannelTransferInstruction{
-		InstructionType: SCT,
-	}
-	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
-	return v
-}
-
-func (ins *SingleChannelTransferInstruction) Visit(visitor RobotInstructionVisitor) {
-	visitor.SingleChannelTransfer(ins)
-}
-
-func (ins *SingleChannelTransferInstruction) GetParameter(name InstructionParameter) interface{} {
-	switch name {
-	case LIQUIDCLASS:
-		return ins.What
-	case VOLUME:
-		return ins.Volume
-	case VOLUNT:
-		return nil
-	case FROMPLATETYPE:
-		return ins.FPlateType
-	case WELLFROMVOLUME:
-		return ins.FVolume
-	case POSFROM:
-		return ins.PltFrom
-	case POSTO:
-		return ins.PltTo
-	case WELLFROM:
-		return ins.WellFrom
-	case PARAMS:
-		return ins.Prms
-	case PLATFORM:
-		if ins.Prms == nil {
-			return ""
-		}
-		return ins.Prms.Platform
-	case WELLTO:
-		return ins.WellTo
-	case WELLTOVOLUME:
-		return ins.TVolume
-	case TOPLATETYPE:
-		return ins.TPlateType
-	case TIPTYPE:
-		return ins.TipType
-	default:
-		return ins.BaseRobotInstruction.GetParameter(name)
-	}
-}
-
-func (ins *SingleChannelTransferInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
-	ret := make([]RobotInstruction, 0)
-	// make the instructions
-
-	suckinstruction := NewSuckInstruction()
-	suckinstruction.AddTransferParams(ins.Params())
-	suckinstruction.Multi = 1
-	suckinstruction.Prms = ins.Prms
-	ret = append(ret, suckinstruction)
-
-	blowinstruction := NewBlowInstruction()
-	blowinstruction.AddTransferParams(ins.Params())
-	blowinstruction.Multi = 1
-	blowinstruction.Prms = ins.Prms
-	ret = append(ret, blowinstruction)
-
-	/*
-		// commented out pending putting it as part of blow
-		// need to append to reset command
-		resetinstruction := NewResetInstruction()
-		resetinstruction.AddTransferParams(ins.Params())
-		resetinstruction.Prms = ins.Prms
-		ret = append(ret, resetinstruction)
-	*/
-
-	return ret, nil
-}
-
-type MultiChannelTransferInstruction struct {
+type ChannelTransferInstruction struct {
 	BaseRobotInstruction
 	*InstructionType
 	What       []string
@@ -700,9 +385,10 @@ type MultiChannelTransferInstruction struct {
 	Multi      int // potentially deprecated
 	Prms       []*wtype.LHChannelParameter
 	TipType    []string
+	Component  []string
 }
 
-func (scti *MultiChannelTransferInstruction) Params(k int) TransferParams {
+func (scti *ChannelTransferInstruction) Params(k int) TransferParams {
 	var tp TransferParams
 	tp.What = scti.What[k]
 	tp.PltFrom = scti.PltFrom[k]
@@ -716,11 +402,12 @@ func (scti *MultiChannelTransferInstruction) Params(k int) TransferParams {
 	tp.TVolume = wunit.CopyVolume(scti.TVolume[k])
 	tp.Channel = scti.Prms[k].Dup()
 	tp.TipType = scti.TipType[k]
+	tp.Component = scti.Component[k]
 	return tp
 }
-func NewMultiChannelTransferInstruction() *MultiChannelTransferInstruction {
-	v := &MultiChannelTransferInstruction{
-		InstructionType: MCT,
+func NewChannelTransferInstruction() *ChannelTransferInstruction {
+	v := &ChannelTransferInstruction{
+		InstructionType: CTI,
 		What:            []string{},
 		PltFrom:         []string{},
 		PltTo:           []string{},
@@ -732,16 +419,17 @@ func NewMultiChannelTransferInstruction() *MultiChannelTransferInstruction {
 		FPlateType:      []string{},
 		TPlateType:      []string{},
 		TipType:         []string{},
+		Component:       []string{},
 	}
 	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
 	return v
 }
 
-func (ins *MultiChannelTransferInstruction) Visit(visitor RobotInstructionVisitor) {
-	visitor.MultiChannelTransfer(ins)
+func (ins *ChannelTransferInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.ChannelTransfer(ins)
 }
 
-func (ins *MultiChannelTransferInstruction) GetParameter(name InstructionParameter) interface{} {
+func (ins *ChannelTransferInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
 	case LIQUIDCLASS:
 		return ins.What
@@ -772,12 +460,14 @@ func (ins *MultiChannelTransferInstruction) GetParameter(name InstructionParamet
 		return ins.TVolume
 	case TOPLATETYPE:
 		return ins.TPlateType
+	case COMPONENT:
+		return ins.Component
 	default:
 		return ins.BaseRobotInstruction.GetParameter(name)
 	}
 }
 
-func (ins *MultiChannelTransferInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *ChannelTransferInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	ret := make([]RobotInstruction, 0)
 
 	if len(ins.Volume) == 0 {
@@ -1073,6 +763,7 @@ type AspirateInstruction struct {
 	What       []string
 	LLF        []bool
 	Platform   string
+	Component  []string
 }
 
 func NewAspirateInstruction() *AspirateInstruction {
@@ -1082,6 +773,7 @@ func NewAspirateInstruction() *AspirateInstruction {
 		Plt:             []string{},
 		What:            []string{},
 		LLF:             []bool{},
+		Component:       []string{},
 	}
 	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
 	return v
@@ -1111,6 +803,8 @@ func (ins *AspirateInstruction) GetParameter(name InstructionParameter) interfac
 		return ins.LLF
 	case PLATFORM:
 		return ins.Platform
+	case COMPONENT:
+		return ins.Component
 	default:
 		return ins.BaseRobotInstruction.GetParameter(name)
 	}
@@ -1137,13 +831,14 @@ func (ins *AspirateInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
 type DispenseInstruction struct {
 	BaseRobotInstruction
 	*InstructionType
-	Head     int
-	Volume   []wunit.Volume
-	Multi    int
-	Plt      []string
-	What     []string
-	LLF      []bool
-	Platform string
+	Head      int
+	Volume    []wunit.Volume
+	Multi     int
+	Plt       []string
+	What      []string
+	LLF       []bool
+	Platform  string
+	Component []string
 }
 
 func NewDispenseInstruction() *DispenseInstruction {
@@ -1153,6 +848,7 @@ func NewDispenseInstruction() *DispenseInstruction {
 		Plt:             []string{},
 		What:            []string{},
 		LLF:             []bool{},
+		Component:       []string{},
 	}
 	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
 	return v
@@ -1182,6 +878,8 @@ func (ins *DispenseInstruction) GetParameter(name InstructionParameter) interfac
 		return ins.Plt
 	case PLATFORM:
 		return ins.Platform
+	case COMPONENT:
+		return ins.Component
 	default:
 		return ins.BaseRobotInstruction.GetParameter(name)
 	}
@@ -1637,6 +1335,7 @@ type SuckInstruction struct {
 	Multi       int
 	Overstroke  bool
 	TipType     string
+	Component   []string
 }
 
 func NewSuckInstruction() *SuckInstruction {
@@ -1648,6 +1347,7 @@ func NewSuckInstruction() *SuckInstruction {
 		Volume:          []wunit.Volume{},
 		FPlateType:      []string{},
 		FVolume:         []wunit.Volume{},
+		Component:       []string{},
 	}
 	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
 	return v
@@ -1667,6 +1367,7 @@ func (ins *SuckInstruction) AddTransferParams(tp TransferParams) {
 	ins.Prms = tp.Channel
 	ins.Head = tp.Channel.Head
 	ins.TipType = tp.TipType
+	ins.Component = append(ins.Component, tp.Component)
 }
 
 func (ins *SuckInstruction) GetParameter(name InstructionParameter) interface{} {
@@ -1992,6 +1693,7 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	aspins.Overstroke = ins.Overstroke
 	aspins.What = ins.What
 	aspins.Plt = ins.FPlateType
+	aspins.Component = ins.Component
 
 	for i := 0; i < ins.Multi; i++ {
 		aspins.LLF = append(aspins.LLF, use_llf[i])
@@ -2062,6 +1764,7 @@ type BlowInstruction struct {
 	Prms       *wtype.LHChannelParameter
 	Multi      int
 	TipType    string
+	Component  []string
 }
 
 func NewBlowInstruction() *BlowInstruction {
@@ -2073,6 +1776,7 @@ func NewBlowInstruction() *BlowInstruction {
 		Volume:          []wunit.Volume{},
 		TPlateType:      []string{},
 		TVolume:         []wunit.Volume{},
+		Component:       []string{},
 	}
 	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
 	return v
@@ -2109,6 +1813,8 @@ func (ins *BlowInstruction) GetParameter(name InstructionParameter) interface{} 
 		return ins.Multi
 	case TIPTYPE:
 		return ins.TipType
+	case COMPONENT:
+		return ins.Component
 	default:
 		return ins.BaseRobotInstruction.GetParameter(name)
 	}
@@ -2124,6 +1830,7 @@ func (ins *BlowInstruction) AddTransferParams(tp TransferParams) {
 	ins.Prms = tp.Channel
 	ins.Head = tp.Channel.Head
 	ins.TipType = tp.TipType
+	ins.Component = append(ins.Component, tp.Component)
 }
 func (scti *BlowInstruction) Params() MultiTransferParams {
 	tp := NewMultiTransferParams(scti.Multi)
@@ -2354,6 +2061,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		dspins.Multi = ins.Multi
 		dspins.Plt = ins.TPlateType
 		dspins.What = ins.What
+		dspins.Component = ins.Component
 
 		for i := 0; i < ins.Multi; i++ {
 			dspins.LLF = append(dspins.LLF, use_llf[i])

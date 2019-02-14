@@ -254,6 +254,7 @@ func cmpsEqual(c1, c2 *wtype.Liquid) bool {
 
 func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsReply, error) {
 	rep := newReply()
+
 	// build list of possible sources -- this is a list of ComponentVectors
 
 	srcs := lhp.GetSourcesFor(opt.Cmps, opt.Ori, opt.Multi, lhp.MinPossibleVolume(), opt.IgnoreInstances)

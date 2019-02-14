@@ -50,10 +50,8 @@ type TerminalRobotInstruction interface {
 var (
 	TFR = NewInstructionType("TFR", "Transfer")
 	TFB = NewInstructionType("TFB", "TransferBlock")
-	SCB = NewInstructionType("SCB", "SingleChannelTransferBlock")
-	MCB = NewInstructionType("MCB", "MultiChannelTransferBlock")
-	SCT = NewInstructionType("SCT", "SingleChannelTransfer")
-	MCT = NewInstructionType("MCT", "MultiChannelTransfer")
+	CBI = NewInstructionType("CBI", "ChannelBlock")
+	CTI = NewInstructionType("CTI", "ChannelTransfer")
 	CCC = NewInstructionType("CCC", "ChangeChannelCharacteristics")
 	LDT = NewInstructionType("LDT", "LoadTipsMove")
 	UDT = NewInstructionType("UDT", "UnloadTipsMove")

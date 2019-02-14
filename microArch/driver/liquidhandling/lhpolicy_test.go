@@ -123,13 +123,17 @@ func getWaterInstructions() []RobotInstruction {
 	waters := []string{"water", "water", "water", "water", "water", "water", "water", "water"}
 
 	{
-		ins := NewSingleChannelBlockInstruction()
-		ins.What = waters
-		ret = append(ret, ins)
+		for _, w := range waters {
+			ins := NewChannelBlockInstruction()
+			tp := NewMultiTransferParams(1)
+			tp.Transfers = append(tp.Transfers, TransferParams{What: w})
+			ins.AddTransferParams(tp)
+			ret = append(ret, ins)
+		}
 	}
 
 	{
-		ins := NewMultiChannelBlockInstruction()
+		ins := NewChannelBlockInstruction()
 		for i := 0; i < 8; i++ {
 			ins.What = append(ins.What, waters)
 		}
@@ -137,13 +141,13 @@ func getWaterInstructions() []RobotInstruction {
 	}
 
 	{
-		ins := NewSingleChannelTransferInstruction()
-		ins.What = "water"
+		ins := NewChannelTransferInstruction()
+		ins.What = append(ins.What, "water")
 		ret = append(ret, ins)
 	}
 
 	{
-		ins := NewMultiChannelTransferInstruction()
+		ins := NewChannelTransferInstruction()
 		ins.What = waters
 		ret = append(ret, ins)
 	}

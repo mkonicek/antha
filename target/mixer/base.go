@@ -2,6 +2,7 @@ package mixer
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/rand"
 	"os/exec"
@@ -15,9 +16,11 @@ import (
 	"github.com/antha-lang/antha/composer"
 	driver "github.com/antha-lang/antha/driver/antha_driver_v1"
 	"github.com/antha-lang/antha/driver/liquidhandling/client"
+	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/logger"
 	lhdriver "github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/scheduler/liquidhandling"
+	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/workflow"
 	"google.golang.org/grpc"
 )
@@ -26,11 +29,15 @@ type MixerDriverSubType string
 
 const (
 	GilsonPipetmaxSubType MixerDriverSubType = "GilsonPipetmax"
+	LabcyteSubType                           = "LabCyteEcho"
 )
 
 var subTypeToConnDriverFun = map[MixerDriverSubType](func(*grpc.ClientConn) lhdriver.LiquidhandlingDriver){
 	GilsonPipetmaxSubType: func(conn *grpc.ClientConn) lhdriver.LiquidhandlingDriver {
 		return client.NewLowLevelClientFromConn(conn)
+	},
+	LabcyteSubType: func(conn *grpc.ClientConn) lhdriver.LiquidhandlingDriver {
+		return client.NewHighLevelClientFromConn(conn)
 	},
 }
 
@@ -57,24 +64,24 @@ func NewBaseMixer(logger *logger.Logger, id workflow.DeviceInstanceID, connectio
 	}
 }
 
-func (bm *BaseMixer) Connect(wf *workflow.Workflow) (*lhdriver.LHProperties, error) {
-	if err := bm.maybeLinkedDriver(wf); err != nil {
+func (bm *BaseMixer) connect(wf *workflow.Workflow, data []byte) error {
+	if err := bm.maybeLinkedDriver(wf, data); err != nil {
 		bm.Close()
-		return nil, err
+		return err
 	} else {
 		bm.maybeExec()
 		if err := bm.maybeDial(); err != nil {
 			bm.Close()
-			return nil, err
-		} else if err := bm.maybeConfigure(wf); err != nil {
+			return err
+		} else if err := bm.maybeConfigureConn(wf, data); err != nil {
 			bm.Close()
-			return nil, err
+			return err
 		}
 	}
 	if bm.properties == nil {
-		return nil, fmt.Errorf("Unable to establish connection to mixer instructionPlugin for %v.", bm.id)
+		return fmt.Errorf("Unable to establish connection to mixer instructionPlugin for %v.", bm.id)
 	} else {
-		return bm.properties, nil
+		return nil
 	}
 }
 
@@ -147,7 +154,7 @@ func (bm *BaseMixer) maybeDial() error {
 	return nil
 }
 
-func (bm *BaseMixer) maybeConfigure(wf *workflow.Workflow) error {
+func (bm *BaseMixer) maybeConfigureConn(wf *workflow.Workflow, data []byte) error {
 	bm.lock.Lock()
 	defer bm.lock.Unlock()
 
@@ -156,7 +163,7 @@ func (bm *BaseMixer) maybeConfigure(wf *workflow.Workflow) error {
 			return fmt.Errorf("Unable to find connection function for mixer subtype %v", bm.expectedSubType)
 		} else {
 			driver := fun(bm.conn)
-			if props, status := driver.Configure(wf.JobId, wf.Meta.Name, bm.id); !status.Ok() {
+			if props, status := driver.Configure(wf.JobId, wf.Meta.Name, bm.id, data); !status.Ok() {
 				return status.GetError()
 			} else {
 				props.Driver = driver
@@ -197,6 +204,58 @@ func (bm *BaseMixer) Close() {
 		bm.cmd = nil
 		bm.cmdFinished = nil
 	}
+}
+
+func (bm *BaseMixer) CanCompile(req effects.Request) bool {
+	if bm.properties == nil {
+		panic("CanCompile called without an active connection to instructionPlugin")
+	}
+	can := effects.Request{
+		Selector: []effects.NameValue{
+			target.DriverSelectorV1Mixer,
+		},
+	}
+	if bm.properties.CanPrompt() {
+		can.Selector = append(can.Selector, target.DriverSelectorV1Prompter)
+	}
+	return can.Contains(req)
+}
+
+func mix(labEffects *effects.LaboratoryEffects, instrs []*wtype.LHInstruction, req *liquidhandling.LHRequest, props *lhdriver.LHProperties) ([]effects.Inst, error) {
+	hasOutputPlate := func(typ wtype.PlateTypeName, id string) bool {
+		for _, p := range req.OutputPlatetypes {
+			if p.Type == typ && (id == "" || p.ID == id) {
+				return true
+			}
+		}
+		return false
+	}
+
+	for _, instr := range instrs {
+		if instr.OutPlate != nil {
+			if p, found := req.OutputPlates[instr.OutPlate.ID]; found && p != instr.OutPlate {
+				return nil, fmt.Errorf("Mix setup error: Plate %s already requested in different state for mix.", p.ID)
+			} else {
+				req.OutputPlates[instr.OutPlate.ID] = instr.OutPlate
+			}
+		}
+
+		if len(instr.Platetype) != 0 && !hasOutputPlate(instr.Platetype, instr.PlateID) {
+			if pt, err := labEffects.Inventory.PlateTypes.NewPlate(instr.Platetype); err != nil {
+				return nil, err
+			} else {
+				pt.ID = instr.PlateID
+				req.OutputPlatetypes = append(req.OutputPlatetypes, pt)
+			}
+		}
+		req.Add_instruction(instr)
+	}
+
+	if err := liquidhandling.Init(props).MakeSolutions(labEffects, req); err != nil {
+		return nil, err
+	}
+
+	return nil, nil // FIXME
 }
 
 func mergePolicies(basePolicy, priorityPolicy wtype.LHPolicy) (newPolicy wtype.LHPolicy) {
@@ -290,4 +349,30 @@ func makemodifiedTypeName(componentType wtype.LiquidType, number int) string {
 // These are added to LiquidType names when a Liquid is modified in an element.
 func unModifyTypeName(componentType string) string {
 	return strings.Split(componentType, modifiedPolicySuffix)[0]
+}
+
+func floatValue(a, b *float64) float64 {
+	if a != nil {
+		return *a
+	} else {
+		return *b
+	}
+}
+
+func checkInstructions(nodes []effects.Node) ([]*wtype.LHInstruction, error) {
+	instrs := make([]*wtype.LHInstruction, 0, len(nodes))
+	for _, node := range nodes {
+		if cmd, ok := node.(*effects.Command); !ok {
+			return nil, fmt.Errorf("cannot compile %T", node)
+		} else if instr, ok := cmd.Inst.(*wtype.LHInstruction); !ok {
+			return nil, fmt.Errorf("cannot compile %T", cmd.Inst)
+		} else {
+			instrs = append(instrs, instr)
+		}
+	}
+	if len(instrs) == 0 {
+		return nil, errors.New("No instructions to mix!")
+	} else {
+		return instrs, nil
+	}
 }

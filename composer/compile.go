@@ -9,6 +9,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+
+	"github.com/antha-lang/antha/workflow"
 )
 
 func (c *Composer) CompileWorkflow() error {
@@ -91,23 +93,39 @@ func (c *Composer) RunWorkflow() error {
 }
 
 func (c *Composer) PrepareDrivers() error {
+	// Here, if we're meant to compile something, we attempt that, on
+	// the basis that when we come to run the workflow itself, we may
+	// not have the necessary sources around or build environment.  If
+	// we're just meant to be running some command, we make sure we
+	// take a copy of that binary into a sensible place within the
+	// outdir, again so that we should be able to guarantee it exists
+	// when we come to workflow execution.
+	conns := make(map[workflow.DeviceInstanceID]*workflow.ParsedConnection)
+
 	for id, cfg := range c.Workflow.Config.GilsonPipetMax.Devices {
+		conns[id] = &cfg.ParsedConnection
+	}
+	for id, cfg := range c.Workflow.Config.Labcyte.Devices {
+		conns[id] = &cfg.ParsedConnection
+	}
+
+	for id, cfg := range conns {
 		outBin := filepath.Join(c.OutDir, "bin", "drivers", string(id))
 		if err := os.MkdirAll(filepath.Dir(outBin), 0700); err != nil {
 			return err
 
-		} else if cfg.ParsedConnection.CompileAndRun != "" {
-			c.Logger.Log("devicePlugin", string(id), "building", cfg.ParsedConnection.CompileAndRun)
-			cmd := exec.Command("go", "build", "-o", outBin, cfg.ParsedConnection.CompileAndRun)
+		} else if cfg.CompileAndRun != "" {
+			c.Logger.Log("instructionPlugin", string(id), "building", cfg.CompileAndRun)
+			cmd := exec.Command("go", "build", "-o", outBin, cfg.CompileAndRun)
 			cmd.Dir = filepath.Dir(outBin)
-			if err := RunAndLogCommand(cmd, c.Logger.With("cmd", "build", "devicePlugin", string(id)).Log); err != nil {
+			if err := RunAndLogCommand(cmd, c.Logger.With("cmd", "build", "instructionPlugin", string(id)).Log); err != nil {
 				return err
 			}
-			cfg.ParsedConnection.ExecFile = outBin
-			cfg.ParsedConnection.CompileAndRun = ""
+			cfg.ExecFile = outBin
+			cfg.CompileAndRun = ""
 
-		} else if cfg.ParsedConnection.ExecFile != "" {
-			src, err := os.Open(cfg.ParsedConnection.ExecFile)
+		} else if cfg.ExecFile != "" {
+			src, err := os.Open(cfg.ExecFile)
 			if err != nil {
 				return err
 			}
@@ -120,7 +138,7 @@ func (c *Composer) PrepareDrivers() error {
 			if _, err = io.Copy(dst, src); err != nil {
 				return err
 			}
-			cfg.ParsedConnection.ExecFile = outBin
+			cfg.ExecFile = outBin
 		}
 	}
 	return nil

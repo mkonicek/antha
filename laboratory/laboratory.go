@@ -107,12 +107,17 @@ func NewLaboratoryBuilder(fh io.Reader) *LaboratoryBuilder {
 func (labBuild *LaboratoryBuilder) connectDevices() (*target.Target, error) {
 	if global, err := mixer.NewGlobalMixerConfig(labBuild.Inventory, &labBuild.workflow.Config.GlobalMixer); err != nil {
 		return nil, err
-	} else if insts, err := mixer.NewGilsonPipetMaxInstances(labBuild.Logger, labBuild.Inventory, global, labBuild.workflow.Config.GilsonPipetMax); err != nil {
+	} else if gilsons, err := mixer.NewGilsonPipetMaxInstances(labBuild.Logger, labBuild.Inventory, global, labBuild.workflow.Config.GilsonPipetMax); err != nil {
+		return nil, err
+	} else if labcytes, err := mixer.NewLabcyteInstances(labBuild.Logger, labBuild.Inventory, global, labBuild.workflow.Config.Labcyte); err != nil {
 		return nil, err
 	} else {
 		tgt := target.New()
-		for _, inst := range insts {
-			tgt.AddDevice(inst)
+		for _, gilson := range gilsons {
+			tgt.AddDevice(gilson)
+		}
+		for _, labcyte := range labcytes {
+			tgt.AddDevice(labcyte)
 		}
 		if err := tgt.Connect(labBuild.workflow); err != nil {
 			tgt.Close()

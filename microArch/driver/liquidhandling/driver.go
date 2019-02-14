@@ -43,7 +43,7 @@ type LiquidhandlingDriver interface {
 	Finalize() driver.CommandStatus
 	Message(level int, title, text string, showcancel bool) driver.CommandStatus
 	GetOutputFile() ([]byte, driver.CommandStatus)
-	Configure(workflow.JobId, string /* Job Name */, workflow.DeviceInstanceID) (*LHProperties, driver.CommandStatus)
+	Configure(workflow.JobId, string /* Job Name */, workflow.DeviceInstanceID, []byte /* opaque */) (*LHProperties, driver.CommandStatus)
 }
 
 type LowLevelLiquidhandlingDriver interface {

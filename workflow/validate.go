@@ -157,14 +157,17 @@ func (cfg Config) validate() error {
 	return utils.ErrorSlice{
 		cfg.GlobalMixer.validate(),
 		cfg.GilsonPipetMax.validate(),
+		cfg.Labcyte.validate(),
 		cfg.assertOnlyOneMixer(),
 	}.Pack()
 }
 
 func (cfg Config) assertOnlyOneMixer() error {
-	// remove / revise when we get better
-	if len(cfg.GilsonPipetMax.Devices) > 1 {
-		return fmt.Errorf("Currently a maximum of one mixer can be used per workflow. You have %d configured.", len(cfg.GilsonPipetMax.Devices))
+	// remove / revise when we get better. NB: because of this test, we
+	// don't need to check that all devices have unique IDs. Once we
+	// relax this, we may need to do that.
+	if count := len(cfg.GilsonPipetMax.Devices) + len(cfg.Labcyte.Devices); count > 1 {
+		return fmt.Errorf("Currently a maximum of one mixer can be used per workflow. You have %d configured.", count)
 	}
 	return nil
 }
@@ -211,11 +214,47 @@ func (inst *GilsonPipetMaxInstanceConfig) validate(id DeviceInstanceID, isDefaul
 	} else if !isDefaults && strings.ToLower(string(id)) == "defaults" {
 		return fmt.Errorf("Confusion: GilsonPipetMax device '%s' exists. Did you mean to set GilsonPipetMax.Defaults instead?")
 
-	} else if inst.ParsedConnection.ExecFile != "" {
-		if abs, err := exec.LookPath(inst.ParsedConnection.ExecFile); err != nil {
-			return fmt.Errorf("Error when trying to locate executable at %v for %v: %v", inst.ParsedConnection.ExecFile, id, err)
+	}
+	return inst.commonMixerInstanceConfig.validate(id)
+}
+
+func (labcytes LabcyteConfig) validate() error {
+	if err := labcytes.Defaults.validate("Defaults", true); err != nil {
+		return err
+	}
+	for id, inst := range labcytes.Devices {
+		if err := inst.validate(id, false); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (inst *LabcyteInstanceConfig) validate(id DeviceInstanceID, isDefaults bool) error {
+	if len(id) == 0 {
+		return errors.New("Labcyte: A device may not have an empty name.")
+
+	} else if inst == nil {
+		if isDefaults {
+			return nil
 		} else {
-			inst.ParsedConnection.ExecFile = abs
+			return fmt.Errorf("Labcyte device '%s' has no configuration!", id)
+		}
+
+	} else if !isDefaults && strings.ToLower(string(id)) == "defaults" {
+		return fmt.Errorf("Confusion: Labcyte device '%s' exists. Did you mean to set Labcyte.Defaults instead?")
+
+	}
+	// NB because the instruction plugin itself does validation of the model, we don't do that here!
+	return inst.commonMixerInstanceConfig.validate(id)
+}
+
+func (inst *commonMixerInstanceConfig) validate(id DeviceInstanceID) error {
+	if inst.ExecFile != "" {
+		if abs, err := exec.LookPath(inst.ExecFile); err != nil {
+			return fmt.Errorf("Error when trying to locate executable at %v for %v: %v", inst.ExecFile, id, err)
+		} else {
+			inst.ExecFile = abs
 		}
 	}
 	// We cannot validate plates or tipes at this point because the

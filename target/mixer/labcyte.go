@@ -1,7 +1,9 @@
 package mixer
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/inventory"
@@ -11,24 +13,24 @@ import (
 	"github.com/antha-lang/antha/workflow"
 )
 
-type GilsonPipetMaxInstance struct {
+type LabcyteInstance struct {
 	ID                   workflow.DeviceInstanceID
 	MaxPlates            float64
 	MaxWells             float64
 	ResidualVolumeWeight float64
 
 	global *GlobalMixerConfig
-	*workflow.GilsonPipetMaxInstanceConfig
+	*workflow.LabcyteInstanceConfig
 
 	*BaseMixer
 }
 
-type GilsonPipetMaxInstances []*GilsonPipetMaxInstance
+type LabcyteInstances []*LabcyteInstance
 
-func NewGilsonPipetMaxInstances(logger *logger.Logger, inv *inventory.Inventory, global *GlobalMixerConfig, config workflow.GilsonPipetMaxConfig) (GilsonPipetMaxInstances, error) {
+func NewLabcyteInstances(logger *logger.Logger, inv *inventory.Inventory, global *GlobalMixerConfig, config workflow.LabcyteConfig) (LabcyteInstances, error) {
 	defaultsWF := config.Defaults
 	if defaultsWF == nil {
-		defaultsWF = &workflow.GilsonPipetMaxInstanceConfig{}
+		defaultsWF = &workflow.LabcyteInstanceConfig{}
 	}
 
 	var (
@@ -37,27 +39,27 @@ func NewGilsonPipetMaxInstances(logger *logger.Logger, inv *inventory.Inventory,
 		defaultResidualVolumeWeight = 1.0
 	)
 
-	defaults := &GilsonPipetMaxInstance{
-		MaxPlates:                    floatValue(defaultsWF.MaxPlates, &defaultMaxPlates),
-		MaxWells:                     floatValue(defaultsWF.MaxWells, &defaultMaxWells),
-		ResidualVolumeWeight:         floatValue(defaultsWF.ResidualVolumeWeight, &defaultResidualVolumeWeight),
-		GilsonPipetMaxInstanceConfig: defaultsWF,
+	defaults := &LabcyteInstance{
+		MaxPlates:             floatValue(defaultsWF.MaxPlates, &defaultMaxPlates),
+		MaxWells:              floatValue(defaultsWF.MaxWells, &defaultMaxWells),
+		ResidualVolumeWeight:  floatValue(defaultsWF.ResidualVolumeWeight, &defaultResidualVolumeWeight),
+		LabcyteInstanceConfig: defaultsWF,
 	}
 	if err := defaults.Validate(inv); err != nil {
 		return nil, err
 	}
 
-	instances := make(GilsonPipetMaxInstances, 0, len(config.Devices))
+	instances := make(LabcyteInstances, 0, len(config.Devices))
 
 	for id, instWF := range config.Devices {
-		instance := &GilsonPipetMaxInstance{
-			ID:                           id,
-			MaxPlates:                    floatValue(instWF.MaxPlates, &defaults.MaxPlates),
-			MaxWells:                     floatValue(instWF.MaxWells, &defaults.MaxWells),
-			ResidualVolumeWeight:         floatValue(instWF.MaxPlates, &defaults.ResidualVolumeWeight),
-			global:                       global,
-			GilsonPipetMaxInstanceConfig: instWF,
-			BaseMixer:                    NewBaseMixer(logger, id, instWF.ParsedConnection, GilsonPipetmaxSubType),
+		instance := &LabcyteInstance{
+			ID:                    id,
+			MaxPlates:             floatValue(instWF.MaxPlates, &defaults.MaxPlates),
+			MaxWells:              floatValue(instWF.MaxWells, &defaults.MaxWells),
+			ResidualVolumeWeight:  floatValue(instWF.MaxPlates, &defaults.ResidualVolumeWeight),
+			global:                global,
+			LabcyteInstanceConfig: instWF,
+			BaseMixer:             NewBaseMixer(logger, id, instWF.ParsedConnection, LabcyteSubType),
 		}
 		if err := instance.Validate(inv); err != nil {
 			return nil, err
@@ -69,7 +71,7 @@ func NewGilsonPipetMaxInstances(logger *logger.Logger, inv *inventory.Inventory,
 	return instances, nil
 }
 
-func (inst *GilsonPipetMaxInstance) Validate(inv *inventory.Inventory) error {
+func (inst *LabcyteInstance) Validate(inv *inventory.Inventory) error {
 	switch {
 	case inst.MaxPlates <= 0:
 		return errors.New("Validation error: MaxPlates must be > 0")
@@ -97,9 +99,11 @@ func (inst *GilsonPipetMaxInstance) Validate(inv *inventory.Inventory) error {
 	return nil
 }
 
-func (inst *GilsonPipetMaxInstance) Connect(wf *workflow.Workflow) error {
+func (inst *LabcyteInstance) Connect(wf *workflow.Workflow) error {
 	if inst.properties == nil {
-		if err := inst.connect(wf, nil); err != nil {
+		if data, err := json.Marshal(inst.Model); err != nil {
+			return err
+		} else if err := inst.connect(wf, data); err != nil {
 			return err
 		} else if err := inst.properties.ApplyUserPreferences(inst.LayoutPreferences); err != nil {
 			inst.Close()
@@ -109,7 +113,7 @@ func (inst *GilsonPipetMaxInstance) Connect(wf *workflow.Workflow) error {
 	return nil
 }
 
-func (inst *GilsonPipetMaxInstance) Compile(labEffects *effects.LaboratoryEffects, nodes []effects.Node) ([]effects.Inst, error) {
+func (inst *LabcyteInstance) Compile(labEffects *effects.LaboratoryEffects, nodes []effects.Node) ([]effects.Inst, error) {
 	instrs, err := checkInstructions(nodes)
 	if err != nil {
 		return nil, err
@@ -163,5 +167,40 @@ func (inst *GilsonPipetMaxInstance) Compile(labEffects *effects.LaboratoryEffect
 		return nil, err
 	}
 
-	return mix(labEffects, instrs, req, props)
+	hasOutputPlate := func(typ wtype.PlateTypeName, id string) bool {
+		for _, p := range req.OutputPlatetypes {
+			if p.Type == typ && (id == "" || p.ID == id) {
+				return true
+			}
+		}
+		return false
+	}
+
+	for _, instr := range instrs {
+		if instr.OutPlate != nil {
+			if p, found := req.OutputPlates[instr.OutPlate.ID]; found && p != instr.OutPlate {
+				return nil, fmt.Errorf("Mix setup error: Plate %s already requested in different state for mix.", p.ID)
+			} else {
+				req.OutputPlates[instr.OutPlate.ID] = instr.OutPlate
+			}
+		}
+
+		if len(instr.Platetype) != 0 && !hasOutputPlate(instr.Platetype, instr.PlateID) {
+			if pt, err := labEffects.Inventory.PlateTypes.NewPlate(instr.Platetype); err != nil {
+				return nil, err
+			} else {
+				pt.ID = instr.PlateID
+				req.OutputPlatetypes = append(req.OutputPlatetypes, pt)
+			}
+		}
+		req.Add_instruction(instr)
+	}
+
+	planner := liquidhandling.Init(props)
+
+	if err := planner.MakeSolutions(labEffects, req); err != nil {
+		return nil, err
+	}
+
+	return nil, nil
 }

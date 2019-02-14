@@ -11,6 +11,15 @@
                     "InputPlateTypes": ["pcrplate_skirted"]
                 }
             }
+        },
+        "Labcyte": {
+            "Devices": {
+                "Larry": {
+                    "Connection": "go://github.com/Synthace/LabCyteEchoDriver/server",
+                    "Model": "525",
+                    "InputPlateTypes": ["pcrplate_skirted"]
+                }
+            }
         }
     }
 }

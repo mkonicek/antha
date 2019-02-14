@@ -116,11 +116,12 @@ func (hlc *HighLevelClient) GetOutputFile() ([]byte, driver.CommandStatus) {
 	}
 }
 
-func (hlc *HighLevelClient) Configure(jobId workflow.JobId, jobName string, devId workflow.DeviceInstanceID) (*liquidhandling.LHProperties, driver.CommandStatus) {
+func (hlc *HighLevelClient) Configure(jobId workflow.JobId, jobName string, devId workflow.DeviceInstanceID, data []byte) (*liquidhandling.LHProperties, driver.CommandStatus) {
 	req := &pb.ConfigureRequest{
 		JobId:            string(jobId),
 		JobName:          jobName,
 		DeviceInstanceId: string(devId),
+		Data:             data,
 	}
 	if r, err := hlc.client.Configure(context.Background(), req); err != nil {
 		return nil, driver.CommandError(err.Error())

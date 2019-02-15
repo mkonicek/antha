@@ -36,6 +36,15 @@ type GilsonPipetMaxConfig struct {
 
 type GilsonPipetMaxInstanceConfig struct {
 	commonMixerInstanceConfig
+	tipsOnly
+}
+
+func (cfg *GilsonPipetMaxInstanceConfig) MarshalJSON() ([]byte, error) {
+	return MergeToMapAndMarshal(&cfg.commonMixerInstanceConfig, &cfg.tipsOnly)
+}
+
+func (cfg *GilsonPipetMaxInstanceConfig) UnmarshalJSON(bs []byte) error {
+	return UnmarshalMapsMerged(bs, &cfg.commonMixerInstanceConfig, &cfg.tipsOnly)
 }
 
 // Labcyte
@@ -49,36 +58,12 @@ type LabcyteInstanceConfig struct {
 	commonMixerInstanceConfig
 }
 
-type modelOnly struct {
-	Model string `json:model`
-}
-
 func (cfg *LabcyteInstanceConfig) MarshalJSON() ([]byte, error) {
-	if commonBs, err := json.Marshal(&cfg.commonMixerInstanceConfig); err != nil {
-		return nil, err
-	} else if modelBs, err := json.Marshal(&cfg.modelOnly); err != nil {
-		return nil, err
-
-	} else {
-		m := make(map[string]json.RawMessage)
-		if err := json.Unmarshal(commonBs, &m); err != nil {
-			return nil, err
-		} else if err := json.Unmarshal(modelBs, &m); err != nil {
-			return nil, err
-		} else {
-			return json.Marshal(m)
-		}
-	}
+	return MergeToMapAndMarshal(&cfg.commonMixerInstanceConfig, &cfg.modelOnly)
 }
 
 func (cfg *LabcyteInstanceConfig) UnmarshalJSON(bs []byte) error {
-	if err := json.Unmarshal(bs, &cfg.commonMixerInstanceConfig); err != nil {
-		return err
-	} else if err := json.Unmarshal(bs, &cfg.modelOnly); err != nil {
-		return err
-	} else {
-		return nil
-	}
+	return UnmarshalMapsMerged(bs, &cfg.commonMixerInstanceConfig, &cfg.modelOnly)
 }
 
 type commonMixerInstanceConfig struct {
@@ -90,7 +75,6 @@ type commonMixerInstanceConfig struct {
 	ResidualVolumeWeight *float64              `json:"residualVolumeWeight,omitempty"`
 	InputPlateTypes      []wtype.PlateTypeName `json:"inputPlateTypes,omitempty"`
 	OutputPlateTypes     []wtype.PlateTypeName `json:"outputPlateTypes,omitempty"`
-	TipTypes             []string              `json:"tipTypes,omitempty"`
 
 	ParsedConnection `json:"-"`
 }
@@ -99,6 +83,14 @@ type ParsedConnection struct {
 	HostPort      string `json:"-"`
 	ExecFile      string `json:"-"`
 	CompileAndRun string `json:"-"`
+}
+
+type tipsOnly struct {
+	TipTypes []string `json:"tipTypes,omitempty"`
+}
+
+type modelOnly struct {
+	Model string `json:model`
 }
 
 // type aliases do not inherit methods, so this is a cheap way to
@@ -137,5 +129,26 @@ func (cfg *commonMixerInstanceConfig) UnmarshalJSON(bs []byte) error {
 
 	cfg.Connection = "" // wipe it out to make sure we don't accidentally use it.
 
+	return nil
+}
+
+func MergeToMapAndMarshal(components ...interface{}) ([]byte, error) {
+	m := make(map[string]json.RawMessage)
+	for _, com := range components {
+		if bs, err := json.Marshal(com); err != nil {
+			return nil, err
+		} else if err := json.Unmarshal(bs, &m); err != nil {
+			return nil, err
+		}
+	}
+	return json.Marshal(m)
+}
+
+func UnmarshalMapsMerged(bs []byte, components ...interface{}) error {
+	for _, com := range components {
+		if err := json.Unmarshal(bs, com); err != nil {
+			return err
+		}
+	}
 	return nil
 }

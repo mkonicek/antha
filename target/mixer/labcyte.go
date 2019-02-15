@@ -90,12 +90,6 @@ func (inst *LabcyteInstance) Validate(inv *inventory.Inventory) error {
 		}
 	}
 
-	for _, tt := range inst.TipTypes {
-		if _, err := inv.TipBoxes.FetchTipbox(tt); err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
@@ -144,14 +138,6 @@ func (inst *LabcyteInstance) Compile(labEffects *effects.LaboratoryEffects, node
 			return nil, err
 		} else {
 			req.OutputPlatetypes = append(req.OutputPlatetypes, pt)
-		}
-	}
-
-	for _, ttn := range inst.TipTypes {
-		if tb, err := labEffects.Inventory.TipBoxes.NewTipbox(ttn); err != nil {
-			return nil, err
-		} else {
-			req.TipBoxes = append(req.TipBoxes, tb)
 		}
 	}
 

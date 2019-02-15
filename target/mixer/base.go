@@ -25,22 +25,14 @@ import (
 	"google.golang.org/grpc"
 )
 
-type MixerDriverSubType string
-
-const (
-	GilsonPipetmaxSubType MixerDriverSubType = "GilsonPipetmax"
-	LabcyteSubType        MixerDriverSubType = "LabCyteEcho"
-	CyBioSubType          MixerDriverSubType = "CyBio"
-)
-
-var subTypeToConnDriverFun = map[MixerDriverSubType](func(*grpc.ClientConn) lhdriver.LiquidhandlingDriver){
-	GilsonPipetmaxSubType: func(conn *grpc.ClientConn) lhdriver.LiquidhandlingDriver {
+var subTypeToConnDriverFun = map[target.MixerDriverSubType](func(*grpc.ClientConn) lhdriver.LiquidhandlingDriver){
+	target.GilsonPipetmaxSubType: func(conn *grpc.ClientConn) lhdriver.LiquidhandlingDriver {
 		return client.NewLowLevelClientFromConn(conn)
 	},
-	CyBioSubType: func(conn *grpc.ClientConn) lhdriver.LiquidhandlingDriver {
+	target.CyBioSubType: func(conn *grpc.ClientConn) lhdriver.LiquidhandlingDriver {
 		return client.NewLowLevelClientFromConn(conn)
 	},
-	LabcyteSubType: func(conn *grpc.ClientConn) lhdriver.LiquidhandlingDriver {
+	target.LabcyteSubType: func(conn *grpc.ClientConn) lhdriver.LiquidhandlingDriver {
 		return client.NewHighLevelClientFromConn(conn)
 	},
 }
@@ -48,7 +40,7 @@ var subTypeToConnDriverFun = map[MixerDriverSubType](func(*grpc.ClientConn) lhdr
 type BaseMixer struct {
 	id              workflow.DeviceInstanceID
 	connection      workflow.ParsedConnection
-	expectedSubType MixerDriverSubType
+	expectedSubType target.MixerDriverSubType
 
 	logger *logger.Logger
 
@@ -59,7 +51,7 @@ type BaseMixer struct {
 	properties  *lhdriver.LHProperties
 }
 
-func NewBaseMixer(logger *logger.Logger, id workflow.DeviceInstanceID, connection workflow.ParsedConnection, subType MixerDriverSubType) *BaseMixer {
+func NewBaseMixer(logger *logger.Logger, id workflow.DeviceInstanceID, connection workflow.ParsedConnection, subType target.MixerDriverSubType) *BaseMixer {
 	return &BaseMixer{
 		id:              id,
 		connection:      connection,

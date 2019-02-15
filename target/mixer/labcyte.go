@@ -9,6 +9,7 @@ import (
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/logger"
 	"github.com/antha-lang/antha/microArch/scheduler/liquidhandling"
+	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/workflow"
 )
 
@@ -58,7 +59,7 @@ func NewLabcyteInstances(logger *logger.Logger, inv *inventory.Inventory, global
 			ResidualVolumeWeight:  floatValue(instWF.MaxPlates, &defaults.ResidualVolumeWeight),
 			global:                global,
 			LabcyteInstanceConfig: instWF,
-			BaseMixer:             NewBaseMixer(logger, id, instWF.ParsedConnection, LabcyteSubType),
+			BaseMixer:             NewBaseMixer(logger, id, instWF.ParsedConnection, target.LabcyteSubType),
 		}
 		if err := instance.Validate(inv); err != nil {
 			return nil, err

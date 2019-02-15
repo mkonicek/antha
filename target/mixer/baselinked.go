@@ -9,17 +9,18 @@ import (
 	lc_driver "github.com/Synthace/LabCyteEchoDriver/driver"
 	pm_driver "github.com/Synthace/PipetMaxDriver/driver"
 	lhdriver "github.com/antha-lang/antha/microArch/driver/liquidhandling"
+	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/workflow"
 )
 
-var linkedDriverFuns = map[MixerDriverSubType](func() lhdriver.LiquidhandlingDriver){
-	GilsonPipetmaxSubType: func() lhdriver.LiquidhandlingDriver {
+var linkedDriverFuns = map[target.MixerDriverSubType](func() lhdriver.LiquidhandlingDriver){
+	target.GilsonPipetmaxSubType: func() lhdriver.LiquidhandlingDriver {
 		return pm_driver.New(false)
 	},
-	CyBioSubType: func() lhdriver.LiquidhandlingDriver {
+	target.CyBioSubType: func() lhdriver.LiquidhandlingDriver {
 		return cb_driver.New()
 	},
-	LabcyteSubType: func() lhdriver.LiquidhandlingDriver {
+	target.LabcyteSubType: func() lhdriver.LiquidhandlingDriver {
 		return lc_driver.New(false)
 	},
 }

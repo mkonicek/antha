@@ -4,6 +4,23 @@
             "PrintInstructions": false,
             "UseDriverTipTracking": true
         },
+        "GilsonPipetMax": {
+            "Devices": {
+                "Gillian": {
+                    "Connection": "file:///home/matthew/src/Go_external_1.11/src/github.com/Synthace/PipetMaxDriver/server/server",
+                    "InputPlateTypes": ["pcrplate_skirted"]
+                }
+            }
+        },
+        "Labcyte": {
+            "Devices": {
+                "Larry": {
+                    "Connection": "go://github.com/Synthace/LabCyteEchoDriver/server",
+                    "Model": "525",
+                    "InputPlateTypes": ["pcrplate_skirted"]
+                }
+            }
+        },
         "CyBio": {
             "Devices": {
                 "Cydney": {

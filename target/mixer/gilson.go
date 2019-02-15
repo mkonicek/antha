@@ -8,6 +8,7 @@ import (
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/logger"
 	"github.com/antha-lang/antha/microArch/scheduler/liquidhandling"
+	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/workflow"
 )
 
@@ -57,7 +58,7 @@ func NewGilsonPipetMaxInstances(logger *logger.Logger, inv *inventory.Inventory,
 			ResidualVolumeWeight:         floatValue(instWF.MaxPlates, &defaults.ResidualVolumeWeight),
 			global:                       global,
 			GilsonPipetMaxInstanceConfig: instWF,
-			BaseMixer:                    NewBaseMixer(logger, id, instWF.ParsedConnection, GilsonPipetmaxSubType),
+			BaseMixer:                    NewBaseMixer(logger, id, instWF.ParsedConnection, target.GilsonPipetmaxSubType),
 		}
 		if err := instance.Validate(inv); err != nil {
 			return nil, err

@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/logger"
 )
 
 type FileManager struct {
@@ -14,12 +15,14 @@ type FileManager struct {
 	outDir       string
 	contents     map[string][]byte
 	writtenCount uint64
+	writtenSet   map[*wtype.File]struct{}
 }
 
 func NewFileManager(outDir string) *FileManager {
 	return &FileManager{
-		outDir:   outDir,
-		contents: make(map[string][]byte),
+		outDir:     outDir,
+		contents:   make(map[string][]byte),
+		writtenSet: make(map[*wtype.File]struct{}),
 	}
 }
 
@@ -53,10 +56,26 @@ func (fm *FileManager) WriteAll(bs []byte) (*wtype.File, error) {
 	} else {
 		p2 := filepath.ToSlash(p)
 		fm.contents[p2] = bs
-		return wtype.NewFile(p), nil
+		f := wtype.NewFile(p)
+		fm.writtenSet[f] = struct{}{}
+		return f, nil
 	}
 }
 
 func (fm *FileManager) WriteString(str string) (*wtype.File, error) {
 	return fm.WriteAll([]byte(str))
+}
+
+func (fm *FileManager) SummarizeWritten(logger *logger.Logger) {
+	logger = logger.With("fileManager", "summary")
+	fm.lock.Lock()
+	defer fm.lock.Unlock()
+
+	for f := range fm.writtenSet {
+		name := "<unnamed>"
+		if f.Name != "" {
+			name = f.Name
+		}
+		logger.Log("name", name, "path", f.Path())
+	}
 }

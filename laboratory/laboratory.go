@@ -201,6 +201,10 @@ func (labBuild *LaboratoryBuilder) Compile() ([]effects.Node, []effects.Inst, er
 	}
 }
 
+func (labBuild *LaboratoryBuilder) Summarize() {
+	labBuild.FileManager.SummarizeWritten(labBuild.Logger)
+}
+
 func (labBuild *LaboratoryBuilder) elementCompleted() {
 	labBuild.elemLock.Lock()
 	defer labBuild.elemLock.Unlock()

@@ -131,5 +131,6 @@ func main() {
 	if _, _, errCompile := labBuild.Compile(); errCompile != nil {
 		labBuild.Fatal(errCompile)
 	}
+	labBuild.Summarize()
 }
 `

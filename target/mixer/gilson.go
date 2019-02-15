@@ -159,9 +159,5 @@ func (inst *GilsonPipetMaxInstance) Compile(labEffects *effects.LaboratoryEffect
 		}
 	}
 
-	if err := addCustomPolicies(instrs, req); err != nil {
-		return nil, err
-	}
-
 	return mix(labEffects, instrs, req, props)
 }

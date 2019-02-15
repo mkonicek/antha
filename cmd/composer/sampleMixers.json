@@ -4,19 +4,11 @@
             "PrintInstructions": false,
             "UseDriverTipTracking": true
         },
-        "GilsonPipetMax": {
+        "CyBio": {
             "Devices": {
-                "Gillian": {
-                    "Connection": "file:///home/matthew/src/Go_external_1.11/src/github.com/Synthace/PipetMaxDriver/server/server",
-                    "InputPlateTypes": ["pcrplate_skirted"]
-                }
-            }
-        },
-        "Labcyte": {
-            "Devices": {
-                "Larry": {
-                    "Connection": "go://github.com/Synthace/LabCyteEchoDriver/server",
-                    "Model": "525",
+                "Cydney": {
+                    "Connection": "go://github.com/Synthace/CyBioXMLDriver/server",
+                    "Model": "Felix",
                     "InputPlateTypes": ["pcrplate_skirted"]
                 }
             }

@@ -5,6 +5,7 @@ package mixer
 import (
 	"fmt"
 
+	cb_driver "github.com/Synthace/CyBioXMLDriver/driver"
 	lc_driver "github.com/Synthace/LabCyteEchoDriver/driver"
 	pm_driver "github.com/Synthace/PipetMaxDriver/driver"
 	lhdriver "github.com/antha-lang/antha/microArch/driver/liquidhandling"
@@ -14,6 +15,9 @@ import (
 var linkedDriverFuns = map[MixerDriverSubType](func() lhdriver.LiquidhandlingDriver){
 	GilsonPipetmaxSubType: func() lhdriver.LiquidhandlingDriver {
 		return pm_driver.New(false)
+	},
+	CyBioSubType: func() lhdriver.LiquidhandlingDriver {
+		return cb_driver.New()
 	},
 	LabcyteSubType: func() lhdriver.LiquidhandlingDriver {
 		return lc_driver.New(false)

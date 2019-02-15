@@ -157,6 +157,7 @@ func (cfg Config) validate() error {
 	return utils.ErrorSlice{
 		cfg.GlobalMixer.validate(),
 		cfg.GilsonPipetMax.validate(),
+		cfg.CyBio.validate(),
 		cfg.Labcyte.validate(),
 		cfg.assertOnlyOneMixer(),
 	}.Pack()
@@ -166,7 +167,7 @@ func (cfg Config) assertOnlyOneMixer() error {
 	// remove / revise when we get better. NB: because of this test, we
 	// don't need to check that all devices have unique IDs. Once we
 	// relax this, we may need to do that.
-	if count := len(cfg.GilsonPipetMax.Devices) + len(cfg.Labcyte.Devices); count > 1 {
+	if count := len(cfg.GilsonPipetMax.Devices) + len(cfg.CyBio.Devices) + len(cfg.Labcyte.Devices); count > 1 {
 		return fmt.Errorf("Currently a maximum of one mixer can be used per workflow. You have %d configured.", count)
 	}
 	return nil
@@ -188,6 +189,7 @@ func (global GlobalMixerConfig) validate() error {
 	return nil
 }
 
+// Gilson
 func (gilsons GilsonPipetMaxConfig) validate() error {
 	if err := gilsons.Defaults.validate("Defaults", true); err != nil {
 		return err
@@ -218,6 +220,38 @@ func (inst *GilsonPipetMaxInstanceConfig) validate(id DeviceInstanceID, isDefaul
 	return inst.commonMixerInstanceConfig.validate(id)
 }
 
+// CyBio
+func (cybios CyBioConfig) validate() error {
+	if err := cybios.Defaults.validate("Defaults", true); err != nil {
+		return err
+	}
+	for id, inst := range cybios.Devices {
+		if err := inst.validate(id, false); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (inst *CyBioInstanceConfig) validate(id DeviceInstanceID, isDefaults bool) error {
+	if len(id) == 0 {
+		return errors.New("CyBio: A device may not have an empty name.")
+
+	} else if inst == nil {
+		if isDefaults {
+			return nil
+		} else {
+			return fmt.Errorf("CyBio device '%s' has no configuration!", id)
+		}
+
+	} else if !isDefaults && strings.ToLower(string(id)) == "defaults" {
+		return fmt.Errorf("Confusion: CyBio device '%s' exists. Did you mean to set CyBio.Defaults instead?")
+
+	}
+	return inst.commonMixerInstanceConfig.validate(id)
+}
+
+// Labcyte
 func (labcytes LabcyteConfig) validate() error {
 	if err := labcytes.Defaults.validate("Defaults", true); err != nil {
 		return err

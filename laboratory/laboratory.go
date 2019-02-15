@@ -109,12 +109,17 @@ func (labBuild *LaboratoryBuilder) connectDevices() (*target.Target, error) {
 		return nil, err
 	} else if gilsons, err := mixer.NewGilsonPipetMaxInstances(labBuild.Logger, labBuild.Inventory, global, labBuild.workflow.Config.GilsonPipetMax); err != nil {
 		return nil, err
+	} else if cybios, err := mixer.NewCyBioInstances(labBuild.Logger, labBuild.Inventory, global, labBuild.workflow.Config.CyBio); err != nil {
+		return nil, err
 	} else if labcytes, err := mixer.NewLabcyteInstances(labBuild.Logger, labBuild.Inventory, global, labBuild.workflow.Config.Labcyte); err != nil {
 		return nil, err
 	} else {
 		tgt := target.New()
 		for _, gilson := range gilsons {
 			tgt.AddDevice(gilson)
+		}
+		for _, cybio := range cybios {
+			tgt.AddDevice(cybio)
 		}
 		for _, labcyte := range labcytes {
 			tgt.AddDevice(labcyte)

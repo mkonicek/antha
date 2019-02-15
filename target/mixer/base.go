@@ -29,11 +29,15 @@ type MixerDriverSubType string
 
 const (
 	GilsonPipetmaxSubType MixerDriverSubType = "GilsonPipetmax"
-	LabcyteSubType                           = "LabCyteEcho"
+	LabcyteSubType        MixerDriverSubType = "LabCyteEcho"
+	CyBioSubType          MixerDriverSubType = "CyBio"
 )
 
 var subTypeToConnDriverFun = map[MixerDriverSubType](func(*grpc.ClientConn) lhdriver.LiquidhandlingDriver){
 	GilsonPipetmaxSubType: func(conn *grpc.ClientConn) lhdriver.LiquidhandlingDriver {
+		return client.NewLowLevelClientFromConn(conn)
+	},
+	CyBioSubType: func(conn *grpc.ClientConn) lhdriver.LiquidhandlingDriver {
 		return client.NewLowLevelClientFromConn(conn)
 	},
 	LabcyteSubType: func(conn *grpc.ClientConn) lhdriver.LiquidhandlingDriver {
@@ -145,7 +149,7 @@ func (bm *BaseMixer) maybeDial() error {
 		ctx := context.Background()
 		if reply, err := c.DriverType(ctx, &driver.TypeRequest{}); err != nil {
 			return err
-		} else if typ := reply.GetType(); typ != "antha.mixer.v1.Mixer" {
+		} else if typ := reply.GetType(); typ != target.DriverSelectorV1Mixer.Value {
 			return fmt.Errorf("Expected to find a mixer instructionPlugin at %s but instead found: %s", bm.connection, typ)
 		} else if subtypes := reply.GetSubtypes(); len(subtypes) != 1 || subtypes[0] != string(bm.expectedSubType) {
 			return fmt.Errorf("Expected to find a [%v] mixer instructionPlugin at %s but instead found: %v", bm.expectedSubType, bm.connection, subtypes)
@@ -222,6 +226,10 @@ func (bm *BaseMixer) CanCompile(req effects.Request) bool {
 }
 
 func mix(labEffects *effects.LaboratoryEffects, instrs []*wtype.LHInstruction, req *liquidhandling.LHRequest, props *lhdriver.LHProperties) ([]effects.Inst, error) {
+	if err := addCustomPolicies(instrs, req); err != nil {
+		return nil, err
+	}
+
 	hasOutputPlate := func(typ wtype.PlateTypeName, id string) bool {
 		for _, p := range req.OutputPlatetypes {
 			if p.Type == typ && (id == "" || p.ID == id) {

@@ -11,6 +11,7 @@ import (
 type Config struct {
 	GlobalMixer    GlobalMixerConfig    `json:"GlobalMixer"`
 	GilsonPipetMax GilsonPipetMaxConfig `json:"GilsonPipetMax"`
+	CyBio          CyBioConfig          `json:"CyBio"`
 	Labcyte        LabcyteConfig        `json:"Labcyte"`
 }
 
@@ -45,6 +46,26 @@ func (cfg *GilsonPipetMaxInstanceConfig) MarshalJSON() ([]byte, error) {
 
 func (cfg *GilsonPipetMaxInstanceConfig) UnmarshalJSON(bs []byte) error {
 	return UnmarshalMapsMerged(bs, &cfg.commonMixerInstanceConfig, &cfg.tipsOnly)
+}
+
+// CyBio
+type CyBioConfig struct {
+	Defaults *CyBioInstanceConfig                      `json:"Defaults,omitempty"`
+	Devices  map[DeviceInstanceID]*CyBioInstanceConfig `json:"Devices"`
+}
+
+type CyBioInstanceConfig struct {
+	modelOnly
+	commonMixerInstanceConfig
+	tipsOnly
+}
+
+func (cfg *CyBioInstanceConfig) MarshalJSON() ([]byte, error) {
+	return MergeToMapAndMarshal(&cfg.commonMixerInstanceConfig, &cfg.modelOnly, &cfg.tipsOnly)
+}
+
+func (cfg *CyBioInstanceConfig) UnmarshalJSON(bs []byte) error {
+	return UnmarshalMapsMerged(bs, &cfg.commonMixerInstanceConfig, &cfg.modelOnly, &cfg.tipsOnly)
 }
 
 // Labcyte

@@ -3,7 +3,6 @@ package mixer
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/inventory"
@@ -149,44 +148,5 @@ func (inst *LabcyteInstance) Compile(labEffects *effects.LaboratoryEffects, node
 		}
 	}
 
-	if err := addCustomPolicies(instrs, req); err != nil {
-		return nil, err
-	}
-
-	hasOutputPlate := func(typ wtype.PlateTypeName, id string) bool {
-		for _, p := range req.OutputPlatetypes {
-			if p.Type == typ && (id == "" || p.ID == id) {
-				return true
-			}
-		}
-		return false
-	}
-
-	for _, instr := range instrs {
-		if instr.OutPlate != nil {
-			if p, found := req.OutputPlates[instr.OutPlate.ID]; found && p != instr.OutPlate {
-				return nil, fmt.Errorf("Mix setup error: Plate %s already requested in different state for mix.", p.ID)
-			} else {
-				req.OutputPlates[instr.OutPlate.ID] = instr.OutPlate
-			}
-		}
-
-		if len(instr.Platetype) != 0 && !hasOutputPlate(instr.Platetype, instr.PlateID) {
-			if pt, err := labEffects.Inventory.PlateTypes.NewPlate(instr.Platetype); err != nil {
-				return nil, err
-			} else {
-				pt.ID = instr.PlateID
-				req.OutputPlatetypes = append(req.OutputPlatetypes, pt)
-			}
-		}
-		req.Add_instruction(instr)
-	}
-
-	planner := liquidhandling.Init(props)
-
-	if err := planner.MakeSolutions(labEffects, req); err != nil {
-		return nil, err
-	}
-
-	return nil, nil
+	return mix(labEffects, instrs, req, props)
 }

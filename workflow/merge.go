@@ -165,6 +165,7 @@ func (a *Config) merge(b Config) error {
 	return utils.ErrorSlice{
 		a.GlobalMixer.Merge(b.GlobalMixer),
 		a.GilsonPipetMax.Merge(b.GilsonPipetMax),
+		a.CyBio.Merge(b.CyBio),
 		a.Labcyte.Merge(b.Labcyte),
 	}.Pack()
 }
@@ -187,6 +188,28 @@ func (a *GilsonPipetMaxConfig) Merge(b GilsonPipetMaxConfig) error {
 		a.Defaults = b.Defaults
 	case b.Defaults != nil:
 		return errors.New("Cannot merge: GilsonPipetMax defaults redefined")
+	}
+	return nil
+}
+
+func (a *CyBioConfig) Merge(b CyBioConfig) error {
+	if a.Devices == nil {
+		a.Devices = b.Devices
+	} else {
+		// simplest: we merge iff device ids are distinct
+		for id, cfg := range b.Devices {
+			if _, found := a.Devices[id]; found {
+				return fmt.Errorf("Cannot merge: CyBio device '%v' redefined", id)
+			}
+			a.Devices[id] = cfg
+		}
+	}
+	// for defaults, we just hope one of them is nil
+	switch {
+	case a.Defaults == nil:
+		a.Defaults = b.Defaults
+	case b.Defaults != nil:
+		return errors.New("Cannot merge: CyBio defaults redefined")
 	}
 	return nil
 }

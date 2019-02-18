@@ -18,10 +18,7 @@ func (wf *Workflow) validate() error {
 	} else {
 		return utils.ErrorSlice{
 			wf.Repositories.validate(),
-			wf.ElementTypes.validate(wf),
-			wf.ElementInstances.validate(wf),
-			wf.ElementInstancesParameters.validate(wf),
-			wf.ElementInstancesConnections.validate(wf),
+			wf.Elements.validate(wf),
 			wf.Inventory.validate(),
 			wf.Config.validate(),
 		}.Pack()
@@ -74,6 +71,15 @@ func (r Repository) validate() error {
 	}
 }
 
+func (es Elements) validate(wf *Workflow) error {
+	return utils.ErrorSlice{
+		es.Types.validate(wf),
+		es.Instances.validate(wf),
+		es.InstancesParameters.validate(wf),
+		es.InstancesConnections.validate(wf),
+	}.Pack()
+}
+
 func (ets ElementTypes) validate(wf *Workflow) error {
 	// we don't support import aliasing for elements. This means that
 	// we require that every element type has a unique type name.
@@ -119,7 +125,7 @@ func (ei ElementInstance) validate(wf *Workflow) error {
 
 func (eps ElementInstancesParameters) validate(wf *Workflow) error {
 	for name, _ := range eps {
-		if _, found := wf.ElementInstances[name]; !found {
+		if _, found := wf.Elements.Instances[name]; !found {
 			return fmt.Errorf("Validation error: ElementInstancesParameters provided for unknown ElementInstance '%v'", name)
 		}
 	}
@@ -138,7 +144,7 @@ func (conns ElementInstancesConnections) validate(wf *Workflow) error {
 }
 
 func (soc ElementSocket) validate(wf *Workflow) error {
-	if _, found := wf.ElementInstances[soc.ElementInstance]; !found {
+	if _, found := wf.Elements.Instances[soc.ElementInstance]; !found {
 		return fmt.Errorf("Validation error: ElementConnection uses ElementInstance '%v' which does not exist.", soc.ElementInstance)
 	} else if soc.ParameterName == "" {
 		return fmt.Errorf("Validation error: ElementConnection using ElementInstance '%v' must specify a ParameterName.", soc.ElementInstance)

@@ -8,29 +8,32 @@
         }
     },
 
-    "ElementTypes": [
-        {
-            "RepositoryPrefix": "repos.antha.com/antha-ninja/elements-westeros",
-            "ElementPath": "Tests/FileOutput"
-        }
-    ],
-
-    "ElementInstances": {
-        "myFileOutput": {
-            "ElementTypeName": "FileOutput",
-            "Meta": {
-                "x": 442,
-                "y": 256
+    "Elements": {
+        "Types": [
+            {
+                "RepositoryPrefix": "repos.antha.com/antha-ninja/elements-westeros",
+                "ElementPath": "Tests/FileOutput"
             }
-        }
-    },
+        ],
 
-    "ElementInstancesParameters": {
-        "myFileOutput": {
-            "ParamFileA": {"Path": "/tmp/anthafoobar/inputs/fileA.txt"},
-            "ParamFileB": {"Path": "/tmp/anthafoobar/inputs/fileB.txt"},
-            "ParamFilename": "myfilename",
-            "ParamFileSlice": []
+        "Instances": {
+            "myFileOutput": {
+                "ElementTypeName": "FileOutput",
+                "Meta": {
+                    "x": 442,
+                    "y": 256
+                }
+            }
+        },
+
+
+        "InstancesParameters": {
+            "myFileOutput": {
+                "ParamFileA": {"Path": "/tmp/anthafoobar/inputs/fileA.txt"},
+                "ParamFileB": {"Path": "/tmp/anthafoobar/inputs/fileB.txt"},
+                "ParamFilename": "myfilename",
+                "ParamFileSlice": []
+            }
         }
     }
 }

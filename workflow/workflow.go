@@ -16,11 +16,8 @@ type Workflow struct {
 
 	Meta Meta `json:"Meta"`
 
-	Repositories                Repositories                `json:"Repositories"`
-	ElementTypes                ElementTypes                `json:"ElementTypes"`
-	ElementInstances            ElementInstances            `json:"ElementInstances"`
-	ElementInstancesParameters  ElementInstancesParameters  `json:"ElementInstancesParameters"`
-	ElementInstancesConnections ElementInstancesConnections `json:"ElementInstancesConnections"`
+	Repositories Repositories `json:"Repositories"`
+	Elements     Elements     `json:"Elements"`
 
 	Inventory Inventory `json:"Inventory"`
 
@@ -106,6 +103,13 @@ type Repository struct {
 	gitRepo *git.Repository
 }
 
+type Elements struct {
+	Types                ElementTypes                `json:"Types"`
+	Instances            ElementInstances            `json:"Instances"`
+	InstancesParameters  ElementInstancesParameters  `json:"InstancesParameters"`
+	InstancesConnections ElementInstancesConnections `json:"InstancesConnections"`
+}
+
 type ElementTypes []*ElementType
 
 type ElementType struct {
@@ -146,8 +150,8 @@ type ElementSocket struct {
 
 func (wf *Workflow) TypeNames() map[ElementTypeName]*ElementType {
 	if wf.typeNames == nil {
-		tn := make(map[ElementTypeName]*ElementType, len(wf.ElementTypes))
-		for _, et := range wf.ElementTypes {
+		tn := make(map[ElementTypeName]*ElementType, len(wf.Elements.Types))
+		for _, et := range wf.Elements.Types {
 			tn[et.Name()] = et
 		}
 		wf.typeNames = tn

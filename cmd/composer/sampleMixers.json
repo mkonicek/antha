@@ -11,33 +11,6 @@
                     "InputPlateTypes": ["pcrplate_skirted"]
                 }
             }
-        },
-        "Labcyte": {
-            "Devices": {
-                "Larry": {
-                    "Connection": "go://github.com/Synthace/LabCyteEchoDriver/server",
-                    "Model": "525",
-                    "InputPlateTypes": ["pcrplate_skirted"]
-                }
-            }
-        },
-        "Tecan": {
-            "Devices": {
-                "Trevor": {
-                    "Connection": "go://github.com/Synthace/TecanScriptDriver/server",
-                    "Model": "Evo",
-                    "InputPlateTypes": ["pcrplate_skirted"]
-                }
-            }
-        },
-        "CyBio": {
-            "Devices": {
-                "Cydney": {
-                    "Connection": "go://github.com/Synthace/CyBioXMLDriver/server",
-                    "Model": "Felix",
-                    "InputPlateTypes": ["pcrplate_skirted"]
-                }
-            }
         }
     }
 }

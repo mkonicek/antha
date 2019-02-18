@@ -22,10 +22,7 @@ func (a *Workflow) merge(b *Workflow) error {
 
 	return utils.ErrorSlice{
 		a.Repositories.merge(b.Repositories),
-		a.ElementTypes.merge(b.ElementTypes),
-		a.ElementInstances.merge(b.ElementInstances),
-		a.ElementInstancesParameters.merge(b.ElementInstancesParameters),
-		a.ElementInstancesConnections.merge(b.ElementInstancesConnections),
+		a.Elements.merge(b.Elements),
 		a.Inventory.merge(b.Inventory),
 		a.Config.merge(b.Config),
 	}.Pack()
@@ -49,6 +46,15 @@ func (a *Repositories) merge(b Repositories) error {
 		}
 	}
 	return nil
+}
+
+func (a *Elements) merge(b Elements) error {
+	return utils.ErrorSlice{
+		a.Types.merge(b.Types),
+		a.Instances.merge(b.Instances),
+		a.InstancesParameters.merge(b.InstancesParameters),
+		a.InstancesConnections.merge(b.InstancesConnections),
+	}.Pack()
 }
 
 func (ets ElementTypes) sort() {

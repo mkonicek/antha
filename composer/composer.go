@@ -56,7 +56,7 @@ func NewComposer(logger *logger.Logger, wf *workflow.Workflow, outDir string, ke
 }
 
 func (c *Composer) FindWorkflowElementTypes() error {
-	for _, et := range c.Workflow.ElementTypes {
+	for _, et := range c.Workflow.Elements.Types {
 		if err := c.Workflow.Repositories.CloneRepository(et, filepath.Join(c.OutDir, "src")); err != nil {
 			return err
 		} else {

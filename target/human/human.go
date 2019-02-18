@@ -49,8 +49,8 @@ func (hum *Human) CanCompile(req effects.Request) bool {
 }
 
 // Compile implements target.device Compile
-func (hum *Human) Compile(labEffects *effects.LaboratoryEffects, nodes []effects.Node) ([]effects.Inst, error) {
-	return hum.impl.Compile(labEffects, nodes)
+func (hum *Human) Compile(labEffects *effects.LaboratoryEffects, dir string, nodes []effects.Node) ([]effects.Inst, error) {
+	return hum.impl.Compile(labEffects, dir, nodes)
 }
 
 func (hum *Human) DetermineRole(tgt *target.Target) {

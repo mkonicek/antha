@@ -99,7 +99,7 @@ func (a GenericHandler) merge(nodes []effects.Node) (*effects.Command, error) {
 }
 
 // Compile implements a Device
-func (a *GenericHandler) Compile(labEffects *effects.LaboratoryEffects, nodes []effects.Node) ([]effects.Inst, error) {
+func (a *GenericHandler) Compile(labEffects *effects.LaboratoryEffects, dir string, nodes []effects.Node) ([]effects.Inst, error) {
 	g := effects.Deps(nodes)
 
 	entry := &target.Wait{}

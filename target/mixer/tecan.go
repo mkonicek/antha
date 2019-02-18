@@ -3,12 +3,13 @@ package mixer
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"path/filepath"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/logger"
-	"github.com/antha-lang/antha/microArch/scheduler/liquidhandling"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/workflow"
 )
@@ -107,47 +108,40 @@ func (inst *TecanInstance) Connect(wf *workflow.Workflow) error {
 	return nil
 }
 
-func (inst *TecanInstance) Compile(labEffects *effects.LaboratoryEffects, nodes []effects.Node) ([]effects.Inst, error) {
+func (inst *TecanInstance) Compile(labEffects *effects.LaboratoryEffects, dir string, nodes []effects.Node) ([]effects.Inst, error) {
 	instrs, err := checkInstructions(nodes)
 	if err != nil {
 		return nil, err
 	}
 
-	props := inst.properties.Dup(labEffects.IDGenerator)
-	req := liquidhandling.NewLHRequest(labEffects.IDGenerator)
-	req.BlockID = instrs[0].BlockID
+	mix, err := mixOpts{
+		Device:     inst,
+		LabEffects: labEffects,
+		Base:       inst.BaseMixer,
+		Global:     inst.global,
+		Instrs:     instrs,
+		InputWeights: map[string]float64{
+			"MAX_N_PLATES":           inst.MaxPlates,
+			"MAX_N_WELLS":            inst.MaxWells,
+			"RESIDUAL_VOLUME_WEIGHT": inst.ResidualVolumeWeight,
+		},
+		InputPlateTypes:  inst.InputPlateTypes,
+		OutputPlateTypes: inst.OutputPlateTypes,
+		TipTypes:         inst.TipTypes,
+	}.mix()
 
-	if err := inst.global.ApplyToLHRequest(req); err != nil {
+	if err != nil {
 		return nil, err
 	}
 
-	req.InputSetupWeights["MAX_N_PLATES"] = inst.MaxPlates
-	req.InputSetupWeights["MAX_N_WELLS"] = inst.MaxWells
-	req.InputSetupWeights["RESIDUAL_VOLUME_WEIGHT"] = inst.ResidualVolumeWeight
+	tarballPath := filepath.Join(dir, fmt.Sprintf("%v.tar.gz", inst.ID))
+	contentPath := fmt.Sprintf("%v-%v.txt", inst.ID, instrs[0].BlockID)
 
-	for _, ptn := range inst.InputPlateTypes {
-		if pt, err := labEffects.Inventory.PlateTypes.NewPlate(ptn); err != nil {
-			return nil, err
-		} else {
-			req.InputPlatetypes = append(req.InputPlatetypes, pt)
-		}
+	if err != nil {
+		return nil, err
+	} else if err := writeToTarball(tarballPath, contentPath, mix.Files.Tarball); err != nil {
+		return nil, err
+	} else {
+		return []effects.Inst{mix}, nil
 	}
-
-	for _, ptn := range inst.OutputPlateTypes {
-		if pt, err := labEffects.Inventory.PlateTypes.NewPlate(ptn); err != nil {
-			return nil, err
-		} else {
-			req.OutputPlatetypes = append(req.OutputPlatetypes, pt)
-		}
-	}
-
-	for _, ps := range [][]*wtype.Plate{inst.global.InputPlates, labEffects.SampleTracker.GetInputPlates()} {
-		for _, p := range ps {
-			if err := req.AddUserPlate(labEffects.IDGenerator, p); err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	return mix(labEffects, instrs, req, props)
 }

@@ -1,9 +1,13 @@
 package mixer
 
 import (
+	"archive/tar"
+	"bytes"
+	"compress/gzip"
 	"context"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"math/rand"
 	"os/exec"
 	"strconv"
@@ -220,8 +224,64 @@ func (bm *BaseMixer) CanCompile(req effects.Request) bool {
 	return can.Contains(req)
 }
 
-func mix(labEffects *effects.LaboratoryEffects, instrs []*wtype.LHInstruction, req *liquidhandling.LHRequest, props *lhdriver.LHProperties) ([]effects.Inst, error) {
-	if err := addCustomPolicies(instrs, req); err != nil {
+type mixOpts struct {
+	Device           effects.Device
+	Base             *BaseMixer
+	LabEffects       *effects.LaboratoryEffects
+	Global           *GlobalMixerConfig
+	Instrs           []*wtype.LHInstruction
+	InputWeights     map[string]float64
+	InputPlateTypes  []wtype.PlateTypeName
+	OutputPlateTypes []wtype.PlateTypeName
+	TipTypes         []string
+}
+
+func (mo mixOpts) mix() (*target.Mix, error) {
+	props := mo.Base.properties.Dup(mo.LabEffects.IDGenerator)
+	req := liquidhandling.NewLHRequest(mo.LabEffects.IDGenerator)
+	req.BlockID = mo.Instrs[0].BlockID
+
+	if err := mo.Global.ApplyToLHRequest(req); err != nil {
+		return nil, err
+	}
+
+	for k, v := range mo.InputWeights {
+		req.InputSetupWeights[k] = v
+	}
+
+	for _, ptn := range mo.InputPlateTypes {
+		if pt, err := mo.LabEffects.Inventory.PlateTypes.NewPlate(ptn); err != nil {
+			return nil, err
+		} else {
+			req.InputPlatetypes = append(req.InputPlatetypes, pt)
+		}
+	}
+
+	for _, ptn := range mo.OutputPlateTypes {
+		if pt, err := mo.LabEffects.Inventory.PlateTypes.NewPlate(ptn); err != nil {
+			return nil, err
+		} else {
+			req.OutputPlatetypes = append(req.OutputPlatetypes, pt)
+		}
+	}
+
+	for _, ttn := range mo.TipTypes {
+		if tb, err := mo.LabEffects.Inventory.TipBoxes.NewTipbox(ttn); err != nil {
+			return nil, err
+		} else {
+			req.TipBoxes = append(req.TipBoxes, tb)
+		}
+	}
+
+	for _, ps := range [][]*wtype.Plate{mo.Global.InputPlates, mo.LabEffects.SampleTracker.GetInputPlates()} {
+		for _, p := range ps {
+			if err := req.AddUserPlate(mo.LabEffects.IDGenerator, p); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	if err := addCustomPolicies(mo.Instrs, req); err != nil {
 		return nil, err
 	}
 
@@ -234,7 +294,7 @@ func mix(labEffects *effects.LaboratoryEffects, instrs []*wtype.LHInstruction, r
 		return false
 	}
 
-	for _, instr := range instrs {
+	for _, instr := range mo.Instrs {
 		if instr.OutPlate != nil {
 			if p, found := req.OutputPlates[instr.OutPlate.ID]; found && p != instr.OutPlate {
 				return nil, fmt.Errorf("Mix setup error: Plate %s already requested in different state for mix.", p.ID)
@@ -244,7 +304,7 @@ func mix(labEffects *effects.LaboratoryEffects, instrs []*wtype.LHInstruction, r
 		}
 
 		if len(instr.Platetype) != 0 && !hasOutputPlate(instr.Platetype, instr.PlateID) {
-			if pt, err := labEffects.Inventory.PlateTypes.NewPlate(instr.Platetype); err != nil {
+			if pt, err := mo.LabEffects.Inventory.PlateTypes.NewPlate(instr.Platetype); err != nil {
 				return nil, err
 			} else {
 				pt.ID = instr.PlateID
@@ -254,11 +314,54 @@ func mix(labEffects *effects.LaboratoryEffects, instrs []*wtype.LHInstruction, r
 		req.Add_instruction(instr)
 	}
 
-	if err := liquidhandling.Init(props).MakeSolutions(labEffects, req); err != nil {
+	handler := liquidhandling.Init(props)
+	if err := handler.MakeSolutions(mo.LabEffects, req); err != nil {
 		return nil, err
 	}
 
-	return nil, nil // FIXME
+	bs, status := handler.Properties.Driver.GetOutputFile()
+	if err := status.GetError(); err != nil {
+		return nil, err
+	} else {
+		mimetype := "application/data"
+		if handler.Properties.Mnfr != "" {
+			mimetype = "application/" + strings.ToLower(handler.Properties.Mnfr)
+		}
+		return &target.Mix{
+			Dev:             mo.Device,
+			Request:         req,
+			Properties:      handler.Properties,
+			FinalProperties: handler.FinalProperties,
+			Final:           handler.PlateIDMap(),
+			Files: target.Files{
+				Tarball: bs,
+				Type:    mimetype,
+			},
+		}, nil
+	}
+}
+
+func writeToTarball(tarballPath, contentName string, content []byte) error {
+	var buf bytes.Buffer
+	gw := gzip.NewWriter(&buf)
+	tw := tar.NewWriter(gw)
+
+	if err := tw.WriteHeader(&tar.Header{
+		Name:    contentName,
+		Mode:    0400,
+		Size:    int64(len(content)),
+		ModTime: time.Now(),
+	}); err != nil {
+		return err
+	} else if _, err := tw.Write(content); err != nil {
+		return err
+	} else if err := tw.Close(); err != nil {
+		return err
+	} else if err := gw.Close(); err != nil {
+		return err
+	} else {
+		return ioutil.WriteFile(tarballPath, buf.Bytes(), 0400)
+	}
 }
 
 func mergePolicies(basePolicy, priorityPolicy wtype.LHPolicy) (newPolicy wtype.LHPolicy) {

@@ -283,7 +283,7 @@ func (a *ir) coalesceDevices(device map[effects.Node]effects.Device) {
 
 // Run plan through device-specific planners. Adjust assignment based on
 // planner capabilities and return output.
-func (a *ir) tryPlan(labEffects *effects.LaboratoryEffects) error {
+func (a *ir) tryPlan(labEffects *effects.LaboratoryEffects, dir string) error {
 	dg := graph.MakeQuotient(graph.MakeQuotientOpt{
 		Graph: a.Commands,
 		Colorer: func(n graph.Node) interface{} {
@@ -322,7 +322,7 @@ func (a *ir) tryPlan(labEffects *effects.LaboratoryEffects) error {
 
 	a.output = make(map[*drun][]effects.Inst)
 	for _, d := range runs {
-		insts, err := d.Device.Compile(labEffects, cmds[d])
+		insts, err := d.Device.Compile(labEffects, dir, cmds[d])
 		if err != nil {
 			return err
 		}
@@ -420,7 +420,7 @@ func (a *ir) genInsts() ([]effects.Inst, error) {
 // configuration. This supports incremental compilation, so roots may refer to
 // nodes that have already been compiled, in which case, the result may refer
 // to previously generated instructions.
-func Compile(labEffects *effects.LaboratoryEffects, t *target.Target, roots []effects.Node) ([]effects.Inst, error) {
+func Compile(labEffects *effects.LaboratoryEffects, dir string, t *target.Target, roots []effects.Node) ([]effects.Inst, error) {
 	if len(roots) == 0 {
 		return nil, nil
 	}
@@ -436,7 +436,7 @@ func Compile(labEffects *effects.LaboratoryEffects, t *target.Target, roots []ef
 	if err := ir.assignDevices(t); err != nil {
 		return nil, fmt.Errorf("error assigning devices with target configuration %s: %s", t, err)
 	}
-	if err := ir.tryPlan(labEffects); err != nil {
+	if err := ir.tryPlan(labEffects, dir); err != nil {
 		return nil, fmt.Errorf("error planning: %s", err)
 	}
 

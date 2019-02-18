@@ -94,7 +94,7 @@ func NewLaboratoryBuilder(fh io.Reader) *LaboratoryBuilder {
 			labBuild.Logger.Log("outdir", d)
 		}
 	}
-	for _, leaf := range []string{"elements", "data"} {
+	for _, leaf := range []string{"elements", "data", "devices"} {
 		if err := os.MkdirAll(filepath.Join(labBuild.outDir, leaf), 0700); err != nil {
 			labBuild.Fatal(err)
 		}
@@ -102,39 +102,6 @@ func NewLaboratoryBuilder(fh io.Reader) *LaboratoryBuilder {
 	labBuild.FileManager = NewFileManager(filepath.Join(labBuild.outDir, "data"))
 
 	return labBuild
-}
-
-func (labBuild *LaboratoryBuilder) connectDevices() (*target.Target, error) {
-	if global, err := mixer.NewGlobalMixerConfig(labBuild.Inventory, &labBuild.workflow.Config.GlobalMixer); err != nil {
-		return nil, err
-	} else if gilsons, err := mixer.NewGilsonPipetMaxInstances(labBuild.Logger, labBuild.Inventory, global, labBuild.workflow.Config.GilsonPipetMax); err != nil {
-		return nil, err
-	} else if tecans, err := mixer.NewTecanInstances(labBuild.Logger, labBuild.Inventory, global, labBuild.workflow.Config.Tecan); err != nil {
-		return nil, err
-	} else if cybios, err := mixer.NewCyBioInstances(labBuild.Logger, labBuild.Inventory, global, labBuild.workflow.Config.CyBio); err != nil {
-		return nil, err
-	} else if labcytes, err := mixer.NewLabcyteInstances(labBuild.Logger, labBuild.Inventory, global, labBuild.workflow.Config.Labcyte); err != nil {
-		return nil, err
-	} else {
-		tgt := target.New()
-		for _, gilson := range gilsons {
-			tgt.AddDevice(gilson)
-		}
-		for _, tecan := range tecans {
-			tgt.AddDevice(tecan)
-		}
-		for _, cybio := range cybios {
-			tgt.AddDevice(cybio)
-		}
-		for _, labcyte := range labcytes {
-			tgt.AddDevice(labcyte)
-		}
-		if err := tgt.Connect(labBuild.workflow); err != nil {
-			tgt.Close()
-			return nil, err
-		}
-		return tgt, nil
-	}
 }
 
 // Only use this before you call run.
@@ -201,13 +168,48 @@ func (labBuild *LaboratoryBuilder) Compile() ([]effects.Node, []effects.Inst, er
 		// supports prompting.
 		human.New().DetermineRole(devices)
 
+		devDir := filepath.Join(labBuild.outDir, "devices")
+
 		if nodes, err := labBuild.Maker.MakeNodes(labBuild.Trace.Instructions()); err != nil {
 			return nil, nil, err
-		} else if instrs, err := codegen.Compile(labBuild.LaboratoryEffects, devices, nodes); err != nil {
+		} else if instrs, err := codegen.Compile(labBuild.LaboratoryEffects, devDir, devices, nodes); err != nil {
 			return nil, nil, err
 		} else {
 			return nodes, instrs, nil
 		}
+	}
+}
+
+func (labBuild *LaboratoryBuilder) connectDevices() (*target.Target, error) {
+	if global, err := mixer.NewGlobalMixerConfig(labBuild.Inventory, &labBuild.workflow.Config.GlobalMixer); err != nil {
+		return nil, err
+	} else if gilsons, err := mixer.NewGilsonPipetMaxInstances(labBuild.Logger, labBuild.Inventory, global, labBuild.workflow.Config.GilsonPipetMax); err != nil {
+		return nil, err
+	} else if tecans, err := mixer.NewTecanInstances(labBuild.Logger, labBuild.Inventory, global, labBuild.workflow.Config.Tecan); err != nil {
+		return nil, err
+	} else if cybios, err := mixer.NewCyBioInstances(labBuild.Logger, labBuild.Inventory, global, labBuild.workflow.Config.CyBio); err != nil {
+		return nil, err
+	} else if labcytes, err := mixer.NewLabcyteInstances(labBuild.Logger, labBuild.Inventory, global, labBuild.workflow.Config.Labcyte); err != nil {
+		return nil, err
+	} else {
+		tgt := target.New()
+		for _, gilson := range gilsons {
+			tgt.AddDevice(gilson)
+		}
+		for _, tecan := range tecans {
+			tgt.AddDevice(tecan)
+		}
+		for _, cybio := range cybios {
+			tgt.AddDevice(cybio)
+		}
+		for _, labcyte := range labcytes {
+			tgt.AddDevice(labcyte)
+		}
+		if err := tgt.Connect(labBuild.workflow); err != nil {
+			tgt.Close()
+			return nil, err
+		}
+		return tgt, nil
 	}
 }
 

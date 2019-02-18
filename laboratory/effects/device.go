@@ -10,7 +10,7 @@ type Device interface {
 
 	// Compile produces a single-entry, single-exit DAG of instructions where
 	// insts[0] is the entry point and insts[len(insts)-1] is the exit point
-	Compile(labEffects *LaboratoryEffects, cmds []Node) (insts []Inst, err error)
+	Compile(labEffects *LaboratoryEffects, dir string, cmds []Node) (insts []Inst, err error)
 
 	// Must be idempotent and thread safe
 	Connect(*workflow.Workflow) error

@@ -52,7 +52,6 @@ func (a *Elements) merge(b Elements) error {
 	return utils.ErrorSlice{
 		a.Types.merge(b.Types),
 		a.Instances.merge(b.Instances),
-		a.InstancesParameters.merge(b.InstancesParameters),
 		a.InstancesConnections.merge(b.InstancesConnections),
 	}.Pack()
 }
@@ -106,22 +105,6 @@ func (a *ElementInstances) merge(b ElementInstances) error {
 			return fmt.Errorf("Cannot merge: element instance '%v' exists in both workflows", name)
 		} else {
 			aMap[name] = elemB
-		}
-	}
-	return nil
-}
-
-func (a *ElementInstancesParameters) merge(b ElementInstancesParameters) error {
-	// Just like element instances, these should be completely distinct
-	if *a == nil {
-		*a = make(ElementInstancesParameters)
-	}
-	aMap := *a
-	for name, paramSetB := range b {
-		if _, found := aMap[name]; found {
-			return fmt.Errorf("Cannot merge: element parameters '%v' exists in both workflows", name)
-		} else {
-			aMap[name] = paramSetB
 		}
 	}
 	return nil

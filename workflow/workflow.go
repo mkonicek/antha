@@ -106,7 +106,6 @@ type Repository struct {
 type Elements struct {
 	Types                ElementTypes                `json:"Types"`
 	Instances            ElementInstances            `json:"Instances"`
-	InstancesParameters  ElementInstancesParameters  `json:"InstancesParameters"`
 	InstancesConnections ElementInstancesConnections `json:"InstancesConnections"`
 }
 
@@ -128,11 +127,10 @@ func (et ElementType) ImportPath() string {
 type ElementInstances map[ElementInstanceName]ElementInstance
 
 type ElementInstance struct {
-	ElementTypeName ElementTypeName `json:"ElementTypeName"`
-	Meta            json.RawMessage `json:"Meta"`
+	ElementTypeName ElementTypeName     `json:"ElementTypeName"`
+	Meta            json.RawMessage     `json:"Meta"`
+	Parameters      ElementParameterSet `json:"Parameters"`
 }
-
-type ElementInstancesParameters map[ElementInstanceName]ElementParameterSet
 
 type ElementParameterSet map[ElementParameterName]json.RawMessage
 

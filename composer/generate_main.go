@@ -109,13 +109,13 @@ func main() {
 {{range elementTypes}}{{if .IsAnthaElement}}	{{.Name}}.RegisterLineMap(labBuild)
 {{end}}{{end}}
 	// Create the elements
-{{range $name, $type := .Elements.Instances}}	{{varName $name}} := {{$type.ElementTypeName}}.New{{$type.ElementTypeName}}(labBuild, {{printf "%q" $name}})
+{{range $name, $inst := .Elements.Instances}}	{{varName $name}} := {{$inst.ElementTypeName}}.New{{$inst.ElementTypeName}}(labBuild, {{printf "%q" $name}})
 {{end}}
 	// Add wiring
 {{range .Elements.InstancesConnections}}	labBuild.AddConnection({{varName .Source.ElementInstance}}, {{varName .Target.ElementInstance}}, func() { {{varName .Target.ElementInstance}}.{{token .Target.ElementInstance .Target.ParameterName}}.{{.Target.ParameterName}} = {{varName .Source.ElementInstance}}.{{token .Source.ElementInstance .Source.ParameterName}}.{{.Source.ParameterName}} })
 {{end}}
 	// Set parameters
-{{range $name, $params := .Elements.InstancesParameters}}{{range $param, $value := $params}}	if err := codec.NewDecoderBytes([]byte({{printf "%q" $value}}), jh).Decode(&{{varName $name}}.{{token $name $param}}.{{$param}}); err != nil {
+{{range $name, $inst := .Elements.Instances}}{{range $param, $value := $inst.Parameters}}	if err := codec.NewDecoderBytes([]byte({{printf "%q" $value}}), jh).Decode(&{{varName $name}}.{{token $name $param}}.{{$param}}); err != nil {
 		labBuild.Fatal(err)
 	}
 {{end}}{{end}}

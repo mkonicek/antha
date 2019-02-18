@@ -75,7 +75,6 @@ func (es Elements) validate(wf *Workflow) error {
 	return utils.ErrorSlice{
 		es.Types.validate(wf),
 		es.Instances.validate(wf),
-		es.InstancesParameters.validate(wf),
 		es.InstancesConnections.validate(wf),
 	}.Pack()
 }
@@ -121,15 +120,6 @@ func (ei ElementInstance) validate(wf *Workflow) error {
 	} else {
 		return nil
 	}
-}
-
-func (eps ElementInstancesParameters) validate(wf *Workflow) error {
-	for name, _ := range eps {
-		if _, found := wf.Elements.Instances[name]; !found {
-			return fmt.Errorf("Validation error: ElementInstancesParameters provided for unknown ElementInstance '%v'", name)
-		}
-	}
-	return nil
 }
 
 func (conns ElementInstancesConnections) validate(wf *Workflow) error {

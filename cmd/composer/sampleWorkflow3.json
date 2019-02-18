@@ -15,17 +15,14 @@
                 "Meta": {
                     "x": 140,
                     "y": 553
+                },
+                "Parameters": {
+                    "ByRow": false,
+                    "LiquidToAliquot": "water",
+                    "OutPlate": "SRWFB96_riser18",
+                    "Replicates": 8,
+                    "VolumePerAliquot": "50ul"
                 }
-            }
-        },
-
-        "InstancesParameters": {
-            "my_aliquot": {
-                "ByRow": false,
-                "LiquidToAliquot": "water",
-                "OutPlate": "SRWFB96_riser18",
-                "Replicates": 8,
-                "VolumePerAliquot": "50ul"
             }
         }
     }

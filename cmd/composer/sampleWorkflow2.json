@@ -15,6 +15,13 @@
                 "Meta": {
                     "x": 140,
                     "y": 553
+                },
+                "Parameters": {
+                    "ByRow": false,
+                    "LiquidToAliquot": "water",
+                    "OutPlate": "SRWFB96_riser18",
+                    "Replicates": 8,
+                    "VolumePerAliquot": "50ul"
                 }
             },
 
@@ -23,6 +30,13 @@
                 "Meta": {
                     "x": 482,
                     "y": 399
+                },
+                "Parameters": {
+                    "ByRow": false,
+                    "LiquidToAliquot": "water",
+                    "OutPlate": "SRWFB96_riser18",
+                    "Replicates": 8,
+                    "VolumePerAliquot": "50ul"
                 }
             },
 
@@ -31,6 +45,13 @@
                 "Meta": {
                     "x": 451,
                     "y": 775
+                },
+                "Parameters": {
+                    "ByRow": false,
+                    "LiquidToAliquot": "water",
+                    "OutPlate": "SRWFB96_riser18",
+                    "Replicates": 8,
+                    "VolumePerAliquot": "50ul"
                 }
             },
 
@@ -39,6 +60,13 @@
                 "Meta": {
                     "x": 798,
                     "y": 557
+                },
+                "Parameters": {
+                    "ByRow": false,
+                    "LiquidToAliquot": "water",
+                    "OutPlate": "SRWFB96_riser18",
+                    "Replicates": 8,
+                    "VolumePerAliquot": "50ul"
                 }
             }
         },
@@ -84,37 +112,6 @@
                     "ParameterName": "NewPlateName"
                 }
             }
-        ],
-
-        "InstancesParameters": {
-            "aliquot_A": {
-                "ByRow": false,
-                "LiquidToAliquot": "water",
-                "OutPlate": "SRWFB96_riser18",
-                "Replicates": 8,
-                "VolumePerAliquot": "50ul"
-            },
-            "aliquot_B": {
-                "ByRow": false,
-                "LiquidToAliquot": "water",
-                "OutPlate": "SRWFB96_riser18",
-                "Replicates": 8,
-                "VolumePerAliquot": "50ul"
-            },
-            "aliquot_C": {
-                "ByRow": false,
-                "LiquidToAliquot": "water",
-                "OutPlate": "SRWFB96_riser18",
-                "Replicates": 8,
-                "VolumePerAliquot": "50ul"
-            },
-            "aliquot_D": {
-                "ByRow": false,
-                "LiquidToAliquot": "water",
-                "OutPlate": "SRWFB96_riser18",
-                "Replicates": 8,
-                "VolumePerAliquot": "50ul"
-            }
-        }
+        ]
     }
 }

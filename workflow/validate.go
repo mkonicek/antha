@@ -157,6 +157,7 @@ func (cfg Config) validate() error {
 	return utils.ErrorSlice{
 		cfg.GlobalMixer.validate(),
 		cfg.GilsonPipetMax.validate(),
+		cfg.Tecan.validate(),
 		cfg.CyBio.validate(),
 		cfg.Labcyte.validate(),
 		cfg.assertOnlyOneMixer(),
@@ -167,7 +168,7 @@ func (cfg Config) assertOnlyOneMixer() error {
 	// remove / revise when we get better. NB: because of this test, we
 	// don't need to check that all devices have unique IDs. Once we
 	// relax this, we may need to do that.
-	if count := len(cfg.GilsonPipetMax.Devices) + len(cfg.CyBio.Devices) + len(cfg.Labcyte.Devices); count > 1 {
+	if count := len(cfg.GilsonPipetMax.Devices) + len(cfg.Tecan.Devices) + len(cfg.CyBio.Devices) + len(cfg.Labcyte.Devices); count > 1 {
 		return fmt.Errorf("Currently a maximum of one mixer can be used per workflow. You have %d configured.", count)
 	}
 	return nil
@@ -215,6 +216,37 @@ func (inst *GilsonPipetMaxInstanceConfig) validate(id DeviceInstanceID, isDefaul
 
 	} else if !isDefaults && strings.ToLower(string(id)) == "defaults" {
 		return fmt.Errorf("Confusion: GilsonPipetMax device '%s' exists. Did you mean to set GilsonPipetMax.Defaults instead?")
+
+	}
+	return inst.commonMixerInstanceConfig.validate(id)
+}
+
+// Tecan
+func (tecans TecanConfig) validate() error {
+	if err := tecans.Defaults.validate("Defaults", true); err != nil {
+		return err
+	}
+	for id, inst := range tecans.Devices {
+		if err := inst.validate(id, false); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (inst *TecanInstanceConfig) validate(id DeviceInstanceID, isDefaults bool) error {
+	if len(id) == 0 {
+		return errors.New("Tecan: A device may not have an empty name.")
+
+	} else if inst == nil {
+		if isDefaults {
+			return nil
+		} else {
+			return fmt.Errorf("Tecan device '%s' has no configuration!", id)
+		}
+
+	} else if !isDefaults && strings.ToLower(string(id)) == "defaults" {
+		return fmt.Errorf("Confusion: Tecan device '%s' exists. Did you mean to set Tecan.Defaults instead?")
 
 	}
 	return inst.commonMixerInstanceConfig.validate(id)

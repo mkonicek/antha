@@ -21,6 +21,15 @@
                 }
             }
         },
+        "Tecan": {
+            "Devices": {
+                "Trevor": {
+                    "Connection": "go://github.com/Synthace/TecanScriptDriver/server",
+                    "Model": "Evo",
+                    "InputPlateTypes": ["pcrplate_skirted"]
+                }
+            }
+        },
         "CyBio": {
             "Devices": {
                 "Cydney": {

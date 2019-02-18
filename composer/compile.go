@@ -105,6 +105,9 @@ func (c *Composer) PrepareDrivers() error {
 	for id, cfg := range c.Workflow.Config.GilsonPipetMax.Devices {
 		conns[id] = &cfg.ParsedConnection
 	}
+	for id, cfg := range c.Workflow.Config.Tecan.Devices {
+		conns[id] = &cfg.ParsedConnection
+	}
 	for id, cfg := range c.Workflow.Config.CyBio.Devices {
 		conns[id] = &cfg.ParsedConnection
 	}

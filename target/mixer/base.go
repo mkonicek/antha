@@ -71,15 +71,15 @@ func (bm *BaseMixer) connect(wf *workflow.Workflow, data []byte) error {
 	if err := bm.maybeLinkedDriver(wf, data); err != nil {
 		bm.Close()
 		return err
-	} else {
-		bm.maybeExec()
-		if err := bm.maybeDial(); err != nil {
-			bm.Close()
-			return err
-		} else if err := bm.maybeConfigureConn(wf, data); err != nil {
-			bm.Close()
-			return err
-		}
+	} else if err := bm.maybeExec(); err != nil {
+		bm.Close()
+		return err
+	} else if err := bm.maybeDial(); err != nil {
+		bm.Close()
+		return err
+	} else if err := bm.maybeConfigureConn(wf, data); err != nil {
+		bm.Close()
+		return err
 	}
 	if bm.properties == nil {
 		return fmt.Errorf("Unable to establish connection to mixer instructionPlugin for %v.", bm.id)
@@ -90,39 +90,52 @@ func (bm *BaseMixer) connect(wf *workflow.Workflow, data []byte) error {
 
 // async. Blocks only until error on exec, or some data received from
 // cmd's stdout or stderr, whichever is soonist.
-func (bm *BaseMixer) maybeExec() {
+func (bm *BaseMixer) maybeExec() error {
 	bm.lock.Lock()
 	defer bm.lock.Unlock()
 
 	if bm.cmd == nil && bm.connection.ExecFile != "" {
 		rng := rand.New(rand.NewSource(time.Now().Unix()))
 		port := fmt.Sprint(1024 + rng.Intn(65536-1024))
-		bm.cmd = exec.Command(bm.connection.ExecFile, "-port", port)
-		bm.cmd.Env = []string{}
+		cmd := exec.Command(bm.connection.ExecFile, "-port", port)
+		cmd.Env = []string{}
+
+		// We have to be careful here: we want to wait until we get
+		// something out of either stdout or stderr, which of course
+		// could be concurrent, hence the locking and careful
+		// signalling.
+		running := make(chan struct{})
+		lock := new(sync.Mutex)
+		logFun := func(pairs ...interface{}) error {
+			lock.Lock()
+			select {
+			case <-running:
+			default:
+				close(running)
+			}
+			lock.Unlock()
+			return bm.logger.Log(pairs...)
+		}
+
+		if err := composer.StartAndLogCommand(cmd, logFun); err != nil {
+			return err
+		}
+
 		bm.connection.HostPort = "localhost:" + port
 
-		running := make(chan struct{})
-		bm.cmdFinished = make(chan struct{})
-		// copy it out so we don't have a data race: we won't be holding
-		// the lock later in the go-routine when we close the cmdFinished chan.
-		cmdFinished := bm.cmdFinished
+		// Continue using local vars to avoid data race: we won't be
+		// holding the lock later in the go-routine when we close the
+		// cmdFinished chan, so can't access it off of bm.
+
+		// We always set cmd and cmdFinished to nil or non-nil
+		// atomically (i.e. we ensure it is never the case that one is
+		// nil and the other non-nil).
+		cmdFinished := make(chan struct{})
+		bm.cmdFinished = cmdFinished
+		bm.cmd = cmd
+
 		go func() {
-			// We have to be careful here: we want to wait until we get
-			// something out of either stdout or stderr, which of course
-			// could be concurrent, hence the locking and careful
-			// signalling.
-			lock := new(sync.Mutex)
-			logFun := func(pairs ...interface{}) error {
-				lock.Lock()
-				defer lock.Unlock()
-				select {
-				case <-running:
-				default:
-					close(running)
-				}
-				return bm.logger.Log(pairs...)
-			}
-			err := composer.RunAndLogCommand(bm.cmd, logFun)
+			err := cmd.Wait()
 			close(cmdFinished)
 			if err != nil {
 				bm.logger.Log("error", err)
@@ -131,6 +144,7 @@ func (bm *BaseMixer) maybeExec() {
 		}()
 		<-running
 	}
+	return nil
 }
 
 func (bm *BaseMixer) maybeDial() error {

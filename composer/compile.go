@@ -150,7 +150,8 @@ func (c *Composer) PrepareDrivers() error {
 	return nil
 }
 
-func RunAndLogCommand(cmd *exec.Cmd, logger func(...interface{}) error) error {
+// Only starts the command, does not Wait for it.
+func StartAndLogCommand(cmd *exec.Cmd, logger func(...interface{}) error) error {
 	if stdout, err := cmd.StdoutPipe(); err != nil {
 		return err
 	} else if stderr, err := cmd.StderrPipe(); err != nil {
@@ -164,7 +165,16 @@ func RunAndLogCommand(cmd *exec.Cmd, logger func(...interface{}) error) error {
 		// cmd.Run())
 		runtime.LockOSThread()
 		defer runtime.UnlockOSThread()
-		return cmd.Run()
+		return cmd.Start()
+	}
+}
+
+// Starts and Waits for the command (unless error)
+func RunAndLogCommand(cmd *exec.Cmd, logger func(...interface{}) error) error {
+	if err := StartAndLogCommand(cmd, logger); err != nil {
+		return err
+	} else {
+		return cmd.Wait()
 	}
 }
 

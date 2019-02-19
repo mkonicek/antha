@@ -88,6 +88,10 @@ func (ets ElementTypes) validate(wf *Workflow) error {
 			return err
 		} else if ep, found := namesToPath[et.Name()]; found {
 			return fmt.Errorf("Validation error: ElementType '%v' is ambiguous (ElementPaths '%v' and '%v')", et.Name(), et.ElementPath, ep)
+		} else if prefix := matchingPrefix(string(et.ElementPath), ".", "/"); prefix != "" {
+			return fmt.Errorf("Validation error: Element Type %v: Element Path may not start with %v : %v", et.Name(), prefix, et.ElementPath)
+		} else if substr := matchingContains(string(et.ElementPath), ".."); substr != "" {
+			return fmt.Errorf("Validation error: Element Type %v: Element Path may not contain  %v : %v", et.Name(), substr, et.ElementPath)
 		} else {
 			namesToPath[et.Name()] = et.ElementPath
 		}
@@ -106,17 +110,27 @@ func (et ElementType) validate(wf *Workflow) error {
 func (eis ElementInstances) validate(wf *Workflow) error {
 	for name, ei := range eis {
 		if name == "" {
-			return errors.New("Validation error: ElementInstance cannot have an empty name")
-		} else if err := ei.validate(wf); err != nil {
+			return errors.New("Validation error: Element Instance cannot have an empty name")
+		} else if prefix := matchingPrefix(string(name), "."); prefix != "" {
+			return fmt.Errorf("Validation error: Element Instance %v: name may not start with %v", name, prefix)
+		} else if substr := matchingContains(string(name), "/", ".."); substr != "" {
+			return fmt.Errorf("Validation error: Element Instance %v: name may not contain %v", name, substr)
+		} else if err := ei.validate(wf, name); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (ei ElementInstance) validate(wf *Workflow) error {
-	if _, found := wf.TypeNames()[ei.ElementTypeName]; !found {
-		return fmt.Errorf("Validation error: ElementInstance with ElementTypeName '%v' is unknown", ei.ElementTypeName)
+func (ei ElementInstance) validate(wf *Workflow, name ElementInstanceName) error {
+	tns := wf.TypeNames()
+	if _, found := tns[ei.ElementTypeName]; !found {
+		maybeName := ElementType{ElementPath: ElementPath(ei.ElementTypeName)}.Name()
+		if _, found := tns[maybeName]; found {
+			return fmt.Errorf("Validation error: Element Instance '%v' has unknown ElementTypeName '%v'. Did you mean '%v'?", name, ei.ElementTypeName, maybeName)
+		} else {
+			return fmt.Errorf("Validation error: Element Instance '%v' has unknown ElementTypeName '%v'", name, ei.ElementTypeName)
+		}
 	} else {
 		return nil
 	}
@@ -343,4 +357,22 @@ func (a Addresses) validate(layoutOptionName string) error {
 		return fmt.Errorf("Layout option field %s has duplicate addresses: %v", layoutOptionName, a)
 	}
 	return nil
+}
+
+func matchingContains(str string, substrs ...string) string {
+	for _, substr := range substrs {
+		if strings.Contains(str, substr) {
+			return substr
+		}
+	}
+	return ""
+}
+
+func matchingPrefix(str string, prefixes ...string) string {
+	for _, prefix := range prefixes {
+		if strings.HasPrefix(str, prefix) {
+			return prefix
+		}
+	}
+	return ""
 }

@@ -109,21 +109,34 @@ func (self *Unit) GobDecode(b []byte) error {
 
 // Name get the full name of the unit
 func (self *Unit) Name() string {
+	if self == nil {
+		return ""
+	}
 	return self.prefix.Name + self.name
 }
 
 // getBaseSIConversionFactor factor to multiply by in order to convert to SI value including effect of prefix
 func (self *Unit) getBaseSIConversionFactor() float64 {
+  if self == nil {
+    return 0.0
+  }
 	return math.Pow(self.prefix.Value, float64(self.exponent)) * self.multiplier
 }
 
 // String a string representation of the unit name and symbol
 func (self *Unit) String() string {
+	if self == nil {
+		return ""
+	}
 	return fmt.Sprintf("%s[%s]", self.Name(), self.PrefixedSymbol())
 }
 
 // Prefix get the SI prefix of this unit, or " " if none
 func (self *Unit) Prefix() SIPrefix {
+	if self == nil {
+    var emptyPrefix SIPrefix
+		return emptyPrefix
+	}
 	return self.prefix
 }
 
@@ -140,16 +153,25 @@ func (self *Unit) PrefixedSymbol() string {
 
 // RawSymbol symbol without prefex, equivalent to Symbol()
 func (self *Unit) RawSymbol() string {
+	if self == nil {
+		return ""
+	}
 	return self.symbol
 }
 
 // BaseSISymbol Base SI or derived unit for this property, equivalent to BaseSISymbol
 func (self *Unit) BaseSISymbol() string {
+	if self == nil {
+		return ""
+	}
 	return self.siSymbol
 }
 
 // getConversionFactor get the conversion factor between this unit and rhs.
 func (self *Unit) getConversionFactor(rhs *Unit) (float64, error) {
+	if self == nil || rhs == nil {
+		return 0.0, errors.Errorf("cannot convert units: nil units provided")
+	}
 	if !self.compatibleWith(rhs) {
 		return 0.0, errors.Errorf("cannot convert units: base units for %s and %s do not match: %s != %s", self.PrefixedSymbol(), rhs.PrefixedSymbol(), self.siSymbol, rhs.BaseSISymbol())
 	}

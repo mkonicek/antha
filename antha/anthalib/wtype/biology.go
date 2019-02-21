@@ -888,7 +888,11 @@ func Comp(s string) string {
 	}
 
 	for _, c := range s {
-		r += m[string(c)]
+		if rc, ok := m[string(c)]; ok {
+			r += rc
+		} else {
+			r += string(c)
+		}
 	}
 
 	return r

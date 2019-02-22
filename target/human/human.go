@@ -5,6 +5,7 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/laboratory/effects"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/handler"
 	"github.com/antha-lang/antha/workflow"
@@ -16,19 +17,26 @@ var (
 
 // A Human is a device that can do anything
 type Human struct {
+	id          workflow.DeviceInstanceID
 	impl        *handler.GenericHandler
 	canMix      bool
 	canIncubate bool
 }
 
 // New returns a new human device
-func New() *Human {
-	h := &Human{}
+func New(idGen *id.IDGenerator) *Human {
+	h := &Human{
+		id: workflow.DeviceInstanceID(idGen.NextID()),
+	}
 	h.impl = &handler.GenericHandler{
 		GenFunc: h.generate,
 	}
 
 	return h
+}
+
+func (hum *Human) Id() workflow.DeviceInstanceID {
+	return hum.id
 }
 
 func (hum *Human) CanCompile(req effects.Request) bool {

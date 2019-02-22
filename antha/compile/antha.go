@@ -256,6 +256,9 @@ func NewAntha(fileSet *token.FileSet, src *ast.File) (*Antha, error) {
 		Path: "github.com/antha-lang/antha/laboratory",
 	})
 	p.addImportReq(&ImportReq{
+		Path: "github.com/antha-lang/antha/workflow",
+	})
+	p.addImportReq(&ImportReq{
 		Path:    "github.com/antha-lang/antha/antha/anthalib/wtype",
 		useExpr: "wtype.FALSE",
 	})
@@ -510,7 +513,7 @@ func (p *Antha) addUses() {
 func (p *Antha) printFunctions(out io.Writer, lineMap map[int]int) error {
 	var tmpl = `
 type {{.ElementTypeName}} struct {
-	name string
+	name workflow.ElementInstanceName
 
 	Inputs     Inputs
 	Outputs    Outputs
@@ -518,17 +521,17 @@ type {{.ElementTypeName}} struct {
 	Data       Data
 }
 
-func New{{.ElementTypeName}}(labBuild *laboratory.LaboratoryBuilder, name string) *{{.ElementTypeName}} {
+func New{{.ElementTypeName}}(labBuild *laboratory.LaboratoryBuilder, name workflow.ElementInstanceName) *{{.ElementTypeName}} {
 	element := &{{.ElementTypeName}}{name: name}
 	labBuild.InstallElement(element)
 	return element
 }
 
-func (element *{{.ElementTypeName}}) Name() string {
+func (element *{{.ElementTypeName}}) Name() workflow.ElementInstanceName {
 	return element.name
 }
 
-func (element *{{.ElementTypeName}}) TypeName() string {
+func (element *{{.ElementTypeName}}) TypeName() workflow.ElementTypeName {
 	return {{printf "%q" .ElementTypeName}}
 }
 

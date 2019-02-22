@@ -12,7 +12,6 @@ import (
 	"github.com/antha-lang/antha/graph"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/target"
-	"github.com/antha-lang/antha/target/human"
 )
 
 // Intermediate representation.
@@ -166,28 +165,18 @@ func (a *ir) assignDevices(t *target.Target) error {
 	for i, inum := 0, a.Commands.NumNodes(); i < inum; i++ {
 		n := a.Commands.Node(i).(effects.Node)
 		var reqs []effects.Request
-		isBundle := false
 		if c, ok := n.(*effects.Command); ok {
 			reqs = append(reqs, c.Request)
 		} else if b, ok := n.(*effects.Bundle); ok {
 			// Try to find device that can do everything
 			reqs = bundleReqs(b)
-			isBundle = true
 		} else {
 			return fmt.Errorf("unknown node %T", n)
 		}
 		devices := t.CanCompile(reqs...)
 
 		if len(devices) == 0 {
-			if isBundle {
-				// FIXME: this shouldn't happen - we should always have
-				// the human providing only what is needed, which means we
-				// should never be in a case where we have to suddenly
-				// invent and inject a new-born.
-				devices = append(devices, human.New())
-			} else {
-				return fmt.Errorf("no device can handle constraints %v", effects.Meet(reqs...))
-			}
+			return fmt.Errorf("no device can handle constraints %v", effects.Meet(reqs...))
 		}
 		sort.Stable(partitionByHuman(devices))
 		colors[n] = devices

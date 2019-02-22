@@ -67,6 +67,10 @@ func NewBaseMixer(logger *logger.Logger, id workflow.DeviceInstanceID, connectio
 	}
 }
 
+func (bm *BaseMixer) Id() workflow.DeviceInstanceID {
+	return bm.id
+}
+
 func (bm *BaseMixer) connect(wf *workflow.Workflow, data []byte) error {
 	if err := bm.maybeLinkedDriver(wf, data); err != nil {
 		bm.Close()

@@ -22,8 +22,8 @@ import (
 )
 
 type Element interface {
-	Name() string
-	TypeName() string
+	Name() workflow.ElementInstanceName
+	TypeName() workflow.ElementTypeName
 
 	Setup(*Laboratory)
 	Steps(*Laboratory)
@@ -166,7 +166,7 @@ func (labBuild *LaboratoryBuilder) Compile() ([]effects.Node, []effects.Inst, er
 		// We have to do this this late because we need the connections
 		// to the plugins established to eg figure out if the device
 		// supports prompting.
-		human.New().DetermineRole(devices)
+		human.New(labBuild.IDGenerator).DetermineRole(devices)
 
 		devDir := filepath.Join(labBuild.outDir, "devices")
 

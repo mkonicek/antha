@@ -16,6 +16,8 @@ type Device interface {
 	Connect(*workflow.Workflow) error
 	// Must be idempotent and thread safe
 	Close()
+
+	Id() workflow.DeviceInstanceID
 }
 
 // An Inst is a instruction

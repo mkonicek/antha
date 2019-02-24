@@ -134,8 +134,7 @@ func (self *Unit) String() string {
 // Prefix get the SI prefix of this unit, or " " if none
 func (self *Unit) Prefix() SIPrefix {
 	if self == nil {
-    var emptyPrefix SIPrefix
-		return emptyPrefix
+		return SIPrefix{}
 	}
 	return self.prefix
 }
@@ -170,7 +169,7 @@ func (self *Unit) BaseSISymbol() string {
 // getConversionFactor get the conversion factor between this unit and rhs.
 func (self *Unit) getConversionFactor(rhs *Unit) (float64, error) {
 	if self == nil || rhs == nil {
-		return 0.0, errors.Errorf("cannot convert units: nil units provided")
+		return 0.0, errors.New("cannot convert units: nil units provided")
 	}
 	if !self.compatibleWith(rhs) {
 		return 0.0, errors.Errorf("cannot convert units: base units for %s and %s do not match: %s != %s", self.PrefixedSymbol(), rhs.PrefixedSymbol(), self.siSymbol, rhs.BaseSISymbol())

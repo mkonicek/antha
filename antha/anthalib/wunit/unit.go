@@ -117,9 +117,9 @@ func (self *Unit) Name() string {
 
 // getBaseSIConversionFactor factor to multiply by in order to convert to SI value including effect of prefix
 func (self *Unit) getBaseSIConversionFactor() float64 {
-  if self == nil {
-    return 0.0
-  }
+	if self == nil {
+		return 0.0
+	}
 	return math.Pow(self.prefix.Value, float64(self.exponent)) * self.multiplier
 }
 

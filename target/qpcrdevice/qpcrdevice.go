@@ -19,6 +19,15 @@ var (
 	_ effects.Device = &QPCRDevice{}
 )
 
+func NewQPCRInstances(tgt *target.Target, config workflow.QPCRConfig) error {
+	for id := range config.Devices {
+		if err := tgt.AddDevice(New(id)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // QPCRDevice defines the state of a qpcr device device
 type QPCRDevice struct {
 	id workflow.DeviceInstanceID

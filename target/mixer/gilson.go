@@ -29,9 +29,7 @@ type GilsonPipetMaxInstance struct {
 	*BaseMixer
 }
 
-type GilsonPipetMaxInstances []*GilsonPipetMaxInstance
-
-func NewGilsonPipetMaxInstances(logger *logger.Logger, inv *inventory.Inventory, global *GlobalMixerConfig, config workflow.GilsonPipetMaxConfig) (GilsonPipetMaxInstances, error) {
+func NewGilsonPipetMaxInstances(logger *logger.Logger, tgt *target.Target, inv *inventory.Inventory, global *GlobalMixerConfig, config workflow.GilsonPipetMaxConfig) error {
 	defaultsWF := config.Defaults
 	if defaultsWF == nil {
 		defaultsWF = &workflow.GilsonPipetMaxInstanceConfig{}
@@ -50,10 +48,8 @@ func NewGilsonPipetMaxInstances(logger *logger.Logger, inv *inventory.Inventory,
 		GilsonPipetMaxInstanceConfig: defaultsWF,
 	}
 	if err := defaults.Validate(inv); err != nil {
-		return nil, err
+		return err
 	}
-
-	instances := make(GilsonPipetMaxInstances, 0, len(config.Devices))
 
 	for id, instWF := range config.Devices {
 		instance := &GilsonPipetMaxInstance{
@@ -66,13 +62,13 @@ func NewGilsonPipetMaxInstances(logger *logger.Logger, inv *inventory.Inventory,
 			BaseMixer:                    NewBaseMixer(logger, id, instWF.ParsedConnection, target.GilsonPipetmaxSubType),
 		}
 		if err := instance.Validate(inv); err != nil {
-			return nil, err
-		} else {
-			instances = append(instances, instance)
+			return err
+		} else if err := tgt.AddDevice(instance); err != nil {
+			return err
 		}
 	}
 
-	return instances, nil
+	return nil
 }
 
 func (inst *GilsonPipetMaxInstance) Validate(inv *inventory.Inventory) error {

@@ -18,6 +18,15 @@ type WOPlateReader struct {
 	id workflow.DeviceInstanceID
 }
 
+func NewWOPlateReaderInstances(tgt *target.Target, config workflow.PlateReaderConfig) error {
+	for id := range config.Devices {
+		if err := tgt.AddDevice(New(id)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Ensure satisfies Device interface
 var (
 	_ effects.Device = &WOPlateReader{}

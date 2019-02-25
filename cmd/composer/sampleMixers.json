@@ -38,6 +38,11 @@
                     "InputPlateTypes": ["pcrplate_skirted"]
                 }
             }
+        },
+        "QPCR": {
+            "Devices": {
+                "Benny": {}
+            }
         }
     }
 }

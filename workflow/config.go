@@ -14,6 +14,10 @@ type Config struct {
 	Tecan          TecanConfig          `json:"Tecan"`
 	CyBio          CyBioConfig          `json:"CyBio"`
 	Labcyte        LabcyteConfig        `json:"Labcyte"`
+
+	QPCR            QPCRConfig            `json:"QPCR"`
+	ShakerIncubator ShakerIncubatorConfig `json:"ShakerIncubator"`
+	PlateReader     PlateReaderConfig     `json:"PlateReader"`
 }
 
 type GlobalMixerConfig struct {
@@ -193,4 +197,16 @@ func UnmarshalMapsMerged(bs []byte, components ...interface{}) error {
 		}
 	}
 	return nil
+}
+
+type QPCRConfig struct {
+	Devices map[DeviceInstanceID]struct{} `json:"Devices"`
+}
+
+type ShakerIncubatorConfig struct {
+	Devices map[DeviceInstanceID]struct{} `json:"Devices"`
+}
+
+type PlateReaderConfig struct {
+	Devices map[DeviceInstanceID]struct{} `json:"Devices"`
 }

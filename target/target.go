@@ -4,6 +4,7 @@ package target
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/workflow"
@@ -57,12 +58,14 @@ const theTargetKey targetKey = 0
 
 // Target for execution (collection of devices).
 type Target struct {
-	Devices []effects.Device
+	Devices map[workflow.DeviceInstanceID]effects.Device
 }
 
 // New creates a new target
 func New() *Target {
-	return &Target{}
+	return &Target{
+		Devices: make(map[workflow.DeviceInstanceID]effects.Device),
+	}
 }
 
 func (a *Target) canCompile(d effects.Device, reqs ...effects.Request) bool {
@@ -85,8 +88,13 @@ func (a *Target) CanCompile(reqs ...effects.Request) (r []effects.Device) {
 }
 
 // AddDevice adds a device to the target configuration
-func (a *Target) AddDevice(d effects.Device) {
-	a.Devices = append(a.Devices, d)
+func (a *Target) AddDevice(d effects.Device) error {
+	id := d.Id()
+	if _, found := a.Devices[id]; found {
+		return fmt.Errorf("Device with id %v already added", id)
+	}
+	a.Devices[id] = d
+	return nil
 }
 
 func (a *Target) Close() {

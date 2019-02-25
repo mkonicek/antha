@@ -17,6 +17,15 @@ var (
 	_ effects.Device = &ShakerIncubator{}
 )
 
+func NewShakerIncubatorsInstances(tgt *target.Target, config workflow.ShakerIncubatorConfig) error {
+	for id := range config.Devices {
+		if err := tgt.AddDevice(New(id)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // A ShakerIncubator is a device that can shake and incubate things
 type ShakerIncubator struct {
 	id workflow.DeviceInstanceID

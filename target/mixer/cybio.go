@@ -30,9 +30,7 @@ type CyBioInstance struct {
 	*BaseMixer
 }
 
-type CyBioInstances []*CyBioInstance
-
-func NewCyBioInstances(logger *logger.Logger, inv *inventory.Inventory, global *GlobalMixerConfig, config workflow.CyBioConfig) (CyBioInstances, error) {
+func NewCyBioInstances(logger *logger.Logger, tgt *target.Target, inv *inventory.Inventory, global *GlobalMixerConfig, config workflow.CyBioConfig) error {
 	defaultsWF := config.Defaults
 	if defaultsWF == nil {
 		defaultsWF = &workflow.CyBioInstanceConfig{}
@@ -51,10 +49,8 @@ func NewCyBioInstances(logger *logger.Logger, inv *inventory.Inventory, global *
 		CyBioInstanceConfig:  defaultsWF,
 	}
 	if err := defaults.Validate(inv); err != nil {
-		return nil, err
+		return err
 	}
-
-	instances := make(CyBioInstances, 0, len(config.Devices))
 
 	for id, instWF := range config.Devices {
 		instance := &CyBioInstance{
@@ -67,13 +63,13 @@ func NewCyBioInstances(logger *logger.Logger, inv *inventory.Inventory, global *
 			BaseMixer:            NewBaseMixer(logger, id, instWF.ParsedConnection, target.CyBioSubType),
 		}
 		if err := instance.Validate(inv); err != nil {
-			return nil, err
-		} else {
-			instances = append(instances, instance)
+			return err
+		} else if err := tgt.AddDevice(instance); err != nil {
+			return err
 		}
 	}
 
-	return instances, nil
+	return nil
 }
 
 func (inst *CyBioInstance) Validate(inv *inventory.Inventory) error {

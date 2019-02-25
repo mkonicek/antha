@@ -30,9 +30,7 @@ type LabcyteInstance struct {
 	*BaseMixer
 }
 
-type LabcyteInstances []*LabcyteInstance
-
-func NewLabcyteInstances(logger *logger.Logger, inv *inventory.Inventory, global *GlobalMixerConfig, config workflow.LabcyteConfig) (LabcyteInstances, error) {
+func NewLabcyteInstances(logger *logger.Logger, tgt *target.Target, inv *inventory.Inventory, global *GlobalMixerConfig, config workflow.LabcyteConfig) error {
 	defaultsWF := config.Defaults
 	if defaultsWF == nil {
 		defaultsWF = &workflow.LabcyteInstanceConfig{}
@@ -51,10 +49,8 @@ func NewLabcyteInstances(logger *logger.Logger, inv *inventory.Inventory, global
 		LabcyteInstanceConfig: defaultsWF,
 	}
 	if err := defaults.Validate(inv); err != nil {
-		return nil, err
+		return err
 	}
-
-	instances := make(LabcyteInstances, 0, len(config.Devices))
 
 	for id, instWF := range config.Devices {
 		instance := &LabcyteInstance{
@@ -67,13 +63,13 @@ func NewLabcyteInstances(logger *logger.Logger, inv *inventory.Inventory, global
 			BaseMixer:             NewBaseMixer(logger, id, instWF.ParsedConnection, target.LabcyteSubType),
 		}
 		if err := instance.Validate(inv); err != nil {
-			return nil, err
-		} else {
-			instances = append(instances, instance)
+			return err
+		} else if err := tgt.AddDevice(instance); err != nil {
+			return err
 		}
 	}
 
-	return instances, nil
+	return nil
 }
 
 func (inst *LabcyteInstance) Validate(inv *inventory.Inventory) error {

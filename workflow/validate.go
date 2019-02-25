@@ -171,6 +171,9 @@ func (cfg Config) validate() error {
 		cfg.CyBio.validate(),
 		cfg.Labcyte.validate(),
 		cfg.assertOnlyOneMixer(),
+		cfg.QPCR.validate(),
+		cfg.ShakerIncubator.validate(),
+		cfg.PlateReader.validate(),
 	}.Pack()
 }
 
@@ -356,6 +359,18 @@ func (a Addresses) validate(layoutOptionName string) error {
 	if len(a.Map()) != len(a) {
 		return fmt.Errorf("Layout option field %s has duplicate addresses: %v", layoutOptionName, a)
 	}
+	return nil
+}
+
+func (qpcr QPCRConfig) validate() error {
+	return nil
+}
+
+func (si ShakerIncubatorConfig) validate() error {
+	return nil
+}
+
+func (pr PlateReaderConfig) validate() error {
 	return nil
 }
 

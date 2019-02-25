@@ -17,6 +17,9 @@ import (
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/human"
 	"github.com/antha-lang/antha/target/mixer"
+	"github.com/antha-lang/antha/target/qpcrdevice"
+	"github.com/antha-lang/antha/target/shakerincubator"
+	"github.com/antha-lang/antha/target/woplatereader"
 	"github.com/antha-lang/antha/utils"
 	"github.com/antha-lang/antha/workflow"
 )
@@ -184,35 +187,27 @@ func (labBuild *LaboratoryBuilder) Compile() {
 }
 
 func (labBuild *LaboratoryBuilder) connectDevices() (*target.Target, error) {
+	tgt := target.New()
 	if global, err := mixer.NewGlobalMixerConfig(labBuild.Inventory, &labBuild.workflow.Config.GlobalMixer); err != nil {
 		return nil, err
-	} else if gilsons, err := mixer.NewGilsonPipetMaxInstances(labBuild.Logger, labBuild.Inventory, global, labBuild.workflow.Config.GilsonPipetMax); err != nil {
-		return nil, err
-	} else if tecans, err := mixer.NewTecanInstances(labBuild.Logger, labBuild.Inventory, global, labBuild.workflow.Config.Tecan); err != nil {
-		return nil, err
-	} else if cybios, err := mixer.NewCyBioInstances(labBuild.Logger, labBuild.Inventory, global, labBuild.workflow.Config.CyBio); err != nil {
-		return nil, err
-	} else if labcytes, err := mixer.NewLabcyteInstances(labBuild.Logger, labBuild.Inventory, global, labBuild.workflow.Config.Labcyte); err != nil {
-		return nil, err
 	} else {
-		tgt := target.New()
-		for _, gilson := range gilsons {
-			tgt.AddDevice(gilson)
-		}
-		for _, tecan := range tecans {
-			tgt.AddDevice(tecan)
-		}
-		for _, cybio := range cybios {
-			tgt.AddDevice(cybio)
-		}
-		for _, labcyte := range labcytes {
-			tgt.AddDevice(labcyte)
-		}
-		if err := tgt.Connect(labBuild.workflow); err != nil {
+		err := utils.ErrorSlice{
+			mixer.NewGilsonPipetMaxInstances(labBuild.Logger, tgt, labBuild.Inventory, global, labBuild.workflow.Config.GilsonPipetMax),
+			mixer.NewTecanInstances(labBuild.Logger, tgt, labBuild.Inventory, global, labBuild.workflow.Config.Tecan),
+			mixer.NewCyBioInstances(labBuild.Logger, tgt, labBuild.Inventory, global, labBuild.workflow.Config.CyBio),
+			mixer.NewLabcyteInstances(labBuild.Logger, tgt, labBuild.Inventory, global, labBuild.workflow.Config.Labcyte),
+			qpcrdevice.NewQPCRInstances(tgt, labBuild.workflow.Config.QPCR),
+			shakerincubator.NewShakerIncubatorsInstances(tgt, labBuild.workflow.Config.ShakerIncubator),
+			woplatereader.NewWOPlateReaderInstances(tgt, labBuild.workflow.Config.PlateReader),
+		}.Pack()
+		if err != nil {
+			return nil, err
+		} else if err := tgt.Connect(labBuild.workflow); err != nil {
 			tgt.Close()
 			return nil, err
+		} else {
+			return tgt, nil
 		}
-		return tgt, nil
 	}
 }
 

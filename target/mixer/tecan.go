@@ -30,9 +30,7 @@ type TecanInstance struct {
 	*BaseMixer
 }
 
-type TecanInstances []*TecanInstance
-
-func NewTecanInstances(logger *logger.Logger, inv *inventory.Inventory, global *GlobalMixerConfig, config workflow.TecanConfig) (TecanInstances, error) {
+func NewTecanInstances(logger *logger.Logger, tgt *target.Target, inv *inventory.Inventory, global *GlobalMixerConfig, config workflow.TecanConfig) error {
 	defaultsWF := config.Defaults
 	if defaultsWF == nil {
 		defaultsWF = &workflow.TecanInstanceConfig{}
@@ -51,10 +49,8 @@ func NewTecanInstances(logger *logger.Logger, inv *inventory.Inventory, global *
 		TecanInstanceConfig:  defaultsWF,
 	}
 	if err := defaults.Validate(inv); err != nil {
-		return nil, err
+		return err
 	}
-
-	instances := make(TecanInstances, 0, len(config.Devices))
 
 	for id, instWF := range config.Devices {
 		instance := &TecanInstance{
@@ -67,13 +63,13 @@ func NewTecanInstances(logger *logger.Logger, inv *inventory.Inventory, global *
 			BaseMixer:            NewBaseMixer(logger, id, instWF.ParsedConnection, target.TecanSubType),
 		}
 		if err := instance.Validate(inv); err != nil {
-			return nil, err
-		} else {
-			instances = append(instances, instance)
+			return err
+		} else if err := tgt.AddDevice(instance); err != nil {
+			return err
 		}
 	}
 
-	return instances, nil
+	return nil
 }
 
 func (inst *TecanInstance) Validate(inv *inventory.Inventory) error {

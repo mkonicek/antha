@@ -157,6 +157,9 @@ func (a *Config) merge(b Config) error {
 		a.Tecan.Merge(b.Tecan),
 		a.CyBio.Merge(b.CyBio),
 		a.Labcyte.Merge(b.Labcyte),
+		a.QPCR.Merge(b.QPCR),
+		a.ShakerIncubator.Merge(b.ShakerIncubator),
+		a.PlateReader.Merge(b.PlateReader),
 	}.Pack()
 }
 
@@ -275,6 +278,48 @@ func (a *GlobalMixerConfig) Merge(b GlobalMixerConfig) error {
 		a.CustomPolicyRuleSet = b.CustomPolicyRuleSet
 	case b.CustomPolicyRuleSet != nil:
 		a.CustomPolicyRuleSet.MergeWith(b.CustomPolicyRuleSet)
+	}
+	return nil
+}
+
+func (a *QPCRConfig) Merge(b QPCRConfig) error {
+	if a.Devices == nil {
+		a.Devices = b.Devices
+	} else {
+		for id, cfg := range b.Devices {
+			if _, found := a.Devices[id]; found {
+				return fmt.Errorf("Cannot merge: QPCR device '%v' redefined", id)
+			}
+			a.Devices[id] = cfg
+		}
+	}
+	return nil
+}
+
+func (a *ShakerIncubatorConfig) Merge(b ShakerIncubatorConfig) error {
+	if a.Devices == nil {
+		a.Devices = b.Devices
+	} else {
+		for id, cfg := range b.Devices {
+			if _, found := a.Devices[id]; found {
+				return fmt.Errorf("Cannot merge: ShakerIncubator device '%v' redefined", id)
+			}
+			a.Devices[id] = cfg
+		}
+	}
+	return nil
+}
+
+func (a *PlateReaderConfig) Merge(b PlateReaderConfig) error {
+	if a.Devices == nil {
+		a.Devices = b.Devices
+	} else {
+		for id, cfg := range b.Devices {
+			if _, found := a.Devices[id]; found {
+				return fmt.Errorf("Cannot merge: PlateReader device '%v' redefined", id)
+			}
+			a.Devices[id] = cfg
+		}
 	}
 	return nil
 }

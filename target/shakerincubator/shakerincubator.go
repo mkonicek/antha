@@ -10,23 +10,35 @@ import (
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/handler"
+	"github.com/antha-lang/antha/workflow"
+)
+
+var (
+	_ effects.Device = &ShakerIncubator{}
 )
 
 // A ShakerIncubator is a device that can shake and incubate things
 type ShakerIncubator struct {
+	id workflow.DeviceInstanceID
 	handler.GenericHandler
 }
 
 // New returns a new shaker incubator
-func New() *ShakerIncubator {
-	ret := &ShakerIncubator{}
-	ret.GenericHandler = handler.GenericHandler{
+func New(id workflow.DeviceInstanceID) *ShakerIncubator {
+	si := &ShakerIncubator{
+		id: id,
+	}
+	si.GenericHandler = handler.GenericHandler{
 		Labels: []effects.NameValue{
 			target.DriverSelectorV1ShakerIncubator,
 		},
-		GenFunc: ret.generate,
+		GenFunc: si.generate,
 	}
-	return ret
+	return si
+}
+
+func (a *ShakerIncubator) Id() workflow.DeviceInstanceID {
+	return a.id
 }
 
 func (a *ShakerIncubator) carrierOpen() driver.Call {

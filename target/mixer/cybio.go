@@ -14,6 +14,10 @@ import (
 	"github.com/antha-lang/antha/workflow"
 )
 
+var (
+	_ effects.Device = &CyBioInstance{}
+)
+
 type CyBioInstance struct {
 	ID                   workflow.DeviceInstanceID
 	MaxPlates            float64

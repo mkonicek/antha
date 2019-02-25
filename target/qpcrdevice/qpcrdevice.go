@@ -14,16 +14,25 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
+// Ensure satisfies Device interface
+var (
+	_ effects.Device = &QPCRDevice{}
+)
+
 // QPCRDevice defines the state of a qpcr device device
 type QPCRDevice struct {
+	id workflow.DeviceInstanceID
 }
 
-// Ensure satisfies Device interface
-var _ effects.Device = (*QPCRDevice)(nil)
-
 // NewQPCRDevice returns a new QPCR Machine
-func New() *QPCRDevice {
-	return &QPCRDevice{}
+func New(id workflow.DeviceInstanceID) *QPCRDevice {
+	return &QPCRDevice{
+		id: id,
+	}
+}
+
+func (a *QPCRDevice) Id() workflow.DeviceInstanceID {
+	return a.id
 }
 
 // CanCompile implements a Device
@@ -110,7 +119,7 @@ func (dev *QPCRDevice) makePrompt(inst *effects.QPCRInstruction) effects.Inst {
 }
 
 // Compile implements a qPCR device.
-func (dev *QPCRDevice) Compile(labEffects *effects.LaboratoryEffects, nodes []effects.Node) ([]effects.Inst, error) {
+func (dev *QPCRDevice) Compile(labEffects *effects.LaboratoryEffects, dir string, nodes []effects.Node) ([]effects.Inst, error) {
 	if len(nodes) > 1 {
 		return nil, fmt.Errorf("Currently only permit a single qPCR instruction per workflow. Received %d", len(nodes))
 	}

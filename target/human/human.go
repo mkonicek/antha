@@ -17,7 +17,8 @@ var (
 
 // A Human is a device that can do anything
 type Human struct {
-	id          workflow.DeviceInstanceID
+	id workflow.DeviceInstanceID
+
 	impl        *handler.GenericHandler
 	canMix      bool
 	canIncubate bool
@@ -26,7 +27,7 @@ type Human struct {
 // New returns a new human device
 func New(idGen *id.IDGenerator) *Human {
 	h := &Human{
-		id: workflow.DeviceInstanceID(idGen.NextID()),
+		id: workflow.DeviceInstanceID(idGen.NextID()) + "_human",
 	}
 	h.impl = &handler.GenericHandler{
 		GenFunc: h.generate,

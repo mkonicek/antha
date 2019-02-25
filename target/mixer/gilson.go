@@ -13,6 +13,10 @@ import (
 	"github.com/antha-lang/antha/workflow"
 )
 
+var (
+	_ effects.Device = &GilsonPipetMaxInstance{}
+)
+
 type GilsonPipetMaxInstance struct {
 	ID                   workflow.DeviceInstanceID
 	MaxPlates            float64

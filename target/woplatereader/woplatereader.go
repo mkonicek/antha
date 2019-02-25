@@ -14,14 +14,24 @@ import (
 )
 
 // WOPlateReader defines the state of a write only plate-reader device
-type WOPlateReader struct{}
+type WOPlateReader struct {
+	id workflow.DeviceInstanceID
+}
 
 // Ensure satisfies Device interface
-var _ effects.Device = (*WOPlateReader)(nil)
+var (
+	_ effects.Device = &WOPlateReader{}
+)
 
 // returns a new Write-Only Plate Reader Used by antha-runner
-func New() *WOPlateReader {
-	return &WOPlateReader{}
+func New(id workflow.DeviceInstanceID) *WOPlateReader {
+	return &WOPlateReader{
+		id: id,
+	}
+}
+
+func (a *WOPlateReader) Id() workflow.DeviceInstanceID {
+	return a.id
 }
 
 // CanCompile implements a Device
@@ -35,7 +45,7 @@ func (a *WOPlateReader) CanCompile(req effects.Request) bool {
 }
 
 // Compile implements a Device
-func (a *WOPlateReader) Compile(labEffects *effects.LaboratoryEffects, nodes []effects.Node) ([]effects.Inst, error) {
+func (a *WOPlateReader) Compile(labEffects *effects.LaboratoryEffects, dir string, nodes []effects.Node) ([]effects.Inst, error) {
 	// Find the LHComponentID for the samples to measure. We'll then search
 	// for these later.
 	prInsts := make([]*wtype.PRInstruction, 0, len(nodes))

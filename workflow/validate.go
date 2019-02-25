@@ -164,26 +164,34 @@ func (inv Inventory) validate() error {
 func (cfg Config) validate() error {
 	// NB the validation here is purely static - i.e. we're not
 	// attempting to connect to any device plugins at this stage.
+	seen := make(DeviceInstanceIDSet)
 	return utils.ErrorSlice{
 		cfg.GlobalMixer.validate(),
-		cfg.GilsonPipetMax.validate(),
-		cfg.Tecan.validate(),
-		cfg.CyBio.validate(),
-		cfg.Labcyte.validate(),
+		cfg.GilsonPipetMax.validate(seen),
+		cfg.Tecan.validate(seen),
+		cfg.CyBio.validate(seen),
+		cfg.Labcyte.validate(seen),
+		cfg.QPCR.validate(seen),
+		cfg.ShakerIncubator.validate(seen),
+		cfg.PlateReader.validate(seen),
 		cfg.assertOnlyOneMixer(),
-		cfg.QPCR.validate(),
-		cfg.ShakerIncubator.validate(),
-		cfg.PlateReader.validate(),
 	}.Pack()
 }
 
 func (cfg Config) assertOnlyOneMixer() error {
-	// remove / revise when we get better. NB: because of this test, we
-	// don't need to check that all devices have unique IDs. Once we
-	// relax this, we may need to do that.
 	if count := len(cfg.GilsonPipetMax.Devices) + len(cfg.Tecan.Devices) + len(cfg.CyBio.Devices) + len(cfg.Labcyte.Devices); count > 1 {
 		return fmt.Errorf("Currently a maximum of one mixer can be used per workflow. You have %d configured.", count)
 	}
+	return nil
+}
+
+type DeviceInstanceIDSet map[DeviceInstanceID]struct{}
+
+func (dis DeviceInstanceIDSet) Add(id DeviceInstanceID) error {
+	if _, found := dis[id]; found {
+		return fmt.Errorf("Device IDs must be unique: multiple devices found with id %v", id)
+	}
+	dis[id] = struct{}{}
 	return nil
 }
 
@@ -204,12 +212,14 @@ func (global GlobalMixerConfig) validate() error {
 }
 
 // Gilson
-func (gilsons GilsonPipetMaxConfig) validate() error {
+func (gilsons GilsonPipetMaxConfig) validate(seen DeviceInstanceIDSet) error {
 	if err := gilsons.Defaults.validate("Defaults", true); err != nil {
 		return err
 	}
 	for id, inst := range gilsons.Devices {
-		if err := inst.validate(id, false); err != nil {
+		if err := seen.Add(id); err != nil {
+			return err
+		} else if err := inst.validate(id, false); err != nil {
 			return err
 		}
 	}
@@ -235,12 +245,14 @@ func (inst *GilsonPipetMaxInstanceConfig) validate(id DeviceInstanceID, isDefaul
 }
 
 // Tecan
-func (tecans TecanConfig) validate() error {
+func (tecans TecanConfig) validate(seen DeviceInstanceIDSet) error {
 	if err := tecans.Defaults.validate("Defaults", true); err != nil {
 		return err
 	}
 	for id, inst := range tecans.Devices {
-		if err := inst.validate(id, false); err != nil {
+		if err := seen.Add(id); err != nil {
+			return err
+		} else if err := inst.validate(id, false); err != nil {
 			return err
 		}
 	}
@@ -266,12 +278,14 @@ func (inst *TecanInstanceConfig) validate(id DeviceInstanceID, isDefaults bool) 
 }
 
 // CyBio
-func (cybios CyBioConfig) validate() error {
+func (cybios CyBioConfig) validate(seen DeviceInstanceIDSet) error {
 	if err := cybios.Defaults.validate("Defaults", true); err != nil {
 		return err
 	}
 	for id, inst := range cybios.Devices {
-		if err := inst.validate(id, false); err != nil {
+		if err := seen.Add(id); err != nil {
+			return err
+		} else if err := inst.validate(id, false); err != nil {
 			return err
 		}
 	}
@@ -297,12 +311,14 @@ func (inst *CyBioInstanceConfig) validate(id DeviceInstanceID, isDefaults bool) 
 }
 
 // Labcyte
-func (labcytes LabcyteConfig) validate() error {
+func (labcytes LabcyteConfig) validate(seen DeviceInstanceIDSet) error {
 	if err := labcytes.Defaults.validate("Defaults", true); err != nil {
 		return err
 	}
 	for id, inst := range labcytes.Devices {
-		if err := inst.validate(id, false); err != nil {
+		if err := seen.Add(id); err != nil {
+			return err
+		} else if err := inst.validate(id, false); err != nil {
 			return err
 		}
 	}
@@ -362,15 +378,30 @@ func (a Addresses) validate(layoutOptionName string) error {
 	return nil
 }
 
-func (qpcr QPCRConfig) validate() error {
+func (qpcr QPCRConfig) validate(seen DeviceInstanceIDSet) error {
+	for id := range qpcr.Devices {
+		if err := seen.Add(id); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
-func (si ShakerIncubatorConfig) validate() error {
+func (si ShakerIncubatorConfig) validate(seen DeviceInstanceIDSet) error {
+	for id := range si.Devices {
+		if err := seen.Add(id); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
-func (pr PlateReaderConfig) validate() error {
+func (pr PlateReaderConfig) validate(seen DeviceInstanceIDSet) error {
+	for id := range pr.Devices {
+		if err := seen.Add(id); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

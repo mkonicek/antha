@@ -50,6 +50,8 @@ type LaboratoryBuilder struct {
 	FileManager *FileManager
 
 	*effects.LaboratoryEffects
+
+	instrs []effects.Inst
 }
 
 func NewLaboratoryBuilder(fh io.Reader) *LaboratoryBuilder {
@@ -155,10 +157,9 @@ func (labBuild *LaboratoryBuilder) RunElements() error {
 	}
 }
 
-func (labBuild *LaboratoryBuilder) Compile() ([]effects.Node, []effects.Inst, error) {
+func (labBuild *LaboratoryBuilder) Compile() {
 	if devices, err := labBuild.connectDevices(); err != nil {
 		labBuild.Fatal(err)
-		return nil, nil, err
 
 	} else {
 		defer devices.Close()
@@ -171,11 +172,13 @@ func (labBuild *LaboratoryBuilder) Compile() ([]effects.Node, []effects.Inst, er
 		devDir := filepath.Join(labBuild.outDir, "devices")
 
 		if nodes, err := labBuild.Maker.MakeNodes(labBuild.Trace.Instructions()); err != nil {
-			return nil, nil, err
+			labBuild.Fatal(err)
+
 		} else if instrs, err := codegen.Compile(labBuild.LaboratoryEffects, devDir, devices, nodes); err != nil {
-			return nil, nil, err
+			labBuild.Fatal(err)
+
 		} else {
-			return nodes, instrs, nil
+			labBuild.instrs = instrs
 		}
 	}
 }
@@ -213,8 +216,11 @@ func (labBuild *LaboratoryBuilder) connectDevices() (*target.Target, error) {
 	}
 }
 
-func (labBuild *LaboratoryBuilder) Summarize() {
+func (labBuild *LaboratoryBuilder) Export() {
 	labBuild.FileManager.SummarizeWritten(labBuild.Logger)
+	if err := export(labBuild.IDGenerator, labBuild.outDir, labBuild.instrs); err != nil {
+		labBuild.Fatal(err)
+	}
 }
 
 func (labBuild *LaboratoryBuilder) elementCompleted() {

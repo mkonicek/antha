@@ -128,9 +128,7 @@ func main() {
 	if errSave != nil {
 		labBuild.Fatal(errSave)
 	}
-	if _, _, errCompile := labBuild.Compile(); errCompile != nil {
-		labBuild.Fatal(errCompile)
-	}
-	labBuild.Summarize()
+	labBuild.Compile()
+	labBuild.Export()
 }
 `

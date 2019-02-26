@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences"
-	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/biogo/biogo/align"
@@ -158,6 +157,11 @@ func (r Result) Positions() (result sequences.SearchResult) {
 	return sequences.FindAll(templateSeq, &querySeq)
 }
 
+// Score returns the alignment score
+func (r Result) Score() int {
+	return r.Alignment.Score
+}
+
 // Alignment stores the string result of an alignment of a query sequence against a template
 // The original RawAlignments are also included
 type Alignment struct {
@@ -166,6 +170,7 @@ type Alignment struct {
 	Raw               []RawAlignment
 	TemplatePositions []int
 	QueryPositions    []int
+	Score             int
 }
 
 // RawAlignment contains the positions aligned between the template and query sequences
@@ -330,36 +335,58 @@ var Algorithms map[string]ScoringMatrix = map[string]ScoringMatrix{
 // SWAffine: the affine gap penalty Smith-Waterman
 // Alignment of the reverse complement of the query sequence will also be attempted and if the number of matches is higher the reverse alignment is returned.
 // In the resulting alignment, mismatches are represented by lower case letters, gaps represented by the GAP character "-".
-func DNA(seq1, seq2 wtype.DNASequence, alignmentMatrix ScoringMatrix) (alignment Result, err error) {
+func DNA(template, query wtype.DNASequence, alignmentMatrix ScoringMatrix) (alignment Result, err error) {
 
-	fwdResult, err := dnaFWDAlignment(seq1, seq2, alignmentMatrix)
+	fwdResult, err := DNAFwd(template, query, alignmentMatrix)
 
 	if err != nil {
 		return
 	}
 
-	revQuery := seq2
-
-	revQuery.Seq = wtype.RevComp(seq2.Seq)
-
-	revResult, err := dnaFWDAlignment(seq1, revQuery, alignmentMatrix)
+	revResult, err := DNARev(template, query, alignmentMatrix)
 
 	if err != nil {
-		return fwdResult, fmt.Errorf(fmt.Sprintf("Error with aligning reverse complement of query sequence %s: %s", seq2.Nm, err.Error()))
+		return fwdResult, fmt.Errorf(fmt.Sprintf("Error with aligning reverse complement of query sequence %s: %s", query.Nm, err.Error()))
 	}
 
-	if len(seq2.Seq) > len(seq1.Seq) {
+	if len(query.Seq) > len(template.Seq) {
 		if err == nil {
 			err = fmt.Errorf("query sequence is larger than template, this may result in an unusual alignment")
 		}
 	}
 
 	if revResult.Matches() > fwdResult.Matches() {
-		revResult = correctForRevComp(revResult)
 		return revResult, err
 	}
 
 	return fwdResult, err
+}
+
+// DNAFwd returns an alignment of a query sequence to a template sequence in the forward frame of the template, using a specified scoring algorithm
+func DNAFwd(template, query wtype.DNASequence, alignmentMatrix ScoringMatrix) (Result, error) {
+	return dnaFWDAlignment(template, query, alignmentMatrix)
+}
+
+// DNARev returns the alignment of a query sequence to a template sequence in the reverse frame of the template, using a specified scoring algorithm
+func DNARev(template, query wtype.DNASequence, alignmentMatrix ScoringMatrix) (alignment Result, err error) {
+
+	revQuery := query
+
+	revQuery.Seq = wtype.RevComp(query.Seq)
+
+	alignment, err = dnaFWDAlignment(template, revQuery, alignmentMatrix)
+
+	if err != nil {
+		return
+	}
+
+	alignment = correctForRevComp(alignment)
+
+	return
+}
+
+type scorer interface {
+	Score() int
 }
 
 func dnaFWDAlignment(template, query wtype.DNASequence, alignmentMatrix ScoringMatrix) (alignment Result, err error) {
@@ -386,6 +413,7 @@ func dnaFWDAlignment(template, query wtype.DNASequence, alignmentMatrix ScoringM
 	aln, err := alignmentMatrix.Align(fsa, fsb)
 	if err == nil {
 		var rawAlignments []RawAlignment
+		sumScores := 0
 		for i := range aln {
 
 			rawAlignemnt := RawAlignment{
@@ -401,6 +429,7 @@ func dnaFWDAlignment(template, query wtype.DNASequence, alignmentMatrix ScoringM
 				},
 			}
 			rawAlignments = append(rawAlignments, rawAlignemnt)
+			sumScores += aln[i].(scorer).Score()
 
 		}
 		fa, positions := format(fsa, fsb, aln, '-')
@@ -414,6 +443,7 @@ func dnaFWDAlignment(template, query wtype.DNASequence, alignmentMatrix ScoringM
 				Raw:               rawAlignments,
 				TemplatePositions: positions[0],
 				QueryPositions:    positions[1],
+				Score:             sumScores,
 			}),
 		}
 	} else {
@@ -441,6 +471,7 @@ func dnaFWDAlignment(template, query wtype.DNASequence, alignmentMatrix ScoringM
 		aln, err := alignmentMatrix.Align(fsa, fsb)
 		if err == nil {
 			var rawAlignments []RawAlignment
+			sumScores := 0
 			for i := range aln {
 
 				rawAlignemnt := RawAlignment{
@@ -456,6 +487,7 @@ func dnaFWDAlignment(template, query wtype.DNASequence, alignmentMatrix ScoringM
 					},
 				}
 				rawAlignments = append(rawAlignments, rawAlignemnt)
+				sumScores += aln[i].(scorer).Score()
 
 			}
 			fa, positions := format(fsa, fsb, aln, '-')
@@ -483,6 +515,7 @@ func dnaFWDAlignment(template, query wtype.DNASequence, alignmentMatrix ScoringM
 					Raw:               rawAlignments,
 					TemplatePositions: positions[0],
 					QueryPositions:    positions[1],
+					Score:             sumScores,
 				}),
 			}
 			if rotatedAlignment.Matches() > alignment.Matches() {
@@ -518,12 +551,12 @@ func format(templateSeq, querySeq seq.Slicer, alignedPairs []feat.Pair, gap alph
 				case alphabet.Letters:
 					alignedSeqs[i] = alignedSeqs[i].Append(alphabet.Letters(gap.Repeat(features[1-i].Len())))
 					for counter := features[1-i].Start(); counter < features[1-i].End(); counter++ {
-						newPositions[i] = append(newPositions[i], features[1-i].Start()+1)
+						newPositions[i] = append(newPositions[i], features[i].Start()+1)
 					}
 				case alphabet.QLetters:
 					alignedSeqs[i] = alignedSeqs[i].Append(alphabet.QLetters(alphabet.QLetter{L: gap}.Repeat(features[1-i].Len())))
 					for counter := features[1-i].Start(); counter < features[1-i].End(); counter++ {
-						newPositions[i] = append(newPositions[i], features[1-i].Start()+1)
+						newPositions[i] = append(newPositions[i], features[i].Start()+1)
 					}
 				}
 			} else {
@@ -544,40 +577,6 @@ func containsN(seq wtype.DNASequence) bool {
 		}
 	}
 	return false
-}
-
-// the biogo implementation of alignment requires the N nucleotides to be replaced with -
-func replaceN(seq wtype.DNASequence) wtype.DNASequence {
-
-	var newSeq []string
-
-	for _, letter := range seq.Seq {
-		if strings.ToUpper(string(letter)) == "N" {
-			letter = rune('-')
-		}
-		newSeq = append(newSeq, string(letter))
-	}
-
-	seq.Seq = strings.Join(newSeq, "")
-
-	return seq
-}
-
-// convert all instances of - back to N
-func replaceDash(seq wtype.DNASequence) wtype.DNASequence {
-
-	var newSeq []string
-
-	for _, letter := range seq.Seq {
-		if strings.ToUpper(string(letter)) == "-" {
-			letter = rune('N')
-		}
-		newSeq = append(newSeq, string(letter))
-	}
-
-	seq.Seq = strings.Join(newSeq, "")
-
-	return seq
 }
 
 // changes mismatched nucleotides to lower case
@@ -633,34 +632,11 @@ func correctForRevComp(alignment Result) (formattedAlignment Result) {
 	return
 }
 
-func colourFormat(alignment string) (formatted string) {
-	var newstring []string
-	for _, letter := range alignment {
-		if strings.ToUpper(string(letter)) == "A" {
-			newstring = append(newstring, text.Red(string(letter)))
-		}
-		if strings.ToUpper(string(letter)) == "T" {
-			newstring = append(newstring, text.Yellow(string(letter)))
-		}
-		if strings.ToUpper(string(letter)) == "C" {
-			newstring = append(newstring, text.Blue(string(letter)))
-		}
-		if strings.ToUpper(string(letter)) == "G" {
-			newstring = append(newstring, text.Magenta(string(letter)))
-		}
-	}
-
-	return strings.Join(newstring, "")
-}
-
 // standard character representing an alignment gap
 const GAP rune = rune('-')
 
 func isGap(character rune) bool {
-	if character == GAP {
-		return true
-	}
-	return false
+	return character == GAP
 }
 
 func isMismatch(character1, character2 rune) bool {
@@ -669,8 +645,5 @@ func isMismatch(character1, character2 rune) bool {
 		return false
 	}
 
-	if strings.ToUpper(string(character1)) != strings.ToUpper(string(character2)) {
-		return true
-	}
-	return false
+	return strings.ToUpper(string(character1)) != strings.ToUpper(string(character2))
 }

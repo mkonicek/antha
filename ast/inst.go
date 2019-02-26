@@ -1,10 +1,45 @@
 package ast
 
 import (
+	"context"
+
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/driver"
-	"github.com/antha-lang/antha/inject"
 )
+
+// An Inst is a instruction
+type Inst interface {
+	// Device that this instruction was generated for
+	Device() Device
+	// DependsOn returns instructions that this instruction depends on
+	DependsOn() []Inst
+	// SetDependsOn sets to the list of dependencies to only the args
+	SetDependsOn(...Inst)
+	// AppendDependsOn adds to the args to the existing list of dependencies
+	AppendDependsOn(...Inst)
+}
+
+// A Device is a scheduling plugin
+type Device interface {
+	CanCompile(Request) bool // Can this device compile this request
+
+	// Compile produces a single-entry, single-exit DAG of instructions where
+	// insts[0] is the entry point and insts[len(insts)-1] is the exit point
+	Compile(ctx context.Context, cmds []Node) (insts []Inst, err error)
+}
+
+type Insts []Inst
+
+// SequentialOrder takes a slice of instructions and modifies them
+// in-place, resetting to sequential dependencies.
+func (insts Insts) SequentialOrder() {
+	if len(insts) > 1 {
+		prev := insts[0]
+		for _, cur := range insts[1:] {
+			cur.SetDependsOn(prev)
+			prev = cur
+		}
+	}
+}
 
 // An IncubateInst is a high-level command to incubate a component
 type IncubateInst struct {
@@ -27,36 +62,7 @@ type IncubateInst struct {
 	PreShakeRadius wunit.Length
 }
 
-// An HandleInst is a high-level generic command to apply some device
-// specific action to a component
-type HandleInst struct {
-	Group    string
-	Selector map[string]string
-	Calls    []driver.Call
-}
-
-// GetID returns a custom key for generic grouping
-func (h *HandleInst) GetID() string {
-	return h.Group
-}
-
 // A PromptInst is a high-level command to prompt a human
 type PromptInst struct {
 	Message string
-}
-
-// An AwaitInst is a command that suspends execution pending data input
-type AwaitInst struct {
-	// user-definable device tags
-	Tags []string
-	// ID we are waiting on
-	AwaitID string
-	// Next element in recursive chain
-	NextElement string
-	// Input to next element
-	NextElementInput inject.Value
-	// Parameter that will receive the awaited data
-	ReplaceParam string
-	// Output of current element
-	CurrentElementOutput inject.Value
 }

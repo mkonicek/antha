@@ -156,9 +156,5 @@ func ContainsAllStrings(template string, targets []string, options ...Option) (t
 			i++
 		}
 	}
-	if i == len(targets) {
-		return true
-	}
-
-	return false
+	return i == len(targets)
 }

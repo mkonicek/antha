@@ -4,10 +4,13 @@ package execute
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/antha-lang/antha/ast"
+	"github.com/antha-lang/antha/codegen"
+	"github.com/antha-lang/antha/inject"
+	"github.com/antha-lang/antha/microArch/sampletracker"
 	"github.com/antha-lang/antha/target"
-	"github.com/antha-lang/antha/trace"
 	"github.com/antha-lang/antha/workflow"
 )
 
@@ -15,7 +18,7 @@ import (
 type Result struct {
 	Workflow *workflow.Workflow
 	Input    []ast.Node
-	Insts    []target.Inst
+	Insts    []ast.Inst
 }
 
 // An Opt are options for Run.
@@ -35,8 +38,8 @@ type Opt struct {
 }
 
 // Run is a simple entrypoint for one-shot execution of workflows.
-func Run(parent context.Context, opt Opt) (*Result, error) {
-	ctx := target.WithTarget(withID(parent, opt.ID), opt.Target)
+func Run(parent context.Context, opt Opt) (res *Result, err error) {
+	ctx := sampletracker.NewContext(target.WithTarget(withID(parent, opt.ID), opt.Target))
 
 	w, err := workflow.New(workflow.Opt{FromDesc: opt.Workflow})
 	if err != nil {
@@ -47,26 +50,42 @@ func Run(parent context.Context, opt Opt) (*Result, error) {
 		return nil, err
 	}
 
-	r := &resolver{}
-
-	err = w.Run(trace.WithResolver(ctx, func(ctx context.Context, insts []interface{}) (map[int]interface{}, error) {
-		return r.resolve(ctx, insts)
-	}))
-
-	if err == nil {
-		return &Result{
-			Workflow: w,
-			Input:    r.nodes,
-			Insts:    r.insts,
-		}, nil
-	}
-
-	// Unwrap execute.Error
-	if terr, ok := err.(*trace.Error); ok {
-		if eerr, ok := terr.BaseError.(*Error); ok {
-			err = eerr
+	ctxTr, tr := WithTrace(ctx)
+	defer func() {
+		if res := recover(); res == nil {
+			return
+		} else if uErr, ok := res.(UserError); ok {
+			// Errorf internally calls panic, which is *not* the Go
+			// way. But until we fix that, to avoid full stack traces
+			// popping out here, we catch this case, and we deliberately
+			// do not attach a stack trace to it.
+			err = uErr
+		} else {
+			err = fmt.Errorf("%s\n%s", res, inject.ElementStackTrace())
 		}
+	}()
+	if err := w.Run(ctxTr); err != nil {
+		return nil, err
 	}
 
-	return nil, err
+	t, err := target.GetTarget(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	nodes, err := getMaker(ctx).MakeNodes(tr.Instructions())
+	if err != nil {
+		return nil, err
+	}
+
+	instrs, err := codegen.Compile(ctx, t, nodes)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Result{
+		Workflow: w,
+		Input:    nodes,
+		Insts:    instrs,
+	}, nil
 }

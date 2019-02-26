@@ -6,13 +6,14 @@ import (
 	"io"
 	"strings"
 
+	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/execute"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/auto"
 	"golang.org/x/net/context"
 )
 
-func shouldWait(inst target.Inst) bool {
+func shouldWait(inst ast.Inst) bool {
 	switch inst.(type) {
 	case *target.Run:
 		return true
@@ -33,20 +34,18 @@ func Run(out io.Writer, in io.Reader, a *auto.Auto, result *execute.Result) erro
 			return err
 		}
 
-		var skip bool
+		run := true
 		if shouldWait(inst) {
-			fmt.Fprintf(out, " (Run? [yes,skip]) ") // nolint
-			s, err := bin.ReadString('\n')
-			if err != nil {
+			if _, err := fmt.Fprintf(out, " (Run? [yes,skip]) "); err != nil {
 				return err
-			}
-			skip = true
-			if strings.HasPrefix(s, "yes") {
-				skip = false
+			} else if s, err := bin.ReadString('\n'); err != nil {
+				return err
+			} else {
+				run = strings.HasPrefix(strings.ToLower(s), "yes")
 			}
 		}
 
-		if !skip {
+		if run {
 			if err := a.Execute(ctx, inst); err != nil {
 				fmt.Fprintf(out, " [FAIL]\n") // nolint
 				return err

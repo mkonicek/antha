@@ -24,7 +24,7 @@ package wutil
 
 import "fmt"
 
-func ExampleRound() {
+func ExampleRoundInt() {
 	fmt.Println(RoundInt(-3.3))
 	fmt.Println(RoundInt(3.3))
 	fmt.Println(RoundInt(-3.9))

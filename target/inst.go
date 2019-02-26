@@ -10,24 +10,14 @@ import (
 	lh "github.com/antha-lang/antha/microArch/scheduler/liquidhandling"
 )
 
-// An Inst is a instruction
-type Inst interface {
-	// Device that this instruction was generated for
-	Device() Device
-	// DependsOn returns instructions that this instruction depends on
-	DependsOn() []Inst
-	// SetDependsOn updates DependsOn
-	SetDependsOn([]Inst)
-}
-
 // An Initializer is an instruction with initialization instructions
 type Initializer interface {
-	GetInitializers() []Inst
+	GetInitializers() []ast.Inst
 }
 
 // A Finalizer is an instruction with finalization instructions
 type Finalizer interface {
-	GetFinalizers() []Inst
+	GetFinalizers() []ast.Inst
 }
 
 // A TimeEstimator is an instruction that can estimate its own execution time
@@ -43,23 +33,28 @@ type TipEstimator interface {
 }
 
 type dependsMixin struct {
-	Depends []Inst
+	Depends []ast.Inst
 }
 
 // DependsOn implements an Inst
-func (a *dependsMixin) DependsOn() []Inst {
+func (a *dependsMixin) DependsOn() []ast.Inst {
 	return a.Depends
 }
 
 // SetDependsOn implements an Inst
-func (a *dependsMixin) SetDependsOn(x []Inst) {
+func (a *dependsMixin) SetDependsOn(x ...ast.Inst) {
 	a.Depends = x
+}
+
+// AppendDependsOn implements an Inst
+func (a *dependsMixin) AppendDependsOn(x ...ast.Inst) {
+	a.Depends = append(a.Depends, x...)
 }
 
 type noDeviceMixin struct{}
 
 // Device implements an Inst
-func (a noDeviceMixin) Device() Device {
+func (a noDeviceMixin) Device() ast.Device {
 	return nil
 }
 
@@ -86,7 +81,7 @@ type SetupIncubator struct {
 	Manual
 	// Corresponding mix
 	Mix              *Mix
-	IncubationPlates []*wtype.LHPlate
+	IncubationPlates []*wtype.Plate
 }
 
 var (
@@ -98,17 +93,17 @@ var (
 type Mix struct {
 	dependsMixin
 
-	Dev             Device
+	Dev             ast.Device
 	Request         *lh.LHRequest
 	Properties      *liquidhandling.LHProperties
 	FinalProperties *liquidhandling.LHProperties
 	Final           map[string]string // Map from ids in Properties to FinalProperties
 	Files           Files
-	Initializers    []Inst
+	Initializers    []ast.Inst
 }
 
 // Device implements an Inst
-func (a *Mix) Device() Device {
+func (a *Mix) Device() ast.Device {
 	return a.Dev
 }
 
@@ -136,7 +131,7 @@ func (a *Mix) GetTipEstimates() []wtype.TipEstimate {
 }
 
 // GetInitializers implements an Initializer
-func (a *Mix) GetInitializers() []Inst {
+func (a *Mix) GetInitializers() []ast.Inst {
 	return a.Initializers
 }
 
@@ -144,13 +139,13 @@ func (a *Mix) GetInitializers() []Inst {
 type Manual struct {
 	dependsMixin
 
-	Dev     Device
+	Dev     ast.Device
 	Label   string
 	Details string
 }
 
 // Device implements an Inst
-func (a *Manual) Device() Device {
+func (a *Manual) Device() ast.Device {
 	return a.Dev
 }
 
@@ -163,30 +158,30 @@ var (
 type Run struct {
 	dependsMixin
 
-	Dev     Device
+	Dev     ast.Device
 	Label   string
 	Details string
 	Calls   []driver.Call
 	// Additional instructions to add to beginning of instruction stream.
 	// Instructions are assumed to depend in FIFO order.
-	Initializers []Inst
+	Initializers []ast.Inst
 	// Additional instructions to add to end of instruction stream.
 	// Instructions are assumed to depend in LIFO order.
-	Finalizers []Inst
+	Finalizers []ast.Inst
 }
 
 // Device implements an Inst
-func (a *Run) Device() Device {
+func (a *Run) Device() ast.Device {
 	return a.Dev
 }
 
 // GetInitializers implements an Initializer instruction
-func (a *Run) GetInitializers() []Inst {
+func (a *Run) GetInitializers() []ast.Inst {
 	return a.Initializers
 }
 
 // GetFinalizers implements a Finalizer instruction
-func (a *Run) GetFinalizers() []Inst {
+func (a *Run) GetFinalizers() []ast.Inst {
 	return a.Finalizers
 }
 
@@ -211,29 +206,4 @@ type TimedWait struct {
 	noDeviceMixin
 
 	Duration time.Duration
-}
-
-// SequentialOrder takes a set of instructions with out any dependencies and
-// modifies them to follow sequential order
-func SequentialOrder(insts ...Inst) []Inst {
-	for idx, inst := range insts {
-		if idx == 0 {
-			continue
-		}
-		inst.SetDependsOn([]Inst{insts[idx-1]})
-	}
-
-	return insts
-}
-
-// AwaitData is a raw data-getting request
-type AwaitData struct {
-	dependsMixin
-	Dev  Device
-	Inst *ast.AwaitInst
-}
-
-// Device implements an Inst
-func (d *AwaitData) Device() Device {
-	return d.Dev
 }

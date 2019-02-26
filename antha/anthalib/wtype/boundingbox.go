@@ -23,13 +23,22 @@
 // defines types for dealing with liquid handling requests
 package wtype
 
-import "math"
+import (
+	"fmt"
+	"math"
+)
 
 //BBox is a simple LHObject representing a bounding box,
 //useful for checking if there's stuff in the way
 type BBox struct {
 	Position Coordinates
 	Size     Coordinates
+}
+
+//Equals defines an equivalence relation over bounding boxes
+//returns true iff position and size are both equal
+func (bb BBox) Equals(bb2 BBox) bool {
+	return bb.Position.Equals(bb2.Position) && bb.Size.Equals(bb2.Size)
 }
 
 func NewBBox(pos, Size Coordinates) *BBox {
@@ -80,11 +89,30 @@ func (self BBox) GetSize() Coordinates {
 	return self.Size
 }
 
+//String gets a string representation of the box
+func (self BBox) String() string {
+	return fmt.Sprintf("[%v+%v]", self.Position, self.Size)
+}
+
+//Dup duplicate the bounding box
+func (self *BBox) Dup() *BBox {
+	if self == nil {
+		return nil
+	}
+	return &BBox{self.Position, self.Size}
+}
+
 func (self *BBox) SetPosition(c Coordinates) {
+	if self == nil {
+		return
+	}
 	self.Position = c
 }
 
 func (self *BBox) SetSize(c Coordinates) {
+	if self == nil {
+		return
+	}
 	self.Size = c
 }
 
@@ -92,6 +120,10 @@ func (self BBox) Contains(rhs Coordinates) bool {
 	return (rhs.X >= self.Position.X && rhs.X < self.Position.X+self.Size.X &&
 		rhs.Y >= self.Position.Y && rhs.Y < self.Position.Y+self.Size.Y &&
 		rhs.Z >= self.Position.Z && rhs.Z < self.Position.Z+self.Size.Z)
+}
+
+func (self BBox) ContainsBox(rhs BBox) bool {
+	return self.Contains(rhs.GetPosition()) && self.Contains(rhs.GetPosition().Add(rhs.GetSize()))
 }
 
 //IntersectsBox checks for bounding box intersection

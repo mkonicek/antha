@@ -2,6 +2,7 @@ package execute
 
 import (
 	"context"
+	"encoding/json"
 	"reflect"
 	"testing"
 
@@ -169,7 +170,7 @@ func TestConstructSlice(t *testing.T) {
 	type Value []interface{}
 	x := Value{
 		&wtype.LHTipbox{},
-		&wtype.LHPlate{},
+		&wtype.Plate{},
 	}
 	tb1, err := inventory.NewTipbox(ctx, "CyBio250Tipbox")
 	if err != nil {
@@ -193,9 +194,9 @@ func TestConstructSlice(t *testing.T) {
 		t.Errorf("expecting %v but got %v instead", golden, x)
 	} else if aa.Type != bb.Type {
 		t.Errorf("expecting %v but got %v instead", golden, x)
-	} else if aa, ok := golden[1].(*wtype.LHPlate); !ok {
+	} else if aa, ok := golden[1].(*wtype.Plate); !ok {
 		t.Errorf("expecting %v but got %v instead", golden, x)
-	} else if bb, ok := x[1].(*wtype.LHPlate); !ok {
+	} else if bb, ok := x[1].(*wtype.Plate); !ok {
 		t.Errorf("expecting %v but got %v instead", golden, x)
 	} else if aa.Type != bb.Type {
 		t.Errorf("expecting %v but got %v instead", golden, x)
@@ -212,7 +213,9 @@ func TestTime(t *testing.T) {
 	golden := Value{
 		"A": wunit.NewTime(60.0, "s"),
 	}
-	if err := unmarshal(ctx, &x, []byte(`{ "A": "60s" }`)); err != nil {
+	if bytes, err := json.Marshal(golden); err != nil {
+		t.Error(err)
+	} else if err := unmarshal(ctx, &x, bytes); err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(x, golden) {
 		t.Errorf("expecting %v but got %v instead", golden, x)

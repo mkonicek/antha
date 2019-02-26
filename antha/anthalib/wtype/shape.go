@@ -27,17 +27,32 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/microArch/logger"
 
 	"math"
 )
 
+type ShapeTypeID string
+
+const (
+	CylinderShape  ShapeTypeID = "cylinder"
+	CircleShape    ShapeTypeID = "circle"
+	RoundShape     ShapeTypeID = "round"
+	SphereShape    ShapeTypeID = "sphere"
+	SquareShape    ShapeTypeID = "square"
+	BoxShape       ShapeTypeID = "box"
+	RectangleShape ShapeTypeID = "rectangle"
+)
+
 type Shape struct {
-	ShapeName  string
+	ShapeName  ShapeTypeID
 	LengthUnit string
 	H          float64
 	W          float64
 	D          float64
+}
+
+func (sh *Shape) Equals(sh2 *Shape) bool {
+	return sh.ShapeName == sh2.ShapeName && sh.LengthUnit == sh2.LengthUnit && sh.H == sh2.H && sh.W == sh2.W && sh.D == sh2.D
 }
 
 // let shape implement geometry
@@ -57,18 +72,18 @@ func (sh *Shape) Dup() *Shape {
 }
 
 func (sh *Shape) String() string {
-	return fmt.Sprintf("Generic Shape [%fx%fx%f]", sh.H, sh.W, sh.D)
+	return fmt.Sprintf("%s [%fx%fx%f]", sh.ShapeName, sh.H, sh.W, sh.D)
 }
 
 func (sh *Shape) MaxCrossSectionalArea() (area wunit.Area, err error) {
 
-	shapename := strings.ToLower(sh.ShapeName)
+	shapename := strings.ToLower(string(sh.ShapeName))
 	var areaunit string
 	if sh.LengthUnit == "mm" {
 		areaunit = "mm^2" //sh.LengthUnit + `^` + strconv.Itoa(2)
 	} else {
 		err = fmt.Errorf("sh.Lengthunit = %s", sh.LengthUnit)
-		logger.Debug(err.Error())
+		fmt.Println(err.Error())
 	}
 	var circular bool
 	var boxlike bool
@@ -84,14 +99,14 @@ func (sh *Shape) MaxCrossSectionalArea() (area wunit.Area, err error) {
 	} else if boxlike {
 		area = wunit.NewArea(sh.H*sh.W, areaunit)
 	} else {
-		err = fmt.Errorf("No method to work out cross sectional area for shape %s yet Circular? %b", sh.ShapeName, circular)
+		err = fmt.Errorf("No method to work out cross sectional area for shape \"%s\" yet Circular? %t", sh.ShapeName, circular)
 	}
 	return
 }
 
 func (sh *Shape) Volume() (volume wunit.Volume, err error) {
 
-	shapename := strings.ToLower(sh.ShapeName)
+	shapename := strings.ToLower(string(sh.ShapeName))
 	var volumeunit string
 	if sh.LengthUnit == "mm" {
 		volumeunit = "ul"
@@ -118,7 +133,7 @@ func (sh *Shape) Volume() (volume wunit.Volume, err error) {
 	return
 }
 
-func NewShape(name, lengthunit string, h, w, d float64) *Shape {
+func NewShape(name ShapeTypeID, lengthunit string, h, w, d float64) *Shape {
 	sh := Shape{name, lengthunit, h, w, d}
 	return &sh
 }
@@ -129,9 +144,5 @@ func NewNilShape() *Shape {
 }
 
 func (sh *Shape) IsZero() bool {
-	if sh.ShapeName == "" {
-		return false
-	}
-
-	return true
+	return len(sh.ShapeName) == 0
 }

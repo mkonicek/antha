@@ -29,6 +29,7 @@ import (
 // driver interface
 
 type LiquidhandlingDriver interface {
+	DriverType() ([]string, error)
 	//AddPlateTo add an LHObject to a particular position in the liquid handler
 	//position: the name of the position defined in LHProperties struct
 	//plate: the LHObject to add
@@ -40,7 +41,7 @@ type LiquidhandlingDriver interface {
 	Initialize() driver.CommandStatus
 	Finalize() driver.CommandStatus
 	Message(level int, title, text string, showcancel bool) driver.CommandStatus
-	GetOutputFile() (string, driver.CommandStatus)
+	GetOutputFile() ([]byte, driver.CommandStatus)
 	GetCapabilities() (LHProperties, driver.CommandStatus)
 }
 

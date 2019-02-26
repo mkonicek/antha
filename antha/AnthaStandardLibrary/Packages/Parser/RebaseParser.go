@@ -68,7 +68,7 @@ func RecognitionSeqHandler(RecognitionSeq string) (RecognitionSequence string, E
 	if strings.Count(RecognitionSeq, "(") == 1 &&
 		strings.Count(RecognitionSeq, "/") == 1 &&
 		strings.Count(RecognitionSeq, ")") == 1 &&
-		strings.HasSuffix(RecognitionSeq, ")") == true {
+		strings.HasSuffix(RecognitionSeq, ")") {
 
 		split := strings.Split(RecognitionSeq, "(")
 
@@ -76,12 +76,12 @@ func RecognitionSeqHandler(RecognitionSeq string) (RecognitionSequence string, E
 
 		split = strings.Split(split[1], "/")
 
-		lengthint, _ := strconv.Atoi(split[0])
+		lengthint, _ := strconv.Atoi(split[0]) //nolint
 		Topstrand3primedistancefromend = lengthint
 
 		split = strings.Split(split[1], ")")
 
-		lengthint, _ = strconv.Atoi(split[0])
+		lengthint, _ = strconv.Atoi(split[0]) //nolint
 		Bottomstrand5primedistancefromend = lengthint
 
 		EndLength = int(math.Abs(float64(Bottomstrand5primedistancefromend - Topstrand3primedistancefromend)))
@@ -167,7 +167,6 @@ func RebaseParse(rebaseRh io.Reader) []wtype.RestrictionEnzyme {
 			if name != "" {
 				outputs = append(outputs, Build_rebase(name, prototype, recognitionseq, methylationsite, commercialsource, refs))
 
-				name = ""
 				recognitionseq = ""
 				methylationsite = ""
 				prototype = ""

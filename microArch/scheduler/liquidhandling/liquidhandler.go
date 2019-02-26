@@ -25,17 +25,19 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
+	"math"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/inventory"
-	"github.com/antha-lang/antha/microArch/driver"
+	"github.com/antha-lang/antha/inventory/cache/plateCache"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
-	"github.com/antha-lang/antha/microArch/logger"
+	"github.com/antha-lang/antha/microArch/simulator"
 	simulator_lh "github.com/antha-lang/antha/microArch/simulator/liquidhandling"
 )
 
@@ -51,7 +53,6 @@ import (
 // The three functions define
 // - setup (SetupAgent): How sources are assigned to plates and plates to positions
 // - layout (LayoutAgent): how experiments are assigned to outputs
-// - execution (ExecutionPlanner): generates instructions to implement the required plan
 //
 // The general mechanism by which requests which refer to specific items as opposed to
 // those which only state that an item of a particular kind is required is by the definition
@@ -64,26 +65,22 @@ import (
 // send it in as an argument
 
 type Liquidhandler struct {
-	Properties       *liquidhandling.LHProperties
-	FinalProperties  *liquidhandling.LHProperties
-	SetupAgent       func(context.Context, *LHRequest, *liquidhandling.LHProperties) (*LHRequest, error)
-	LayoutAgent      func(context.Context, *LHRequest, *liquidhandling.LHProperties) (*LHRequest, error)
-	ExecutionPlanner func(context.Context, *LHRequest, *liquidhandling.LHProperties) (*LHRequest, error)
-	PolicyManager    *LHPolicyManager
-	plateIDMap       map[string]string // which plates are before / after versions
+	Properties      *liquidhandling.LHProperties
+	FinalProperties *liquidhandling.LHProperties
+	SetupAgent      func(context.Context, *LHRequest, *liquidhandling.LHProperties) error
+	LayoutAgent     func(context.Context, *LHRequest, *liquidhandling.LHProperties) error
+	plateIDMap      map[string]string // which plates are before / after versions
 }
 
 // initialize the liquid handling structure
 func Init(properties *liquidhandling.LHProperties) *Liquidhandler {
-	lh := Liquidhandler{}
-	lh.SetupAgent = BasicSetupAgent
-	lh.LayoutAgent = ImprovedLayoutAgent
-	//lh.ExecutionPlanner = ImprovedExecutionPlanner
-	lh.ExecutionPlanner = ExecutionPlanner3
-	lh.Properties = properties
-	lh.FinalProperties = properties
-	lh.plateIDMap = make(map[string]string)
-	return &lh
+	return &Liquidhandler{
+		Properties:      properties,
+		FinalProperties: properties,
+		SetupAgent:      BasicSetupAgent,
+		LayoutAgent:     ImprovedLayoutAgent,
+		plateIDMap:      make(map[string]string),
+	}
 }
 
 func (this *Liquidhandler) PlateIDMap() map[string]string {
@@ -96,80 +93,38 @@ func (this *Liquidhandler) PlateIDMap() map[string]string {
 	return ret
 }
 
-// catch errors early
-func ValidateRequest(request *LHRequest) error {
-	if len(request.LHInstructions) == 0 {
-		return wtype.LHError(wtype.LH_ERR_OTHER, "Nil plan requested: no Mix Instructions present")
-	}
-
-	// no component can have all three of Conc, Vol and TVol set to 0:
-
-	for _, ins := range request.LHInstructions {
-		for i, cmp := range ins.Components {
-			if cmp.Vol == 0.0 && cmp.Conc == 0.0 && cmp.Tvol == 0.0 {
-				errstr := fmt.Sprintf("Nil mix (no volume, concentration or total volume) requested: %d : ", i)
-
-				for j := 0; j < len(ins.Components); j++ {
-					ss := ins.Components[i].CName
-					if j == i {
-						ss = strings.ToUpper(ss)
-					}
-
-					if j != len(ins.Components)-1 {
-						ss += ", "
-					}
-
-					errstr += ss
-				}
-				return wtype.LHError(wtype.LH_ERR_OTHER, errstr)
-			}
-		}
-	}
-	return nil
-}
-
 // high-level function which requests planning and execution for an incoming set of
 // solutions
 func (this *Liquidhandler) MakeSolutions(ctx context.Context, request *LHRequest) error {
-	err := ValidateRequest(request)
-
-	if err != nil {
+	if err := request.Validate(); err != nil {
 		return err
 	}
 
-	request.ConfigureYourself()
-
-	//f := func() {
-	err = this.Plan(ctx, request)
-	if err != nil {
+	if err := this.Plan(ctx, request); err != nil {
 		return err
 	}
 
-	err = this.AddSetupInstructions(request)
-	if err != nil {
+	if err := this.AddSetupInstructions(request); err != nil {
 		return err
 	}
 
-	/*err = this.Simulate(request)
-	if err != nil {
-		//since the simulator is... tender right now, let's take this with a pinch of salt
-		logger.Info("Ignoring simulation error")
-		//return err
-	} else {
-		logger.Info("Simulation completed successfully")
-	}*/
+	fmt.Println("Tip Usage Summary:")
+	for _, tipEstimate := range request.TipsUsed {
+		fmt.Printf("  %v\n", tipEstimate)
+	}
 
-	err = this.Execute(request)
-	if err != nil {
+	if err := this.Simulate(request); err != nil && !request.Options.IgnorePhysicalSimulation {
+		return errors.WithMessage(err, "during physical simulation")
+	}
+
+	if err := this.Execute(request); err != nil {
 		return err
 	}
 
 	// output some info on the final setup
-
 	OutputSetup(this.Properties)
 
-	// and afer
-
+	// and after
 	fmt.Println("SETUP AFTER: ")
 	OutputSetup(this.FinalProperties)
 
@@ -183,8 +138,8 @@ func (this *Liquidhandler) AddSetupInstructions(request *LHRequest) error {
 		return wtype.LHError(wtype.LH_ERR_OTHER, "Cannot execute request: no instructions")
 	}
 
-	setup_insts := this.get_setup_instructions(request)
-	if request.Instructions[0].InstructionType() == liquidhandling.INI {
+	setup_insts := this.get_setup_instructions()
+	if request.Instructions[0].Type() == liquidhandling.INI {
 		request.Instructions = append(request.Instructions[:1], append(setup_insts, request.Instructions[1:]...)...)
 	} else {
 		request.Instructions = append(setup_insts, request.Instructions...)
@@ -192,41 +147,90 @@ func (this *Liquidhandler) AddSetupInstructions(request *LHRequest) error {
 	return nil
 }
 
-// run the request via the simulator
+// run the request via the physical simulator
 func (this *Liquidhandler) Simulate(request *LHRequest) error {
 
-	instructions := (*request).Instructions
-	if instructions == nil {
-		return wtype.LHError(wtype.LH_ERR_OTHER, "Cannot execute request: no instructions")
+	instructions := request.Instructions
+	if len(instructions) == 0 {
+		return wtype.LHError(wtype.LH_ERR_OTHER, "cannot simulate request: no instructions")
 	}
 
 	// set up the simulator with default settings
-	vlh := simulator_lh.NewVirtualLiquidHandler(this.Properties, nil)
-	for _, err := range vlh.GetErrors() {
-		err.WriteToLog()
+	props := this.Properties.DupKeepIDs()
+
+	settings := simulator_lh.DefaultSimulatorSettings()
+
+	//Make this warning less noisy since it's not really important
+	settings.EnablePipetteSpeedWarning(simulator_lh.WarnOnce)
+	//again, something we should fix, but not important to users to quieten
+	settings.EnableAutoChannelWarning(simulator_lh.WarnOnce)
+	//this is probably not even an error as liquid types are more about LHPolicies than what's actually in the well
+	settings.EnableLiquidTypeWarning(simulator_lh.WarnNever)
+	//disable tipbox collision. Tipboxes are narrower at the top than the bottom, so bounding box collision falsely predicts
+	//collisions when when tips are picked up sequentially
+	settings.EnableTipboxCollision(false)
+
+	vlh, err := simulator_lh.NewVirtualLiquidHandler(props, settings)
+	if err != nil {
+		return err
 	}
 
-	//check we didn't hit a catastrophic error
-	if vlh.HasError() {
-		return vlh.GetWorstError()
+	triS := make([]liquidhandling.TerminalRobotInstruction, 0, len(instructions))
+	for i, ins := range instructions {
+		tri, ok := ins.(liquidhandling.TerminalRobotInstruction)
+		if !ok {
+			return fmt.Errorf("instruction %d not terminal", i)
+		}
+		triS = append(triS, tri)
+
 	}
 
-	fmt.Printf("Simulating %d instructions...\n", len(instructions))
-	for _, ins := range instructions {
-		ins.(liquidhandling.TerminalRobotInstruction).OutputTo(vlh)
-		if vlh.HasError() {
-			break
+	if request.Options.PrintInstructions {
+		fmt.Printf("Simulating %d instructions\n", len(instructions))
+		for i, ins := range instructions {
+			if request.Options.PrintInstructions {
+				fmt.Printf("%d: %s\n", i, liquidhandling.InsToString(ins))
+			}
 		}
 	}
 
-	for _, err := range vlh.GetErrors() {
-		err.WriteToLog()
+	if err := vlh.Simulate(triS); err != nil {
+		return err
 	}
 
-	//return the worst error if it's actually an error
-	if vlh.HasError() {
-		return vlh.GetWorstError()
+	//if there were no errors or warnings
+	numErrors := vlh.CountErrors()
+	if numErrors == 0 {
+		return nil
 	}
+
+	//Output all the messages from the simulator in one logger call
+	pMessage := func(n int) string {
+		if n == 1 {
+			return "message"
+		}
+		return "messages"
+	}
+	logLines := make([]string, 0, numErrors+1)
+	logLines = append(logLines, fmt.Sprintf("showing %d %s from physical simulation:", numErrors, pMessage(numErrors)))
+	//Format numbers at consistent width so messages line up
+	fmtString := fmt.Sprintf("  %%%dd: simulator: %%s", 1+int(math.Floor(math.Log10(float64(numErrors)))))
+	for i, err := range vlh.GetErrors() {
+		logLines = append(logLines, fmt.Sprintf(fmtString, i+1, err.Error()))
+	}
+	fmt.Println(strings.Join(logLines, "\n"))
+
+	//return the worst error if it's actually an error
+	if simErr := vlh.GetFirstError(simulator.SeverityError); simErr != nil {
+		errMsg := simErr.Error()
+		if dErr, ok := simErr.(simulator_lh.DetailedLHError); ok {
+			//include physical 'stack'
+			errMsg += "\n\t" + strings.Replace(dErr.GetStateAtError(), "\n", "\n\t", -1)
+		}
+		return errors.Errorf("%s\n\tPhysical simulation can be overridden using the \"IgnorePhysicalSimulation\" configuration option.",
+			errMsg)
+	}
+
 	return nil
 }
 
@@ -234,27 +238,28 @@ func (this *Liquidhandler) Simulate(request *LHRequest) error {
 func (this *Liquidhandler) Execute(request *LHRequest) error {
 	//robot setup now included in instructions
 
-	instructions := (*request).Instructions
+	instructions := request.Instructions
 
 	// some timing info for the log (only) for now
 
 	timer := this.Properties.GetTimer()
 	var d time.Duration
 
-	err := this.update_metadata(request)
+	err := this.update_metadata()
 	if err != nil {
 		return err
 	}
 
 	for _, ins := range instructions {
 
-		if (*request).Options.PrintInstructions {
+		if request.Options.PrintInstructions {
 			fmt.Println(liquidhandling.InsToString(ins))
+
 		}
 		_, ok := ins.(liquidhandling.TerminalRobotInstruction)
 
 		if !ok {
-			fmt.Printf("ERROR: Got instruction ", liquidhandling.InsToString(ins), "which is wrong type")
+			fmt.Printf("ERROR: Got instruction \"%s\" which is wrong type", liquidhandling.InsToString(ins))
 			continue
 		}
 
@@ -266,13 +271,13 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 
 		// The graph view depends on the string generated in this step
 		str := ""
-		if ins.InstructionType() == liquidhandling.TFR {
+		if ins.Type() == liquidhandling.TFR {
 			mocks := liquidhandling.MockAspDsp(ins)
 			for _, ii := range mocks {
-				str += liquidhandling.InsToString2(ii) + "\n"
+				str += liquidhandling.InsToString(ii) + "\n"
 			}
 		} else {
-			str = liquidhandling.InsToString2(ins) + "\n"
+			str = liquidhandling.InsToString(ins) + "\n"
 		}
 
 		request.InstructionText += str
@@ -284,259 +289,197 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 		}
 	}
 
-	logger.Debug(fmt.Sprintf("Total time estimate: %s", d.String()))
-	request.TimeEstimate = d.Seconds()
+	fmt.Printf("Total time estimate: %s\n", d.String())
+	request.TimeEstimate = d.Round(time.Second).Seconds()
 
 	return nil
 }
 
-func (this *Liquidhandler) revise_volumes(rq *LHRequest) error {
-	// XXX -- HARD CODE 8 here
-	lastPlate := make([]string, 8)
-	lastWell := make([]string, 8)
+// shrinkVolumes reduce autoallocated volumes to the amount we actually need, removing
+// any unused wells or plates
+func (this *Liquidhandler) shrinkVolumes(rq *LHRequest) error {
 
-	vols := make(map[string]map[string]wunit.Volume)
+	// first, iterate through the generated instructions and count up how much
+	// of each autoallocated liquid was actually used
+	var lastWells []*wtype.LHWell
+	vols := make(map[*wtype.LHWell]wunit.Volume)
+	rawVols := make(map[*wtype.LHWell]wunit.Volume)
+	useVol := func(well *wtype.LHWell, vol wunit.Volume, carry wunit.Volume) {
+		v, ok := vols[well]
+		r := rawVols[well]
+		if !ok {
+			v = wunit.NewVolume(0.0, "ul")
+			r = wunit.NewVolume(0.0, "ul")
+			vols[well] = v
+			rawVols[well] = r
+		}
+		v.Add(vol)
+		v.Add(carry)
+		r.Add(vol)
+	}
+	usedPlates := make(map[*wtype.LHPlate]bool)
 
 	for _, ins := range rq.Instructions {
-		if ins.InstructionType() == liquidhandling.MOV {
-			lastPlate = make([]string, 8)
-			lastPos := ins.GetParameter("POSTO").([]string)
-
-			for i, p := range lastPos {
-				lastPlate[i] = this.Properties.PosLookup[p]
-			}
-
-			lastWell = ins.GetParameter("WELLTO").([]string)
-		} else if ins.InstructionType() == liquidhandling.ASP {
-			for i, _ := range lastPlate {
-				if i >= len(lastWell) {
-					break
+		ins.Visit(liquidhandling.RobotInstructionBaseVisitor{
+			HandleMove: func(ins *liquidhandling.MoveInstruction) {
+				if len(ins.Pos) != len(lastWells) {
+					lastWells = make([]*wtype.LHWell, len(ins.Pos))
 				}
-				lp := lastPlate[i]
-				lw := lastWell[i]
-
-				if lp == "" {
-					continue
-				}
-
-				ppp := this.Properties.PlateLookup[lp].(*wtype.LHPlate)
-
-				lwl := ppp.Wellcoords[lw]
-
-				if !lwl.IsAutoallocated() {
-					continue
-				}
-
-				_, ok := vols[lp]
-
-				if !ok {
-					vols[lp] = make(map[string]wunit.Volume)
-				}
-
-				v, ok := vols[lp][lw]
-
-				if !ok {
-					v = wunit.NewVolume(0.0, "ul")
-					vols[lp][lw] = v
-				}
-				//v.Add(ins.Volume[i])
-
-				insvols := ins.GetParameter("VOLUME").([]wunit.Volume)
-				v.Add(insvols[i])
-				// double add of carry volume here?
-				v.Add(rq.CarryVolume)
-
-			}
-		} else if ins.InstructionType() == liquidhandling.TFR {
-			tfr := ins.(*liquidhandling.TransferInstruction)
-			for _, mtf := range tfr.Transfers {
-				for _, tf := range mtf.Transfers {
-					lpos, lw := tf.PltFrom, tf.WellFrom
-
-					lp := this.Properties.PosLookup[lpos]
-					ppp := this.Properties.PlateLookup[lp].(*wtype.LHPlate)
-					lwl := ppp.Wellcoords[lw]
-
-					if !lwl.IsAutoallocated() {
-						continue
+				for i, position := range ins.Pos {
+					plateID := this.Properties.PosLookup[position]
+					if plate, ok := this.Properties.PlateLookup[plateID].(*wtype.LHPlate); ok {
+						usedPlates[plate] = true
+						lastWells[i] = plate.Wellcoords[ins.Well[i]]
 					}
-
-					_, ok := vols[lp]
-
-					if !ok {
-						vols[lp] = make(map[string]wunit.Volume)
+				}
+			},
+			HandleAspirate: func(ins *liquidhandling.AspirateInstruction) {
+				for i, lastWell := range lastWells {
+					if lastWell.IsAutoallocated() && i < len(ins.Volume) {
+						useVol(lastWell, ins.Volume[i], this.Properties.CarryVolume())
 					}
-
-					v, ok := vols[lp][lw]
-
-					if !ok {
-						v = wunit.NewVolume(0.0, "ul")
-						vols[lp][lw] = v
-					}
-					//v.Add(ins.Volume[i])
-
-					v.Add(tf.Volume)
 				}
-			}
-		}
-	}
-
-	// apply evaporation
-	for _, vc := range rq.Evaps {
-		loctox := strings.Split(vc.Location, ":")
-
-		// ignore anything where the location isn't properly set
-
-		if len(loctox) < 2 {
-			continue
-		}
-
-		plateID := loctox[0]
-		wellcrds := loctox[1]
-
-		wellmap, ok := vols[plateID]
-
-		if !ok {
-			continue
-		}
-
-		vol := wellmap[wellcrds]
-		vol.Add(vc.Volume)
-	}
-
-	// now go through and set the plates up appropriately
-
-	for plateID, wellmap := range vols {
-		plate, ok := this.FinalProperties.Plates[this.Properties.PlateIDLookup[plateID]]
-		plate2, _ := this.Properties.Plates[this.Properties.PlateIDLookup[plateID]]
-
-		if !ok {
-			err := wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("NO SUCH PLATE: ", plateID))
-			return err
-		}
-
-		// what's it like here?
-
-		for crd, unroundedvol := range wellmap {
-			rv, _ := wutil.Roundto(unroundedvol.RawValue(), 1)
-			vol := wunit.NewVolume(rv, unroundedvol.Unit().PrefixedSymbol())
-			well := plate.Wellcoords[crd]
-			well2 := plate2.Wellcoords[crd]
-
-			if well.IsAutoallocated() {
-				vol.Add(well.ResidualVolume())
-
-				well2Contents := well2.Contents().Dup()
-				well2Contents.SetVolume(vol)
-				err := well2.SetContents(well2Contents)
-				if err != nil {
-					return err
-				}
-
-				wellContents := well.Contents().Dup()
-				wellContents.SetVolume(well.ResidualVolume())
-				wellContents.ID = wtype.GetUUID()
-				err = well.SetContents(wellContents)
-				if err != nil {
-					return err
-				}
-
-				well.DeclareNotTemporary()
-				well2.DeclareNotTemporary()
-			}
-		}
-	}
-
-	// finally get rid of any temporary stuff
-
-	this.Properties.RemoveUnusedAutoallocatedComponents()
-	this.FinalProperties.RemoveUnusedAutoallocatedComponents()
-
-	pidm := make(map[string]string, len(this.Properties.Plates))
-	for pos, _ := range this.Properties.Plates {
-		p1, ok1 := this.Properties.Plates[pos]
-		p2, ok2 := this.FinalProperties.Plates[pos]
-
-		if (!ok1 && ok2) || (ok1 && !ok2) {
-
-			if ok1 {
-				fmt.Println("BEFORE HAS: ", p1)
-			}
-
-			if ok2 {
-				fmt.Println("AFTER  HAS: ", p2)
-			}
-
-			return (wtype.LHError(8, fmt.Sprintf("Plate disappeared from position %s", pos)))
-		}
-
-		if !(ok1 && ok2) {
-			continue
-		}
-
-		this.plateIDMap[p1.ID] = p2.ID
-		pidm[p2.ID] = p1.ID
-	}
-
-	// this is many shades of wrong but likely to save us a lot of time
-	for _, pos := range this.Properties.InputSearchPreferences() {
-		p1, ok1 := this.Properties.Plates[pos]
-		p2, ok2 := this.FinalProperties.Plates[pos]
-
-		if ok1 && ok2 {
-			for _, wa := range p1.Cols {
-				for _, w := range wa {
-					// copy the outputs to the correct side
-					// and remove the outputs from the initial state
-					if !w.Empty() {
-						w2, ok := p2.Wellcoords[w.Crds.FormatA1()]
-						if ok {
-							// there's no strict separation between outputs and
-							// inputs here
-							if w.IsAutoallocated() {
-								continue
-							} else if w.IsUserAllocated() {
-								// swap old and new
-								c := w.WContents.Dup()
-								w.Clear()
-								c2 := w2.WContents.Dup()
-								w2.Clear()
-								err := w.AddComponent(c2)
-								if err != nil {
-									return wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Scheduler : %s", err.Error()))
-								}
-								err = w2.AddComponent(c)
-								if err != nil {
-									return wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Scheduler : %s", err.Error()))
-								}
-							} else {
-								// replace
-								w2.Clear()
-								err := w2.AddComponent(w.Contents())
-								if err != nil {
-									return wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Scheduler : %s", err.Error()))
-								}
-								w.Clear()
+			},
+			HandleTransfer: func(ins *liquidhandling.TransferInstruction) {
+				for _, mtf := range ins.Transfers {
+					for _, tf := range mtf.Transfers {
+						if plate, ok := this.Properties.PlateLookup[tf.PltFrom].(*wtype.LHPlate); ok {
+							usedPlates[plate] = true
+							if well := plate.Wellcoords[tf.WellFrom]; well.IsAutoallocated() {
+								useVol(well, tf.Volume, wunit.ZeroVolume())
 							}
 						}
 					}
 				}
+			},
+		})
+	}
 
+	getFinalWell := func(initialWell *wtype.LHWell) (*wtype.LHWell, error) {
+		// assumption: plate locations don't change
+		plateID := wtype.IDOf(initialWell.GetParent())
+		if platePos, ok := this.Properties.PlateIDLookup[plateID]; !ok {
+			return nil, errors.Errorf("couldn't find position of plate %s", plateID)
+		} else if finalPlate, ok := this.FinalProperties.Plates[platePos]; !ok {
+			return nil, errors.Errorf("couldn't find final plate for initial plate %s at %s", plateID, platePos)
+		} else if finalWell, ok := finalPlate.WellAt(initialWell.Crds); !ok {
+			return nil, errors.Errorf("couldn't find well %s in final plate at %s", initialWell.Crds.FormatA1(), platePos)
+		} else {
+			return finalWell, nil
+		}
+
+	}
+
+	// second, set volumes for each autoallocated input as calculated
+	for initialWell, volUsed := range vols {
+		if initialWell.IsAutoallocated() {
+			remainingVolume := initialWell.ResidualVolume()
+			initialVolume := wunit.AddVolumes(volUsed, remainingVolume)
+
+			if initialVolume.GreaterThan(initialWell.MaxVolume()) {
+				// this logic is a bit complicated and questionable, however we need to
+				// improve on how carry volumes are handled before it can be removed
+				//
+				// the idea is that if the total volume requested is greater than the
+				// maximum the well can hold only because of carry volumes we round down
+				// to the maximum the well can hold and hope for the best. This is a rare
+				// case but still we should ideally be stricter
+				//
+				rv := rawVols[initialWell]
+				if rv.LessThan(initialWell.MaxVolume()) || rv.EqualTo(initialWell.MaxVolume()) {
+					// don't exceed the well maximum by a trivial amount
+					initialVolume = initialWell.MaxVolume()
+				} else {
+					return fmt.Errorf("Error autogenerating stock %s at plate %s (type %s) well %s: Volume requested (%s) over well capacity (%s)",
+						initialWell.Contents().CName, wtype.NameOf(initialWell.Plate), wtype.TypeOf(initialWell.Plate), initialWell.Crds.FormatA1(),
+						initialVolume.ToString(), initialWell.MaxVolume().ToString())
+				}
 			}
 
-			//fmt.Println(p2, " ", p1)
-			//fmt.Println("Plate ID Map: ", p2.ID, " --> ", p1.ID)
+			initialContents := initialWell.Contents().Dup()
+			initialContents.SetVolume(initialVolume)
+			if err := initialWell.SetContents(initialContents); err != nil {
+				return err
+			}
 
-			//	this.plateIDMap[p2.ID] = p1.ID
+			// since we aren't yet re-generating the instructions, we need to update the final volume as well
+			finalContents := initialContents.Dup()
+			finalContents.SetVolume(remainingVolume)
+			if finalWell, err := getFinalWell(initialWell); err != nil {
+				return err
+			} else if err := finalWell.SetContents(finalContents); err != nil {
+				return err
+			}
 		}
 	}
 
-	// all done
+	// third, remove anything which was autoallocated but not used at all by instructions
+	toRemove := make([]string, 0, len(this.Properties.Plates))
+	for _, plate := range this.Properties.Plates {
+		if !usedPlates[plate] && plate.AllAutoallocated() {
+			toRemove = append(toRemove, plate.ID)
+		} else {
+			for _, initialWell := range plate.Wellcoords {
+				if _, used := vols[initialWell]; !used && initialWell.IsAutoallocated() {
+					initialWell.Clear()
+
+					// as in step 2, we need to update the final well volume as well
+					if finalWell, err := getFinalWell(initialWell); err != nil {
+						return err
+					} else {
+						finalWell.Clear()
+					}
+				}
+			}
+		}
+	}
+	for _, removeID := range toRemove {
+		if platePos, ok := this.Properties.PlateIDLookup[removeID]; !ok {
+			return errors.Errorf("cannot remove plate that doesn't exist")
+		} else {
+			this.Properties.RemovePlateWithID(removeID)
+			this.FinalProperties.RemovePlateAtPosition(platePos)
+			ipo := make([]string, 0, len(rq.InputPlateOrder))
+			for _, id := range rq.InputPlateOrder {
+				if id != removeID {
+					ipo = append(ipo, id)
+				}
+			}
+			rq.InputPlateOrder = ipo
+		}
+	}
 
 	return nil
 }
 
-func (this *Liquidhandler) get_setup_instructions(rq *LHRequest) []liquidhandling.TerminalRobotInstruction {
+// updateIDs
+func (this *Liquidhandler) updateIDs() error {
+
+	// keep track of object ID changes
+	this.plateIDMap = make(map[string]string, len(this.Properties.PlateLookup))
+	for id := range this.Properties.PlateIDLookup {
+		if newID, err := this.FinalProperties.UpdateID(id); err != nil {
+			return err
+		} else {
+			this.plateIDMap[id] = newID
+		}
+	}
+
+	// update component IDs
+	for _, plate := range this.FinalProperties.Plates {
+		for _, row := range plate.Wells() {
+			for _, well := range row {
+				if !well.IsEmpty() {
+					well.Contents().ID = wtype.GetUUID()
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func (this *Liquidhandler) get_setup_instructions() []liquidhandling.TerminalRobotInstruction {
 	instructions := make([]liquidhandling.TerminalRobotInstruction, 0, 1+len(this.Properties.PosLookup))
 
 	//first instruction is always to remove all plates
@@ -556,15 +499,10 @@ func (this *Liquidhandler) get_setup_instructions(rq *LHRequest) []liquidhandlin
 	return instructions
 }
 
-func (this *Liquidhandler) update_metadata(rq *LHRequest) error {
-
-	if _, ok := this.Properties.Driver.(liquidhandling.LowLevelLiquidhandlingDriver); ok {
-		stat := this.Properties.Driver.(liquidhandling.LowLevelLiquidhandlingDriver).UpdateMetaData(this.Properties)
-		if stat.Errorcode == driver.ERR {
-			return wtype.LHError(wtype.LH_ERR_DRIV, stat.Msg)
-		}
+func (this *Liquidhandler) update_metadata() error {
+	if drv, ok := this.Properties.Driver.(liquidhandling.LowLevelLiquidhandlingDriver); ok {
+		return drv.UpdateMetaData(this.Properties).GetError()
 	}
-
 	return nil
 }
 
@@ -595,486 +533,194 @@ func (this *Liquidhandler) update_metadata(rq *LHRequest) error {
 // paused, which should be tricky but possible.
 //
 
-func checkSanityIns(request *LHRequest) {
-	// check instructions for basic sanity
-
-	var errors []string
-
-	printError := func(add bool, format string, args ...interface{}) {
-		str := fmt.Sprintf("internal error: "+format, args...)
-		if add {
-			errors = append(errors, str)
-		}
-		fmt.Println(str)
-	}
-
-	for _, ins := range request.LHInstructions {
-		if ins.Type == wtype.LHIMIX {
-			v := wunit.NewVolume(0.0, "ul")
-			tv := wunit.NewVolume(0.0, "ul")
-			for _, c := range ins.Components {
-				// need to be a bit careful but...
-
-				if c.Vol < 0.0 {
-					printError(true, "negative volume for component %s volume %s", c.CName, c.Vol)
-					continue
-				}
-
-				if c.Vol != 0.0 {
-					v.Add(c.Volume())
-				} else if c.Tvol != 0.0 {
-					if !tv.IsZero() && !tv.EqualTo(c.TotalVolume()) {
-						printError(true, "multiple distinct total volumes specified for instruction %s %s component %s",
-							ins.ID, ins.Results[0].CName, c)
-					}
-
-					tv = c.TotalVolume()
-				}
-			}
-
-			if tv.IsZero() && !v.EqualTo(ins.Results[0].Volume()) {
-				printError(true, "sum of requested volumes does not match resulting volume for instruction %s %s sum %s != result volume %s",
-					ins.ID, ins.Results[0].CName, v, ins.Results[0].Volume())
-			} else if !tv.IsZero() && !tv.EqualTo(ins.Results[0].Volume()) {
-				printError(true, "total volume does not match resulting volume for instruction %s %s total volume %s != result volume %s",
-					ins.ID, ins.Results[0].CName, tv, ins.Results[0].Volume())
-			} else if ins.PlateID != "" {
-				// compare result volume to the well volume
-
-				plat, ok := request.GetPlate(ins.PlateID)
-
-				if !ok {
-					// possibly an issue
-				} else if plat.Welltype.MaxVolume().LessThan(ins.Results[0].Volume()) {
-					printError(false, "volume exceeds well max of plate for instruction %s %s volume %s > well max %s",
-						plat.Type, ins.ID, ins.Results[0].CName, ins.Results[0].Volume(), plat.Welltype.MaxVolume())
-				}
-			}
-		}
-	}
-
-	if len(errors) != 0 {
-		panic(strings.Join(errors, "\n"))
-	}
-
-}
-
-func checkInstructionOrdering(request *LHRequest) {
-	ch := request.InstructionChain
-
-	for {
-		if ch == nil {
-			break
-		}
-
-		onlyAllowOneInstructionType(ch)
-
-		ch = ch.Child
-	}
-}
-
-func onlyAllowOneInstructionType(c *IChain) {
-	m := make(map[string]bool)
-	inss := c.Values
-
-	for _, i := range inss {
-		m[i.InsType()] = true
-	}
-
-	if len(m) != 1 {
-		panic(fmt.Errorf("Only one instruction type per stage is allowed, found %v at stage %d", m, c.Depth))
-	}
-}
-
-func checkDestinationSanity(request *LHRequest) {
-	for _, ins := range request.LHInstructions {
-		// non-mix instructions are fine
-		if ins.Type != wtype.LHIMIX {
-			continue
-		}
-
-		if ins.PlateID == "" || ins.Platetype == "" || ins.Welladdress == "" {
-			fmt.Println("INS ", ins, " NOT WELL FORMED: HAS PlateID ", ins.PlateID != "", " HAS platetype ", ins.Platetype != "", " HAS WELLADDRESS ", ins.Welladdress != "")
-			panic(fmt.Errorf("After layout all mix instructions must have plate IDs, plate types and well addresses"))
-		}
-	}
-}
-
-func anotherSanityCheck(request *LHRequest) {
-	p := map[*wtype.LHComponent]*wtype.LHInstruction{}
-
-	for _, ins := range request.LHInstructions {
-		// we must not share pointers
-
-		for _, c := range ins.Components {
-			ins2, ok := p[c]
-			if ok {
-				panic(fmt.Sprintf("POINTER REUSE: Instructions %s %s for component %s %s", ins.ID, ins2.ID, c.ID, c.CName))
-			}
-
-			p[c] = ins
-		}
-
-		ins2, ok := p[ins.Results[0]]
-
-		if ok {
-			panic(fmt.Sprintf("POINTER REUSE: Instructions %s %s for component %s %s", ins.ID, ins2.ID, ins.Results[0].ID, ins.Results[0].CName))
-		}
-
-		p[ins.Results[0]] = ins
-	}
-}
-
-func forceSanity(request *LHRequest) {
-	for _, ins := range request.LHInstructions {
-		for i := 0; i < len(ins.Components); i++ {
-			ins.Components[i] = ins.Components[i].Dup()
-		}
-
-		ins.Results[0] = ins.Results[0].Dup()
-	}
-}
-
 func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
-	// figure out the output order
 
-	err := set_output_order(request)
+	//add in a plateCache for instruction generation
+	ctx = plateCache.NewContext(ctx)
 
-	if err != nil {
+	// figure out the ordering for the high level instructions
+	if ichain, err := buildInstructionChain(request.LHInstructions); err != nil {
 		return err
+	} else {
+		//sort the instructions within each link of the instruction chain
+		ichain.SortInstructions(request.Options.OutputSort)
+		request.InstructionChain = ichain
+		request.updateWithNewLHInstructions(ichain.GetOrderedLHInstructions())
+		request.OutputOrder = ichain.FlattenInstructionIDs()
 	}
 
 	if request.Options.PrintInstructions {
-		for _, insID := range request.Output_order {
-			ins := request.LHInstructions[insID]
-			fmt.Print(ins.InsType(), " G:", ins.Generation(), " ", ins.ID, " ", wtype.ComponentVector(ins.Components), " ", ins.PlateName, " ID(", ins.PlateID, ") ", ins.Welladdress, ": ", ins.ProductIDs())
-
-			if ins.IsMixInPlace() {
-				fmt.Print(" INPLACE")
-			}
-
-			fmt.Println()
+		fmt.Println("")
+		fmt.Printf("Ordered Instructions:")
+		for _, insID := range request.OutputOrder {
+			fmt.Println(request.LHInstructions[insID])
 		}
 		request.InstructionChain.Print()
 	}
 
 	// assert we should have some instruction ordering
-
-	if len(request.Output_order) == 0 {
-		return fmt.Errorf("Error with instruction sorting: Have %d want %d instructions", len(request.Output_order), len(request.LHInstructions))
+	if len(request.OutputOrder) == 0 {
+		return fmt.Errorf("Error with instruction sorting: Have %d want %d instructions", len(request.OutputOrder), len(request.LHInstructions))
 	}
 
-	// assert that we must keep prompts separate from mixes
-
-	checkInstructionOrdering(request)
-
-	forceSanity(request)
-	// convert requests to volumes and determine required stock concentrations
-	checkSanityIns(request)
-	instructions, stockconcs, err := solution_setup(request, this.Properties)
-
-	if err != nil {
+	// assert that we must keep prompts and splits separate from mixes
+	if err := request.InstructionChain.AssertInstructionsSeparate(); err != nil {
 		return err
 	}
 
-	checkSanityIns(request)
+	// make sure instructions don't share pointers to inputs or outputs
+	request.LHInstructions.DupLiquids()
 
-	request.LHInstructions = instructions
-	request.Stockconcs = stockconcs
+	if err := request.LHInstructions.AssertVolumesNonNegative(); err != nil {
+		return err
+	} else if err := request.LHInstructions.AssertTotalVolumesMatch(); err != nil {
+		return err
+	} else if err := request.LHInstructions.AssertMixResultsCorrect(); err != nil {
+		return err
+	} else if err := request.assertWellNotOverfilled(ctx); err != nil {
+		return err
+	}
+
+	if instructions, stockconcs, err := request.solutionSetup(); err != nil {
+		return errors.WithMessage(err, "during solution setup")
+	} else if err := instructions.AssertVolumesNonNegative(); err != nil {
+		return errors.WithMessage(err, "after solution setup")
+	} else if err := instructions.AssertTotalVolumesMatch(); err != nil {
+		return errors.WithMessage(err, "after solution setup")
+	} else if err := instructions.AssertMixResultsCorrect(); err != nil {
+		return errors.WithMessage(err, "after solution setup")
+	} else {
+		request.LHInstructions = instructions
+		request.Stockconcs = stockconcs
+	}
 
 	// set up the mapping of the outputs
 	// tried moving here to see if we can use results in fixVolumes
-	request, err = this.Layout(ctx, request)
-
-	if err != nil {
+	if err := this.Layout(ctx, request); err != nil {
 		return err
 	}
-	forceSanity(request)
-	anotherSanityCheck(request)
+
+	request.LHInstructions.DupLiquids()
+	if err := request.LHInstructions.AssertNoPointerReuse(); err != nil {
+		return errors.WithMessage(err, "failed to prevent pointer re-use")
+	}
 
 	// assert: all instructions should now be assigned specific plate IDs, types and wells
-	checkDestinationSanity(request)
+	if err := request.LHInstructions.AssertDestinationsSet(); err != nil {
+		return errors.WithMessage(err, "some mix instructions missing destinations after layout")
+	}
 
 	if request.Options.FixVolumes {
 		// see if volumes can be corrected
-		request, err = FixVolumes(request)
-
-		if err != nil {
+		if err := FixVolumes(request, this.Properties.CarryVolume()); err != nil {
 			return err
-		}
-		if request.Options.PrintInstructions {
-			fmt.Println("")
-			fmt.Println("POST VOLUME FIX")
-			fmt.Println("")
-			for _, insID := range request.Output_order {
-				ins := request.LHInstructions[insID]
-				fmt.Print(ins.InsType(), " G:", ins.Generation(), " ", ins.ID, " ", wtype.ComponentVector(ins.Components), " ", ins.PlateName, " ID(", ins.PlateID, ") ", ins.Welladdress, ": ", ins.ProductIDs())
-
-				if ins.IsMixInPlace() {
-					fmt.Print(" INPLACE")
+		} else {
+			if request.Options.PrintInstructions {
+				fmt.Println("\nInstructions Post Volume Fix")
+				for _, insID := range request.OutputOrder {
+					fmt.Println(request.LHInstructions[insID])
 				}
-
-				fmt.Println()
 			}
 		}
 	}
-	checkSanityIns(request)
 
-	// looks at components, determines what inputs are required
-	request, err = this.GetInputs(request)
-
-	if err != nil {
-		return err
+	if err := request.LHInstructions.AssertVolumesNonNegative(); err != nil {
+		return errors.WithMessage(err, "after fixing volumes")
+	} else if err := request.LHInstructions.AssertTotalVolumesMatch(); err != nil {
+		return errors.WithMessage(err, "after fixing volumes")
+	} else if err := request.LHInstructions.AssertMixResultsCorrect(); err != nil {
+		return errors.WithMessage(err, "after fixing volumes")
+	} else if err := request.assertWellNotOverfilled(ctx); err != nil {
+		return errors.WithMessage(err, "after fixing volumes")
 	}
-	// define the input plates
-	// should be merged with the above
-	request, err = input_plate_setup(ctx, request)
 
-	if err != nil {
+	// looks at liquids provided, calculates liquids required
+	if inputSolutions, err := request.getInputs(this.Properties.CarryVolume()); err != nil {
 		return err
+	} else {
+		request.InputSolutions = inputSolutions
+	}
+
+	// define the input plates
+	if err := request.inputPlateSetup(ctx, this.Properties.CarryVolume()); err != nil {
+		return errors.WithMessage(err, "while setting up input plates")
 	}
 
 	// next we need to determine the liquid handler setup
-	request, err = this.Setup(ctx, request)
-	if err != nil {
+	if err := this.Setup(ctx, request); err != nil {
 		return err
 	}
 
+	// final insurance that plate names will be safe
+	request.fixDuplicatePlateNames()
+
 	// remove dummy mix-in-place instructions
+	request.removeDummyInstructions()
 
-	request = removeDummyInstructions(request)
+	//set the well targets
+	if err := this.addWellTargets(); err != nil {
+		return err
+	}
 
-	// now make instructions
-	request, err = this.ExecutionPlan(ctx, request)
+	// make the instructions for executing this request by first building the ITree root, then generating the lower level instructions
+	if root, err := liquidhandling.NewITreeRoot(request.InstructionChain); err != nil {
+		return err
+	} else if final, err := root.Build(ctx, request.Policies(), this.Properties); err != nil {
+		return err
+	} else if tri, err := root.Leaves(); err != nil {
+		return err
+	} else {
+		request.InstructionTree = root
+		request.Instructions = tri
+		this.FinalProperties = final
+	}
 
-	if err != nil {
+	// tipboxes are added during the tree building, so only exist in the final state
+	// copy them accross to the initial properties
+	for pos, tb := range this.FinalProperties.Tipboxes {
+		initialTb := tb.DupKeepIDs()
+		initialTb.Refresh()
+		this.Properties.AddTipBoxTo(pos, initialTb)
+	}
+
+	// revise the volumes - this makes sure the volumes requested are correct
+	if err := this.shrinkVolumes(request); err != nil {
+		return err
+	}
+
+	// make certain the IDs have been changed by the liquidhandling step
+	if err := this.updateIDs(); err != nil {
 		return err
 	}
 
 	// counts tips used in this run -- reads instructions generated above so must happen
 	// after execution planning
-	request, err = this.countTipsUsed(request)
-
-	if err != nil {
+	if estimate, err := this.countTipsUsed(request.Instructions); err != nil {
 		return err
+	} else {
+		request.TipsUsed = estimate
 	}
 
-	// Ensures tip boxes and wastes are correct for initial and final robot states
-	this.Refresh_tipboxes_tipwastes(request)
-
-	// revise the volumes - this makes sure the volumes requested are correct
-	err = this.revise_volumes(request)
-
-	if err != nil {
-		return err
-	}
-	// ensure the after state is correct
-	this.fix_post_ids()
-	err = this.fix_post_names(request)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// resolve question of where something is requested to go
-const NoID = "NOID"
-const NoName = "NONAME"
-const NoWell = "NOWELL"
-
-func assembleLoc(ins *wtype.LHInstruction) string {
-	id := NoID
-	if ins.PlateID != "" {
-		id = ins.PlateID
-	}
-
-	name := NoName
-
-	if ins.PlateName != "" {
-		name = ins.PlateName
-	}
-
-	well := NoWell
-
-	if ins.Welladdress != "" {
-		well = ins.Welladdress
-	}
-
-	return strings.Join([]string{id, name, well}, ":")
-}
-
-// sort out inputs
-func (this *Liquidhandler) GetInputs(request *LHRequest) (*LHRequest, error) {
-	instructions := (*request).LHInstructions
-
-	inputs := make(map[string][]*wtype.LHComponent, 3)
-	vmap := make(map[string]wunit.Volume)
-
-	allinputs := make([]string, 0, 10)
-
-	ordH := make(map[string]int, len(instructions))
-
-	inPlaceLocations := make(map[string]string, len(instructions))
-
-	//	for _, instruction := range instructions {
-	for _, insID := range request.Output_order {
-		// ignore non-mixes
-
-		instruction := instructions[insID]
-
-		if instruction.InsType() != "MIX" {
-			continue
-		}
-
-		components := instruction.Components
-
-		for ix, component := range components {
-			// Ignore components which already exist
-
-			if component.IsInstance() {
-				continue
-			}
-
-			// what if this is a mix in place?
-			if ix == 0 && !component.IsSample() {
-				// these components come in as instances -- hence 1 per well
-				// but if not allocated we need to do so
-				inputs[component.CNID()] = make([]*wtype.LHComponent, 0, 1)
-				inputs[component.CNID()] = append(inputs[component.CNID()], component)
-				allinputs = append(allinputs, component.CNID())
-				vmap[component.CNID()] = component.Volume()
-				component.DeclareInstance()
-
-				// if this already exists do nothing
-				_, ok := ordH[component.CNID()]
-
-				if !ok {
-					ordH[component.CNID()] = len(ordH)
-					// assign like this: ID:NAME:WELL
-					// if ID is blank we call it NOID
-					loc := assembleLoc(instruction)
-					inPlaceLocations[component.CNID()] = loc
-				}
-			} else {
-				cmps, ok := inputs[component.Kind()]
-				if !ok {
-					cmps = make([]*wtype.LHComponent, 0, 3)
-					allinputs = append(allinputs, component.Kind())
-				}
-
-				_, ok = ordH[component.Kind()]
-
-				if !ok {
-					ordH[component.Kind()] = len(ordH)
-				}
-
-				cmps = append(cmps, component)
-				inputs[component.Kind()] = cmps
-
-				// similarly add the volumes up
-
-				vol := vmap[component.Kind()]
-
-				if vol.IsNil() {
-					vol = wunit.NewVolume(0.0, "ul")
-				}
-
-				v2a := wunit.NewVolume(component.Vol, component.Vunit)
-
-				// we have to add the carry volume here
-				// this is roughly per transfer so should be OK
-				v2a.Add(request.CarryVolume)
-				vol.Add(v2a)
-
-				vmap[component.Kind()] = vol
+	// change component IDs in final state to be certain that all compoenent IDs were changed by the liquidhandling
+	for _, p := range this.FinalProperties.Plates {
+		for _, w := range p.Wellcoords {
+			if w.IsUserAllocated() {
+				w.WContents.ID = wtype.GetUUID()
 			}
 		}
 	}
 
-	// work out how much we have and how much we need
-	// need to consider what to do with IDs
-
-	// invert the Hash
-
-	var err error
-	(*request).Input_order, err = OrdinalFromHash(ordH)
-
-	if err != nil {
-		return request, err
+	if err := this.updateComponentNames(request); err != nil {
+		return err
 	}
 
-	var requestinputs map[string][]*wtype.LHComponent
-	requestinputs = request.Input_solutions
-
-	if len(requestinputs) == 0 {
-		requestinputs = make(map[string][]*wtype.LHComponent, 5)
-	}
-
-	vmap2 := make(map[string]wunit.Volume, len(vmap))
-	vmap3 := make(map[string]wunit.Volume, len(vmap))
-
-	for _, k := range allinputs {
-		// vola: how much comes in
-		ar := requestinputs[k]
-		vola := wunit.NewVolume(0.00, "ul")
-		for _, cmp := range ar {
-			vold := wunit.NewVolume(cmp.Vol, cmp.Vunit)
-			vola.Add(vold)
-		}
-		// volb: how much we asked for
-		volb := vmap[k].Dup()
-		volb.Subtract(vola)
-		vmap2[k] = vola
-
-		if volb.GreaterThanFloat(0.0001) {
-			vmap3[k] = volb
-		}
-		// toggle HERE for DEBUG
-		if false {
-			volc := vmap[k]
-			logger.Debug(fmt.Sprint("COMPONENT ", k, " HAVE : ", vola.ToString(), " WANT: ", volc.ToString(), " DIFF: ", volb.ToString()))
-		}
-	}
-
-	(*request).Input_vols_required = vmap
-	(*request).Input_vols_supplied = vmap2
-	(*request).Input_vols_wanting = vmap3
-
-	// add any new inputs
-
-	for k, v := range inputs {
-		if requestinputs[k] == nil {
-			requestinputs[k] = v
-		}
-	}
-
-	(*request).Input_solutions = requestinputs
-
-	return request, nil
-}
-
-func OrdinalFromHash(m map[string]int) ([]string, error) {
-	s := make([]string, len(m))
-
-	// no collisions allowed!
-
-	for k, v := range m {
-		if s[v] != "" {
-			return nil, fmt.Errorf("Error: ordinal %d appears twice!", v)
-		}
-
-		s[v] = k
-	}
-
-	return s, nil
+	return request.assertNoTemporaryPlates(ctx)
 }
 
 // define which labware to use
-func (this *Liquidhandler) GetPlates(ctx context.Context, plates map[string]*wtype.LHPlate, major_layouts map[int][]string, ptype *wtype.LHPlate) (map[string]*wtype.LHPlate, error) {
+func (this *Liquidhandler) GetPlates(ctx context.Context, plates map[string]*wtype.Plate, major_layouts map[int][]string, ptype *wtype.Plate) (map[string]*wtype.Plate, error) {
 	if plates == nil {
-		plates = make(map[string]*wtype.LHPlate, len(major_layouts))
+		plates = make(map[string]*wtype.Plate, len(major_layouts))
 
 		// assign new plates
 		for i := 0; i < len(major_layouts); i++ {
@@ -1089,10 +735,10 @@ func (this *Liquidhandler) GetPlates(ctx context.Context, plates map[string]*wty
 
 	// we should know how many plates we need
 	for k, plate := range plates {
-		if plate.Inst == "" {
-			//stockrequest := execution.GetContext().StockMgr.RequestStock(makePlateStockRequest(plate))
-			//plate.Inst = stockrequest["inst"].(string)
-		}
+		//if plate.Inst == "" {
+		//stockrequest := execution.GetContext().StockMgr.RequestStock(makePlateStockRequest(plate))
+		//plate.Inst = stockrequest["inst"].(string)
+		//}
 
 		plates[k] = plate
 	}
@@ -1101,184 +747,176 @@ func (this *Liquidhandler) GetPlates(ctx context.Context, plates map[string]*wty
 }
 
 // generate setup for the robot
-func (this *Liquidhandler) Setup(ctx context.Context, request *LHRequest) (*LHRequest, error) {
+func (this *Liquidhandler) Setup(ctx context.Context, request *LHRequest) error {
 	// assign the plates to positions
 	// this needs to be parameterizable
 	return this.SetupAgent(ctx, request, this.Properties)
 }
 
 // generate the output layout
-func (this *Liquidhandler) Layout(ctx context.Context, request *LHRequest) (*LHRequest, error) {
+func (this *Liquidhandler) Layout(ctx context.Context, request *LHRequest) error {
 	// assign the results to destinations
 	// again needs to be parameterized
 
 	return this.LayoutAgent(ctx, request, this.Properties)
 }
 
-// make the instructions for executing this request
-func (this *Liquidhandler) ExecutionPlan(ctx context.Context, request *LHRequest) (*LHRequest, error) {
-	// necessary??
-	this.FinalProperties = this.Properties.Dup()
-	temprobot := this.Properties.Dup()
-	//saved_plates := this.Properties.SaveUserPlates()
-
-	var rq *LHRequest
-	var err error
-
-	if request.Options.ExecutionPlannerVersion == "ep3" {
-		rq, err = ExecutionPlanner3(ctx, request, this.Properties)
-	} else {
-		rq, err = this.ExecutionPlanner(ctx, request, this.Properties)
-	}
-
-	this.FinalProperties = temprobot
-
-	//this.Properties.RestoreUserPlates(saved_plates)
-
-	return rq, err
-}
-
 func OutputSetup(robot *liquidhandling.LHProperties) {
-	logger.Debug("DECK SETUP INFO")
-	logger.Debug("Tipboxes: ")
+	fmt.Println("DECK SETUP INFO")
+	fmt.Println("Tipboxes: ")
 
 	for k, v := range robot.Tipboxes {
-		logger.Debug(fmt.Sprintf("%s %s: %s", k, robot.PlateIDLookup[k], v.Type))
+		fmt.Printf("%s %s: %s\n", k, robot.PlateIDLookup[k], v.Type)
 	}
 
-	logger.Debug("Plates:")
+	fmt.Println("Plates:")
 
 	for k, v := range robot.Plates {
 
-		logger.Debug(fmt.Sprintf("%s %s: %s %s", k, robot.PlateIDLookup[k], v.PlateName, v.Type))
+		fmt.Printf("%s %s: %s %s\n", k, robot.PlateIDLookup[k], v.PlateName, v.Type)
 
 		//TODO Deprecate
 		if strings.Contains(v.GetName(), "Input") {
-			wtype.AutoExportPlateCSV(v.GetName()+".csv", v)
+			_, err := wtype.AutoExportPlateCSV(v.GetName()+".csv", v)
+			if err != nil {
+				fmt.Printf("export plate csv (deprecated): %s\n", err.Error())
+			}
 		}
 
 		v.OutputLayout()
 	}
 
-	logger.Debug("Tipwastes: ")
+	fmt.Println("Tipwastes: ")
 
 	for k, v := range robot.Tipwastes {
-		logger.Debug(fmt.Sprintf("%s %s: %s capacity %d", k, robot.PlateIDLookup[k], v.Type, v.Capacity))
+		fmt.Printf("%s %s: %s capacity %d\n", k, robot.PlateIDLookup[k], v.Type, v.Capacity)
 	}
 
 }
 
-//ugly
-func (lh *Liquidhandler) fix_post_ids() {
-	for _, p := range lh.FinalProperties.Plates {
-		for _, w := range p.Wellcoords {
-			if w.IsUserAllocated() {
-				w.WContents.ID = wtype.GetUUID()
-			}
-		}
-	}
-}
+// updateComponentNames the name (CName) of an output liquid can be overridden by the
+// LHInstruction which generated it, so this function updates the name of each liquid
+// to be equal to that which was set in the Mix instruction which created it
+func (lh *Liquidhandler) updateComponentNames(rq *LHRequest) error {
 
-func (lh *Liquidhandler) fix_post_names(rq *LHRequest) error {
-	// Instructions updating a well
-	assignment := make(map[*wtype.LHWell]*wtype.LHInstruction)
-	for _, inst := range rq.LHInstructions {
-		// ignore non -mix instructions
+	// get the instructions in the ordere that they happen
+	orderedInstructions, err := rq.GetOrderedLHInstructions()
+	if err != nil {
+		return err
+	}
+
+	for _, inst := range orderedInstructions {
+		// only mixes update component names
 		if inst.Type != wtype.LHIMIX {
 			continue
 		}
 
-		tx := strings.Split(inst.Results[0].Loc, ":")
-		newid, ok := lh.plateIDMap[tx[0]]
-		if !ok {
-			return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("No output plate mapped to %s", tx[0]))
-		}
-
-		ip, ok := lh.FinalProperties.PlateLookup[newid]
-		if !ok {
+		// find the well from the output's platelocation
+		if pl := inst.Outputs[0].PlateLocation(); pl.IsZero() {
+			return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("malformed output component location \"%s\" for instruction %s", inst.Outputs[0].Loc, inst.ID))
+		} else if newid, ok := lh.plateIDMap[pl.ID]; !ok {
+			return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("No output plate mapped to %s", pl.ID))
+		} else if ip, ok := lh.FinalProperties.PlateLookup[newid]; !ok {
 			return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("No output plate %s", newid))
-		}
-
-		p, ok := ip.(*wtype.LHPlate)
-		if !ok {
+		} else if p, ok := ip.(*wtype.Plate); !ok {
 			return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("Got %s, should have *wtype.LHPlate", reflect.TypeOf(ip)))
+		} else if well, ok := p.WellAt(pl.Coords); !ok {
+			return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("No well %s on plate %s", pl.Coords.FormatA1(), pl.ID))
+		} else {
+			well.WContents.CName = inst.Outputs[0].CName
 		}
-
-		well, ok := p.Wellcoords[tx[1]]
-		if !ok {
-			return wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("No well %s on plate %s", tx[1], tx[0]))
-		}
-
-		oldInst := assignment[well]
-		if oldInst == nil {
-			assignment[well] = inst
-		} else if prev, cur := oldInst.Results[0].Generation(), inst.Results[0].Generation(); prev < cur {
-			assignment[well] = inst
-		}
-	}
-
-	for well, inst := range assignment {
-		well.WContents.CName = inst.Results[0].CName
 	}
 
 	return nil
 }
 
-func dummy(ins *wtype.LHInstruction) bool {
-	if wtype.InsType(ins.Type) == "MIX" && ins.IsMixInPlace() && len(ins.Components) == 1 {
-		// instructions of this form generally mean "do nothing"
-		// but have very useful side-effects
-		return true
-	}
-
-	return false
-}
-
-func removeDummyInstructions(rq *LHRequest) *LHRequest {
-	toRemove := make(map[string]bool, len(rq.LHInstructions))
-	for _, ins := range rq.LHInstructions {
-		if dummy(ins) {
-			toRemove[ins.ID] = true
+//addWellTargets for all the adaptors and plates available
+func (lh *Liquidhandler) addWellTargets() error {
+	for _, head := range lh.Properties.Heads {
+		for _, plate := range lh.Properties.Plates {
+			addWellTargetsPlate(head.Adaptor, plate)
+		}
+		for _, plate := range lh.Properties.Wastes {
+			addWellTargetsPlate(head.Adaptor, plate)
+		}
+		for _, plate := range lh.Properties.Washes {
+			addWellTargetsPlate(head.Adaptor, plate)
+		}
+		for _, tipWaste := range lh.Properties.Tipwastes {
+			addWellTargetsTipWaste(head.Adaptor, tipWaste)
 		}
 	}
+	return nil
+}
 
-	if len(toRemove) == 0 {
-		//no dummies
-		return rq
+const adaptorSpacing = 9.0
+
+func addWellTargetsPlate(adaptor *wtype.LHAdaptor, plate *wtype.Plate) {
+	if adaptor.Manufacturer != "Gilson" {
+		fmt.Println("Not adding well target data for non-gilson adaptor")
+		return
 	}
 
-	oo := make([]string, 0, len(rq.Output_order)-len(toRemove))
-
-	for _, ins := range rq.Output_order {
-		if toRemove[ins] {
-			continue
-		} else {
-			oo = append(oo, ins)
+	if !plate.AreWellTargetsEnabled(adaptor.Params.Multi, adaptorSpacing) {
+		if plate.NRows() < 8 {
+			//declare special so that the driver knows not to expect well targets
+			plate.DeclareSpecial()
 		}
+		return
 	}
 
-	if len(oo) != len(rq.Output_order)-len(toRemove) {
-		panic(fmt.Sprintf("Dummy instruction prune failed: before %d dummies %d after %d", len(rq.Output_order), len(toRemove), len(oo)))
+	//channelPositions should come from the adaptor
+	channelPositions := make([]wtype.Coordinates, 0, adaptor.Params.Multi)
+	for i := 0; i < adaptor.Params.Multi; i++ {
+		channelPositions = append(channelPositions, wtype.Coordinates{Y: float64(i) * adaptorSpacing})
 	}
 
-	rq.Output_order = oo
+	//ystart and count should come from some geometric calculation between channelPositions and well size
+	ystart, count := getWellTargetYStart(plate.NRows())
 
-	// prune instructionChain
+	targets := make([]wtype.Coordinates, count)
+	copy(targets, channelPositions)
 
-	rq.InstructionChain.PruneOut(toRemove)
+	for i := 0; i < count; i++ {
+		targets[i].Y += ystart
+	}
 
-	return rq
+	plate.Welltype.SetWellTargets(adaptor.Name, targets)
 }
 
-func (req *LHRequest) MergedInputOutputPlates() map[string]*wtype.LHPlate {
-	m := make(map[string]*wtype.LHPlate, len(req.Input_plates)+len(req.Output_plates))
-	addToMap(m, req.Input_plates)
-	addToMap(m, req.Output_plates)
-	return m
+func addWellTargetsTipWaste(adaptor *wtype.LHAdaptor, waste *wtype.LHTipwaste) {
+	// this may vary in future but for now we just need to add the following eight entries:
+	ystart := -31.5
+	yinc := 9.0
+	targets := make([]wtype.Coordinates, 0, adaptor.Params.Multi)
+	for i := 0; i < adaptor.Params.Multi; i++ {
+		targets = append(targets, wtype.Coordinates{Y: ystart + float64(i)*yinc})
+	}
+
+	waste.AsWell.SetWellTargets(adaptor.Name, targets)
 }
 
-func addToMap(m, a map[string]*wtype.LHPlate) {
-	for k, v := range a {
-		m[k] = v
+//getWellTargetYStart pmdriver mapping from number of y wells to number of tips and y start
+func getWellTargetYStart(wy int) (float64, int) {
+	// this is pretty simple to start with
+	// OK but there are a few issues with special plate types
+
+	switch wy {
+	case 1:
+		return -31.5, 8
+	case 2:
+		return -13.5, 4
+	case 3:
+		return -9.0, 3 // check
+	case 4:
+		return -4.5, 2
+	case 5:
+		return 0.0, 1
+	case 6:
+		return 0.0, 1
+	case 7:
+		return 0.0, 1
 	}
+
+	return 0.0, 0
 }

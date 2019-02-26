@@ -23,6 +23,7 @@
 package entrez
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -32,7 +33,7 @@ type entrezTest struct {
 
 var tests = []entrezTest{
 
-	entrezTest{
+	{
 		ID: "EF208560",
 	},
 }
@@ -42,6 +43,9 @@ func TestRetrieveRecords(t *testing.T) {
 		_, err := RetrieveRecords(test.ID, "nucleotide", 1, "fasta")
 
 		if err != nil {
+			if err.Error() == fmt.Sprintf("no data returned from looking up query %s in nucleotide", test.ID) {
+				t.Skip("Skipping nil response from ENTREZ")
+			}
 			t.Error(
 				"For", test.ID, "\n",
 				"got error:", err.Error(), "\n",

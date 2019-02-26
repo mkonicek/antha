@@ -110,10 +110,11 @@ func Makeseq(dir string, seq BioSequence) string {
 	if e != nil {
 		panic(e)
 	}
+	defer f.Close() //nolint
 
-	fmt.Fprintf(f, ">%s\n%s\n", seq.Name(), seq.Sequence())
-
-	f.Close()
+	if _, err := fmt.Fprintf(f, ">%s\n%s\n", seq.Name(), seq.Sequence()); err != nil {
+		panic(err)
+	}
 
 	return filename
 }
@@ -196,14 +197,24 @@ func (aln SimpleAlignment) Column(i int) string {
 	return r
 }
 
+// CentreToQuery trims aligned (subject) sequences to only those
+// residues/nucleotides aligned to those in the query. This removes inserts
+// (with respect to the query) from aligned sequences. Gaps within the interior
+// of the aligned sequence are already represented by '-' characters, however
+// gaps at the ends of the aligned sequence must be added here as well. The
+// resulting aligned sequences will have the same length as the query.
 func (aln AlignedSequence) CentreToQuery(q string) (string, string) {
-	s := ""
-	r := ""
+
+	s := "" // query
+	r := "" // aligned
+
+	// Add any gaps to the start of the aligned sequence.
 	for i := 1; i < aln.Qstart; i++ {
 		r += "-"
 		s += string(q[i-1])
 	}
 
+	// Remove any inserts from the aligned sequence.
 	for i := 0; i < len(aln.Qseq); i++ {
 		if aln.Qseq[i] != '-' {
 			r += string(aln.Sseq[i])
@@ -211,10 +222,12 @@ func (aln AlignedSequence) CentreToQuery(q string) (string, string) {
 		}
 	}
 
-	for i := aln.Qend; i < len(q); i++ {
+	// Add any gaps to the end of the aligned sequence.
+	for i := aln.Qend + 1; i <= len(q); i++ {
 		r += "-"
 		s += string(q[i-1])
 	}
 
+	// Return query, aligned.
 	return s, r
 }

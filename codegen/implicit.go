@@ -24,7 +24,7 @@ func (a *ir) getMixes() (ret []*target.Mix) {
 	return
 }
 
-func isIncubator(dev target.Device) bool {
+func isIncubator(dev ast.Device) bool {
 	incubates := dev.CanCompile(ast.Request{
 		Selector: []ast.NameValue{
 			target.DriverSelectorV1ShakerIncubator,
@@ -42,8 +42,8 @@ func isIncubator(dev target.Device) bool {
 
 // Hacky function to identify metadata for incubator setup in lieu of better
 // device modeling;
-func findIncubationPlates(prop *liquidhandling.LHProperties) ([]*wtype.LHPlate, error) {
-	var ret []*wtype.LHPlate
+func findIncubationPlates(prop *liquidhandling.LHProperties) ([]*wtype.Plate, error) {
+	var ret []*wtype.Plate
 	for _, plate := range prop.Plates {
 		switch {
 		case strings.HasSuffix(plate.Type, "bioshake"):
@@ -56,7 +56,7 @@ func findIncubationPlates(prop *liquidhandling.LHProperties) ([]*wtype.LHPlate, 
 	}
 
 	if len(ret) == 0 {
-		return nil, fmt.Errorf("no incubation plates found")
+		return nil, fmt.Errorf("no incubation plates found. Only bioshake plates are currently supported")
 	}
 
 	return ret, nil
@@ -84,7 +84,7 @@ func (a *ir) addImplicitMixInsts() error {
 		)
 	}
 
-	seen := make(map[target.Device]bool)
+	seen := make(map[ast.Device]bool)
 	for d := range a.output {
 		if seen[d.Device] {
 			continue
@@ -134,7 +134,7 @@ func (a *ir) addIzers(deviceOrder []*drun) error {
 		}
 
 		for _, node := range order {
-			inst := node.(target.Inst)
+			inst := node.(ast.Inst)
 			init, ok := inst.(target.Initializer)
 			if ok {
 				a.initializers = append(a.initializers, init.GetInitializers()...)

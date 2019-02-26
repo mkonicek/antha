@@ -7,17 +7,31 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
-type ComponentVector []*LHComponent
+type ComponentVector []*Liquid
 
 func (cv ComponentVector) String() string {
 	s := fmt.Sprintf("%v %v %v", cv.GetNames(), cv.GetVols(), cv.GetWellCoords())
 	return s
 }
 
+//DeleteAllBelowVolume set all components whose volume is below vol to nil
 func (cv ComponentVector) DeleteAllBelowVolume(vol wunit.Volume) {
 	for i := 0; i < len(cv); i++ {
-		if cv[i] != nil && cv[i].Volume().LessThan(vol) {
+		//Volume.isZero() checks that volume is zero or within a small tolerace to zero
+		if v := cv[i].Volume(); v.LessThan(vol) && !wunit.SubtractVolumes(vol, v).IsZero() {
 			cv[i] = nil
+		}
+	}
+}
+
+func (cv ComponentVector) SubtractVolume(vol wunit.Volume) {
+	for i := 0; i < len(cv); i++ {
+		v := cv[i].Volume()
+		v.Subtract(vol)
+		if !v.IsPositive() {
+			cv[i] = nil
+		} else {
+			cv[i].SetVolume(v)
 		}
 	}
 }
@@ -120,4 +134,22 @@ func (cv ComponentVector) getLocTok(x int) []string {
 	}
 
 	return ret
+}
+
+func (cv1 ComponentVector) Equal(cv2 ComponentVector) bool {
+	if len(cv1) != len(cv2) {
+		return false
+	}
+
+	for i := 0; i < len(cv1); i++ {
+		if cv1[i] != nil && cv2[i] != nil {
+			if !cv1[i].EqualTypeVolumeID(cv2[i]) {
+				return false
+			}
+		} else if !(cv1[i] == nil && cv2[i] == nil) {
+			return false
+		}
+	}
+
+	return true
 }

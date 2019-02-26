@@ -29,7 +29,6 @@ import (
 	"github.com/biogo/biogo/io/seqio/fasta"
 	"github.com/biogo/biogo/seq"
 	"github.com/biogo/biogo/seq/linear"
-	"github.com/antha-lang/antha/microArch/logger"
 )
 
 func SeqToBioseq(s seq.Sequence) string {
@@ -48,7 +47,6 @@ func ReadFastaSeqs(fn string) []seq.Sequence {
 	f, e := os.Open(fn)
 
 	if e != nil {
-		logger.Fatal(e.Error())
 		panic(e)
 	}
 

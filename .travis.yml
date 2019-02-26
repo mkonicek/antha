@@ -1,11 +1,11 @@
 language: go
 go:
-- 1.9
+- 1.11
 before_install:
 - sudo apt-get update -qq
 - sudo apt-get install -y libglpk-dev protobuf-compiler
-- go get gopkg.in/alecthomas/gometalinter.v1
-- ln -s `which gometalinter.v1` $GOPATH/bin/gometalinter
+- go get gopkg.in/alecthomas/gometalinter.v2
+- ln -s `which gometalinter.v2` $GOPATH/bin/gometalinter
 - gometalinter --install
 - go get -t ./...
 script: make lint

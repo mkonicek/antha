@@ -6,9 +6,9 @@ import (
 
 func TestVisit(t *testing.T) {
 	g := MakeTestGraph(map[string][]string{
-		"root": []string{"a", "b"},
-		"a":    []string{"c", "d"},
-		"e":    []string{},
+		"root": {"a", "b"},
+		"a":    {"c", "d"},
+		"e":    {},
 	})
 	if res, err := Visit(VisitOpt{
 		Graph: g,
@@ -24,9 +24,9 @@ func TestVisit(t *testing.T) {
 
 func TestVisitBfs(t *testing.T) {
 	g := MakeTestGraph(map[string][]string{
-		"root": []string{"a", "b", "c"},
-		"a":    []string{"c"},
-		"b":    []string{"c"},
+		"root": {"a", "b", "c"},
+		"a":    {"c"},
+		"b":    {"c"},
 	})
 	if res, err := Visit(VisitOpt{
 		Graph:        g,

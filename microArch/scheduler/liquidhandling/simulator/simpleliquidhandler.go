@@ -24,8 +24,6 @@ package simpleliquidhandler
 
 import (
 	"time"
-
-	"github.com/antha-lang/antha/microArch/logger"
 )
 
 var (
@@ -33,9 +31,6 @@ var (
 )
 
 type SimpleLiquidHandler struct {
-	pippetteSpeed float64
-	driveSpeed    float64
-	headState     int
 }
 
 type LHCommandStatus struct {
@@ -78,7 +73,7 @@ func (lh *SimpleLiquidHandler) UnloadTips(head, multi int) LHCommandStatus {
 	return LHCommandStatus{true, 0, "OK"}
 }
 func (lh *SimpleLiquidHandler) SetPipetteSpeed(rate float64) {
-	return
+
 }
 func (lh *SimpleLiquidHandler) SetDriveSpeed(drive string, rate float64) LHCommandStatus {
 	time.Sleep(DEFAULT_SLEEP_TIME)
@@ -105,7 +100,6 @@ func (lh *SimpleLiquidHandler) SetPositionState(position string, state LHPositio
 	return LHCommandStatus{true, 0, "OK"}
 }
 func (lh *SimpleLiquidHandler) GetCapabilities() LHProperties {
-	logger.Fatal("not yet implemented")
 	panic("not yet implemented")
 }
 func (lh *SimpleLiquidHandler) GetCurrentPosition(head int) (string, LHCommandStatus) {
@@ -121,6 +115,5 @@ func (lh *SimpleLiquidHandler) GetHeadState(head int) (string, LHCommandStatus) 
 	return "", LHCommandStatus{true, 0, "OK"}
 }
 func (lh *SimpleLiquidHandler) GetStatus() (LHStatus, LHCommandStatus) {
-	logger.Fatal("not yet implemented")
 	panic("not yet implemented")
 }

@@ -89,10 +89,17 @@ type LHObject interface {
 	SetOffset(Coordinates) error
 	//SetParent Store the offset of the object
 	SetParent(LHObject) error
+	//ClearParent Clear the parent of the object
+	ClearParent()
 	//GetParent
 	GetParent() LHObject
 	//GetID
 	GetID() string
+	//Dup duplicate the object, optionally keeping the IDs identical
+	Duplicate(bool) LHObject
+	//DimensionsString returns a string description of the position and size of the object and its children.
+	//useful for debugging
+	DimensionsString() string
 }
 
 //GetObjectRoot get the highest parent
@@ -178,15 +185,24 @@ type Addressable interface {
 	WellCoordsToCoords(WellCoords, WellReference) (Coordinates, bool)
 }
 
+type Targetted interface {
+	//GetTargetOffset Gets the well target location for the numbered channel of the named adaptor
+	GetTargetOffset(string, int) Coordinates
+	//GetTargets return all the defined targets for the named adaptor
+	GetTargets(string) []Coordinates
+}
+
 //LHContainer a tip or a well or something that holds liquids
 type LHContainer interface {
-	Contents() *LHComponent
+	Contents() *Liquid
 	CurrentVolume() wunit.Volume
 	ResidualVolume() wunit.Volume
 	//WorkingVolume = CurrentVolume - ResidualVolume
-	WorkingVolume() wunit.Volume
+	CurrentWorkingVolume() wunit.Volume
 	//Add to the container
-	AddComponent(*LHComponent) error
+	AddComponent(*Liquid) error
+	//Set the contents of the container
+	SetContents(*Liquid) error
 	//Remove from the container
-	RemoveVolume(wunit.Volume) (*LHComponent, error)
+	RemoveVolume(wunit.Volume) (*Liquid, error)
 }

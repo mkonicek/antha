@@ -27,258 +27,30 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/pkg/errors"
+
+	"reflect"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"github.com/antha-lang/antha/antha/anthalib/wutil/text"
 	"github.com/antha-lang/antha/inventory"
 	anthadriver "github.com/antha-lang/antha/microArch/driver"
-	"github.com/antha-lang/antha/microArch/logger"
-	"reflect"
 )
 
-func TipChosenError(v wunit.Volume, prms *LHProperties) string {
-	return fmt.Sprintf("No tip chosen: Volume %s is too low to be accurately moved by the liquid handler (configured minimum %s, tip minimum %s). Low volume tips may not be available and / or the robot may need to be configured differently", v.ToString(), prms.MinPossibleVolume().ToString(), prms.MinCurrentVolume().ToString())
-}
+// Valid parameter fields for robot instructions
+const (
+	//maxTouchOffset maximum value for TOUCHOFFSET which makes sense - values larger than this are capped to this value
+	maxTouchOffset = 5.0
 
-type SingleChannelBlockInstruction struct {
-	GenericRobotInstruction
-	Type       int
-	What       []string
-	PltFrom    []string
-	PltTo      []string
-	WellFrom   []string
-	WellTo     []string
-	Volume     []wunit.Volume
-	FPlateType []string
-	TPlateType []string
-	FVolume    []wunit.Volume
-	TVolume    []wunit.Volume
-	Prms       *wtype.LHChannelParameter
-}
+	//added to avoid floating point issues with heights in simulator
+	safetyZHeight = 0.05
+)
 
-func NewSingleChannelBlockInstruction() *SingleChannelBlockInstruction {
-	var v SingleChannelBlockInstruction
-	v.Type = SCB
-	v.What = make([]string, 0)
-	v.PltFrom = make([]string, 0)
-	v.PltTo = make([]string, 0)
-	v.WellFrom = make([]string, 0)
-	v.WellTo = make([]string, 0)
-	v.Volume = make([]wunit.Volume, 0)
-	v.FVolume = make([]wunit.Volume, 0)
-	v.TVolume = make([]wunit.Volume, 0)
-	v.FPlateType = make([]string, 0)
-	v.TPlateType = make([]string, 0)
-	v.GenericRobotInstruction.Ins = &v
-	return &v
-}
-
-func (ins *SingleChannelBlockInstruction) AddTransferParams(mct TransferParams) {
-	ins.What = append(ins.What, mct.What)
-	ins.PltFrom = append(ins.PltFrom, mct.PltFrom)
-	ins.PltTo = append(ins.PltTo, mct.PltTo)
-	ins.WellFrom = append(ins.WellFrom, mct.WellFrom)
-	ins.WellTo = append(ins.WellTo, mct.WellTo)
-	ins.Volume = append(ins.Volume, mct.Volume)
-	ins.FPlateType = append(ins.FPlateType, mct.FPlateType)
-	ins.TPlateType = append(ins.TPlateType, mct.TPlateType)
-	ins.FVolume = append(ins.FVolume, mct.FVolume)
-	ins.TVolume = append(ins.TVolume, mct.TVolume)
-	ins.Prms = mct.Channel
-}
-func (ins *SingleChannelBlockInstruction) InstructionType() int {
-	return ins.Type
-}
-
-func (ins *SingleChannelBlockInstruction) GetParameter(name string) interface{} {
-	switch name {
-	case "LIQUIDCLASS":
-		return ins.What
-	case "VOLUME":
-		return ins.Volume
-	case "VOLUNT":
-		return nil
-	case "FROMPLATETYPE":
-		return ins.FPlateType
-	case "WELLFROMVOLUME":
-		return ins.FVolume
-	case "POSFROM":
-		return ins.PltFrom
-	case "POSTO":
-		return ins.PltTo
-	case "WELLFROM":
-		return ins.WellFrom
-	case "PARAMS":
-		return ins.Prms
-	case "PLATFORM":
-		if ins.Prms == nil {
-			return ""
-		}
-		return ins.Prms.Platform
-	case "WELLTO":
-		return ins.WellTo
-	case "WELLTOVOLUME":
-		return ins.TVolume
-	case "TOPLATETYPE":
-		return ins.TPlateType
-	case "INSTRUCTIONTYPE":
-		return ins.InstructionType()
-	}
-	return nil
-}
-
-func tipArrays(multi int) ([]string, []*wtype.LHChannelParameter) {
-	// TODO --> mirroring
-	tt := make([]string, multi)
-	chanA := make([]*wtype.LHChannelParameter, multi)
-
-	return tt, chanA
-}
-
-func (ins *SingleChannelBlockInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
-	usetiptracking := SafeGetBool(policy.Options, "USE_DRIVER_TIP_TRACKING")
-
-	ret := make([]RobotInstruction, 0)
-	// get tips
-	channel, tipp := ChooseChannel(ins.Volume[0], prms)
-
-	tiptype := ""
-
-	if tipp != nil {
-		tiptype = tipp.Type
-	} else {
-		return ret, fmt.Errorf(TipChosenError(ins.Volume[0], prms))
-	}
-
-	ins.Prms = channel
-	pol := GetPolicyFor(policy, ins)
-
-	tt, chanA := tipArrays(channel.Multi)
-	tt[0] = tiptype
-	chanA[0] = channel
-
-	tipget, err := GetTips(ctx, tt, prms, chanA, usetiptracking)
-
-	if err != nil {
-		return ret, err
-	}
-
-	ret = append(ret, tipget...)
-	n_tip_uses := 0
-
-	var last_thing *wtype.LHComponent
-
-	last_thing = nil
-
-	var dirty bool
-
-	for t := 0; t < len(ins.Volume); t++ {
-		newchannel, newtipp := ChooseChannel(ins.Volume[t], prms)
-		newtiptype := ""
-		if newtipp != nil {
-			newtiptype = newtipp.Type
-		} else {
-			return ret, fmt.Errorf(TipChosenError(ins.Volume[t], prms))
-		}
-		mergedchannel := newchannel.MergeWithTip(newtipp)
-		tipp = newtipp
-
-		tvs, err := TransferVolumes(ins.Volume[t], mergedchannel.Minvol, mergedchannel.Maxvol)
-
-		if err != nil {
-			return ret, err
-		}
-		for _, vol := range tvs {
-			// determine whether to change tips
-			change_tips := false
-			change_tips = n_tip_uses > pol["TIP_REUSE_LIMIT"].(int)
-			change_tips = change_tips || channel != newchannel
-			change_tips = change_tips || newtiptype != tiptype
-
-			this_thing := prms.Plates[ins.PltFrom[t]].Wellcoords[ins.WellFrom[t]].Contents()
-
-			if last_thing != nil {
-				if this_thing.CName != last_thing.CName {
-					change_tips = true
-				}
-			}
-
-			// finally ensure we don't contaminate sources
-			if dirty {
-				change_tips = true
-			}
-
-			if change_tips {
-				tipdrp, err := DropTips(tt, prms, chanA)
-				if err != nil {
-					return ret, err
-				}
-				ret = append(ret, tipdrp)
-
-				tt, chanA := tipArrays(newchannel.Multi)
-				tt[0] = newtiptype
-				chanA[0] = newchannel
-				tipget, err := GetTips(ctx, tt, prms, chanA, usetiptracking)
-
-				if err != nil {
-					return ret, err
-				}
-
-				ret = append(ret, tipget...)
-				tiptype = newtiptype
-				channel = newchannel
-				n_tip_uses = 0
-				last_thing = nil
-				dirty = false
-			}
-
-			stci := NewSingleChannelTransferInstruction()
-
-			stci.What = ins.What[t]
-			stci.PltFrom = ins.PltFrom[t]
-			stci.PltTo = ins.PltTo[t]
-			stci.WellFrom = ins.WellFrom[t]
-			stci.WellTo = ins.WellTo[t]
-			stci.Volume = vol
-			stci.FPlateType = ins.FPlateType[t]
-			stci.TPlateType = ins.TPlateType[t]
-			stci.FVolume = wunit.CopyVolume(ins.FVolume[t])
-			stci.TVolume = wunit.CopyVolume(ins.TVolume[t])
-			stci.Prms = channel.MergeWithTip(tipp)
-			stci.TipType = tiptype
-			ret = append(ret, stci)
-			last_thing = this_thing
-
-			// finally check if we are touching a bad liquid
-			// in future we will do this properly, for now we assume
-			// touching any liquid is bad
-
-			npre, premix := pol["PRE_MIX"]
-			npost, postmix := pol["POST_MIX"]
-
-			if pol["DSPREFERENCE"].(int) == 0 && !ins.TVolume[t].IsZero() || premix && npre.(int) > 0 || postmix && npost.(int) > 0 {
-				dirty = true
-			}
-
-			ins.FVolume[t].Subtract(vol)
-			ins.TVolume[t].Add(vol)
-			n_tip_uses += 1
-		}
-
-	}
-	tipdrp, err := DropTips(tt, prms, chanA)
-
-	if err != nil {
-		return ret, err
-	}
-	ret = append(ret, tipdrp)
-
-	return ret, nil
-}
-
-type MultiChannelBlockInstruction struct {
-	GenericRobotInstruction
-	Type       int
+type ChannelBlockInstruction struct {
+	BaseRobotInstruction
+	*InstructionType
 	What       [][]string
 	PltFrom    [][]string
 	PltTo      [][]string
@@ -289,28 +61,37 @@ type MultiChannelBlockInstruction struct {
 	TPlateType [][]string
 	FVolume    [][]wunit.Volume
 	TVolume    [][]wunit.Volume
-	Multi      int
-	Prms       *wtype.LHChannelParameter
+	Component  [][]string                    // array of component name (i.e. Liquid's CName) by [transfer][channel]
+	Prms       [][]*wtype.LHChannelParameter // which channel properties apply to each transfer
+	Multi      []int
 }
 
-func NewMultiChannelBlockInstruction() *MultiChannelBlockInstruction {
-	var v MultiChannelBlockInstruction
-	v.Type = MCB
-	v.What = make([][]string, 0)
-	v.PltFrom = make([][]string, 0)
-	v.PltTo = make([][]string, 0)
-	v.WellFrom = make([][]string, 0)
-	v.WellTo = make([][]string, 0)
-	v.Volume = make([][]wunit.Volume, 0)
-	v.FPlateType = make([][]string, 0)
-	v.TPlateType = make([][]string, 0)
-	v.FVolume = make([][]wunit.Volume, 0)
-	v.TVolume = make([][]wunit.Volume, 0)
-	v.GenericRobotInstruction.Ins = &v
-	return &v
+func NewChannelBlockInstruction() *ChannelBlockInstruction {
+	v := &ChannelBlockInstruction{
+		InstructionType: CBI,
+		What:            [][]string{},
+		PltFrom:         [][]string{},
+		PltTo:           [][]string{},
+		WellFrom:        [][]string{},
+		WellTo:          [][]string{},
+		Volume:          [][]wunit.Volume{},
+		FPlateType:      [][]string{},
+		TPlateType:      [][]string{},
+		FVolume:         [][]wunit.Volume{},
+		TVolume:         [][]wunit.Volume{},
+		Component:       [][]string{},
+		Prms:            [][]*wtype.LHChannelParameter{},
+		Multi:           []int{},
+	}
+	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
+	return v
 }
 
-func (ins *MultiChannelBlockInstruction) AddTransferParams(mct MultiTransferParams) {
+func (ins *ChannelBlockInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.ChannelBlock(ins)
+}
+
+func (ins *ChannelBlockInstruction) AddTransferParams(mct MultiTransferParams) {
 	ins.What = append(ins.What, mct.What())
 	ins.PltFrom = append(ins.PltFrom, mct.PltFrom())
 	ins.PltTo = append(ins.PltTo, mct.PltTo())
@@ -321,50 +102,62 @@ func (ins *MultiChannelBlockInstruction) AddTransferParams(mct MultiTransferPara
 	ins.TPlateType = append(ins.TPlateType, mct.TPlateType())
 	ins.FVolume = append(ins.FVolume, mct.FVolume())
 	ins.TVolume = append(ins.TVolume, mct.TVolume())
+	ins.Component = append(ins.Component, mct.Component())
+	ins.Prms = append(ins.Prms, mct.Channels())
+	ins.Multi = append(ins.Multi, mct.Multi)
 }
 
-func (ins *MultiChannelBlockInstruction) InstructionType() int {
-	return ins.Type
-}
-
-func (ins *MultiChannelBlockInstruction) GetParameter(name string) interface{} {
+func (ins *ChannelBlockInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
-	case "LIQUIDCLASS":
+	case LIQUIDCLASS:
 		return ins.What
-	case "VOLUME":
+	case VOLUME:
 		return ins.Volume
-	case "VOLUNT":
+	case VOLUNT:
 		return nil
-	case "FROMPLATETYPE":
+	case FROMPLATETYPE:
 		return ins.FPlateType
-	case "WELLFROMVOLUME":
+	case WELLFROMVOLUME:
 		return ins.FVolume
-	case "POSFROM":
+	case POSFROM:
 		return ins.PltFrom
-	case "POSTO":
+	case POSTO:
 		return ins.PltTo
-	case "WELLFROM":
+	case WELLFROM:
 		return ins.WellFrom
-	case "PARAMS":
+	case PARAMS:
 		return ins.Prms
-	case "PLATFORM":
-		if ins.Prms == nil {
-			return ""
+	case PLATFORM:
+		ret := []string{}
+		for _, p := range ins.Prms {
+			for _, ppp := range p {
+				var pp string
+
+				if ppp != nil {
+					pp = ppp.Platform
+					break
+				}
+
+				ret = append(ret, pp)
+			}
 		}
-		return ins.Prms.Platform
-	case "WELLTO":
+		return ret
+	case WELLTO:
 		return ins.WellTo
-	case "WELLTOVOLUME":
+	case WELLTOVOLUME:
 		return ins.TVolume
-	case "TOPLATETYPE":
+	case TOPLATETYPE:
 		return ins.TPlateType
-	case "INSTRUCTIONTYPE":
-		return ins.InstructionType()
+	case COMPONENT:
+		return ins.Component
+	case MULTI:
+		return ins.Multi
+	default:
+		return ins.BaseRobotInstruction.GetParameter(name)
 	}
-	return nil
 }
 
-func (ins *MultiChannelBlockInstruction) GetVolumes() []wunit.Volume {
+func (ins *ChannelBlockInstruction) GetVolumes() []wunit.Volume {
 	v := make([]wunit.Volume, 0, 1)
 	seen := make(map[string]bool)
 	for _, vv := range ins.Volume[0] {
@@ -375,6 +168,16 @@ func (ins *MultiChannelBlockInstruction) GetVolumes() []wunit.Volume {
 	}
 
 	return v
+}
+
+func (ins *ChannelBlockInstruction) MaxMulti() int {
+	mx := 0
+	for _, m := range ins.Multi {
+		if m > mx {
+			mx = m
+		}
+	}
+	return mx
 }
 
 func mergeTipsAndChannels(channels []*wtype.LHChannelParameter, tips []*wtype.LHTip) []*wtype.LHChannelParameter {
@@ -393,10 +196,22 @@ func mergeTipsAndChannels(channels []*wtype.LHChannelParameter, tips []*wtype.LH
 	return ret
 }
 
-func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+// By the point at which the ChannelBlockInstruction is used by the Generate method all transfers will share the same policy.
+func (ins *ChannelBlockInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	usetiptracking := SafeGetBool(policy.Options, "USE_DRIVER_TIP_TRACKING")
 
-	pol := GetPolicyFor(policy, ins)
+	pol, err := GetPolicyFor(policy, ins)
+
+	if err != nil {
+		if _, ok := err.(ErrInvalidLiquidType); ok {
+			return []RobotInstruction{}, err
+		}
+		pol, err = GetDefaultPolicy(policy, ins)
+
+		if err != nil {
+			return []RobotInstruction{}, err
+		}
+	}
 	ret := make([]RobotInstruction, 0)
 	// get some tips
 
@@ -406,7 +221,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 	//channels, _, tiptypes, err := ChooseChannels(ins.GetVolumes(), prms)
 	channels, _, tiptypes, err := ChooseChannels(ins.Volume[0], prms)
 	if err != nil {
-		return ret, fmt.Errorf(TipChosenError(ins.GetVolumes()[0], prms))
+		return ret, err
 	}
 
 	tipget, err := GetTips(ctx, tiptypes, prms, channels, usetiptracking)
@@ -415,14 +230,19 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 	}
 	ret = append(ret, tipget...)
 	n_tip_uses := 0
-	var last_thing *wtype.LHComponent
+	var last_thing *wtype.Liquid
 	var dirty bool
 
 	for t := 0; t < len(ins.Volume); t++ {
-		tvols := NewVolumeSet(ins.Prms.Multi)
-		//		vols := NewVolumeSet(ins.Prms.Multi)
-		fvols := NewVolumeSet(ins.Prms.Multi)
-		for i, _ := range ins.Volume[t] {
+		if len(ins.What[t]) == 0 {
+			continue
+		}
+
+		prmSet := ins.Prms[t][0]
+
+		tvols := NewVolumeSet(prmSet.Multi)
+		fvols := NewVolumeSet(prmSet.Multi)
+		for i := range ins.Volume[t] {
 			fvols[i] = wunit.CopyVolume(ins.FVolume[t][i])
 			tvols[i] = wunit.CopyVolume(ins.TVolume[t][i])
 		}
@@ -446,8 +266,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 		for _, vols := range tvs {
 			// determine whether to change tips
 			// INMC: DO THIS PER CHANNEL
-			change_tips := false
-			change_tips = n_tip_uses > pol["TIP_REUSE_LIMIT"].(int)
+			change_tips := n_tip_uses > pol["TIP_REUSE_LIMIT"].(int)
 			change_tips = change_tips || !reflect.DeepEqual(channels, newchannels)
 			change_tips = change_tips || !reflect.DeepEqual(tiptypes, newtiptypes)
 
@@ -468,7 +287,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 			if change_tips {
 				// maybe wrap this as a ChangeTips function call
 				// these need parameters
-				tipdrp, err := DropTips(newtiptypes, prms, channels)
+				tipdrp, err := DropTips(tiptypes, prms, channels)
 
 				if err != nil {
 					return ret, err
@@ -483,13 +302,12 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 
 				ret = append(ret, tipget...)
 				//		tips = newtips
-				tiptypes = newtiptypes
-				channels = newchannels
+
 				n_tip_uses = 0
 				last_thing = nil
 				dirty = false
 			}
-			mci := NewMultiChannelTransferInstruction()
+			mci := NewChannelTransferInstruction()
 			//vols.SetEqualTo(vol, ins.Multi)
 			mci.What = ins.What[t]
 			mci.Volume = vols.GetACopy()
@@ -501,6 +319,7 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 			mci.WellTo = ins.WellTo[t]
 			mci.FPlateType = ins.FPlateType[t]
 			mci.TPlateType = ins.TPlateType[t]
+			mci.Component = ins.Component[t]
 			mci.TipType = newtiptypes
 			//mci.Multi = ins.Multi
 			mci.Multi = countMulti(ins.PltFrom[t])
@@ -550,120 +369,9 @@ func (ins *MultiChannelBlockInstruction) Generate(ctx context.Context, policy *w
 	return ret, nil
 }
 
-type SingleChannelTransferInstruction struct {
-	GenericRobotInstruction
-	Type       int
-	What       string
-	PltFrom    string
-	PltTo      string
-	WellFrom   string
-	WellTo     string
-	Volume     wunit.Volume
-	FPlateType string
-	TPlateType string
-	FVolume    wunit.Volume
-	TVolume    wunit.Volume
-	Prms       *wtype.LHChannelParameter
-	TipType    string
-}
-
-func (scti *SingleChannelTransferInstruction) Params() TransferParams {
-	var tp TransferParams
-	tp.What = scti.What
-	tp.PltFrom = scti.PltFrom
-	tp.PltTo = scti.PltTo
-	tp.WellTo = scti.WellTo
-	tp.WellFrom = scti.WellFrom
-	tp.Volume = wunit.CopyVolume(scti.Volume)
-	tp.FPlateType = scti.FPlateType
-	tp.TPlateType = scti.TPlateType
-	tp.FVolume = wunit.CopyVolume(scti.FVolume)
-	tp.TVolume = wunit.CopyVolume(scti.TVolume)
-	tp.Channel = scti.Prms
-	tp.TipType = scti.TipType
-	return tp
-}
-
-func NewSingleChannelTransferInstruction() *SingleChannelTransferInstruction {
-	var v SingleChannelTransferInstruction
-	v.Type = SCT
-	v.GenericRobotInstruction.Ins = &v
-	return &v
-}
-func (ins *SingleChannelTransferInstruction) InstructionType() int {
-	return ins.Type
-}
-
-func (ins *SingleChannelTransferInstruction) GetParameter(name string) interface{} {
-	switch name {
-	case "LIQUIDCLASS":
-		return ins.What
-	case "VOLUME":
-		return ins.Volume
-	case "VOLUNT":
-		return nil
-	case "FROMPLATETYPE":
-		return ins.FPlateType
-	case "WELLFROMVOLUME":
-		return ins.FVolume
-	case "POSFROM":
-		return ins.PltFrom
-	case "POSTO":
-		return ins.PltTo
-	case "WELLFROM":
-		return ins.WellFrom
-	case "PARAMS":
-		return ins.Prms
-	case "PLATFORM":
-		if ins.Prms == nil {
-			return ""
-		}
-		return ins.Prms.Platform
-	case "WELLTO":
-		return ins.WellTo
-	case "WELLTOVOLUME":
-		return ins.TVolume
-	case "TOPLATETYPE":
-		return ins.TPlateType
-	case "INSTRUCTIONTYPE":
-		return ins.InstructionType()
-	case "TIPTYPE":
-		return ins.TipType
-	}
-	return nil
-}
-
-func (ins *SingleChannelTransferInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
-	ret := make([]RobotInstruction, 0)
-	// make the instructions
-
-	suckinstruction := NewSuckInstruction()
-	suckinstruction.AddTransferParams(ins.Params())
-	suckinstruction.Multi = 1
-	suckinstruction.Prms = ins.Prms
-	ret = append(ret, suckinstruction)
-
-	blowinstruction := NewBlowInstruction()
-	blowinstruction.AddTransferParams(ins.Params())
-	blowinstruction.Multi = 1
-	blowinstruction.Prms = ins.Prms
-	ret = append(ret, blowinstruction)
-
-	/*
-		// commented out pending putting it as part of blow
-		// need to append to reset command
-		resetinstruction := NewResetInstruction()
-		resetinstruction.AddTransferParams(ins.Params())
-		resetinstruction.Prms = ins.Prms
-		ret = append(ret, resetinstruction)
-	*/
-
-	return ret, nil
-}
-
-type MultiChannelTransferInstruction struct {
-	GenericRobotInstruction
-	Type       int
+type ChannelTransferInstruction struct {
+	BaseRobotInstruction
+	*InstructionType
 	What       []string
 	PltFrom    []string
 	PltTo      []string
@@ -677,9 +385,10 @@ type MultiChannelTransferInstruction struct {
 	Multi      int // potentially deprecated
 	Prms       []*wtype.LHChannelParameter
 	TipType    []string
+	Component  []string
 }
 
-func (scti *MultiChannelTransferInstruction) Params(k int) TransferParams {
+func (scti *ChannelTransferInstruction) Params(k int) TransferParams {
 	var tp TransferParams
 	tp.What = scti.What[k]
 	tp.PltFrom = scti.PltFrom[k]
@@ -693,73 +402,77 @@ func (scti *MultiChannelTransferInstruction) Params(k int) TransferParams {
 	tp.TVolume = wunit.CopyVolume(scti.TVolume[k])
 	tp.Channel = scti.Prms[k].Dup()
 	tp.TipType = scti.TipType[k]
+	tp.Component = scti.Component[k]
 	return tp
 }
-func NewMultiChannelTransferInstruction() *MultiChannelTransferInstruction {
-	var v MultiChannelTransferInstruction
-	v.Type = MCT
-	v.What = make([]string, 0)
-	v.PltFrom = make([]string, 0)
-	v.PltTo = make([]string, 0)
-	v.WellFrom = make([]string, 0)
-	v.WellTo = make([]string, 0)
-	v.Volume = make([]wunit.Volume, 0)
-	v.FVolume = make([]wunit.Volume, 0)
-	v.TVolume = make([]wunit.Volume, 0)
-	v.FPlateType = make([]string, 0)
-	v.TPlateType = make([]string, 0)
-	v.TipType = make([]string, 0)
-	v.GenericRobotInstruction.Ins = &v
-	return &v
-}
-func (ins *MultiChannelTransferInstruction) InstructionType() int {
-	return ins.Type
+func NewChannelTransferInstruction() *ChannelTransferInstruction {
+	v := &ChannelTransferInstruction{
+		InstructionType: CTI,
+		What:            []string{},
+		PltFrom:         []string{},
+		PltTo:           []string{},
+		WellFrom:        []string{},
+		WellTo:          []string{},
+		Volume:          []wunit.Volume{},
+		FVolume:         []wunit.Volume{},
+		TVolume:         []wunit.Volume{},
+		FPlateType:      []string{},
+		TPlateType:      []string{},
+		TipType:         []string{},
+		Component:       []string{},
+	}
+	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
+	return v
 }
 
-func (ins *MultiChannelTransferInstruction) GetParameter(name string) interface{} {
+func (ins *ChannelTransferInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.ChannelTransfer(ins)
+}
+
+func (ins *ChannelTransferInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
-	case "LIQUIDCLASS":
+	case LIQUIDCLASS:
 		return ins.What
-	case "VOLUME":
+	case VOLUME:
 		return ins.Volume
-	case "VOLUNT":
+	case VOLUNT:
 		return nil
-	case "FROMPLATETYPE":
+	case FROMPLATETYPE:
 		return ins.FPlateType
-	case "WELLFROMVOLUME":
+	case WELLFROMVOLUME:
 		return ins.FVolume
-	case "POSFROM":
+	case POSFROM:
 		return ins.PltFrom
-	case "POSTO":
+	case POSTO:
 		return ins.PltTo
-	case "WELLFROM":
+	case WELLFROM:
 		return ins.WellFrom
-	case "PARAMS":
+	case PARAMS:
 		return ins.Prms
-	case "PLATFORM":
+	case PLATFORM:
 		if ins.Prms == nil {
 			return ""
 		}
 		return ins.Prms[0].Platform
-	case "WELLTO":
+	case WELLTO:
 		return ins.WellTo
-	case "WELLTOVOLUME":
+	case WELLTOVOLUME:
 		return ins.TVolume
-	case "TOPLATETYPE":
+	case TOPLATETYPE:
 		return ins.TPlateType
-	case "INSTRUCTIONTYPE":
-		return ins.InstructionType()
+	case COMPONENT:
+		return ins.Component
+	default:
+		return ins.BaseRobotInstruction.GetParameter(name)
 	}
-	return nil
 }
 
-func (ins *MultiChannelTransferInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
+func (ins *ChannelTransferInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	ret := make([]RobotInstruction, 0)
 
 	if len(ins.Volume) == 0 {
 		return ret, nil
 	}
-
 	// make the instructions
 
 	suckinstruction := NewSuckInstruction()
@@ -784,34 +497,35 @@ func (ins *MultiChannelTransferInstruction) Generate(ctx context.Context, policy
 }
 
 type StateChangeInstruction struct {
-	GenericRobotInstruction
-	Type     int
+	BaseRobotInstruction
+	*InstructionType
 	OldState *wtype.LHChannelParameter
 	NewState *wtype.LHChannelParameter
 }
 
 func NewStateChangeInstruction(oldstate, newstate *wtype.LHChannelParameter) *StateChangeInstruction {
-	var v StateChangeInstruction
-	v.Type = CCC
-	v.OldState = oldstate
-	v.NewState = newstate
-	v.GenericRobotInstruction.Ins = &v
-	return &v
-}
-func (ins *StateChangeInstruction) InstructionType() int {
-	return ins.Type
+	v := &StateChangeInstruction{
+		InstructionType: CCC,
+		OldState:        oldstate,
+		NewState:        newstate,
+	}
+	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
+	return v
 }
 
-func (ins *StateChangeInstruction) GetParameter(name string) interface{} {
+func (ins *StateChangeInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.StateChange(ins)
+}
+
+func (ins *StateChangeInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
-	case "OLDSTATE":
+	case OLDSTATE:
 		return ins.OldState
-	case "NEWSTATE":
+	case NEWSTATE:
 		return ins.NewState
-	case "INSTRUCTIONTYPE":
-		return ins.InstructionType()
+	default:
+		return ins.BaseRobotInstruction.GetParameter(name)
 	}
-	return nil
 }
 
 func (ins *StateChangeInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
@@ -819,8 +533,8 @@ func (ins *StateChangeInstruction) Generate(ctx context.Context, policy *wtype.L
 }
 
 type ChangeAdaptorInstruction struct {
-	GenericRobotInstruction
-	Type           int
+	BaseRobotInstruction
+	*InstructionType
 	Head           int
 	DropPosition   string
 	GetPosition    string
@@ -830,39 +544,40 @@ type ChangeAdaptorInstruction struct {
 }
 
 func NewChangeAdaptorInstruction(head int, droppos, getpos, oldad, newad, platform string) *ChangeAdaptorInstruction {
-	var v ChangeAdaptorInstruction
-	v.Type = CHA
-	v.Head = head
-	v.DropPosition = droppos
-	v.GetPosition = getpos
-	v.OldAdaptorType = oldad
-	v.NewAdaptorType = newad
-	v.Platform = platform
-	v.GenericRobotInstruction.Ins = &v
-	return &v
-}
-func (ins *ChangeAdaptorInstruction) InstructionType() int {
-	return ins.Type
+	v := &ChangeAdaptorInstruction{
+		InstructionType: CHA,
+		Head:            head,
+		DropPosition:    droppos,
+		GetPosition:     getpos,
+		OldAdaptorType:  oldad,
+		NewAdaptorType:  newad,
+		Platform:        platform,
+	}
+	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
+	return v
 }
 
-func (ins *ChangeAdaptorInstruction) GetParameter(name string) interface{} {
+func (ins *ChangeAdaptorInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.ChangeAdaptor(ins)
+}
+
+func (ins *ChangeAdaptorInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
-	case "HEAD":
+	case HEAD:
 		return ins.Head
-	case "POSFROM":
+	case POSFROM:
 		return ins.DropPosition
-	case "POSTO":
+	case POSTO:
 		return ins.GetPosition
-	case "OLDADAPTOR":
+	case OLDADAPTOR:
 		return ins.OldAdaptorType
-	case "NEWADAPTOR":
+	case NEWADAPTOR:
 		return ins.NewAdaptorType
-	case "INSTRUCTIONTYPE":
-		return ins.InstructionType()
-	case "PLATFORM":
+	case PLATFORM:
 		return ins.Platform
+	default:
+		return ins.BaseRobotInstruction.GetParameter(name)
 	}
-	return nil
 }
 
 func (ins *ChangeAdaptorInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
@@ -878,8 +593,8 @@ func (ins *ChangeAdaptorInstruction) Generate(ctx context.Context, policy *wtype
 }
 
 type LoadTipsMoveInstruction struct {
-	GenericRobotInstruction
-	Type       int
+	BaseRobotInstruction
+	*InstructionType
 	Head       int
 	Well       []string
 	FPosition  []string
@@ -889,36 +604,37 @@ type LoadTipsMoveInstruction struct {
 }
 
 func NewLoadTipsMoveInstruction() *LoadTipsMoveInstruction {
-	var v LoadTipsMoveInstruction
-	v.Type = LDT
-	v.Well = make([]string, 0)
-	v.FPosition = make([]string, 0)
-	v.FPlateType = make([]string, 0)
-	v.GenericRobotInstruction.Ins = &v
-	return &v
-}
-func (ins *LoadTipsMoveInstruction) InstructionType() int {
-	return ins.Type
+	v := &LoadTipsMoveInstruction{
+		InstructionType: LDT,
+		Well:            []string{},
+		FPosition:       []string{},
+		FPlateType:      []string{},
+	}
+	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
+	return v
 }
 
-func (ins *LoadTipsMoveInstruction) GetParameter(name string) interface{} {
+func (ins *LoadTipsMoveInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.LoadTipsMove(ins)
+}
+
+func (ins *LoadTipsMoveInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
-	case "HEAD":
+	case HEAD:
 		return ins.Head
-	case "FROMPLATETYPE":
+	case FROMPLATETYPE:
 		return ins.FPlateType
-	case "POSFROM":
+	case POSFROM:
 		return ins.FPosition
-	case "WELLFROM":
+	case WELLFROM:
 		return ins.Well
-	case "Multi":
+	case MULTI:
 		return ins.Multi
-	case "INSTRUCTIONTYPE":
-		return ins.InstructionType()
-	case "PLATFORM":
+	case PLATFORM:
 		return ins.Platform
+	default:
+		return ins.BaseRobotInstruction.GetParameter(name)
 	}
-	return nil
 }
 
 func (ins *LoadTipsMoveInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
@@ -957,8 +673,8 @@ func (ins *LoadTipsMoveInstruction) Generate(ctx context.Context, policy *wtype.
 }
 
 type UnloadTipsMoveInstruction struct {
-	GenericRobotInstruction
-	Type       int
+	BaseRobotInstruction
+	*InstructionType
 	Head       int
 	PltTo      []string
 	WellTo     []string
@@ -968,36 +684,37 @@ type UnloadTipsMoveInstruction struct {
 }
 
 func NewUnloadTipsMoveInstruction() *UnloadTipsMoveInstruction {
-	var v UnloadTipsMoveInstruction
-	v.Type = UDT
-	v.PltTo = make([]string, 0)
-	v.WellTo = make([]string, 0)
-	v.TPlateType = make([]string, 0)
-	v.GenericRobotInstruction.Ins = &v
-	return &v
-}
-func (ins *UnloadTipsMoveInstruction) InstructionType() int {
-	return ins.Type
+	v := &UnloadTipsMoveInstruction{
+		InstructionType: UDT,
+		PltTo:           []string{},
+		WellTo:          []string{},
+		TPlateType:      []string{},
+	}
+	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
+	return v
 }
 
-func (ins *UnloadTipsMoveInstruction) GetParameter(name string) interface{} {
+func (ins *UnloadTipsMoveInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.UnloadTipsMove(ins)
+}
+
+func (ins *UnloadTipsMoveInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
-	case "HEAD":
+	case HEAD:
 		return ins.Head
-	case "TOPLATETYPE":
+	case TOPLATETYPE:
 		return ins.TPlateType
-	case "POSTO":
+	case POSTO:
 		return ins.PltTo
-	case "WELLTO":
+	case WELLTO:
 		return ins.WellTo
-	case "INSTRUCTIONTYPE":
-		return ins.InstructionType()
-	case "MULTI":
+	case MULTI:
 		return ins.Multi
-	case "PLATFORM":
+	case PLATFORM:
 		return ins.Platform
+	default:
+		return ins.BaseRobotInstruction.GetParameter(name)
 	}
-	return nil
 }
 
 func (ins *UnloadTipsMoveInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
@@ -1036,8 +753,8 @@ func (ins *UnloadTipsMoveInstruction) Generate(ctx context.Context, policy *wtyp
 }
 
 type AspirateInstruction struct {
-	GenericRobotInstruction
-	Type       int
+	BaseRobotInstruction
+	*InstructionType
 	Head       int
 	Volume     []wunit.Volume
 	Overstroke bool
@@ -1046,46 +763,51 @@ type AspirateInstruction struct {
 	What       []string
 	LLF        []bool
 	Platform   string
+	Component  []string
 }
 
 func NewAspirateInstruction() *AspirateInstruction {
-	var v AspirateInstruction
-	v.Type = ASP
-	v.Volume = make([]wunit.Volume, 0)
-	v.Plt = make([]string, 0)
-	v.What = make([]string, 0)
-	v.LLF = make([]bool, 0)
-	v.GenericRobotInstruction.Ins = &v
-	return &v
-}
-func (ins *AspirateInstruction) InstructionType() int {
-	return ins.Type
+	v := &AspirateInstruction{
+		InstructionType: ASP,
+		Volume:          []wunit.Volume{},
+		Plt:             []string{},
+		What:            []string{},
+		LLF:             []bool{},
+		Component:       []string{},
+	}
+	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
+	return v
 }
 
-func (ins *AspirateInstruction) GetParameter(name string) interface{} {
+func (ins *AspirateInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.Aspirate(ins)
+}
+
+func (ins *AspirateInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
-	case "VOLUME":
+	case VOLUME:
 		return ins.Volume
-	case "LIQUIDCLASS":
+	case LIQUIDCLASS:
 		return ins.What
-	case "HEAD":
+	case HEAD:
 		return ins.Head
-	case "MULTI":
+	case MULTI:
 		return ins.Multi
-	case "OVERSTROKE":
+	case OVERSTROKE:
 		return ins.Overstroke
-	case "INSTRUCTIONTYPE":
-		return ins.InstructionType()
-	case "WHAT":
+	case WHAT:
 		return ins.What
-	case "PLATE":
+	case PLATE:
 		return ins.Plt
-	case "LLF":
+	case LLF:
 		return ins.LLF
-	case "PLATFORM":
+	case PLATFORM:
 		return ins.Platform
+	case COMPONENT:
+		return ins.Component
+	default:
+		return ins.BaseRobotInstruction.GetParameter(name)
 	}
-	return nil
 }
 
 func (ins *AspirateInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
@@ -1099,68 +821,68 @@ func (ins *AspirateInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
 	}
 	volumes := make([]float64, len(ins.Volume))
 	for i, vol := range ins.Volume {
-		volumes[i] = vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
+		volumes[i] = vol.ConvertToString("ul")
 	}
 	os := []bool{ins.Overstroke}
 
-	ret := driver.Aspirate(volumes, os, ins.Head, ins.Multi, ins.Plt, ins.What, ins.LLF)
-	if !ret.OK {
-		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
-	}
-
-	return nil
+	return driver.Aspirate(volumes, os, ins.Head, ins.Multi, ins.Plt, ins.What, ins.LLF).GetError()
 }
 
 type DispenseInstruction struct {
-	GenericRobotInstruction
-	Type     int
-	Head     int
-	Volume   []wunit.Volume
-	Multi    int
-	Plt      []string
-	What     []string
-	LLF      []bool
-	Platform string
+	BaseRobotInstruction
+	*InstructionType
+	Head      int
+	Volume    []wunit.Volume
+	Multi     int
+	Plt       []string
+	What      []string
+	LLF       []bool
+	Platform  string
+	Component []string
 }
 
 func NewDispenseInstruction() *DispenseInstruction {
-	var v DispenseInstruction
-	v.Type = DSP
-	v.Volume = make([]wunit.Volume, 0)
-	v.Plt = make([]string, 0)
-	v.What = make([]string, 0)
-	v.LLF = make([]bool, 0)
-	v.GenericRobotInstruction.Ins = &v
-	return &v
-}
-func (ins *DispenseInstruction) InstructionType() int {
-	return ins.Type
+	v := &DispenseInstruction{
+		InstructionType: DSP,
+		Volume:          []wunit.Volume{},
+		Plt:             []string{},
+		What:            []string{},
+		LLF:             []bool{},
+		Component:       []string{},
+	}
+	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
+	return v
 }
 
-func (ins *DispenseInstruction) GetParameter(name string) interface{} {
+func (ins *DispenseInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.Dispense(ins)
+}
+
+func (ins *DispenseInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
-	case "VOLUME":
+	case VOLUME:
 		return ins.Volume
-	case "LIQUIDCLASS":
+	case LIQUIDCLASS:
 		return ins.What
-	case "HEAD":
+	case HEAD:
 		return ins.Head
-	case "MULTI":
+	case MULTI:
 		return ins.Multi
-	case "INSTRUCTIONTYPE":
-		return ins.InstructionType()
-	case "WHAT":
+	case WHAT:
 		return ins.What
-	case "LLF":
+	case LLF:
 		return ins.LLF
-	case "PLT":
+	case PLT:
 		return ins.Plt
-	case "PLATE":
+	case PLATE:
 		return ins.Plt
-	case "PLATFORM":
+	case PLATFORM:
 		return ins.Platform
+	case COMPONENT:
+		return ins.Component
+	default:
+		return ins.BaseRobotInstruction.GetParameter(name)
 	}
-	return nil
 }
 
 func (ins *DispenseInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
@@ -1174,22 +896,16 @@ func (ins *DispenseInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
 	}
 	volumes := make([]float64, len(ins.Volume))
 	for i, vol := range ins.Volume {
-		volumes[i] = vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
+		volumes[i] = vol.ConvertToString("ul")
 	}
 
 	os := []bool{false}
-	ret := driver.Dispense(volumes, os, ins.Head, ins.Multi, ins.Plt, ins.What, ins.LLF)
-	if !ret.OK {
-		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
-	}
-
-	return nil
-
+	return driver.Dispense(volumes, os, ins.Head, ins.Multi, ins.Plt, ins.What, ins.LLF).GetError()
 }
 
 type BlowoutInstruction struct {
-	GenericRobotInstruction
-	Type     int
+	BaseRobotInstruction
+	*InstructionType
 	Head     int
 	Volume   []wunit.Volume
 	Multi    int
@@ -1200,36 +916,37 @@ type BlowoutInstruction struct {
 }
 
 func NewBlowoutInstruction() *BlowoutInstruction {
-	var v BlowoutInstruction
-	v.Type = BLO
-	v.Volume = make([]wunit.Volume, 0)
-	v.GenericRobotInstruction.Ins = &v
-	return &v
-}
-func (ins *BlowoutInstruction) InstructionType() int {
-	return ins.Type
+	v := &BlowoutInstruction{
+		InstructionType: BLO,
+		Volume:          []wunit.Volume{},
+	}
+	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
+	return v
 }
 
-func (ins *BlowoutInstruction) GetParameter(name string) interface{} {
+func (ins *BlowoutInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.Blowout(ins)
+}
+
+func (ins *BlowoutInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
-	case "VOLUME":
+	case VOLUME:
 		return ins.Volume
-	case "HEAD":
+	case HEAD:
 		return ins.Head
-	case "MULTI":
+	case MULTI:
 		return ins.Multi
-	case "INSTRUCTIONTYPE":
-		return ins.InstructionType()
-	case "WHAT":
+	case WHAT:
 		return ins.What
-	case "LLF":
+	case LLF:
 		return ins.LLF
-	case "PLT":
+	case PLT:
 		return ins.Plt
-	case "PLATFORM":
+	case PLATFORM:
 		return ins.Platform
+	default:
+		return ins.BaseRobotInstruction.GetParameter(name)
 	}
-	return nil
 }
 
 func (ins *BlowoutInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
@@ -1243,47 +960,43 @@ func (ins *BlowoutInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
 	}
 	volumes := make([]float64, len(ins.Volume))
 	for i, vol := range ins.Volume {
-		volumes[i] = vol.ConvertTo(wunit.ParsePrefixedUnit("ul"))
+		volumes[i] = vol.ConvertToString("ul")
 	}
 	bo := make([]bool, ins.Multi)
 	for i := 0; i < ins.Multi; i++ {
 		bo[i] = true
 	}
-	ret := driver.Dispense(volumes, bo, ins.Head, ins.Multi, ins.Plt, ins.What, ins.LLF)
-	if !ret.OK {
-		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
-	}
-
-	return nil
+	return driver.Dispense(volumes, bo, ins.Head, ins.Multi, ins.Plt, ins.What, ins.LLF).GetError()
 }
 
 type PTZInstruction struct {
-	GenericRobotInstruction
-	Type    int
+	BaseRobotInstruction
+	*InstructionType
 	Head    int
 	Channel int
 }
 
 func NewPTZInstruction() *PTZInstruction {
-	var v PTZInstruction
-	v.Type = PTZ
-	v.GenericRobotInstruction.Ins = &v
-	return &v
-}
-func (ins *PTZInstruction) InstructionType() int {
-	return ins.Type
+	v := &PTZInstruction{
+		InstructionType: PTZ,
+	}
+	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
+	return v
 }
 
-func (ins *PTZInstruction) GetParameter(name string) interface{} {
+func (ins *PTZInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.PTZ(ins)
+}
+
+func (ins *PTZInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
-	case "HEAD":
+	case HEAD:
 		return ins.Head
-	case "CHANNEL":
+	case CHANNEL:
 		return ins.Channel
-	case "INSTRUCTIONTYPE":
-		return ins.InstructionType()
+	default:
+		return ins.BaseRobotInstruction.GetParameter(name)
 	}
-	return nil
 }
 
 func (ins *PTZInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
@@ -1295,17 +1008,13 @@ func (ins *PTZInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
 	if !ok {
 		return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
 	}
-	ret := driver.ResetPistons(ins.Head, ins.Channel)
-	if !ret.OK {
-		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
-	}
 
-	return nil
+	return driver.ResetPistons(ins.Head, ins.Channel).GetError()
 }
 
 type MoveInstruction struct {
-	GenericRobotInstruction
-	Type      int
+	BaseRobotInstruction
+	*InstructionType
 	Head      int
 	Pos       []string
 	Plt       []string
@@ -1319,49 +1028,65 @@ type MoveInstruction struct {
 }
 
 func NewMoveInstruction() *MoveInstruction {
-	var v MoveInstruction
-	v.Type = MOV
-	v.Plt = make([]string, 0)
-	v.Pos = make([]string, 0)
-	v.Well = make([]string, 0)
-	v.WVolume = make([]wunit.Volume, 0)
-	v.Reference = make([]int, 0)
-	v.OffsetX = make([]float64, 0)
-	v.OffsetY = make([]float64, 0)
-	v.OffsetZ = make([]float64, 0)
-	v.GenericRobotInstruction.Ins = &v
-	return &v
-}
-func (ins *MoveInstruction) InstructionType() int {
-	return ins.Type
+	v := &MoveInstruction{
+		InstructionType: MOV,
+		Plt:             []string{},
+		Pos:             []string{},
+		Well:            []string{},
+		WVolume:         []wunit.Volume{},
+		Reference:       []int{},
+		OffsetX:         []float64{},
+		OffsetY:         []float64{},
+		OffsetZ:         []float64{},
+	}
+	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
+	return v
 }
 
-func (ins *MoveInstruction) GetParameter(name string) interface{} {
+func (ins *MoveInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.Move(ins)
+}
+
+func (ins *MoveInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
-	case "TOWELLVOLUME":
+	case WELLTOVOLUME:
 		return ins.WVolume
-	case "HEAD":
+	case HEAD:
 		return ins.Head
-	case "TOPLATETYPE":
+	case TOPLATETYPE:
 		return ins.Plt
-	case "POSTO":
+	case POSTO:
 		return ins.Pos
-	case "WELLTO":
+	case WELLTO:
 		return ins.Well
-	case "REFERENCE":
+	case REFERENCE:
 		return ins.Reference
-	case "OFFSETX":
+	case OFFSETX:
 		return ins.OffsetX
-	case "OFFSETY":
+	case OFFSETY:
 		return ins.OffsetY
-	case "OFFSETZ":
+	case OFFSETZ:
 		return ins.OffsetZ
-	case "INSTRUCTIONTYPE":
-		return ins.InstructionType()
-	case "PLATFORM":
+	case PLATFORM:
 		return ins.Platform
+	default:
+		return ins.BaseRobotInstruction.GetParameter(name)
 	}
-	return nil
+}
+
+func (ins *MoveInstruction) MaybeMerge(next RobotInstruction) RobotInstruction {
+	switch n := next.(type) {
+	case *AspirateInstruction:
+		return NewMovAsp(ins, n)
+	case *DispenseInstruction:
+		return NewMovDsp(ins, n)
+	case *MixInstruction:
+		return NewMovMix(ins, n)
+	case *BlowoutInstruction:
+		return NewMovBlo(ins, n)
+	default:
+		return ins
+	}
 }
 
 func (ins *MoveInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
@@ -1373,18 +1098,12 @@ func (ins *MoveInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
 	if !ok {
 		return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
 	}
-	ret := driver.Move(ins.Pos, ins.Well, ins.Reference, ins.OffsetX, ins.OffsetY, ins.OffsetZ, ins.Plt, ins.Head)
-	if !ret.OK {
-		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
-	}
-
-	return nil
-
+	return driver.Move(ins.Pos, ins.Well, ins.Reference, ins.OffsetX, ins.OffsetY, ins.OffsetZ, ins.Plt, ins.Head).GetError()
 }
 
 type MoveRawInstruction struct {
-	GenericRobotInstruction
-	Type       int
+	BaseRobotInstruction
+	*InstructionType
 	Head       int
 	What       []string
 	PltFrom    []string
@@ -1400,58 +1119,59 @@ type MoveRawInstruction struct {
 }
 
 func NewMoveRawInstruction() *MoveRawInstruction {
-	var v MoveRawInstruction
-	v.Type = MRW
-	v.What = make([]string, 0)
-	v.PltFrom = make([]string, 0)
-	v.PltTo = make([]string, 0)
-	v.WellFrom = make([]string, 0)
-	v.WellTo = make([]string, 0)
-	v.FPlateType = make([]string, 0)
-	v.TPlateType = make([]string, 0)
-	v.Volume = make([]wunit.Volume, 0)
-	v.FVolume = make([]wunit.Volume, 0)
-	v.TVolume = make([]wunit.Volume, 0)
-	v.GenericRobotInstruction.Ins = &v
-	return &v
-}
-func (ins *MoveRawInstruction) InstructionType() int {
-	return ins.Type
+	v := &MoveRawInstruction{
+		InstructionType: MRW,
+		What:            []string{},
+		PltFrom:         []string{},
+		PltTo:           []string{},
+		WellFrom:        []string{},
+		WellTo:          []string{},
+		FPlateType:      []string{},
+		TPlateType:      []string{},
+		Volume:          []wunit.Volume{},
+		FVolume:         []wunit.Volume{},
+		TVolume:         []wunit.Volume{},
+	}
+	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
+	return v
 }
 
-func (ins *MoveRawInstruction) GetParameter(name string) interface{} {
+func (ins *MoveRawInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.MoveRaw(ins)
+}
+
+func (ins *MoveRawInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
-	case "HEAD":
+	case HEAD:
 		return ins.Head
-	case "LIQUIDCLASS":
+	case LIQUIDCLASS:
 		return ins.What
-	case "VOLUME":
+	case VOLUME:
 		return ins.Volume
-	case "FROMPLATETYPE":
+	case FROMPLATETYPE:
 		return ins.FPlateType
-	case "TOPLATETYPE":
+	case TOPLATETYPE:
 		return ins.TPlateType
-	case "WELLFROMVOLUME":
+	case WELLFROMVOLUME:
 		return ins.FVolume
-	case "WELLTOVOLUME":
+	case WELLTOVOLUME:
 		return ins.TVolume
-	case "POSFROM":
+	case POSFROM:
 		return ins.PltFrom
-	case "POSTO":
+	case POSTO:
 		return ins.PltTo
-	case "WELLFROM":
+	case WELLFROM:
 		return ins.WellFrom
-	case "PARAMS":
+	case PARAMS:
 		return ins.Prms
-	case "PLATFORM":
+	case PLATFORM:
 		if ins.Prms == nil {
 			return ""
 		}
 		return ins.Prms.Platform
-	case "INSTRUCTIONTYPE":
-		return ins.InstructionType()
+	default:
+		return ins.BaseRobotInstruction.GetParameter(name)
 	}
-	return nil
 }
 
 func (ins *MoveRawInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
@@ -1465,13 +1185,12 @@ func (ins *MoveRawInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
 			return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
 		}
 	*/
-	logger.Fatal("Not yet implemented")
 	panic("Not yet implemented")
 }
 
 type LoadTipsInstruction struct {
-	GenericRobotInstruction
-	Type       int
+	BaseRobotInstruction
+	*InstructionType
 	Head       int
 	Pos        []string
 	Well       []string
@@ -1483,44 +1202,45 @@ type LoadTipsInstruction struct {
 }
 
 func NewLoadTipsInstruction() *LoadTipsInstruction {
-	var v LoadTipsInstruction
-	v.Type = LOD
-	v.Channels = make([]int, 0)
-	v.TipType = make([]string, 0)
-	v.HolderType = make([]string, 0)
-	v.Pos = make([]string, 0)
-	v.Well = make([]string, 0)
-	v.GenericRobotInstruction.Ins = &v
-	return &v
-}
-func (ins *LoadTipsInstruction) InstructionType() int {
-	return ins.Type
+	v := &LoadTipsInstruction{
+		InstructionType: LOD,
+		Channels:        []int{},
+		TipType:         []string{},
+		HolderType:      []string{},
+		Pos:             []string{},
+		Well:            []string{},
+	}
+	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
+	return v
 }
 
-func (ins *LoadTipsInstruction) GetParameter(name string) interface{} {
+func (ins *LoadTipsInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.LoadTips(ins)
+}
+
+func (ins *LoadTipsInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
-	case "HEAD":
+	case HEAD:
 		return ins.Head
-	case "CHANNEL":
+	case CHANNEL:
 		return ins.Channels
-	case "TIPTYPE":
+	case TIPTYPE:
 		return ins.TipType
-	case "FROMPLATETYPE":
+	case FROMPLATETYPE:
 		return ins.HolderType
-	case "INSTRUCTIONTYPE":
-		return ins.InstructionType()
-	case "MULTI":
+	case MULTI:
 		return ins.Multi
-	case "WELL":
+	case WELL:
 		return ins.Well
-	case "PLATE":
+	case PLATE:
 		return ins.HolderType
-	case "POS":
+	case POS:
 		return ins.Pos
-	case "PLATFORM":
+	case PLATFORM:
 		return ins.Platform
+	default:
+		return ins.BaseRobotInstruction.GetParameter(name)
 	}
-	return nil
 }
 
 func (ins *LoadTipsInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
@@ -1528,22 +1248,16 @@ func (ins *LoadTipsInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 }
 
 func (ins *LoadTipsInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
-	driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
-	if !ok {
+	if driver, ok := lhdriver.(LowLevelLiquidhandlingDriver); !ok {
 		return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+	} else {
+		return driver.LoadTips(ins.Channels, ins.Head, ins.Multi, ins.HolderType, ins.Pos, ins.Well).GetError()
 	}
-	ret := driver.LoadTips(ins.Channels, ins.Head, ins.Multi, ins.HolderType, ins.Pos, ins.Well)
-	if !ret.OK {
-		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
-	}
-
-	return nil
-
 }
 
 type UnloadTipsInstruction struct {
-	GenericRobotInstruction
-	Type       int
+	BaseRobotInstruction
+	*InstructionType
 	Head       int
 	Channels   []int
 	TipType    []string
@@ -1555,42 +1269,43 @@ type UnloadTipsInstruction struct {
 }
 
 func NewUnloadTipsInstruction() *UnloadTipsInstruction {
-	var v UnloadTipsInstruction
-	v.Type = ULD
-	v.TipType = make([]string, 0)
-	v.HolderType = make([]string, 0)
-	v.Channels = make([]int, 0)
-	v.Pos = make([]string, 0)
-	v.Well = make([]string, 0)
-	v.GenericRobotInstruction.Ins = &v
-	return &v
-}
-func (ins *UnloadTipsInstruction) InstructionType() int {
-	return ins.Type
+	v := &UnloadTipsInstruction{
+		InstructionType: ULD,
+		TipType:         []string{},
+		HolderType:      []string{},
+		Channels:        []int{},
+		Pos:             []string{},
+		Well:            []string{},
+	}
+	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
+	return v
 }
 
-func (ins *UnloadTipsInstruction) GetParameter(name string) interface{} {
+func (ins *UnloadTipsInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.UnloadTips(ins)
+}
+
+func (ins *UnloadTipsInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
-	case "HEAD":
+	case HEAD:
 		return ins.Head
-	case "CHANNEL":
+	case CHANNEL:
 		return ins.Channels
-	case "TIPTYPE":
+	case TIPTYPE:
 		return ins.TipType
-	case "TOPLATETYPE":
+	case TOPLATETYPE:
 		return ins.HolderType
-	case "INSTRUCTIONTYPE":
-		return ins.InstructionType()
-	case "MULTI":
+	case MULTI:
 		return ins.Multi
-	case "WELL":
+	case WELL:
 		return ins.Well
-	case "POS":
+	case POS:
 		return ins.Pos
-	case "PLATFORM":
+	case PLATFORM:
 		return ins.Platform
+	default:
+		return ins.BaseRobotInstruction.GetParameter(name)
 	}
-	return nil
 }
 
 func (ins *UnloadTipsInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
@@ -1598,49 +1313,48 @@ func (ins *UnloadTipsInstruction) Generate(ctx context.Context, policy *wtype.LH
 }
 
 func (ins *UnloadTipsInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
-	driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
-	if !ok {
+	if driver, ok := lhdriver.(LowLevelLiquidhandlingDriver); !ok {
 		return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+	} else {
+		return driver.UnloadTips(ins.Channels, ins.Head, ins.Multi, ins.HolderType, ins.Pos, ins.Well).GetError()
 	}
-	ret := driver.UnloadTips(ins.Channels, ins.Head, ins.Multi, ins.HolderType, ins.Pos, ins.Well)
-	if !ret.OK {
-		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
-	}
-
-	return nil
-
 }
 
 type SuckInstruction struct {
-	GenericRobotInstruction
-	Type       int
-	Head       int
-	What       []string
-	PltFrom    []string
-	WellFrom   []string
-	Volume     []wunit.Volume
-	FPlateType []string
-	FVolume    []wunit.Volume
-	Prms       *wtype.LHChannelParameter
-	Multi      int
-	Overstroke bool
-	TipType    string
+	BaseRobotInstruction
+	*InstructionType
+	Head        int
+	What        []string
+	ComponentID []string // ID, not currently used. Will be needed soon.
+	PltFrom     []string
+	WellFrom    []string
+	Volume      []wunit.Volume
+	FPlateType  []string
+	FVolume     []wunit.Volume
+	Prms        *wtype.LHChannelParameter
+	Multi       int
+	Overstroke  bool
+	TipType     string
+	Component   []string
 }
 
 func NewSuckInstruction() *SuckInstruction {
-	var v SuckInstruction
-	v.Type = SUK
-	v.What = make([]string, 0)
-	v.PltFrom = make([]string, 0)
-	v.WellFrom = make([]string, 0)
-	v.Volume = make([]wunit.Volume, 0)
-	v.FPlateType = make([]string, 0)
-	v.FVolume = make([]wunit.Volume, 0)
-	v.GenericRobotInstruction.Ins = &v
-	return &v
+	v := &SuckInstruction{
+		InstructionType: SUK,
+		What:            []string{},
+		PltFrom:         []string{},
+		WellFrom:        []string{},
+		Volume:          []wunit.Volume{},
+		FPlateType:      []string{},
+		FVolume:         []wunit.Volume{},
+		Component:       []string{},
+	}
+	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
+	return v
 }
-func (ins *SuckInstruction) InstructionType() int {
-	return ins.Type
+
+func (ins *SuckInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.Suck(ins)
 }
 
 func (ins *SuckInstruction) AddTransferParams(tp TransferParams) {
@@ -1653,41 +1367,43 @@ func (ins *SuckInstruction) AddTransferParams(tp TransferParams) {
 	ins.Prms = tp.Channel
 	ins.Head = tp.Channel.Head
 	ins.TipType = tp.TipType
+	ins.Component = append(ins.Component, tp.Component)
 }
 
-func (ins *SuckInstruction) GetParameter(name string) interface{} {
+func (ins *SuckInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
-	case "HEAD":
+	case HEAD:
 		return ins.Head
-	case "LIQUIDCLASS":
+	case LIQUIDCLASS:
 		return ins.What
-	case "VOLUME":
+	case VOLUME:
 		return ins.Volume
-	case "FROMPLATETYPE":
+	case FROMPLATETYPE:
 		return ins.FPlateType
-	case "WELLFROMVOLUME":
+	case WELLFROMVOLUME:
 		return ins.FVolume
-	case "POSFROM":
+	case POSFROM:
 		return ins.PltFrom
-	case "WELLFROM":
+	case WELLFROM:
 		return ins.WellFrom
-	case "PARAMS":
+	case PARAMS:
 		return ins.Prms
-	case "MULTI":
+	case MULTI:
 		return ins.Multi
-	case "OVERSTROKE":
+	case OVERSTROKE:
 		return ins.Overstroke
-	case "PLATFORM":
+	case PLATFORM:
 		if ins.Prms == nil {
 			return ""
 		}
 		return ins.Prms.Platform
-	case "INSTRUCTIONTYPE":
-		return ins.InstructionType()
-	case "TIPTYPE":
+	case TIPTYPE:
 		return ins.TipType
+	case WHICH:
+		return ins.ComponentID
+	default:
+		return ins.BaseRobotInstruction.GetParameter(name)
 	}
-	return nil
 }
 
 func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
@@ -1696,7 +1412,32 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 
 	// this is where the policies come into effect
 
-	pol := GetPolicyFor(policy, ins)
+	pol, err := GetPolicyFor(policy, ins)
+
+	if err != nil {
+		if _, ok := err.(ErrInvalidLiquidType); ok {
+			return []RobotInstruction{}, err
+		}
+		pol, err = GetDefaultPolicy(policy, ins)
+
+		if err != nil {
+			return []RobotInstruction{}, err
+		}
+	}
+
+	// set the defaults
+	ret = append(ret, setDefaults(ins.Head, pol)...)
+	defaultpspeed := SafeGetF64(pol, "DEFAULTPIPETTESPEED")
+
+	allowOutOfRangePipetteSpeeds := SafeGetBool(pol, "OVERRIDEPIPETTESPEED")
+
+	head := prms.GetLoadedHead(ins.Head)
+
+	defaultpspeed, err = checkAndSaften(defaultpspeed, head.Params.Minspd.RawValue(), head.Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds)
+
+	if err != nil {
+		return []RobotInstruction{}, errors.Wrap(err, fmt.Sprintf("setting default pipette speed for policy %s", text.PrettyPrint(pol)))
+	}
 
 	// offsets
 	ofx := SafeGetF64(pol, "ASPXOFFSET")
@@ -1704,15 +1445,23 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	ofz := SafeGetF64(pol, "ASPZOFFSET")
 	ofzadj := SafeGetF64(pol, "OFFSETZADJUST")
 	ofz += ofzadj
+	ofz, err = makeZOffsetSafe(ctx, prms, ofz, ins.Head, ins.PltFrom, ins.TipType)
+	if err != nil {
+		return nil, err
+	}
 
 	mixofx := SafeGetF64(pol, "PRE_MIX_X")
 	mixofy := SafeGetF64(pol, "PRE_MIX_Y")
 	mixofz := SafeGetF64(pol, "PRE_MIX_Z")
 	mixofz += ofzadj
 	final_asp_ref := SafeGetInt(pol, "ASPREFERENCE")
+	mixofz, err = makeZOffsetSafe(ctx, prms, mixofz, ins.Head, ins.PltFrom, ins.TipType)
+	if err != nil {
+		return nil, err
+	}
 
 	//LLF
-	use_llf, any_llf := get_use_llf(policy, ins.Multi, ins.PltFrom, prms)
+	use_llf, any_llf := get_use_llf(pol, ins.Multi, ins.PltFrom, prms)
 	if any_llf {
 		below_surface := SafeGetF64(pol, "LLFBELOWSURFACE")
 		//Is the liquid height in each well higher than below_surface
@@ -1748,8 +1497,6 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		//override ofz
 		ofz = -SafeGetF64(pol, "LLFBELOWSURFACE")
 	}
-
-	pspeed := SafeGetF64(pol, "DEFAULTPIPETTESPEED")
 
 	// do we need to enter slowly?
 	entryspeed, gentlynow := pol["ASPENTRYSPEED"]
@@ -1853,9 +1600,14 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 
 		mixrate := SafeGetF64(pol, "PRE_MIX_RATE")
 
-		changepipspeed := (mixrate == pspeed) && (mixrate > 0.0)
+		changepipspeed := (mixrate != defaultpspeed) && (mixrate > 0.0)
 
 		if changepipspeed {
+			mixrate, err = checkAndSaften(mixrate, head.Params.Minspd.RawValue(), head.Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds)
+			if err != nil {
+				return []RobotInstruction{}, errors.Wrap(err, "setting pre mix pipetting speed")
+			}
+
 			setspd := NewSetPipetteSpeedInstruction()
 			setspd.Head = ins.Head
 			setspd.Channel = -1 // all channels
@@ -1870,7 +1622,7 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 			sps := NewSetPipetteSpeedInstruction()
 			sps.Head = ins.Head
 			sps.Channel = -1 // all channels
-			sps.Speed = pspeed
+			sps.Speed = defaultpspeed
 			ret = append(ret, sps)
 		}
 	}
@@ -1908,9 +1660,14 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 
 	apspeed := SafeGetF64(pol, "ASPSPEED")
 
-	changepspeed := (apspeed == pspeed) && (apspeed > 0.0)
+	changepspeed := (apspeed != defaultpspeed) && (apspeed > 0.0)
 
 	if changepspeed {
+		apspeed, err = checkAndSaften(apspeed, head.Params.Minspd.RawValue(), head.Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds)
+
+		if err != nil {
+			return []RobotInstruction{}, errors.Wrap(err, "setting pipette aspirate speed")
+		}
 		sps := NewSetPipetteSpeedInstruction()
 		sps.Head = ins.Head
 		sps.Channel = -1 // all channels
@@ -1927,7 +1684,7 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	ev, iwantmore := pol["EXTRA_ASP_VOLUME"]
 	if iwantmore {
 		extra_vol := ev.(wunit.Volume)
-		for i, _ := range aspins.Volume {
+		for i := range aspins.Volume {
 			aspins.Volume[i].Add(extra_vol)
 		}
 	}
@@ -1936,6 +1693,7 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	aspins.Overstroke = ins.Overstroke
 	aspins.What = ins.What
 	aspins.Plt = ins.FPlateType
+	aspins.Component = ins.Component
 
 	for i := 0; i < ins.Multi; i++ {
 		aspins.LLF = append(aspins.LLF, use_llf[i])
@@ -1949,17 +1707,19 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		sps := NewSetPipetteSpeedInstruction()
 		sps.Head = ins.Head
 		sps.Channel = -1 // all channels
-		sps.Speed = pspeed
+		sps.Speed = defaultpspeed
 		ret = append(ret, sps)
 	}
 
 	// do we wait
 
-	wait_time, wait := pol["ASP_WAIT"]
+	_, wait := pol["ASP_WAIT"]
 
-	if wait {
+	wait_time := SafeGetF64(pol, "ASP_WAIT")
+
+	if wait && wait_time > 0.0 {
 		waitins := NewWaitInstruction()
-		waitins.Time = wait_time.(float64)
+		waitins.Time = wait_time
 		ret = append(ret, waitins)
 	}
 
@@ -1992,8 +1752,8 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 }
 
 type BlowInstruction struct {
-	GenericRobotInstruction
-	Type       int
+	BaseRobotInstruction
+	*InstructionType
 	Head       int
 	What       []string
 	PltTo      []string
@@ -2004,55 +1764,60 @@ type BlowInstruction struct {
 	Prms       *wtype.LHChannelParameter
 	Multi      int
 	TipType    string
+	Component  []string
 }
 
 func NewBlowInstruction() *BlowInstruction {
-	var v BlowInstruction
-	v.Type = BLW
-	v.What = make([]string, 0)
-	v.PltTo = make([]string, 0)
-	v.WellTo = make([]string, 0)
-	v.Volume = make([]wunit.Volume, 0)
-	v.TPlateType = make([]string, 0)
-	v.TVolume = make([]wunit.Volume, 0)
-	v.GenericRobotInstruction.Ins = &v
-	return &v
-}
-func (ins *BlowInstruction) InstructionType() int {
-	return ins.Type
+	v := &BlowInstruction{
+		InstructionType: BLW,
+		What:            []string{},
+		PltTo:           []string{},
+		WellTo:          []string{},
+		Volume:          []wunit.Volume{},
+		TPlateType:      []string{},
+		TVolume:         []wunit.Volume{},
+		Component:       []string{},
+	}
+	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
+	return v
 }
 
-func (ins *BlowInstruction) GetParameter(name string) interface{} {
+func (ins *BlowInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.Blow(ins)
+}
+
+func (ins *BlowInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
-	case "HEAD":
+	case HEAD:
 		return ins.Head
-	case "LIQUIDCLASS":
+	case LIQUIDCLASS:
 		return ins.What
-	case "VOLUME":
+	case VOLUME:
 		return ins.Volume
-	case "TOPLATETYPE":
+	case TOPLATETYPE:
 		return ins.TPlateType
-	case "WELLTOVOLUME":
+	case WELLTOVOLUME:
 		return ins.TVolume
-	case "POSTO":
+	case POSTO:
 		return ins.PltTo
-	case "WELLTO":
+	case WELLTO:
 		return ins.WellTo
-	case "PARAMS":
+	case PARAMS:
 		return ins.Prms
-	case "PLATFORM":
+	case PLATFORM:
 		if ins.Prms == nil {
 			return ""
 		}
 		return ins.Prms.Platform
-	case "MULTI":
+	case MULTI:
 		return ins.Multi
-	case "INSTRUCTIONTYPE":
-		return ins.InstructionType()
-	case "TIPTYPE":
+	case TIPTYPE:
 		return ins.TipType
+	case COMPONENT:
+		return ins.Component
+	default:
+		return ins.BaseRobotInstruction.GetParameter(name)
 	}
-	return nil
 }
 
 func (ins *BlowInstruction) AddTransferParams(tp TransferParams) {
@@ -2065,6 +1830,7 @@ func (ins *BlowInstruction) AddTransferParams(tp TransferParams) {
 	ins.Prms = tp.Channel
 	ins.Head = tp.Channel.Head
 	ins.TipType = tp.TipType
+	ins.Component = append(ins.Component, tp.Component)
 }
 func (scti *BlowInstruction) Params() MultiTransferParams {
 	tp := NewMultiTransferParams(scti.Multi)
@@ -2085,26 +1851,76 @@ func (scti *BlowInstruction) Params() MultiTransferParams {
 	return tp
 }
 
+func setDefaults(head int, pol wtype.LHPolicy) []RobotInstruction {
+	ret := make([]RobotInstruction, 0)
+
+	// pipetting speed
+	defaultpspeed := SafeGetF64(pol, "DEFAULTPIPETTESPEED")
+	setspd := NewSetPipetteSpeedInstruction()
+	setspd.Head = head
+	setspd.Channel = -1 // all channels
+	setspd.Speed = defaultpspeed
+	ret = append(ret, setspd)
+
+	// Z move speed
+	spd := NewSetDriveSpeedInstruction()
+	spd.Drive = "Z"
+	spd.Speed = pol["DEFAULTZSPEED"].(float64)
+	ret = append(ret, spd)
+
+	return ret
+}
+
 func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	ret := make([]RobotInstruction, 0)
 	// apply policies here
 
-	pol := GetPolicyFor(policy, ins)
+	pol, err := GetPolicyFor(policy, ins)
+
+	if err != nil {
+		if _, ok := err.(ErrInvalidLiquidType); ok {
+			return []RobotInstruction{}, err
+		}
+		pol, err = GetDefaultPolicy(policy, ins)
+
+		if err != nil {
+			return []RobotInstruction{}, err
+		}
+	}
+
+	allowOutOfRangePipetteSpeeds := SafeGetBool(pol, "OVERRIDEPIPETTESPEED")
+
+	head := prms.GetLoadedHead(ins.Head)
+
+	// change pipette speed?
+	defaultpspeed := SafeGetF64(pol, "DEFAULTPIPETTESPEED")
+	defaultpspeed, err = checkAndSaften(defaultpspeed, head.Params.Minspd.RawValue(), head.Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds)
+
+	if err != nil {
+		return []RobotInstruction{}, errors.Wrap(err, "setting pipette aspirate speed")
+	}
+
+	// set the defaults
+	ret = append(ret, setDefaults(ins.Head, pol)...)
+
 	// first, are we breaking up the move?
 
 	ofx := SafeGetF64(pol, "DSPXOFFSET")
 	ofy := SafeGetF64(pol, "DSPYOFFSET")
 	ofz := SafeGetF64(pol, "DSPZOFFSET")
 	ofzadj := SafeGetF64(pol, "OFFSETZADJUST")
-
 	ofz += ofzadj
+	ofz, err = makeZOffsetSafe(ctx, prms, ofz, ins.Head, ins.PltTo, ins.TipType)
+	if err != nil {
+		return nil, err
+	}
 
 	ref := SafeGetInt(pol, "DSPREFERENCE")
 	entryspeed := SafeGetF64(pol, "DSPENTRYSPEED")
 	defaultspeed := SafeGetF64(pol, "DEFAULTZSPEED")
 
 	//LLF
-	use_llf, any_llf := get_use_llf(policy, ins.Multi, ins.PltTo, prms)
+	use_llf, any_llf := get_use_llf(pol, ins.Multi, ins.PltTo, prms)
 	if any_llf {
 		//override reference
 		ref = 2 //liquid level
@@ -2114,7 +1930,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 
 	var gentlydoesit bool
 
-	if entryspeed != defaultspeed {
+	if entryspeed > 0.0 && entryspeed != defaultspeed {
 		gentlydoesit = true
 	}
 
@@ -2179,17 +1995,21 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 
 	ret = append(ret, mov)
 
-	// change pipette speed?
-	pspeed := SafeGetF64(pol, "DEFAULTPIPETTESPEED")
 	dpspeed := SafeGetF64(pol, "DSPSPEED")
 
 	var setpspeed bool
 
-	if pspeed != dpspeed && dpspeed != 0.0 {
+	if defaultpspeed != dpspeed && dpspeed != 0.0 {
 		setpspeed = true
 	}
 
 	if setpspeed {
+		dpspeed, err = checkAndSaften(dpspeed, head.Params.Minspd.RawValue(), head.Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds)
+
+		if err != nil {
+			return []RobotInstruction{}, errors.Wrap(err, "setting pipette dispense speed")
+		}
+
 		sps := NewSetPipetteSpeedInstruction()
 		sps.Head = ins.Head
 		sps.Channel = -1 // all channels
@@ -2202,8 +2022,6 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	weneedtoreset := true
 
 	justblowout := SafeGetBool(pol, "JUSTBLOWOUT")
-
-	// bit of a horrible hack... we need to fix this soon
 
 	if justblowout {
 		blowoutvolume := SafeGetF64(pol, "BLOWOUTVOLUME")
@@ -2235,14 +2053,15 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		dspins.Volume = ins.Volume
 
 		extra_vol := SafeGetVolume(pol, "EXTRA_DISP_VOLUME")
-		if extra_vol.GreaterThan(wunit.ZeroVolume()) {
-			for i, _ := range dspins.Volume {
+		if extra_vol.IsPositive() {
+			for i := range dspins.Volume {
 				dspins.Volume[i].Add(extra_vol)
 			}
 		}
 		dspins.Multi = ins.Multi
 		dspins.Plt = ins.TPlateType
 		dspins.What = ins.What
+		dspins.Component = ins.Component
 
 		for i := 0; i < ins.Multi; i++ {
 			dspins.LLF = append(dspins.LLF, use_llf[i])
@@ -2257,7 +2076,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		sps := NewSetPipetteSpeedInstruction()
 		sps.Head = ins.Head
 		sps.Channel = -1 // all channels
-		sps.Speed = pspeed
+		sps.Speed = defaultpspeed
 		ret = append(ret, sps)
 	}
 
@@ -2305,6 +2124,11 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		pmzoff := SafeGetF64(pol, "POST_MIX_Z")
 		pmzoff += ofzadj
 
+		pmzoff, err = makeZOffsetSafe(ctx, prms, pmzoff, ins.Head, ins.PltTo, ins.TipType)
+		if err != nil {
+			return nil, err
+		}
+
 		for k := 0; k < ins.Multi; k++ {
 			mix.OffsetZ = append(mix.OffsetZ, pmzoff)
 		}
@@ -2337,7 +2161,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 			if override || tb.Tiptype.Filtered {
 				mixvol = ins.Prms.Maxvol.ConvertToString("ul")
 			} else {
-				return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("Setting POST_MIX_VOLME to %s cannot be achieved with current tip (type %s) volume limits %v", vmixvol.ToString(), ins.TipType, ins.Prms))
+				return ret, wtype.LHError(wtype.LH_ERR_POLICY, fmt.Sprintf("Setting POST_MIX_VOLUME to %s cannot be achieved with current tip (type %s) volume limits %v, instruction details: %s", vmixvol.ToString(), ins.TipType, ins.Prms, text.PrettyPrint(ins)))
 			}
 		}
 
@@ -2361,11 +2185,16 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		//mixrate, changespeed := pol["POST_MIX_RATE"]
 		var changespeed bool
 		mixrate := SafeGetF64(pol, "POST_MIX_RATE")
-		if mixrate != pspeed && mixrate != 0.0 {
+		if mixrate != defaultpspeed && mixrate != 0.0 {
 			changespeed = true
 		}
 
 		if changespeed {
+			mixrate, err = checkAndSaften(mixrate, head.Params.Minspd.RawValue(), head.Params.Maxspd.RawValue(), allowOutOfRangePipetteSpeeds)
+
+			if err != nil {
+				return []RobotInstruction{}, errors.Wrap(err, "setting post mix pipetting speed")
+			}
 			setspd := NewSetPipetteSpeedInstruction()
 			setspd.Head = ins.Head
 			setspd.Channel = -1 // all channels
@@ -2380,7 +2209,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 			sps := NewSetPipetteSpeedInstruction()
 			sps.Head = ins.Head
 			sps.Channel = -1 // all channels
-			sps.Speed = pspeed
+			sps.Speed = defaultpspeed
 			ret = append(ret, sps)
 		}
 
@@ -2398,6 +2227,9 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 
 	if touch_off {
 		touch_offset := SafeGetF64(pol, "TOUCHOFFSET")
+		if touch_offset > maxTouchOffset {
+			touch_offset = maxTouchOffset
+		}
 		mov := NewMoveInstruction()
 		mov.Head = ins.Head
 		mov.Pos = ins.PltTo
@@ -2423,6 +2255,15 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		ret = append(ret, mov)
 	}
 
+	if gentlydoesit {
+		// reset the drive speed
+		spd := NewSetDriveSpeedInstruction()
+		spd.Drive = "Z"
+		spd.Speed = pol["DEFAULTZSPEED"].(float64)
+		ret = append(ret, spd)
+
+	}
+
 	// now do we reset?
 
 	// allow policies to override completely
@@ -2441,35 +2282,36 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 }
 
 type SetPipetteSpeedInstruction struct {
-	GenericRobotInstruction
-	Type    int
+	BaseRobotInstruction
+	*InstructionType
 	Head    int
 	Channel int
 	Speed   float64
 }
 
 func NewSetPipetteSpeedInstruction() *SetPipetteSpeedInstruction {
-	var v SetPipetteSpeedInstruction
-	v.Type = SPS
-	v.GenericRobotInstruction.Ins = &v
-	return &v
-}
-func (ins *SetPipetteSpeedInstruction) InstructionType() int {
-	return ins.Type
+	v := &SetPipetteSpeedInstruction{
+		InstructionType: SPS,
+	}
+	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
+	return v
 }
 
-func (ins *SetPipetteSpeedInstruction) GetParameter(name string) interface{} {
+func (ins *SetPipetteSpeedInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.SetPipetteSpeed(ins)
+}
+
+func (ins *SetPipetteSpeedInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
-	case "HEAD":
+	case HEAD:
 		return ins.Head
-	case "CHANNEL":
+	case CHANNEL:
 		return ins.Channel
-	case "SPEED":
+	case SPEED:
 		return ins.Speed
-	case "INSTRUCTIONTYPE":
-		return ins.InstructionType()
+	default:
+		return ins.BaseRobotInstruction.GetParameter(name)
 	}
-	return nil
 }
 
 func (ins *SetPipetteSpeedInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
@@ -2477,46 +2319,41 @@ func (ins *SetPipetteSpeedInstruction) Generate(ctx context.Context, policy *wty
 }
 
 func (ins *SetPipetteSpeedInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
-	driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
-	if !ok {
+	if driver, ok := lhdriver.(LowLevelLiquidhandlingDriver); !ok {
 		return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+	} else {
+		return driver.SetPipetteSpeed(ins.Head, ins.Channel, ins.Speed).GetError()
 	}
-	ret := driver.SetPipetteSpeed(ins.Head, ins.Channel, ins.Speed)
-	if !ret.OK {
-		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
-	}
-
-	return nil
-
 }
 
 type SetDriveSpeedInstruction struct {
-	GenericRobotInstruction
-	Type  int
+	BaseRobotInstruction
+	*InstructionType
 	Drive string
 	Speed float64
 }
 
 func NewSetDriveSpeedInstruction() *SetDriveSpeedInstruction {
-	var v SetDriveSpeedInstruction
-	v.Type = SDS
-	v.GenericRobotInstruction.Ins = &v
-	return &v
-}
-func (ins *SetDriveSpeedInstruction) InstructionType() int {
-	return ins.Type
+	v := &SetDriveSpeedInstruction{
+		InstructionType: SDS,
+	}
+	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
+	return v
 }
 
-func (ins *SetDriveSpeedInstruction) GetParameter(name string) interface{} {
+func (ins *SetDriveSpeedInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.SetDriveSpeed(ins)
+}
+
+func (ins *SetDriveSpeedInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
-	case "DRIVE":
+	case DRIVE:
 		return ins.Drive
-	case "SPEED":
+	case SPEED:
 		return ins.Speed
-	case "INSTRUCTIONTYPE":
-		return ins.InstructionType()
+	default:
+		return ins.BaseRobotInstruction.GetParameter(name)
 	}
-	return nil
 }
 
 func (ins *SetDriveSpeedInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
@@ -2524,36 +2361,32 @@ func (ins *SetDriveSpeedInstruction) Generate(ctx context.Context, policy *wtype
 }
 
 func (ins *SetDriveSpeedInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
-	driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
-	if !ok {
+	if driver, ok := lhdriver.(LowLevelLiquidhandlingDriver); !ok {
 		return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+	} else {
+		return driver.SetDriveSpeed(ins.Drive, ins.Speed).GetError()
 	}
-	ret := driver.SetDriveSpeed(ins.Drive, ins.Speed)
-	if !ret.OK {
-		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
-	}
-
-	return nil
-
 }
 
 type InitializeInstruction struct {
-	GenericRobotInstruction
-	Type int
+	BaseRobotInstruction
+	*InstructionType
 }
 
 func NewInitializeInstruction() *InitializeInstruction {
-	var v InitializeInstruction
-	v.Type = INI
-	v.GenericRobotInstruction.Ins = &v
-	return &v
-}
-func (ins *InitializeInstruction) InstructionType() int {
-	return ins.Type
+	v := &InitializeInstruction{
+		InstructionType: INI,
+	}
+	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
+	return v
 }
 
-func (ins *InitializeInstruction) GetParameter(name string) interface{} {
-	return nil
+func (ins *InitializeInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.Initialize(ins)
+}
+
+func (ins *InitializeInstruction) GetParameter(name InstructionParameter) interface{} {
+	return ins.BaseRobotInstruction.GetParameter(name)
 }
 
 func (ins *InitializeInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
@@ -2561,32 +2394,28 @@ func (ins *InitializeInstruction) Generate(ctx context.Context, policy *wtype.LH
 }
 
 func (ins *InitializeInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
-	ret := lhdriver.Initialize()
-	if !ret.OK {
-		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
-	}
-
-	return nil
-
+	return lhdriver.Initialize().GetError()
 }
 
 type FinalizeInstruction struct {
-	GenericRobotInstruction
-	Type int
+	BaseRobotInstruction
+	*InstructionType
 }
 
 func NewFinalizeInstruction() *FinalizeInstruction {
-	var v FinalizeInstruction
-	v.Type = FIN
-	v.GenericRobotInstruction.Ins = &v
-	return &v
-}
-func (ins *FinalizeInstruction) InstructionType() int {
-	return ins.Type
+	v := &FinalizeInstruction{
+		InstructionType: FIN,
+	}
+	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
+	return v
 }
 
-func (ins *FinalizeInstruction) GetParameter(name string) interface{} {
-	return nil
+func (ins *FinalizeInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.Finalize(ins)
+}
+
+func (ins *FinalizeInstruction) GetParameter(name InstructionParameter) interface{} {
+	return ins.BaseRobotInstruction.GetParameter(name)
 }
 
 func (ins *FinalizeInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
@@ -2594,39 +2423,34 @@ func (ins *FinalizeInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 }
 
 func (ins *FinalizeInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
-	ret := lhdriver.Finalize()
-	if !ret.OK {
-		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
-	}
-
-	return nil
-
+	return lhdriver.Finalize().GetError()
 }
 
 type WaitInstruction struct {
-	GenericRobotInstruction
-	Type int
+	BaseRobotInstruction
+	*InstructionType
 	Time float64
 }
 
 func NewWaitInstruction() *WaitInstruction {
-	var v WaitInstruction
-	v.Type = WAI
-	v.GenericRobotInstruction.Ins = &v
-	return &v
-}
-func (ins *WaitInstruction) InstructionType() int {
-	return ins.Type
+	v := &WaitInstruction{
+		InstructionType: WAI,
+	}
+	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
+	return v
 }
 
-func (ins *WaitInstruction) GetParameter(name string) interface{} {
+func (ins *WaitInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.Wait(ins)
+}
+
+func (ins *WaitInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
-	case "TIME":
+	case TIME:
 		return ins.Time
-	case "INSTRUCTIONTYPE":
-		return ins.InstructionType()
+	default:
+		return ins.BaseRobotInstruction.GetParameter(name)
 	}
-	return nil
 }
 
 func (ins *WaitInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
@@ -2634,22 +2458,16 @@ func (ins *WaitInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 }
 
 func (ins *WaitInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
-	driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
-	if !ok {
+	if driver, ok := lhdriver.(LowLevelLiquidhandlingDriver); !ok {
 		return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", ins)
+	} else {
+		return driver.Wait(ins.Time).GetError()
 	}
-	ret := driver.Wait(ins.Time)
-	if !ret.OK {
-		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
-	}
-
-	return nil
-
 }
 
 type LightsOnInstruction struct {
-	GenericRobotInstruction
-	Type       int
+	BaseRobotInstruction
+	*InstructionType
 	What       []string
 	PltFrom    []string
 	PltTo      []string
@@ -2664,23 +2482,25 @@ type LightsOnInstruction struct {
 }
 
 func NewLightsOnInstruction() *LightsOnInstruction {
-	var v LightsOnInstruction
-	v.Type = LON
-	v.What = make([]string, 0)
-	v.PltFrom = make([]string, 0)
-	v.PltTo = make([]string, 0)
-	v.WellFrom = make([]string, 0)
-	v.WellTo = make([]string, 0)
-	v.Volume = make([]wunit.Volume, 0)
-	v.GenericRobotInstruction.Ins = &v
-	return &v
-}
-func (ins *LightsOnInstruction) InstructionType() int {
-	return ins.Type
+	v := &LightsOnInstruction{
+		InstructionType: LON,
+		What:            []string{},
+		PltFrom:         []string{},
+		PltTo:           []string{},
+		WellFrom:        []string{},
+		WellTo:          []string{},
+		Volume:          []wunit.Volume{},
+	}
+	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
+	return v
 }
 
-func (ins *LightsOnInstruction) GetParameter(name string) interface{} {
-	return nil
+func (ins *LightsOnInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.LightsOn(ins)
+}
+
+func (ins *LightsOnInstruction) GetParameter(name InstructionParameter) interface{} {
+	return ins.BaseRobotInstruction.GetParameter(name)
 }
 
 func (ins *LightsOnInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
@@ -2698,8 +2518,8 @@ func (ins *LightsOnInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
 }
 
 type LightsOffInstruction struct {
-	GenericRobotInstruction
-	Type       int
+	BaseRobotInstruction
+	*InstructionType
 	What       []string
 	PltFrom    []string
 	PltTo      []string
@@ -2714,23 +2534,25 @@ type LightsOffInstruction struct {
 }
 
 func NewLightsOffInstruction() *LightsOffInstruction {
-	var v LightsOffInstruction
-	v.Type = LOF
-	v.What = make([]string, 0)
-	v.PltFrom = make([]string, 0)
-	v.PltTo = make([]string, 0)
-	v.WellFrom = make([]string, 0)
-	v.WellTo = make([]string, 0)
-	v.Volume = make([]wunit.Volume, 0)
-	v.GenericRobotInstruction.Ins = &v
-	return &v
-}
-func (ins *LightsOffInstruction) InstructionType() int {
-	return ins.Type
+	v := &LightsOffInstruction{
+		InstructionType: LOF,
+		What:            []string{},
+		PltFrom:         []string{},
+		PltTo:           []string{},
+		WellFrom:        []string{},
+		WellTo:          []string{},
+		Volume:          []wunit.Volume{},
+	}
+	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
+	return v
 }
 
-func (ins *LightsOffInstruction) GetParameter(name string) interface{} {
-	return nil
+func (ins *LightsOffInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.LightsOff(ins)
+}
+
+func (ins *LightsOffInstruction) GetParameter(name InstructionParameter) interface{} {
+	return ins.BaseRobotInstruction.GetParameter(name)
 }
 
 func (ins *LightsOffInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
@@ -2748,8 +2570,8 @@ func (ins *LightsOffInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
 }
 
 type OpenInstruction struct {
-	GenericRobotInstruction
-	Type       int
+	BaseRobotInstruction
+	*InstructionType
 	What       []string
 	PltFrom    []string
 	PltTo      []string
@@ -2764,23 +2586,25 @@ type OpenInstruction struct {
 }
 
 func NewOpenInstruction() *OpenInstruction {
-	var v OpenInstruction
-	v.Type = OPN
-	v.What = make([]string, 0)
-	v.PltFrom = make([]string, 0)
-	v.PltTo = make([]string, 0)
-	v.WellFrom = make([]string, 0)
-	v.WellTo = make([]string, 0)
-	v.Volume = make([]wunit.Volume, 0)
-	v.GenericRobotInstruction.Ins = &v
-	return &v
-}
-func (ins *OpenInstruction) InstructionType() int {
-	return ins.Type
+	v := &OpenInstruction{
+		InstructionType: OPN,
+		What:            []string{},
+		PltFrom:         []string{},
+		PltTo:           []string{},
+		WellFrom:        []string{},
+		WellTo:          []string{},
+		Volume:          []wunit.Volume{},
+	}
+	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
+	return v
 }
 
-func (ins *OpenInstruction) GetParameter(name string) interface{} {
-	return nil
+func (ins *OpenInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.Open(ins)
+}
+
+func (ins *OpenInstruction) GetParameter(name InstructionParameter) interface{} {
+	return ins.BaseRobotInstruction.GetParameter(name)
 }
 
 func (ins *OpenInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
@@ -2798,8 +2622,8 @@ func (ins *OpenInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
 }
 
 type CloseInstruction struct {
-	GenericRobotInstruction
-	Type       int
+	BaseRobotInstruction
+	*InstructionType
 	What       []string
 	PltFrom    []string
 	PltTo      []string
@@ -2814,23 +2638,25 @@ type CloseInstruction struct {
 }
 
 func NewCloseInstruction() *CloseInstruction {
-	var v CloseInstruction
-	v.Type = CLS
-	v.What = make([]string, 0)
-	v.PltFrom = make([]string, 0)
-	v.PltTo = make([]string, 0)
-	v.WellFrom = make([]string, 0)
-	v.WellTo = make([]string, 0)
-	v.Volume = make([]wunit.Volume, 0)
-	v.GenericRobotInstruction.Ins = &v
-	return &v
-}
-func (ins *CloseInstruction) InstructionType() int {
-	return ins.Type
+	v := &CloseInstruction{
+		InstructionType: CLS,
+		What:            []string{},
+		PltFrom:         []string{},
+		PltTo:           []string{},
+		WellFrom:        []string{},
+		WellTo:          []string{},
+		Volume:          []wunit.Volume{},
+	}
+	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
+	return v
 }
 
-func (ins *CloseInstruction) GetParameter(name string) interface{} {
-	return nil
+func (ins *CloseInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.Close(ins)
+}
+
+func (ins *CloseInstruction) GetParameter(name InstructionParameter) interface{} {
+	return ins.BaseRobotInstruction.GetParameter(name)
 }
 
 func (ins *CloseInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
@@ -2848,8 +2674,8 @@ func (ins *CloseInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
 }
 
 type LoadAdaptorInstruction struct {
-	GenericRobotInstruction
-	Type       int
+	BaseRobotInstruction
+	*InstructionType
 	What       []string
 	PltFrom    []string
 	PltTo      []string
@@ -2864,23 +2690,25 @@ type LoadAdaptorInstruction struct {
 }
 
 func NewLoadAdaptorInstruction() *LoadAdaptorInstruction {
-	var v LoadAdaptorInstruction
-	v.Type = LAD
-	v.What = make([]string, 0)
-	v.PltFrom = make([]string, 0)
-	v.PltTo = make([]string, 0)
-	v.WellFrom = make([]string, 0)
-	v.WellTo = make([]string, 0)
-	v.Volume = make([]wunit.Volume, 0)
-	v.GenericRobotInstruction.Ins = &v
-	return &v
-}
-func (ins *LoadAdaptorInstruction) InstructionType() int {
-	return ins.Type
+	v := &LoadAdaptorInstruction{
+		InstructionType: LAD,
+		What:            []string{},
+		PltFrom:         []string{},
+		PltTo:           []string{},
+		WellFrom:        []string{},
+		WellTo:          []string{},
+		Volume:          []wunit.Volume{},
+	}
+	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
+	return v
 }
 
-func (ins *LoadAdaptorInstruction) GetParameter(name string) interface{} {
-	return nil
+func (ins *LoadAdaptorInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.LoadAdaptor(ins)
+}
+
+func (ins *LoadAdaptorInstruction) GetParameter(name InstructionParameter) interface{} {
+	return ins.BaseRobotInstruction.GetParameter(name)
 }
 
 func (ins *LoadAdaptorInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
@@ -2898,8 +2726,8 @@ func (ins *LoadAdaptorInstruction) OutputTo(lhdriver LiquidhandlingDriver) error
 }
 
 type UnloadAdaptorInstruction struct {
-	GenericRobotInstruction
-	Type       int
+	BaseRobotInstruction
+	*InstructionType
 	What       []string
 	PltFrom    []string
 	PltTo      []string
@@ -2914,23 +2742,25 @@ type UnloadAdaptorInstruction struct {
 }
 
 func NewUnloadAdaptorInstruction() *UnloadAdaptorInstruction {
-	var v UnloadAdaptorInstruction
-	v.Type = UAD
-	v.What = make([]string, 0)
-	v.PltFrom = make([]string, 0)
-	v.PltTo = make([]string, 0)
-	v.WellFrom = make([]string, 0)
-	v.WellTo = make([]string, 0)
-	v.Volume = make([]wunit.Volume, 0)
-	v.GenericRobotInstruction.Ins = &v
-	return &v
-}
-func (ins *UnloadAdaptorInstruction) InstructionType() int {
-	return ins.Type
+	v := &UnloadAdaptorInstruction{
+		InstructionType: UAD,
+		What:            []string{},
+		PltFrom:         []string{},
+		PltTo:           []string{},
+		WellFrom:        []string{},
+		WellTo:          []string{},
+		Volume:          []wunit.Volume{},
+	}
+	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
+	return v
 }
 
-func (ins *UnloadAdaptorInstruction) GetParameter(name string) interface{} {
-	return nil
+func (ins *UnloadAdaptorInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.UnloadAdaptor(ins)
+}
+
+func (ins *UnloadAdaptorInstruction) GetParameter(name InstructionParameter) interface{} {
+	return ins.BaseRobotInstruction.GetParameter(name)
 }
 
 func (ins *UnloadAdaptorInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
@@ -2948,8 +2778,8 @@ func (ins *UnloadAdaptorInstruction) OutputTo(lhdriver LiquidhandlingDriver) err
 }
 
 type ResetInstruction struct {
-	GenericRobotInstruction
-	Type       int
+	BaseRobotInstruction
+	*InstructionType
 	What       []string
 	PltFrom    []string
 	PltTo      []string
@@ -2964,56 +2794,56 @@ type ResetInstruction struct {
 }
 
 func NewResetInstruction() *ResetInstruction {
-	var ri ResetInstruction
-	ri.Type = RST
-	ri.What = make([]string, 0)
-	ri.PltFrom = make([]string, 0)
-	ri.WellFrom = make([]string, 0)
-	ri.WellTo = make([]string, 0)
-	ri.Volume = make([]wunit.Volume, 0)
-	ri.FPlateType = make([]string, 0)
-	ri.TPlateType = make([]string, 0)
-	ri.FVolume = make([]wunit.Volume, 0)
-	ri.TVolume = make([]wunit.Volume, 0)
-	ri.GenericRobotInstruction.Ins = &ri
-	return &ri
+	v := &ResetInstruction{
+		InstructionType: RST,
+		What:            []string{},
+		PltFrom:         []string{},
+		WellFrom:        []string{},
+		WellTo:          []string{},
+		Volume:          []wunit.Volume{},
+		FPlateType:      []string{},
+		TPlateType:      []string{},
+		FVolume:         []wunit.Volume{},
+		TVolume:         []wunit.Volume{},
+	}
+	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
+	return v
 }
 
-func (ins *ResetInstruction) InstructionType() int {
-	return ins.Type
+func (ins *ResetInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.Reset(ins)
 }
 
-func (ins *ResetInstruction) GetParameter(name string) interface{} {
+func (ins *ResetInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
-	case "LIQUIDCLASS":
+	case LIQUIDCLASS:
 		return ins.What
-	case "VOLUME":
+	case VOLUME:
 		return ins.Volume
-	case "VOLUNT":
+	case VOLUNT:
 		return nil
-	case "FROMPLATETYPE":
+	case FROMPLATETYPE:
 		return ins.FPlateType
-	case "WELLFROMVOLUME":
+	case WELLFROMVOLUME:
 		return ins.FVolume
-	case "POSFROM":
+	case POSFROM:
 		return ins.PltFrom
-	case "POSTO":
+	case POSTO:
 		return ins.PltTo
-	case "WELLFROM":
+	case WELLFROM:
 		return ins.WellFrom
-	case "WELLTO":
+	case WELLTO:
 		return ins.WellTo
-	case "PARAMS":
+	case PARAMS:
 		return ins.Prms
-	case "PLATFORM":
+	case PLATFORM:
 		if ins.Prms == nil {
 			return ""
 		}
 		return ins.Prms.Platform
-	case "INSTRUCTIONTYPE":
-		return ins.InstructionType()
+	default:
+		return ins.BaseRobotInstruction.GetParameter(name)
 	}
-	return nil
 }
 
 func (ins *ResetInstruction) AddTransferParams(tp TransferParams) {
@@ -3033,7 +2863,18 @@ func (ins *ResetInstruction) AddMultiTransferParams(mtp MultiTransferParams) {
 }
 
 func (ins *ResetInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
-	pol := GetPolicyFor(policy, ins)
+	pol, err := GetPolicyFor(policy, ins)
+
+	if err != nil {
+		if _, ok := err.(ErrInvalidLiquidType); ok {
+			return []RobotInstruction{}, err
+		}
+		pol, err = GetDefaultPolicy(policy, ins)
+
+		if err != nil {
+			return []RobotInstruction{}, err
+		}
+	}
 	ret := make([]RobotInstruction, 0)
 
 	mov := NewMoveInstruction()
@@ -3094,14 +2935,14 @@ func (ins *ResetInstruction) Generate(ctx context.Context, policy *wtype.LHPolic
 }
 
 type MoveMixInstruction struct {
-	GenericRobotInstruction
-	Type      int
+	BaseRobotInstruction
+	*InstructionType
 	Head      int
 	Plt       []string
 	Well      []string
-	Volume    []wunit.Volume
+	Volume    []wunit.Volume // volume of sample being transferred
 	PlateType []string
-	FVolume   []wunit.Volume
+	FVolume   []wunit.Volume // Total volume of sample in the well which the sample is being mixed into?
 	Cycles    []int
 	What      []string
 	Blowout   []bool
@@ -3113,63 +2954,60 @@ type MoveMixInstruction struct {
 }
 
 func NewMoveMixInstruction() *MoveMixInstruction {
-	var mi MoveMixInstruction
-
-	mi.Type = MMX
-	mi.Plt = make([]string, 0)
-	mi.Well = make([]string, 0)
-	mi.Volume = make([]wunit.Volume, 0)
-	mi.FVolume = make([]wunit.Volume, 0)
-	mi.PlateType = make([]string, 0)
-	mi.Cycles = make([]int, 0)
-	mi.Prms = make(map[string]interface{})
-	mi.What = make([]string, 0)
-	mi.Blowout = make([]bool, 0)
-	mi.OffsetX = make([]float64, 0)
-	mi.OffsetY = make([]float64, 0)
-	mi.OffsetZ = make([]float64, 0)
-	mi.GenericRobotInstruction.Ins = &mi
-	return &mi
-}
-
-func (ins *MoveMixInstruction) GetParameter(name string) interface{} {
-	switch name {
-	case "VOLUME":
-		return ins.Volume
-	case "VOLUNT":
-		return nil
-	case "PLATETYPE":
-		return ins.PlateType
-	case "WELLVOLUME":
-		return ins.FVolume
-	case "POS":
-		return ins.Plt
-	case "WELL":
-		return ins.Well
-	case "PARAMS":
-		return ins.Prms
-	case "CYCLES":
-		return ins.Cycles
-	case "INSTRUCTIONTYPE":
-		return ins.InstructionType()
-	case "WHAT":
-		return ins.What
-	case "BLOWOUT":
-		return ins.Blowout
-	case "OFFSETX":
-		return ins.OffsetX
-	case "OFFSETY":
-		return ins.OffsetY
-	case "OFFSETZ":
-		return ins.OffsetZ
+	v := &MoveMixInstruction{
+		InstructionType: MMX,
+		Plt:             []string{},
+		Well:            []string{},
+		Volume:          []wunit.Volume{},
+		FVolume:         []wunit.Volume{},
+		PlateType:       []string{},
+		Cycles:          []int{},
+		Prms:            map[string]interface{}{},
+		What:            []string{},
+		Blowout:         []bool{},
+		OffsetX:         []float64{},
+		OffsetY:         []float64{},
+		OffsetZ:         []float64{},
 	}
-
-	return nil
-
+	v.BaseRobotInstruction = NewBaseRobotInstruction(v)
+	return v
 }
 
-func (ins *MoveMixInstruction) InstructionType() int {
-	return MMX
+func (ins *MoveMixInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.MoveMix(ins)
+}
+
+func (ins *MoveMixInstruction) GetParameter(name InstructionParameter) interface{} {
+	switch name {
+	case VOLUME:
+		return ins.Volume
+	case VOLUNT:
+		return nil
+	case PLATETYPE:
+		return ins.PlateType
+	case WELLVOLUME:
+		return ins.FVolume
+	case POS:
+		return ins.Plt
+	case WELL:
+		return ins.Well
+	case PARAMS:
+		return ins.Prms
+	case CYCLES:
+		return ins.Cycles
+	case WHAT:
+		return ins.What
+	case BLOWOUT:
+		return ins.Blowout
+	case OFFSETX:
+		return ins.OffsetX
+	case OFFSETY:
+		return ins.OffsetY
+	case OFFSETZ:
+		return ins.OffsetZ
+	default:
+		return ins.BaseRobotInstruction.GetParameter(name)
+	}
 }
 
 func (ins *MoveMixInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
@@ -3207,8 +3045,8 @@ func (ins *MoveMixInstruction) Generate(ctx context.Context, policy *wtype.LHPol
 }
 
 type MixInstruction struct {
-	GenericRobotInstruction
-	Type      int
+	BaseRobotInstruction
+	*InstructionType
 	Head      int
 	Volume    []wunit.Volume
 	PlateType []string
@@ -3219,65 +3057,54 @@ type MixInstruction struct {
 }
 
 func NewMixInstruction() *MixInstruction {
-	var mi MixInstruction
-
-	mi.Type = MIX
-	mi.Volume = make([]wunit.Volume, 0)
-	mi.PlateType = make([]string, 0)
-	mi.Cycles = make([]int, 0)
-	mi.What = make([]string, 0)
-	mi.Blowout = make([]bool, 0)
-	mi.GenericRobotInstruction.Ins = &mi
-	return &mi
+	mi := &MixInstruction{
+		InstructionType: MIX,
+		Volume:          []wunit.Volume{},
+		PlateType:       []string{},
+		Cycles:          []int{},
+		What:            []string{},
+		Blowout:         []bool{},
+	}
+	mi.BaseRobotInstruction = NewBaseRobotInstruction(mi)
+	return mi
 }
 
-func (mi *MixInstruction) InstructionType() int {
-	return mi.Type
+func (ins *MixInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.Mix(ins)
 }
 
 func (ins *MixInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	return nil, nil
 }
 
-func (ins *MixInstruction) GetParameter(name string) interface{} {
+func (ins *MixInstruction) GetParameter(name InstructionParameter) interface{} {
 	switch name {
-	case "VOLUME":
+	case VOLUME:
 		return ins.Volume
-	case "VOLUNT":
-		return nil
-	case "PLATETYPE":
+	case PLATETYPE:
 		return ins.PlateType
-	case "CYCLES":
+	case CYCLES:
 		return ins.Cycles
-	case "INSTRUCTIONTYPE":
-		return ins.InstructionType()
-	case "LIQUIDCLASS":
+	case INSTRUCTIONTYPE:
+		return ins.Type()
+	case LIQUIDCLASS:
 		return ins.What
+	default:
+		return nil
 	}
-	return nil
-
 }
 
 func (mi *MixInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
-	driver, ok := lhdriver.(LowLevelLiquidhandlingDriver)
-
-	if !ok {
+	if driver, ok := lhdriver.(LowLevelLiquidhandlingDriver); !ok {
 		return fmt.Errorf("Wrong instruction type for driver: need Lowlevel, got %T", mi)
+	} else {
+		vols := make([]float64, len(mi.Volume))
+		for i := 0; i < len(mi.Volume); i++ {
+			vols[i] = mi.Volume[i].ConvertToString("ul")
+		}
+
+		return driver.Mix(mi.Head, vols, mi.PlateType, mi.Cycles, mi.Multi, mi.What, mi.Blowout).GetError()
 	}
-	vols := make([]float64, len(mi.Volume))
-
-	for i := 0; i < len(mi.Volume); i++ {
-		vols[i] = mi.Volume[i].ConvertTo(wunit.ParsePrefixedUnit("ul"))
-	}
-
-	ret := driver.Mix(mi.Head, vols, mi.PlateType, mi.Cycles, mi.Multi, mi.What, mi.Blowout)
-
-	if !ret.OK {
-		return fmt.Errorf(" %d : %s", ret.Errorcode, ret.Msg)
-	}
-
-	return nil
-
 }
 
 func countMulti(sa []string) int {
@@ -3335,21 +3162,6 @@ func GetTips(ctx context.Context, tiptypes []string, params *LHProperties, chann
 	return inss, nil
 }
 
-func channelArrayToOldStyle(channels []*wtype.LHChannelParameter) (*wtype.LHChannelParameter, int) {
-	var ch *wtype.LHChannelParameter
-	multi := 0
-
-	for _, c := range channels {
-		if c != nil {
-			multi += 1
-			if ch == nil {
-				ch = c
-			}
-		}
-	}
-	return ch, multi
-}
-
 func collate(s []string) string {
 	m := make(map[string]int, len(s))
 	for _, v := range s {
@@ -3401,10 +3213,10 @@ func getMulti(w []string) int {
 	return c
 }
 
-func get_use_llf(policy *wtype.LHPolicyRuleSet, multi int, plates []string, prms *LHProperties) ([]bool, bool) {
+func get_use_llf(pol wtype.LHPolicy, multi int, plates []string, prms *LHProperties) ([]bool, bool) {
 	use_llf := make([]bool, multi)
 	any_llf := false
-	enable_llf := SafeGetBool(policy.Options, "USE_LLF")
+	enable_llf := SafeGetBool(pol, "USE_LLF")
 
 	//save a few ms
 	if !enable_llf {
@@ -3414,6 +3226,7 @@ func get_use_llf(policy *wtype.LHPolicyRuleSet, multi int, plates []string, prms
 	for i := 0; i < multi; i++ {
 		//probably just fetching the same plate each time
 		plate := prms.Plates[plates[i]]
+
 		//do LLF if the well has a volumemodel
 		use_llf[i] = enable_llf && plate.Welltype.HasLiquidLevelModel()
 
@@ -3421,4 +3234,83 @@ func get_use_llf(policy *wtype.LHPolicyRuleSet, multi int, plates []string, prms
 	}
 
 	return use_llf, any_llf
+}
+
+// compare proposed value to minimum and maximum tolerated
+// return proposed if within bounds
+// return relevant bound (min or max) if proposed is outside the range and overrideIfOutOfRange is true
+// return an error otherwise
+func checkAndSaften(proposed, min, max float64, overrideIfOutOfRange bool) (float64, error) {
+	if proposed < min {
+		if !overrideIfOutOfRange {
+			return proposed, fmt.Errorf("value %f out of range %f - %f", proposed, min, max)
+		} else {
+			return min, nil
+		}
+	} else if proposed > max {
+		if !overrideIfOutOfRange {
+			return proposed, fmt.Errorf("value %f out of range %f - %f", proposed, min, max)
+		} else {
+			return max, nil
+		}
+
+	}
+
+	return proposed, nil
+}
+
+//makeZOffsetSafe increase the zoffset to prevent the robot head from colliding
+//with the top of the plate when accessing the bottom of particularly deep wells
+//with shorter tips.
+//Does not affect behaviour with troughs and other wells that are big enough for
+//the entire head to fit inside.
+func makeZOffsetSafe(ctx context.Context, prms *LHProperties, zoffset float64, headIndex int, plates []string, tiptype string) (float64, error) {
+	platename := ""
+	for _, p := range plates {
+		if p != "" {
+			platename = p
+			break
+		}
+	}
+
+	plate := prms.Plates[platename]
+
+	//get the size of all the channels together
+	adaptor := prms.GetLoadedAdaptor(headIndex)
+	channelSpacing := 9.0 //get this from adaptor in future
+	coneDiameter := 5.5   //get this from adaptor in future
+	adaptorSize := wtype.Coordinates{X: coneDiameter, Y: coneDiameter}
+	adaptorWidth := channelSpacing*float64(adaptor.Params.Multi-1) + coneDiameter
+	if adaptor.Params.Orientation == wtype.LHVChannel {
+		adaptorSize.Y = adaptorWidth
+	} else {
+		adaptorSize.X = adaptorWidth
+	}
+
+	//if all the channels can fit in the well, don't add offset
+	//this means we can still reach the bottom of troughs and reservoirs
+	if s := plate.Welltype.GetSize(); s.X > adaptorSize.X && s.Y > adaptorSize.Y {
+		return zoffset, nil
+	}
+
+	var tipbox *wtype.LHTipbox
+	for _, tb := range prms.Tipboxes {
+		if tb.Tiptype.Type == tiptype {
+			tipbox = tb
+			break
+		}
+	}
+	if tipbox == nil {
+		// this can only happen if there's an error in channel selection
+		return zoffset, wtype.LHError(wtype.LH_ERR_OTHER, fmt.Sprintf("instruction requested tip type %q but none found in parameters: please report this to the authors", tiptype))
+	}
+
+	//safetyZHeight is a small offset to avoid predicted collisions due to numerical error
+	minZ := plate.Welltype.GetSize().Z - tipbox.Tiptype.GetEffectiveHeight() - plate.Welltype.Bottomh + safetyZHeight
+
+	if minZ > zoffset {
+		return minZ, nil
+	}
+
+	return zoffset, nil
 }

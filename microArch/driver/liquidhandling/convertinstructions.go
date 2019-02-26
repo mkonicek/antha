@@ -24,28 +24,9 @@ package liquidhandling
 
 import (
 	"context"
-	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
-
-func readableComponentArray(arr []*wtype.LHComponent) string {
-	ret := ""
-
-	for i, v := range arr {
-		if v != nil {
-			ret += fmt.Sprintf("%s:%-6.2f%s", v.CName, v.Vol, v.Vunit)
-		} else {
-			ret += "_nil_"
-		}
-		if i < len(arr)-1 {
-
-			ret += ", "
-		}
-	}
-
-	return ret
-}
 
 //
 //	at this point (i.e. in a TransferBlock) the instructions have potentially been grouped into sets
@@ -59,112 +40,75 @@ func readableComponentArray(arr []*wtype.LHComponent) string {
 //	etc.
 //
 
-func ConvertInstructions(ctx context.Context, inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool, policy *wtype.LHPolicyRuleSet) (insOut []*TransferInstruction, robotOut *LHProperties, err error) {
-	// again again again we dup the robot
-
-	if multi != 1 {
-		rbt := robot.DupKeepIDs()
-
-		tfrs, err := convertInstructions(inssIn, rbt, carryvol, channelprms, multi, legacyVolume)
-
-		if err != nil {
-			return []*TransferInstruction{}, robot, err
-		}
-
-		// check if we actually generate any multichannel stuff here
-
-		mcHere, err := hasMCB(ctx, tfrs, rbt, policy)
-
-		if err != nil {
-			return []*TransferInstruction{}, robot, err
-		}
-
-		// if there's no multichannel here require only single channeling
-		// this is to make behaviour in regard of sources, atomic mixes
-		// correct
-		if !mcHere {
-			multi = 1
-		}
+func ConvertInstructions(ctx context.Context, inssIn LHIVector, robot *LHProperties, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool, policy *wtype.LHPolicyRuleSet) ([]*TransferInstruction, error) {
+	// we call convertInstructions twice because
+	// 1) calling convertInstructions with multi = 8 when there are no actual multichannel instructions causes
+	//    undesirable source volume selection, see tests "TestExecutionPlanning/single_channel_well_use", and
+	//    "TestExecutionPlanning/single_channel_auto_allocation"
+	// 2) convertInstructions makes changes to robot, meaning that it must be called exactly once with the the copy of robot passed to the function
+	if transfers, err := convertInstructions(inssIn, robot.DupKeepIDs(), channelprms, multi, legacyVolume); err != nil {
+		return nil, err
+	} else if hasMCB, err := hasMultiChannelBlock(ctx, transfers, robot, policy); err != nil {
+		return nil, err
+	} else if hasMCB {
+		return convertInstructions(inssIn, robot, channelprms, multi, legacyVolume)
+	} else {
+		return convertInstructions(inssIn, robot, channelprms, 1, legacyVolume)
 	}
-
-	tfrs, err := convertInstructions(inssIn, robot, carryvol, channelprms, multi, legacyVolume)
-
-	if err != nil {
-		return []*TransferInstruction{}, robot, err
-	}
-
-	return tfrs, robot, nil
 }
 
-func hasMCB(ctx context.Context, tfrs []*TransferInstruction, rbt *LHProperties, policy *wtype.LHPolicyRuleSet) (bool, error) {
-	hasMulti := false
-
+func hasMultiChannelBlock(ctx context.Context, tfrs []*TransferInstruction, rbt *LHProperties, policy *wtype.LHPolicyRuleSet) (bool, error) {
 	for _, tfr := range tfrs {
-		instrx, err := tfr.Generate(ctx, policy, rbt)
+		instrx, err := tfr.Dup().Generate(ctx, policy, rbt)
 
 		if err != nil {
 			return false, err
 		}
 
 		for _, ins := range instrx {
-			if ins.InstructionType() == MCB {
-				hasMulti = true
-				break
+			if mcb, ok := ins.(*ChannelBlockInstruction); ok {
+				if mcb.MaxMulti() > 1 {
+					return true, nil
+				}
 			}
 		}
+	}
 
-		if hasMulti {
-			break
+	return false, nil
+}
+
+func singlemakeComponentSets(inssIn LHIVector) ([][]*wtype.Liquid, []LHIVector) {
+	var componentsToMove [][]*wtype.Liquid
+	var instructionsToUse []LHIVector
+	//make lists of components to attempt to transfer simultaneously
+	for i := 0; i < len(inssIn); i++ {
+		if inssIn[i] == nil {
+			continue
+		}
+
+		cmps := inssIn[i].ComponentsMoving()
+		for _, cmp := range cmps {
+			if cmp != nil {
+				if cmp.CName == "" {
+					panic("COMPONENTS MUST HAVE NAMES")
+				}
+				componentsToMove = append(componentsToMove, []*wtype.Liquid{cmp})
+				instructionsToUse = append(instructionsToUse, LHIVector{inssIn[i]})
+			}
 		}
 	}
 
-	return hasMulti, nil
+	return componentsToMove, instructionsToUse
 }
 
-func dupCmpAr(ins *wtype.LHInstruction) []*wtype.LHComponent {
-	in := ins.Components
-	r := make([]*wtype.LHComponent, len(in))
-
-	for i := 0; i < len(in); i++ {
-		r[i] = in[i].Dup()
-		r[i].Loc = ins.PlateID + ":" + ins.Welladdress
-	}
-
-	return r
-}
-
-func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.Volume, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool) (insOut []*TransferInstruction, err error) {
-	insOut = make([]*TransferInstruction, 0, 1)
-
-	// TODO --> iterator?
-	horiz := false
-
-	var l int
-
-	if multi == 1 {
-		horiz = true
-		l = len(inssIn)
-	} else {
-		horiz = false
-		l = inssIn.MaxLen()
-	}
-
-	for i := 0; i < l; i++ {
+func multimakeComponentSets(inssIn LHIVector) ([][]*wtype.Liquid, []LHIVector) {
+	var componentsToMove [][]*wtype.Liquid
+	var instructionsToUse []LHIVector
+	//make lists of components to attempt to transfer simultaneously
+	for i := 0; i < inssIn.MaxLen(); i++ {
 		var inssToUse LHIVector
-		var cmps []*wtype.LHComponent
-		if horiz {
-			if inssIn[i] == nil {
-				continue
-			}
-			cmps = inssIn[i].ComponentsMoving()
-			inssToUse = make(LHIVector, len(cmps))
-			for j := 0; j < len(cmps); j++ {
-				inssToUse[j] = inssIn[i]
-			}
-		} else {
-			cmps = inssIn.CompsAt(i)
-			inssToUse = inssIn
-		}
+		cmps := inssIn.CompsAt(i)
+		inssToUse = inssIn
 		lenToMake := 0
 
 		for _, c := range cmps {
@@ -181,22 +125,59 @@ func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 			continue
 		}
 
-		orientation := wtype.LHVChannel
-		independent := false
+		componentsToMove = append(componentsToMove, cmps)
+		instructionsToUse = append(instructionsToUse, inssToUse)
+	}
 
-		if channelprms != nil {
-			orientation = channelprms.Orientation
-			independent = channelprms.Independent
-		}
+	return componentsToMove, instructionsToUse
 
-		parallelTransfers, err := robot.GetComponents(GetComponentsOptions{Cmps: cmps, Carryvol: carryvol, Ori: orientation, Multi: multi, Independent: independent, LegacyVolume: legacyVolume})
+}
+
+// this function takes a set of instructions and, depending on whether parallelisation
+// is chosen, either groups components into simultaneously movable chunks or splits
+// the components up, to be found one at a time. The dichotomy here is necessary to
+// avoid this part overriding mix ordering requested by the user since the source matching
+// routine favours higher-volume components over lower ones, so that if all components
+// for single-channeling are fed in as a block they will actually be moved from highest
+// to lowest volume rather than preserving order.
+func makeComponentSets(inssIn LHIVector, multi int) ([][]*wtype.Liquid, []LHIVector) {
+	if multi == 1 {
+		return singlemakeComponentSets(inssIn)
+	} else {
+		return multimakeComponentSets(inssIn)
+	}
+
+}
+
+func convertInstructions(inssIn LHIVector, robot *LHProperties, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool) ([]*TransferInstruction, error) {
+	insOut := make([]*TransferInstruction, 0, 1)
+
+	componentsToMove, instructionsToUse := makeComponentSets(inssIn, multi)
+
+	orientation := wtype.LHVChannel
+	independent := false
+
+	if channelprms != nil {
+		orientation = channelprms.Orientation
+		independent = channelprms.Independent
+	}
+
+	for i := 0; i < len(componentsToMove); i++ {
+		parallelTransfers, err := robot.GetComponents(
+			GetComponentsOptions{
+				Cmps:         componentsToMove[i],
+				Ori:          orientation,
+				Multi:        multi,
+				Independent:  independent,
+				LegacyVolume: legacyVolume,
+			})
 
 		if err != nil {
 			return nil, err
 		}
 
 		for _, t := range parallelTransfers.Transfers {
-			transfers, err := makeTransfers(t, cmps, robot, inssToUse, carryvol)
+			transfers, err := makeTransfers(t, componentsToMove[i], robot, instructionsToUse[i])
 
 			if err != nil {
 				return nil, err
@@ -210,7 +191,7 @@ func convertInstructions(inssIn LHIVector, robot *LHProperties, carryvol wunit.V
 	return insOut, nil
 }
 
-func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent, robot *LHProperties, inssIn []*wtype.LHInstruction, carryvol wunit.Volume) ([]*TransferInstruction, error) {
+func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.Liquid, robot *LHProperties, inssIn []*wtype.LHInstruction) ([]*TransferInstruction, error) {
 	fromPlateIDs := parallelTransfer.PlateIDs
 	fromWells := parallelTransfer.WellCoords
 	vols := parallelTransfer.Vols
@@ -233,7 +214,7 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 	ptwx := make([]int, len(cmps))        //	  "    to    "   x
 	ptwy := make([]int, len(cmps))        //	  "     "    "   y
 	cnames := make([]string, len(cmps))   //        component names
-
+	policies := make([]wtype.LHPolicy, len(cmps))
 	// ci counts up cmps
 
 	for ci := 0; ci < len(cmps); ci++ {
@@ -301,7 +282,7 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 			return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: source well not found on source plate - plate report this error to the authors")
 		}
 
-		vf[ci] = wellFrom.CurrVolume()
+		vf[ci] = wellFrom.CurrentVolume()
 
 		// dest well volume
 
@@ -311,7 +292,7 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 			return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: dest well not found on dest plate - please report this error to the authors")
 		}
 
-		vt[ci] = wellTo.CurrVolume()
+		vt[ci] = wellTo.CurrentVolume()
 
 		// source plate dimensions
 
@@ -326,19 +307,16 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 		cnames[ci] = wellFrom.WContents.CName
 
 		cmpFrom, err := wellFrom.RemoveVolume(va[ci])
-		if cmpFrom == nil || err != nil {
-			return insOut, wtype.LHError(wtype.LH_ERR_DIRE, "Planning inconsistency: src well does not contain sufficient volume - please report this error to the authors")
+		if err != nil {
+			return insOut, wtype.LHErrorf(wtype.LH_ERR_DIRE, "Planning inconsistency: %s - please report this error to the authors", err.Error())
 		}
 
 		// silently remove the carry
-		_, err = wellFrom.RemoveVolume(carryvol)
-		if err != nil {
-			return insOut, wtype.LHError(wtype.LH_ERR_VOL, "Planning inconsistency: error removing carry volume")
-		}
+		wellFrom.RemoveCarry(robot.CarryVolume())
 
 		err = wellTo.AddComponent(cmpFrom)
 		if err != nil {
-			return insOut, wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Planning inconsistency : %s", err.Error()))
+			return insOut, wtype.LHErrorf(wtype.LH_ERR_VOL, "Planning inconsistency : %s", err.Error())
 		}
 
 		// make sure the cmp loc is set
@@ -346,15 +324,15 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.LHComponent,
 		wellTo.WContents.Loc = wtype.IDOf(wellTo.Plate) + ":" + wellTo.Crds.FormatA1()
 
 		// make sure the wellTo gets the right ID (ultimately)
-		cmpFrom.ReplaceDaughterID(wellTo.WContents.ID, inssIn[ci].Results[0].ID)
-		wellTo.WContents.ID = inssIn[ci].Results[0].ID
+		cmpFrom.ReplaceDaughterID(wellTo.WContents.ID, inssIn[ci].Outputs[0].ID)
+		wellTo.WContents.ID = inssIn[ci].Outputs[0].ID
 		wellTo.WContents.DeclareInstance()
 		//fmt.Println("ADDED :", cmpFrom.CName, " ", cmpFrom.Vol, " TO ", dstPlate.ID, " ", wt[ci])
 	}
 
 	//}
 
-	tfr := NewTransferInstruction(wh, pf, pt, wf, wt, ptf, ptt, va, vf, vt, pfwx, pfwy, ptwx, ptwy, cnames)
+	tfr := NewTransferInstruction(wh, pf, pt, wf, wt, ptf, ptt, va, vf, vt, pfwx, pfwy, ptwx, ptwy, cnames, policies)
 	insOut = append(insOut, tfr)
 
 	return insOut, nil

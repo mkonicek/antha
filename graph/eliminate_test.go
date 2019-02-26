@@ -4,10 +4,10 @@ import "testing"
 
 func TestTreeEliminate(t *testing.T) {
 	g := MakeTestGraph(map[string][]string{
-		"root": []string{"a", "b"},
-		"a":    []string{"c", "d"},
-		"b":    []string{"e"},
-		"e":    []string{"f", "g"},
+		"root": {"a", "b"},
+		"a":    {"c", "d"},
+		"b":    {"e"},
+		"e":    {"f", "g"},
 	})
 
 	in := map[string]bool{
@@ -41,12 +41,12 @@ func TestTreeEliminate(t *testing.T) {
 
 func TestGraphEliminate(t *testing.T) {
 	g := MakeTestGraph(map[string][]string{
-		"a": []string{"c"},
-		"b": []string{"c"},
-		"c": []string{"d"},
-		"d": []string{"e"},
-		"e": []string{"f"},
-		"f": []string{"g", "h"},
+		"a": {"c"},
+		"b": {"c"},
+		"c": {"d"},
+		"d": {"e"},
+		"e": {"f"},
+		"f": {"g", "h"},
 	})
 
 	out := map[string]bool{
@@ -110,54 +110,54 @@ func TestHarderGraphEliminate(t *testing.T) {
 		notInMap[v] = true
 	}
 	g := MakeTestGraph(map[string][]string{
-		"v0":  []string{"v47", "v23", "v7", "v35"},
-		"v1":  []string{"v38", "v5", "v28"},
-		"v2":  []string{"v44"},
-		"v3":  []string{"v26"},
-		"v4":  []string{"v42", "v15"},
-		"v5":  []string{"v8", "v2"},
-		"v6":  []string{"v29", "v2", "v45"},
-		"v7":  []string{"v17", "v34"},
-		"v8":  []string{"v2"},
-		"v9":  []string{"v27"},
-		"v10": []string{"v20"},
-		"v11": []string{"v44"},
-		"v12": []string{"v16", "v31"},
-		"v13": []string{"v33"},
-		"v14": []string{"v43"},
-		"v15": []string{"v28"},
-		"v16": []string{"v40"},
-		"v17": []string{"v34"},
-		"v18": []string{"v31"},
-		"v19": []string{"v9", "v27"},
-		"v20": []string{"v32"},
-		"v21": []string{"v1", "v14"},
-		"v22": []string{"v13"},
-		"v23": []string{"v37", "v24"},
-		"v24": []string{"v18", "v31"},
-		"v25": []string{"v36", "v31", "v3"},
-		"v26": []string{"v46", "v3", "v41", "v14"},
-		"v27": []string{"v20"},
-		"v28": []string{"v15"},
-		"v29": []string{"v45"},
-		"v30": []string{"v12"},
-		"v31": []string{"v40"},
-		"v32": []string{"v22", "v27", "v13"},
-		"v33": []string{"v21", "v13", "v1", "v14"},
-		"v34": []string{"v10", "v27"},
-		"v35": []string{"v39", "v19"},
-		"v36": []string{"v3"},
-		"v37": []string{"v24"},
-		"v38": []string{"v5", "v28"},
-		"v39": []string{"v19"},
-		"v40": []string{"v25"},
-		"v41": []string{"v4", "v42", "v28"},
-		"v42": []string{"v11", "v2"},
-		"v43": []string{"v14"},
-		"v44": []string{"v6"},
-		"v45": []string{},
-		"v46": []string{"v41", "v43"},
-		"v47": []string{"v30", "v12"},
+		"v0":  {"v47", "v23", "v7", "v35"},
+		"v1":  {"v38", "v5", "v28"},
+		"v2":  {"v44"},
+		"v3":  {"v26"},
+		"v4":  {"v42", "v15"},
+		"v5":  {"v8", "v2"},
+		"v6":  {"v29", "v2", "v45"},
+		"v7":  {"v17", "v34"},
+		"v8":  {"v2"},
+		"v9":  {"v27"},
+		"v10": {"v20"},
+		"v11": {"v44"},
+		"v12": {"v16", "v31"},
+		"v13": {"v33"},
+		"v14": {"v43"},
+		"v15": {"v28"},
+		"v16": {"v40"},
+		"v17": {"v34"},
+		"v18": {"v31"},
+		"v19": {"v9", "v27"},
+		"v20": {"v32"},
+		"v21": {"v1", "v14"},
+		"v22": {"v13"},
+		"v23": {"v37", "v24"},
+		"v24": {"v18", "v31"},
+		"v25": {"v36", "v31", "v3"},
+		"v26": {"v46", "v3", "v41", "v14"},
+		"v27": {"v20"},
+		"v28": {"v15"},
+		"v29": {"v45"},
+		"v30": {"v12"},
+		"v31": {"v40"},
+		"v32": {"v22", "v27", "v13"},
+		"v33": {"v21", "v13", "v1", "v14"},
+		"v34": {"v10", "v27"},
+		"v35": {"v39", "v19"},
+		"v36": {"v3"},
+		"v37": {"v24"},
+		"v38": {"v5", "v28"},
+		"v39": {"v19"},
+		"v40": {"v25"},
+		"v41": {"v4", "v42", "v28"},
+		"v42": {"v11", "v2"},
+		"v43": {"v14"},
+		"v44": {"v6"},
+		"v45": {},
+		"v46": {"v41", "v43"},
+		"v47": {"v30", "v12"},
 	})
 	eg := Eliminate(EliminateOpt{
 		Graph: g,
@@ -172,11 +172,11 @@ func TestHarderGraphEliminate(t *testing.T) {
 	}
 
 	root := "v0"
-	depth := 7
+	depth := int64(7)
 	dist := ShortestPath(ShortestPathOpt{
 		Graph:   tr,
 		Sources: []Node{root},
-		Weight: func(x, y Node) int {
+		Weight: func(x, y Node) int64 {
 			return 1
 		},
 	})

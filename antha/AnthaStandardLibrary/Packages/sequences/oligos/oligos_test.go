@@ -2,6 +2,7 @@
 package oligos
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -13,6 +14,7 @@ type testpair struct {
 	//BasicMeltingTemp test
 	sequence    wtype.DNASequence
 	meltingtemp wunit.Temperature
+
 	// FWDoligoTest
 	mintemp             wunit.Temperature
 	maxtemp             wunit.Temperature
@@ -30,6 +32,9 @@ type testpair struct {
 	overlapPercent float64
 	overlapNumber  int
 	overlapSeq     string
+
+	// errorCheckingTests
+	expectedError error
 }
 
 var meltingtemptests = []testpair{
@@ -51,6 +56,58 @@ var oligotests = []testpair{
 		overlapthreshold:    45,
 		outputoligoseq:      "ATGAGCAAAGGAGAAGAACTTTTCA",
 		calculatedGCcontent: 0.36},
+}
+
+var primerErrorTests = []testpair{
+	{
+		sequence:            wtype.MakeSingleStrandedDNASequence("SGAP-004b-001-SacO1_partial", "GTTTAAATCAAAACTGGTGAAACTCACCCAGGGATTGGCTGACACGAAAAACATATTCTCAATAAATCCTTTAGGGAAATAGGCCAGGTTTTCACCGTAACACGCCACATCTTGCGAATATATGTGTAGAAACTGCCGGAAATCGTCGTGGTATTCACTCCAGAGCGATGAAAACGTTTCAGTTTGCTCATGGAAAACGGTGTA"),
+		mintemp:             wunit.NewTemperature(50, "C"),
+		maxtemp:             wunit.NewTemperature(85, "C"),
+		maxGCcontent:        0.1,
+		minlength:           21,
+		maxlength:           45,
+		seqstoavoid:         []string{""},
+		overlapthreshold:    45,
+		calculatedGCcontent: 0.355556,
+		expectedError:       fmt.Errorf(" For %s could only generate FORWARD primers with GC Content (%f) greater than the maximum GC Content specified (%f). Please try lowering this parameter, or selecting a less-GC rich region.", "SGAP-004b-001-SacO1_partial", 0.355556, 0.100000),
+	},
+	{
+		sequence:            wtype.MakeSingleStrandedDNASequence("SGAP-004b-001-SacO1_partial", "GTTTAAATCAAAACTGGTGAAACTCACCCAGGGATTGGCTGACACGAAAAACATATTCTCAATAAATCCTTTAGGGAAATAGGCCAGGTTTTCACCGTAACACGCCACATCTTGCGAATATATGTGTAGAAACTGCCGGAAATCGTCGTGGTATTCACTCCAGAGCGATGAAAACGTTTCAGTTTGCTCATGGAAAACGGTGTA."),
+		meltingtemp:         wunit.NewTemperature(28.000000, "C"),
+		mintemp:             wunit.NewTemperature(50, "C"),
+		maxtemp:             wunit.NewTemperature(85, "C"),
+		maxGCcontent:        0.6,
+		minlength:           9,
+		maxlength:           10,
+		seqstoavoid:         []string{""},
+		overlapthreshold:    45,
+		calculatedGCcontent: 0.36,
+		expectedError:       fmt.Errorf(" For %s could only generate FORWARD primers with melting temperature (%f) lower than the minimum melting temperature specified (%f). Please try lowering this parameter.", "SGAP-004b-001-SacO1_partial", 28.000000, 50.000000),
+	},
+	{
+		sequence:            wtype.MakeSingleStrandedDNASequence("MultipleBindingSites", "ACGGGGGCGAAGAAGTTGTCCATATTGGCCACGTTTAAATCAAAAACGGGGGCGAAGAAGTTGTCCATATTGGCCACGTTTAAATCAAAAACGGGGGCGAAGAAGTTGTCCATATTGGCCACGTTTAAATCAAAAACGGGGGCGAAGAAGTTGTCCATATTGGCCACGTTTAAATCAAAATGGGATATATCAACGGTGGTATATCCAGTGATTTTTTTCTCCATATTCTTCCTTTTTCA."),
+		mintemp:             wunit.NewTemperature(45, "C"),
+		maxtemp:             wunit.NewTemperature(85, "C"),
+		maxGCcontent:        0.6,
+		minlength:           9,
+		maxlength:           21,
+		seqstoavoid:         []string{""},
+		overlapthreshold:    45,
+		calculatedGCcontent: 0.36,
+		expectedError:       fmt.Errorf(" For %s could only generate FORWARD primers with more than one (%d) binding sites. Please try selecting another region.", "MultipleBindingSites", 4),
+	},
+	{
+		sequence:            wtype.MakeSingleStrandedDNASequence("SeqsToAvoid", "GTTTAAATCAAAACTGGTGAAACTCACCCAGGGATTGGCTGACACGAAAAACATATTCTCAATAAATCCTTTAGGGAAATAGGCCAGGTTTTCACCGTAACACGCCACATCTTGCGAATATATGTGTAGAAACTGCCGGAAATCGTCGTGGTATTCACTCCAGAGCGATGAAAACGTTTCAGTTTGCTCATGGAAAACGGTGTA"),
+		mintemp:             wunit.NewTemperature(45, "C"),
+		maxtemp:             wunit.NewTemperature(85, "C"),
+		maxGCcontent:        0.6,
+		minlength:           9,
+		maxlength:           21,
+		seqstoavoid:         []string{"GTTTAAATCAAAACTGGTGAAACTCACCCAGGGATTGGCTGACACGAAAAACATATTCTCAATAAATCCTTTAGGGAAATAGGCCAGGTTTTCACCGTAACACGCCACATCTTGCGAATATATGTGTAGAAACTGCCGGAAATCGTCGTGGTATTCACTCCAGAGCGATGAAAACGTTTCAGTTTGCTCATGGAAAACGGTGTA"},
+		overlapthreshold:    45,
+		calculatedGCcontent: 0.36,
+		expectedError:       fmt.Errorf(" For %s could only generate FORWARD primers that contain the specified sequences to avoid. Please try removing these from the parameters.", "SeqsToAvoid"),
+	},
 }
 
 var overlaptests = []testpair{
@@ -120,7 +177,19 @@ func TestFWDOligoSeq(t *testing.T) {
 		}
 
 	}
+
+	for _, oligo := range primerErrorTests {
+		_, err := FWDOligoSeq(oligo.sequence, oligo.maxGCcontent, oligo.minlength, oligo.maxlength, oligo.mintemp, oligo.maxtemp, oligo.seqstoavoid, oligo.overlapthreshold)
+		if err.Error() != oligo.expectedError.Error() {
+			t.Error(
+				"For", oligo.sequence.Name(), "\n",
+				"expected", oligo.expectedError.Error(), "\n",
+				"got", err.Error(), "\n",
+			)
+		}
+	}
 }
+
 func TestOverlapCheck(t *testing.T) {
 	for _, test := range overlaptests {
 		percent, number, seq := OverlapCheck(test.primer1, test.primer2)
@@ -160,7 +229,7 @@ type regionTest struct {
 
 var regionTests = []regionTest{
 
-	regionTest{
+	{
 		LargeSeq: wtype.DNASequence{
 			Nm:      "Test1",
 			Seq:     "ATCGTAGTGTG",
@@ -173,7 +242,7 @@ var regionTests = []regionTest{
 		Start: 5,
 		End:   7,
 	},
-	regionTest{
+	{
 		LargeSeq: wtype.DNASequence{
 			Nm:      "Test2",
 			Seq:     "ATCGTAGTGTG",
@@ -186,7 +255,7 @@ var regionTests = []regionTest{
 		Start: 7,
 		End:   5,
 	},
-	regionTest{
+	{
 		LargeSeq: wtype.DNASequence{
 			Nm:      "Test3",
 			Seq:     "ATCGTAGTGTG",
@@ -199,7 +268,7 @@ var regionTests = []regionTest{
 		Start: 1,
 		End:   11,
 	},
-	regionTest{
+	{
 		LargeSeq: wtype.DNASequence{
 			Nm:      "Test4",
 			Seq:     "ATCGTAGTGTG",

@@ -1,0 +1,171 @@
+syntax="proto3";
+package pb;
+
+service LowLevelLiquidhandlingDriver{
+    rpc AddPlateTo (AddPlateToRequest) returns (CommandReply) {}
+    rpc Finalize (FinalizeRequest) returns (CommandReply) {}
+    rpc GetCapabilities (GetCapabilitiesRequest) returns (GetCapabilitiesReply) {}
+    rpc GetOutputFile(GetOutputFileRequest) returns (GetOutputFileReply) {}
+    rpc Initialize (InitializeRequest) returns (CommandReply) {}
+    rpc Message (MessageRequest) returns (CommandReply) {}
+    rpc RemoveAllPlates (RemoveAllPlatesRequest) returns (CommandReply) {}
+    rpc RemovePlateAt (RemovePlateAtRequest) returns (CommandReply) {}
+    rpc Aspirate (AspirateRequest) returns (CommandReply) {}
+    rpc Dispense (DispenseRequest) returns (CommandReply) {}
+    rpc LoadTips (LoadTipsRequest) returns (CommandReply) {}
+    rpc Mix (MixRequest) returns (CommandReply) {}
+    rpc Move (MoveRequest) returns (CommandReply) {}
+    rpc ResetPistons (ResetPistonsRequest) returns (CommandReply) {}
+    rpc SetDriveSpeed (SetDriveSpeedRequest) returns (CommandReply) {}
+    rpc SetPipetteSpeed (SetPipetteSpeedRequest) returns (CommandReply) {}
+    rpc UnloadTips (UnloadTipsRequest) returns (CommandReply) {}
+    rpc UpdateMetaData (UpdateMetaDataRequest) returns (CommandReply) {}
+    rpc Wait (WaitRequest) returns (CommandReply){}
+}
+
+service HighLevelLiquidhandlingDriver{
+    rpc AddPlateTo (AddPlateToRequest) returns (CommandReply) {}
+    rpc Finalize (FinalizeRequest) returns (CommandReply) {}
+    rpc GetCapabilities (GetCapabilitiesRequest) returns (GetCapabilitiesReply) {}
+    rpc GetOutputFile(GetOutputFileRequest) returns (GetOutputFileReply) {}
+    rpc Initialize (InitializeRequest) returns (CommandReply) {}
+    rpc Message (MessageRequest) returns (CommandReply) {}
+    rpc RemoveAllPlates (RemoveAllPlatesRequest) returns (CommandReply) {}
+    rpc RemovePlateAt (RemovePlateAtRequest) returns (CommandReply) {}
+    rpc Transfer(TransferRequest)returns (CommandReply){}
+}
+
+message AddPlateToRequest {
+    string position = 1;
+    string plate_JSON = 2;
+    string name = 3;
+}
+
+message FinalizeRequest {}
+
+message GetCapabilitiesRequest {}
+
+message GetOutputFileRequest {}
+
+message InitializeRequest {}
+
+message MessageRequest {
+    int32 level = 1;
+    string title = 2;
+    string text = 3;
+    bool show_cancel = 4;
+}
+
+message RemoveAllPlatesRequest {}
+
+message RemovePlateAtRequest {
+    string position = 1;
+}
+
+message AspirateRequest {
+    repeated double volume = 1;
+    repeated bool overstroke = 2;
+    int32 head = 3;
+    int32 multi = 4;
+    repeated string platetype = 5;
+    repeated string what = 6;
+    repeated bool llf = 7;
+}
+
+message DispenseRequest {
+    repeated double volume = 1;
+    repeated bool blowout = 2;
+    int32 head = 3;
+    int32 multi = 4;
+    repeated string platetype = 5;
+    repeated string what = 6;
+    repeated bool llf = 7;
+}
+
+message LoadTipsRequest {
+    repeated int32 channels = 1;
+    int32 head = 2;
+    int32 multi = 3;
+    repeated string platetype = 4;
+    repeated string position = 5;
+    repeated string well = 6;
+}
+
+message MixRequest {
+    int32 head = 1;
+    repeated double volume = 2;
+    repeated string platetype = 3;
+    repeated int32 cycles = 4;
+    int32 multi = 5;
+    repeated string what = 6;
+    repeated bool blowout = 7;
+}
+
+message MoveRequest {
+    repeated string deckposition = 1;
+    repeated string wellcoords = 2;
+    repeated int32 reference = 3;
+    repeated double offset_x = 4;
+    repeated double offset_y = 5;
+    repeated double offset_z = 6;
+    repeated string plate_type = 7;
+    int32 head = 8;
+}
+
+message ResetPistonsRequest {
+    int32 head = 1;
+    int32 channel = 2;
+}
+
+message SetDriveSpeedRequest {
+    string drive = 1;
+    double rate = 2;
+}
+
+message SetPipetteSpeedRequest {
+    int32 head = 1;
+    int32 channel = 2;
+    double rate = 3;
+}
+
+message UnloadTipsRequest {
+    repeated int32 channels = 1;
+    int32 head = 2;
+    int32 multi = 3;
+    repeated string platetype = 4;
+    repeated string position = 5;
+    repeated string well = 6;
+}
+
+message UpdateMetaDataRequest {
+    string LH_properties_JSON = 1;
+}
+
+message WaitRequest {
+    double time = 1;
+}
+
+message TransferRequest {
+    repeated string what = 1;
+    repeated string platefrom = 2;
+    repeated string wellfrom = 3;
+    repeated string plateto = 4;
+    repeated string wellto = 5;
+    repeated double volume = 6;
+}
+
+message CommandReply {
+   reserved 1;
+   int32 errorcode = 2;
+   string msg = 3;
+}
+    
+message GetCapabilitiesReply {
+    string LH_properties_JSON = 1;
+    CommandReply status = 2;
+}
+
+message GetOutputFileReply {
+    bytes output_file = 1;
+    CommandReply status = 2;
+}

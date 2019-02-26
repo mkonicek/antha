@@ -135,7 +135,10 @@ func (s *Seq) String() string { return alphabet.Letters(s.Seq).String() }
 // omission of the sequence name.
 func (s *Seq) Format(fs fmt.State, c rune) {
 	if s == nil {
-		fmt.Fprint(fs, "<nil>")
+		// nb. calling fprint without error checking in custom formatters is in
+		// line with behaviour in standard go libraries,
+		// e.g. https://golang.org/pkg/math/big/#Float.Format
+		fmt.Fprint(fs, "<nil>") // nolint
 		return
 	}
 	var (
@@ -152,65 +155,65 @@ func (s *Seq) Format(fs fmt.State, c rune) {
 	switch c {
 	case 'v':
 		if fs.Flag('#') {
-			fmt.Fprintf(fs, "&%#v", *s)
+			fmt.Fprintf(fs, "&%#v", *s) // nolint
 			return
 		}
 		fallthrough
 	case 's':
 		if !fs.Flag('-') {
-			fmt.Fprintf(fs, "%q ", s.ID)
+			fmt.Fprintf(fs, "%q ", s.ID) // nolint
 		}
 		for _, l := range buf {
-			fmt.Fprintf(fs, "%c", l)
+			fmt.Fprintf(fs, "%c", l) // nolint
 		}
 		if pOk && p < s.Len() {
-			fmt.Fprint(fs, "...")
+			fmt.Fprint(fs, "...") // nolint
 		}
 	case 'a':
 		s.formatDescLineTo(fs, '>')
 		for i, l := range buf {
-			fmt.Fprintf(fs, "%c", l)
+			fmt.Fprintf(fs, "%c", l) // nolint
 			if wOk && i < s.Len()-1 && i%w == w-1 {
-				fmt.Fprintln(fs)
+				fmt.Fprintln(fs) // nolint
 			}
 		}
 		if pOk && p < s.Len() {
-			fmt.Fprint(fs, "...")
+			fmt.Fprint(fs, "...") // nolint
 		}
 	case 'q':
 		s.formatDescLineTo(fs, '@')
 		for _, l := range buf {
-			fmt.Fprintf(fs, "%c", l)
+			fmt.Fprintf(fs, "%c", l) // nolint
 		}
 		if pOk && p < s.Len() {
-			fmt.Fprintln(fs, "...")
+			fmt.Fprintln(fs, "...") // nolint
 		} else {
-			fmt.Fprintln(fs)
+			fmt.Fprintln(fs) // nolint
 		}
 		if fs.Flag('+') {
 			s.formatDescLineTo(fs, '+')
 		} else {
-			fmt.Fprintln(fs, "+")
+			fmt.Fprintln(fs, "+") // nolint
 		}
 		e := seq.DefaultQphred.Encode(seq.DefaultEncoding)
 		if e >= unicode.MaxASCII {
 			e = unicode.MaxASCII - 1
 		}
-		for _ = range buf {
-			fmt.Fprintf(fs, "%c", e)
+		for range buf {
+			fmt.Fprintf(fs, "%c", e) // nolint
 		}
 		if pOk && p < s.Len() {
-			fmt.Fprint(fs, "...")
+			fmt.Fprint(fs, "...") // nolint
 		}
 	default:
-		fmt.Fprintf(fs, "%%!%c(linear.Seq=%.10s)", c, s)
+		fmt.Fprintf(fs, "%%!%c(linear.Seq=%.10s)", c, s) // nolint
 	}
 }
 
 func (s *Seq) formatDescLineTo(fs fmt.State, p rune) {
-	fmt.Fprintf(fs, "%c%s", p, s.ID)
+	fmt.Fprintf(fs, "%c%s", p, s.ID) // nolint
 	if s.Desc != "" {
-		fmt.Fprintf(fs, " %s", s.Desc)
+		fmt.Fprintf(fs, " %s", s.Desc) // nolint
 	}
-	fmt.Fprintln(fs)
+	fmt.Fprintln(fs) // nolint
 }

@@ -71,7 +71,7 @@ func WithTarget(parent context.Context, t *Target) context.Context {
 
 // Target for execution (collection of devices).
 type Target struct {
-	devices []Device
+	devices []ast.Device
 }
 
 // New creates a new target
@@ -79,7 +79,7 @@ func New() *Target {
 	return &Target{}
 }
 
-func (a *Target) canCompile(d Device, reqs ...ast.Request) bool {
+func (a *Target) canCompile(d ast.Device, reqs ...ast.Request) bool {
 	for _, req := range reqs {
 		if !d.CanCompile(req) {
 			return false
@@ -89,7 +89,7 @@ func (a *Target) canCompile(d Device, reqs ...ast.Request) bool {
 }
 
 // CanCompile returns the devices that can compile the given set of requests
-func (a *Target) CanCompile(reqs ...ast.Request) (r []Device) {
+func (a *Target) CanCompile(reqs ...ast.Request) (r []ast.Device) {
 	for _, d := range a.devices {
 		if a.canCompile(d, reqs...) {
 			r = append(r, d)
@@ -99,6 +99,6 @@ func (a *Target) CanCompile(reqs ...ast.Request) (r []Device) {
 }
 
 // AddDevice adds a device to the target configuration
-func (a *Target) AddDevice(d Device) {
+func (a *Target) AddDevice(d ast.Device) {
 	a.devices = append(a.devices, d)
 }

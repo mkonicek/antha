@@ -1,6 +1,7 @@
 package codegen
 
 import (
+	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/graph"
 	"github.com/antha-lang/antha/target"
 )
@@ -10,19 +11,19 @@ import (
 // where we can't depend on target.Graph because we are using this to build the
 // initial DependsOn relation.
 type instGraph struct {
-	insts     []target.Inst
-	added     map[target.Inst]bool
-	dependsOn map[target.Inst][]target.Inst
-	entry     map[graph.Node]target.Inst
-	exit      map[graph.Node]target.Inst
+	insts     []ast.Inst
+	added     map[ast.Inst]bool
+	dependsOn map[ast.Inst][]ast.Inst
+	entry     map[graph.Node]ast.Inst
+	exit      map[graph.Node]ast.Inst
 }
 
 func newInstGraph() *instGraph {
 	return &instGraph{
-		added:     make(map[target.Inst]bool),
-		entry:     make(map[graph.Node]target.Inst),
-		exit:      make(map[graph.Node]target.Inst),
-		dependsOn: make(map[target.Inst][]target.Inst),
+		added:     make(map[ast.Inst]bool),
+		entry:     make(map[graph.Node]ast.Inst),
+		exit:      make(map[graph.Node]ast.Inst),
+		dependsOn: make(map[ast.Inst][]ast.Inst),
 	}
 }
 
@@ -35,15 +36,15 @@ func (a *instGraph) Node(i int) graph.Node {
 }
 
 func (a *instGraph) NumOuts(n graph.Node) int {
-	return len(a.dependsOn[n.(target.Inst)])
+	return len(a.dependsOn[n.(ast.Inst)])
 }
 
 func (a *instGraph) Out(n graph.Node, i int) graph.Node {
-	return a.dependsOn[n.(target.Inst)][i]
+	return a.dependsOn[n.(ast.Inst)][i]
 }
 
 // addInsts adds instructions to the graph
-func (a *instGraph) addInsts(insts []target.Inst) {
+func (a *instGraph) addInsts(insts ast.Insts) {
 	// Add dependencies
 	for _, in := range insts {
 		a.dependsOn[in] = append(a.dependsOn[in], in.DependsOn()...)
@@ -68,15 +69,15 @@ func (a *instGraph) addInsts(insts []target.Inst) {
 	}
 }
 
-func (a *instGraph) addInitializers(insts []target.Inst) {
+func (a *instGraph) addInitializers(insts ast.Insts) {
 	if len(insts) == 0 {
 		return
 	}
 
-	insts = target.SequentialOrder(insts...)
+	insts.SequentialOrder()
 	last := insts[len(insts)-1]
 	for _, inst := range a.entry {
-		appendToDepends(inst, last)
+		inst.AppendDependsOn(last)
 		// Unlike other cases, inst has already been added to graph, so update
 		// data explicitly
 		a.dependsOn[inst] = append(a.dependsOn[inst], last)
@@ -84,21 +85,21 @@ func (a *instGraph) addInitializers(insts []target.Inst) {
 	a.addInsts(insts)
 }
 
-func (a *instGraph) addFinalizers(insts []target.Inst) {
+func (a *instGraph) addFinalizers(insts ast.Insts) {
 	if len(insts) == 0 {
 		return
 	}
 
-	insts = target.SequentialOrder(insts...)
+	insts.SequentialOrder()
 	first := insts[0]
 	for _, inst := range a.exit {
-		appendToDepends(first, inst)
+		first.AppendDependsOn(inst)
 	}
 	a.addInsts(insts)
 }
 
 // addRootedInsts adds instructions that correspond to a particular graph Node
-func (a *instGraph) addRootedInsts(root graph.Node, insts []target.Inst) {
+func (a *instGraph) addRootedInsts(root graph.Node, insts ast.Insts) {
 	exit := &target.Wait{}
 	entry := &target.Wait{}
 
@@ -109,12 +110,10 @@ func (a *instGraph) addRootedInsts(root graph.Node, insts []target.Inst) {
 		first := insts[0]
 		last := insts[len(insts)-1]
 
-		appendToDepends(first, entry)
-		appendToDepends(exit, last)
+		first.AppendDependsOn(entry)
+		exit.AppendDependsOn(last)
 	}
 
-	var newInsts []target.Inst
-	newInsts = append(newInsts, entry, exit)
-	newInsts = append(newInsts, insts...)
+	newInsts := append(ast.Insts{entry, exit}, insts...)
 	a.addInsts(newInsts)
 }

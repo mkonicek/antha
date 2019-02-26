@@ -25,9 +25,10 @@ package eng
 
 import (
 	"fmt"
+	"math"
+
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/Liquidclasses"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"math"
 )
 
 func Θ(liquid string, airvelocity wunit.Velocity) (float64, error) {
@@ -35,15 +36,15 @@ func Θ(liquid string, airvelocity wunit.Velocity) (float64, error) {
 	var ok bool
 	liquiddetails, ok := liquidclasses.Liquidclass[liquid]
 	if !ok {
-		return 0.0, fmt.Errorf("liquid,", liquid, "not found in map", "liquidclasses.Liquidclass[liquid]")
+		return 0.0, fmt.Errorf("liquid \"%s\" not found in map liquidclasses.Liquidclass[liquid]", liquid)
 	}
 	c, ok := liquiddetails["c"]
 	if !ok {
-		return 0.0, fmt.Errorf("liquid,", liquid, "not found in map", "no value c found for liquid in liquidclasses.Liquidclass[liquid][c]")
+		return 0.0, fmt.Errorf("liquid \"%s\" not found in map no value c found for liquid in liquidclasses.Liquidclass[liquid][c]", liquid)
 	}
 	d, ok := liquiddetails["d"]
 	if !ok {
-		return 0.0, fmt.Errorf("liquid,", liquid, "not found in map", "no value d found for liquid in liquidclasses.Liquidclass[liquid][d]")
+		return 0.0, fmt.Errorf("liquid \"%s\" not found in map no value d found for liquid in liquidclasses.Liquidclass[liquid][d]", liquid)
 	}
 	return (c) + ((d) * airvelocity.SIValue()), nil
 
@@ -72,10 +73,7 @@ func X(pw float64, Pa wunit.Pressure) float64 {
 
 func EvaporationVolume(temp wunit.Temperature, liquidtype string, relativehumidity float64, time float64, Airvelocity wunit.Velocity, surfacearea wunit.Area, Pa wunit.Pressure) wunit.Volume {
 	// ensure we are in the right units
-	mysa := wunit.NewArea(surfacearea.Mvalue, surfacearea.Unit().PrefixedSymbol())
-	if surfacearea.Unit().ToString() != "mm^2" {
-		mysa.Mvalue /= 1000000.00
-	}
+	mysa := wunit.NewArea(surfacearea.ConvertToString("mm^2"), "mm^2")
 
 	var PWS float64 = Pws(temp)
 	var pw float64 = Pw(relativehumidity, PWS) // vapour partial pressure in Pascals
@@ -84,12 +82,12 @@ func EvaporationVolume(temp wunit.Temperature, liquidtype string, relativehumidi
 		panic(err.Error())
 	}
 	var Gh = (theta *
-		((surfacearea.RawValue() / 1000000) *
+		((mysa.RawValue() / 1000000) *
 			((Xs(PWS, Pa)) - (X(pw, Pa))))) // Gh is rate of evaporation in kg/h
 
 	evaporatedliquid := (Gh * (time / 3600)) // in kg
 
-	density, _ := liquidclasses.Liquidclass[liquidtype]["ro"]
+	density := liquidclasses.Liquidclass[liquidtype]["ro"]
 
 	evaporatedliquid = (evaporatedliquid * density) / 1000     // converted to litres
 	vol := wunit.NewVolume((evaporatedliquid * 1000000), "ul") // convert to ul

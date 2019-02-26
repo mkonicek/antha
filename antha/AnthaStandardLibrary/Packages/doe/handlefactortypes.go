@@ -55,65 +55,48 @@ func HandleStringFactor(header string, value interface{}) (string, error) {
 // If the header contains a valid concentration unit a number can be specified as the value.
 func HandleConcFactor(header string, value interface{}) (anthaConc wunit.Concentration, err error) {
 
-	var floatValue float64
-	var floatFound bool
-
-	rawconcfloat, found := value.(float64)
-
-	if found {
-		floatValue = rawconcfloat
-		floatFound = true
-	} else {
-		rawconcstring, found := value.(string)
-		var floatParseErr error
-		if floatValue, floatParseErr = strconv.ParseFloat(rawconcstring, 64); found && floatParseErr == nil {
-			floatFound = true
+	defaultUnit, err := lookForUnitInHeader(header, "Concentration")
+	switch conc := value.(type) {
+	case int:
+		if err != nil {
+			return
 		}
-	}
+		anthaConc = wunit.NewConcentration(float64(conc), defaultUnit)
+		return anthaConc, nil
+	case float64:
+		if err != nil {
+			return
+		}
+		anthaConc = wunit.NewConcentration(conc, defaultUnit)
 
-	if floatFound {
+		return anthaConc, nil
+	case string:
+		value, unit := wunit.SplitValueAndUnit(conc)
 
-		// handle floating point imprecision
-		floatValue, err = wutil.Roundto(floatValue, 6)
+		if unit == "" {
+			if err != nil {
+				return
+			}
+			unit = defaultUnit
+		}
+
+		err = wunit.GetGlobalUnitRegistry().AssertValidUnitForType("Concentration", unit)
 
 		if err != nil {
-			return anthaConc, err
-		}
-		containsconc, conc, _ := wunit.ParseConcentration(header)
-
-		if containsconc {
-
-			concunit := conc.Unit().PrefixedSymbol()
-
-			anthaConc = wunit.NewConcentration(floatValue, concunit)
-		} else {
-			err = fmt.Errorf("No valid conc found in component %s so can't assign a concentration unit to value", header)
-			return anthaConc, err
+			return
 		}
 
-	} else if rawconcstring, found := value.(string); found {
+		anthaConc = wunit.NewConcentration(value, unit)
 
-		containsconc, conc, _ := wunit.ParseConcentration(rawconcstring)
-
-		if containsconc {
-			anthaConc = conc
-		} else {
-			err = fmt.Errorf("No valid conc found in %s", rawconcstring)
-			return anthaConc, err
-		}
-
-		// if float use conc unit from header component
-	} else {
-		err = fmt.Errorf("problem with type of %T expected string or float", value)
-		return anthaConc, err
+		return
+	default:
+		return anthaConc, fmt.Errorf("cannot convert %v of type %T to concentration!", value, conc)
 	}
-
-	return
 }
 
 // HandleComponentWithConcentration returns both LHComponent and Concentration from a component name with concentration in a DOE design.
 // If no valid concentration is found or an invalid component name is specifed an error is returned.
-func HandleComponentWithConcentration(ctx context.Context, header string, value interface{}) (component *wtype.LHComponent, concentration wunit.Concentration, err error) {
+func HandleComponentWithConcentration(ctx context.Context, header string, value interface{}) (component *wtype.Liquid, concentration wunit.Concentration, err error) {
 
 	concentration, err = HandleConcFactor(header, value)
 
@@ -177,7 +160,7 @@ func HandleVolumeFactor(header string, value interface{}) (anthaVolume wunit.Vol
 		fields := strings.Fields(header)
 
 		for _, field := range fields {
-			if _, validUnitFound := wunit.UnitMap["Volume"][strings.Trim(field, "()")]; validUnitFound {
+			if wunit.GetGlobalUnitRegistry().ValidUnitForType("Volume", strings.Trim(field, "()")) {
 				volUnit = strings.Trim(field, "()")
 			}
 		}
@@ -211,7 +194,7 @@ func HandleVolumeFactor(header string, value interface{}) (anthaVolume wunit.Vol
 // LHComponent.
 //
 // If the value cannot be converted to a valid component an error is returned.
-func HandleLHComponentFactor(ctx context.Context, header string, value interface{}) (*wtype.LHComponent, error) {
+func HandleLHComponentFactor(ctx context.Context, header string, value interface{}) (*wtype.Liquid, error) {
 	str, found := value.(string)
 	if !found {
 		if flt, found := value.(float64); found {
@@ -247,7 +230,7 @@ func HandleLHComponentFactor(ctx context.Context, header string, value interface
 // LHComponent.
 //
 // If the value cannot be converted to a valid component an error is returned.
-func HandleLHPlateFactor(ctx context.Context, header string, value interface{}) (*wtype.LHPlate, error) {
+func HandleLHPlateFactor(ctx context.Context, header string, value interface{}) (*wtype.Plate, error) {
 	str, found := value.(string)
 	if !found {
 		return nil, fmt.Errorf("value %T is not a string", value)
@@ -281,7 +264,7 @@ func HandleTemperatureFactor(header string, value interface{}) (anthaTemp wunit.
 			unit = defaultUnit
 		}
 
-		err = wunit.ValidMeasurementUnit("Temperature", unit)
+		err = wunit.GetGlobalUnitRegistry().AssertValidUnitForType("Temperature", unit)
 
 		if err != nil {
 			return
@@ -320,7 +303,7 @@ func HandleTimeFactor(header string, value interface{}) (anthaTime wunit.Time, e
 			unit = defaultUnit
 		}
 
-		err = wunit.ValidMeasurementUnit("Time", unit)
+		err = wunit.GetGlobalUnitRegistry().AssertValidUnitForType("Time", unit)
 
 		if err != nil {
 			return
@@ -358,7 +341,7 @@ func HandleRPMFactor(header string, value interface{}) (anthaRate wunit.Rate, er
 			unit = defaultUnit
 		}
 
-		err = wunit.ValidMeasurementUnit("Rate", unit)
+		err = wunit.GetGlobalUnitRegistry().AssertValidUnitForType("Rate", unit)
 
 		if err != nil {
 			return
@@ -371,36 +354,72 @@ func HandleRPMFactor(header string, value interface{}) (anthaRate wunit.Rate, er
 	}
 }
 
-// lookForUnitInHeader searches for a unit flanked by ( ).
+// lookForUnitInHeader searches for a unit in a string.
+// The unit may be on it's own, preceded by a number or flanked by ( ).
+// e.g. (g/L) g/L or 10g/L will all return g/L
 // If a measurment type is specified the unit will be checked for validity.
+// Units flanked by parentheses take priority.
+// If two units are specified in parenthesis, an error is returned.
 func lookForUnitInHeader(header, measurementType string) (unit string, err error) {
 
 	var errs []string
 
+	var validUnitsFound []string
+	var prioritisedUnitsFound []string
 	fields := strings.Fields(header)
 
 	for _, field := range fields {
-
+		var priority bool
 		if strings.HasPrefix(field, "(") && strings.HasSuffix(field, ")") {
-			trimmed := strings.Trim(field, "()")
+			priority = true
+		}
+		// trim parenthesis
+		trimmed := strings.Trim(field, "()")
 
-			if measurementType != "" {
-				err = wunit.ValidMeasurementUnit(measurementType, unit)
+		if measurementType != "" {
 
-				if err == nil {
-					unit = trimmed
-					return
-				}
+			// remove any number from unit
+			_, trimmed := wunit.SplitValueAndUnit(trimmed)
+
+			// check unit validity
+			err = wunit.GetGlobalUnitRegistry().AssertValidUnitForType(measurementType, trimmed)
+			if err == nil && priority {
+				prioritisedUnitsFound = append(prioritisedUnitsFound, trimmed)
+			} else if err != nil {
+				errs = append(errs, err.Error())
 			} else {
-				unit = trimmed
+				validUnitsFound = append(validUnitsFound, trimmed)
 			}
-			errs = append(errs, err.Error())
+		} else {
+			// remove any number from unit
+			_, trimmed := wunit.SplitValueAndUnit(trimmed)
+			if priority {
+				prioritisedUnitsFound = append(prioritisedUnitsFound, trimmed)
+			} else {
+				validUnitsFound = append(validUnitsFound, trimmed)
+			}
 		}
 
 	}
 
+	if len(prioritisedUnitsFound) == 1 {
+		return prioritisedUnitsFound[0], nil
+	}
+
+	if len(prioritisedUnitsFound) > 0 {
+		return "", fmt.Errorf("more than one unit found in header %v: valid units found %s %s. Units flanked by parentheses are prioritised.", header, prioritisedUnitsFound, validUnitsFound)
+	}
+
+	if len(validUnitsFound) == 1 {
+		return validUnitsFound[0], nil
+	}
+
+	if len(validUnitsFound) > 0 {
+		return "", fmt.Errorf("more than one unit found in header %v: valid units found %s. Units flanked by parentheses are prioritised.", header, validUnitsFound)
+	}
+
 	if len(errs) > 0 {
-		return "", fmt.Errorf(strings.Join(errs, ";"))
+		return "", fmt.Errorf("no unit found in header %s, errors: %s", header, strings.Join(errs, ";"))
 	}
 
 	if measurementType != "" {

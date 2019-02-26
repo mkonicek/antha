@@ -7,19 +7,19 @@ import (
 
 func TestIsValidLiquidHandlerType(t *testing.T) {
 
-	validTypes := []string{LLLiquidHandler, HLLiquidHandler}
+	validTypes := []LiquidHandlerLevel{LLLiquidHandler, HLLiquidHandler}
 
 	for _, c := range validTypes {
-		if !IsValidLiquidHandlerType(c) {
+		if !c.IsValid() {
 			t.Errorf(fmt.Sprintf("error: Type %s must return as valid, returns invalid", c))
 		}
 	}
 
-	invalidTypes := []string{"anythingElse", ""}
+	invalidTypes := []LiquidHandlerLevel{157, -65}
 
 	for _, c := range invalidTypes {
-		if IsValidLiquidHandlerType(c) {
-			t.Errorf(fmt.Sprintf("error: Type %s must return as invalid, returns valid", c))
+		if c.IsValid() {
+			t.Errorf(fmt.Sprintf("error: Type %d must return as invalid, returns valid", c))
 
 		}
 	}
@@ -27,19 +27,19 @@ func TestIsValidLiquidHandlerType(t *testing.T) {
 }
 
 func TestIsValidTipType(t *testing.T) {
-	validTypes := []string{FixedTips, DisposableTips, MixedDisposableAndFixedTips, NoTips}
+	validTypes := []TipType{FixedTips, DisposableTips, MixedDisposableAndFixedTips, NoTips}
 
 	for _, c := range validTypes {
-		if !IsValidTipType(c) {
+		if !c.IsValid() {
 			t.Errorf(fmt.Sprintf("error: Type %s must return as valid, returns invalid", c))
 		}
 	}
 
-	invalidTypes := []string{"anythingElse", ""}
+	invalidTypes := []TipType{-2, 78}
 
 	for _, c := range invalidTypes {
-		if IsValidTipType(c) {
-			t.Errorf(fmt.Sprintf("error: Type %s must return as invalid, returns valid", c))
+		if c.IsValid() {
+			t.Errorf(fmt.Sprintf("error: Type %d must return as invalid, returns valid", c))
 
 		}
 	}

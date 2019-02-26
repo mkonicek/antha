@@ -1,8 +1,6 @@
 package execute
 
 import (
-	"strings"
-
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/ast"
 )
@@ -13,7 +11,7 @@ type maker struct {
 	// Map from old LHComponent id to new id after sample
 	afterSample map[string][]string
 	// Map from from wtype world to ast world
-	byComp map[*wtype.LHComponent]*ast.UseComp
+	byComp map[*wtype.Liquid]*ast.UseComp
 	byID   map[string][]*ast.UseComp
 }
 
@@ -21,12 +19,12 @@ func newMaker() *maker {
 	return &maker{
 		afterInst:   make(map[string][]string),
 		afterSample: make(map[string][]string),
-		byComp:      make(map[*wtype.LHComponent]*ast.UseComp),
+		byComp:      make(map[*wtype.Liquid]*ast.UseComp),
 		byID:        make(map[string][]*ast.UseComp),
 	}
 }
 
-func (a *maker) makeComp(c *wtype.LHComponent) *ast.UseComp {
+func (a *maker) makeComp(c *wtype.Liquid) *ast.UseComp {
 	u, ok := a.byComp[c]
 	if !ok {
 		u = &ast.UseComp{
@@ -123,7 +121,7 @@ func (a *maker) MakeNodes(insts []*commandInst) ([]ast.Node, error) {
 
 	for comp := range a.byComp {
 		// Contains all descendents rather then direct ones
-		for _, kid := range strings.Split(comp.DaughterID, "_") {
+		for kid := range comp.DaughtersID {
 			if comp.ID != kid {
 				a.afterSample[comp.ID] = append(a.afterSample[comp.ID], kid)
 			}

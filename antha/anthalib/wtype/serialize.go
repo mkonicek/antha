@@ -25,15 +25,59 @@ package wtype
 import (
 	"encoding/json"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/pkg/errors"
 )
 
-func (lhp *LHPlate) MarshalJSON() ([]byte, error) {
+// MarshalDeckObject marshals any object which can be placed on a deck into valid JSON
+// in a way such that it can be unmarshalled by UnMarshalDeckObject
+func MarshalDeckObject(object LHObject) ([]byte, error) {
+	if class := ClassOf(object); class == "" {
+		// shouldn't happen since all current LHObjects implement Classy
+		return nil, errors.Errorf("cannot serialise object of type %T", object)
+	} else {
+		return json.Marshal(struct {
+			Class  string
+			Object LHObject
+		}{
+			Class:  ClassOf(object),
+			Object: object,
+		})
+	}
+}
+
+// UnmarshalDeckObject unmarshal an on-deck object serialised with MarshalDeckObject
+// retaining the correct underlying type
+func UnmarshalDeckObject(data []byte) (LHObject, error) {
+	obj := struct {
+		Class  string
+		Object *json.RawMessage
+	}{}
+	if err := json.Unmarshal(data, &obj); err != nil {
+		return nil, err
+	}
+
+	switch obj.Class {
+	case "plate":
+		var p Plate
+		return &p, json.Unmarshal(*obj.Object, &p)
+	case "tipwaste":
+		var tw LHTipwaste
+		return &tw, json.Unmarshal(*obj.Object, &tw)
+	case "tipbox":
+		var tb LHTipbox
+		return &tb, json.Unmarshal(*obj.Object, &tb)
+	default:
+		return nil, errors.Errorf("cannot unmarshal object with class %q", obj.Class)
+	}
+}
+
+func (lhp *Plate) MarshalJSON() ([]byte, error) {
 	slhp := lhp.ToSLHPLate()
 
 	return json.Marshal(slhp)
 }
 
-func (lhp *LHPlate) UnmarshalJSON(b []byte) error {
+func (lhp *Plate) UnmarshalJSON(b []byte) error {
 	var slhp SLHPlate
 
 	err := json.Unmarshal(b, &slhp)
@@ -68,7 +112,7 @@ type SLHPlate struct {
 	WellZStart  float64 // offset (mm) to bottom of well in Z direction
 }
 
-func (p *LHPlate) ToSLHPLate() SLHPlate {
+func (p *Plate) ToSLHPLate() SLHPlate {
 	return SLHPlate{
 		ID:          p.ID,
 		Inst:        p.Inst,
@@ -90,7 +134,7 @@ func (p *LHPlate) ToSLHPLate() SLHPlate {
 	}
 }
 
-func (slhp SLHPlate) FillPlate(plate *LHPlate) {
+func (slhp SLHPlate) FillPlate(plate *Plate) {
 	plate.ID = slhp.ID
 	plate.Inst = slhp.Inst
 	plate.Loc = slhp.Loc
@@ -119,9 +163,10 @@ func (slhp SLHPlate) FillPlate(plate *LHPlate) {
 		plate.HWells[w.ID] = w
 		w.Plate = plate
 	}
+	plate.Welltype.Plate = plate
 }
 
-func makeRows(p *LHPlate) {
+func makeRows(p *Plate) {
 	p.Rows = make([][]*LHWell, p.WlsY)
 	for i := 0; i < p.WlsY; i++ {
 		p.Rows[i] = make([]*LHWell, p.WlsX)
@@ -131,7 +176,7 @@ func makeRows(p *LHPlate) {
 		}
 	}
 }
-func makeCols(p *LHPlate) {
+func makeCols(p *Plate) {
 	p.Cols = make([][]*LHWell, p.WlsX)
 	for i := 0; i < p.WlsX; i++ {
 		p.Cols[i] = make([]*LHWell, p.WlsY)
@@ -160,7 +205,7 @@ type LHWellType struct {
 func (w *LHWell) AddDimensions(lhwt *LHWellType) {
 	w.MaxVol = wunit.NewVolume(lhwt.Vol, lhwt.Vunit).ConvertToString("ul")
 	w.Rvol = wunit.NewVolume(lhwt.Rvol, lhwt.Vunit).ConvertToString("ul")
-	w.WShape = NewShape(lhwt.ShapeName, lhwt.Dunit, lhwt.Xdim, lhwt.Ydim, lhwt.Zdim)
+	w.WShape = NewShape(ShapeTypeID(lhwt.ShapeName), lhwt.Dunit, lhwt.Xdim, lhwt.Ydim, lhwt.Zdim)
 	w.Bottom = lhwt.Bottom
 	w.Bounds.SetSize(Coordinates{
 		wunit.NewLength(lhwt.Xdim, lhwt.Dunit).ConvertToString("mm"),
@@ -170,9 +215,9 @@ func (w *LHWell) AddDimensions(lhwt *LHWellType) {
 	w.Bottomh = wunit.NewLength(lhwt.Bottomh, lhwt.Dunit).ConvertToString("mm")
 }
 
-func (plate *LHPlate) Welldimensions() *LHWellType {
+func (plate *Plate) Welldimensions() *LHWellType {
 	t := plate.Welltype
-	lhwt := LHWellType{t.MaxVol, "ul", t.Rvol, t.WShape.ShapeName, t.Bottom, t.GetSize().X, t.GetSize().Y, t.GetSize().Z, t.Bottomh, "mm"}
+	lhwt := LHWellType{t.MaxVol, "ul", t.Rvol, string(t.WShape.ShapeName), t.Bottom, t.GetSize().X, t.GetSize().Y, t.GetSize().Z, t.Bottomh, "mm"}
 	return &lhwt
 }
 
@@ -180,7 +225,7 @@ type SLHWell struct {
 	ID       string
 	Inst     string
 	Coords   WellCoords
-	Contents *LHComponent
+	Contents *Liquid
 }
 
 func (slw SLHWell) FillWell(lw *LHWell) {
@@ -206,4 +251,263 @@ func (f *FromFactory) UnmarshalJSON(b []byte) error {
 	}
 	f.String = s
 	return nil
+}
+
+type sTip struct {
+	ID              string
+	Type            string
+	Mnfr            string
+	Dirty           bool
+	MaxVol          wunit.Volume
+	MinVol          wunit.Volume
+	Shape           *Shape
+	Bounds          BBox
+	EffectiveHeight float64
+	Contents        *Liquid
+	Filtered        bool
+}
+
+func NewSTip(tip *LHTip) *sTip {
+	return &sTip{
+		ID:              tip.ID,
+		Type:            tip.Type,
+		Mnfr:            tip.Mnfr,
+		Dirty:           tip.Dirty,
+		MaxVol:          tip.MaxVol,
+		MinVol:          tip.MinVol,
+		Shape:           tip.Shape,
+		Bounds:          tip.Bounds,
+		EffectiveHeight: tip.EffectiveHeight,
+		Contents:        tip.contents,
+		Filtered:        tip.Filtered,
+	}
+}
+
+func (s *sTip) Fill(t *LHTip) {
+	t.ID = s.ID
+	t.Type = s.Type
+	t.Mnfr = s.Mnfr
+	t.Dirty = s.Dirty
+	t.MaxVol = s.MaxVol
+	t.MinVol = s.MinVol
+	t.Shape = s.Shape
+	t.Bounds = s.Bounds
+	t.EffectiveHeight = s.EffectiveHeight
+	t.contents = s.Contents
+	t.Filtered = s.Filtered
+}
+
+type sTipbox struct {
+	ID         string
+	Boxname    string
+	Type       string
+	Mnfr       string
+	Nrows      int
+	Ncols      int
+	Height     float64
+	Tiptype    *LHTip
+	AsWell     *LHWell
+	NTips      int
+	Tips       [][]*LHTip
+	TipXOffset float64
+	TipYOffset float64
+	TipXStart  float64
+	TipYStart  float64
+	TipZStart  float64
+	Bounds     BBox
+}
+
+func newSTipbox(tb *LHTipbox) *sTipbox {
+	return &sTipbox{
+		ID:         tb.ID,
+		Boxname:    tb.Boxname,
+		Type:       tb.Type,
+		Mnfr:       tb.Mnfr,
+		Nrows:      tb.Nrows,
+		Ncols:      tb.Ncols,
+		Height:     tb.Height,
+		Tiptype:    tb.Tiptype,
+		AsWell:     tb.AsWell,
+		NTips:      tb.NTips,
+		Tips:       tb.Tips,
+		TipXOffset: tb.TipXOffset,
+		TipYOffset: tb.TipYOffset,
+		TipXStart:  tb.TipXStart,
+		TipYStart:  tb.TipYStart,
+		TipZStart:  tb.TipZStart,
+		Bounds:     tb.Bounds,
+	}
+}
+
+func (stb *sTipbox) Fill(tb *LHTipbox) {
+	tb.ID = stb.ID
+	tb.Boxname = stb.Boxname
+	tb.Type = stb.Type
+	tb.Mnfr = stb.Mnfr
+	tb.Nrows = stb.Nrows
+	tb.Ncols = stb.Ncols
+	tb.Height = stb.Height
+	tb.Tiptype = stb.Tiptype
+	tb.AsWell = stb.AsWell
+	tb.NTips = stb.NTips
+	tb.Tips = stb.Tips
+	tb.TipXOffset = stb.TipXOffset
+	tb.TipYOffset = stb.TipYOffset
+	tb.TipXStart = stb.TipXStart
+	tb.TipYStart = stb.TipYStart
+	tb.TipZStart = stb.TipZStart
+	tb.Bounds = stb.Bounds
+
+	for _, row := range tb.Tips {
+		for _, tip := range row {
+			if err := tip.SetParent(tb); err != nil {
+				//Tip must accept tipbox as parent, so this should never happen
+				panic(err)
+			}
+		}
+	}
+}
+
+type sTipwaste struct {
+	Name       string
+	ID         string
+	Type       string
+	Mnfr       string
+	Capacity   int
+	Contents   int
+	Height     float64
+	WellXStart float64
+	WellYStart float64
+	WellZStart float64
+	AsWell     *LHWell
+	Bounds     BBox
+}
+
+func newSTipwaste(tw *LHTipwaste) *sTipwaste {
+	return &sTipwaste{
+		Name:       tw.Name,
+		ID:         tw.ID,
+		Type:       tw.Type,
+		Mnfr:       tw.Mnfr,
+		Capacity:   tw.Capacity,
+		Contents:   tw.Contents,
+		Height:     tw.Height,
+		WellXStart: tw.WellXStart,
+		WellYStart: tw.WellYStart,
+		WellZStart: tw.WellZStart,
+		AsWell:     tw.AsWell,
+		Bounds:     tw.Bounds,
+	}
+}
+
+func (stw *sTipwaste) Fill(tw *LHTipwaste) {
+	tw.Name = stw.Name
+	tw.ID = stw.ID
+	tw.Type = stw.Type
+	tw.Mnfr = stw.Mnfr
+	tw.Capacity = stw.Capacity
+	tw.Contents = stw.Contents
+	tw.Height = stw.Height
+	tw.WellXStart = stw.WellXStart
+	tw.WellYStart = stw.WellYStart
+	tw.WellZStart = stw.WellZStart
+	tw.AsWell = stw.AsWell
+	tw.Bounds = stw.Bounds
+
+	if err := tw.AsWell.SetParent(tw); err != nil {
+		//well should accept any tipwaste as parent, so this should never happen
+		panic(err)
+	}
+}
+
+type sHeadAssemblyPosition struct {
+	Offset    Coordinates
+	HeadIndex int
+}
+
+func newSHeadAssemblyPosition(hap *LHHeadAssemblyPosition, heads map[*LHHead]int) *sHeadAssemblyPosition {
+	if headIndex, ok := heads[hap.Head]; !ok {
+		// caller error, should not happen
+		panic(errors.New("head not in head map"))
+	} else {
+		return &sHeadAssemblyPosition{
+			Offset:    hap.Offset,
+			HeadIndex: headIndex,
+		}
+	}
+}
+
+func (shap *sHeadAssemblyPosition) Fill(hap *LHHeadAssemblyPosition, heads []*LHHead) {
+	hap.Offset = shap.Offset
+	hap.Head = heads[shap.HeadIndex]
+}
+
+// SerializableHeadAssembly an easily serialisable representation of LHHEadAssembly referring to heads
+// by index in some array
+type SerializableHeadAssembly struct {
+	Positions      []*sHeadAssemblyPosition
+	MotionLimits   *BBox
+	VelocityLimits *VelocityRange
+}
+
+// NewSerializableHeadAssembly convert to an easily serialisable representation of a head assembly
+// heads is a map of heads to list index
+func NewSerializableHeadAssembly(ha *LHHeadAssembly, heads map[*LHHead]int) *SerializableHeadAssembly {
+	positions := make([]*sHeadAssemblyPosition, 0, len(ha.Positions))
+	for _, pos := range ha.Positions {
+		positions = append(positions, newSHeadAssemblyPosition(pos, heads))
+	}
+
+	return &SerializableHeadAssembly{
+		Positions:      positions,
+		MotionLimits:   ha.MotionLimits,
+		VelocityLimits: ha.VelocityLimits,
+	}
+}
+
+func (sha *SerializableHeadAssembly) Fill(ha *LHHeadAssembly, heads []*LHHead) {
+	positions := make([]*LHHeadAssemblyPosition, 0, len(sha.Positions))
+	for _, spos := range sha.Positions {
+		pos := LHHeadAssemblyPosition{}
+		spos.Fill(&pos, heads)
+		positions = append(positions, &pos)
+	}
+
+	ha.Positions = positions
+	ha.MotionLimits = sha.MotionLimits
+	ha.VelocityLimits = sha.VelocityLimits
+}
+
+type SerializableHead struct {
+	Name         string
+	Manufacturer string
+	ID           string
+	AdaptorIndex int
+	Params       *LHChannelParameter
+	TipLoading   TipLoadingBehaviour
+}
+
+func NewSerializableHead(head *LHHead, adaptors map[*LHAdaptor]int) *SerializableHead {
+	if adaptorIndex, ok := adaptors[head.Adaptor]; !ok {
+		// unknown adaptor loaded, caller error
+		panic(errors.New("unknown adaptor found in head"))
+	} else {
+		return &SerializableHead{
+			Name:         head.Name,
+			Manufacturer: head.Manufacturer,
+			ID:           head.ID,
+			AdaptorIndex: adaptorIndex,
+			Params:       head.Params,
+			TipLoading:   head.TipLoading,
+		}
+	}
+}
+
+func (sh *SerializableHead) Fill(head *LHHead, adaptors []*LHAdaptor) {
+	head.Name = sh.Name
+	head.Manufacturer = sh.Manufacturer
+	head.ID = sh.ID
+	head.Adaptor = adaptors[sh.AdaptorIndex]
+	head.Params = sh.Params
+	head.TipLoading = sh.TipLoading
 }

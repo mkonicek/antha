@@ -3,21 +3,15 @@ package human
 import (
 	"context"
 	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/ast"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/handler"
 )
 
-const (
-	// HumanByHumanCost is the cost of manually moving from another human device
-	HumanByHumanCost = 50
-	// HumanByXCost is the cost of manually moving from any non-human device
-	HumanByXCost = 100
-)
-
 var (
-	_ target.Device = &Human{}
+	_ ast.Device = &Human{}
 )
 
 // A Human is a device that can do anything
@@ -30,9 +24,6 @@ type Human struct {
 type Opt struct {
 	CanMix      bool
 	CanIncubate bool
-
-	// CanHandle is deprecated
-	CanHandle bool
 }
 
 // New returns a new human device
@@ -61,29 +52,17 @@ func (a *Human) CanCompile(req ast.Request) bool {
 		can.Selector = append(can.Selector, target.DriverSelectorV1Mixer)
 	}
 
-	if a.opt.CanHandle {
-		can.Selector = append(can.Selector, req.Selector...)
-	}
-
 	return can.Contains(req)
 }
 
-// MoveCost implements target.device MoveCost
-func (a *Human) MoveCost(from target.Device) int {
-	if _, ok := from.(*Human); ok {
-		return HumanByHumanCost
-	}
-	return HumanByXCost
-}
-
 // Compile implements target.device Compile
-func (a *Human) Compile(ctx context.Context, nodes []ast.Node) ([]target.Inst, error) {
+func (a *Human) Compile(ctx context.Context, nodes []ast.Node) ([]ast.Inst, error) {
 	return a.impl.Compile(ctx, nodes)
 }
 
-func (a *Human) generate(cmd interface{}) ([]target.Inst, error) {
+func (a *Human) generate(cmd interface{}) ([]ast.Inst, error) {
 
-	var insts []target.Inst
+	var insts []ast.Inst
 
 	switch cmd := cmd.(type) {
 
@@ -101,20 +80,9 @@ func (a *Human) generate(cmd interface{}) ([]target.Inst, error) {
 			Details: fmt.Sprintf("incubate at %s for %s", cmd.Temp.ToString(), cmd.Time.ToString()),
 		})
 
-	case *ast.HandleInst:
-		insts = append(insts, &target.Manual{
-			Dev:   a,
-			Label: cmd.Group,
-		})
-
 	case *ast.PromptInst:
 		insts = append(insts, &target.Prompt{
 			Message: cmd.Message,
-		})
-
-	case *ast.AwaitInst:
-		insts = append(insts, &target.Prompt{
-			Message: fmt.Sprintf("Now get some data for %s %s", cmd.Tags, cmd.AwaitID),
 		})
 
 	case *wtype.PRInstruction:

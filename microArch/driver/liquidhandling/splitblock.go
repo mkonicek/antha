@@ -7,23 +7,22 @@ import (
 )
 
 type SplitBlockInstruction struct {
-	GenericRobotInstruction
+	BaseRobotInstruction
+	*InstructionType
 	Inss []*wtype.LHInstruction
 }
 
-func NewSplitBlockInstruction(inss []*wtype.LHInstruction) SplitBlockInstruction {
-	sb := SplitBlockInstruction{}
-	sb.Inss = inss
-	sb.GenericRobotInstruction.Ins = RobotInstruction(&sb)
+func NewSplitBlockInstruction(inss []*wtype.LHInstruction) *SplitBlockInstruction {
+	sb := &SplitBlockInstruction{
+		InstructionType: SPB,
+		Inss:            inss,
+	}
+	sb.BaseRobotInstruction = NewBaseRobotInstruction(sb)
 	return sb
 }
 
-func (sp SplitBlockInstruction) InstructionType() int {
-	return SPB
-}
-
-func (sp SplitBlockInstruction) GetParameter(p string) interface{} {
-	return nil
+func (sb *SplitBlockInstruction) Visit(visitor RobotInstructionVisitor) {
+	visitor.SplitBlock(sb)
 }
 
 // this instruction does not generate anything
@@ -38,7 +37,15 @@ func (sp SplitBlockInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 
 		// if Components is a sample we'll probably want to change ParentID instead
 		// that may not work
-		robot.UpdateComponentID(ins.Components[0].ID, ins.Results[1])
+		robot.UpdateComponentID(ins.Inputs[0].ID, ins.Outputs[1])
+
+		/*
+			question over whether this is needed
+			if !ok {
+				fmt.Printf("Warning: cannot update component ID %s to %s: Not found\n", ins.Inputs[0].ID, ins.Results[1].ID)
+				//return []RobotInstruction{}, fmt.Errorf("Error updating component ID %s to %s: Not found", ins.Inputs[0].ID, ins.Results[1].ID)
+			}
+		*/
 	}
 
 	return []RobotInstruction{}, nil

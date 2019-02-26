@@ -23,47 +23,23 @@
 // solutions is a utility package for working with solutions of LHComponents
 package solutions
 
-import (
-	"strings"
-
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
-)
+import "github.com/antha-lang/antha/antha/anthalib/wtype"
 
 // NormaliseName evaluates whether a string contains a concentration and attempts to normalise the name in a standardised format.
 // e.g. 10ng/ul glucose will be normalised to 10 mg/l glucose or 10mM glucose to 10 mM/l glucose or 10mM/l glucose to 10 mM/l glucose or glucose 10mM/l to 10 mM/l glucose
 // A concatanenated name such as 10g/L glucose + 10g/L yeast extract will be returned with no modifications
-func NormaliseName(name string) (normalised string) {
+var NormaliseName = wtype.NormaliseName
 
-	if strings.Contains(name, wutil.MIXDELIMITER) {
-		return name
-	}
+// ReturnNormalisedComponentName will return the component name in a normalised form.
+// If sub components exist the name will be changed to the list of sub components with concentrations.
+// e.g. a solution called LB with a concentration of 10X and components 10g/L Yeast Extract and 5g/L Tryptone will be normalised to 10g/L Yeast Extract + 5g/L Tryptone.
+// An LB solution with concentration 1 X and no components is returned as 1X LB.
+// An LB solution with no concentration and no components is returned as LB.
+var ReturnNormalisedComponentName = wtype.ReturnNormalisedComponentName
 
-	containsConc, conc, nameonly := wunit.ParseConcentration(strings.TrimSpace(name))
-
-	if containsConc {
-		if conc.RawValue() > 0 {
-			return conc.ToString() + " " + nameonly
-		} else {
-			return nameonly
-		}
-	} else {
-		return name
-	}
-}
-
-// NormaliseComponentName will return the concentration of the component followed by the unmodified component name followed by the full list of sub components with concentrations.
-// e.g. a solution called LB with a concentration of 10X and components 10g/L Yeast Extract and 5g/L Tryptone will be normalised to 10X LB---10g/L Yeast Extract---5g/L Tryptone.
-// An LB solution with no concentration and components is returned as LB.
-// Warning: if a component name already contains a concentration it will be possible to return duplicate concentration values. e.g. 10X 10X LB or 10X LB 10X.
-// To avoid this, when first declaring a component name the NormaliseName function should be used first.
-func NormaliseComponentName(component *wtype.LHComponent) string {
-
-	compList, _ := GetSubComponents(component)
-
-	if component.HasConcentration() {
-		return component.Concentration().ToString() + " " + component.Name() + " " + compList.List(false)
-	}
-	return component.Name() + compList.List(false)
-}
+// NormaliseComponentName will change the name of the component to the normalised form returned by ReturnNormalisedComponentName.
+// If sub components exist the name will be changed to the list of sub components with concentrations.
+// e.g. a solution called LB with a concentration of 10X and components 10g/L Yeast Extract and 5g/L Tryptone will be normalised to 10g/L Yeast Extract + 5g/L Tryptone.
+// An LB solution with concentration 1 X and no components is returned as 1X LB.
+// An LB solution with no concentration and no components is returned as LB.
+var NormaliseComponentName = wtype.NormaliseComponentName

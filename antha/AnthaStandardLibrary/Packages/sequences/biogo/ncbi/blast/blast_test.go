@@ -18,9 +18,8 @@ const (
 )
 
 // Helpers
-func intPtr(i int) *int           { return &i }
-func floatPtr(f float64) *float64 { return &f }
-func stringPtr(s string) *string  { return &s }
+func intPtr(i int) *int          { return &i }
+func stringPtr(s string) *string { return &s }
 
 // Tests
 func Test(t *testing.T) { check.TestingT(t) }

@@ -27,6 +27,7 @@ import (
 
 	"strconv"
 
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/spreadsheet"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/tealeg/xlsx"
@@ -103,7 +104,7 @@ func JMPXLSXFilefromRuns(runs []Run, outputfilename string) (xlsxfile *xlsx.File
 	}
 	err = xlsxfile.Save(outputfilename)
 	if err != nil {
-		fmt.Printf(err.Error())
+		fmt.Print(err.Error())
 	}
 	return
 }
@@ -175,8 +176,7 @@ func DXXLSXFilefromRuns(runs []Run, outputfilename string) (xlsxfile *xlsx.File)
 	}
 
 	// add blank row
-
-	row = sheet.AddRow()
+	sheet.AddRow()
 
 	//add data 1 row per run
 	for _, run := range runs {
@@ -218,7 +218,7 @@ func DXXLSXFilefromRuns(runs []Run, outputfilename string) (xlsxfile *xlsx.File)
 	}
 	err = xlsxfile.Save(outputfilename)
 	if err != nil {
-		fmt.Printf(err.Error())
+		fmt.Print(err.Error())
 	}
 	return
 }
@@ -231,5 +231,6 @@ func XLSXFileFromRuns(runs []Run, outputfilename string, dxorjmp string) (xlsxfi
 	} else {
 		panic(fmt.Sprintf("Unknown design file format %s when exporting design to XLSX file. Please specify File type as JMP or DX (Design Expert)", dxorjmp))
 	}
+	spreadsheet.AutoFormat(xlsxfile)
 	return
 }

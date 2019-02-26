@@ -49,11 +49,6 @@ const (
 	parserMode = parser.ParseComments
 )
 
-// execution variables
-var (
-	fileSet = token.NewFileSet() // per process FileSet
-)
-
 var (
 	errNotAnthaFile = errors.New("not antha file")
 )
@@ -97,7 +92,10 @@ func runCompile(cmd *cobra.Command, args []string) error {
 
 			// Collect errors processing errors
 			if err := processFile(root, path, outdir); err != nil {
-				errs = append(errs, err)
+				errs = append(
+					errs,
+					fmt.Errorf("error processing file: %s \n Error: %s", path, err),
+				)
 			}
 
 			return nil
@@ -167,6 +165,7 @@ func processFile(root *compile.AnthaRoot, filename, outdir string) error {
 		return err
 	}
 
+	fileSet := token.NewFileSet() // per process FileSet
 	file, adjust, err := parse(fileSet, filename, src, false)
 	if err != nil {
 		return err

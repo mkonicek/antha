@@ -47,17 +47,17 @@ func (a *ShakerIncubator) carrierClose() driver.Call {
 
 func (a *ShakerIncubator) reset() []driver.Call {
 	return []driver.Call{
-		driver.Call{
+		{
 			Method: "/antha.shakerincubator.v1.ShakerIncubator/ShakeStop",
 			Args:   &shakerincubator.Blank{},
 			Reply:  &shakerincubator.BoolReply{},
 		},
-		driver.Call{
+		{
 			Method: "/antha.shakerincubator.v1.ShakerIncubator/TemperatureReset",
 			Args:   &shakerincubator.Blank{},
 			Reply:  &shakerincubator.BoolReply{},
 		},
-		driver.Call{
+		{
 			Method: "/antha.shakerincubator.v1.ShakerIncubator/CarrierOpen",
 			Args:   &shakerincubator.Blank{},
 			Reply:  &shakerincubator.BoolReply{},
@@ -89,15 +89,15 @@ func (a *ShakerIncubator) shakeStart(rate wunit.Rate, length wunit.Length) drive
 	}
 }
 
-func (a *ShakerIncubator) generate(cmd interface{}) ([]target.Inst, error) {
+func (a *ShakerIncubator) generate(cmd interface{}) ([]ast.Inst, error) {
 	inc, ok := cmd.(*ast.IncubateInst)
 	if !ok {
 		return nil, fmt.Errorf("expecting %T found %T instead", inc, cmd)
 	}
 
-	var initializers []target.Inst
-	var finalizers []target.Inst
-	var insts []target.Inst
+	var initializers []ast.Inst
+	var finalizers []ast.Inst
+	var insts ast.Insts
 
 	initializers = append(initializers, &target.Run{
 		Dev:   a,
@@ -166,5 +166,6 @@ func (a *ShakerIncubator) generate(cmd interface{}) ([]target.Inst, error) {
 		})
 	}
 
-	return target.SequentialOrder(insts...), nil
+	insts.SequentialOrder()
+	return insts, nil
 }

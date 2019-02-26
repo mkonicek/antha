@@ -68,7 +68,10 @@ func decodeUTF16(b []byte) (string, error) {
 		u16s[0] = uint16(b[i]) + (uint16(b[i+1]) << 8)
 		r := utf16.Decode(u16s)
 		n := utf8.EncodeRune(b8buf, r[0])
-		ret.Write(b8buf[:n])
+		_, err := ret.Write(b8buf[:n])
+		if err != nil {
+			return "", err
+		}
 	}
 
 	return ret.String(), nil

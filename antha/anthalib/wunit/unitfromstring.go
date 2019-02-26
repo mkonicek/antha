@@ -24,171 +24,79 @@ package wunit
 
 import (
 	"fmt"
-	"sort"
 	"strconv"
 	"strings"
-
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
-
-func NormaliseUnit(unit string) (normalisedunit string) {
-
-	cm := NewPMeasurement(0, unit)
-
-	normalisedunit = cm.Unit().PrefixedSymbol()
-	return
-}
 
 // SplitValueAndUnit splits a joined value and unit in string format into seperate typed value and unit fields.
 // If the string input is not in the valid format of value followed by unit it will not be parsed correctly.
 // If a value on its own is given the unit will be returned blank, if the unit is given alone the value will be 0.0
 // valid: 10s, 10 s, 10.5s, 2.16e+04 s, 10, s
 // invalid: s 10 s10
-func SplitValueAndUnit(str string) (value float64, unit string) {
-
-	fields := strings.Fields(str)
-
-	if len(fields) == 2 {
-		if value, err := strconv.ParseFloat(fields[0], 64); err == nil {
-			return value, fields[1]
-		}
-		if value, err := strconv.Atoi(fields[0]); err == nil {
-			return float64(value), fields[1]
-		}
-	} else if len(fields) == 1 {
-		for i := 0; i < len(str); i++ {
-			if value, err := strconv.ParseFloat(str[:len(str)-i], 64); err == nil {
-				return value, str[len(str)-i:]
-			}
-		}
-	}
-	return value, str
+func SplitValueAndUnit(str string) (float64, string) {
+	value, unit := extractFloat(str)
+	return value, strings.TrimSpace(unit)
 }
 
-// Utility function to parse concentration from a component name.
-// Not currently robust to situations where the component name (without the concentration) is more than one field (e.g. ammonium sulphate) or if the component name is a concatenation of component names (e.g. 1mM Glucose + 10mM Glycerol).
-func ParseConcentration(componentname string) (containsconc bool, conc Concentration, componentNameOnly string) {
+// ParseConcentration utility to extract concentration and component name from a string.
+// Valid inputs include
+//   - "6M Glucose", "6 M Glucose"
+//   - "Glucose 6 M", "Glucose 6M"
+//   - "Glucose (M)", "Glucose M", "Glucose (6 M)"
+//   - "Glucose"
+// returns three values - a boolean which is true if the value of the concentration was set,
+// the parsed concentration, and the remaining component name.
+// if removing the concentration would leave the empty string, the component name is
+// set as the input string
+func ParseConcentration(s string) (bool, Concentration, string) {
 
-	approvedunits := UnitMap["Concentration"]
+	reg := GetGlobalUnitRegistry()
 
-	var sortedKeys []string
-
-	for k, _ := range approvedunits {
-		sortedKeys = append(sortedKeys, k)
-	}
-
-	sort.Strings(sortedKeys)
-
-	fields := strings.Fields(componentname)
-	var unitmatchlength int
-	var longestmatchedunit string
-	var valueandunit string
-	var unit string
-	var valueString string
-	var notConcFields []string
-	for _, key := range sortedKeys {
-		for i, field := range fields {
-
-			/// if value and unit are separate fields
-			if field == key && i != 0 {
-				f, err := strconv.ParseFloat(fields[i-1], 64)
-				if err == nil && f != 0 {
-					if len(key) > unitmatchlength {
-						notConcFields = make([]string, 0)
-						longestmatchedunit = key
-						unitmatchlength = len(key)
-						valueString = fields[i-1]
-						unit = field
-						valueandunit = valueString + unit
-						if (i - 1) > 0 {
-							notConcFields = append(notConcFields, fields[:i-1]...)
-						}
-						if len(fields) > i+1 {
-							notConcFields = append(notConcFields, fields[i+1:]...)
-						}
-						//break
-					}
-					// support for cases where concentration unit is given but no value
-				} else if trimmed := strings.Trim(field, "()"); trimmed == key {
-					if len(key) > unitmatchlength {
-						notConcFields = make([]string, 0)
-						longestmatchedunit = key
-						unitmatchlength = len(key)
-						valueandunit = field
-						if i > 0 {
-							notConcFields = append(notConcFields, fields[:i]...)
-						}
-						if len(fields) > i+1 {
-							notConcFields = append(notConcFields, fields[i+1:]...)
-						}
-						//break
-					}
-				}
-				// if value and unit are one joined field
-				// change this to separate number and match rest of valueandunit
-			} else if trimmed := strings.Trim(field, "()"); strings.HasSuffix(field, key) || strings.HasSuffix(trimmed, key) {
-				if len(key) > unitmatchlength {
-					notConcFields = make([]string, 0)
-					longestmatchedunit = key
-					unitmatchlength = len(key)
-					valueandunit = field
-					if i > 0 {
-						notConcFields = append(notConcFields, fields[:i]...)
-					}
-					if len(fields) > i+1 {
-						notConcFields = append(notConcFields, fields[i+1:]...)
-					}
-					//break
-				}
-			}
-		}
-	}
-
-	componentNameOnly = strings.Join(notConcFields, " ")
-
-	// if no match, return original component name
-	if unitmatchlength == 0 {
-		return false, conc, componentname
-	}
-
-	concfields := strings.Split(valueandunit, longestmatchedunit)
-
-	value, err := strconv.ParseFloat(concfields[0], 64)
-	if err != nil {
-		concfields[0] = strings.Trim(concfields[0], "()")
-		value, err = strconv.ParseFloat(concfields[0], 64)
-		if err != nil {
-			if concfields[0] == "" {
-				value = 0.0
+	// unit location indicated by parentheses after component Name - e.g. "Glucose (6M)"
+	if l, r := strings.LastIndex(s, "("), strings.LastIndex(s, ")"); l >= 0 && l < r && strings.HasSuffix(s, ")") {
+		value, unit := extractFloat(strings.TrimSpace(s[l+1 : r]))
+		if trimUnit := strings.TrimSpace(unit); reg.ValidUnitForType("Concentration", trimUnit) {
+			if componentName := strings.TrimSpace(s[:l] + s[r+1:]); componentName != "" {
+				return true, NewConcentration(value, trimUnit), componentName
 			} else {
-				if strings.Contains(componentname, wutil.MIXDELIMITER) {
-					return false, conc, componentname
-				}
-				panic(fmt.Sprint("error parsing componentname: ", componentname, ": ", err.Error()))
-				return false, conc, componentNameOnly
+				return true, NewConcentration(value, trimUnit), s
 			}
 		}
 	}
 
-	conc = NewConcentration(value, longestmatchedunit)
-	containsconc = true
+	approvedUnits := reg.ListValidUnitsForType("Concentration")
 
-	return containsconc, conc, componentNameOnly
+	// value and unit at left - e.g. "6M Glucose", but not "6 Glucose"
+	if value, remainder := SplitValueAndUnit(s); len(remainder) < len(s) { // value must be given for unit at left
+		if sym, componentName := extractSymbol(remainder, approvedUnits); sym != "" {
+			if componentName := strings.TrimSpace(componentName); componentName != "" {
+				return true, NewConcentration(value, sym), componentName
+			}
+		}
+	}
+
+	// unit at right - e.g. "Glucose 6M" or "Glucose M", but not "SolutionX"
+	if sym, remainder := extractLastSymbol(s, approvedUnits); sym != "" && remainder != "" {
+		trimRemainder := strings.TrimSpace(remainder)
+		// units at the right must be preceded by either a number or a space
+		if value, componentName := extractLastFloat(trimRemainder); len(componentName) != len(trimRemainder) || strings.HasSuffix(remainder, " ") {
+			if componentName := strings.TrimSpace(componentName); componentName != "" {
+				return true, NewConcentration(value, sym), componentName
+			} else {
+				return true, NewConcentration(value, sym), s
+			}
+		}
+	}
+
+	// no unit found
+	return false, NewConcentration(0, "g/l"), s
 }
 
 // ParseVolume parses a volume and valid unit (nl, ul, ml, l) in string format; handles cases where the volume is split with a space.
 func ParseVolume(volstring string) (volume Volume, err error) {
 	var volandunit []string
 
-	approvedunits := UnitMap["Volume"]
-
-	var sortedKeys []string
-
-	for k, _ := range approvedunits {
-		sortedKeys = append(sortedKeys, k)
-	}
-
-	sort.Strings(sortedKeys)
+	sortedKeys := GetGlobalUnitRegistry().ListValidUnitsForType("Volume")
 
 	var longestmatchedunit string
 
@@ -220,61 +128,3 @@ func ParseVolume(volstring string) (volume Volume, err error) {
 	volume = NewVolume(vol, longestmatchedunit)
 	return
 }
-
-/*
-
-func parseVol(volstring string) (volume Volume, err error) {
-	approvedunits := wunit.UnitMap["Volume"]
-
-	fields := strings.Fields(volstring)
-	var unitmatchlength int
-	var longestmatchedunit string
-	var valueandunit string
-
-	for key, _ := range approvedunits {
-		for _,field := range fields {
-		if strings.Contains(field,key){
-			if len(key) > unitmatchlength {
-				longestmatchedunit = key
-				unitmatchlength = len(key)
-				valueandunit = field
-				}
-			}
-		}
-	}
-
-	for _, field := range fields {
-		if len(fields)== 2 && field !=  longestmatchedunit {
-			componentNameOnly = field
-		}
-	}
-
-	// if no match, return original component name
-	if unitmatchlength == 0 {
-		return false, conc, componentname
-	}
-
-	concfields := strings.Split(valueandunit,longestmatchedunit)
-
-	value, err := strconv.ParseFloat(concfields[0],64)
-	if err != nil{
-		concfields[0] = strings.Trim(concfields[0], "()")
-		value, err = strconv.ParseFloat(concfields[0], 64)
-		if err != nil {
-			if concfields[0] == ""{
-				value = 0.0
-			}else{
-			panic(fmt.Sprint("error parsing componentname: ", componentname,": ",err.Error()))
-			return false, conc, componentNameOnly
-			}
-		}
-	}
-
-
-
-
-	conc = wunit.NewConcentration(value,longestmatchedunit)
-	containsconc = true
-	return
-}
-*/

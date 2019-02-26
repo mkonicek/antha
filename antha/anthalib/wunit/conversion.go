@@ -24,135 +24,90 @@
 package wunit
 
 import (
-	"fmt"
+	"github.com/pkg/errors"
 )
 
-// MasstoVolume divides a mass (in kg) by a density (in kg/m^3) and returns the volume (in L).
-func MasstoVolume(m Mass, d Density) (v Volume) {
-
-	mass := m.SIValue()
-
-	if m.Unit().BaseSIUnit() == "g" {
-		// work out mass in kg
-		mass = mass / 1000
+// MassToVolume divides a mass (in kg) by a density (in kg/m^3) and returns the volume (in L).
+func MassToVolume(m Mass, d Density) (Volume, error) {
+	if mass, err := m.InStringUnit("g"); err != nil {
+		return Volume{}, err
+	} else if density, err := d.InStringUnit("kg/m^3"); err != nil {
+		return Volume{}, err
+	} else {
+		return NewVolume(mass.RawValue()/density.RawValue(), "l"), nil
 	}
-
-	density := d.SIValue()
-	fmt.Println(mass, density)
-	volume := mass / density // in m^3
-	volume = volume * 1000   // in l
-	v = NewVolume(volume, "l")
-
-	return v
 }
 
-// VolumetoMass multiplies a volume (in L) by a density (in kg/m^3) and returns the mass (in kg).
-func VolumetoMass(v Volume, d Density) (m Mass) {
-	density := d.SIValue()
+// VolumeToMass multiplies a volume (in L) by a density (in kg/m^3) and returns the mass (in kg).
+func VolumeToMass(v Volume, d Density) (Mass, error) {
+	if volume, err := v.InStringUnit("m^3"); err != nil {
+		return Mass{}, err
+	} else if density, err := d.InStringUnit("kg/m^3"); err != nil {
+		return Mass{}, err
+	} else {
+		return NewMass(volume.RawValue()*density.RawValue(), "kg"), nil
+	}
+}
 
-	volume := v.SIValue() / 1000 // convert m^3 to l
+// MasstoVolume deprecated, please use MassToVolume instead
+func MasstoVolume(m Mass, d Density) Volume {
+	if ret, err := MassToVolume(m, d); err != nil {
+		panic(err)
+	} else {
+		return ret
+	}
+}
 
-	mass := volume * density // in m^3
-
-	m = NewMass(mass, "kg")
-	return m
+// VolumetoMass deprecated, pelase use VolumeToMass
+func VolumetoMass(v Volume, d Density) Mass {
+	if ret, err := VolumeToMass(v, d); err != nil {
+		panic(err)
+	} else {
+		return ret
+	}
 }
 
 // VolumeForTargetMass returns the volume required to convert a starting stock concentration to a solution containing a target mass.
-// returns an error if the concentration units are not in g/l.
+// returns an error if the concentration units are not based on g/l.
 // If the stock concentration is zero a volume of 0ul will be returned with an error.
 // if the target mass is zero a volume of 0ul will be returned with no error.
-func VolumeForTargetMass(targetmass Mass, stockConc Concentration) (v Volume, err error) {
-
-	if stockConc.RawValue() == 0.0 {
-		v = NewVolume(0.0, "ul")
-		return v, fmt.Errorf("Zero value found when converting concentration and mass to new volume so new volume set to zero: target mass: %s; starting concentration: %s", targetmass.ToString(), stockConc.ToString())
-	}
-
-	if targetmass.RawValue() == 0.0 {
+func VolumeForTargetMass(targetMass Mass, stockConc Concentration) (Volume, error) {
+	if stockConc.IsZero() {
+		return Volume{}, errors.New("stock concentration cannot be zero")
+	} else if targetMass.IsZero() {
 		return NewVolume(0.0, "ul"), nil
-	}
-
-	if stockConc.Unit().PrefixedSymbol() == "ng/ul" && targetmass.Unit().PrefixedSymbol() == "ng" {
-		v = NewVolume(float64((targetmass.RawValue() / stockConc.RawValue())), "ul")
-		fmt.Println("starting conc SI ", stockConc.SIValue(), " and target mass SI: ", targetmass.SIValue())
-
-	} else if stockConc.Unit().PrefixedSymbol() == "mg/l" && targetmass.Unit().PrefixedSymbol() == "ng" {
-		v = NewVolume(float64((targetmass.RawValue() / stockConc.RawValue())), "ul")
-		fmt.Println("starting conc SI ", stockConc.SIValue(), " and target mass SI: ", targetmass.SIValue())
-
-	} else if stockConc.Unit().BaseSIUnit() == "kg/l" && targetmass.Unit().BaseSIUnit() == "kg" {
-		v = NewVolume(float64((targetmass.SIValue()/stockConc.SIValue())*1000000), "ul")
-		fmt.Println("starting conc SI ", stockConc.SIValue(), " and target mass SI: ", targetmass.SIValue())
-
-	} else if stockConc.Unit().BaseSIUnit() == "g/l" && targetmass.Unit().BaseSIUnit() == "g" {
-		v = NewVolume(float64((targetmass.SIValue()/stockConc.SIValue())*1000000), "ul")
-		fmt.Println("starting conc SI ", stockConc.SIValue(), " and target mass SI: ", targetmass.SIValue())
+	} else if concInGramsPerULitre, err := stockConc.InStringUnit("g/ul"); err != nil {
+		return Volume{}, err
+	} else if massInGrams, err := targetMass.InStringUnit("g"); err != nil {
+		return Volume{}, err
 	} else {
-		fmt.Println("Base units ", stockConc.Unit().BaseSIUnit(), " and ", targetmass.Unit().BaseSIUnit(), " not compatible with this function")
-		err = fmt.Errorf("Convert ", targetmass.ToString(), " to g and ", stockConc.ToString(), " to g/l")
+		return NewVolume(massInGrams.RawValue()/concInGramsPerULitre.RawValue(), "ul"), nil
 	}
-
-	return
 }
 
 // VolumeForTargetConcentration returns the volume required to convert a starting stock concentration to a target concentration of volume total volume
 // returns an error if the concentration units are incompatible (M/l and g/L) or if the target concentration is higher than the stock concentration
-// If the stock concentration is zero a volume of 0ul will be returned with an error.
-// if the target concetnration or total volume are set to zero a volume of 0ul will be returned with no error.
-func VolumeForTargetConcentration(targetConc Concentration, stockConc Concentration, totalVol Volume) (v Volume, err error) {
-
-	if stockConc.RawValue() == 0.0 {
-		return NewVolume(0.0, "ul"), fmt.Errorf("Zero value found when converting concentrations to new volume so new volume set to zero: starting concentration: %s; final concentration: %s; volume set point: %s", stockConc.ToString(), targetConc.ToString(), totalVol.ToString())
-	}
-
-	if targetConc.RawValue() == 0.0 || totalVol.RawValue() == 0.0 {
+// unless the total volume is zero
+func VolumeForTargetConcentration(targetConc Concentration, stockConc Concentration, totalVol Volume) (Volume, error) {
+	if totalVol.IsZero() {
 		return NewVolume(0.0, "ul"), nil
+	} else if stockConcInTargetUnits, err := stockConc.InUnit(targetConc.Unit()); err != nil {
+		return Volume{}, err
+	} else if stockConc.LessThan(targetConc) {
+		return Volume{}, errors.Errorf("cannot dilute stock at %v to higher concentration %v", stockConc, targetConc)
+	} else {
+		return NewVolume(totalVol.RawValue()*targetConc.RawValue()/stockConcInTargetUnits.RawValue(), totalVol.Unit().PrefixedSymbol()), nil
 	}
-
-	factor, err := DivideConcentrations(targetConc, stockConc)
-
-	if err != nil {
-		return NewVolume(0.0, "ul"), fmt.Errorf("Error converting concentrations to new volume so new volume set to zero: starting concentration: %s; final concentration: %s; volume set point: %s. Error: %s", stockConc.ToString(), targetConc.ToString(), totalVol.ToString(), err.Error())
-	}
-
-	v = MultiplyVolume(totalVol, factor)
-
-	if v.GreaterThan(totalVol) {
-		err = fmt.Errorf(fmt.Sprint("Target concentration, ", targetConc.ToString(), " is higher than stock concentration ", stockConc.ToString(), " so volume calculated ", v.ToString(), " is larger than total volume ", totalVol.ToString()))
-	}
-
-	return
 }
 
 // MassForTargetConcentration multiplies a concentration (in g/l) by a volume (in l) to return the mass (in g).
 // if a concentration is not in a form convertable to g/l an error is returned.
-func MassForTargetConcentration(targetconc Concentration, totalvol Volume) (m Mass, err error) {
-
-	litre := NewVolume(1.0, "l")
-
-	var multiplier float64 = 1
-	var unit string
-
-	if targetconc.Unit().PrefixedSymbol() == "kg/l" {
-		multiplier = 1000
-		unit = "g"
-		//fmt.Println("targetconc.Unit().BaseSISymbol() == kg/l")
-	} else if targetconc.Unit().PrefixedSymbol() == "g/l" {
-		multiplier = 1
-		unit = "g"
-		//fmt.Println("targetconc.Unit().BaseSISymbol() == g/l")
-	} else if targetconc.Unit().PrefixedSymbol() == "mg/l" {
-		multiplier = 1
-		unit = "mg"
-	} else if targetconc.Unit().PrefixedSymbol() == "ng/ul" {
-		multiplier = 1
-		unit = "mg"
+func MassForTargetConcentration(targetConc Concentration, totalVol Volume) (Mass, error) {
+	if volumeInLitres, err := totalVol.InStringUnit("l"); err != nil {
+		return Mass{nil}, err
+	} else if concInGramsPerLitre, err := targetConc.InStringUnit("g/l"); err != nil {
+		return Mass{nil}, err
 	} else {
-		err = fmt.Errorf("target conc %s must in g/l to convert to a mass", targetconc.ToString())
+		return NewMass(concInGramsPerLitre.RawValue()*volumeInLitres.RawValue(), "g"), nil
 	}
-
-	m = NewMass(float64((targetconc.RawValue()*multiplier)*(totalvol.SIValue()/litre.SIValue())), unit)
-
-	return
 }

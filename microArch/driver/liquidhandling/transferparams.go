@@ -2,40 +2,38 @@ package liquidhandling
 
 import (
 	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
 type TransferParams struct {
-	What       string
-	PltFrom    string
-	PltTo      string
-	WellFrom   string
-	WellTo     string
-	Volume     wunit.Volume
-	FPlateType string
-	TPlateType string
-	FVolume    wunit.Volume
-	TVolume    wunit.Volume
-	Channel    *wtype.LHChannelParameter
-	TipType    string
-	FPlateWX   int
-	FPlateWY   int
-	TPlateWX   int
-	TPlateWY   int
-	Component  string
+	What       string                    // liquid class
+	PltFrom    string                    // from position
+	PltTo      string                    // to position
+	WellFrom   string                    // well coordinate in from plate
+	WellTo     string                    // well coordinate in to plate
+	Volume     wunit.Volume              // volume of sample being transferred
+	FPlateType string                    // from plate type
+	TPlateType string                    // to plate type
+	FVolume    wunit.Volume              // volume in 'from' well
+	TVolume    wunit.Volume              // volume in 'to' well
+	Channel    *wtype.LHChannelParameter // which channel to use
+	TipType    string                    // type of tip to use
+	FPlateWX   int                       // X dimension in 'from' plate
+	FPlateWY   int                       // Y dimension in 'from' plate
+	TPlateWX   int                       // X dimension in 'to' plate
+	TPlateWY   int                       // Y dimension in 'to' plate
+	Component  string                    // component type
+	Policy     wtype.LHPolicy            // policy attached to this transfer
 }
 
 func (tp TransferParams) ToString() string {
-	return fmt.Sprintf("%s %s %s %s %s %s %s %s %s %s %s %s %d %d %d %d %s", tp.What, tp.PltFrom, tp.PltTo, tp.WellFrom, tp.WellTo, tp.Volume.ToString(), tp.FPlateType, tp.TPlateType, tp.FVolume.ToString(), tp.TVolume.ToString(), tp.Channel, tp.TipType, tp.FPlateWX, tp.FPlateWY, tp.TPlateWX, tp.TPlateWY, tp.Component)
+	return fmt.Sprintf("%s %s %s %s %s %s %s %s %s %s %s %s %d %d %d %d %s %+v", tp.What, tp.PltFrom, tp.PltTo, tp.WellFrom, tp.WellTo, tp.Volume.ToString(), tp.FPlateType, tp.TPlateType, tp.FVolume.ToString(), tp.TVolume.ToString(), tp.Channel, tp.TipType, tp.FPlateWX, tp.FPlateWY, tp.TPlateWX, tp.TPlateWY, tp.Component, tp.Policy)
 }
 
-func (tp TransferParams) Zero() bool {
-	if tp.What == "" {
-		return true
-	}
-
-	return false
+func (tp TransferParams) IsZero() bool {
+	return tp.What == "" || tp.Volume.IsZero()
 }
 
 func (tp TransferParams) Dup() TransferParams {
@@ -57,6 +55,7 @@ func (tp TransferParams) Dup() TransferParams {
 		TPlateWX:   tp.TPlateWX,
 		TPlateWY:   tp.TPlateWY,
 		Component:  tp.Component,
+		Policy:     tp.Policy,
 	}
 }
 
@@ -68,8 +67,26 @@ type MultiTransferParams struct {
 func (mtp MultiTransferParams) RemoveInitialBlanks() MultiTransferParams {
 	r := NewMultiTransferParams(mtp.Multi)
 
+	started := false
+
+	for _, tp := range mtp.Transfers {
+		if !tp.IsZero() {
+			started = true
+		}
+
+		if started {
+			r.Transfers = append(r.Transfers, tp)
+		}
+	}
+
+	return r
+}
+
+func (mtp MultiTransferParams) RemoveBlanks() MultiTransferParams {
+	r := NewMultiTransferParams(mtp.Multi)
+
 	for _, tf := range mtp.Transfers {
-		if !tf.Zero() {
+		if !tf.IsZero() {
 			r.Transfers = append(r.Transfers, tf)
 		}
 	}
@@ -77,24 +94,35 @@ func (mtp MultiTransferParams) RemoveInitialBlanks() MultiTransferParams {
 	return r
 }
 
-func (mtp MultiTransferParams) RemoveVolume(vol wunit.Volume) {
-	for _, t := range mtp.Transfers {
-		if !t.Zero() {
-			t.Volume.Subtract(vol)
+// RemoveVolumes reduce the volume of the ith transfer by vols[i]
+func (mtp MultiTransferParams) RemoveVolumes(vols []wunit.Volume) {
+	for i, t := range mtp.Transfers {
+		if i >= len(vols) {
+			break
+		} else if !t.IsZero() {
+			t.Volume.Subtract(vols[i])
 		}
 	}
 }
-func (mtp MultiTransferParams) RemoveFVolume(vol wunit.Volume) {
-	for _, t := range mtp.Transfers {
-		if !t.Zero() {
-			t.FVolume.Subtract(vol)
+
+// RemoveFVolumes reduce the FVolume (from volumes) of the ith transfer by vols[i]
+func (mtp MultiTransferParams) RemoveFVolumes(vols []wunit.Volume) {
+	for i, t := range mtp.Transfers {
+		if i >= len(vols) {
+			break
+		} else if !t.IsZero() {
+			t.FVolume.Subtract(vols[i])
 		}
 	}
 }
-func (mtp MultiTransferParams) AddTVolume(vol wunit.Volume) {
-	for _, t := range mtp.Transfers {
-		if !t.Zero() {
-			t.TVolume.Add(vol)
+
+// AddTVolumes increase the TVolume (to volumes) of the ith transfer by vols[i]
+func (mtp MultiTransferParams) AddTVolumes(vols []wunit.Volume) {
+	for i, t := range mtp.Transfers {
+		if i >= len(vols) {
+			break
+		} else if !t.IsZero() {
+			t.TVolume.Add(vols[i])
 		}
 	}
 }
@@ -142,14 +170,14 @@ func (mtp MultiTransferParams) WellTo() []string {
 	return r
 }
 func (mtp MultiTransferParams) Volume() []wunit.Volume {
-	r := make([]wunit.Volume, mtp.Multi)
+	r := make([]wunit.Volume, 0, mtp.Multi)
 
-	for i := 0; i < mtp.Multi; i++ {
-		r[i] = wunit.ZeroVolume()
+	for _, t := range mtp.Transfers {
+		r = append(r, t.Volume.Dup())
 	}
 
-	for i, t := range mtp.Transfers {
-		r[i] = t.Volume.Dup()
+	for len(r) < mtp.Multi {
+		r = append(r, wunit.ZeroVolume())
 	}
 
 	return r
@@ -275,13 +303,17 @@ func (mtp MultiTransferParams) ParamSet(n int) TransferParams {
 	return mtp.Transfers[n]
 }
 
+func (mtp MultiTransferParams) Channels() []*wtype.LHChannelParameter {
+	r := []*wtype.LHChannelParameter{}
+
+	for _, c := range mtp.Transfers {
+		r = append(r, c.Channel)
+	}
+	return r
+}
+
 func (mtp MultiTransferParams) ToString() string {
 	s := ""
-
-	if mtp.ParamSet == nil {
-		return s
-	}
-
 	for i := 0; i < mtp.Multi; i++ {
 		s += mtp.ParamSet(i).ToString() + " "
 	}
@@ -304,34 +336,7 @@ func (mtp MultiTransferParams) Dup() MultiTransferParams {
 	return ret
 }
 
-func dupStringArray(in []string) []string {
-	out := make([]string, len(in))
-
-	for i := 0; i < len(in); i++ {
-		out[i] = in[i]
-	}
-	return out
-}
-func dupIntArray(in []int) []int {
-	out := make([]int, len(in))
-
-	for i := 0; i < len(in); i++ {
-		out[i] = in[i]
-	}
-	return out
-}
-
-func dupVolArray(in []wunit.Volume) []wunit.Volume {
-	out := make([]wunit.Volume, len(in))
-
-	for i := 0; i < len(in); i++ {
-		out[i] = in[i].Dup()
-	}
-
-	return out
-}
-
-func MTPFromArrays(what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype []string, volume, fvolume, tvolume []wunit.Volume, FPlateWX, FPlateWY, TPlateWX, TPlateWY []int, Components []string) MultiTransferParams {
+func MTPFromArrays(what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype []string, volume, fvolume, tvolume []wunit.Volume, FPlateWX, FPlateWY, TPlateWX, TPlateWY []int, Components []string, policies []wtype.LHPolicy) MultiTransferParams {
 
 	mtp := NewMultiTransferParams(len(what))
 
@@ -352,6 +357,7 @@ func MTPFromArrays(what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetyp
 			FPlateWY:   FPlateWY[i],
 			TPlateWY:   TPlateWY[i],
 			Component:  Components[i],
+			Policy:     policies[i],
 		})
 	}
 
@@ -361,7 +367,7 @@ func MTPFromArrays(what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetyp
 type SetOfMultiTransferParams []MultiTransferParams
 
 func (mtp SetOfMultiTransferParams) What() []string {
-	sa := make([]string, 0, 1)
+	sa := make([]string, 0, len(mtp))
 
 	for _, mtp := range mtp {
 		sa = append(sa, mtp.What()...)
@@ -370,7 +376,7 @@ func (mtp SetOfMultiTransferParams) What() []string {
 	return sa
 }
 func (mtp SetOfMultiTransferParams) PltFrom() []string {
-	sa := make([]string, 0, 1)
+	sa := make([]string, 0, len(mtp))
 
 	for _, mtp := range mtp {
 		sa = append(sa, mtp.PltFrom()...)
@@ -380,7 +386,7 @@ func (mtp SetOfMultiTransferParams) PltFrom() []string {
 }
 
 func (mtp SetOfMultiTransferParams) PltTo() []string {
-	r := make([]string, 0, 1)
+	r := make([]string, 0, len(mtp))
 	for _, t := range mtp {
 		r = append(r, t.PltTo()...)
 	}
@@ -388,7 +394,7 @@ func (mtp SetOfMultiTransferParams) PltTo() []string {
 	return r
 }
 func (mtp SetOfMultiTransferParams) WellFrom() []string {
-	r := make([]string, 0, 1)
+	r := make([]string, 0, len(mtp))
 	for _, t := range mtp {
 		r = append(r, t.WellFrom()...)
 	}
@@ -396,7 +402,7 @@ func (mtp SetOfMultiTransferParams) WellFrom() []string {
 	return r
 }
 func (mtp SetOfMultiTransferParams) WellTo() []string {
-	r := make([]string, 0, 1)
+	r := make([]string, 0, len(mtp))
 	for _, t := range mtp {
 		r = append(r, t.WellTo()...)
 	}
@@ -404,7 +410,7 @@ func (mtp SetOfMultiTransferParams) WellTo() []string {
 	return r
 }
 func (mtp SetOfMultiTransferParams) Volume() []wunit.Volume {
-	r := make([]wunit.Volume, 0, 1)
+	r := make([]wunit.Volume, 0, len(mtp))
 
 	for _, t := range mtp {
 		r = append(r, t.Volume()...)
@@ -413,7 +419,7 @@ func (mtp SetOfMultiTransferParams) Volume() []wunit.Volume {
 	return r
 }
 func (mtp SetOfMultiTransferParams) FPlateType() []string {
-	r := make([]string, 0, 1)
+	r := make([]string, 0, len(mtp))
 	for _, t := range mtp {
 		r = append(r, t.FPlateType()...)
 	}
@@ -421,7 +427,7 @@ func (mtp SetOfMultiTransferParams) FPlateType() []string {
 	return r
 }
 func (mtp SetOfMultiTransferParams) TPlateType() []string {
-	r := make([]string, 0, 1)
+	r := make([]string, 0, len(mtp))
 	for _, t := range mtp {
 		r = append(r, t.TPlateType()...)
 	}
@@ -430,7 +436,7 @@ func (mtp SetOfMultiTransferParams) TPlateType() []string {
 }
 
 func (mtp SetOfMultiTransferParams) FVolume() []wunit.Volume {
-	r := make([]wunit.Volume, 0, 1)
+	r := make([]wunit.Volume, 0, len(mtp))
 
 	for _, t := range mtp {
 		r = append(r, t.FVolume()...)
@@ -440,7 +446,7 @@ func (mtp SetOfMultiTransferParams) FVolume() []wunit.Volume {
 }
 
 func (mtp SetOfMultiTransferParams) TVolume() []wunit.Volume {
-	r := make([]wunit.Volume, 0, 1)
+	r := make([]wunit.Volume, 0, len(mtp))
 
 	for _, t := range mtp {
 		r = append(r, t.TVolume()...)
@@ -450,7 +456,7 @@ func (mtp SetOfMultiTransferParams) TVolume() []wunit.Volume {
 }
 
 func (mtp SetOfMultiTransferParams) Channel() []*wtype.LHChannelParameter {
-	r := make([]*wtype.LHChannelParameter, 0, 1)
+	r := make([]*wtype.LHChannelParameter, 0, len(mtp))
 	for _, t := range mtp {
 		r = append(r, t.Channel()...)
 	}
@@ -459,7 +465,7 @@ func (mtp SetOfMultiTransferParams) Channel() []*wtype.LHChannelParameter {
 }
 
 func (mtp SetOfMultiTransferParams) TipType() []string {
-	r := make([]string, 0, 1)
+	r := make([]string, 0, len(mtp))
 	for _, t := range mtp {
 		r = append(r, t.TipType()...)
 	}
@@ -468,35 +474,35 @@ func (mtp SetOfMultiTransferParams) TipType() []string {
 }
 
 func (mtp SetOfMultiTransferParams) FPlateWX() []int {
-	r := make([]int, 0, 1)
+	r := make([]int, 0, len(mtp))
 	for _, t := range mtp {
 		r = append(r, t.FPlateWX()...)
 	}
 	return r
 }
 func (mtp SetOfMultiTransferParams) TPlateWX() []int {
-	r := make([]int, 0, 1)
+	r := make([]int, 0, len(mtp))
 	for _, t := range mtp {
 		r = append(r, t.TPlateWX()...)
 	}
 	return r
 }
 func (mtp SetOfMultiTransferParams) FPlateWY() []int {
-	r := make([]int, 0, 1)
+	r := make([]int, 0, len(mtp))
 	for _, t := range mtp {
 		r = append(r, t.FPlateWY()...)
 	}
 	return r
 }
 func (mtp SetOfMultiTransferParams) TPlateWY() []int {
-	r := make([]int, 0, 1)
+	r := make([]int, 0, len(mtp))
 	for _, t := range mtp {
 		r = append(r, t.TPlateWY()...)
 	}
 	return r
 }
 func (mtp SetOfMultiTransferParams) Component() []string {
-	r := make([]string, 0, 1)
+	r := make([]string, 0, len(mtp))
 	for _, t := range mtp {
 		r = append(r, t.Component()...)
 	}

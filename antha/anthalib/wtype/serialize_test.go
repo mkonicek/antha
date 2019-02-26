@@ -26,10 +26,32 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 
-	"github.com/kylelemons/godebug/pretty"
+	"github.com/go-test/deep"
 )
+
+func TestMarshalDeckObject(t *testing.T) {
+	objects := []LHObject{
+		makeplatefortest(),
+		maketroughfortest(),
+		makeTipboxForTest(),
+		makeTipwasteForTest(),
+	}
+
+	for _, obj := range objects {
+		t.Run(fmt.Sprintf("%T called %s", obj, NameOf(obj)), func(t *testing.T) {
+			if data, err := MarshalDeckObject(obj); err != nil {
+				t.Error(err)
+			} else if after, err := UnmarshalDeckObject(data); err != nil {
+				t.Error(err)
+			} else if !reflect.DeepEqual(obj, after) {
+				t.Errorf("serialisation changed object: \ne: %#v,\ng: %#v", obj, after)
+			}
+		})
+	}
+}
 
 func TestDeserializeLHSolution(t *testing.T) {
 	str := `{"ID":"","BlockID":{"ThreadID":"","OutputCount":0},"Inst":"","SName":"","Order":0,"Components":null,"ContainerType":"","Welladdress":"","Plateaddress":"","PlateID":"","Platetype":"","Vol":0,"Type":"","Conc":0,"Tvol":0,"Majorlayoutgroup":0,"Minorlayoutgroup":0}`
@@ -94,7 +116,7 @@ func TestLHWellSerialize(t *testing.T) {
 	//	Plate     : <nil>,
 	//}
 
-	wellExtra := make(map[string]interface{}, 0)
+	wellExtra := make(map[string]interface{})
 	lhwell := LHWell{
 		"15cf94b7-ae06-443d-bc9a-9aadc30790fd",
 		"",
@@ -127,8 +149,7 @@ func TestLHWellSerialize(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if reflect.DeepEqual(lhwell, dest) != true {
-		fmt.Println(pretty.Compare(lhwell, dest))
-		t.Fatal("Initial well and dest well differ")
+	if !reflect.DeepEqual(lhwell, dest) {
+		t.Fatal(fmt.Sprintf("Initial well (%+v) and dest well (%+v) differ. Differences are: %s", lhwell.WContents, dest.WContents, strings.Join(deep.Equal(lhwell, dest), "\n")))
 	}
 }

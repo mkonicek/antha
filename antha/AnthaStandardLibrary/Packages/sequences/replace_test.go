@@ -55,19 +55,19 @@ type rotateTest struct {
 }
 
 var rotateTests = []rotateTest{
-	rotateTest{
+	{
 		seq:            "REVERSE",
 		rotateBy:       0,
 		reverse:        false,
 		expectedResult: "REVERSE",
 	},
-	rotateTest{
+	{
 		seq:            "REVERSE",
 		rotateBy:       1,
 		reverse:        false,
 		expectedResult: "EVERSER",
 	},
-	rotateTest{
+	{
 		seq:            "REVERSE",
 		rotateBy:       1,
 		reverse:        true,
@@ -77,7 +77,7 @@ var rotateTests = []rotateTest{
 
 var replaceTests = []replaceAllTest{
 
-	replaceAllTest{
+	{
 		LargeSeq: &wtype.DNASequence{
 			Nm:      "Test1",
 			Seq:     "ATCGTAGTGTG",
@@ -100,7 +100,7 @@ var replaceTests = []replaceAllTest{
 		},
 		ErrMessage: "",
 	},
-	replaceAllTest{
+	{
 		LargeSeq: &wtype.DNASequence{
 			Nm:      "Test2", // reverse complement
 			Seq:     "ATCGTAGTGTG",
@@ -123,7 +123,7 @@ var replaceTests = []replaceAllTest{
 		},
 		ErrMessage: "",
 	},
-	replaceAllTest{
+	{
 		LargeSeq: &wtype.DNASequence{
 			Nm:      "Test3", // reverse complement two replace regions
 			Seq:     "ATCGTAGTGTGTAC",
@@ -146,7 +146,7 @@ var replaceTests = []replaceAllTest{
 		},
 		ErrMessage: "",
 	},
-	replaceAllTest{
+	{
 		LargeSeq: &wtype.DNASequence{
 			Nm:      "Test4", // plasmid
 			Seq:     "ATCGTAGTGTGTAC",
@@ -169,7 +169,7 @@ var replaceTests = []replaceAllTest{
 		},
 		ErrMessage: "",
 	},
-	replaceAllTest{
+	{
 		LargeSeq: &wtype.DNASequence{
 			Nm:      "Test5", // plasmid overlapping end of plasmid
 			Seq:     "ATCGTAGTGTGTAC",
@@ -192,7 +192,7 @@ var replaceTests = []replaceAllTest{
 		},
 		ErrMessage: "",
 	},
-	replaceAllTest{
+	{
 		LargeSeq: &wtype.DNASequence{
 			Nm:      "Test6", // replace with nothing
 			Seq:     "ATCGTAGTGTGTAC",
@@ -215,7 +215,7 @@ var replaceTests = []replaceAllTest{
 		},
 		ErrMessage: "",
 	},
-	replaceAllTest{
+	{
 		LargeSeq: &wtype.DNASequence{
 			Nm:      "Test7", // replace with nothing
 			Seq:     "ATCGTAGTGTGTAC",
@@ -241,7 +241,7 @@ var replaceTests = []replaceAllTest{
 }
 
 var replacePositionTests = []replaceTest{
-	replaceTest{
+	{
 		LargeSeq: &wtype.DNASequence{
 			Nm:      "Test1",
 			Seq:     "ATCGTAGTGTG",
@@ -264,7 +264,7 @@ var replacePositionTests = []replaceTest{
 		},
 		ErrMessage: "",
 	},
-	replaceTest{
+	{
 		LargeSeq: &wtype.DNASequence{
 			Nm:      "Test2",
 			Seq:     "ATCGTAGTGTG",
@@ -287,7 +287,7 @@ var replacePositionTests = []replaceTest{
 		},
 		ErrMessage: "",
 	},
-	replaceTest{
+	{
 		LargeSeq: &wtype.DNASequence{
 			Nm:      "Test3",
 			Seq:     "ATCGTAGTGTG",
@@ -310,7 +310,7 @@ var replacePositionTests = []replaceTest{
 		},
 		ErrMessage: "",
 	},
-	replaceTest{
+	{
 		LargeSeq: &wtype.DNASequence{
 			Nm:      "Test4",
 			Seq:     "ATCGTAGTGTG",
@@ -333,7 +333,7 @@ var replacePositionTests = []replaceTest{
 		},
 		ErrMessage: "",
 	},
-	replaceTest{
+	{
 		LargeSeq: &wtype.DNASequence{
 			Nm:      "Test5",
 			Seq:     "ACCGTAGTGTG",
@@ -356,7 +356,7 @@ var replacePositionTests = []replaceTest{
 		},
 		ErrMessage: "",
 	},
-	replaceTest{
+	{
 		LargeSeq: &wtype.DNASequence{
 			Nm:      "Test6",
 			Seq:     "ACCGTAGTGTG",
@@ -379,7 +379,7 @@ var replacePositionTests = []replaceTest{
 		},
 		ErrMessage: "",
 	},
-	replaceTest{
+	{
 		LargeSeq: &wtype.DNASequence{
 			Nm:      "Test7",
 			Seq:     "ACCGTAGTGTG",

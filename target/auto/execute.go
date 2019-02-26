@@ -6,13 +6,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/antha-lang/antha/ast"
 	runner "github.com/antha-lang/antha/driver/antha_runner_v1"
 	"github.com/antha-lang/antha/target"
 	"google.golang.org/grpc"
 )
 
 // Execute runs an instruction based on current target
-func (a *Auto) Execute(ctx context.Context, inst target.Inst) error {
+func (a *Auto) Execute(ctx context.Context, inst ast.Inst) error {
 	switch inst := inst.(type) {
 	case *target.Mix:
 		return a.executeMix(ctx, inst)
@@ -28,8 +29,6 @@ func (a *Auto) Execute(ctx context.Context, inst target.Inst) error {
 		return nil
 	case *target.SetupMixer:
 		return nil
-	case *target.AwaitData:
-		return a.executeWaitData(ctx, inst)
 	case *target.Prompt:
 		return nil
 	case *target.TimedWait:
@@ -37,10 +36,6 @@ func (a *Auto) Execute(ctx context.Context, inst target.Inst) error {
 	default:
 		return fmt.Errorf("unknown instruction %T", inst)
 	}
-}
-
-func (a *Auto) executeWaitData(ctx context.Context, inst *target.AwaitData) error {
-	return fmt.Errorf("not yet implemented")
 }
 
 func (a *Auto) executeRun(ctx context.Context, inst *target.Run) error {

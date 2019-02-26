@@ -11,7 +11,6 @@ import (
 
 	api "github.com/antha-lang/antha/api/v1"
 	"github.com/antha-lang/antha/inject"
-	"github.com/antha-lang/antha/trace"
 )
 
 // TODO: deterministic node name/order
@@ -37,7 +36,13 @@ func (a Port) String() string {
 
 // A Process is an instance of a component / element execution
 type Process struct {
-	Component string `json:"component"`
+	Component string         `json:"component"`
+	Metadata  screenPosition `json:"metadata"`
+}
+
+type screenPosition struct {
+	X int `json:"x"`
+	Y int `json:"y"`
 }
 
 // A Connection connects the output of one Process to the input of another
@@ -48,7 +53,7 @@ type Connection struct {
 
 // Desc is the description of a workflow.
 type Desc struct {
-	Processes   map[string]Process `json:"processes"`
+	Processes   map[string]Process `json:"Processes"`
 	Connections []Connection       `json:"connections"`
 }
 
@@ -70,14 +75,18 @@ type node struct {
 	Ins      map[string]bool       // In edges
 }
 
-func (a *node) removeIn(port string) (int, error) {
+func (a *node) removeIn(port string) error {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 	if !a.Ins[port] {
-		return 0, errAlreadyRemoved
+		return errAlreadyRemoved
 	}
 	delete(a.Ins, port)
-	return len(a.Ins), nil
+	return nil
+}
+
+func (a *node) hasIns() bool {
+	return len(a.Ins) > 0
 }
 
 func (a *node) setParam(port string, value interface{}) error {
@@ -161,9 +170,9 @@ func (a *Workflow) run(ctx context.Context, n *node) ([]*node, error) {
 	var roots []*node
 	for _, eps := range n.Outs {
 		for _, ep := range eps {
-			if remaining, err := ep.Node.removeIn(ep.Port); err != nil {
+			if err := ep.Node.removeIn(ep.Port); err != nil {
 				return nil, fmt.Errorf("error removing in edge on %q: %s", ep, err)
-			} else if remaining == 0 {
+			} else if !ep.Node.hasIns() {
 				roots = append(roots, ep.Node)
 			}
 		}
@@ -175,7 +184,7 @@ func (a *Workflow) run(ctx context.Context, n *node) ([]*node, error) {
 func makeRoots(nodes map[string]*node) ([]*node, error) {
 	var roots []*node
 	for _, n := range nodes {
-		if len(n.Ins) == 0 {
+		if !n.hasIns() {
 			roots = append(roots, n)
 		}
 	}
@@ -186,37 +195,27 @@ func makeRoots(nodes map[string]*node) ([]*node, error) {
 }
 
 // Run a workflow
-func (a *Workflow) Run(parent context.Context) error {
-	roots, err := makeRoots(a.nodes)
+func (a *Workflow) Run(ctx context.Context) error {
+	worklist, err := makeRoots(a.nodes)
 	if err != nil {
 		return err
 	}
 
-	ctx, cancel, allDone := trace.NewContext(parent)
-	defer cancel()
+	for len(worklist) > 0 {
+		n := worklist[0]
+		worklist = worklist[1:]
 
-	trace.Go(ctx, func(ctx context.Context) error {
-		for len(roots) != 0 {
-			var newRoots []*node
-			// TODO: Parallelize this loop
-			for _, n := range roots {
-				rs, err := a.run(ctx, n)
-				if err != nil {
-					return fmt.Errorf("cannot run process %q: %s", n.Process, err)
-				}
-				newRoots = append(newRoots, rs...)
-			}
-
-			if len(newRoots) == 0 && len(a.nodes) > 0 {
-				return errCyclicWorkflow
-			}
-			roots = newRoots
+		if moreWork, err := a.run(ctx, n); err != nil {
+			return fmt.Errorf("cannot run process %q: %s", n.Process, err)
+		} else {
+			worklist = append(worklist, moreWork...)
 		}
-		return nil
-	})
+	}
+	if len(a.nodes) > 0 { // by definition, len(worklist) == 0
+		return errCyclicWorkflow
+	}
 
-	<-allDone()
-	return ctx.Err()
+	return nil
 }
 
 // AddNode adds a process to a workflow that executes funcName

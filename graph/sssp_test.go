@@ -6,26 +6,26 @@ import (
 
 func TestShortestPaths(t *testing.T) {
 	g := MakeTestGraph(map[string][]string{
-		"a": []string{"b", "c"},
-		"b": []string{"d"},
-		"c": []string{"d"},
-		"d": []string{"e", "f"},
-		"e": []string{"g"},
-		"f": []string{"g"},
+		"a": {"b", "c"},
+		"b": {"d"},
+		"c": {"d"},
+		"d": {"e", "f"},
+		"e": {"g"},
+		"f": {"g"},
 	})
 	type edge struct{ A, B string }
-	weights := map[edge]int{
-		edge{A: "a", B: "b"}: 1,
-		edge{A: "a", B: "c"}: 10,
-		edge{A: "b", B: "d"}: 20,
-		edge{A: "c", B: "d"}: 1,
-		edge{A: "d", B: "e"}: 1,
-		edge{A: "d", B: "f"}: 1,
-		edge{A: "e", B: "g"}: 10,
-		edge{A: "f", B: "g"}: 1,
+	weights := map[edge]int64{
+		{A: "a", B: "b"}: 1,
+		{A: "a", B: "c"}: 10,
+		{A: "b", B: "d"}: 20,
+		{A: "c", B: "d"}: 1,
+		{A: "d", B: "e"}: 1,
+		{A: "d", B: "f"}: 1,
+		{A: "e", B: "g"}: 10,
+		{A: "f", B: "g"}: 1,
 	}
 
-	edist := map[string]int{
+	edist := map[string]int64{
 		"a": 0,
 		"b": 1,
 		"c": 10,
@@ -38,7 +38,7 @@ func TestShortestPaths(t *testing.T) {
 	dist := ShortestPath(ShortestPathOpt{
 		Graph:   g,
 		Sources: []Node{"a"},
-		Weight: func(x, y Node) int {
+		Weight: func(x, y Node) int64 {
 			k := edge{A: x.(string), B: y.(string)}
 			return weights[k]
 		},

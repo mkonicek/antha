@@ -124,7 +124,7 @@ func (ut Util) GetXML(v url.Values, tool, email string, l *Limiter, d interface{
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint
 	return xml.NewDecoder(resp.Body).Decode(d)
 }
 

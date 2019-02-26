@@ -1,7 +1,5 @@
 package liquidhandling
 
-// func (lhp *LHProperties) GetComponents(cmps []*wtype.LHComponent, carryvol wunit.Volume, ori, multi int, independent, legacyVolume bool) (plateIDs, wellCoords [][]string, vols [][]wunit.Volume, err error)
-
 import (
 	"fmt"
 
@@ -13,7 +11,7 @@ type ComponentVolumeHash map[string]wunit.Volume
 
 func (h ComponentVolumeHash) AllVolsPosOrZero() bool {
 	for _, v := range h {
-		if v.LessThan(wunit.ZeroVolume()) {
+		if v.LessThan(wunit.ZeroVolume()) && !v.IsZero() {
 			return false
 		}
 	}
@@ -31,8 +29,7 @@ func (h ComponentVolumeHash) Dup() ComponentVolumeHash {
 
 type GetComponentsOptions struct {
 	Cmps            wtype.ComponentVector
-	Carryvol        wunit.Volume
-	Ori             int
+	Ori             wtype.ChannelOrientation
 	Multi           int
 	Independent     bool
 	LegacyVolume    bool
@@ -68,7 +65,7 @@ func matchToParallelTransfer(m wtype.Match) ParallelTransfer {
 }
 
 // returns a vector iterator for a plate given the multichannel capabilites of the head (ori, multi)
-func getPlateIterator(lhp *wtype.LHPlate, ori, multi int) wtype.VectorPlateIterator {
+func getPlateIterator(lhp *wtype.Plate, ori wtype.ChannelOrientation, multi int) wtype.AddressSliceIterator {
 	if ori == wtype.LHVChannel {
 		//it = NewColVectorIterator(lhp, multi)
 
@@ -88,14 +85,19 @@ func getPlateIterator(lhp *wtype.LHPlate, ori, multi int) wtype.VectorPlateItera
 			multi = lhp.WellsY()
 		}
 
-		return wtype.NewTickingColVectorIterator(lhp, multi, tpw, wpt)
+		if multi == 1 {
+			tpw = 1
+			wpt = 1
+		}
+
+		return wtype.NewTickingIterator(lhp, wtype.ColumnWise, wtype.TopToBottom, wtype.LeftToRight, false, multi, wpt, tpw)
 	} else {
 		// needs same treatment as above
-		return wtype.NewRowVectorIterator(lhp, multi)
+		return wtype.NewTickingIterator(lhp, wtype.RowWise, wtype.TopToBottom, wtype.LeftToRight, false, multi, 1, 1)
 	}
 }
 
-func (lhp *LHProperties) GetSourcesFor(cmps wtype.ComponentVector, ori, multi int, minPossibleVolume wunit.Volume, ignoreInstances bool) []wtype.ComponentVector {
+func (lhp *LHProperties) GetSourcesFor(cmps wtype.ComponentVector, ori wtype.ChannelOrientation, multi int, minPossibleVolume wunit.Volume, ignoreInstances bool) []wtype.ComponentVector {
 	ret := make([]wtype.ComponentVector, 0, 1)
 
 	for _, ipref := range lhp.OrderedMergedPlatePrefs() {
@@ -103,7 +105,6 @@ func (lhp *LHProperties) GetSourcesFor(cmps wtype.ComponentVector, ori, multi in
 
 		if ok {
 			it := getPlateIterator(p, ori, multi)
-
 			for wv := it.Curr(); it.Valid(); wv = it.Next() {
 				// cmps needs duping here
 				mycmps := p.GetVolumeFilteredContentVector(wv, cmps, minPossibleVolume, ignoreInstances) // dups components
@@ -183,7 +184,7 @@ func sourceVolumesOK(srcs []wtype.ComponentVector, dests wtype.ComponentVector) 
 func collateDifference(a, b, c map[string]wunit.Volume) string {
 	s := ""
 
-	for k, _ := range a {
+	for k := range a {
 		_, ok := b[k]
 
 		if !ok {
@@ -193,8 +194,8 @@ func collateDifference(a, b, c map[string]wunit.Volume) string {
 
 		v := c[k]
 
-		if v.LessThanFloat(0.0) {
-			v.M(-1.0)
+		if v.RawValue() < 0.0 {
+			v.MultiplyBy(-1.0)
 			s += fmt.Sprintf("%s - missing %s; ", k, v.ToString())
 		}
 	}
@@ -247,12 +248,13 @@ func cmpVecsEqual(v1, v2 wtype.ComponentVector) bool {
 	return true
 }
 
-func cmpsEqual(c1, c2 *wtype.LHComponent) bool {
+func cmpsEqual(c1, c2 *wtype.Liquid) bool {
 	return c1.ID == c2.ID && c1.Vol == c2.Vol
 }
 
 func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsReply, error) {
 	rep := newReply()
+
 	// build list of possible sources -- this is a list of ComponentVectors
 
 	srcs := lhp.GetSourcesFor(opt.Cmps, opt.Ori, opt.Multi, lhp.MinPossibleVolume(), opt.IgnoreInstances)
@@ -263,7 +265,7 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 	currCmps := opt.Cmps.Dup()
 	var lastCmps wtype.ComponentVector
 
-	done := false
+	var done bool
 
 	for {
 		done = areWeDoneYet(currCmps)
@@ -316,57 +318,13 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 		bestMatch = makeMatchSafe(currCmps, bestMatch, lhp.MinPossibleVolume())
 
 		// update sources
-
-		updateSources(bestSrc, bestMatch, opt.Carryvol, lhp.MinPossibleVolume())
+		updateSources(bestSrc, bestMatch, lhp.CarryVolume(), lhp.MinPossibleVolume())
 		lastCmps = currCmps.Dup()
 		updateDests(currCmps, bestMatch)
 		rep.Transfers = append(rep.Transfers, matchToParallelTransfer(bestMatch))
 	}
 
 	return rep, nil
-}
-
-// this double-checks if we are using duplicated trough wells
-func feasible(match wtype.Match, src wtype.ComponentVector, carry wunit.Volume) bool {
-	// sum available volumes asked for and those available
-
-	want := make(map[string]wunit.Volume)
-
-	for i := 0; i < len(match.IDs); i++ {
-		if match.M[i] == -1 {
-			continue
-		}
-		if _, ok := want[match.IDs[i]+":"+match.WCs[i]]; !ok {
-			want[match.IDs[i]+":"+match.WCs[i]] = wunit.NewVolume(0.0, "ul")
-		}
-		want[match.IDs[i]+":"+match.WCs[i]].Add(match.Vols[i])
-		want[match.IDs[i]+":"+match.WCs[i]].Add(carry)
-	}
-
-	got := make(map[string]wunit.Volume)
-
-	for i := 0; i < len(src); i++ {
-		// if a component appears more than once in a location it's a fake duplicate
-		got[src[i].Loc] = src[i].Volume()
-	}
-
-	compare := func(a, b map[string]wunit.Volume) bool {
-		// true iff all volumes in a are <= their equivalents in b (undef == 0)
-		for k, v1 := range a {
-			v2, ok := b[k]
-			if !ok {
-				return false
-			}
-
-			if v2.LessThan(v1) {
-				return false
-			}
-		}
-
-		return true
-	}
-
-	return compare(want, got)
 }
 
 func updateSources(src wtype.ComponentVector, match wtype.Match, carryVol, minPossibleVolume wunit.Volume) wtype.ComponentVector {
@@ -394,7 +352,7 @@ func makeMatchSafe(dst wtype.ComponentVector, match wtype.Match, mpv wunit.Volum
 				mpv.Subtract(wunit.NewVolume(checkVol, dst[i].Vunit))
 				match.Vols[i].Subtract(mpv)
 
-				if match.Vols[i].LessThanFloat(0.0) {
+				if match.Vols[i].RawValue() < 0.0 {
 					panic(fmt.Sprintf("Serious volume issue -- try a manual plate layout with some additional volume for %s", dst[i].CName))
 				}
 			}
@@ -408,7 +366,8 @@ func updateDests(dst wtype.ComponentVector, match wtype.Match) wtype.ComponentVe
 	for i := 0; i < len(match.M); i++ {
 		if match.M[i] != -1 {
 			dst[i].Vol -= match.Vols[i].ConvertToString(dst[i].Vunit)
-			if dst[i].Vol < 0.0001 {
+
+			if dst[i].Volume().MustInStringUnit("ul").RawValue() < 0.0001 {
 				dst[i].Vol = 0.0
 			}
 		}

@@ -132,9 +132,3 @@ func revcmp(s string) string {
 
 	return s2
 }
-
-func siprint(s string) {
-	s = strings.Replace(s, "GCTCTTC", "gctcttc", -1)
-	s = strings.Replace(s, "GAAGAGC", "gaagagc", -1)
-	fmt.Println(s)
-}

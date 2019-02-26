@@ -2,7 +2,6 @@ package mixer
 
 import (
 	"context"
-	"encoding/csv"
 	"fmt"
 	"io"
 	"log"
@@ -13,18 +12,23 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/inventory"
+	"github.com/antha-lang/toolbox/csvutil"
+	"github.com/pkg/errors"
 )
+
+const plateTypeReplacementKey string = "PlateType"
 
 // ParsePlateResult is the result of parsing a plate
 type ParsePlateResult struct {
-	Plate    *wtype.LHPlate
+	Plate    *wtype.Plate
 	Warnings []string
 }
 
 // ValidationConfig specifies how to parse a plate
 type ValidationConfig struct {
-	valid   string
-	invalid string
+	valid        string
+	invalid      string
+	replaceField map[string]string
 }
 
 // ValidChars are the characters that are valid in a component name
@@ -50,6 +54,13 @@ func PermissiveValidationConfig() ValidationConfig {
 	return ValidationConfig{
 		invalid: "",
 		valid:   "+abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+	}
+}
+
+// ReplacePlateType will replace the plate type in the CSV file with the replacement option specified.
+func ReplacePlateType(replacement string) ValidationConfig {
+	return ValidationConfig{
+		replaceField: map[string]string{plateTypeReplacementKey: replacement},
 	}
 }
 
@@ -79,35 +90,89 @@ func validWellCoord(coord string) (wtype.WellCoords, error) {
 	return well, nil
 }
 
-func validWell(well wtype.WellCoords, plate *wtype.LHPlate) error {
+func validWell(well wtype.WellCoords, plate *wtype.Plate) error {
 	if well.X >= plate.WellsX() || well.Y >= plate.WellsY() {
 		return fmt.Errorf("well coord %q does not exist on plate type %q", well.FormatA1(), plate.Type)
 	}
 	return nil
 }
 
-// ParsePlateCSV parses a plate
-func ParsePlateCSV(ctx context.Context, inData io.Reader) (*ParsePlateResult, error) {
-	return ParsePlateCSVWithValidationConfig(ctx, inData, DefaultValidationConfig())
-}
-
-// ParsePlateCSVWithValidationConfig parses a csv file into a plate.
+// ParsePlateCSV parses a csv file into a plate.
+// ValidationConfig options may be added which either:
+// (i) define sets of valid and invalid characters which may be used in the component names.
+// (ii) define fields in the Plate csv which may be replaced.
+// If no config is set for case (i) a default config will be used.
 //
 // CSV plate format: (? denotes optional, whitespace for clarity)
 //
-//   <plate type> , <plate name ?>
-//   <well0> , <component name0> , <component type0 ?> , <volume0 ?> , <volume unit0 ?>, <conc0 ?> , <conc unit0 ?>
-//   <well1> , <component name1> , <component type1 ?> , <volume1 ?> , <volume unit1 ?>, <conc1 ?> , <conc unit1 ?>
+//   <plate type ?> , <plate name ?>
+//   <well0> , <component name0> , <component type0 ?> , <volume0 ?> , <volume unit0 ?>, <conc0 ?> , <conc unit0 ?>, <SubComponent1Name: ?> , <SubComponent1Conc unit0 ?>, <SubComponent2Name: ?> , <SubComponent2Conc unit0 ?>, <SubComponentNName: ?> , <SubComponentNConc unit0 ?>
+//   <well1> , <component name1> , <component type1 ?> , <volume1 ?> , <volume unit1 ?>, <conc1 ?> , <conc unit1 ?>, <SubComponent1Name: ?> , <SubComponent1Conc unit0 ?>, <SubComponent2Name: ?> , <SubComponent2Conc unit0 ?>, <SubComponentNName: ?> , <SubComponentNConc unit0 ?>
+//   ...
+//
+func ParsePlateCSV(ctx context.Context, inData io.Reader, validationOptions ...ValidationConfig) (*ParsePlateResult, error) {
+
+	var addDefaultConfig bool
+
+	for _, configOption := range validationOptions {
+		if len(configOption.valid) > 0 {
+			addDefaultConfig = true
+		}
+	}
+
+	if !addDefaultConfig {
+		validationOptions = append(validationOptions, DefaultValidationConfig())
+	}
+
+	return parsePlateCSVWithValidationConfig(ctx, inData, validationOptions...)
+}
+
+// parsePlateCSVWithValidationConfig parses a csv file into a plate.
+//
+// CSV plate format: (? denotes optional, whitespace for clarity)
+//
+//   <plate type ?> , <plate name ?>
+//   <well0> , <component name0> , <component type0 ?> , <volume0 ?> , <volume unit0 ?>, <conc0 ?> , <conc unit0 ?>, <SubComponent1Name: ?> , <SubComponent1Conc unit0 ?>, <SubComponent2Name: ?> , <SubComponent2Conc unit0 ?>, <SubComponentNName: ?> , <SubComponentNConc unit0 ?>
+//   <well1> , <component name1> , <component type1 ?> , <volume1 ?> , <volume unit1 ?>, <conc1 ?> , <conc unit1 ?>, <SubComponent1Name: ?> , <SubComponent1Conc unit0 ?>, <SubComponent2Name: ?> , <SubComponent2Conc unit0 ?>, <SubComponentNName: ?> , <SubComponentNConc unit0 ?>
 //   ...
 //
 // TODO: refactor if/when Opt loses raw []byte and file as InputPlate options
-func ParsePlateCSVWithValidationConfig(ctx context.Context, inData io.Reader, vc ValidationConfig) (*ParsePlateResult, error) {
+func parsePlateCSVWithValidationConfig(ctx context.Context, inData io.Reader, vcOptions ...ValidationConfig) (*ParsePlateResult, error) {
 	// Get returning "" if idx >= len(xs)
 	get := func(xs []string, idx int) string {
 		if len(xs) <= idx {
 			return ""
 		}
 		return strings.TrimSpace(xs[idx])
+	}
+
+	// returns first index of value in xs which matches equal fold comparison for header.
+	// if no value is found, -1 and error will be returned
+	getIndexForColumnHeader := func(xs []string, header string) (int, error) {
+		for i, str := range xs {
+			if strings.EqualFold(strings.TrimSpace(str), strings.TrimSpace(header)) {
+				return i, nil
+			}
+		}
+		return -1, errors.Errorf("header %s not found in list %v", header, xs)
+	}
+
+	var validationConfigs []ValidationConfig
+	var replaceConfigs []ValidationConfig
+	var vc ValidationConfig
+
+	for _, config := range vcOptions {
+		if len(config.valid) > 0 {
+			validationConfigs = append(validationConfigs, config)
+		} else if len(config.replaceField) > 0 {
+			replaceConfigs = append(replaceConfigs, config)
+		}
+	}
+
+	if len(validationConfigs) == 1 {
+		vc = validationConfigs[0]
+	} else {
+		return nil, fmt.Errorf("conflicting validation configs specified to ParsePlateCSV, please only set one: %v", validationConfigs)
 	}
 
 	parseUnit := func(value, unit, defaultUnit string) (float64, string, error) {
@@ -124,7 +189,7 @@ func ParsePlateCSVWithValidationConfig(ctx context.Context, inData io.Reader, vc
 		return v, unit, err
 	}
 
-	csvr := csv.NewReader(inData)
+	csvr := csvutil.NewTolerantReader(inData)
 	csvr.FieldsPerRecord = -1
 
 	rec, err := csvr.Read()
@@ -136,7 +201,19 @@ func ParsePlateCSVWithValidationConfig(ctx context.Context, inData io.Reader, vc
 		return nil, fmt.Errorf("empty file")
 	}
 
-	plateType := rec[0]
+	var plateType string
+
+	if len(replaceConfigs) == 0 {
+		plateType = rec[0]
+	} else {
+		for _, replacer := range replaceConfigs {
+			if replacement, found := replacer.replaceField[plateTypeReplacementKey]; found {
+				plateType = replacement
+				break
+			}
+		}
+	}
+
 	plate, err := inventory.NewPlate(ctx, plateType)
 	if err != nil {
 		return nil, fmt.Errorf("cannot make plate %s: %s", plateType, err)
@@ -148,6 +225,24 @@ func ParsePlateCSVWithValidationConfig(ctx context.Context, inData io.Reader, vc
 	}
 
 	var warnings []string
+	var fatalErrors []string
+
+	var lookForSubComponents bool
+
+	// expectation is that there are 7 static columns in the plate csv file,
+	// after that, a Sub components column header will be looked for.
+	const numberOfStaticCSVColumns = 7
+
+	subComponentsStart, err := getIndexForColumnHeader(rec, wtype.SubComponentsHeader)
+
+	if err == nil {
+		lookForSubComponents = true
+
+		if subComponentsStart < numberOfStaticCSVColumns {
+			return nil, errors.Errorf("%s header cannot be specified in the first %d column headers. Found at position %d", wtype.SubComponentsHeader, numberOfStaticCSVColumns, subComponentsStart+1)
+		}
+	}
+
 	for lineNo := 1; true; lineNo++ {
 		rec, err := csvr.Read()
 		if err == io.EOF {
@@ -159,14 +254,14 @@ func ParsePlateCSVWithValidationConfig(ctx context.Context, inData io.Reader, vc
 
 		wellField := get(rec, 0)
 		cname := get(rec, 1)
-		ctypeField := get(rec, 2)
+		ctypeField := unModifyTypeName(get(rec, 2))
 
 		well, err := validWellCoord(wellField)
 		if err != nil {
 			warnings = append(warnings, fmt.Sprintf("line %d skipped: %s", lineNo, err))
 			continue
 		} else if err := validWell(well, plate); err != nil {
-			warnings = append(warnings, fmt.Sprintf("line %d skipped: %s", lineNo, err))
+			fatalErrors = append(fatalErrors, fmt.Sprintf("line %d: %s", lineNo, err))
 			continue
 		}
 
@@ -176,8 +271,9 @@ func ParsePlateCSVWithValidationConfig(ctx context.Context, inData io.Reader, vc
 		}
 
 		ctype, err := wtype.LiquidTypeFromString(wtype.PolicyName(ctypeField))
+
 		if err != nil {
-			warnings = append(warnings, fmt.Sprintf("line %d: unknown component type %q, defaulting to %q: %s", lineNo, ctypeField, wtype.LiquidTypeName(ctype), err))
+			warnings = append(warnings, fmt.Sprintf("line %d: component type %q not found in default system types, using (%q); this may generate undesirable behaviour if this is not a custom type known by the system: %s", lineNo, ctypeField, ctype, err))
 		}
 
 		vol, vunit, err := parseUnit(get(rec, 3), get(rec, 4), "ul")
@@ -203,6 +299,24 @@ func ParsePlateCSVWithValidationConfig(ctx context.Context, inData io.Reader, vc
 		cmp.Conc = concentration.RawValue()
 		cmp.Cunit = concentration.Unit().PrefixedSymbol()
 
+		if len(rec) > numberOfStaticCSVColumns && lookForSubComponents {
+			for k := subComponentsStart; k < len(rec); k = k + 2 {
+				subCompName := get(rec, k)
+				// sub component names may contain a : which must be removed
+				trimmedSubCompName := strings.TrimRight(subCompName, ":")
+				if k+1 < len(rec) {
+					subCompConc := get(rec, k+1)
+					subCmp := wtype.NewLHComponent()
+					subCmp.SetName(trimmedSubCompName)
+					err := cmp.AddSubComponent(subCmp, wunit.NewConcentration(wunit.SplitValueAndUnit(subCompConc)))
+					if err != nil {
+						return nil, err
+					}
+				} else if len(subCompName) != 0 {
+					return nil, fmt.Errorf("no concentration set on sub component %s for well %s", trimmedSubCompName, well.FormatA1())
+				}
+			}
+		}
 		if wa, ok := plate.WellAt(well); ok {
 			err = wa.AddComponent(cmp)
 			if err != nil {
@@ -214,6 +328,14 @@ func ParsePlateCSVWithValidationConfig(ctx context.Context, inData io.Reader, vc
 		} else {
 			return nil, fmt.Errorf("Unknown location \"%s\" in plate \"%s\"", well.FormatA1(), plate.Name())
 		}
+	}
+
+	if len(fatalErrors) > 0 {
+		return nil, fmt.Errorf(strings.Join(fatalErrors, "\n"))
+	}
+
+	if err = plate.ValidateVolumes(); err != nil {
+		return nil, err
 	}
 
 	return &ParsePlateResult{
@@ -236,7 +358,7 @@ func parsePlateFile(ctx context.Context, filename string) (*ParsePlateResult, er
 
 // ParseInputPlateFile is convenience function for parsing a plate from file.
 // Will splat out warnings to stdout.
-func ParseInputPlateFile(ctx context.Context, filename string) (*wtype.LHPlate, error) {
+func ParseInputPlateFile(ctx context.Context, filename string) (*wtype.Plate, error) {
 	r, err := parsePlateFile(ctx, filename)
 	if err != nil {
 		return nil, err

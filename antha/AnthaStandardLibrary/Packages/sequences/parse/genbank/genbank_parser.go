@@ -26,6 +26,7 @@ package genbank
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -38,9 +39,9 @@ import (
 func GenbankToFeaturelessDNASequence(sequenceFile wtype.File) (wtype.DNASequence, error) {
 	data, err := sequenceFile.ReadAll()
 	if err != nil {
-		fmt.Errorf("Error reading file. Please check file.")
+		return wtype.DNASequence{}, err
 	}
-	line := ""
+	var line string
 	genbanklines := make([]string, 0)
 	buffer := bytes.NewBuffer(data)
 	scanner := bufio.NewScanner(buffer)
@@ -58,7 +59,7 @@ func GenbankToFeaturelessDNASequence(sequenceFile wtype.File) (wtype.DNASequence
 
 //Parses a feature from a genbank file into a DNASequence.
 func GenbankFeatureToDNASequence(file wtype.File, featurename string) (wtype.DNASequence, error) {
-	line := ""
+	var line string
 	genbanklines := make([]string, 0)
 
 	data, err := file.ReadAll()
@@ -108,7 +109,7 @@ func GenbankToAnnotatedSeq(file wtype.File) (annotated wtype.DNASequence, err er
 
 // parses contents of a genbank file into a DNASEquence making features from annotations
 func GenbankContentsToAnnotatedSeq(contentsinbytes []byte) (annotated wtype.DNASequence, err error) {
-	line := ""
+	var line string
 	genbanklines := make([]string, 0)
 
 	data := bytes.NewBuffer(contentsinbytes)
@@ -166,7 +167,7 @@ func locusLine(line string) (name string, seqlength int, seqtype string, circula
 	fields = newarray
 	if len(fields) > 1 {
 		if len(fields) < 5 {
-			err = fmt.Errorf("The locusline does not contain enough elements or is not formatted correctly. Please check file.")
+			err = errors.New("the locusline does not contain enough elements or is not formatted correctly. Please check file.")
 			return
 		}
 		name = fields[0]
@@ -190,7 +191,7 @@ func locusLine(line string) (name string, seqlength int, seqtype string, circula
 		}
 		return
 	} else {
-		err = fmt.Errorf("invalid genbank line: ", line)
+		err = fmt.Errorf("invalid genbank locus line: \"%s\"", line)
 	}
 
 	return
@@ -224,7 +225,7 @@ func featureline1(line string) (reverse bool, class string, startposition int, e
 		}
 		var warning error
 		if strings.Contains(s, `join`) {
-			warning = fmt.Errorf("double position of feature!!", s, "adding as one feature only for now")
+			warning = fmt.Errorf("feature \"%s\" contains join location, adding as one feature only for now", s)
 			s = strings.Replace(s, "Join(", "", -1)
 			s = strings.Replace(s, ")", "", -1)
 			joinhandler := strings.Split(s, `,`)
@@ -239,9 +240,12 @@ func featureline1(line string) (reverse bool, class string, startposition int, e
 				return
 			}
 		} else {
-			if strings.Contains(s, `complement`) {
+			if strings.Contains(s, "complement") {
 				reverse = true
-				s = strings.TrimLeft(s, `(complement)`)
+				// though the following line is technically incorrect I'm afraid
+				// to fix it because I don't want to cause any accidental bugs,
+				// so nolint it (contains duplicate chars in cutset)
+				s = strings.TrimLeft(s, `(complement)`) // nolint
 				s = strings.TrimRight(s, ")")
 				if s[0] == '<' {
 					s = s[1:]
@@ -252,9 +256,9 @@ func featureline1(line string) (reverse bool, class string, startposition int, e
 			}
 			index := strings.Index(s, "..")
 			if index != -1 {
-
 				startposition, err = strconv.Atoi(s[0:index])
 				if err != nil {
+					return
 				}
 				ss := strings.SplitAfter(s, "..")
 				if strings.Contains(ss[1], ")") {
@@ -290,7 +294,7 @@ func featureline2(line string) (description string, found bool) {
 	for i, field := range fields {
 		if strings.Contains(field, `"`) {
 			tempfields := make([]string, i)
-			tempfield := strings.Join(fields[i:len(fields)], " ")
+			tempfield := strings.Join(fields[i:], " ")
 			tempfields = append(tempfields, tempfield)
 			fields = tempfields
 			break
@@ -360,7 +364,7 @@ func handleFeature(lines []string) (description string, reverse bool, class stri
 		reverse, class, startposition, endposition, err := featureline1(lines[0])
 
 		if err != nil {
-			fmt.Errorf("Error with Featureline1 func %s", lines[0])
+			err = fmt.Errorf("Error with Featureline1 func %s", lines[0])
 			return description, reverse, class, startposition, endposition, err
 		}
 
@@ -407,7 +411,7 @@ func handleFeatures(lines []string, seq string, seqtype string) (features []wtyp
 			featurespresent = true
 		}
 	}
-	if featurespresent != true {
+	if !featurespresent {
 		return
 	}
 	features = make([]wtype.Feature, 0)
@@ -415,7 +419,7 @@ func handleFeatures(lines []string, seq string, seqtype string) (features []wtyp
 
 	for i := 0; i < len(lines); i++ {
 		if lines[i][0:8] == "FEATURES" {
-			lines = lines[i+1 : len(lines)]
+			lines = lines[i+1:]
 			break
 		}
 	}
@@ -441,7 +445,7 @@ func handleFeatures(lines []string, seq string, seqtype string) (features []wtyp
 			}
 
 			features = append(features, feature)
-			lines = lines[end:len(lines)]
+			lines = lines[end:]
 			if start > end {
 				return features, fmt.Errorf("Start position cannot be greater than end position in feature")
 			}
@@ -465,7 +469,7 @@ func handleSequence(lines []string) (dnaseq string) {
 	if len(lines) > 0 {
 		for i := 0; i < originallines; i++ {
 			if len([]byte(lines[0])) > 0 {
-				if originfound == false {
+				if !originfound {
 					if lines[i][0:6] == "ORIGIN" {
 						originfound = true
 					}

@@ -26,6 +26,7 @@ package wtype
 import (
 	"fmt"
 	"math"
+	"sort"
 	"strings"
 )
 
@@ -69,6 +70,18 @@ func (self *deckSlot) IsBelow(point Coordinates) bool {
 		point.Y >= self.position.Y && point.Y <= self.position.Y+self.size.Y)
 }
 
+//Duplicate copy the deckSlot and contained objects, optionally keeping IDs unchanged
+func (self *deckSlot) Duplicate(keepIDs bool) *deckSlot {
+	accepts := make([]string, len(self.accepts))
+	copy(accepts, self.accepts)
+	return &deckSlot{
+		contents: self.contents.Duplicate(keepIDs),
+		position: self.position,
+		size:     self.size,
+		accepts:  accepts,
+	}
+}
+
 //LHDeck Represents a robot deck
 type LHDeck struct {
 	name     string
@@ -98,6 +111,27 @@ func (self *LHDeck) GetType() string {
 
 func (self *LHDeck) GetClass() string {
 	return "deck"
+}
+
+//DimensionsString returns a string description of the position and size of the object and its children.
+func (self *LHDeck) DimensionsString() string {
+	ret := []string{fmt.Sprintf("Deck \"%s\" with %d slots:", self.GetName(), len(self.slots))}
+
+	slotNames := self.GetSlotNames()
+	sort.Strings(slotNames)
+
+	for _, slotName := range slotNames {
+		slot := self.slots[slotName]
+		ret = append(ret, fmt.Sprintf("\tslot \"%s\" at %v+%v", slotName, slot.position, slot.size))
+		if slot.contents == nil {
+			ret = append(ret, "\t\tempty")
+			continue
+		}
+		ds := slot.contents.DimensionsString()
+		ret = append(ret, "\t\t"+strings.Replace(ds, "\n", "\n\t\t", -1))
+	}
+
+	return strings.Join(ret, "\n")
 }
 
 func (self *LHDeck) GetManufacturer() string {
@@ -148,8 +182,28 @@ func (self *LHDeck) SetParent(o LHObject) error {
 		self.GetName(), ClassOf(o), NameOf(o))
 }
 
+//@implement LHObject
+func (self *LHDeck) ClearParent() {}
+
 func (self *LHDeck) GetParent() LHObject {
 	return nil
+}
+
+//Duplicate copy the LHObject, optionally keeping IDs unchanged
+func (self *LHDeck) Duplicate(keepIDs bool) LHObject {
+
+	slots := make(map[string]*deckSlot)
+	for name, sl := range self.slots {
+		slots[name] = sl.Duplicate(keepIDs)
+	}
+
+	uuid := self.id
+	if !keepIDs {
+		uuid = GetUUID()
+	}
+
+	r := &LHDeck{self.name, self.mfg, self.decktype, uuid, slots}
+	return r
 }
 
 //@implements LHParent
@@ -168,7 +222,20 @@ func (self *LHDeck) GetSlotNames() []string {
 	return ret
 }
 
+func (self *LHDeck) GetSlotPosition(name string) Coordinates {
+	if self == nil {
+		return Coordinates{}
+	}
+	if ds, ok := self.slots[name]; ok {
+		return ds.position
+	}
+	return Coordinates{}
+}
+
 func (self *LHDeck) GetSlotContaining(obj LHObject) string {
+	if self == nil {
+		return ""
+	}
 	for n, sl := range self.slots {
 		if IDOf(sl.contents) == IDOf(obj) {
 			return n
@@ -192,8 +259,13 @@ func (self *LHDeck) SetChild(name string, child LHObject) error {
 			ClassOf(child), NameOf(child), name, ClassOf(ds.contents), NameOf(ds.contents))
 	} else {
 		ds.contents = child
-		child.SetParent(self)
-		child.SetOffset(ds.position)
+		if err := child.SetParent(self); err != nil {
+			return err
+		}
+
+		if err := child.SetOffset(ds.position); err != nil {
+			return err
+		}
 	}
 	return nil
 }

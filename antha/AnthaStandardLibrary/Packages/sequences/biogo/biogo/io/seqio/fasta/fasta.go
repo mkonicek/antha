@@ -101,7 +101,10 @@ func (r *Reader) Read() (seq.Sequence, error) {
 				return nil, fmt.Errorf("fasta: badly formed line %q", line)
 			}
 			line = bytes.Join(bytes.Fields(line[len(r.SeqPrefix):]), nil)
-			r.working.AppendLetters(alphabet.BytesToLetters(line)...)
+			err = r.working.AppendLetters(alphabet.BytesToLetters(line)...)
+			if err != nil {
+				return nil, err
+			}
 			line = nil
 		} else {
 			return nil, fmt.Errorf("fasta: badly formed line %q", line)
@@ -186,9 +189,6 @@ func (w *Writer) Write(s seq.Sequence) (n int, err error) {
 		}
 	}
 	_n, err = w.w.Write([]byte{'\n'})
-	if n += _n; err != nil {
-		return n, err
-	}
-
-	return n, nil
+	n += _n
+	return n, err
 }

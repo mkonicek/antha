@@ -6,9 +6,9 @@ import (
 
 func getLHObjects() map[string]interface{} {
 	ret := map[string]interface{}{
-		"LHComponent": &LHComponent{},
+		"LHComponent": &Liquid{},
 		"LHDeck":      &LHDeck{},
-		"LHPlate":     &LHPlate{},
+		"LHPlate":     &Plate{},
 		"LHTip":       &LHTip{},
 		"LHTipbox":    &LHTipbox{},
 		"LHTipwaste":  &LHTipwaste{},
@@ -58,7 +58,7 @@ func getAssertionMap() map[string]func(interface{}) bool {
 func TestInterfaceImplementations(t *testing.T) {
 
 	tests := map[string][]string{
-		"LHComponent": []string{
+		"LHComponent": {
 			"Named",
 			"Identifiable",
 			"Typed",
@@ -68,7 +68,7 @@ func TestInterfaceImplementations(t *testing.T) {
 			//"Addressable",
 			//"LHContainer",
 		},
-		"LHDeck": []string{
+		"LHDeck": {
 			"Named",
 			"Identifiable",
 			"Typed",
@@ -78,7 +78,7 @@ func TestInterfaceImplementations(t *testing.T) {
 			//"Addressable",
 			//"LHContainer",
 		},
-		"LHPlate": []string{
+		"LHPlate": {
 			"Named",
 			"Identifiable",
 			"Typed",
@@ -88,7 +88,7 @@ func TestInterfaceImplementations(t *testing.T) {
 			"Addressable",
 			//"LHContainer",
 		},
-		"LHTip": []string{
+		"LHTip": {
 			"Named",
 			"Identifiable",
 			"Typed",
@@ -98,7 +98,7 @@ func TestInterfaceImplementations(t *testing.T) {
 			//"Addressable",
 			"LHContainer",
 		},
-		"LHTipbox": []string{
+		"LHTipbox": {
 			"Named",
 			"Identifiable",
 			"Typed",
@@ -108,7 +108,7 @@ func TestInterfaceImplementations(t *testing.T) {
 			"Addressable",
 			//"LHContainer",
 		},
-		"LHTipwaste": []string{
+		"LHTipwaste": {
 			"Named",
 			"Identifiable",
 			"Typed",
@@ -118,7 +118,7 @@ func TestInterfaceImplementations(t *testing.T) {
 			"Addressable",
 			//"LHContainer",
 		},
-		"LHWell": []string{
+		"LHWell": {
 			"Named",
 			"Identifiable",
 			"Typed",

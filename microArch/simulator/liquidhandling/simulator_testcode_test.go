@@ -144,7 +144,7 @@ func makeLHProperties(p *LHPropertiesParams) *liquidhandling.LHProperties {
 
 	layout := make(map[string]*wtype.LHPosition)
 	for _, lp := range p.Layouts {
-		layout[lp.Name] = wtype.NewLHPosition(lp.Name, wtype.Coordinates{X: lp.Xpos, Y: lp.Ypos, Z: lp.Zpos})
+		layout[lp.Name] = wtype.NewLHPosition(lp.Name, wtype.Coordinates{X: lp.Xpos, Y: lp.Ypos, Z: lp.Zpos}, wtype.SBSFootprint)
 	}
 
 	lhp := liquidhandling.NewLHProperties(p.Name, p.Mfg, liquidhandling.LLLiquidHandler, liquidhandling.DisposableTips, layout)

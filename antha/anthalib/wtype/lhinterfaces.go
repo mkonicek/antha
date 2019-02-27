@@ -133,7 +133,7 @@ type LHParent interface {
 	//Accepts test if slot can accept a certain class
 	Accepts(string, LHObject) bool
 	//GetSlotSize
-	GetSlotSize(string) Coordinates
+	GetSlotSize(string) Coordinates2D
 }
 
 //WellReference used for specifying position within a well

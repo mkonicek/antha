@@ -74,7 +74,7 @@ func makeGilsonForTest(ctx context.Context, tipList []string) *LHProperties {
 	for y := 0; y < 3; y++ {
 		xp = x0
 		for x := 0; x < 3; x++ {
-			pos := wtype.NewLHPosition(fmt.Sprintf("position_%d", i+1), wtype.Coordinates{X: xp, Y: yp, Z: zp})
+			pos := wtype.NewLHPosition(fmt.Sprintf("position_%d", i+1), wtype.Coordinates{X: xp, Y: yp, Z: zp}, wtype.SBSFootprint)
 			layout[pos.Name] = pos
 			i += 1
 			xp += xi

@@ -189,6 +189,9 @@ func (self Coordinates2D) Abs() float64 {
 	return math.Sqrt(self.X*self.X + self.Y*self.Y)
 }
 
+// SBSFootprint the size of standard SBS format plates
+var SBSFootprint = Coordinates2D{X: 127.76, Y: 85.48}
+
 //a rectangle
 type Rectangle struct {
 	lowerLeft  Coordinates2D

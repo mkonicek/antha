@@ -103,7 +103,7 @@ func makeGilsonForTest(ctx context.Context, tipList []string) *liquidhandling.LH
 		xp = x0
 		for x := 0; x < 3; x++ {
 			posname := fmt.Sprintf("position_%d", i+1)
-			layout[posname] = wtype.NewLHPosition(posname, wtype.Coordinates{X: xp, Y: yp, Z: zp})
+			layout[posname] = wtype.NewLHPosition(posname, wtype.Coordinates{X: xp, Y: yp, Z: zp}, wtype.SBSFootprint)
 			i += 1
 			xp += xi
 		}

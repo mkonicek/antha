@@ -215,15 +215,17 @@ func (lhd *LHDevice) Dup() *LHDevice {
 
 // describes a position on the liquid handling deck
 type LHPosition struct {
-	Name     string      // human readable name of the position chosen by device driver
-	Location Coordinates // absolute position of read left corner of the position
+	Name     string        // human readable name of the position chosen by device driver
+	Location Coordinates   // absolute position of read left corner of the position
+	Size     Coordinates2D // size of the position - equal to the footprint of objects which can be accepted
 }
 
 // NewLHPosition constructs a new position on a liquidhandling deck
-func NewLHPosition(name string, location Coordinates) *LHPosition {
+func NewLHPosition(name string, location Coordinates, size Coordinates2D) *LHPosition {
 	return &LHPosition{
 		Name:     name,
 		Location: location,
+		Size:     size,
 	}
 }
 

@@ -81,7 +81,7 @@ func NewVirtualLiquidHandler(props *liquidhandling.LHProperties, settings *Simul
 	deck := wtype.NewLHDeck("simulated deck", props.Mnfr, props.Model)
 	for name, pos := range props.Positions {
 		//size not given un LHProperties, assuming standard 96well size
-		deck.AddSlot(name, pos.Location, wtype.Coordinates{X: 127.76, Y: 85.48, Z: 0})
+		deck.AddSlot(name, pos.Location, pos.Size)
 		//deck.SetSlotAccepts(name, "riser")
 	}
 

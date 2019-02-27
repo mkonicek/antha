@@ -33,11 +33,11 @@ import (
 type deckSlot struct {
 	contents LHObject
 	position Coordinates
-	size     Coordinates
+	size     Coordinates2D
 	accepts  []string
 }
 
-func newDeckSlot(position, size Coordinates) *deckSlot {
+func newDeckSlot(position Coordinates, size Coordinates2D) *deckSlot {
 	r := deckSlot{nil, position, size, make([]string, 0)}
 	return &r
 }
@@ -286,13 +286,13 @@ func (self *LHDeck) Accepts(name string, child LHObject) bool {
 	return false
 }
 
-func (self *LHDeck) GetSlotSize(name string) Coordinates {
+func (self *LHDeck) GetSlotSize(name string) Coordinates2D {
 	return self.slots[name].size
 }
 
 //LHDeck specific methods
 
-func (self *LHDeck) AddSlot(name string, position, size Coordinates) {
+func (self *LHDeck) AddSlot(name string, position Coordinates, size Coordinates2D) {
 	self.slots[name] = newDeckSlot(position, size)
 }
 

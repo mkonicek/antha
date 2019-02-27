@@ -47,6 +47,11 @@ func TestNewVirtualLiquidHandler_ValidProps(t *testing.T) {
 }
 
 func TestVLH_AddPlateTo(t *testing.T) {
+	// create a wide deckposition and enable input plates to go there
+	propsWithWideSlot := defaultLHProperties()
+	propsWithWideSlot.Positions["widePosition"] = wtype.NewLHPosition("widePosition", wtype.Coordinates{X: -300}, wtype.Coordinates2D{X: 300.0, Y: 85.48})
+	propsWithWideSlot.Preferences.Inputs = append(propsWithWideSlot.Preferences.Inputs, "widePosition")
+
 	SimulatorTests{
 		{
 			Name: "OK",
@@ -110,6 +115,14 @@ func TestVLH_AddPlateTo(t *testing.T) {
 			},
 			ExpectedErrors: []string{
 				"(err) AddPlateTo[1]: Footprint of plate \"plate1\"[300mm x 85.48mm] doesn't fit slot \"output_1\"[127.76mm x 85.48mm]",
+			},
+		},
+		{
+			Name:  "non-SBS format plate",
+			Props: propsWithWideSlot,
+			Instructions: []TestRobotInstruction{
+				&Initialize{},
+				&AddPlateTo{"widePosition", wideLHPlate("plate1"), "plate1"},
 			},
 		},
 	}.Run(t)

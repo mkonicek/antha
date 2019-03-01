@@ -24,8 +24,9 @@ package wunit
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"math"
+
+	"github.com/pkg/errors"
 
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
@@ -309,6 +310,9 @@ func (cm *ConcreteMeasurement) GreaterThanRounded(m Measurement, p int) bool {
 func (cm *ConcreteMeasurement) EqualToRounded(m Measurement, p int) bool {
 	// this is not equal to anything
 	if isNil(cm) {
+		if m.RawValue() == 0 && m.Unit().String() == "" {
+			return true
+		}
 		return false
 	} else if rhs, err := m.InUnit(cm.Unit()); err != nil {
 		panic(err)
@@ -345,6 +349,9 @@ func (cm *ConcreteMeasurement) EqualTo(m Measurement) bool {
 	// this is not equal to anything
 
 	if isNil(cm) {
+		if m.RawValue() == 0 && m.Unit().String() == "" {
+			return true
+		}
 		return false
 	} else if rhs, err := m.InUnit(cm.Unit()); err != nil {
 		// the units are incompatible, so the values cannot be equal
@@ -360,6 +367,9 @@ func (cm *ConcreteMeasurement) EqualTo(m Measurement) bool {
 // where tol is expressed in the same units as the receiver
 func (cm *ConcreteMeasurement) EqualToTolerance(m Measurement, tol float64) bool {
 	if isNil(cm) {
+		if m.RawValue() == 0 && m.Unit().String() == "" {
+			return true
+		}
 		return false
 	} else if rhs, err := m.InUnit(cm.Unit()); err != nil {
 		panic(err)

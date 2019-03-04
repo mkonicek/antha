@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -47,28 +48,19 @@ func (r *Repository) Clone(dir string) error {
 	if err := os.MkdirAll(dir, 0700); err != nil {
 		return err
 	}
-	switch {
-	case r.Branch == "" && r.Commit == "":
-		return r.cloneFromDirectory(dir)
-	case r.Commit != "":
-		return r.cloneFromGitCommit(dir)
-	default:
-		return r.cloneFromGitBranch(dir)
-	}
+	return r.Walk(copier(dir))
 }
 
-func (r *Repository) cloneFromDirectory(dir string) error {
-	src := filepath.FromSlash(r.Directory)
-	return filepath.Walk(src, func(p string, info os.FileInfo, err error) error {
-		if err != nil || !info.Mode().IsRegular() {
-			return err
+func copier(dir string) func(f *File) error {
+	return func(f *File) error {
+		if f == nil || !f.IsRegular {
+			return nil
 		}
-		suffix := strings.TrimPrefix(p, src)
-		dst := filepath.Join(dir, suffix)
+		dst := filepath.Join(dir, f.Name)
 		if err := os.MkdirAll(filepath.Dir(dst), 0700); err != nil {
 			return err
 		}
-		srcFh, err := os.Open(p)
+		srcFh, err := f.Contents()
 		if err != nil {
 			return err
 		}
@@ -80,10 +72,45 @@ func (r *Repository) cloneFromDirectory(dir string) error {
 		defer dstFh.Close()
 		_, err = io.Copy(dstFh, srcFh)
 		return err
+	}
+}
+
+type TreeWalker func(*File) error
+
+type File struct {
+	Name      string // relative to the root of the walk, *always* in local filepath
+	IsRegular bool
+	Contents  func() (io.ReadCloser, error)
+}
+
+func (r *Repository) Walk(fun TreeWalker) error {
+	switch {
+	case r.Branch == "" && r.Commit == "":
+		return r.walkFromDirectory(fun)
+	case r.Commit != "":
+		return r.walkFromGitCommit(fun)
+	default:
+		return r.walkFromGitBranch(fun)
+	}
+}
+
+func (r *Repository) walkFromDirectory(fun TreeWalker) error {
+	src := filepath.Clean(filepath.FromSlash(r.Directory))
+	var f File
+	return filepath.Walk(src, func(p string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		f.Name = strings.TrimPrefix(p, src)
+		f.IsRegular = info.Mode().IsRegular()
+		f.Contents = func() (io.ReadCloser, error) {
+			return os.Open(p)
+		}
+		return fun(&f)
 	})
 }
 
-func (r *Repository) cloneFromGitCommit(dir string) error {
+func (r *Repository) walkFromGitCommit(fun TreeWalker) error {
 	if err := r.ensureGitRepo(); err != nil {
 		return err
 	}
@@ -95,18 +122,23 @@ func (r *Repository) cloneFromGitCommit(dir string) error {
 	} else {
 		iter := tree.Files()
 		defer iter.Close()
+		var f File
 		for {
-			if f, err := iter.Next(); err == io.EOF {
+			if gf, err := iter.Next(); err == io.EOF {
 				break
 			} else if err != nil {
 				return err
-			} else if c, err := f.Contents(); err != nil {
-				return err
 			} else {
-				dst := filepath.Join(dir, filepath.FromSlash(f.Name))
-				if err := os.MkdirAll(filepath.Dir(dst), 0700); err != nil {
-					return err
-				} else if err := ioutil.WriteFile(dst, []byte(c), 0400); err != nil {
+				f.Name = filepath.FromSlash(gf.Name)
+				f.IsRegular = gf.Mode.IsRegular()
+				f.Contents = func() (io.ReadCloser, error) {
+					if c, err := gf.Contents(); err != nil {
+						return nil, err
+					} else {
+						return ioutil.NopCloser(bytes.NewBuffer([]byte(c))), nil
+					}
+				}
+				if err := fun(&f); err != nil {
 					return err
 				}
 			}
@@ -115,7 +147,7 @@ func (r *Repository) cloneFromGitCommit(dir string) error {
 	}
 }
 
-func (r *Repository) cloneFromGitBranch(dir string) error {
+func (r *Repository) walkFromGitBranch(fun TreeWalker) error {
 	if err := r.ensureGitRepo(); err != nil {
 		return err
 	}
@@ -127,7 +159,7 @@ func (r *Repository) cloneFromGitBranch(dir string) error {
 		// we switch from branch to commit
 		r.Commit = ch.String()
 		r.Branch = ""
-		return r.cloneFromGitCommit(dir)
+		return r.walkFromGitCommit(fun)
 	}
 }
 

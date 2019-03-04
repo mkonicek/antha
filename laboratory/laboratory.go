@@ -57,7 +57,7 @@ type LaboratoryBuilder struct {
 	instrs []effects.Inst
 }
 
-func NewLaboratoryBuilder(fh io.Reader) *LaboratoryBuilder {
+func NewLaboratoryBuilder(fh io.ReadCloser) *LaboratoryBuilder {
 	labBuild := &LaboratoryBuilder{
 		elements:  make(map[Element]*ElementBase),
 		Errored:   make(chan struct{}),

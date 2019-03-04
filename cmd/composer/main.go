@@ -1,10 +1,8 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
-	"io"
 	"os"
 
 	"github.com/antha-lang/antha/composer"
@@ -29,33 +27,9 @@ func main() {
 
 	logger := logger.NewLogger()
 
-	workflows := flag.Args()
-	if len(workflows) == 0 {
-		logger.Fatal(errors.New("No workflow files provided (use - to read from stdin)."))
-	}
-
-	stdinUnused := true
-	rs := make([]io.Reader, len(workflows))
-	for idx, wfPath := range workflows {
-		if wfPath == "-" {
-			if stdinUnused {
-				stdinUnused = false
-				rs[idx] = os.Stdin
-			} else {
-				logger.Fatal(errors.New("Workflow can only be read from stdin once"))
-			}
-
-		} else {
-			if fh, err := os.Open(wfPath); err != nil {
-				logger.Fatal(err)
-			} else {
-				defer fh.Close()
-				rs[idx] = fh
-			}
-		}
-	}
-
-	if wf, err := workflow.WorkflowFromReaders(rs...); err != nil {
+	if rs, err := workflow.ReadersFromPaths(flag.Args()); err != nil {
+		logger.Fatal(err)
+	} else if wf, err := workflow.WorkflowFromReaders(rs...); err != nil {
 		logger.Fatal(err)
 	} else if comp, err := composer.NewComposer(logger, wf, outdir, keep, run, linkedDrivers); err != nil {
 		logger.Fatal(err)

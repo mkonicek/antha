@@ -93,6 +93,7 @@ package main
 
 import (
 	"bytes"
+	"io/ioutil"
 
 	"github.com/antha-lang/antha/laboratory"
 	"github.com/ugorji/go/codec"
@@ -101,7 +102,7 @@ import (
 {{end}}{{end}})
 
 func main() {
-	labBuild := laboratory.NewLaboratoryBuilder(bytes.NewBuffer(MustAsset("data/workflow.json")))
+	labBuild := laboratory.NewLaboratoryBuilder(ioutil.NopCloser(bytes.NewBuffer(MustAsset("data/workflow.json"))))
 	jh := &codec.JsonHandle{}
 	labBuild.RegisterJsonExtensions(jh)
 

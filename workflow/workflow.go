@@ -26,9 +26,10 @@ type Workflow struct {
 	typeNames map[ElementTypeName]*ElementType
 }
 
-func WorkflowFromReaders(rs ...io.Reader) (*Workflow, error) {
+func WorkflowFromReaders(rs ...io.ReadCloser) (*Workflow, error) {
 	acc := &Workflow{}
 	for _, r := range rs {
+		defer r.Close()
 		wf := &Workflow{}
 		dec := json.NewDecoder(r)
 		if err := dec.Decode(wf); err != nil {

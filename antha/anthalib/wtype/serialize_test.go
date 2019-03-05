@@ -132,7 +132,7 @@ func TestLHWellSerialize(t *testing.T) {
 			51.2,
 		},
 		FlatWellBottom,
-		BBox{Coordinates{}, Coordinates{7.3, 7.3, 51.2}},
+		BBox{Coordinates3D{}, Coordinates3D{7.3, 7.3, 51.2}},
 		46,
 		wellExtra,
 		nil,

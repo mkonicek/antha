@@ -9,7 +9,7 @@ import (
 func makeTipwasteForTest() *LHTipwaste {
 	shp := NewShape("box", "mm", 123.0, 80.0, 92.0)
 	w := NewLHWell("ul", 800000.0, 800000.0, shp, 0, 123.0, 80.0, 92.0, 0.0, "mm")
-	lht := NewLHTipwaste(6000, "TipwasteForTest", "ACME Corp.", Coordinates{X: 127.76, Y: 85.48, Z: 92.0}, w, 49.5, 31.5, 0.0)
+	lht := NewLHTipwaste(6000, "TipwasteForTest", "ACME Corp.", Coordinates3D{X: 127.76, Y: 85.48, Z: 92.0}, w, 49.5, 31.5, 0.0)
 	return lht
 }
 
@@ -35,9 +35,9 @@ func TestTipwasteCoordsToWellCoords(t *testing.T) {
 
 	tw := makeTipwasteForTest()
 
-	eDelta := Coordinates{X: -0.2 * tw.AsWell.GetSize().X, Y: -0.3 * tw.AsWell.GetSize().Y}
+	eDelta := Coordinates3D{X: -0.2 * tw.AsWell.GetSize().X, Y: -0.3 * tw.AsWell.GetSize().Y}
 
-	pos := Coordinates{
+	pos := Coordinates3D{
 		X: tw.WellXStart + eDelta.X,
 		Y: tw.WellYStart + eDelta.Y,
 	}
@@ -56,7 +56,7 @@ func TestTipwasteCoordsToWellCoords(t *testing.T) {
 
 func TestTipwasteSerialisation(t *testing.T) {
 	partFull := makeTipwasteForTest()
-	partFull.SetOffset(Coordinates{X: 1.0, Y: 2.0, Z: 3.0})
+	partFull.SetOffset(Coordinates3D{X: 1.0, Y: 2.0, Z: 3.0})
 	partFull.Contents = 300
 
 	tipwastes := []*LHTipwaste{

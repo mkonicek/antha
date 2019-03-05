@@ -78,15 +78,15 @@ func ClassOf(o interface{}) string {
 //of objects that exist within a liquid handler
 type LHObject interface {
 	//GetPosition get the absolute position of the object (mm)
-	GetPosition() Coordinates
+	GetPosition() Coordinates3D
 	//GetSize get the size of the object (mm)
-	GetSize() Coordinates
+	GetSize() Coordinates3D
 	//GetBoxIntersections get a list of LHObjects (can be this object or children) which intersect with the BBox
 	GetBoxIntersections(BBox) []LHObject
 	//GetPointIntersections get a list of LHObjects (can be this object or children) which intersect with the given point
-	GetPointIntersections(Coordinates) []LHObject
+	GetPointIntersections(Coordinates3D) []LHObject
 	//SetOffset set the offset of the object relative to its parent (global if parent is nil)
-	SetOffset(Coordinates) error
+	SetOffset(Coordinates3D) error
 	//SetParent Store the offset of the object
 	SetParent(LHObject) error
 	//ClearParent Clear the parent of the object
@@ -115,11 +115,11 @@ func GetObjectRoot(o LHObject) LHObject {
 }
 
 //get the origin for the objects coordinate system
-func OriginOf(o LHObject) Coordinates {
+func OriginOf(o LHObject) Coordinates3D {
 	if p := o.GetParent(); p != nil {
 		return p.GetPosition()
 	}
-	return Coordinates{}
+	return Coordinates3D{}
 }
 
 //LHParent An LHObject that can hold other LHObjects
@@ -133,7 +133,7 @@ type LHParent interface {
 	//Accepts test if slot can accept a certain class
 	Accepts(string, LHObject) bool
 	//GetSlotSize
-	GetSlotSize(string) Coordinates
+	GetSlotSize(string) Coordinates2D
 }
 
 //WellReference used for specifying position within a well
@@ -175,21 +175,21 @@ type Addressable interface {
 	//of the center of the well/tip to the given coordinate
 	//(this leaves the caller to ascertain whether any mis-alignment
 	//is acceptable)
-	CoordsToWellCoords(Coordinates) (WellCoords, Coordinates)
+	CoordsToWellCoords(Coordinates3D) (WellCoords, Coordinates3D)
 	//WellCoordsToCoords Get the physical location of an addressable
 	//position relative to the object origin.
 	//WellCoords should be valid in the object, or the bool will
 	//return false and Coordinates are undefined.
 	//WellReference is the position within a well.
 	//Requesting LiquidReference on a LHTipbox will return false
-	WellCoordsToCoords(WellCoords, WellReference) (Coordinates, bool)
+	WellCoordsToCoords(WellCoords, WellReference) (Coordinates3D, bool)
 }
 
 type Targetted interface {
 	//GetTargetOffset Gets the well target location for the numbered channel of the named adaptor
-	GetTargetOffset(string, int) Coordinates
+	GetTargetOffset(string, int) Coordinates3D
 	//GetTargets return all the defined targets for the named adaptor
-	GetTargets(string) []Coordinates
+	GetTargets(string) []Coordinates3D
 }
 
 //LHContainer a tip or a well or something that holds liquids

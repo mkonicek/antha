@@ -3279,7 +3279,7 @@ func makeZOffsetSafe(ctx context.Context, prms *LHProperties, zoffset float64, h
 	adaptor := prms.GetLoadedAdaptor(headIndex)
 	channelSpacing := 9.0 //get this from adaptor in future
 	coneDiameter := 5.5   //get this from adaptor in future
-	adaptorSize := wtype.Coordinates{X: coneDiameter, Y: coneDiameter}
+	adaptorSize := wtype.Coordinates3D{X: coneDiameter, Y: coneDiameter}
 	adaptorWidth := channelSpacing*float64(adaptor.Params.Multi-1) + coneDiameter
 	if adaptor.Params.Orientation == wtype.LHVChannel {
 		adaptorSize.Y = adaptorWidth

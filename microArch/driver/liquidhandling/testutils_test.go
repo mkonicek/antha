@@ -74,7 +74,7 @@ func makeGilsonForTest(ctx context.Context, tipList []string) *LHProperties {
 	for y := 0; y < 3; y++ {
 		xp = x0
 		for x := 0; x < 3; x++ {
-			pos := wtype.NewLHPosition(fmt.Sprintf("position_%d", i+1), wtype.Coordinates{X: xp, Y: yp, Z: zp})
+			pos := wtype.NewLHPosition(fmt.Sprintf("position_%d", i+1), wtype.Coordinates3D{X: xp, Y: yp, Z: zp}, wtype.SBSFootprint)
 			layout[pos.Name] = pos
 			i += 1
 			xp += xi
@@ -105,8 +105,8 @@ func makeGilsonForTest(ctx context.Context, tipList []string) *LHProperties {
 	lvhead.Adaptor = lvadaptor
 
 	ha := wtype.NewLHHeadAssembly(nil)
-	ha.AddPosition(wtype.Coordinates{X: 0, Y: -18.08, Z: 0})
-	ha.AddPosition(wtype.Coordinates{X: 0, Y: 0, Z: 0})
+	ha.AddPosition(wtype.Coordinates3D{X: 0, Y: -18.08, Z: 0})
+	ha.AddPosition(wtype.Coordinates3D{X: 0, Y: 0, Z: 0})
 	ha.LoadHead(hvhead)
 	ha.LoadHead(lvhead)
 	lhp.Heads = append(lhp.Heads, hvhead, lvhead)

@@ -110,7 +110,7 @@ func makeLHHead(hp HeadParams) *wtype.LHHead {
 
 type HeadAssemblyParams struct {
 	MotionLimits    *wtype.BBox
-	PositionOffsets []wtype.Coordinates
+	PositionOffsets []wtype.Coordinates3D
 	Heads           []HeadParams
 	VelocityLimits  *wtype.VelocityRange
 }
@@ -144,7 +144,7 @@ func makeLHProperties(p *LHPropertiesParams) *liquidhandling.LHProperties {
 
 	layout := make(map[string]*wtype.LHPosition)
 	for _, lp := range p.Layouts {
-		layout[lp.Name] = wtype.NewLHPosition(lp.Name, wtype.Coordinates{X: lp.Xpos, Y: lp.Ypos, Z: lp.Zpos})
+		layout[lp.Name] = wtype.NewLHPosition(lp.Name, wtype.Coordinates3D{X: lp.Xpos, Y: lp.Ypos, Z: lp.Zpos}, wtype.SBSFootprint)
 	}
 
 	lhp := liquidhandling.NewLHProperties(p.Name, p.Mfg, liquidhandling.LLLiquidHandler, liquidhandling.DisposableTips, layout)
@@ -216,7 +216,7 @@ type LHPlateParams struct {
 	mfr         string
 	nrows       int
 	ncols       int
-	size        wtype.Coordinates
+	size        wtype.Coordinates3D
 	welltype    LHWellParams
 	wellXOffset float64
 	wellYOffset float64
@@ -266,7 +266,7 @@ func makeLHTip(p *LHTipParams) *wtype.LHTip {
 type LHTipboxParams struct {
 	nrows        int
 	ncols        int
-	size         wtype.Coordinates
+	size         wtype.Coordinates3D
 	manufacturer string
 	boxtype      string
 	tiptype      LHTipParams
@@ -299,7 +299,7 @@ type LHTipwasteParams struct {
 	capacity   int
 	typ        string
 	mfr        string
-	size       wtype.Coordinates
+	size       wtype.Coordinates3D
 	w          LHWellParams
 	wellxstart float64
 	wellystart float64
@@ -365,7 +365,7 @@ func defaultLHPlateProps() *LHPlateParams {
 		mfr:       "test_plate_mfr",
 		nrows:     8,
 		ncols:     12,
-		size:      wtype.Coordinates{X: 127.76, Y: 85.48, Z: 25.7},
+		size:      wtype.Coordinates3D{X: 127.76, Y: 85.48, Z: 25.7},
 		welltype: LHWellParams{
 			crds:  wtype.ZeroWellCoords(),
 			vunit: "ul",
@@ -419,7 +419,7 @@ func troughLHPlateProps() *LHPlateParams {
 		mfr:       "test_trough_mfr",
 		nrows:     1,
 		ncols:     12,
-		size:      wtype.Coordinates{X: 127.76, Y: 85.48, Z: 45.8},
+		size:      wtype.Coordinates3D{X: 127.76, Y: 85.48, Z: 45.8},
 		welltype: LHWellParams{
 			crds:  wtype.ZeroWellCoords(),
 			vunit: "ul",
@@ -452,7 +452,7 @@ func troughLHPlateProps() *LHPlateParams {
 func troughLHPlate(name string) *wtype.Plate {
 	params := troughLHPlateProps()
 	plate := makeLHPlate(params, name)
-	targets := []wtype.Coordinates{
+	targets := []wtype.Coordinates3D{
 		{X: 0.0, Y: -31.5, Z: 0.0},
 		{X: 0.0, Y: -22.5, Z: 0.0},
 		{X: 0.0, Y: -13.5, Z: 0.0},
@@ -470,7 +470,7 @@ func defaultLHTipbox(name string) *wtype.LHTipbox {
 	params := LHTipboxParams{
 		nrows:        8,
 		ncols:        12,
-		size:         wtype.Coordinates{X: 127.76, Y: 85.48, Z: 60.13},
+		size:         wtype.Coordinates3D{X: 127.76, Y: 85.48, Z: 60.13},
 		manufacturer: "test Tipbox mfg",
 		boxtype:      "tipbox",
 		tiptype: LHTipParams{
@@ -522,7 +522,7 @@ func smallLHTipbox(name string) *wtype.LHTipbox {
 	params := LHTipboxParams{
 		nrows:        8,
 		ncols:        12,
-		size:         wtype.Coordinates{X: 127.76, Y: 85.48, Z: 60.13},
+		size:         wtype.Coordinates3D{X: 127.76, Y: 85.48, Z: 60.13},
 		manufacturer: "test Tipbox mfg",
 		boxtype:      "tipbox",
 		tiptype: LHTipParams{
@@ -575,7 +575,7 @@ func defaultLHTipwaste(name string) *wtype.LHTipwaste {
 		capacity: 700,
 		typ:      "tipwaste",
 		mfr:      "testTipwaste mfr",
-		size:     wtype.Coordinates{X: 127.76, Y: 85.48, Z: 92.0},
+		size:     wtype.Coordinates3D{X: 127.76, Y: 85.48, Z: 92.0},
 		w: LHWellParams{
 			crds:  wtype.ZeroWellCoords(),
 			vunit: "ul",
@@ -619,7 +619,7 @@ func defaultLHProperties() *liquidhandling.LHProperties {
 		},
 		HeadAssemblies: []HeadAssemblyParams{
 			{
-				PositionOffsets: []wtype.Coordinates{{X: 0, Y: 0, Z: 0}},
+				PositionOffsets: []wtype.Coordinates3D{{X: 0, Y: 0, Z: 0}},
 				Heads: []HeadParams{
 					{
 						Name: "Head0 Name",
@@ -688,7 +688,7 @@ func multiheadLHPropertiesProps() *LHPropertiesParams {
 		HeadAssemblies: []HeadAssemblyParams{
 			{
 				MotionLimits:    wtype.NewBBox6f(0, 0, 0, 3*x_step, 3*y_step, 600.),
-				PositionOffsets: []wtype.Coordinates{{X: -9}, {X: 9}},
+				PositionOffsets: []wtype.Coordinates3D{{X: -9}, {X: 9}},
 				Heads: []HeadParams{
 					{
 						Name: "Head0 Name",
@@ -1233,7 +1233,7 @@ func adaptorAssertion(head int, tips []tipDesc) *AssertionFn {
 }
 
 //adaptorPositionAssertion assert that the adaptor has tips in the given positions
-func positionAssertion(head int, origin wtype.Coordinates) *AssertionFn {
+func positionAssertion(head int, origin wtype.Coordinates3D) *AssertionFn {
 	var ret AssertionFn = func(t *testing.T, vlh *VirtualLiquidHandler) {
 		adaptor, err := vlh.GetAdaptorState(head)
 		if err != nil {

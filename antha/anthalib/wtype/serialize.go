@@ -207,7 +207,7 @@ func (w *LHWell) AddDimensions(lhwt *LHWellType) {
 	w.Rvol = wunit.NewVolume(lhwt.Rvol, lhwt.Vunit).ConvertToString("ul")
 	w.WShape = NewShape(ShapeTypeID(lhwt.ShapeName), lhwt.Dunit, lhwt.Xdim, lhwt.Ydim, lhwt.Zdim)
 	w.Bottom = lhwt.Bottom
-	w.Bounds.SetSize(Coordinates{
+	w.Bounds.SetSize(Coordinates3D{
 		wunit.NewLength(lhwt.Xdim, lhwt.Dunit).ConvertToString("mm"),
 		wunit.NewLength(lhwt.Ydim, lhwt.Dunit).ConvertToString("mm"),
 		wunit.NewLength(lhwt.Zdim, lhwt.Dunit).ConvertToString("mm"),
@@ -421,7 +421,7 @@ func (stw *sTipwaste) Fill(tw *LHTipwaste) {
 }
 
 type sHeadAssemblyPosition struct {
-	Offset    Coordinates
+	Offset    Coordinates3D
 	HeadIndex int
 }
 

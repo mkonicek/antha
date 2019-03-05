@@ -27,12 +27,12 @@ func (self *testAddressable) GetChildByAddress(WellCoords) LHObject {
 	return (LHObject)(nil)
 }
 
-func (self *testAddressable) CoordsToWellCoords(c Coordinates) (WellCoords, Coordinates) {
-	return WellCoords{}, Coordinates{}
+func (self *testAddressable) CoordsToWellCoords(c Coordinates3D) (WellCoords, Coordinates3D) {
+	return WellCoords{}, Coordinates3D{}
 }
 
-func (self *testAddressable) WellCoordsToCoords(wc WellCoords, r WellReference) (Coordinates, bool) {
-	return Coordinates{}, true
+func (self *testAddressable) WellCoordsToCoords(wc WellCoords, r WellReference) (Coordinates3D, bool) {
+	return Coordinates3D{}, true
 }
 
 type addressIteratorTest struct {

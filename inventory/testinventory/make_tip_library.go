@@ -66,6 +66,8 @@ func makeTipboxes() (tipboxes []*wtype.LHTipbox) {
 
 	tipboxes = append(tipboxes, makeTecanTipBoxes()...)
 
+	tipboxes = append(tipboxes, makeHamiltonTipboxes()...)
+
 	return tipboxes
 }
 
@@ -165,6 +167,28 @@ func makeTecanTipBoxes() []*wtype.LHTipbox {
 	w = wtype.NewLHWell("ul", 10.0, 1.0, shp, 0, 7.3, 7.3, 46.0, 0.0, "mm")
 	tip = wtype.NewLHTip("Tecan", "Tecan10", 1.0, 10.0, "ul", false, shp, 0.0)
 	tb = wtype.NewLHTipbox(8, 12, getTipboxSize(), "Tecan", "DiTi 10uL LiHa", tip, w, 9.0, 9.0, xOffset, yOffset, 28.93)
+	ret = append(ret, tb)
+
+	return ret
+}
+
+func makeHamiltonTipboxes() []*wtype.LHTipbox {
+	var ret []*wtype.LHTipbox
+
+	//Filter tips
+
+	// 300ul, see https://www.hamiltoncompany.com/automated-liquid-handling/disposable-tips/300-%CE%BCl-conductive-sterile-filter-tips
+	shp := wtype.NewShape("cylinder", "mm", 7.3, 7.3, 59.9)
+	w := wtype.NewLHWell("ul", 300.0, 20.0, shp, 0, 7.3, 7.3, 59.9, 0.0, "mm")
+	tip := wtype.NewLHTip("Hamilton", "Hx300F", 20.0, 300.0, "ul", false, shp, 59.9)
+	tb := wtype.NewLHTipbox(8, 12, getTipboxSize(), "Hamilton", "Hx300F Tipbox", tip, w, 9.0, 9.0, xOffset, yOffset, 59.9)
+	ret = append(ret, tb)
+
+	// 50ul, see https://www.hamiltoncompany.com/automated-liquid-handling/disposable-tips/50-%CE%BCl-conductive-sterile-filter-tips
+	shp = wtype.NewShape("cylinder", "mm", 7.3, 7.3, 50.4)
+	w = wtype.NewLHWell("ul", 50.0, 1.0, shp, 0, 7.3, 7.3, 50.4, 0.0, "mm")
+	tip = wtype.NewLHTip("Hamilton", "Hx50F", 1.0, 50.0, "ul", false, shp, 50.4)
+	tb = wtype.NewLHTipbox(8, 12, getTipboxSize(), "Hamilton", "Hx50F Tipbox", tip, w, 9.0, 9.0, xOffset, yOffset, 50.4)
 	ret = append(ret, tb)
 
 	return ret

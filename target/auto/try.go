@@ -63,6 +63,7 @@ var mixerMap = map[string]func(*tryer, context.Context, *grpc.ClientConn, interf
 	"CyBio":          (*tryer).addLowLevelMixer,
 	"TecanEvo":       (*tryer).addLowLevelMixer,
 	"LabCyteEcho":    (*tryer).addHighLevelMixer,
+	"Hamilton":       (*tryer).addLowLevelMixer,
 }
 
 // AddMixer queries a mixer driver and adds the corresponding device to the target

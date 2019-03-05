@@ -350,3 +350,21 @@ func TestPlateLocation(t *testing.T) {
 		t.Fatal("PlateLocations in different wells reported equal")
 	}
 }
+
+func TestComp(t *testing.T) {
+
+	// expect unhandled characters to pass through without modification
+
+	test := "GG-.GG"
+
+	got := Comp(test)
+	want := "CC-.CC"
+
+	if len(got) < len(test) {
+		t.Fatal("Complement is shorter than input - some characters ignored?")
+	}
+	if got != want {
+		t.Fatalf("Unexpected complement: got %s, want %s\n", got, want)
+	}
+
+}

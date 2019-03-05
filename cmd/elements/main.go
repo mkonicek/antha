@@ -58,7 +58,7 @@ func makeWorkflows(l *logger.Logger, args []string) {
 			Elements: workflow.Elements{
 				Types: workflow.ElementTypes{et},
 				Instances: workflow.ElementInstances{
-					workflow.ElementInstanceName("underTest"): workflow.ElementInstance{
+					workflow.ElementInstanceName("underTest"): &workflow.ElementInstance{
 						ElementTypeName: et.Name(),
 					},
 				},

@@ -78,7 +78,7 @@ func copier(dir string) func(f *File) error {
 type TreeWalker func(*File) error
 
 type File struct {
-	Name      string // relative to the root of the walk, *always* in local filepath
+	Name      string // relative to the root of the walk, *always* in local filepath, never absolute
 	IsRegular bool
 	Contents  func() (io.ReadCloser, error)
 }
@@ -94,6 +94,8 @@ func (r *Repository) Walk(fun TreeWalker) error {
 	}
 }
 
+const pathSepStr = string(os.PathSeparator) // os.PathSeparator is a char, which is less useful
+
 func (r *Repository) walkFromDirectory(fun TreeWalker) error {
 	src := filepath.Clean(filepath.FromSlash(r.Directory))
 	var f File
@@ -101,7 +103,7 @@ func (r *Repository) walkFromDirectory(fun TreeWalker) error {
 		if err != nil {
 			return err
 		}
-		f.Name = strings.TrimPrefix(p, src)
+		f.Name = strings.TrimPrefix(strings.TrimPrefix(p, src), pathSepStr)
 		f.IsRegular = info.Mode().IsRegular()
 		f.Contents = func() (io.ReadCloser, error) {
 			return os.Open(p)
@@ -129,7 +131,7 @@ func (r *Repository) walkFromGitCommit(fun TreeWalker) error {
 			} else if err != nil {
 				return err
 			} else {
-				f.Name = filepath.FromSlash(gf.Name)
+				f.Name = strings.TrimPrefix(filepath.FromSlash(gf.Name), pathSepStr)
 				f.IsRegular = gf.Mode.IsRegular()
 				f.Contents = func() (io.ReadCloser, error) {
 					if c, err := gf.Contents(); err != nil {

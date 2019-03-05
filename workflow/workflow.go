@@ -14,12 +14,12 @@ import (
 type Workflow struct {
 	JobId JobId `json:"JobId"`
 
-	Meta Meta `json:"Meta"`
+	Meta Meta `json:"Meta,omitempty"`
 
 	Repositories Repositories `json:"Repositories"`
 	Elements     Elements     `json:"Elements"`
 
-	Inventory Inventory `json:"Inventory"`
+	Inventory Inventory `json:"Inventory,omitempty"`
 
 	Config Config `json:"Config"`
 
@@ -54,7 +54,7 @@ func (wf *Workflow) WriteToFile(p string) error {
 }
 
 type Meta struct {
-	Name string                 `json:"Name"`
+	Name string                 `json:"Name,omitempty"`
 	Rest map[string]interface{} `json:"-"`
 }
 
@@ -83,7 +83,12 @@ func (m *Meta) MarshalJSON() ([]byte, error) {
 			all[key] = val
 		}
 	}
-	all["Name"] = m.Name
+	if m.Name != "" {
+		all["Name"] = m.Name
+	}
+	if len(all) == 0 {
+		all = nil
+	}
 	return json.Marshal(all)
 }
 
@@ -98,16 +103,16 @@ type Repositories map[RepositoryPrefix]*Repository
 
 type Repository struct {
 	Directory string `json:"Directory"`
-	Branch    string `json:"Branch"`
-	Commit    string `json:"Commit"`
+	Branch    string `json:"Branch,omitempty"`
+	Commit    string `json:"Commit,omitempty"`
 
 	gitRepo *git.Repository
 }
 
 type Elements struct {
-	Types                ElementTypes                `json:"Types"`
-	Instances            ElementInstances            `json:"Instances"`
-	InstancesConnections ElementInstancesConnections `json:"InstancesConnections"`
+	Types                ElementTypes                `json:"Types,omitempty"`
+	Instances            ElementInstances            `json:"Instances,omitempty"`
+	InstancesConnections ElementInstancesConnections `json:"InstancesConnections,omitempty"`
 }
 
 type ElementTypes []*ElementType
@@ -129,8 +134,8 @@ type ElementInstances map[ElementInstanceName]ElementInstance
 
 type ElementInstance struct {
 	ElementTypeName ElementTypeName     `json:"ElementTypeName"`
-	Meta            json.RawMessage     `json:"Meta"`
-	Parameters      ElementParameterSet `json:"Parameters"`
+	Meta            json.RawMessage     `json:"Meta,omitempty"`
+	Parameters      ElementParameterSet `json:"Parameters,omitempty"`
 }
 
 type ElementParameterSet map[ElementParameterName]json.RawMessage
@@ -159,7 +164,7 @@ func (wf *Workflow) TypeNames() map[ElementTypeName]*ElementType {
 }
 
 type Inventory struct {
-	PlateTypes wtype.PlateTypes `json:"PlateTypes"`
+	PlateTypes wtype.PlateTypes `json:"PlateTypes,omitempty"`
 	/* Currently only PlateTypes can be set but it's clear how to extend this:
 	Components Components `json:"Components"`
 	TipBoxes   TipBoxes   `json:"TipBoxes"`

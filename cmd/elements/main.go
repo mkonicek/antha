@@ -32,8 +32,8 @@ func main() {
 }
 
 func find(l *logger.Logger, paths []string) {
-	findElements(l, paths, func(f *workflow.File) error {
-		l.Log("element", filepath.Dir(f.Name))
+	findElements(l, paths, func(r *workflow.Repository, et *workflow.ElementType) error {
+		l.Log("repositoryPrefix", et.RepositoryPrefix, "elementPath", et.ElementPath)
 		return nil
 	})
 }
@@ -49,18 +49,17 @@ func makeWorkflows(l *logger.Logger, args []string) {
 	if err := os.MkdirAll(outdir, 0700); err != nil {
 		l.Fatal(err)
 	}
-	findElements(l, paths, func(f *workflow.File) error {
+	findElements(l, paths, func(r *workflow.Repository, et *workflow.ElementType) error {
 		wf := &workflow.Workflow{
-			JobId: workflow.JobId(filepath.Base(f.Name)),
+			JobId: workflow.JobId(et.ElementPath),
+			Repositories: workflow.Repositories{
+				et.RepositoryPrefix: r,
+			},
 			Elements: workflow.Elements{
-				Types: []*workflow.ElementType{
-					{
-						ElementPath: workflow.ElementPath(filepath.Base(f.Name)),
-					},
-				},
+				Types: []*workflow.ElementType{et},
 			},
 		}
-		dir := filepath.Join(outdir, filepath.Dir(f.Name))
+		dir := filepath.Join(outdir, filepath.FromSlash(string(et.ElementPath)))
 		if err := os.MkdirAll(dir, 0700); err != nil {
 			return err
 		} else {
@@ -69,13 +68,14 @@ func makeWorkflows(l *logger.Logger, args []string) {
 	})
 }
 
-func findElements(l *logger.Logger, paths []string, consumer func(*workflow.File) error) {
+func findElements(l *logger.Logger, paths []string, consumer func(*workflow.Repository, *workflow.ElementType) error) {
 	if rs, err := workflow.ReadersFromPaths(paths); err != nil {
 		l.Fatal(err)
 	} else if wf, err := workflow.WorkflowFromReaders(rs...); err != nil {
 		l.Fatal(err)
 	} else {
-		for _, r := range wf.Repositories {
+		for rp, r := range wf.Repositories {
+			var et workflow.ElementType
 			err := r.Walk(func(f *workflow.File) error {
 				if f == nil || !f.IsRegular {
 					return nil
@@ -83,7 +83,9 @@ func findElements(l *logger.Logger, paths []string, consumer func(*workflow.File
 				if filepath.Ext(f.Name) != ".an" {
 					return nil
 				}
-				return consumer(f)
+				et.RepositoryPrefix = rp
+				et.ElementPath = workflow.ElementPath(filepath.ToSlash(filepath.Dir(f.Name)))
+				return consumer(r, &et)
 			})
 			if err != nil {
 				l.Fatal(err)

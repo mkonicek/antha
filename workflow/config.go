@@ -37,7 +37,7 @@ type DeviceInstanceID string
 // Gilson
 type GilsonPipetMaxConfig struct {
 	Defaults *GilsonPipetMaxInstanceConfig                      `json:"Defaults,omitempty"`
-	Devices  map[DeviceInstanceID]*GilsonPipetMaxInstanceConfig `json:"Devices"`
+	Devices  map[DeviceInstanceID]*GilsonPipetMaxInstanceConfig `json:"Devices,omitempty"`
 }
 
 type GilsonPipetMaxInstanceConfig struct {
@@ -56,7 +56,7 @@ func (cfg *GilsonPipetMaxInstanceConfig) UnmarshalJSON(bs []byte) error {
 // Tecan
 type TecanConfig struct {
 	Defaults *TecanInstanceConfig                      `json:"Defaults,omitempty"`
-	Devices  map[DeviceInstanceID]*TecanInstanceConfig `json:"Devices"`
+	Devices  map[DeviceInstanceID]*TecanInstanceConfig `json:"Devices,omitempty"`
 }
 
 type TecanInstanceConfig struct {
@@ -76,7 +76,7 @@ func (cfg *TecanInstanceConfig) UnmarshalJSON(bs []byte) error {
 // CyBio
 type CyBioConfig struct {
 	Defaults *CyBioInstanceConfig                      `json:"Defaults,omitempty"`
-	Devices  map[DeviceInstanceID]*CyBioInstanceConfig `json:"Devices"`
+	Devices  map[DeviceInstanceID]*CyBioInstanceConfig `json:"Devices,omitempty"`
 }
 
 type CyBioInstanceConfig struct {
@@ -96,7 +96,7 @@ func (cfg *CyBioInstanceConfig) UnmarshalJSON(bs []byte) error {
 // Labcyte
 type LabcyteConfig struct {
 	Defaults *LabcyteInstanceConfig                      `json:"Defaults,omitempty"`
-	Devices  map[DeviceInstanceID]*LabcyteInstanceConfig `json:"Devices"`
+	Devices  map[DeviceInstanceID]*LabcyteInstanceConfig `json:"Devices,omitempty"`
 }
 
 type LabcyteInstanceConfig struct {
@@ -200,13 +200,13 @@ func UnmarshalMapsMerged(bs []byte, components ...interface{}) error {
 }
 
 type QPCRConfig struct {
-	Devices map[DeviceInstanceID]struct{} `json:"Devices"`
+	Devices map[DeviceInstanceID]struct{} `json:"Devices,omitempty"`
 }
 
 type ShakerIncubatorConfig struct {
-	Devices map[DeviceInstanceID]struct{} `json:"Devices"`
+	Devices map[DeviceInstanceID]struct{} `json:"Devices,omitempty"`
 }
 
 type PlateReaderConfig struct {
-	Devices map[DeviceInstanceID]struct{} `json:"Devices"`
+	Devices map[DeviceInstanceID]struct{} `json:"Devices,omitempty"`
 }

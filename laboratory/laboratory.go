@@ -28,10 +28,10 @@ type Element interface {
 	Name() workflow.ElementInstanceName
 	TypeName() workflow.ElementTypeName
 
-	Setup(*Laboratory)
-	Steps(*Laboratory)
-	Analysis(*Laboratory)
-	Validation(*Laboratory)
+	Setup(*Laboratory) error
+	Steps(*Laboratory) error
+	Analysis(*Laboratory) error
+	Validation(*Laboratory) error
 }
 
 type LaboratoryBuilder struct {
@@ -314,12 +314,12 @@ func NewElementBase(e Element) *ElementBase {
 	}
 }
 
-func (eb *ElementBase) Run(lab *Laboratory, funs ...func(*Laboratory)) {
+func (eb *ElementBase) Run(lab *Laboratory, funs ...func(*Laboratory) error) {
 	defer eb.Completed(lab)
 	eb.InputReady()
 
 	if len(funs) == 0 {
-		funs = []func(*Laboratory){
+		funs = []func(*Laboratory) error{
 			eb.element.Setup,
 			eb.element.Steps,
 			eb.element.Analysis,
@@ -343,7 +343,10 @@ func (eb *ElementBase) Run(lab *Laboratory, funs ...func(*Laboratory)) {
 			case <-lab.Errored:
 				return
 			default:
-				fun(lab)
+				if err := fun(lab); err != nil {
+					lab.Error(err)
+					return
+				}
 			}
 		}
 	case <-lab.Errored:

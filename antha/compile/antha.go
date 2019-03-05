@@ -612,6 +612,12 @@ func (p *Antha) desugarGenDecl(d *ast.GenDecl) {
 // to
 //  func (element *ElementTypeName) Validation(lab *laboratory.Laboratory)
 func (p *Antha) desugarAnthaDecl(d *ast.AnthaDecl) ast.Decl {
+	body := d.Body
+	body.List = append(body.List,
+		&ast.ReturnStmt{
+			Return:  d.Pos(),
+			Results: []ast.Expr{mustParseExpr("nil")},
+		})
 	f := &ast.FuncDecl{
 		Doc: d.Doc,
 		Recv: &ast.FieldList{
@@ -624,7 +630,7 @@ func (p *Antha) desugarAnthaDecl(d *ast.AnthaDecl) ast.Decl {
 			},
 		},
 		Name: ast.NewIdent(d.Tok.String()),
-		Body: d.Body,
+		Body: body,
 	}
 
 	f.Type = &ast.FuncType{
@@ -635,6 +641,14 @@ func (p *Antha) desugarAnthaDecl(d *ast.AnthaDecl) ast.Decl {
 				{
 					Names: identList("lab"),
 					Type:  mustParseExpr("*laboratory.Laboratory"),
+				},
+			},
+		},
+		Results: &ast.FieldList{
+			Opening: d.Pos(),
+			List: []*ast.Field{
+				{
+					Type: mustParseExpr("error"),
 				},
 			},
 		},

@@ -56,7 +56,7 @@ func GetPlateForTest() *wtype.Plate {
 	cone := wtype.NewShape("cylinder", "mm", 5.5, 5.5, 20.4)
 	welltype := wtype.NewLHWell("ul", 200, 5, cone, wtype.UWellBottom, 5.5, 5.5, 20.4, 1.4, "mm")
 
-	plate := wtype.NewLHPlate("pcrplate_skirted_riser", "Unknown", 8, 12, wtype.Coordinates{X: 127.76, Y: 85.48, Z: 25.7}, welltype, 9, 9, 0.0, 0.0, riserheightinmm-1.25)
+	plate := wtype.NewLHPlate("pcrplate_skirted_riser", "Unknown", 8, 12, wtype.Coordinates3D{X: 127.76, Y: 85.48, Z: 25.7}, welltype, 9, 9, 0.0, 0.0, riserheightinmm-1.25)
 	return plate
 }
 
@@ -72,14 +72,14 @@ func PrefillPlateForTest(ctx context.Context, plate *wtype.LHPlate, liquidType s
 func GetTipwasteForTest() *wtype.LHTipwaste {
 	shp := wtype.NewShape("box", "mm", 123.0, 80.0, 92.0)
 	w := wtype.NewLHWell("ul", 800000.0, 800000.0, shp, 0, 123.0, 80.0, 92.0, 0.0, "mm")
-	lht := wtype.NewLHTipwaste(6000, "Gilsontipwaste", "gilson", wtype.Coordinates{X: 127.76, Y: 85.48, Z: 92.0}, w, 49.5, 31.5, 0.0)
+	lht := wtype.NewLHTipwaste(6000, "Gilsontipwaste", "gilson", wtype.Coordinates3D{X: 127.76, Y: 85.48, Z: 92.0}, w, 49.5, 31.5, 0.0)
 	return lht
 }
 
 func GetTroughForTest() *wtype.Plate {
 	stshp := wtype.NewShape("box", "mm", 8.2, 72, 41.3)
 	trough12 := wtype.NewLHWell("ul", 1500, 500, stshp, wtype.VWellBottom, 8.2, 72, 41.3, 4.7, "mm")
-	plate := wtype.NewLHPlate("DWST12", "Unknown", 1, 12, wtype.Coordinates{X: 127.76, Y: 85.48, Z: 44.1}, trough12, 9, 9, 0, 30.0, 4.5)
+	plate := wtype.NewLHPlate("DWST12", "Unknown", 1, 12, wtype.Coordinates3D{X: 127.76, Y: 85.48, Z: 44.1}, trough12, 9, 9, 0, 30.0, 4.5)
 	return plate
 }
 
@@ -1183,7 +1183,7 @@ func TestFixDuplicatePlateNames(t *testing.T) {
 
 }
 
-func assertCoordsEq(lhs, rhs []wtype.Coordinates) bool {
+func assertCoordsEq(lhs, rhs []wtype.Coordinates3D) bool {
 	if len(lhs) != len(rhs) {
 		return false
 	}
@@ -1213,7 +1213,7 @@ func TestAddWellTargets(t *testing.T) {
 
 	lh.addWellTargets()
 
-	expected := []wtype.Coordinates{
+	expected := []wtype.Coordinates3D{
 		{X: 0.0, Y: -31.5, Z: 0.0},
 		{X: 0.0, Y: -22.5, Z: 0.0},
 		{X: 0.0, Y: -13.5, Z: 0.0},
@@ -1224,7 +1224,7 @@ func TestAddWellTargets(t *testing.T) {
 		{X: 0.0, Y: 31.5, Z: 0.0},
 	}
 
-	if e, g := []wtype.Coordinates{}, plate.Welltype.GetWellTargets("DummyAdaptor"); !assertCoordsEq(e, g) {
+	if e, g := []wtype.Coordinates3D{}, plate.Welltype.GetWellTargets("DummyAdaptor"); !assertCoordsEq(e, g) {
 		t.Errorf("plate well targets incorrect, expected %v, got %v", e, g)
 	}
 

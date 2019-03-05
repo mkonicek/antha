@@ -78,7 +78,7 @@ func addRiser(plate *wtype.Plate, riser device) (plates []*wtype.Plate) {
 		riserheight = riserheight + plateRiserSpecificOffset(plate, riser)
 
 		newplate.WellZStart = plate.WellZStart + riserheight
-		newplate.Bounds.SetSize(plate.GetSize().Add(wtype.Coordinates{X: 0.0, Y: 0.0, Z: riserheight}))
+		newplate.Bounds.SetSize(plate.GetSize().Add(wtype.Coordinates3D{X: 0.0, Y: 0.0, Z: riserheight}))
 		newname := plate.Type + "_" + risername
 		newplate.Type = newname
 		if riser.GetConstraints() != nil {
@@ -669,9 +669,9 @@ func makePCRPlateWell() *wtype.LHWell {
 	return pcrplatewell
 }
 
-func makePlateCoords(height float64) wtype.Coordinates {
+func makePlateCoords(height float64) wtype.Coordinates3D {
 	//standard X/Y size for 96 well plates
-	return wtype.Coordinates{X: 127.76, Y: 85.48, Z: height}
+	return wtype.Coordinates3D{X: 127.76, Y: 85.48, Z: height}
 }
 
 func makePCRPlate() *wtype.Plate {

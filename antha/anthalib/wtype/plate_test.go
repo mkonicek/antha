@@ -14,7 +14,7 @@ import (
 func makeplatefortest() *Plate {
 	swshp := NewShape("box", "mm", 8.2, 8.2, 41.3)
 	welltype := NewLHWell("ul", 200, 10, swshp, VWellBottom, 8.2, 8.2, 41.3, 4.7, "mm")
-	p := NewLHPlate("DSW96", "none", 8, 12, Coordinates{127.76, 85.48, 43.1}, welltype, 9.0, 9.0, 0.5, 0.5, 0.5)
+	p := NewLHPlate("DSW96", "none", 8, 12, Coordinates3D{127.76, 85.48, 43.1}, welltype, 9.0, 9.0, 0.5, 0.5, 0.5)
 	return p
 }
 
@@ -51,7 +51,7 @@ func make6platefortest() *LHPlate {
 func maketroughfortest() *Plate {
 	stshp := NewShape("box", "mm", 8.2, 72, 41.3)
 	trough12 := NewLHWell("ul", 15000, 5000, stshp, VWellBottom, 8.2, 72, 41.3, 4.7, "mm")
-	plate := NewLHPlate("DWST12", "Unknown", 1, 12, Coordinates{127.76, 85.48, 44.1}, trough12, 9, 9, 0, 30.0, 4.5)
+	plate := NewLHPlate("DWST12", "Unknown", 1, 12, Coordinates3D{127.76, 85.48, 44.1}, trough12, 9, 9, 0, 30.0, 4.5)
 	return plate
 }
 
@@ -509,7 +509,7 @@ func TestWellCoordsToCoords(t *testing.T) {
 	type TestCase struct {
 		Address          string
 		Reference        WellReference
-		ExpectedPosition Coordinates
+		ExpectedPosition Coordinates3D
 		ExpectingError   bool
 	}
 
@@ -517,17 +517,17 @@ func TestWellCoordsToCoords(t *testing.T) {
 		{
 			Address:          "A1",
 			Reference:        BottomReference,
-			ExpectedPosition: Coordinates{X: plate.WellXStart, Y: plate.WellYStart, Z: plate.WellZStart + plate.Welltype.Bottomh},
+			ExpectedPosition: Coordinates3D{X: plate.WellXStart, Y: plate.WellYStart, Z: plate.WellZStart + plate.Welltype.Bottomh},
 		},
 		{
 			Address:          "A1",
 			Reference:        TopReference,
-			ExpectedPosition: Coordinates{X: plate.WellXStart, Y: plate.WellYStart, Z: plate.WellZStart + plate.Welltype.GetSize().Z},
+			ExpectedPosition: Coordinates3D{X: plate.WellXStart, Y: plate.WellYStart, Z: plate.WellZStart + plate.Welltype.GetSize().Z},
 		},
 		{
 			Address:          "A1",
 			Reference:        LiquidReference,
-			ExpectedPosition: Coordinates{X: plate.WellXStart, Y: plate.WellYStart, Z: plate.WellZStart + plate.Welltype.Bottomh + 9.264858420611434},
+			ExpectedPosition: Coordinates3D{X: plate.WellXStart, Y: plate.WellYStart, Z: plate.WellZStart + plate.Welltype.Bottomh + 9.264858420611434},
 		},
 		{
 			Address:        "Z1",
@@ -555,7 +555,7 @@ func TestCoordsToWellCoords(t *testing.T) {
 
 	plate := makeplatefortest()
 
-	pos := Coordinates{
+	pos := Coordinates3D{
 		X: plate.WellXStart + 0.75*plate.WellXOffset,
 		Y: plate.WellYStart + 0.75*plate.WellYOffset,
 	}
@@ -577,12 +577,12 @@ func TestGetWellBounds(t *testing.T) {
 
 	plate := makeplatefortest()
 
-	eStart := Coordinates{
+	eStart := Coordinates3D{
 		X: 0.5 - 0.5*8.2,
 		Y: 0.5 - 0.5*8.2,
 		Z: 0.5,
 	}
-	eSize := Coordinates{
+	eSize := Coordinates3D{
 		X: 9.0*11 + 8.2,
 		Y: 9.0*7 + 8.2,
 		Z: 41.3,

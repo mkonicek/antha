@@ -32,8 +32,8 @@ const (
 	sbsY    = 85.48
 )
 
-func getTipboxSize() wtype.Coordinates {
-	return wtype.Coordinates{X: sbsX, Y: sbsY, Z: 60.13}
+func getTipboxSize() wtype.Coordinates3D {
+	return wtype.Coordinates3D{X: sbsX, Y: sbsY, Z: 60.13}
 }
 
 func makeTipboxes() (tipboxes []*wtype.LHTipbox) {

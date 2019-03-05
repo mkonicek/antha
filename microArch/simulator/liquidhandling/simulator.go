@@ -440,8 +440,8 @@ func (self *VirtualLiquidHandler) validateLHArgs(head, multi int, platetype, wha
 
 //getTargetPosition get a position within the liquidhandler, adding any errors as neccessary
 //bool is false if the instruction shouldn't continue (e.g. missing deckposition e.t.c)
-func (self *VirtualLiquidHandler) getTargetPosition(adaptorName string, channelIndex int, deckposition, platetype string, wc wtype.WellCoords, ref wtype.WellReference) (wtype.Coordinates, bool) {
-	ret := wtype.Coordinates{}
+func (self *VirtualLiquidHandler) getTargetPosition(adaptorName string, channelIndex int, deckposition, platetype string, wc wtype.WellCoords, ref wtype.WellReference) (wtype.Coordinates3D, bool) {
+	ret := wtype.Coordinates3D{}
 
 	target, ok := self.state.GetDeck().GetChild(deckposition)
 	if !ok {
@@ -490,13 +490,13 @@ func (self *VirtualLiquidHandler) getTargetPosition(adaptorName string, channelI
 }
 
 func (self *VirtualLiquidHandler) getWellsBelow(height float64, adaptor *AdaptorState) []*wtype.LHWell {
-	tip_pos := make([]wtype.Coordinates, adaptor.GetChannelCount())
+	tip_pos := make([]wtype.Coordinates3D, adaptor.GetChannelCount())
 	wells := make([]*wtype.LHWell, adaptor.GetChannelCount())
-	size := wtype.Coordinates{X: 0, Y: 0, Z: height}
+	size := wtype.Coordinates3D{X: 0, Y: 0, Z: height}
 	deck := self.state.GetDeck()
 	for i := 0; i < adaptor.GetChannelCount(); i++ {
 		if ch := adaptor.GetChannel(i); ch.HasTip() {
-			tip_pos[i] = ch.GetAbsolutePosition().Subtract(wtype.Coordinates{X: 0., Y: 0., Z: ch.GetTip().GetEffectiveHeight()})
+			tip_pos[i] = ch.GetAbsolutePosition().Subtract(wtype.Coordinates3D{X: 0., Y: 0., Z: ch.GetTip().GetEffectiveHeight()})
 		} else {
 			tip_pos[i] = ch.GetAbsolutePosition()
 		}
@@ -512,8 +512,8 @@ func (self *VirtualLiquidHandler) getWellsBelow(height float64, adaptor *Adaptor
 	return wells
 }
 
-func makeOffsets(Xs, Ys, Zs []float64) []wtype.Coordinates {
-	ret := make([]wtype.Coordinates, len(Xs))
+func makeOffsets(Xs, Ys, Zs []float64) []wtype.Coordinates3D {
+	ret := make([]wtype.Coordinates3D, len(Xs))
 	for i := range Xs {
 		ret[i].X = Xs[i]
 		ret[i].Y = Ys[i]
@@ -598,7 +598,7 @@ func (self *VirtualLiquidHandler) Move(deckpositionS []string, wellcoords []stri
 	offsets := makeOffsets(offsetX, offsetY, offsetZ)
 
 	//find the coordinates of each explicitly requested position
-	coords := make([]wtype.Coordinates, adaptor.GetChannelCount())
+	coords := make([]wtype.Coordinates3D, adaptor.GetChannelCount())
 	for _, ch := range channels {
 		c, ok := self.getTargetPosition(adaptor.GetName(), ch, deckposition, platetype, wc[ch], refs[ch])
 		if !ok {
@@ -608,7 +608,7 @@ func (self *VirtualLiquidHandler) Move(deckpositionS []string, wellcoords []stri
 		coords[ch] = coords[ch].Add(offsets[ch])
 		//if there's a tip, raise the coortinates to the top of the tip to take account of it
 		if tip := adaptor.GetChannel(ch).GetTip(); tip != nil {
-			coords[ch] = coords[ch].Add(wtype.Coordinates{X: 0., Y: 0., Z: tip.GetEffectiveHeight()})
+			coords[ch] = coords[ch].Add(wtype.Coordinates3D{X: 0., Y: 0., Z: tip.GetEffectiveHeight()})
 		}
 	}
 
@@ -636,7 +636,7 @@ func (self *VirtualLiquidHandler) Move(deckpositionS []string, wellcoords []stri
 	}
 
 	//Get the locations of each channel relative to the head
-	rel_coords := make([]wtype.Coordinates, adaptor.GetChannelCount())
+	rel_coords := make([]wtype.Coordinates3D, adaptor.GetChannelCount())
 	for i := range coords {
 		rel_coords[i] = coords[i].Subtract(origin)
 	}
@@ -1155,7 +1155,7 @@ func (self *VirtualLiquidHandler) LoadTips(channels []int, head, multi int,
 	amount := []string{}
 	for _, ch := range channels {
 		tip_s := tips[ch].GetSize()
-		tip_p := tips[ch].GetPosition().Add(wtype.Coordinates{X: 0.5 * tip_s.X, Y: 0.5 * tip_s.Y, Z: tip_s.Z})
+		tip_p := tips[ch].GetPosition().Add(wtype.Coordinates3D{X: 0.5 * tip_s.X, Y: 0.5 * tip_s.Y, Z: tip_s.Z})
 		ch_p := adaptor.GetChannel(ch).GetAbsolutePosition()
 		delta := ch_p.Subtract(tip_p)
 		if xy := delta.AbsXY(); xy > 0.5 {
@@ -1679,7 +1679,7 @@ func (self *VirtualLiquidHandler) AddPlateTo(position string, plate interface{},
 					position, wtype.TypeOf(plate), wellOff)
 			}
 
-			overSpill := wtype.Coordinates{
+			overSpill := wtype.Coordinates3D{
 				X: math.Max(wellLim.X-plateSize.X, 0.0),
 				Y: math.Max(wellLim.Y-plateSize.Y, 0.0),
 				Z: math.Max(wellLim.Z-plateSize.Z, 0.0),

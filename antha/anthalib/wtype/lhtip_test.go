@@ -25,8 +25,8 @@ func TestTipSerialization(t *testing.T) {
 			MinVol: wunit.NewVolume(5, "ul"),
 			Shape:  &Shape{},
 			Bounds: BBox{
-				Position: Coordinates{X: 12.0, Y: 24.0, Z: 48.0},
-				Size:     Coordinates{X: 10.0, Y: 20.0, Z: 40.0},
+				Position: Coordinates3D{X: 12.0, Y: 24.0, Z: 48.0},
+				Size:     Coordinates3D{X: 10.0, Y: 20.0, Z: 40.0},
 			},
 			EffectiveHeight: 42.0,
 			Filtered:        true,

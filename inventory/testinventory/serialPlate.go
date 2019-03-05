@@ -50,7 +50,7 @@ func (pt PlateForSerializing) LHPlate() *wtype.Plate {
 
 	return plate
 }
-func makePlateCoords(height float64) wtype.Coordinates {
+func makePlateCoords(height float64) wtype.Coordinates3D {
 	//standard X/Y size for 96 well plates
-	return wtype.Coordinates{X: 127.76, Y: 85.48, Z: height}
+	return wtype.Coordinates3D{X: 127.76, Y: 85.48, Z: height}
 }

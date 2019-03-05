@@ -866,15 +866,15 @@ func addWellTargetsPlate(adaptor *wtype.LHAdaptor, plate *wtype.Plate) {
 	}
 
 	//channelPositions should come from the adaptor
-	channelPositions := make([]wtype.Coordinates, 0, adaptor.Params.Multi)
+	channelPositions := make([]wtype.Coordinates3D, 0, adaptor.Params.Multi)
 	for i := 0; i < adaptor.Params.Multi; i++ {
-		channelPositions = append(channelPositions, wtype.Coordinates{Y: float64(i) * adaptorSpacing})
+		channelPositions = append(channelPositions, wtype.Coordinates3D{Y: float64(i) * adaptorSpacing})
 	}
 
 	//ystart and count should come from some geometric calculation between channelPositions and well size
 	ystart, count := getWellTargetYStart(plate.NRows())
 
-	targets := make([]wtype.Coordinates, count)
+	targets := make([]wtype.Coordinates3D, count)
 	copy(targets, channelPositions)
 
 	for i := 0; i < count; i++ {
@@ -888,9 +888,9 @@ func addWellTargetsTipWaste(adaptor *wtype.LHAdaptor, waste *wtype.LHTipwaste) {
 	// this may vary in future but for now we just need to add the following eight entries:
 	ystart := -31.5
 	yinc := 9.0
-	targets := make([]wtype.Coordinates, 0, adaptor.Params.Multi)
+	targets := make([]wtype.Coordinates3D, 0, adaptor.Params.Multi)
 	for i := 0; i < adaptor.Params.Multi; i++ {
-		targets = append(targets, wtype.Coordinates{Y: ystart + float64(i)*yinc})
+		targets = append(targets, wtype.Coordinates3D{Y: ystart + float64(i)*yinc})
 	}
 
 	waste.AsWell.SetWellTargets(adaptor.Name, targets)

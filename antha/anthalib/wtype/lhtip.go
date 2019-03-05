@@ -75,12 +75,12 @@ func (self *LHTip) GetClass() string {
 }
 
 //@implement LHObject
-func (self *LHTip) GetPosition() Coordinates {
+func (self *LHTip) GetPosition() Coordinates3D {
 	return OriginOf(self).Add(self.Bounds.GetPosition())
 }
 
 //@implement LHObject
-func (self *LHTip) GetSize() Coordinates {
+func (self *LHTip) GetSize() Coordinates3D {
 	return self.Bounds.GetSize()
 }
 
@@ -102,7 +102,7 @@ func (self *LHTip) GetBoxIntersections(box BBox) []LHObject {
 }
 
 //@implement LHObject
-func (self *LHTip) GetPointIntersections(point Coordinates) []LHObject {
+func (self *LHTip) GetPointIntersections(point Coordinates3D) []LHObject {
 	if self == nil {
 		return nil
 	}
@@ -115,7 +115,7 @@ func (self *LHTip) GetPointIntersections(point Coordinates) []LHObject {
 }
 
 //@implement LHObject
-func (self *LHTip) SetOffset(point Coordinates) error {
+func (self *LHTip) SetOffset(point Coordinates3D) error {
 	self.Bounds.SetPosition(point)
 	return nil
 }
@@ -200,7 +200,7 @@ func NewLHTip(mfr, ttype string, minvol, maxvol float64, volunit string, filtere
 		MaxVol: wunit.NewVolume(maxvol, volunit),
 		MinVol: wunit.NewVolume(minvol, volunit),
 		Shape:  shape,
-		Bounds: BBox{Coordinates{}, Coordinates{
+		Bounds: BBox{Coordinates3D{}, Coordinates3D{
 			shape.Height().ConvertToString("mm"), //not a mistake, Shape currently has height&width as
 			shape.Width().ConvertToString("mm"),  // XY coordinates and Depth as Z
 			shape.Depth().ConvertToString("mm"),

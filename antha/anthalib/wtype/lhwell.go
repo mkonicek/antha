@@ -89,12 +89,12 @@ func (self *LHWell) GetWellCoords() WellCoords {
 }
 
 //@implement LHObject
-func (self *LHWell) GetPosition() Coordinates {
+func (self *LHWell) GetPosition() Coordinates3D {
 	return OriginOf(self).Add(self.Bounds.GetPosition())
 }
 
 //@implement LHObject
-func (self *LHWell) GetSize() Coordinates {
+func (self *LHWell) GetSize() Coordinates3D {
 	return self.Bounds.GetSize()
 }
 
@@ -113,7 +113,7 @@ func (self *LHWell) GetBoxIntersections(box BBox) []LHObject {
 }
 
 //@implement LHObject
-func (self *LHWell) GetPointIntersections(point Coordinates) []LHObject {
+func (self *LHWell) GetPointIntersections(point Coordinates3D) []LHObject {
 	//relative point
 	point = point.Subtract(OriginOf(self))
 	//At some point this should be called self.shape for a more accurate intersection test
@@ -125,7 +125,7 @@ func (self *LHWell) GetPointIntersections(point Coordinates) []LHObject {
 }
 
 //@implement LHObject
-func (self *LHWell) SetOffset(point Coordinates) error {
+func (self *LHWell) SetOffset(point Coordinates3D) error {
 	self.Bounds.SetPosition(point)
 	return nil
 }
@@ -639,7 +639,7 @@ func NewLHWell(vunit string, vol, rvol float64, shape *Shape, bott WellBottomTyp
 	well.Rvol = wunit.NewVolume(rvol, vunit).ConvertToString("ul")
 	well.WShape = shape.Dup()
 	well.Bottom = bott
-	well.Bounds = BBox{Coordinates{}, Coordinates{
+	well.Bounds = BBox{Coordinates3D{}, Coordinates3D{
 		wunit.NewLength(xdim, dunit).ConvertToString("mm"),
 		wunit.NewLength(ydim, dunit).ConvertToString("mm"),
 		wunit.NewLength(zdim, dunit).ConvertToString("mm"),
@@ -862,22 +862,22 @@ func (w LHWell) CheckExtraKey(s string) error {
 
 const wellTargetKey = "well_targets"
 
-func (w *LHWell) getTargetMap() map[string][]Coordinates {
+func (w *LHWell) getTargetMap() map[string][]Coordinates3D {
 	m, ok := w.Extra[wellTargetKey]
 	if !ok {
-		ret := make(map[string][]Coordinates)
+		ret := make(map[string][]Coordinates3D)
 		w.Extra[wellTargetKey] = ret
 		return ret
 	}
-	ret, ok := m.(map[string][]Coordinates)
+	ret, ok := m.(map[string][]Coordinates3D)
 	//gets broken by serialise/deserialise
 	if !ok {
-		ret := make(map[string][]Coordinates)
+		ret := make(map[string][]Coordinates3D)
 		for name, coords := range m.(map[string]interface{}) {
-			ret[name] = make([]Coordinates, 0)
+			ret[name] = make([]Coordinates3D, 0)
 			for _, crd := range coords.([]interface{}) {
 				c := crd.(map[string]interface{})
-				ret[name] = append(ret[name], Coordinates{X: c["X"].(float64),
+				ret[name] = append(ret[name], Coordinates3D{X: c["X"].(float64),
 					Y: c["Y"].(float64),
 					Z: c["Z"].(float64)})
 			}
@@ -892,18 +892,18 @@ func (w *LHWell) getTargetMap() map[string][]Coordinates {
 //the well center for each channel.
 //len(offsets) specifies the maximum number of channels which can access the well
 //simultaneously using adaptor
-func (w *LHWell) SetWellTargets(adaptor string, offsets []Coordinates) {
+func (w *LHWell) SetWellTargets(adaptor string, offsets []Coordinates3D) {
 	wtMap := w.getTargetMap()
 	wtMap[adaptor] = offsets
 }
 
 //GetWellTargets return the well targets for the given adaptor
 //if the adaptor has no defined targets, simply returns the well center
-func (w *LHWell) GetWellTargets(adaptor string) []Coordinates {
+func (w *LHWell) GetWellTargets(adaptor string) []Coordinates3D {
 	wtMap := w.getTargetMap()
 	adaptorTargets, ok := wtMap[adaptor]
 	if !ok {
-		return []Coordinates{}
+		return []Coordinates3D{}
 	}
 	return adaptorTargets
 }

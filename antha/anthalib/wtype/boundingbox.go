@@ -31,8 +31,8 @@ import (
 //BBox is a simple LHObject representing a bounding box,
 //useful for checking if there's stuff in the way
 type BBox struct {
-	Position Coordinates
-	Size     Coordinates
+	Position Coordinates3D
+	Size     Coordinates3D
 }
 
 //Equals defines an equivalence relation over bounding boxes
@@ -41,7 +41,7 @@ func (bb BBox) Equals(bb2 BBox) bool {
 	return bb.Position.Equals(bb2.Position) && bb.Size.Equals(bb2.Size)
 }
 
-func NewBBox(pos, Size Coordinates) *BBox {
+func NewBBox(pos, Size Coordinates3D) *BBox {
 	if Size.X < 0. {
 		pos.X = pos.X + Size.X
 		Size.X = -Size.X
@@ -59,33 +59,33 @@ func NewBBox(pos, Size Coordinates) *BBox {
 }
 
 func NewBBox6f(pos_x, pos_y, pos_z, Size_x, Size_y, Size_z float64) *BBox {
-	return NewBBox(Coordinates{pos_x, pos_y, pos_z},
-		Coordinates{Size_x, Size_y, Size_z})
+	return NewBBox(Coordinates3D{pos_x, pos_y, pos_z},
+		Coordinates3D{Size_x, Size_y, Size_z})
 }
 
 func NewXBox4f(pos_y, pos_z, Size_y, Size_z float64) *BBox {
-	return NewBBox(Coordinates{-math.MaxFloat64 / 2., pos_y, pos_z},
-		Coordinates{math.MaxFloat64, Size_y, Size_z})
+	return NewBBox(Coordinates3D{-math.MaxFloat64 / 2., pos_y, pos_z},
+		Coordinates3D{math.MaxFloat64, Size_y, Size_z})
 }
 
 func NewYBox4f(pos_x, pos_z, Size_x, Size_z float64) *BBox {
-	return NewBBox(Coordinates{pos_x, -math.MaxFloat64 / 2., pos_z},
-		Coordinates{Size_x, math.MaxFloat64, Size_z})
+	return NewBBox(Coordinates3D{pos_x, -math.MaxFloat64 / 2., pos_z},
+		Coordinates3D{Size_x, math.MaxFloat64, Size_z})
 }
 
 func NewZBox4f(pos_x, pos_y, Size_x, Size_y float64) *BBox {
-	return NewBBox(Coordinates{pos_x, pos_y, -math.MaxFloat64 / 2.},
-		Coordinates{Size_x, Size_y, math.MaxFloat64})
+	return NewBBox(Coordinates3D{pos_x, pos_y, -math.MaxFloat64 / 2.},
+		Coordinates3D{Size_x, Size_y, math.MaxFloat64})
 }
 
-func (self BBox) GetPosition() Coordinates {
+func (self BBox) GetPosition() Coordinates3D {
 	return self.Position
 }
 func (self BBox) ZMax() float64 {
 	return self.Position.Z + self.Size.Z
 }
 
-func (self BBox) GetSize() Coordinates {
+func (self BBox) GetSize() Coordinates3D {
 	return self.Size
 }
 
@@ -102,21 +102,21 @@ func (self *BBox) Dup() *BBox {
 	return &BBox{self.Position, self.Size}
 }
 
-func (self *BBox) SetPosition(c Coordinates) {
+func (self *BBox) SetPosition(c Coordinates3D) {
 	if self == nil {
 		return
 	}
 	self.Position = c
 }
 
-func (self *BBox) SetSize(c Coordinates) {
+func (self *BBox) SetSize(c Coordinates3D) {
 	if self == nil {
 		return
 	}
 	self.Size = c
 }
 
-func (self BBox) Contains(rhs Coordinates) bool {
+func (self BBox) Contains(rhs Coordinates3D) bool {
 	return (rhs.X >= self.Position.X && rhs.X < self.Position.X+self.Size.X &&
 		rhs.Y >= self.Position.Y && rhs.Y < self.Position.Y+self.Size.Y &&
 		rhs.Z >= self.Position.Z && rhs.Z < self.Position.Z+self.Size.Z)
@@ -144,7 +144,7 @@ func (self BBox) IntersectsBox(rhs BBox) bool {
 }
 
 //IntersectsPoint
-func (self BBox) IntersectsPoint(rhs Coordinates) bool {
+func (self BBox) IntersectsPoint(rhs Coordinates3D) bool {
 	return (rhs.X >= self.Position.X && rhs.X < self.Position.X+self.Size.X &&
 		rhs.Y >= self.Position.Y && rhs.Y < self.Position.Y+self.Size.Y &&
 		rhs.Z >= self.Position.Z && rhs.Z < self.Position.Z+self.Size.Z)

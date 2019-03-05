@@ -6,8 +6,8 @@ import (
 
 //makeAlignmentTestPlate make a plate setting only the important things
 func makeTestPlate(wellsX, wellsY int, offsetX, offsetY float64) *LHPlate {
-	plateSize := Coordinates{X: 127.76, Y: 85.48, Z: 15.0}
-	wellSize := Coordinates{X: plateSize.X / float64(wellsX), Y: plateSize.Y / float64(wellsY), Z: 15.0}
+	plateSize := Coordinates3D{X: 127.76, Y: 85.48, Z: 15.0}
+	wellSize := Coordinates3D{X: plateSize.X / float64(wellsX), Y: plateSize.Y / float64(wellsY), Z: 15.0}
 
 	shape := NewShape("box", "mm", wellSize.X, wellSize.Y, wellSize.Z)
 	well := NewLHWell("ul", 100.0, 10.0, shape, FlatWellBottom, wellSize.X, wellSize.Y, wellSize.Z, 0.0, "mm")

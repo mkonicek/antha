@@ -108,7 +108,7 @@ func (self *LHTipwaste) GetClass() string {
 	return "tipwaste"
 }
 
-func NewLHTipwaste(capacity int, typ, mfr string, size Coordinates, w *LHWell, wellxstart, wellystart, wellzstart float64) *LHTipwaste {
+func NewLHTipwaste(capacity int, typ, mfr string, size Coordinates3D, w *LHWell, wellxstart, wellystart, wellzstart float64) *LHTipwaste {
 	var lht LHTipwaste
 	//	lht.ID = "tipwaste-" + GetUUID()
 	lht.ID = GetUUID()
@@ -123,7 +123,7 @@ func NewLHTipwaste(capacity int, typ, mfr string, size Coordinates, w *LHWell, w
 	lht.WellZStart = wellzstart
 
 	w.SetParent(&lht) //nolint
-	offset := Coordinates{
+	offset := Coordinates3D{
 		X: wellxstart - 0.5*w.GetSize().X,
 		Y: wellystart - 0.5*w.GetSize().Y,
 		Z: wellzstart,
@@ -172,14 +172,14 @@ func (lht *LHTipwaste) DisposeNum(num int) bool {
 //@implement LHObject
 //##############################################
 
-func (self *LHTipwaste) GetPosition() Coordinates {
+func (self *LHTipwaste) GetPosition() Coordinates3D {
 	if self.parent != nil {
 		return self.parent.GetPosition().Add(self.Bounds.GetPosition())
 	}
 	return self.Bounds.GetPosition()
 }
 
-func (self *LHTipwaste) GetSize() Coordinates {
+func (self *LHTipwaste) GetSize() Coordinates3D {
 	return self.Bounds.GetSize()
 }
 
@@ -197,7 +197,7 @@ func (self *LHTipwaste) GetBoxIntersections(box BBox) []LHObject {
 	return ret
 }
 
-func (self *LHTipwaste) GetPointIntersections(point Coordinates) []LHObject {
+func (self *LHTipwaste) GetPointIntersections(point Coordinates3D) []LHObject {
 	if r := self.AsWell.GetPointIntersections(point); len(r) > 0 {
 		return r
 	}
@@ -213,7 +213,7 @@ func (self *LHTipwaste) GetPointIntersections(point Coordinates) []LHObject {
 	return ret
 }
 
-func (self *LHTipwaste) SetOffset(o Coordinates) error {
+func (self *LHTipwaste) SetOffset(o Coordinates3D) error {
 	self.Bounds.SetPosition(o)
 	return nil
 }
@@ -269,7 +269,7 @@ func (self *LHTipwaste) GetChildByAddress(c WellCoords) LHObject {
 	return self.AsWell
 }
 
-func (self *LHTipwaste) CoordsToWellCoords(r Coordinates) (WellCoords, Coordinates) {
+func (self *LHTipwaste) CoordsToWellCoords(r Coordinates3D) (WellCoords, Coordinates3D) {
 	wc := WellCoords{0, 0}
 
 	c, _ := self.WellCoordsToCoords(wc, TopReference)
@@ -277,9 +277,9 @@ func (self *LHTipwaste) CoordsToWellCoords(r Coordinates) (WellCoords, Coordinat
 	return wc, r.Subtract(c)
 }
 
-func (self *LHTipwaste) WellCoordsToCoords(wc WellCoords, r WellReference) (Coordinates, bool) {
+func (self *LHTipwaste) WellCoordsToCoords(wc WellCoords, r WellReference) (Coordinates3D, bool) {
 	if !self.AddressExists(wc) {
-		return Coordinates{}, false
+		return Coordinates3D{}, false
 	}
 
 	var z float64
@@ -288,26 +288,26 @@ func (self *LHTipwaste) WellCoordsToCoords(wc WellCoords, r WellReference) (Coor
 	} else if r == TopReference {
 		z = self.WellZStart + self.AsWell.GetSize().Z
 	} else {
-		return Coordinates{}, false
+		return Coordinates3D{}, false
 	}
 
-	return self.GetPosition().Add(Coordinates{
+	return self.GetPosition().Add(Coordinates3D{
 		self.WellXStart,
 		self.WellYStart,
 		z}), true
 }
 
 //GetTargetOffset get the offset for addressing a well with the named adaptor and channel
-func (self *LHTipwaste) GetTargetOffset(adaptorName string, channel int) Coordinates {
+func (self *LHTipwaste) GetTargetOffset(adaptorName string, channel int) Coordinates3D {
 	targets := self.AsWell.GetWellTargets(adaptorName)
 	if channel < 0 || channel >= len(targets) {
-		return Coordinates{}
+		return Coordinates3D{}
 	}
 	return targets[channel]
 }
 
 //GetTargets return all the defined targets for the named adaptor
-func (self *LHTipwaste) GetTargets(adaptorName string) []Coordinates {
+func (self *LHTipwaste) GetTargets(adaptorName string) []Coordinates3D {
 	return self.AsWell.GetWellTargets(adaptorName)
 }
 

@@ -130,12 +130,19 @@ func (et ElementType) ImportPath() string {
 	return path.Join(string(et.RepositoryPrefix), string(et.ElementPath))
 }
 
-type ElementInstances map[ElementInstanceName]ElementInstance
+type ElementInstances map[ElementInstanceName]*ElementInstance
 
 type ElementInstance struct {
 	ElementTypeName ElementTypeName     `json:"ElementTypeName"`
 	Meta            json.RawMessage     `json:"Meta,omitempty"`
 	Parameters      ElementParameterSet `json:"Parameters,omitempty"`
+
+	hasConnections bool
+	hasParameters  bool
+}
+
+func (ei ElementInstance) IsUsed() bool {
+	return ei.hasConnections || ei.hasParameters
 }
 
 type ElementParameterSet map[ElementParameterName]json.RawMessage

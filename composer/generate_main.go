@@ -110,7 +110,7 @@ func main() {
 {{range elementTypes}}{{if .IsAnthaElement}}	{{.Name}}.RegisterLineMap(labBuild)
 {{end}}{{end}}
 	// Create the elements
-{{range $name, $inst := .Elements.Instances}}	{{varName $name}} := {{$inst.ElementTypeName}}.New{{$inst.ElementTypeName}}(labBuild, {{printf "%q" $name}})
+{{range $name, $inst := .Elements.Instances}}	{{if $inst.IsUsed}}{{varName $name}} := {{end}}{{$inst.ElementTypeName}}.New{{$inst.ElementTypeName}}(labBuild, {{printf "%q" $name}})
 {{end}}
 	// Add wiring
 {{range .Elements.InstancesConnections}}	labBuild.AddConnection({{varName .Source.ElementInstance}}, {{varName .Target.ElementInstance}}, func() { {{varName .Target.ElementInstance}}.{{token .Target.ElementInstance .Target.ParameterName}}.{{.Target.ParameterName}} = {{varName .Source.ElementInstance}}.{{token .Source.ElementInstance .Source.ParameterName}}.{{.Source.ParameterName}} })

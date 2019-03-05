@@ -51,19 +51,24 @@ func makeWorkflows(l *logger.Logger, args []string) {
 	}
 	findElements(l, paths, func(r *workflow.Repository, et *workflow.ElementType) error {
 		wf := &workflow.Workflow{
-			JobId: workflow.JobId(et.ElementPath),
+			JobId: workflow.JobId("underTest"),
 			Repositories: workflow.Repositories{
 				et.RepositoryPrefix: r,
 			},
 			Elements: workflow.Elements{
-				Types: []*workflow.ElementType{et},
+				Types: workflow.ElementTypes{et},
+				Instances: workflow.ElementInstances{
+					workflow.ElementInstanceName("underTest"): workflow.ElementInstance{
+						ElementTypeName: et.Name(),
+					},
+				},
 			},
 		}
 		dir := filepath.Join(outdir, filepath.FromSlash(string(et.ElementPath)))
 		if err := os.MkdirAll(dir, 0700); err != nil {
 			return err
 		} else {
-			return wf.WriteToFile(filepath.Join(dir, "workflow.json"))
+			return wf.WriteToFile(filepath.Join(dir, "underTest.json"))
 		}
 	})
 }

@@ -59,8 +59,10 @@ func (rs Repositories) validate() error {
 	}
 }
 
-func (r Repository) validate() error {
-	if info, err := os.Stat(filepath.FromSlash(r.Directory)); err != nil {
+func (r *Repository) validate() error {
+	if r == nil {
+		return errors.New("Validation error: Repository can not be nil")
+	} else if info, err := os.Stat(filepath.FromSlash(r.Directory)); err != nil {
 		return err
 	} else if !info.Mode().IsDir() {
 		return fmt.Errorf("Validation error: Repository Directory is not a directory: '%s'", r.Directory)
@@ -99,8 +101,10 @@ func (ets ElementTypes) validate(wf *Workflow) error {
 	return nil
 }
 
-func (et ElementType) validate(wf *Workflow) error {
-	if _, found := wf.Repositories[et.RepositoryPrefix]; !found {
+func (et *ElementType) validate(wf *Workflow) error {
+	if et == nil {
+		return errors.New("Validation error: ElementType cannot be nil")
+	} else if _, found := wf.Repositories[et.RepositoryPrefix]; !found {
 		return fmt.Errorf("Validation error: ElementType uses unknown RepositoryPrefix: '%s'", et.RepositoryPrefix)
 	} else {
 		return nil
@@ -122,7 +126,10 @@ func (eis ElementInstances) validate(wf *Workflow) error {
 	return nil
 }
 
-func (ei ElementInstance) validate(wf *Workflow, name ElementInstanceName) error {
+func (ei *ElementInstance) validate(wf *Workflow, name ElementInstanceName) error {
+	if ei == nil {
+		return fmt.Errorf("Validation error: Element Instance %v cannot be nil", name)
+	}
 	tns := wf.TypeNames()
 	if _, found := tns[ei.ElementTypeName]; !found {
 		maybeName := ElementType{ElementPath: ElementPath(ei.ElementTypeName)}.Name()
@@ -132,6 +139,7 @@ func (ei ElementInstance) validate(wf *Workflow, name ElementInstanceName) error
 			return fmt.Errorf("Validation error: Element Instance '%v' has unknown ElementTypeName '%v'", name, ei.ElementTypeName)
 		}
 	} else {
+		ei.hasParameters = len(ei.Parameters) > 0
 		return nil
 	}
 }
@@ -148,11 +156,12 @@ func (conns ElementInstancesConnections) validate(wf *Workflow) error {
 }
 
 func (soc ElementSocket) validate(wf *Workflow) error {
-	if _, found := wf.Elements.Instances[soc.ElementInstance]; !found {
+	if ei, found := wf.Elements.Instances[soc.ElementInstance]; !found {
 		return fmt.Errorf("Validation error: ElementConnection uses ElementInstance '%v' which does not exist.", soc.ElementInstance)
 	} else if soc.ParameterName == "" {
 		return fmt.Errorf("Validation error: ElementConnection using ElementInstance '%v' must specify a ParameterName.", soc.ElementInstance)
 	} else {
+		ei.hasConnections = true
 		return nil
 	}
 }

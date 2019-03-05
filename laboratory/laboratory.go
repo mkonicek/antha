@@ -272,6 +272,7 @@ func (lab *Laboratory) CallSteps(e Element) error {
 
 	finished := make(chan struct{})
 	eb.AddOnExit(func() { close(finished) })
+	eb.AddOnExit(lab.elementCompleted)
 
 	go eb.Run(lab.makeLab(e), eb.element.Steps)
 	<-finished

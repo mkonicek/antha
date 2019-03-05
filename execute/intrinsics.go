@@ -306,14 +306,14 @@ func genericMix(lab *laboratory.Laboratory, generic *wtype.LHInstruction) *wtype
 
 // Mix mixes components
 func Mix(lab *laboratory.Laboratory, components ...*wtype.Liquid) *wtype.Liquid {
-	return genericMix(lab, mixer.GenericMix(lab.IDGenerator, mixer.MixOptions{
+	return genericMix(lab, mixer.GenericMix(lab, mixer.MixOptions{
 		Inputs: components,
 	}))
 }
 
 // MixInto mixes components
 func MixInto(lab *laboratory.Laboratory, outplate *wtype.Plate, address string, components ...*wtype.Liquid) *wtype.Liquid {
-	return genericMix(lab, mixer.GenericMix(lab.IDGenerator, mixer.MixOptions{
+	return genericMix(lab, mixer.GenericMix(lab, mixer.MixOptions{
 		Inputs:      components,
 		Destination: outplate,
 		Address:     address,
@@ -322,7 +322,7 @@ func MixInto(lab *laboratory.Laboratory, outplate *wtype.Plate, address string, 
 
 // MixNamed mixes components
 func MixNamed(lab *laboratory.Laboratory, outplatetype wtype.PlateTypeName, address string, platename string, components ...*wtype.Liquid) *wtype.Liquid {
-	return genericMix(lab, mixer.GenericMix(lab.IDGenerator, mixer.MixOptions{
+	return genericMix(lab, mixer.GenericMix(lab, mixer.MixOptions{
 		Inputs:    components,
 		PlateType: outplatetype,
 		Address:   address,
@@ -334,7 +334,7 @@ func MixNamed(lab *laboratory.Laboratory, outplatetype wtype.PlateTypeName, addr
 //
 // TODO: Addresses break dependence information. Deprecated.
 func MixTo(lab *laboratory.Laboratory, outplatetype wtype.PlateTypeName, address string, platenum int, components ...*wtype.Liquid) *wtype.Liquid {
-	return genericMix(lab, mixer.GenericMix(lab.IDGenerator, mixer.MixOptions{
+	return genericMix(lab, mixer.GenericMix(lab, mixer.MixOptions{
 		Inputs:    components,
 		PlateType: outplatetype,
 		Address:   address,
@@ -359,7 +359,7 @@ func SplitSample(lab *laboratory.Laboratory, component *wtype.Liquid, volume wun
 
 // Sample takes a sample of volume v from this liquid
 func Sample(lab *laboratory.Laboratory, liquid *wtype.Liquid, v wunit.Volume) *wtype.Liquid {
-	return mixer.Sample(lab.IDGenerator, liquid, v)
+	return mixer.Sample(lab, liquid, v)
 }
 
 func splitSample(lab *laboratory.Laboratory, component *wtype.Liquid, volume wunit.Volume) *effects.CommandInst {
@@ -369,7 +369,7 @@ func splitSample(lab *laboratory.Laboratory, component *wtype.Liquid, volume wun
 	// this will count as a mix-in-place effectively
 	split.Inputs = append(split.Inputs, component.Dup(lab.IDGenerator))
 
-	cmpMoving, cmpStaying := mixer.SplitSample(lab.IDGenerator, component, volume)
+	cmpMoving, cmpStaying := mixer.SplitSample(lab, component, volume)
 
 	//the ID of the component that is staying has been updated
 	lab.SampleTracker.UpdateIDOf(component.ID, cmpStaying.ID)

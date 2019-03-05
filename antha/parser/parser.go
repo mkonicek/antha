@@ -1226,7 +1226,7 @@ func (p *parseLHSList) parseSelector(x ast.Expr) ast.Expr {
 
 	var sel *ast.Ident
 	switch p.tok {
-	case token.OUTPUTS, token.DATA:
+	case token.OUTPUTS, token.DATA, token.INPUTS, token.PARAMETERS:
 		sel = p.parseToken(p.tok)
 	default:
 		sel = p.parseIdent()
@@ -1514,7 +1514,7 @@ L:
 				p.resolve(x)
 			}
 			switch p.tok {
-			case token.IDENT, token.DATA, token.OUTPUTS:
+			case token.IDENT, token.DATA, token.OUTPUTS, token.PARAMETERS, token.INPUTS:
 				x = p.parseSelector(p.checkExprOrType(x))
 			case token.LPAREN:
 				x = p.parseTypeAssertion(p.checkExpr(x))

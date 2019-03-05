@@ -109,7 +109,6 @@ func NewLaboratoryBuilder(fh io.ReadCloser) *LaboratoryBuilder {
 	return labBuild
 }
 
-// Only use this before you call run.
 func (labBuild *LaboratoryBuilder) InstallElement(e Element) {
 	eb := NewElementBase(e)
 	labBuild.elemLock.Lock()

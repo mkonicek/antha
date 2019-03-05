@@ -7,6 +7,8 @@ import (
 	"image"
 	"image/color"
 	"image/gif"
+	"path"
+	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
@@ -15,8 +17,8 @@ import (
 )
 
 // OpenFile takes a wtype.File and returns its contents as image.NRGBA
-func OpenFile(lab *laboratory.Laboratory, file wtype.File) (*image.NRGBA, error) {
-	data, err := lab.FileManager.ReadAll(file)
+func OpenFile(lab *laboratory.Laboratory, file *wtype.File) (*image.NRGBA, error) {
+	data, err := lab.FileManager.ReadAll(*file)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +96,26 @@ const (
 	TIFF
 	GIF
 	BMP
+	_maxImageFormat
 )
+
+func ImageFormatFromPath(name string) (ImageFormat, error) {
+	ext := strings.ToLower(path.Ext(name))
+	switch ext {
+	case ".png":
+		return PNG, nil
+	case ".jpg", ".jpeg":
+		return JPEG, nil
+	case ".tif", ".tiff":
+		return TIFF, nil
+	case ".git":
+		return GIF, nil
+	case ".bmp":
+		return BMP, nil
+	default:
+		return _maxImageFormat, fmt.Errorf("Unrecognised image format extension: %v", ext)
+	}
+}
 
 // Export exports an image to file.
 func Export(lab *laboratory.Laboratory, img image.Image, format ImageFormat) (*wtype.File, error) {

@@ -1,6 +1,8 @@
 package execute
 
 import (
+	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -239,7 +241,7 @@ func RunQPCRFromTemplate(lab *laboratory.Laboratory, opt QPCROptions) []*wtype.L
 func NewComponent(lab *laboratory.Laboratory, typ string) *wtype.Liquid {
 	c, err := lab.Inventory.Components.NewComponent(typ)
 	if err != nil {
-		lab.Errorf("cannot make component %s: %s", typ, err)
+		panic(fmt.Sprintf("cannot make component %s: %s", typ, err))
 	}
 	return c
 }
@@ -248,7 +250,7 @@ func NewComponent(lab *laboratory.Laboratory, typ string) *wtype.Liquid {
 func NewPlate(lab *laboratory.Laboratory, typ wtype.PlateTypeName) *wtype.Plate {
 	p, err := lab.Inventory.PlateTypes.NewPlate(typ)
 	if err != nil {
-		lab.Errorf("cannot make plate %s: %s", typ, err)
+		panic(fmt.Sprintf("cannot make plate %s: %s", typ, err))
 	}
 	return p
 }

@@ -285,13 +285,13 @@ func (lab *Laboratory) CallSteps(e Element) error {
 	}
 }
 
-func (lab *Laboratory) Error(err error) {
+func (lab *Laboratory) error(err error) {
 	lab.recordError(err)
 	lab.Logger.Log("error", err.Error())
 }
 
-func (lab *Laboratory) Errorf(fmtStr string, args ...interface{}) {
-	lab.Error(fmt.Errorf(fmtStr, args...))
+func (lab *Laboratory) errorf(fmtStr string, args ...interface{}) {
+	lab.error(fmt.Errorf(fmtStr, args...))
 }
 
 // ElementBase
@@ -329,7 +329,7 @@ func (eb *ElementBase) Run(lab *Laboratory, funs ...func(*Laboratory) error) {
 
 	defer func() {
 		if res := recover(); res != nil {
-			lab.Errorf("%v", res)
+			lab.errorf("panic: %v", res)
 			// Use println because of the embedded \n in the Stack Trace
 			fmt.Println(lab.lineMapManager.ElementStackTrace())
 		}
@@ -344,7 +344,7 @@ func (eb *ElementBase) Run(lab *Laboratory, funs ...func(*Laboratory) error) {
 				return
 			default:
 				if err := fun(lab); err != nil {
-					lab.Error(err)
+					lab.error(err)
 					return
 				}
 			}
@@ -356,7 +356,7 @@ func (eb *ElementBase) Run(lab *Laboratory, funs ...func(*Laboratory) error) {
 
 func (eb *ElementBase) Completed(lab *Laboratory) {
 	if err := eb.Save(lab); err != nil {
-		lab.Error(err)
+		lab.error(err)
 	}
 	lab.Logger.Log("progress", "completed")
 	funs := eb.onExit

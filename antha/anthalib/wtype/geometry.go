@@ -24,7 +24,6 @@ package wtype
 
 import (
 	"fmt"
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"math"
 )
 
@@ -115,13 +114,6 @@ func (self Coordinates) To2D() Coordinates2D {
 		X: self.X,
 		Y: self.Y,
 	}
-}
-
-//Geometry interface for 3D geometry
-type Geometry interface {
-	Height() wunit.Length
-	Width() wunit.Length
-	Depth() wunit.Length
 }
 
 type PointSet []Coordinates

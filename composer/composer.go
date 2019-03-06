@@ -36,6 +36,10 @@ func NewComposer(logger *logger.Logger, wf *workflow.Workflow, outDir string, ke
 			logger.Log("msg", fmt.Sprintf("Using '%s' for output.", d))
 			outDir = d
 		}
+	} else if entries, err := ioutil.ReadDir(outDir); err != nil && !os.IsNotExist(err) {
+		return nil, err
+	} else if len(entries) != 0 {
+		return nil, fmt.Errorf("Provided outdir (%v) must be empty (or not exist)", outDir)
 	}
 
 	if err := os.MkdirAll(filepath.Join(outDir, "workflow", "data"), 0700); err != nil {

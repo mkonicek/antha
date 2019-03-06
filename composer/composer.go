@@ -33,13 +33,13 @@ func NewComposer(logger *logger.Logger, wf *workflow.Workflow, outDir string, ke
 		if d, err := ioutil.TempDir("", fmt.Sprintf("antha-build-%s", wf.JobId)); err != nil {
 			return nil, err
 		} else {
-			logger.Log("msg", fmt.Sprintf("Using '%s' for output.", d))
+			logger.Log("outdir", d)
 			outDir = d
 		}
 	} else if entries, err := ioutil.ReadDir(outDir); err != nil && !os.IsNotExist(err) {
 		return nil, err
 	} else if len(entries) != 0 {
-		return nil, fmt.Errorf("Provided outdir (%v) must be empty (or not exist)", outDir)
+		return nil, fmt.Errorf("Provided outdir '%s' must be empty (or not exist)", outDir)
 	}
 
 	if err := os.MkdirAll(filepath.Join(outDir, "workflow", "data"), 0700); err != nil {

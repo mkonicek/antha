@@ -521,7 +521,7 @@ type {{.ElementTypeName}} struct {
 	Data       Data
 }
 
-func New{{.ElementTypeName}}(installer laboratory.ElementInstaller, name workflow.ElementInstanceName) *{{.ElementTypeName}} {
+func New(installer laboratory.ElementInstaller, name workflow.ElementInstanceName) *{{.ElementTypeName}} {
 	element := &{{.ElementTypeName}}{name: name}
 	installer.InstallElement(element)
 	return element

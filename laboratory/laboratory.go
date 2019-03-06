@@ -109,6 +109,13 @@ func NewLaboratoryBuilder(fh io.ReadCloser) *LaboratoryBuilder {
 	return labBuild
 }
 
+// This interface exists just to allow both the lab builder and
+// laboratory itself to trivially contain the InstallElement
+// method. It's used in transpiled elements.
+type ElementInstaller interface {
+	InstallElement(Element)
+}
+
 func (labBuild *LaboratoryBuilder) InstallElement(e Element) {
 	eb := NewElementBase(e)
 	labBuild.elemLock.Lock()

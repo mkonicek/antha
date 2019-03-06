@@ -75,7 +75,7 @@
             {
                 "Source": {
                     "ElementInstance": "aliquot_A",
-                    "ParameterName": "RemainingLiquidToAliquot"
+                    "ParameterName": "FirstOutputLiquid"
                 },
                 "Target": {
                     "ElementInstance": "aliquot_C",
@@ -85,7 +85,7 @@
             {
                 "Source": {
                     "ElementInstance": "aliquot_A",
-                    "ParameterName": "RemainingLiquidToAliquot"
+                    "ParameterName": "FirstOutputLiquid"
                 },
                 "Target": {
                     "ElementInstance": "aliquot_B",
@@ -95,7 +95,7 @@
             {
                 "Source": {
                     "ElementInstance": "aliquot_B",
-                    "ParameterName": "RemainingLiquidToAliquot"
+                    "ParameterName": "FirstOutputLiquid"
                 },
                 "Target": {
                     "ElementInstance": "aliquot_D",

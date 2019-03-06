@@ -108,7 +108,7 @@ func ImageFormatFromPath(name string) (ImageFormat, error) {
 		return JPEG, nil
 	case ".tif", ".tiff":
 		return TIFF, nil
-	case ".git":
+	case ".gif":
 		return GIF, nil
 	case ".bmp":
 		return BMP, nil

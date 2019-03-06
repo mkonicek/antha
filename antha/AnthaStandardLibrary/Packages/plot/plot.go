@@ -28,6 +28,8 @@ package plot
 import (
 	"bytes"
 	"fmt"
+	"path"
+	"strings"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/spreadsheet"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -48,7 +50,26 @@ const (
 	PNG
 	SVG
 	TIFF
+	_maxPlotFormat
 )
+
+func PlotFormatFromPath(name string) (PlotFormat, error) {
+	ext := strings.ToLower(path.Ext(name))
+	switch ext {
+	case ".jpg", ".jpeg":
+		return JPEG, nil
+	case ".pdf":
+		return PDF, nil
+	case ".png":
+		return PNG, nil
+	case ".svg":
+		return SVG, nil
+	case ".tif", ".tiff":
+		return TIFF, nil
+	default:
+		return _maxPlotFormat, fmt.Errorf("Unrecognised image format extension: %v", ext)
+	}
+}
 
 var plotFormatString = map[PlotFormat]string{
 	JPEG: "jpeg",

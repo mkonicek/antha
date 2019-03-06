@@ -441,15 +441,15 @@ func (p *Antha) recordMessages() {
 func (p *Antha) validateMessages() error {
 	p.TokenByParamName = make(map[string]token.Token)
 
-	seenMessage := make(map[string]*Message)
+	seenMessage := make(map[token.Token]*Message)
 
 	for _, msg := range p.messages {
 		name := msg.Name
-		if _, found := seenMessage[name]; found {
+		if _, found := seenMessage[msg.Kind]; found {
 			return fmt.Errorf("%s already declared", name)
 		}
 
-		seenMessage[name] = msg
+		seenMessage[msg.Kind] = msg
 
 		for _, field := range msg.Fields {
 			if tok, found := p.TokenByParamName[field.Name]; found {
@@ -460,6 +460,27 @@ func (p *Antha) validateMessages() error {
 			if !ast.IsExported(field.Name) {
 				return fmt.Errorf("field %s must begin with an upper case letter", name)
 			}
+		}
+	}
+
+	// add in empty ones if there are any missing
+	for _, tok := range []token.Token{token.OUTPUTS, token.DATA, token.PARAMETERS, token.INPUTS} {
+		if _, found := seenMessage[tok]; !found {
+			p.messages = append(p.messages, &Message{
+				Name: tok.String(),
+				Kind: tok,
+			})
+			p.file.Decls = append(p.file.Decls, &ast.GenDecl{
+				Tok: tok,
+				Specs: []ast.Spec{
+					&ast.TypeSpec{
+						Name: ast.NewIdent(tok.String()),
+						Type: &ast.StructType{
+							Fields: &ast.FieldList{},
+						},
+					},
+				},
+			})
 		}
 	}
 
@@ -610,7 +631,7 @@ func (p *Antha) desugarGenDecl(d *ast.GenDecl) {
 // E.g.,
 //   Validation
 // to
-//  func (element *ElementTypeName) Validation(lab *laboratory.Laboratory)
+//  func (element *ElementTypeName) Validation(lab *laboratory.Laboratory) error
 func (p *Antha) desugarAnthaDecl(d *ast.AnthaDecl) ast.Decl {
 	body := d.Body
 	body.List = append(body.List,

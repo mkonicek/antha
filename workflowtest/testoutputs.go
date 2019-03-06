@@ -170,12 +170,11 @@ func joinErrors(errors []error) string {
 }
 
 func getMixTasks(runResult *execute.Result) []*target.Mix {
-	ret := make([]*target.Mix, 0, len(runResult.Insts))
 
+	ret := make([]*target.Mix, 0, len(runResult.Insts))
 	for _, inst := range runResult.Insts {
-		switch inst.(type) {
-		case *target.Mix:
-			ret = append(ret, inst.(*target.Mix))
+		if mix, ok := inst.(*target.Mix); ok {
+			ret = append(ret, mix)
 		}
 	}
 

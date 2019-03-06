@@ -186,21 +186,13 @@ func makeOutputspec(spec string, optionalcallbackname string) (outputspec string
 	return outputspec
 }
 
-var pugprepend string = "http://pubchem.ncbi.nlm.nih.gov/rest/pug"
-
 func pugLookup(inputspec string, operationspec string, outputspec string, operation_options string) ([]byte, error) {
 
-	array := make([]string, 0)
-	array = append(array, pugprepend, inputspec, operationspec, outputspec)
-	if operation_options != "" {
-		array = append(array, operation_options)
-	}
-	Urlstring := strings.Join(array, "/")
 	/*<input specification>/<operation specification>/[<output specification>][?<operation_options>]
 
 	http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/glucose/property/MolecularFormula,MolecularWeight/JSON
 	*/
-	res, err := http.Get(Urlstring)
+	res, err := http.Get(fmt.Sprintf("http://pubchem.ncbi.nlm.nih.gov/rest/pug/%s/%s/%s/%s", inputspec, operationspec, outputspec, operation_options))
 	if err != nil {
 		return nil, err
 	}

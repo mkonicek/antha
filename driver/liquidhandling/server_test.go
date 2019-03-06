@@ -155,8 +155,8 @@ func (test *HighLevelConnectionTest) Run(t *testing.T) {
 	go func() {
 		if srv, err := server.NewHighLevelServer(drv); err != nil {
 			t.Error(err)
-		} else {
-			srv.Listen(3000)
+		} else if err := srv.Listen(3000); err != nil {
+			t.Error(err)
 		}
 	}()
 
@@ -229,8 +229,8 @@ func (test *LowLevelConnectionTest) Run(t *testing.T) {
 	go func() {
 		if srv, err := server.NewLowLevelServer(drv); err != nil {
 			t.Error(err)
-		} else {
-			srv.Listen(3001)
+		} else if err := srv.Listen(3001); err != nil {
+			t.Error(err)
 		}
 	}()
 
@@ -332,8 +332,8 @@ func TestGetCapabilities(t *testing.T) {
 	go func() {
 		if srv, err := server.NewLowLevelServer(&LLGetCapabilities{Props: expected}); err != nil {
 			t.Error(err)
-		} else {
-			srv.Listen(3002)
+		} else if err := srv.Listen(3002); err != nil {
+			t.Error(err)
 		}
 	}()
 

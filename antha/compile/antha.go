@@ -548,7 +548,7 @@ func (p *Antha) Transform(fileSet *token.FileSet, src *ast.File) (err error) {
 	// Case-insensitive comparison because some filesystems are
 	// case-insensitive
 	packagePath := filepath.Base(filepath.Dir(p.elementPath))
-	if e, f := p.protocolName, packagePath; strings.ToLower(e) != strings.ToLower(f) {
+	if e, f := p.protocolName, packagePath; !strings.EqualFold(e, f) {
 		return fmt.Errorf("%s: expecting protocol %s to be in directory %s", file.Name(), e, f)
 	}
 

@@ -20,15 +20,13 @@ func getComponentOrder(inss []TerminalRobotInstruction) []string {
 
 		cmpint := ins.GetParameter("COMPONENT")
 
-		switch cmpint.(type) {
+		switch param := cmpint.(type) {
 		case string:
-			ret = append(ret, cmpint.(string))
+			ret = append(ret, param)
 		case []string:
-			ret = append(ret, cmpint.([]string)...)
+			ret = append(ret, param...)
 		case [][]string:
-			cmps := cmpint.([][]string)
-
-			for _, cmpa := range cmps {
+			for _, cmpa := range param {
 				ret = append(ret, cmpa...)
 			}
 		}
@@ -57,9 +55,11 @@ func TestOrdering(t *testing.T) {
 
 	iTree := NewITree(ins)
 	var inss []TerminalRobotInstruction
-	iTree.Build(ctx, pol, rbt)
-	inss, err = iTree.Leaves()
+	if _, err := iTree.Build(ctx, pol, rbt); err != nil {
+		t.Fatal(err)
+	}
 
+	inss, err = iTree.Leaves()
 	if err != nil {
 		t.Errorf(err.Error())
 	}
@@ -91,9 +91,11 @@ func TestOrdering2(t *testing.T) {
 
 	iTree := NewITree(ins)
 	var inss []TerminalRobotInstruction
-	iTree.Build(ctx, pol, rbt)
-	inss, err = iTree.Leaves()
+	if _, err := iTree.Build(ctx, pol, rbt); err != nil {
+		t.Fatal(err)
+	}
 
+	inss, err = iTree.Leaves()
 	if err != nil {
 		t.Errorf(err.Error())
 	}
@@ -254,11 +256,13 @@ func TestOrdering3(t *testing.T) {
 
 	iTree := NewITree(ins)
 	var inss []TerminalRobotInstruction
-	iTree.Build(ctx, pol, rbt)
-	inss, err = iTree.Leaves()
+	if _, err := iTree.Build(ctx, pol, rbt); err != nil {
+		t.Fatal(err)
+	}
 
+	inss, err = iTree.Leaves()
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Error(err)
 	}
 
 	if len(inss) != 58 {

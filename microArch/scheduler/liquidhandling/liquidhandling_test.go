@@ -63,7 +63,9 @@ func GetPlateForTest() *wtype.Plate {
 func PrefillPlateForTest(ctx context.Context, plate *wtype.LHPlate, liquidType string, volumes map[string]float64) *wtype.LHPlate {
 	for address, volume := range volumes {
 		cmp := GetComponentForTest(ctx, liquidType, wunit.NewVolume(volume, "ul"))
-		plate.Wellcoords[address].SetContents(cmp)
+		if err := plate.Wellcoords[address].SetContents(cmp); err != nil {
+			panic(err)
+		}
 	}
 
 	return plate
@@ -252,7 +254,9 @@ func configureTransferRequestMutliSamplesTest(policyName string, samples ...*wty
 	for _, sample := range samples {
 		ins := wtype.NewLHMixInstruction()
 
-		sample.SetPolicyName(wtype.PolicyName(policyName))
+		if err := sample.SetPolicyName(wtype.PolicyName(policyName)); err != nil {
+			return nil, err
+		}
 
 		ins.AddInput(sample)
 		ins.AddOutput(GetComponentForTest(ctx, "water", sample.Volume()))
@@ -750,7 +754,9 @@ func TestPlateReuse(t *testing.T) {
 		}
 		for _, v := range plate.Wellcoords {
 			if !v.IsEmpty() {
-				v.RemoveVolume(wunit.NewVolume(5.0, "ul"))
+				if _, err := v.RemoveVolume(wunit.NewVolume(5.0, "ul")); err != nil {
+					t.Error(err)
+				}
 			}
 		}
 
@@ -1203,15 +1209,23 @@ func TestAddWellTargets(t *testing.T) {
 	lh := GetLiquidHandlerForTest(ctx)
 
 	plate := GetPlateForTest()
-	lh.Properties.AddPlateTo("position_4", plate)
+	if err := lh.Properties.AddPlateTo("position_4", plate); err != nil {
+		t.Fatal(err)
+	}
 
 	tipwaste := GetTipwasteForTest()
-	lh.Properties.AddTipWasteTo("position_1", tipwaste)
+	if err := lh.Properties.AddTipWasteTo("position_1", tipwaste); err != nil {
+		t.Fatal(err)
+	}
 
 	trough := GetTroughForTest()
-	lh.Properties.AddPlateTo("position_5", trough)
+	if err := lh.Properties.AddPlateTo("position_5", trough); err != nil {
+		t.Fatal(err)
+	}
 
-	lh.addWellTargets()
+	if err := lh.addWellTargets(); err != nil {
+		t.Fatal(err)
+	}
 
 	expected := []wtype.Coordinates3D{
 		{X: 0.0, Y: -31.5, Z: 0.0},

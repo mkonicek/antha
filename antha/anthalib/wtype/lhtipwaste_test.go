@@ -56,7 +56,9 @@ func TestTipwasteCoordsToWellCoords(t *testing.T) {
 
 func TestTipwasteSerialisation(t *testing.T) {
 	partFull := makeTipwasteForTest()
-	partFull.SetOffset(Coordinates3D{X: 1.0, Y: 2.0, Z: 3.0})
+	if err := partFull.SetOffset(Coordinates3D{X: 1.0, Y: 2.0, Z: 3.0}); err != nil {
+		t.Fatal(err)
+	}
 	partFull.Contents = 300
 
 	tipwastes := []*LHTipwaste{

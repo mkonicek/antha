@@ -263,11 +263,8 @@ func compare(results map[string]map[*wtype.LHPlate]int, expected map[string]map[
 func fmtIt(rest interface{}) string {
 	var ret string
 
-	switch rest.(type) {
+	switch t := rest.(type) {
 	case map[string]map[string]int:
-
-		t := rest.(map[string]map[string]int)
-
 		for k, v := range t {
 			ret += fmt.Sprintf("%s: ", k)
 			for k2, v2 := range v {
@@ -276,15 +273,12 @@ func fmtIt(rest interface{}) string {
 		}
 
 	case map[string]map[*wtype.LHPlate]int:
-		t := rest.(map[string]map[*wtype.LHPlate]int)
-
 		for k, v := range t {
 			ret += fmt.Sprintf("%s: ", k)
 			for k2, v2 := range v {
 				ret += fmt.Sprintf("%s(%d) ", k2.Type, v2)
 			}
 		}
-
 	}
 
 	return ret

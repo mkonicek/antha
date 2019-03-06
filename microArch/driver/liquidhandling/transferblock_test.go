@@ -125,7 +125,9 @@ func getTestRobot(ctx context.Context, dstp *wtype.Plate, platetype string) *LHP
 
 	c.Vol = v
 	c.Vunit = "ul"
-	p.AddComponent(c, true)
+	if _, err := p.AddComponent(c, true); err != nil {
+		panic(err)
+	}
 
 	c, err = inventory.NewComponent(ctx, "tartrazine")
 	if err != nil {
@@ -134,7 +136,9 @@ func getTestRobot(ctx context.Context, dstp *wtype.Plate, platetype string) *LHP
 	c.Vol = v
 	c.Vunit = "ul"
 
-	p.AddComponent(c, true)
+	if _, err := p.AddComponent(c, true); err != nil {
+		panic(err)
+	}
 
 	c, err = inventory.NewComponent(ctx, "ethanol")
 	if err != nil {
@@ -143,12 +147,18 @@ func getTestRobot(ctx context.Context, dstp *wtype.Plate, platetype string) *LHP
 	c.Vol = v
 	c.Vunit = "ul"
 
-	p.AddComponent(c, true)
+	if _, err := p.AddComponent(c, true); err != nil {
+		panic(err)
+	}
 
-	rbt.AddPlateTo("position_4", p)
+	if err := rbt.AddPlateTo("position_4", p); err != nil {
+		panic(err)
+	}
 
 	// dst
-	rbt.AddPlateTo("position_8", dstp)
+	if err := rbt.AddPlateTo("position_8", dstp); err != nil {
+		panic(err)
+	}
 
 	return rbt
 
@@ -803,14 +813,15 @@ func generateRobotInstructions2(ctx context.Context, inss []*wtype.LHInstruction
 
 	//generate the low level instructions
 	iTree := NewITree(tb)
-	iTree.Build(ctx, pol, rbt)
-	ris2, err := iTree.Leaves()
-
-	if err != nil {
-		panic(err.Error())
+	if _, err := iTree.Build(ctx, pol, rbt); err != nil {
+		panic(err)
 	}
 
-	return ris2
+	if ris2, err := iTree.Leaves(); err != nil {
+		panic(err.Error())
+	} else {
+		return ris2
+	}
 }
 
 // regression test for issue with additional transfers being

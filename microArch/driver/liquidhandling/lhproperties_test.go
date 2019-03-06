@@ -33,7 +33,9 @@ func TestSavePlates(t *testing.T) {
 		t.Fatal(err)
 	}
 	p.Wellcoords["A1"].SetUserAllocated()
-	lhp.AddPlateTo(pos, p)
+	if err := lhp.AddPlateTo(pos, p); err != nil {
+		t.Fatal(err)
+	}
 	pl := lhp.SaveUserPlates()
 
 	if len(pl) != 1 {
@@ -257,7 +259,9 @@ func (test *UpdateIDTest) run(t *testing.T) {
 		t.Fatal(err)
 	} else {
 		plt.ID = "initial_plate_id"
-		rbt.AddInputPlate(plt)
+		if err := rbt.AddInputPlate(plt); err != nil {
+			t.Fatal(err)
+		}
 	}
 	if plt, err := inventory.NewPlate(ctx, "pcrplate_skirted"); err != nil {
 		t.Fatal(err)
@@ -275,13 +279,17 @@ func (test *UpdateIDTest) run(t *testing.T) {
 		t.Fatal(err)
 	} else {
 		tb.ID = "initial_tipbox_id"
-		rbt.AddTipBox(tb)
+		if err := rbt.AddTipBox(tb); err != nil {
+			t.Fatal(err)
+		}
 	}
 	if tw, err := inventory.NewTipwaste(ctx, "Gilsontipwaste"); err != nil {
 		t.Fatal(err)
 	} else {
 		tw.ID = "initial_tipwaste_id"
-		rbt.AddTipWaste(tw)
+		if err := rbt.AddTipWaste(tw); err != nil {
+			t.Fatal(err)
+		}
 	}
 
 	// update the IDs as required

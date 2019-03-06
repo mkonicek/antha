@@ -128,17 +128,12 @@ func (ins *ChannelBlockInstruction) GetParameter(name InstructionParameter) inte
 	case PARAMS:
 		return ins.Prms
 	case PLATFORM:
-		ret := []string{}
-		for _, p := range ins.Prms {
-			for _, ppp := range p {
-				var pp string
-
-				if ppp != nil {
-					pp = ppp.Platform
-					break
+		ret := make([]string, 0, len(ins.Prms))
+		for _, channelParams := range ins.Prms {
+			for _, p := range channelParams {
+				if p != nil {
+					ret = append(ret, p.Platform)
 				}
-
-				ret = append(ret, pp)
 			}
 		}
 		return ret

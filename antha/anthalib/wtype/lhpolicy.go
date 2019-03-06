@@ -595,22 +595,20 @@ func (lhnc LHNumericCondition) IsEqualTo(other LHCondition) bool {
 
 func (lhnc LHNumericCondition) Match(v interface{}) bool {
 	//fmt.Println(fmt.Sprintln("NUMERIC MATCH: ", lhnc.Lower, " ", lhnc.Upper, " ", v))
-	switch v.(type) {
+	switch f := v.(type) {
 	case float64:
-		f := v.(float64)
-
 		if f <= lhnc.Upper && f >= lhnc.Lower {
 			return true
 		}
 	case []float64:
 		//true iff at least one value all values are within range
 		// how to deal with nulls?
-		if len(v.([]float64)) == 0 || numInFloatArray(v.([]float64)) == 0 {
+		if len(f) == 0 || numInFloatArray(f) == 0 {
 			return false
 		}
 
-		for _, f := range v.([]float64) {
-			if !lhnc.Match(f) && f > wutil.EPSILON_64() {
+		for _, g := range f {
+			if !lhnc.Match(g) && g > wutil.EPSILON_64() {
 				return false
 			}
 		}
@@ -619,11 +617,11 @@ func (lhnc LHNumericCondition) Match(v interface{}) bool {
 	case []wunit.Volume:
 		//true iff all values are within range
 		// these are simple rules but could need refinement
-		for _, f := range v.([]wunit.Volume) {
-			if f.IsZero() {
+		for _, g := range f {
+			if g.IsZero() {
 				return true
 			}
-			if !lhnc.Match(f.RawValue()) {
+			if !lhnc.Match(g.RawValue()) {
 				return false
 			}
 		}

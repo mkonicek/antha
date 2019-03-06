@@ -80,7 +80,9 @@ func TestInputPlates(t *testing.T) {
 		cmp := getLiquidForTest("water", 100.0)
 		cmp.ID = it.Curr().FormatA1()
 
-		well.SetContents(cmp)
+		if err := well.SetContents(cmp); err != nil {
+			t.Fatal(err)
+		}
 	}
 
 	st := NewSampleTracker()

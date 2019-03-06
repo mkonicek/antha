@@ -121,7 +121,9 @@ func makeLHHeadAssembly(ha HeadAssemblyParams) *wtype.LHHeadAssembly {
 		ret.AddPosition(pos)
 	}
 	for _, h := range ha.Heads {
-		ret.LoadHead(makeLHHead(h))
+		if err := ret.LoadHead(makeLHHead(h)); err != nil {
+			panic(err)
+		}
 	}
 	ret.VelocityLimits = ha.VelocityLimits.Dup()
 	return ret
@@ -1073,7 +1075,9 @@ func preloadFilledTips(head int, tipbox_loc string, channels []int, what string,
 		tipbox := vlh.GetObjectAt(tipbox_loc).(*wtype.LHTipbox)
 		tip := tipbox.Tiptype.Dup()
 		c := getLHComponent(what, volume)
-		tip.AddComponent(c)
+		if err := tip.AddComponent(c); err != nil {
+			panic(err)
+		}
 
 		for _, ch := range channels {
 			adaptor.GetChannel(ch).LoadTip(tip.Dup())
@@ -1359,7 +1363,9 @@ func (self *SimulatorTest) Run(t *testing.T) {
 		for _, inst := range self.Instructions {
 			instructions = append(instructions, inst.Convert())
 		}
-		vlh.Simulate(instructions)
+		if err := vlh.Simulate(instructions); err != nil {
+			t.Error(err)
+		}
 	}
 
 	//check errors

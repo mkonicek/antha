@@ -32,7 +32,9 @@ func TestComponentPolicy(t *testing.T) {
 
 func MakeTestCondition() LHPolicyRule {
 	r := NewLHPolicyRule("verylowvolumerule")
-	r.AddNumericConditionOn("VOLUME", 0.0, 1.0)
+	if err := r.AddNumericConditionOn("VOLUME", 0.0, 1.0); err != nil {
+		panic(err)
+	}
 	return r
 }
 

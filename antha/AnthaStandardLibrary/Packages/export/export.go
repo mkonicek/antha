@@ -120,7 +120,7 @@ func SequenceReport(dir string, seq wtype.BioSequence) (wtype.File, string, erro
 
 	var buf bytes.Buffer
 
-	_, err = fmt.Fprintf(&buf, strings.Join(lines, ""))
+	_, err = fmt.Fprint(&buf, strings.Join(lines, ""))
 	if err != nil {
 		return anthafile, "", err
 	}

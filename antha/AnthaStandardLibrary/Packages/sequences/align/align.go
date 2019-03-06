@@ -674,5 +674,5 @@ func isMismatch(character1, character2 rune) bool {
 		return false
 	}
 
-	return strings.ToUpper(string(character1)) != strings.ToUpper(string(character2))
+	return !strings.EqualFold(string(character1), string(character2))
 }

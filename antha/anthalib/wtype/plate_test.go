@@ -503,7 +503,9 @@ func TestWellCoordsToCoords(t *testing.T) {
 	c := NewLHComponent()
 	c.Vol = 100.0
 	c.Vunit = "ul"
-	plate.GetChildByAddress(MakeWellCoords("A1")).(*LHWell).AddComponent(c)
+	if err := plate.GetChildByAddress(MakeWellCoords("A1")).(*LHWell).AddComponent(c); err != nil {
+		t.Fatal(err)
+	}
 	plate.Welltype.SetLiquidLevelModel(wutil.Quadratic{A: 0.402, B: 7.069, C: 0.0})
 
 	type TestCase struct {

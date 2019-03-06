@@ -25,7 +25,9 @@ type CategoryCondition struct {
 }
 
 func (self *CategoryCondition) ApplyTo(rule *wtype.LHPolicyRule) {
-	rule.AddCategoryConditionOn(self.Attribute, self.Value)
+	if err := rule.AddCategoryConditionOn(self.Attribute, self.Value); err != nil {
+		panic(err)
+	}
 }
 
 type NumericCondition struct { //nolint
@@ -35,7 +37,9 @@ type NumericCondition struct { //nolint
 }
 
 func (self *NumericCondition) ApplyTo(rule *wtype.LHPolicyRule) {
-	rule.AddNumericConditionOn(self.Attribute, self.Low, self.High)
+	if err := rule.AddNumericConditionOn(self.Attribute, self.Low, self.High); err != nil {
+		panic(err)
+	}
 }
 
 type Rule struct {

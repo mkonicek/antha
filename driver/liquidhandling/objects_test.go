@@ -135,8 +135,12 @@ func makeGilsonForTest(ctx context.Context, tipList []string) *liquidhandling.LH
 	ha := wtype.NewLHHeadAssembly(nil)
 	ha.AddPosition(wtype.Coordinates3D{X: 0, Y: -18.08, Z: 0})
 	ha.AddPosition(wtype.Coordinates3D{X: 0, Y: 0, Z: 0})
-	ha.LoadHead(hvhead)
-	ha.LoadHead(lvhead)
+	if err := ha.LoadHead(hvhead); err != nil {
+		panic(err)
+	}
+	if err := ha.LoadHead(lvhead); err != nil {
+		panic(err)
+	}
 	lhp.Heads = append(lhp.Heads, hvhead, lvhead)
 	lhp.Adaptors = append(lhp.Adaptors, hvadaptor, lvadaptor)
 	lhp.HeadAssemblies = append(lhp.HeadAssemblies, ha)
@@ -184,23 +188,23 @@ func SetUpTipsFor(ctx context.Context, lhp *liquidhandling.LHProperties, tipList
 func makeGilsonWithTipboxesForTest(ctx context.Context) (*liquidhandling.LHProperties, error) {
 	params := makeGilsonForTest(ctx, []string{"Gilson20", "Gilson200"})
 
-	tw, err := inventory.NewTipwaste(ctx, "Gilsontipwaste")
-	if err != nil {
+	if tw, err := inventory.NewTipwaste(ctx, "Gilsontipwaste"); err != nil {
+		return nil, err
+	} else if err := params.AddTipWaste(tw); err != nil {
 		return nil, err
 	}
-	params.AddTipWaste(tw)
 
-	tb, err := inventory.NewTipbox(ctx, "DL10 Tip Rack (PIPETMAX 8x20)")
-	if err != nil {
+	if tb, err := inventory.NewTipbox(ctx, "DL10 Tip Rack (PIPETMAX 8x20)"); err != nil {
+		return nil, err
+	} else if err := params.AddTipBox(tb); err != nil {
 		return nil, err
 	}
-	params.AddTipBox(tb)
 
-	tb, err = inventory.NewTipbox(ctx, "DF200 Tip Rack (PIPETMAX 8x200)")
-	if err != nil {
+	if tb, err := inventory.NewTipbox(ctx, "DF200 Tip Rack (PIPETMAX 8x200)"); err != nil {
+		return nil, err
+	} else if err := params.AddTipBox(tb); err != nil {
 		return nil, err
 	}
-	params.AddTipBox(tb)
 
 	return params, nil
 }
@@ -256,7 +260,9 @@ func makeTestInputPlate(ctx context.Context, inputPlateType string) (*wtype.Plat
 
 	c.Vol = 5000.0 // ul
 
-	p.AddComponent(c, true)
+	if _, err := p.AddComponent(c, true); err != nil {
+		return nil, err
+	}
 
 	return p, nil
 }

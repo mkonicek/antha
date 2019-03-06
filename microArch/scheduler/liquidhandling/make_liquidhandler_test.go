@@ -96,8 +96,12 @@ func makeGilson(ctx context.Context) *liquidhandling.LHProperties {
 	ha := wtype.NewLHHeadAssembly(nil)
 	ha.AddPosition(wtype.Coordinates3D{X: 0, Y: -18.08, Z: 0})
 	ha.AddPosition(wtype.Coordinates3D{X: 0, Y: 0, Z: 0})
-	ha.LoadHead(hvhead)
-	ha.LoadHead(lvhead)
+	if err := ha.LoadHead(hvhead); err != nil {
+		panic(err)
+	}
+	if err := ha.LoadHead(lvhead); err != nil {
+		panic(err)
+	}
 	lhp.Heads = append(lhp.Heads, hvhead, lvhead)
 	lhp.Adaptors = append(lhp.Adaptors, hvadaptor, lvadaptor)
 	lhp.HeadAssemblies = append(lhp.HeadAssemblies, ha)

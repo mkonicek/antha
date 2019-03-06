@@ -407,7 +407,9 @@ func (self TestMixComponent) AddToPlate(ctx context.Context, plate *wtype.LHPlat
 			cmp.Type = self.LiquidType
 		}
 
-		plate.Wellcoords[well].SetContents(cmp)
+		if err := plate.Wellcoords[well].SetContents(cmp); err != nil {
+			panic(err)
+		}
 	}
 }
 

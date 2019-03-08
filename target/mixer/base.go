@@ -419,14 +419,14 @@ func addCustomPolicies(mixes []*wtype.LHInstruction, lhreq *liquidhandling.LHReq
 					mergedPolicy := mergePolicies(matchingSystemPolicy, component.Policy)
 					if !wtype.EquivalentPolicies(mergedPolicy, matchingSystemPolicy) {
 						num := 1
-						newPolicyName := makemodifiedTypeName(component.Type, num)
+						newPolicyName := MakeModifiedTypeName(component.Type, num)
 						existingCustomPolicy, found := allPolicies[newPolicyName]
 						for found {
 							// check if existing policy with modified name is the same
 							if !wtype.EquivalentPolicies(mergedPolicy, existingCustomPolicy) {
 								// if not increase number and try again
 								num++
-								newPolicyName = makemodifiedTypeName(component.Type, num)
+								newPolicyName = MakeModifiedTypeName(component.Type, num)
 								existingCustomPolicy, found = allPolicies[newPolicyName]
 							} else {
 								// otherwise use existing modified policy
@@ -463,18 +463,6 @@ func addCustomPolicies(mixes []*wtype.LHInstruction, lhreq *liquidhandling.LHReq
 	return nil
 }
 
-const modifiedPolicySuffix = "_modified_"
-
-func makemodifiedTypeName(componentType wtype.LiquidType, number int) string {
-	return string(componentType) + modifiedPolicySuffix + strconv.Itoa(number)
-}
-
-// unModifyTypeName will trim a _modified_ suffix from a LiquidType in the CSV file.
-// These are added to LiquidType names when a Liquid is modified in an element.
-func unModifyTypeName(componentType string) string {
-	return strings.Split(componentType, modifiedPolicySuffix)[0]
-}
-
 func floatValue(a, b *float64) float64 {
 	if a != nil {
 		return *a
@@ -499,4 +487,16 @@ func checkInstructions(nodes []effects.Node) ([]*wtype.LHInstruction, error) {
 	} else {
 		return instrs, nil
 	}
+}
+
+const modifiedPolicySuffix = "_modified_"
+
+func MakeModifiedTypeName(componentType wtype.LiquidType, number int) string {
+	return string(componentType) + modifiedPolicySuffix + strconv.Itoa(number)
+}
+
+// unModifyTypeName will trim a _modified_ suffix from a LiquidType in the CSV file.
+// These are added to LiquidType names when a Liquid is modified in an element.
+func UnModifyTypeName(componentType string) string {
+	return strings.Split(componentType, modifiedPolicySuffix)[0]
 }

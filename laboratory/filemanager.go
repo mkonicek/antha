@@ -1,6 +1,7 @@
 package laboratory
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -26,7 +27,10 @@ func NewFileManager(outDir string) *FileManager {
 	}
 }
 
-func (fm *FileManager) ReadAll(f wtype.File) ([]byte, error) {
+func (fm *FileManager) ReadAll(f *wtype.File) ([]byte, error) {
+	if f == nil {
+		return nil, errors.New("Cannot read nil file")
+	}
 	fm.lock.Lock()
 	defer fm.lock.Unlock()
 

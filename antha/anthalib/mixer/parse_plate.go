@@ -10,7 +10,8 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/laboratory/effects"
+	"github.com/antha-lang/antha/laboratory"
+	"github.com/antha-lang/antha/target/mixer"
 	"github.com/antha-lang/toolbox/csvutil"
 	"github.com/pkg/errors"
 )
@@ -57,9 +58,9 @@ func PermissiveValidationConfig() ValidationConfig {
 }
 
 // ReplacePlateType will replace the plate type in the CSV file with the replacement option specified.
-func ReplacePlateType(replacement string) ValidationConfig {
+func ReplacePlateType(replacement wtype.PlateTypeName) ValidationConfig {
 	return ValidationConfig{
-		replaceField: map[string]string{plateTypeReplacementKey: replacement},
+		replaceField: map[string]string{plateTypeReplacementKey: string(replacement)},
 	}
 }
 
@@ -109,7 +110,7 @@ func validWell(well wtype.WellCoords, plate *wtype.Plate) error {
 //   <well1> , <component name1> , <component type1 ?> , <volume1 ?> , <volume unit1 ?>, <conc1 ?> , <conc unit1 ?>, <SubComponent1Name: ?> , <SubComponent1Conc unit0 ?>, <SubComponent2Name: ?> , <SubComponent2Conc unit0 ?>, <SubComponentNName: ?> , <SubComponentNConc unit0 ?>
 //   ...
 //
-func ParsePlateCSV(labEffects *effects.LaboratoryEffects, inData io.Reader, validationOptions ...ValidationConfig) (*ParsePlateResult, error) {
+func ParsePlateCSV(lab *laboratory.Laboratory, inData io.Reader, validationOptions ...ValidationConfig) (*ParsePlateResult, error) {
 
 	var addDefaultConfig bool
 
@@ -123,7 +124,7 @@ func ParsePlateCSV(labEffects *effects.LaboratoryEffects, inData io.Reader, vali
 		validationOptions = append(validationOptions, DefaultValidationConfig())
 	}
 
-	return parsePlateCSVWithValidationConfig(labEffects, inData, validationOptions...)
+	return parsePlateCSVWithValidationConfig(lab, inData, validationOptions...)
 }
 
 // parsePlateCSVWithValidationConfig parses a csv file into a plate.
@@ -136,7 +137,7 @@ func ParsePlateCSV(labEffects *effects.LaboratoryEffects, inData io.Reader, vali
 //   ...
 //
 // TODO: refactor if/when Opt loses raw []byte and file as InputPlate options
-func parsePlateCSVWithValidationConfig(labEffects *effects.LaboratoryEffects, inData io.Reader, vcOptions ...ValidationConfig) (*ParsePlateResult, error) {
+func parsePlateCSVWithValidationConfig(lab *laboratory.Laboratory, inData io.Reader, vcOptions ...ValidationConfig) (*ParsePlateResult, error) {
 	// Get returning "" if idx >= len(xs)
 	get := func(xs []string, idx int) string {
 		if len(xs) <= idx {
@@ -213,7 +214,7 @@ func parsePlateCSVWithValidationConfig(labEffects *effects.LaboratoryEffects, in
 		}
 	}
 
-	plate, err := labEffects.Inventory.PlateTypes.NewPlate(plateType)
+	plate, err := lab.Inventory.PlateTypes.NewPlate(plateType)
 	if err != nil {
 		return nil, fmt.Errorf("cannot make plate %s: %s", plateType, err)
 	}
@@ -253,7 +254,7 @@ func parsePlateCSVWithValidationConfig(labEffects *effects.LaboratoryEffects, in
 
 		wellField := get(rec, 0)
 		cname := get(rec, 1)
-		ctypeField := unModifyTypeName(get(rec, 2))
+		ctypeField := mixer.UnModifyTypeName(get(rec, 2))
 
 		well, err := validWellCoord(wellField)
 		if err != nil {
@@ -288,7 +289,7 @@ func parsePlateCSVWithValidationConfig(labEffects *effects.LaboratoryEffects, in
 		concentration := wunit.NewConcentration(conc, cunit)
 
 		// Make component
-		cmp := wtype.NewLHComponent(labEffects.IDGenerator)
+		cmp := wtype.NewLHComponent(lab.IDGenerator)
 
 		cmp.Vol = volume.RawValue()
 		cmp.Vunit = volume.Unit().PrefixedSymbol()
@@ -305,7 +306,7 @@ func parsePlateCSVWithValidationConfig(labEffects *effects.LaboratoryEffects, in
 				trimmedSubCompName := strings.TrimRight(subCompName, ":")
 				if k+1 < len(rec) {
 					subCompConc := get(rec, k+1)
-					subCmp := wtype.NewLHComponent(labEffects.IDGenerator)
+					subCmp := wtype.NewLHComponent(lab.IDGenerator)
 					subCmp.SetName(trimmedSubCompName)
 					err := cmp.AddSubComponent(subCmp, wunit.NewConcentration(wunit.SplitValueAndUnit(subCompConc)))
 					if err != nil {
@@ -317,7 +318,7 @@ func parsePlateCSVWithValidationConfig(labEffects *effects.LaboratoryEffects, in
 			}
 		}
 		if wa, ok := plate.WellAt(well); ok {
-			err = wa.AddComponent(labEffects.IDGenerator, cmp)
+			err = wa.AddComponent(lab.IDGenerator, cmp)
 			if err != nil {
 				return nil, err
 			}
@@ -333,7 +334,7 @@ func parsePlateCSVWithValidationConfig(labEffects *effects.LaboratoryEffects, in
 		return nil, fmt.Errorf(strings.Join(fatalErrors, "\n"))
 	}
 
-	if err = plate.ValidateVolumes(labEffects.IDGenerator); err != nil {
+	if err = plate.ValidateVolumes(lab.IDGenerator); err != nil {
 		return nil, err
 	}
 
@@ -343,7 +344,7 @@ func parsePlateCSVWithValidationConfig(labEffects *effects.LaboratoryEffects, in
 	}, nil
 }
 
-func parsePlateFile(labEffects *effects.LaboratoryEffects, filename string) (*ParsePlateResult, error) {
+func parsePlateFile(lab *laboratory.Laboratory, filename string) (*ParsePlateResult, error) {
 	f, err := os.Open(filename)
 
 	if err != nil {
@@ -352,13 +353,13 @@ func parsePlateFile(labEffects *effects.LaboratoryEffects, filename string) (*Pa
 
 	defer f.Close() // nolint: errcheck
 
-	return ParsePlateCSV(labEffects, f)
+	return ParsePlateCSV(lab, f)
 }
 
 // ParseInputPlateFile is convenience function for parsing a plate from file.
 // Will splat out warnings to stdout.
-func ParseInputPlateFile(labEffects *effects.LaboratoryEffects, filename string) (*wtype.Plate, error) {
-	r, err := parsePlateFile(labEffects, filename)
+func ParseInputPlateFile(lab *laboratory.Laboratory, filename string) (*wtype.Plate, error) {
+	r, err := parsePlateFile(lab, filename)
 	if err != nil {
 		return nil, err
 	}

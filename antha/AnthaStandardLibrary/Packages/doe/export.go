@@ -33,7 +33,7 @@ import (
 	"github.com/tealeg/xlsx"
 )
 
-func JMPXLSXFilefromRuns(runs []Run, outputfilename string) (xlsxfile *xlsx.File) {
+func JMPXLSXFilefromRuns(runs []Run) (xlsxfile *xlsx.File) {
 
 	// if output is a struct look for a sensible field to print
 
@@ -102,14 +102,10 @@ func JMPXLSXFilefromRuns(runs []Run, outputfilename string) (xlsxfile *xlsx.File
 			cell.SetValue(additional)
 		}
 	}
-	err = xlsxfile.Save(outputfilename)
-	if err != nil {
-		fmt.Print(err.Error())
-	}
 	return
 }
 
-func DXXLSXFilefromRuns(runs []Run, outputfilename string) (xlsxfile *xlsx.File) {
+func DXXLSXFilefromRuns(runs []Run) (xlsxfile *xlsx.File) {
 
 	// if output is a struct look for a sensible field to print
 
@@ -216,18 +212,14 @@ func DXXLSXFilefromRuns(runs []Run, outputfilename string) (xlsxfile *xlsx.File)
 			cell.SetValue(additional)
 		}
 	}
-	err = xlsxfile.Save(outputfilename)
-	if err != nil {
-		fmt.Print(err.Error())
-	}
 	return
 }
 
-func XLSXFileFromRuns(runs []Run, outputfilename string, dxorjmp string) (xlsxfile *xlsx.File) {
+func XLSXFileFromRuns(runs []Run, dxorjmp string) (xlsxfile *xlsx.File) {
 	if dxorjmp == "DX" {
-		xlsxfile = DXXLSXFilefromRuns(runs, outputfilename)
+		xlsxfile = DXXLSXFilefromRuns(runs)
 	} else if dxorjmp == "JMP" {
-		xlsxfile = JMPXLSXFilefromRuns(runs, outputfilename)
+		xlsxfile = JMPXLSXFilefromRuns(runs)
 	} else {
 		panic(fmt.Sprintf("Unknown design file format %s when exporting design to XLSX file. Please specify File type as JMP or DX (Design Expert)", dxorjmp))
 	}

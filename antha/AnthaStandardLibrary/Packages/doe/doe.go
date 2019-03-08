@@ -1205,3 +1205,17 @@ func AllCombinations(factors []DOEPair) (runs []Run) {
 	}
 	return
 }
+
+func UniqueFactors(runs []Run) []string {
+	var unique []string
+
+	for _, run := range runs {
+		for _, factor := range run.Factordescriptors {
+			trimmed := strings.TrimSpace(factor)
+			if !search.InStrings(unique, trimmed) {
+				unique = append(unique, trimmed)
+			}
+		}
+	}
+	return unique
+}

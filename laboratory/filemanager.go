@@ -3,7 +3,9 @@ package laboratory
 import (
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"sync"
 
@@ -47,6 +49,27 @@ func (fm *FileManager) ReadAll(f *wtype.File) ([]byte, error) {
 	bsCopy := make([]byte, len(bs))
 	copy(bsCopy, bs)
 	return bsCopy, nil
+}
+
+func (fm *FileManager) WithWriter(fun func(io.Writer) error) (*wtype.File, error) {
+	fm.lock.Lock()
+	defer fm.lock.Unlock()
+
+	fm.writtenCount++
+	p := filepath.Join(fm.outDir, fmt.Sprintf("%d", fm.writtenCount))
+	if fh, err := os.OpenFile(p, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0400); err != nil {
+		return nil, err
+	} else {
+		err := fun(fh)
+		fh.Close()
+		if err != nil {
+			return nil, err
+		} else {
+			f := wtype.NewFile(p)
+			fm.writtenSet[f] = struct{}{}
+			return f, nil
+		}
+	}
 }
 
 func (fm *FileManager) WriteAll(bs []byte) (*wtype.File, error) {

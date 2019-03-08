@@ -31,7 +31,7 @@ import (
 )
 
 // GDXToDNASequence parses DNA sequence files in .gdx format into a set of DNA sequences of type []wtype.DNASequence
-func GDXToDNASequence(lab *laboratory.Laboratory, sequenceFile wtype.File) (partsList []wtype.DNASequence, err error) {
+func GDXToDNASequence(lab *laboratory.Laboratory, sequenceFile *wtype.File) (partsList []wtype.DNASequence, err error) {
 	data, err := lab.FileManager.ReadAll(sequenceFile)
 	if err != nil {
 		return nil, err

@@ -18,7 +18,7 @@ import (
 
 // OpenFile takes a wtype.File and returns its contents as image.NRGBA
 func OpenFile(lab *laboratory.Laboratory, file *wtype.File) (*image.NRGBA, error) {
-	data, err := lab.FileManager.ReadAll(*file)
+	data, err := lab.FileManager.ReadAll(file)
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +34,7 @@ func OpenFile(lab *laboratory.Laboratory, file *wtype.File) (*image.NRGBA, error
 }
 
 // OpenGIF takes a wtype.File and returns its contents as a gif.GIF
-func OpenGIF(lab *laboratory.Laboratory, file wtype.File) (*gif.GIF, error) {
+func OpenGIF(lab *laboratory.Laboratory, file *wtype.File) (*gif.GIF, error) {
 	data, err := lab.FileManager.ReadAll(file)
 	if err != nil {
 		return nil, err

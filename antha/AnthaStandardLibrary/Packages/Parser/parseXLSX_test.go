@@ -413,10 +413,10 @@ var pcrTests = []parsePCRDesignXLSXTest{
 	},
 }
 
-func fileNameToAnthaFile(name string) (wtype.File, error) {
+func fileNameToAnthaFile(name string) (*wtype.File, error) {
 	bytes, err := ioutil.ReadFile(name)
 	if err != nil {
-		return wtype.File{}, err
+		return nil, err
 	}
 	return export.Binary(bytes, name)
 }

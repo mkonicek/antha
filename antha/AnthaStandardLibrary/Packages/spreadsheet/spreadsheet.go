@@ -50,7 +50,7 @@ func OpenXLSXFromFileName(filename string) (file *xlsx.File, err error) {
 }
 
 // OpenXLSX opens an xlsx file and returns the xlsx.File data structure.
-func OpenXLSX(lab *laboratory.Laboratory, xlsx wtype.File) (file *xlsx.File, err error) {
+func OpenXLSX(lab *laboratory.Laboratory, xlsx *wtype.File) (file *xlsx.File, err error) {
 	fileContents, err := lab.FileManager.ReadAll(xlsx)
 	if err != nil {
 		return nil, err

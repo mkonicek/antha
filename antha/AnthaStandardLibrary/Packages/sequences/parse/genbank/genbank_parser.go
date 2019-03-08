@@ -37,7 +37,7 @@ import (
 )
 
 //Parses file of type .gb to DNASequence. Features are not annotated
-func GenbankToFeaturelessDNASequence(lab *laboratory.Laboratory, sequenceFile wtype.File) (wtype.DNASequence, error) {
+func GenbankToFeaturelessDNASequence(lab *laboratory.Laboratory, sequenceFile *wtype.File) (wtype.DNASequence, error) {
 	data, err := lab.FileManager.ReadAll(sequenceFile)
 	if err != nil {
 		return wtype.DNASequence{}, err
@@ -59,7 +59,7 @@ func GenbankToFeaturelessDNASequence(lab *laboratory.Laboratory, sequenceFile wt
 }
 
 //Parses a feature from a genbank file into a DNASequence.
-func GenbankFeatureToDNASequence(lab *laboratory.Laboratory, file wtype.File, featurename string) (wtype.DNASequence, error) {
+func GenbankFeatureToDNASequence(lab *laboratory.Laboratory, file *wtype.File, featurename string) (wtype.DNASequence, error) {
 	var line string
 	genbanklines := make([]string, 0)
 
@@ -99,7 +99,7 @@ func GenbankFeatureToDNASequence(lab *laboratory.Laboratory, file wtype.File, fe
 }
 
 // parses a genbank file into a DNASEquence making features from annotations
-func GenbankToAnnotatedSeq(lab *laboratory.Laboratory, file wtype.File) (annotated wtype.DNASequence, err error) {
+func GenbankToAnnotatedSeq(lab *laboratory.Laboratory, file *wtype.File) (annotated wtype.DNASequence, err error) {
 	data, err := lab.FileManager.ReadAll(file)
 	if err != nil {
 		return

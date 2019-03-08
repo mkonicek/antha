@@ -35,7 +35,7 @@ import (
 )
 
 // Creates a DNASequence from a sequence file of format: .gdx .fasta .gb
-func DNAFileToDNASequence(lab *laboratory.Laboratory, sequenceFile wtype.File) (sequences []wtype.DNASequence, err error) {
+func DNAFileToDNASequence(lab *laboratory.Laboratory, sequenceFile *wtype.File) (sequences []wtype.DNASequence, err error) {
 
 	sequences = make([]wtype.DNASequence, 0)
 	var seqs []wtype.DNASequence

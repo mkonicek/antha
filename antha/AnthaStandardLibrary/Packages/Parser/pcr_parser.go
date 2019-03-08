@@ -14,7 +14,7 @@ import (
 
 // ParsePCRExc3el takes in a pcr design file (.xlsx or .csv) and converts this
 // into an array of type PCRReactions.
-func ParsePCRExcel(lab *laboratory.Laboratory, designfile wtype.File) ([]pcr.Reaction, error) {
+func ParsePCRExcel(lab *laboratory.Laboratory, designfile *wtype.File) ([]pcr.Reaction, error) {
 
 	data, err := lab.FileManager.ReadAll(designfile)
 	var pcrreaction []pcr.Reaction

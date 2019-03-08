@@ -71,7 +71,7 @@ func (seqs SequenceSet) GetSequences() (partslist []wtype.DNASequence, err error
 
 // FileSet is a set of files which obeys the PartSource interface.
 // Any fasta or Genbank files will return DNASequences.
-type FileSet []wtype.File
+type FileSet []*wtype.File
 
 // GetSequences returns all sequences and any errors which occur.
 // Any fasta or Genbank files will return DNASequences.

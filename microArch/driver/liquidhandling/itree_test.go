@@ -62,18 +62,16 @@ func (test *ITreeTest) Run(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if leaves, err := root.Leaves(); err != nil {
-		t.Fatal(err)
-	} else {
-		got := make([]string, 0, len(leaves))
-		for _, leaf := range leaves {
-			got = append(got, leaf.Type().Name)
-		}
-
-		if !reflect.DeepEqual(got, test.ExpectedLeaves) {
-			t.Errorf("leaves don't match:\n e: %s\ng: %s", test.ExpectedLeaves, got)
-		}
+	leaves := root.Leaves()
+	got := make([]string, 0, len(leaves))
+	for _, leaf := range leaves {
+		got = append(got, leaf.Type().Name)
 	}
+
+	if !reflect.DeepEqual(got, test.ExpectedLeaves) {
+		t.Errorf("leaves don't match:\n e: %s\ng: %s", test.ExpectedLeaves, got)
+	}
+
 }
 
 func TestITree(t *testing.T) {

@@ -42,6 +42,16 @@ func NewITree(p RobotInstruction) *ITree {
 	return &ITree{instruction: p}
 }
 
+// Children get the children of this node of the tree
+func (tree *ITree) Children() []*ITree {
+	return tree.children
+}
+
+// Instruction get the instruction associated with this node of the tree
+func (tree *ITree) Instruction() RobotInstruction {
+	return tree.instruction
+}
+
 func allSplits(inss []*wtype.LHInstruction) bool {
 	for _, ins := range inss {
 		if ins.Type != wtype.LHISPL {
@@ -160,29 +170,51 @@ func (tree *ITree) NumLeaves() int {
 }
 
 // Leaves returns the leaves of the tree - i.e. the TerminalRobotInstructions
-func (tree *ITree) Leaves() ([]TerminalRobotInstruction, error) {
-	return tree.addLeaves(make([]TerminalRobotInstruction, 0, tree.NumLeaves()))
-}
-
-// addLeaves add the leaves to the accumulator
-func (tree *ITree) addLeaves(acc []TerminalRobotInstruction) ([]TerminalRobotInstruction, error) {
-	if len(tree.children) == 0 {
-		// i am leaf (on the wind)
-		// ignore instructions which aren't terminal instructions, these are probably things like split which don't
-		// actually generate terminal instructions at all
-		if tri, ok := tree.instruction.(TerminalRobotInstruction); ok {
-			return append(acc, tri), nil
-		}
-	} else {
-		for _, child := range tree.children {
-			if nac, err := child.addLeaves(acc); err != nil {
-				return nac, err
-			} else {
-				acc = nac
-			}
+func (tree *ITree) Leaves() []TerminalRobotInstruction {
+	leaves := tree.Refine()
+	ret := make([]TerminalRobotInstruction, 0, len(leaves))
+	for _, leaf := range leaves {
+		if tri, ok := leaf.instruction.(TerminalRobotInstruction); ok {
+			ret = append(ret, tri)
 		}
 	}
-	return acc, nil
+	return ret
+}
+
+// Refine returns a slice containing more precise instructions. Returns the lowest possible descendents of this node,
+// stopping either at leaves or if the instruction type is given in the argument
+// e.g. for a tree with instruction types A,B,C,D,E of the form
+//       A
+//     /   \
+//    B     C
+//    |    / \
+//    D   D'  E
+// then:
+//   - A.Refine(C) returns [D, C]
+//   - A.Refine(B) returns [B, D', E]
+//   - A.Refine() returns [D, D', E], the leaves of the tree
+func (tree *ITree) Refine(types ...*InstructionType) []*ITree {
+	tmap := make(map[*InstructionType]bool, len(types))
+	for _, t := range types {
+		tmap[t] = true
+	}
+
+	ret := make([]*ITree, 0, tree.NumLeaves())
+	return tree.refine(tmap, ret)
+}
+
+func (tree *ITree) refine(tmap map[*InstructionType]bool, acc []*ITree) []*ITree {
+	if tree == nil {
+		return acc
+	} else if (tree.instruction != nil && tmap[tree.instruction.Type()]) || len(tree.children) == 0 {
+		// the type is in tmap or we've reached the bottom of the tree
+		return append(acc, tree)
+	} else {
+		for _, child := range tree.children {
+			acc = child.refine(tmap, acc)
+		}
+		return acc
+	}
 }
 
 // String return a multi-line representation of the ITree showing instructions types

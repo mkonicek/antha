@@ -146,10 +146,11 @@ func (self *PolicyTest) run(t *testing.T) {
 	}
 
 	if self.Error != "" {
-		t.Errorf("error not generated: expected \"%s\"", self.Error)
-	} else if ris, err := tree.Leaves(); err != nil {
-		t.Error(err)
-	} else if g := stringInstructions(ris); self.ExpectedInstructions != g {
+		t.Fatalf("error not generated: expected \"%s\"", self.Error)
+	}
+
+	ris := tree.Leaves()
+	if g := stringInstructions(ris); self.ExpectedInstructions != g {
 		t.Errorf("instruction types don't match\n  g: %s\n  e: %s", g, self.ExpectedInstructions)
 	} else {
 		for _, a := range self.Assertions {

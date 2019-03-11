@@ -23,7 +23,11 @@
 // defines types for dealing with liquid handling requests
 package wtype
 
-import "github.com/antha-lang/antha/antha/anthalib/wunit"
+import (
+	"github.com/pkg/errors"
+
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
+)
 
 type Named interface {
 	GetName() string
@@ -136,24 +140,44 @@ type LHParent interface {
 	GetSlotSize(string) Coordinates2D
 }
 
-//WellReference used for specifying position within a well
+// WellReference used for specifying position within a well particularly for
+// signify the intended locations for tip movements. Offsets are taken relative to these
 type WellReference int
 
 const (
-	BottomReference WellReference = iota //0
-	TopReference                         //1
-	LiquidReference                      //2
+	UnknownReference WellReference = iota - 1 // -1
+	BottomReference                           //0
+	TopReference                              //1
+	LiquidReference                           //2
 )
 
+// NewWellReference construct a WellReference from its descriptive name.
+// returns UnkonwnReference and an error if the reference is not recognised
+func NewWellReference(s string) (WellReference, error) {
+	names := map[string]WellReference{
+		"well_bottom":  BottomReference,
+		"well_top":     TopReference,
+		"liquid_level": LiquidReference,
+	}
+
+	if r, ok := names[s]; ok {
+		return r, nil
+	}
+	return UnknownReference, errors.Errorf(`unknown well reference "%s"`, s)
+}
+
+// String returns a descriptive name for the reference which is interpreted by the front end
 func (self WellReference) String() string {
-	return []string{"BottomReference", "TopReference", "LiquidReference"}[self]
+	names := []string{"well_bottom", "well_top", "liquid_level"}
+	if int(self) >= 0 && int(self) < len(names) {
+		return names[self]
+	}
+	return "unknown_reference"
 }
 
 func (self WellReference) AsInt() int {
-	return []int{0, 1, 2}[self]
+	return int(self)
 }
-
-var WellReferenceNames []string = []string{"bottom", "top", "liquid"}
 
 //Addressable unifies the interface to objects which have
 //sub-components that can be addressed by WellCoords (e.g. "A1")

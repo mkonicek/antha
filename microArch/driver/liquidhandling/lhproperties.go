@@ -1061,3 +1061,23 @@ func (p *LHProperties) DeckSummary() string {
 func (p *LHProperties) CarryVolume() wunit.Volume {
 	return wtype.GLOBALCARRYVOLUME
 }
+
+func (p *LHProperties) GetSetupInstructions() []TerminalRobotInstruction {
+	instructions := make([]TerminalRobotInstruction, 0, 1+len(p.PosLookup))
+
+	//first instruction is always to remove all plates
+	instructions = append(instructions, NewRemoveAllPlatesInstruction())
+
+	for position, plateid := range p.PosLookup {
+		if plateid == "" {
+			continue
+		}
+		plate := p.PlateLookup[plateid]
+		name := plate.(wtype.Named).GetName()
+
+		ins := NewAddPlateToInstruction(position, name, plate)
+
+		instructions = append(instructions, ins)
+	}
+	return instructions
+}

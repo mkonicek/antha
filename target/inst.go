@@ -135,6 +135,26 @@ func (a *Mix) GetInitializers() []ast.Inst {
 	return a.Initializers
 }
 
+// SummarizeLayout helper function to get a validated JSON summary of the deck layouts before and after
+// the mix operation takes place, suitable for consumption by the front end.
+// The JSON schema is available at microArch/driver/liquidhandling/schemas/layout.schema.json
+func (a *Mix) SummarizeLayout() ([]byte, error) {
+	// Mix is the first time all of these things are tied together in a coherent way
+	// so a helper here simplifies the API for callers, however the actual implementation of
+	// SummarizeLayout makes more sense down in microArch/scheduler/liquidhandling
+	return lh.SummarizeLayout(a.Properties, a.FinalProperties, a.Final)
+}
+
+// SummarizeActions helper function get a validated JSON summary of the steps taken during the liquidhandling
+// operation, suitable for consumption by the front end.
+// The JSON schema is available at microArch/driver/liquidhandling/schemas/actions.schema.json
+func (a *Mix) SummarizeActions() ([]byte, error) {
+	// Mix is the first time all of these things are tied together in a coherent way
+	// so a helper here simplifies the API for callers, however the actual implementation of
+	// SummarizeLayout makes more sense down in microArch/scheduler/liquidhandling
+	return lh.SummarizeActions(a.Properties, a.Request.InstructionTree)
+}
+
 // A Manual is human-aided interaction
 type Manual struct {
 	dependsMixin

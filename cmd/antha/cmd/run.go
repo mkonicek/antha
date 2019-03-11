@@ -137,6 +137,8 @@ type runOpt struct {
 	WorkflowFile           string
 	MixInstructionFileName string
 	TestBundleFileName     string
+	LayoutSummaryFile      string
+	MixSummaryFile         string
 	RunTest                bool
 }
 
@@ -174,6 +176,43 @@ func (a *runOpt) Run() error {
 	})
 	if err != nil {
 		return err
+	}
+
+	mixes := make([]*target.Mix, 0, len(rout.Insts))
+	for _, inst := range rout.Insts {
+		if mix, ok := inst.(*target.Mix); ok {
+			mixes = append(mixes, mix)
+		}
+	}
+
+	if a.LayoutSummaryFile != "" {
+		for i, mix := range mixes {
+			outFile := a.LayoutSummaryFile
+			if len(mixes) > 1 {
+				outFile = fmt.Sprintf("%s.%d", a.LayoutSummaryFile, i)
+			}
+
+			if bs, err := mix.SummarizeLayout(); err != nil {
+				return err
+			} else if err := ioutil.WriteFile(outFile, bs, 0644); err != nil {
+				return err
+			}
+		}
+	}
+
+	if a.MixSummaryFile != "" {
+		for i, mix := range mixes {
+			outFile := a.MixSummaryFile
+			if len(mixes) > 1 {
+				outFile = fmt.Sprintf("%s.%d", a.MixSummaryFile, i)
+			}
+
+			if bs, err := mix.SummarizeActions(); err != nil {
+				return err
+			} else if err := ioutil.WriteFile(outFile, bs, 0644); err != nil {
+				return err
+			}
+		}
 	}
 
 	// if option is set, add liquid handling instruction output
@@ -292,6 +331,8 @@ func runWorkflow(cmd *cobra.Command, args []string) error {
 		MixInstructionFileName: viper.GetString("mixInstructionFileName"),
 		TestBundleFileName:     viper.GetString("makeTestBundle"),
 		RunTest:                viper.GetBool("runTest"),
+		LayoutSummaryFile:      viper.GetString("layoutSummary"),
+		MixSummaryFile:         viper.GetString("mixSummary"),
 	}
 
 	return opt.Run()
@@ -315,6 +356,8 @@ func init() {
 	flags.String("mixInstructionFileName", "", "Name of instructions files to output to for mixes")
 	flags.String("parameters", "", "Parameters to workflow")
 	flags.String("workflow", "", "Workflow definition file")
+	flags.String("mixSummary", "", "save a summary of the generated liquidhandling actions to the given filename")
+	flags.String("layoutSummary", "", "save a summary of the generated deck layout to the given filename")
 	flags.StringSlice("component", nil, "Uris of remote components ({tcp,go}://...); use multiple flags for multiple components")
 	flags.StringSlice("driver", nil, "Uris of remote drivers ({tcp,go}://...); use multiple flags for multiple drivers")
 	flags.StringSlice("inputPlateTypes", nil, "Default input plate types (in order of preference)")

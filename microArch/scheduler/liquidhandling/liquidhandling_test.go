@@ -808,6 +808,8 @@ func TestExecutionPlanning(t *testing.T) {
 			Assertions: Assertions{
 				NumberOfAssertion(liquidhandling.ASP, 3*8), //no multichanneling
 				NumberOfAssertion(liquidhandling.DSP, 3*8), //no multichanneling
+				LayoutSummaryAssertion("test/simple.layout.json"),
+				ActionsSummaryAssertion("test/simple.actions.json"),
 			},
 		},
 		{

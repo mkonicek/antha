@@ -602,13 +602,7 @@ func generateRobotInstructions(t *testing.T, ctx context.Context, inss []*wtype.
 	if _, err := iTree.Build(ctx, pol, rbt); err != nil {
 		t.Fatal(err)
 	}
-
-	ris2, err := iTree.Leaves()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return ris2
+	return iTree.Leaves()
 }
 
 func assertNumTipsUsed(t *testing.T, instructions []TerminalRobotInstruction, expectedTips int) {
@@ -813,15 +807,12 @@ func generateRobotInstructions2(ctx context.Context, inss []*wtype.LHInstruction
 
 	//generate the low level instructions
 	iTree := NewITree(tb)
+
 	if _, err := iTree.Build(ctx, pol, rbt); err != nil {
 		panic(err)
 	}
 
-	if ris2, err := iTree.Leaves(); err != nil {
-		panic(err.Error())
-	} else {
-		return ris2
-	}
+	return iTree.Leaves()
 }
 
 // regression test for issue with additional transfers being

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/pkg/errors"
+	"io/ioutil"
 	"math"
 	"reflect"
 	"sort"
@@ -62,6 +63,21 @@ func (test *PlanningTest) run(ctx context.Context, t *testing.T) {
 	if !t.Failed() && test.ErrorPrefix == "" {
 		test.checkPlateIDMap(t)
 		test.checkPositionConsistency(t)
+		test.checkSummaryGeneration(t, request)
+	}
+}
+
+// checkSummaryGeneration check that we generate a valid JSON string from the objects,
+// LayoutSummary and ActionSummary validate their output against the schemas agreed with UI
+func (test *PlanningTest) checkSummaryGeneration(t *testing.T, request *LHRequest) {
+	if bs, err := SummarizeLayout(test.Liquidhandler.Properties, test.Liquidhandler.FinalProperties, test.Liquidhandler.PlateIDMap()); err != nil {
+		fmt.Printf("Invalid Layout:\n%s\n", string(bs))
+		t.Error(err)
+	}
+
+	if bs, err := SummarizeActions(test.Liquidhandler.Properties, request.InstructionTree); err != nil {
+		fmt.Printf("Invalid Actions:\n%s\n", string(bs))
+		t.Error(err)
 	}
 }
 
@@ -372,6 +388,40 @@ func FinalOutputVolumesAssertion(tol float64, expected ...map[string]float64) As
 					t.Errorf("output plate %d doesn't match:\ne: %v\ng: %v", i, expected[i], g)
 				}
 			}
+		}
+	}
+}
+
+// LayoutSummaryAssertion assert that the generated layout is the same as the one found at the given path
+func LayoutSummaryAssertion(path string) Assertion { //nolint
+
+	expected, err := ioutil.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+
+	return func(t *testing.T, lh *Liquidhandler, rq *LHRequest) {
+		if got, err := SummarizeLayout(lh.Properties, lh.FinalProperties, lh.PlateIDMap()); err != nil {
+			t.Fatal(err)
+		} else if err := AssertLayoutsEquivalent(got, expected); err != nil {
+			t.Error(errors.WithMessage(err, "layout summary mismatch"))
+		}
+	}
+}
+
+// ActionsSummaryAssertion assert that the generated layout is the same as the one found at the given path
+func ActionsSummaryAssertion(path string) Assertion { //nolint
+
+	expected, err := ioutil.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+
+	return func(t *testing.T, lh *Liquidhandler, rq *LHRequest) {
+		if got, err := SummarizeActions(lh.Properties, rq.InstructionTree); err != nil {
+			t.Fatal(err)
+		} else if err := AssertActionsEquivalent(got, expected); err != nil {
+			t.Error(errors.WithMessage(err, "actions summary mismatch"))
 		}
 	}
 }

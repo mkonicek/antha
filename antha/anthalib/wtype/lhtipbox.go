@@ -42,7 +42,7 @@ type LHTipbox struct {
 	Tiptype    *LHTip
 	AsWell     *LHWell
 	NTips      int
-	Tips       [][]*LHTip
+	Tips       [][]*LHTip // Tips[row][col]
 	TipXOffset float64
 	TipYOffset float64
 	TipXStart  float64

@@ -54,15 +54,11 @@ func TestOrdering(t *testing.T) {
 	ins := getTransferMulti()[0]
 
 	iTree := NewITree(ins)
-	var inss []TerminalRobotInstruction
 	if _, err := iTree.Build(ctx, pol, rbt); err != nil {
 		t.Fatal(err)
 	}
 
-	inss, err = iTree.Leaves()
-	if err != nil {
-		t.Errorf(err.Error())
-	}
+	inss := iTree.Leaves()
 
 	if len(inss) != 58 {
 		t.Errorf("Expected 58 instructions, got %d", len(inss))
@@ -90,15 +86,12 @@ func TestOrdering2(t *testing.T) {
 	ins := getTransferMulti()[1]
 
 	iTree := NewITree(ins)
-	var inss []TerminalRobotInstruction
+
 	if _, err := iTree.Build(ctx, pol, rbt); err != nil {
 		t.Fatal(err)
 	}
 
-	inss, err = iTree.Leaves()
-	if err != nil {
-		t.Errorf(err.Error())
-	}
+	inss := iTree.Leaves()
 
 	if len(inss) != 58 {
 		t.Errorf("Expected 58 instructions, got %d", len(inss))
@@ -255,15 +248,12 @@ func TestOrdering3(t *testing.T) {
 	ins := getTransferMulti()[2]
 
 	iTree := NewITree(ins)
-	var inss []TerminalRobotInstruction
+
 	if _, err := iTree.Build(ctx, pol, rbt); err != nil {
 		t.Fatal(err)
 	}
 
-	inss, err = iTree.Leaves()
-	if err != nil {
-		t.Error(err)
-	}
+	inss := iTree.Leaves()
 
 	if len(inss) != 58 {
 		t.Errorf("Expected 58 instructions, got %d", len(inss))

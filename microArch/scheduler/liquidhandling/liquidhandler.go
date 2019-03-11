@@ -138,7 +138,7 @@ func (this *Liquidhandler) AddSetupInstructions(request *LHRequest) error {
 		return wtype.LHError(wtype.LH_ERR_OTHER, "Cannot execute request: no instructions")
 	}
 
-	setup_insts := this.get_setup_instructions()
+	setup_insts := this.Properties.GetSetupInstructions()
 	if request.Instructions[0].Type() == liquidhandling.INI {
 		request.Instructions = append(request.Instructions[:1], append(setup_insts, request.Instructions[1:]...)...)
 	} else {
@@ -479,26 +479,6 @@ func (this *Liquidhandler) updateIDs() error {
 	return nil
 }
 
-func (this *Liquidhandler) get_setup_instructions() []liquidhandling.TerminalRobotInstruction {
-	instructions := make([]liquidhandling.TerminalRobotInstruction, 0, 1+len(this.Properties.PosLookup))
-
-	//first instruction is always to remove all plates
-	instructions = append(instructions, liquidhandling.NewRemoveAllPlatesInstruction())
-
-	for position, plateid := range this.Properties.PosLookup {
-		if plateid == "" {
-			continue
-		}
-		plate := this.Properties.PlateLookup[plateid]
-		name := plate.(wtype.Named).GetName()
-
-		ins := liquidhandling.NewAddPlateToInstruction(position, name, plate)
-
-		instructions = append(instructions, ins)
-	}
-	return instructions
-}
-
 func (this *Liquidhandler) update_metadata() error {
 	if drv, ok := this.Properties.Driver.(liquidhandling.LowLevelLiquidhandlingDriver); ok {
 		return drv.UpdateMetaData(this.Properties).GetError()
@@ -667,11 +647,9 @@ func (this *Liquidhandler) Plan(ctx context.Context, request *LHRequest) error {
 		return err
 	} else if final, err := root.Build(ctx, request.Policies(), this.Properties); err != nil {
 		return err
-	} else if tri, err := root.Leaves(); err != nil {
-		return err
 	} else {
 		request.InstructionTree = root
-		request.Instructions = tri
+		request.Instructions = root.Leaves()
 		this.FinalProperties = final
 	}
 

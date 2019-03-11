@@ -114,6 +114,10 @@ const (
 	TestSample      LiquidPurpose = "TestSample"
 )
 
+func CustomLiquidPurpose(s string) LiquidPurpose {
+	return LiquidPurpose(s)
+}
+
 func (c *Liquid) SetLiquidPurpose(purpose LiquidPurpose) {
 	c.Extra[liquidPurposeKey] = purpose
 }

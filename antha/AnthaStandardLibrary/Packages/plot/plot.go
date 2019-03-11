@@ -26,8 +26,8 @@
 package plot
 
 import (
-	"bytes"
 	"fmt"
+	"io"
 	"path"
 	"strings"
 
@@ -42,15 +42,15 @@ import (
 	"gonum.org/v1/plot/vg"
 )
 
-type PlotFormat uint8
+type PlotFormat string
 
 const (
-	JPEG PlotFormat = iota
-	PDF
-	PNG
-	SVG
-	TIFF
-	_maxPlotFormat
+	JPEG               PlotFormat = "jpeg"
+	PDF                PlotFormat = "pdf"
+	PNG                PlotFormat = "png"
+	SVG                PlotFormat = "svg"
+	TIFF               PlotFormat = "tiff"
+	_unknownPlotFormat PlotFormat = "unknownFormat"
 )
 
 func PlotFormatFromPath(name string) (PlotFormat, error) {
@@ -67,22 +67,14 @@ func PlotFormatFromPath(name string) (PlotFormat, error) {
 	case ".tif", ".tiff":
 		return TIFF, nil
 	default:
-		return _maxPlotFormat, fmt.Errorf("Unrecognised image format extension: %v", ext)
+		return _unknownPlotFormat, fmt.Errorf("Unrecognised image format extension: %v", ext)
 	}
-}
-
-var plotFormatString = map[PlotFormat]string{
-	JPEG: "jpeg",
-	PDF:  "pdf",
-	PNG:  "png",
-	SVG:  "svg",
-	TIFF: "tiff",
 }
 
 // Export creates a wtype.file from the plot data. Heights and lengths can be parsed from strings i.e. 10cm.
 // If no valid height or length is specified default values of 10cm will be used but an error will also be returned.
 // If the desired filename specified does not contain a file extension, a png file will be used as the default file format.
-func Export(lab *laboratory.Laboratory, plt *plot.Plot, heightstr string, lengthstr string, format PlotFormat) (*wtype.File, error) {
+func Export(lab *laboratory.Laboratory, plt *plot.Plot, heightstr string, lengthstr string, fileName string) (*wtype.File, error) {
 
 	var errs utils.ErrorSlice
 
@@ -97,19 +89,21 @@ func Export(lab *laboratory.Laboratory, plt *plot.Plot, heightstr string, length
 		errs = append(errs, err)
 	}
 
-	plotFormat := plotFormatString[format]
-	w, err := plt.WriterTo(length, height, plotFormat)
+	plotFormat, err := PlotFormatFromPath(fileName)
+	if err != nil {
+		errs = append(errs, err)
+		return nil, errs.Pack()
+	}
+	w, err := plt.WriterTo(length, height, string(plotFormat))
 	if err != nil {
 		errs = append(errs, err)
 		return nil, errs.Pack()
 	}
 
-	var out bytes.Buffer
-	if _, err = w.WriteTo(&out); err != nil {
-		return nil, err
-	}
-
-	return lab.FileManager.WriteAll(out.Bytes())
+	return lab.FileManager.WithWriter(func(writer io.Writer) error {
+		_, err := w.WriteTo(writer)
+		return err
+	}, fileName)
 }
 
 // Plot creates a plot from float data. Multiple sets of y values may be

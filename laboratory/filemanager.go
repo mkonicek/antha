@@ -51,7 +51,7 @@ func (fm *FileManager) ReadAll(f *wtype.File) ([]byte, error) {
 	return bsCopy, nil
 }
 
-func (fm *FileManager) WithWriter(fun func(io.Writer) error) (*wtype.File, error) {
+func (fm *FileManager) WithWriter(fun func(io.Writer) error, fileName string) (*wtype.File, error) {
 	fm.lock.Lock()
 	defer fm.lock.Unlock()
 
@@ -66,13 +66,14 @@ func (fm *FileManager) WithWriter(fun func(io.Writer) error) (*wtype.File, error
 			return nil, err
 		} else {
 			f := wtype.NewFile(p)
+			f.Name = fileName
 			fm.writtenSet[f] = struct{}{}
 			return f, nil
 		}
 	}
 }
 
-func (fm *FileManager) WriteAll(bs []byte) (*wtype.File, error) {
+func (fm *FileManager) WriteAll(bs []byte, fileName string) (*wtype.File, error) {
 	fm.lock.Lock()
 	defer fm.lock.Unlock()
 
@@ -84,13 +85,14 @@ func (fm *FileManager) WriteAll(bs []byte) (*wtype.File, error) {
 		p2 := filepath.ToSlash(p)
 		fm.contents[p2] = bs
 		f := wtype.NewFile(p)
+		f.Name = fileName
 		fm.writtenSet[f] = struct{}{}
 		return f, nil
 	}
 }
 
-func (fm *FileManager) WriteString(str string) (*wtype.File, error) {
-	return fm.WriteAll([]byte(str))
+func (fm *FileManager) WriteString(str string, fileName string) (*wtype.File, error) {
+	return fm.WriteAll([]byte(str), fileName)
 }
 
 func (fm *FileManager) SummarizeWritten(logger *logger.Logger) {

@@ -12,7 +12,7 @@ import (
 )
 
 //File takes a URL, and returns the whole content of the response into a wtype.File object.
-func File(lab *laboratory.Laboratory, url string) (*wtype.File, error) {
+func File(lab *laboratory.Laboratory, url string, filename string) (*wtype.File, error) {
 	var buf bytes.Buffer
 
 	var client http.Client
@@ -29,5 +29,5 @@ func File(lab *laboratory.Laboratory, url string) (*wtype.File, error) {
 		}
 	}
 
-	return lab.FileManager.WriteAll(buf.Bytes())
+	return lab.FileManager.WriteAll(buf.Bytes(), filename)
 }

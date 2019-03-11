@@ -118,8 +118,12 @@ func ImageFormatFromPath(name string) (ImageFormat, error) {
 }
 
 // Export exports an image to file.
-func Export(lab *laboratory.Laboratory, img image.Image, format ImageFormat) (*wtype.File, error) {
+func Export(lab *laboratory.Laboratory, img image.Image, filename string) (*wtype.File, error) {
 	var imageFormat imaging.Format
+	format, err := ImageFormatFromPath(filename)
+	if err != nil {
+		return nil, err
+	}
 	switch format {
 	case PNG:
 		imageFormat = imaging.PNG
@@ -140,7 +144,7 @@ func Export(lab *laboratory.Laboratory, img image.Image, format ImageFormat) (*w
 		return nil, err
 	}
 
-	return lab.FileManager.WriteAll(buf.Bytes())
+	return lab.FileManager.WriteAll(buf.Bytes(), filename)
 }
 
 // Posterize posterizes an image. This refers to changing an image to use only

@@ -27,7 +27,6 @@ import (
 	"bytes"
 	"encoding/csv"
 	"fmt"
-	"path"
 	"strings"
 	"text/template"
 	"time"
@@ -282,14 +281,8 @@ ORIGIN
 
 	if err := tmpl.Execute(&buf, seqs); err != nil {
 		return nil, err
-	} else if file, err := lab.FileManager.WriteAll(buf.Bytes()); err != nil {
-		return nil, err
 	} else {
-		if path.Ext(filename) == "" {
-			filename = filename + ".gbk"
-		}
-		file.Name = filename
-		return file, nil
+		return lab.FileManager.WriteAll(buf.Bytes(), filename)
 	}
 }
 
@@ -308,12 +301,7 @@ func TextFile(lab *laboratory.Laboratory, filename string, lines []string) (*wty
 		}
 	}
 
-	if file, err := lab.FileManager.WriteString(sb.String()); err != nil {
-		return nil, err
-	} else {
-		file.Name = filename
-		return file, nil
-	}
+	return lab.FileManager.WriteString(sb.String(), filename)
 }
 
 // CSV exports a matrix of string data as a csv file.

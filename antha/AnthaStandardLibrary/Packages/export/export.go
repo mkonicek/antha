@@ -26,6 +26,7 @@ package export
 import (
 	"bytes"
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"text/template"
@@ -320,4 +321,12 @@ func CSV(records [][]string) ([]byte, error) {
 		return nil, fmt.Errorf("error writing csv: %s", err.Error())
 	}
 	return buf.Bytes(), nil
+}
+
+func JSON(lab *laboratory.Laboratory, data interface{}, filename string) (*wtype.File, error) {
+	if bs, err := json.Marshal(data); err != nil {
+		return nil, err
+	} else {
+		return lab.FileManager.WriteAll(bs, filename)
+	}
 }

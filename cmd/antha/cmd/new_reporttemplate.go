@@ -83,17 +83,17 @@ func readme(cmd *cobra.Command, args []string) error {
 		}
 		fmt.Println("github.com/Synthace/elements", synthaceElementsCommit)
 
-		pipetmaxCommit, err := gitCommit(filepath.Join(gopath(), "github.com/Synthace/PipetMaxDriver"))
+		pipetmaxCommit, err := gitCommit(filepath.Join(gopath(), "github.com/Synthace/instruction-plugins/PipetMax"))
 		if err != nil {
-			pipetmaxCommit = fmt.Sprintln("error getting git commit for Synthace/PipetMaxDriver:", err.Error())
+			pipetmaxCommit = fmt.Sprintln("error getting git commit for Synthace/instruction-plugins/PipetMax:", err.Error())
 		}
-		fmt.Println("github.com/Synthace/PipetMaxDriver", pipetmaxCommit)
+		fmt.Println("github.com/Synthace/instruction-plugins/PipetMax", pipetmaxCommit)
 
-		cybioCommit, err := gitCommit(filepath.Join(gopath(), "github.com/Synthace/CybioXMLDriver"))
+		cybioCommit, err := gitCommit(filepath.Join(gopath(), "github.com/Synthace/instruction-plugins/CyBio"))
 		if err != nil {
-			cybioCommit = fmt.Sprintln("error getting git commit for Synthace/CybioXMLDriver:", err.Error())
+			cybioCommit = fmt.Sprintln("error getting git commit for Synthace/instruction-plugins/CyBio:", err.Error())
 		}
-		fmt.Println("github.com/Synthace/CybioXMLDriver", cybioCommit)
+		fmt.Println("github.com/Synthace/instruction-plugins/CyBio", cybioCommit)
 
 		otherDependencies := strings.Replace(synthaceElements, "***COMMIT****", synthaceElementsCommit, 1)
 
@@ -175,7 +175,7 @@ cd -
 4. (A) Pipetmaxdriver
 
 {{.TripleQuote}}bash
-cd $GOPATH/src/github.com/Synthace/PipetMaxDriver
+cd $GOPATH/src/github.com/Synthace/instruction-plugins/PipetMax
 git fetch
 git checkout {{.PIPETMAXDRIVERCOMMIT}}
 {{.TripleQuote}}
@@ -185,7 +185,7 @@ Or
 4. (B) CybioDriver
 
 {{.TripleQuote}}bash
-cd $GOPATH/src/github.com/Synthace/CybioXMLDriver
+cd $GOPATH/src/github.com/Synthace/instruction-plugins/CyBio
 git fetch
 git checkout {{.CYBIODRIVERCOMMIT}}
 cd -
@@ -215,7 +215,7 @@ PipetMax:
 
 
 {{.TripleQuote}}bash
-antharun --driver  go://github.com/Synthace/PipetMaxDriver/server
+antharun --driver  go://github.com/Synthace/instruction-plugins/PipetMax
 {{.TripleQuote}}
 
 
@@ -223,7 +223,7 @@ Cybio:
 
 
 {{.TripleQuote}}bash
-cd $GOPATH/src/github.com/Synthace/CybioXMLDriver/server
+cd $GOPATH/src/github.com/Synthace/instruction-plugins/CyBio
 go build ./...
 ./server -machine felix
 {{.TripleQuote}}

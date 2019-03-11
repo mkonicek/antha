@@ -1,6 +1,6 @@
 #! /bin/bash
 
-drivers=("go://github.com/antha-lang/manualLiquidHandler/server" "go://github.com/Synthace/PipetMaxDriver/server" "go://github.com/Synthace/CyBioXMLDriver/server")
+drivers=("go://github.com/antha-lang/manualLiquidHandler/server" "go://github.com/Synthace/instruction-plugins/PipetMax" "go://github.com/Synthace/instruction-plugins/CyBio")
 #drivers=("manual" "50051")
 
 for driver in ${drivers[@]}; do

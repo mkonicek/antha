@@ -102,6 +102,91 @@ func (c *Liquid) HasSubComponent(subComponentName string) bool {
 	return hasSubComponent(c, subComponentName)
 }
 
+const liquidPurposeKey = "LiquidPurpose"
+
+type LiquidPurpose string
+
+const (
+	NegativeControl LiquidPurpose = "NegativeControl"
+	PositiveControl LiquidPurpose = "PositiveControl"
+	Standard        LiquidPurpose = "Standard"
+	Diluent         LiquidPurpose = "Diluent"
+	TestSample      LiquidPurpose = "TestSample"
+)
+
+func (c *Liquid) SetLiquidPurpose(purpose LiquidPurpose) {
+	c.Extra[liquidPurposeKey] = purpose
+}
+
+func (c *Liquid) SetAsNegativeControl() {
+	c.SetLiquidPurpose(NegativeControl)
+}
+
+func (c *Liquid) SetAsPositiveControl() {
+	c.SetLiquidPurpose(PositiveControl)
+}
+
+func (c *Liquid) SetAsStandard() {
+	c.SetLiquidPurpose(Standard)
+}
+
+func (c *Liquid) SetAsDiluent() {
+	c.SetLiquidPurpose(Diluent)
+}
+
+func (c *Liquid) SetAsTestSample() {
+	c.SetLiquidPurpose(TestSample)
+}
+
+func (c *Liquid) GetLiquidPurpose() LiquidPurpose {
+	liquidPurpose, found := c.Extra[liquidPurposeKey]
+	if !found {
+		return ""
+	}
+
+	return liquidPurpose.(LiquidPurpose)
+}
+
+func (c *Liquid) IsNegativeControl() bool {
+	liquidPurpose, found := c.Extra[liquidPurposeKey]
+	if !found {
+		return false
+	}
+	return liquidPurpose.(LiquidPurpose) == NegativeControl
+}
+
+func (c *Liquid) IsPositiveControl() bool {
+	liquidPurpose, found := c.Extra[liquidPurposeKey]
+	if !found {
+		return false
+	}
+	return liquidPurpose.(LiquidPurpose) == PositiveControl
+}
+
+func (c *Liquid) IsStandard() bool {
+	liquidPurpose, found := c.Extra[liquidPurposeKey]
+	if !found {
+		return false
+	}
+	return liquidPurpose.(LiquidPurpose) == Standard
+}
+
+func (c *Liquid) IsDiluent() bool {
+	liquidPurpose, found := c.Extra[liquidPurposeKey]
+	if !found {
+		return false
+	}
+	return liquidPurpose.(LiquidPurpose) == Diluent
+}
+
+func (c *Liquid) IsTestSample() bool {
+	liquidPurpose, found := c.Extra[liquidPurposeKey]
+	if !found {
+		return false
+	}
+	return liquidPurpose.(LiquidPurpose) == TestSample
+}
+
 func (cmp *Liquid) Matches(cmp2 *Liquid) bool {
 	// request for a specific component
 	if cmp.IsInstance() {

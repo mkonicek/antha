@@ -133,7 +133,7 @@ func addRiser(idGen *id.IDGenerator, plate *wtype.Plate, riser device) (plates [
 		riserheight = riserheight + plateRiserSpecificOffset(plate, riser)
 
 		newplate.WellZStart = plate.WellZStart + riserheight
-		newplate.Bounds.SetSize(plate.GetSize().Add(wtype.Coordinates{X: 0.0, Y: 0.0, Z: riserheight}))
+		newplate.Bounds.SetSize(plate.GetSize().Add(wtype.Coordinates3D{X: 0.0, Y: 0.0, Z: riserheight}))
 		newname := plate.Type + wtype.PlateTypeName("_"+risername)
 		newplate.Type = newname
 		if riser.GetConstraints() != nil {
@@ -182,7 +182,7 @@ func makeBasicPlates(idGen *id.IDGenerator) (plates []*wtype.Plate) {
 	plate := wtype.NewLHPlate(idGen, "DSW96", "Unknown", 8, 12, makePlateCoords(44.1), deepsquarewell, 9, 9, 0.0, 0.0, valueformaxheadtonotintoDSWplatewithp20tips)
 	plates = append(plates, plate)
 
-	// Nunc™2.0mL DeepWell™ Plates 95040452
+	// Nunc?2.0mL DeepWell? Plates 95040452
 	nunc96deepwellshp := wtype.NewShape(wtype.BoxShape, "mm", 8.5, 8.5, 41.5)
 	nunc96deepwell := wtype.NewLHWell(idGen, "ul", 2000, 420, nunc96deepwellshp, wtype.UWellBottom, 8.2, 8.2, 41.3, 2.5, "mm")
 	plate = wtype.NewLHPlate(idGen, "Nunc96DeepWell", "Unknown", 8, 12, makePlateCoords(43.6), nunc96deepwell, 9, 9, -1.0, 0.0, 6.5)
@@ -724,9 +724,9 @@ func makePCRPlateWell(idGen *id.IDGenerator) *wtype.LHWell {
 	return pcrplatewell
 }
 
-func makePlateCoords(height float64) wtype.Coordinates {
+func makePlateCoords(height float64) wtype.Coordinates3D {
 	//standard X/Y size for 96 well plates
-	return wtype.Coordinates{X: 127.76, Y: 85.48, Z: height}
+	return wtype.Coordinates3D{X: 127.76, Y: 85.48, Z: height}
 }
 
 func makePCRPlate(idGen *id.IDGenerator) *wtype.Plate {
@@ -903,7 +903,7 @@ func makeHighResplateforPicking(idGen *id.IDGenerator) *wtype.Plate {
 	return plate
 }
 
-// Nunc™ 1.0 ml DeepWell™ Plates with Shared-Wall Technology Cat Num: 260251
+// Nunc? 1.0 ml DeepWell? Plates with Shared-Wall Technology Cat Num: 260251
 // Source of dimensions: https://www.thermofisher.com/order/catalog/product/260251
 func make96DeepWellLowVolumePlate(idGen *id.IDGenerator) *wtype.Plate {
 
@@ -1049,7 +1049,7 @@ func make384wellplateAppliedBiosystems(idGen *id.IDGenerator) *wtype.Plate {
 }
 
 // Pall, Catalogue # 5076.
-// AcroPrep™ 384-well Filter Plates, 100 µL
+// AcroPrep? 384-well Filter Plates, 100μL
 // AcroPrep 384 x 100ul-well collection plate, without top filter plate.
 // Source of dimensions: https://shop.pall.com/us/en/laboratory/dna-rna-purification/plant-genomic-dna-purification/acroprep-384-well-filter-plates-100-l-zidgri78lbr
 func makeAcroPrep384NoFilter(idGen *id.IDGenerator) *wtype.Plate {
@@ -1098,7 +1098,7 @@ func makeAcroPrep384NoFilter(idGen *id.IDGenerator) *wtype.Plate {
 }
 
 // Pall, Catalogue # 5076.
-// AcroPrep™ 384-well Filter Plates, 100 µL
+// AcroPrep? 384-well Filter Plates, 100μL
 // AcroPrep 384-well protein filter plate--omega membrane,
 // long tip--stacked on top of a 384 x 100ul-well collection plate.
 // Source of dimensions: https://shop.pall.com/us/en/laboratory/dna-rna-purification/plant-genomic-dna-purification/acroprep-384-well-filter-plates-100-l-zidgri78lbr

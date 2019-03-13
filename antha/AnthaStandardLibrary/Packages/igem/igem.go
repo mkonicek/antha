@@ -143,39 +143,19 @@ func MakeFastaURL(partname string) (Urlstring string) {
 	return Urlstring
 }
 
-func MakeXMLURL(partnames []string) (Urlstring string) {
-	// see comment above for structure
-	//<domain> = substance | compound | assay | <other inputs>
+func FetchPartsXML(parts []string) (parsedxml Rsbpml) {
 
-	parts := make([]string, 0)
-	parts = append(parts, "part")
-	parts = append(parts, partnames...)
-	partconcat := strings.Join(parts, ".")
-
-	level1 := "http://parts.igem.org"
-
-	array := make([]string, 0)
-	array = append(array, level1, "xml", partconcat)
-
-	Urlstring = strings.Join(array, "/")
-
-	return Urlstring
-}
-
-func SlurpOutput(Urlstring string) (output []byte) {
-	fmt.Println("Slurping...", Urlstring)
-
-	res, err := http.Get(Urlstring)
+	res, err := http.Get(fmt.Sprintf("http://parts.igem.org/xml/part.%s", strings.Join(parts, ".")))
 	if err != nil {
 		panic(err)
 	}
 
-	output, err = ioutil.ReadAll(res.Body) // this is a slow step!
+	output, err := ioutil.ReadAll(res.Body) // this is a slow step!
 	if err != nil {
 		panic(err)
 	}
 
-	return output
+	return ParseOutput(output)
 }
 
 func makeRegistryfile() ([]byte, error) {
@@ -350,23 +330,13 @@ func ParseOutput(xmldata []byte) (parsedxml Rsbpml) {
 	return parsedxml
 }
 
-func Partpropertiesmini(parts []string) (parsedxml Rsbpml) {
-	url := MakeXMLURL(parts)
-
-	urloutput := SlurpOutput(url)
-
-	parsedxml = ParseOutput(urloutput)
-
-	return parsedxml
-}
-
 func LookUp(parts []string) (parsedxml Rsbpml) {
 	fmt.Println("number of parts to find in registry", len(parts))
 	if len(parts) > 14 {
 
 		partslice := parts[0:14]
 
-		parsedxml = Partpropertiesmini(partslice)
+		parsedxml = FetchPartsXML(partslice)
 
 		newparsedxml := make([]Part, 0)
 		newparsedxml = append(newparsedxml, parsedxml.Partlist[0].Parts...)
@@ -376,13 +346,13 @@ func LookUp(parts []string) (parsedxml Rsbpml) {
 		fmt.Println("parts left = ", partsleft)
 		for i := 10; i < len(parts); i = i + 14 {
 			partslice = parts[i : i+14]
-			parsedxml = Partpropertiesmini(partslice)
+			parsedxml = FetchPartsXML(partslice)
 			newparsedxml = append(newparsedxml, parsedxml.Partlist[0].Parts...)
 			var parsedxml Rsbpml
 			partsleft = partsleft - len(partslice)
 			if partsleft < 14 {
 				partslice = parts[len(parts)-partsleft:]
-				parsedxml = Partpropertiesmini(partslice)
+				parsedxml = FetchPartsXML(partslice)
 
 				for _, part := range parsedxml.Partlist[0].Parts {
 					newparsedxml = append(newparsedxml, part)
@@ -396,7 +366,7 @@ func LookUp(parts []string) (parsedxml Rsbpml) {
 		}
 	} else {
 
-		parsedxml = Partpropertiesmini(parts)
+		parsedxml = FetchPartsXML(parts)
 	}
 	return parsedxml
 }
@@ -478,9 +448,7 @@ func GetSequence(partname string) (sequence string) {
 
 	parts := make([]string, 0)
 	parts = append(parts, partname)
-	url := MakeXMLURL(parts)
-	urloutput := SlurpOutput(url)
-	parsedxml := ParseOutput(urloutput)
+	parsedxml := FetchPartsXML(parts)
 	sequence = parsedxml.Partlist[0].Parts[0].Sequencelist[0].Seq_data // [0].Seq_data
 
 	sequence = strings.ToUpper(strings.Replace(sequence, "\n", "", -1))
@@ -492,9 +460,7 @@ func GetType(partname string) (parttype string) {
 
 	parts := make([]string, 0)
 	parts = append(parts, partname)
-	url := MakeXMLURL(parts)
-	urloutput := SlurpOutput(url)
-	parsedxml := ParseOutput(urloutput)
+	parsedxml := FetchPartsXML(parts)
 
 	parttype = parsedxml.Partlist[0].Parts[0].Part_type // [0].Seq_data
 
@@ -505,9 +471,7 @@ func GetCategories(partname string) (categories Categories) {
 
 	parts := make([]string, 0)
 	parts = append(parts, partname)
-	url := MakeXMLURL(parts)
-	urloutput := SlurpOutput(url)
-	parsedxml := ParseOutput(urloutput)
+	parsedxml := FetchPartsXML(parts)
 
 	categories = parsedxml.Partlist[0].Parts[0].Categories // [0].Seq_data
 
@@ -518,9 +482,7 @@ func GetResults(partname string) (results string) {
 
 	parts := make([]string, 0)
 	parts = append(parts, partname)
-	url := MakeXMLURL(parts)
-	urloutput := SlurpOutput(url)
-	parsedxml := ParseOutput(urloutput)
+	parsedxml := FetchPartsXML(parts)
 
 	results = parsedxml.Partlist[0].Parts[0].Part_results // [0].Seq_data
 
@@ -545,9 +507,7 @@ func GetRating(partname string) (rating string) {
 
 	parts := make([]string, 0)
 	parts = append(parts, partname)
-	url := MakeXMLURL(parts)
-	urloutput := SlurpOutput(url)
-	parsedxml := ParseOutput(urloutput)
+	parsedxml := FetchPartsXML(parts)
 
 	rating = parsedxml.Partlist[0].Parts[0].Part_rating // [0].Seq_data
 
@@ -558,10 +518,8 @@ func GetDescription(partname string) (desc string) {
 
 	parts := make([]string, 0)
 	parts = append(parts, partname)
-	url := MakeXMLURL(parts)
-	urloutput := SlurpOutput(url)
-	parsedxml := ParseOutput(urloutput)
 
+	parsedxml := FetchPartsXML(parts)
 	desc = parsedxml.Partlist[0].Parts[0].Part_short_desc // [0].Seq_data
 
 	return desc
@@ -584,9 +542,7 @@ func GetPart(partname string) (partproperties Part) {
 
 	parts := make([]string, 0)
 	parts = append(parts, partname)
-	url := MakeXMLURL(parts)
-	urloutput := SlurpOutput(url)
-	parsedxml := ParseOutput(urloutput)
+	parsedxml := FetchPartsXML(parts)
 
 	partproperties = parsedxml.Partlist[0].Parts[0] // [0].Seq_data
 	return partproperties

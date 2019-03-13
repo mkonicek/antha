@@ -25,7 +25,9 @@ type CategoryCondition struct {
 }
 
 func (self *CategoryCondition) ApplyTo(rule *wtype.LHPolicyRule) {
-	rule.AddCategoryConditionOn(self.Attribute, self.Value)
+	if err := rule.AddCategoryConditionOn(self.Attribute, self.Value); err != nil {
+		panic(err)
+	}
 }
 
 type NumericCondition struct { //nolint
@@ -35,7 +37,9 @@ type NumericCondition struct { //nolint
 }
 
 func (self *NumericCondition) ApplyTo(rule *wtype.LHPolicyRule) {
-	rule.AddNumericConditionOn(self.Attribute, self.Low, self.High)
+	if err := rule.AddNumericConditionOn(self.Attribute, self.Low, self.High); err != nil {
+		panic(err)
+	}
 }
 
 type Rule struct {
@@ -142,10 +146,11 @@ func (self *PolicyTest) run(t *testing.T) {
 	}
 
 	if self.Error != "" {
-		t.Errorf("error not generated: expected \"%s\"", self.Error)
-	} else if ris, err := tree.Leaves(); err != nil {
-		t.Error(err)
-	} else if g := stringInstructions(ris); self.ExpectedInstructions != g {
+		t.Fatalf("error not generated: expected \"%s\"", self.Error)
+	}
+
+	ris := tree.Leaves()
+	if g := stringInstructions(ris); self.ExpectedInstructions != g {
 		t.Errorf("instruction types don't match\n  g: %s\n  e: %s", g, self.ExpectedInstructions)
 	} else {
 		for _, a := range self.Assertions {

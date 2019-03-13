@@ -26,6 +26,7 @@ package wtype
 import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/laboratory/effects/id"
+	"github.com/pkg/errors"
 )
 
 type Named interface {
@@ -81,15 +82,15 @@ func ClassOf(o interface{}) string {
 //of objects that exist within a liquid handler
 type LHObject interface {
 	//GetPosition get the absolute position of the object (mm)
-	GetPosition() Coordinates
+	GetPosition() Coordinates3D
 	//GetSize get the size of the object (mm)
-	GetSize() Coordinates
+	GetSize() Coordinates3D
 	//GetBoxIntersections get a list of LHObjects (can be this object or children) which intersect with the BBox
 	GetBoxIntersections(BBox) []LHObject
 	//GetPointIntersections get a list of LHObjects (can be this object or children) which intersect with the given point
-	GetPointIntersections(Coordinates) []LHObject
+	GetPointIntersections(Coordinates3D) []LHObject
 	//SetOffset set the offset of the object relative to its parent (global if parent is nil)
-	SetOffset(Coordinates) error
+	SetOffset(Coordinates3D) error
 	//SetParent Store the offset of the object
 	SetParent(LHObject) error
 	//ClearParent Clear the parent of the object
@@ -118,11 +119,11 @@ func GetObjectRoot(o LHObject) LHObject {
 }
 
 //get the origin for the objects coordinate system
-func OriginOf(o LHObject) Coordinates {
+func OriginOf(o LHObject) Coordinates3D {
 	if p := o.GetParent(); p != nil {
 		return p.GetPosition()
 	}
-	return Coordinates{}
+	return Coordinates3D{}
 }
 
 //LHParent An LHObject that can hold other LHObjects
@@ -136,27 +137,47 @@ type LHParent interface {
 	//Accepts test if slot can accept a certain class
 	Accepts(string, LHObject) bool
 	//GetSlotSize
-	GetSlotSize(string) Coordinates
+	GetSlotSize(string) Coordinates2D
 }
 
-//WellReference used for specifying position within a well
+// WellReference used for specifying position within a well particularly for
+// signify the intended locations for tip movements. Offsets are taken relative to these
 type WellReference int
 
 const (
-	BottomReference WellReference = iota //0
-	TopReference                         //1
-	LiquidReference                      //2
+	UnknownReference WellReference = iota - 1 // -1
+	BottomReference                           //0
+	TopReference                              //1
+	LiquidReference                           //2
 )
 
+// NewWellReference construct a WellReference from its descriptive name.
+// returns UnkonwnReference and an error if the reference is not recognised
+func NewWellReference(s string) (WellReference, error) {
+	names := map[string]WellReference{
+		"well_bottom":  BottomReference,
+		"well_top":     TopReference,
+		"liquid_level": LiquidReference,
+	}
+
+	if r, ok := names[s]; ok {
+		return r, nil
+	}
+	return UnknownReference, errors.Errorf(`unknown well reference "%s"`, s)
+}
+
+// String returns a descriptive name for the reference which is interpreted by the front end
 func (self WellReference) String() string {
-	return []string{"BottomReference", "TopReference", "LiquidReference"}[self]
+	names := []string{"well_bottom", "well_top", "liquid_level"}
+	if int(self) >= 0 && int(self) < len(names) {
+		return names[self]
+	}
+	return "unknown_reference"
 }
 
 func (self WellReference) AsInt() int {
-	return []int{0, 1, 2}[self]
+	return int(self)
 }
-
-var WellReferenceNames []string = []string{"bottom", "top", "liquid"}
 
 //Addressable unifies the interface to objects which have
 //sub-components that can be addressed by WellCoords (e.g. "A1")
@@ -178,21 +199,21 @@ type Addressable interface {
 	//of the center of the well/tip to the given coordinate
 	//(this leaves the caller to ascertain whether any mis-alignment
 	//is acceptable)
-	CoordsToWellCoords(*id.IDGenerator, Coordinates) (WellCoords, Coordinates)
+	CoordsToWellCoords(*id.IDGenerator, Coordinates3D) (WellCoords, Coordinates3D)
 	//WellCoordsToCoords Get the physical location of an addressable
 	//position relative to the object origin.
 	//WellCoords should be valid in the object, or the bool will
 	//return false and Coordinates are undefined.
 	//WellReference is the position within a well.
 	//Requesting LiquidReference on a LHTipbox will return false
-	WellCoordsToCoords(*id.IDGenerator, WellCoords, WellReference) (Coordinates, bool)
+	WellCoordsToCoords(*id.IDGenerator, WellCoords, WellReference) (Coordinates3D, bool)
 }
 
 type Targetted interface {
 	//GetTargetOffset Gets the well target location for the numbered channel of the named adaptor
-	GetTargetOffset(string, int) Coordinates
+	GetTargetOffset(string, int) Coordinates3D
 	//GetTargets return all the defined targets for the named adaptor
-	GetTargets(string) []Coordinates
+	GetTargets(string) []Coordinates3D
 }
 
 //LHContainer a tip or a well or something that holds liquids

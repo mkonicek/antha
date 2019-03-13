@@ -1,12 +1,10 @@
 language: go
 go:
-- 1.11
+- 1.11.5
 before_install:
 - sudo apt-get update -qq
 - sudo apt-get install -y libglpk-dev protobuf-compiler
-- go get gopkg.in/alecthomas/gometalinter.v2
-- ln -s `which gometalinter.v2` $GOPATH/bin/gometalinter
-- gometalinter --install
+- curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.15.0
 - go get -t ./...
 script: make lint
 notifications:

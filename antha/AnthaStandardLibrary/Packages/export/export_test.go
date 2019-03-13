@@ -103,10 +103,10 @@ func TestGenbankSerial(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	if strings.ToUpper(got.Name()) != strings.ToUpper(want.Name()) {
+	if !strings.EqualFold(got.Name(), want.Name()) {
 		t.Errorf("Name: got %s, want %s\n", got.Name(), want.Name())
 	}
-	if strings.ToUpper(got.Sequence()) != strings.ToUpper(want.Sequence()) {
+	if !strings.EqualFold(got.Sequence(), want.Sequence()) {
 		t.Errorf("Sequence: got %s, want %s\n", got.Sequence(), want.Sequence())
 	}
 	if len(got.Features) != len(want.Features) {

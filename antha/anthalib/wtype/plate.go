@@ -590,7 +590,7 @@ func (lhp *Plate) NextEmptyWell(idGen *id.IDGenerator, it AddressIterator) WellC
 	return ZeroWellCoords()
 }
 
-func NewLHPlate(idGen *id.IDGenerator, platetype PlateTypeName, mfr string, nrows, ncols int, size Coordinates, welltype *LHWell, wellXOffset, wellYOffset, wellXStart, wellYStart, wellZStart float64) *Plate {
+func NewLHPlate(idGen *id.IDGenerator, platetype PlateTypeName, mfr string, nrows, ncols int, size Coordinates3D, welltype *LHWell, wellXOffset, wellYOffset, wellXStart, wellYStart, wellZStart float64) *Plate {
 	var lhp Plate
 	lhp.Type = platetype
 	//lhp.ID = "plate-" + GetUUID()
@@ -639,7 +639,7 @@ func NewLHPlate(idGen *id.IDGenerator, platetype PlateTypeName, mfr string, nrow
 			arr[i][j].Plate = &lhp
 			arr[i][j].Crds = crds
 			arr[i][j].WContents.Loc = lhp.ID + ":" + crds.FormatA1()
-			arr[i][j].SetOffset(Coordinates{ //nolint
+			arr[i][j].SetOffset(Coordinates3D{ //nolint
 				wellXStart + float64(j)*wellXOffset - xOff,
 				wellYStart + float64(i)*wellYOffset - yOff,
 				wellZStart,
@@ -662,7 +662,7 @@ func LHPlateFromType(idGen *id.IDGenerator, pt *PlateType) *LHPlate {
 
 	plate := NewLHPlate(idGen, pt.Name, pt.Manufacturer, pt.ColSize, pt.RowSize,
 		//standard X/Y size for 96 well plates
-		Coordinates{X: 127.76, Y: 85.48, Z: pt.Height},
+		Coordinates3D{X: 127.76, Y: 85.48, Z: pt.Height},
 		newWelltype, pt.WellXOffset, pt.WellYOffset, pt.WellXStart, pt.WellYStart, pt.WellZStart)
 
 	plate.Welltype.Extra = pt.Extra
@@ -937,28 +937,28 @@ func (p *Plate) GetAllConstraints() map[string][]string {
 //@implement LHObject
 //##############################################
 
-func (self *Plate) GetPosition() Coordinates {
+func (self *Plate) GetPosition() Coordinates3D {
 	if self.parent != nil {
 		return self.parent.GetPosition().Add(self.Bounds.GetPosition())
 	}
 	return self.Bounds.GetPosition()
 }
 
-func (self *Plate) GetSize() Coordinates {
+func (self *Plate) GetSize() Coordinates3D {
 	return self.Bounds.GetSize()
 }
 
-func (self *Plate) GetWellOffset() Coordinates {
-	return Coordinates{self.WellXStart, self.WellYStart, self.WellZStart}
+func (self *Plate) GetWellOffset() Coordinates3D {
+	return Coordinates3D{self.WellXStart, self.WellYStart, self.WellZStart}
 }
 
-func (self *Plate) GetWellCorner() Coordinates {
+func (self *Plate) GetWellCorner() Coordinates3D {
 	size := self.Welltype.GetSize()
-	return Coordinates{self.WellXStart - 0.5*size.X, self.WellYStart - 0.5*size.Y, self.WellZStart}
+	return Coordinates3D{self.WellXStart - 0.5*size.X, self.WellYStart - 0.5*size.Y, self.WellZStart}
 }
 
-func (self *Plate) GetWellSize() Coordinates {
-	return Coordinates{
+func (self *Plate) GetWellSize() Coordinates3D {
+	return Coordinates3D{
 		self.WellXOffset*float64(self.NCols()-1) + self.Welltype.GetSize().X,
 		self.WellYOffset*float64(self.NRows()-1) + self.Welltype.GetSize().Y,
 		self.Welltype.GetSize().Z,
@@ -992,7 +992,7 @@ func (self *Plate) GetBoxIntersections(box BBox) []LHObject {
 	return ret
 }
 
-func (self *Plate) GetPointIntersections(point Coordinates) []LHObject {
+func (self *Plate) GetPointIntersections(point Coordinates3D) []LHObject {
 	//relative
 	point = point.Subtract(OriginOf(self))
 	ret := []LHObject{}
@@ -1011,7 +1011,7 @@ func (self *Plate) GetPointIntersections(point Coordinates) []LHObject {
 	return ret
 }
 
-func (self *Plate) SetOffset(o Coordinates) error {
+func (self *Plate) SetOffset(o Coordinates3D) error {
 	self.Bounds.SetPosition(o)
 	return nil
 }
@@ -1085,7 +1085,7 @@ func (self *Plate) GetChildByAddress(c WellCoords) LHObject {
 	return self.Cols[c.X][c.Y]
 }
 
-func (self *Plate) CoordsToWellCoords(idGen *id.IDGenerator, r Coordinates) (WellCoords, Coordinates) {
+func (self *Plate) CoordsToWellCoords(idGen *id.IDGenerator, r Coordinates3D) (WellCoords, Coordinates3D) {
 	rel := r.Subtract(self.GetPosition())
 	wellSize := self.Welltype.GetSize()
 	wc := WellCoords{
@@ -1108,9 +1108,9 @@ func (self *Plate) CoordsToWellCoords(idGen *id.IDGenerator, r Coordinates) (Wel
 	return wc, r.Subtract(r2)
 }
 
-func (self *Plate) WellCoordsToCoords(idGen *id.IDGenerator, wc WellCoords, r WellReference) (Coordinates, bool) {
+func (self *Plate) WellCoordsToCoords(idGen *id.IDGenerator, wc WellCoords, r WellReference) (Coordinates3D, bool) {
 	if !self.AddressExists(wc) {
-		return Coordinates{}, false
+		return Coordinates3D{}, false
 	}
 
 	child := self.GetChildByAddress(wc).(*LHWell)
@@ -1131,7 +1131,7 @@ func (self *Plate) WellCoordsToCoords(idGen *id.IDGenerator, wc WellCoords, r We
 
 	center := child.GetPosition().Add(child.GetSize().Multiply(0.5))
 
-	return Coordinates{center.X, center.Y, z}, true
+	return Coordinates3D{center.X, center.Y, z}, true
 }
 
 func (p *Plate) ResetID(newID string) {
@@ -1401,16 +1401,16 @@ func (p *Plate) ColVol() wunit.Volume {
 }
 
 //GetTargetOffset get the offset for addressing a well with the named adaptor and channel
-func (p *Plate) GetTargetOffset(adaptorName string, channel int) Coordinates {
+func (p *Plate) GetTargetOffset(adaptorName string, channel int) Coordinates3D {
 	targets := p.Welltype.GetWellTargets(adaptorName)
 	if channel < 0 || channel >= len(targets) {
-		return Coordinates{}
+		return Coordinates3D{}
 	}
 	return targets[channel]
 }
 
 //GetTargets return all the defined targets for the named adaptor
-func (p *Plate) GetTargets(adaptorName string) []Coordinates {
+func (p *Plate) GetTargets(adaptorName string) []Coordinates3D {
 	return p.Welltype.GetWellTargets(adaptorName)
 }
 

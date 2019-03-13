@@ -66,8 +66,10 @@ func hasMultiChannelBlock(labEffects *effects.LaboratoryEffects, tfrs []*Transfe
 		}
 
 		for _, ins := range instrx {
-			if ins.Type() == MCB {
-				return true, nil
+			if mcb, ok := ins.(*ChannelBlockInstruction); ok {
+				if mcb.MaxMulti() > 1 {
+					return true, nil
+				}
 			}
 		}
 	}
@@ -75,41 +77,38 @@ func hasMultiChannelBlock(labEffects *effects.LaboratoryEffects, tfrs []*Transfe
 	return false, nil
 }
 
-func convertInstructions(labEffects *effects.LaboratoryEffects, inssIn LHIVector, robot *LHProperties, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool) ([]*TransferInstruction, error) {
-	insOut := make([]*TransferInstruction, 0, 1)
-
-	// TODO --> iterator?
-	var horiz bool
-
-	var l int
-
-	if multi == 1 {
-		horiz = true
-		l = len(inssIn)
-	} else {
-		horiz = false
-		l = inssIn.MaxLen()
-	}
-
-	//make lists of components to attempt to transfer simultaneously
+func singlemakeComponentSets(labEffects *effects.LaboratoryEffects, inssIn LHIVector) ([][]*wtype.Liquid, []LHIVector) {
 	var componentsToMove [][]*wtype.Liquid
 	var instructionsToUse []LHIVector
-	for i := 0; i < l; i++ {
-		var inssToUse LHIVector
-		var cmps []*wtype.Liquid
-		if horiz {
-			if inssIn[i] == nil {
-				continue
-			}
-			cmps = inssIn[i].ComponentsMoving(labEffects.IDGenerator)
-			inssToUse = make(LHIVector, len(cmps))
-			for j := 0; j < len(cmps); j++ {
-				inssToUse[j] = inssIn[i]
-			}
-		} else {
-			cmps = inssIn.CompsAt(labEffects.IDGenerator, i)
-			inssToUse = inssIn
+	//make lists of components to attempt to transfer simultaneously
+	for i := 0; i < len(inssIn); i++ {
+		if inssIn[i] == nil {
+			continue
 		}
+
+		cmps := inssIn[i].ComponentsMoving(labEffects.IDGenerator)
+		for _, cmp := range cmps {
+			if cmp != nil {
+				if cmp.CName == "" {
+					panic("COMPONENTS MUST HAVE NAMES")
+				}
+				componentsToMove = append(componentsToMove, []*wtype.Liquid{cmp})
+				instructionsToUse = append(instructionsToUse, LHIVector{inssIn[i]})
+			}
+		}
+	}
+
+	return componentsToMove, instructionsToUse
+}
+
+func multimakeComponentSets(labEffects *effects.LaboratoryEffects, inssIn LHIVector) ([][]*wtype.Liquid, []LHIVector) {
+	var componentsToMove [][]*wtype.Liquid
+	var instructionsToUse []LHIVector
+	//make lists of components to attempt to transfer simultaneously
+	for i := 0; i < inssIn.MaxLen(); i++ {
+		var inssToUse LHIVector
+		cmps := inssIn.CompsAt(labEffects.IDGenerator, i)
+		inssToUse = inssIn
 		lenToMake := 0
 
 		for _, c := range cmps {
@@ -130,6 +129,31 @@ func convertInstructions(labEffects *effects.LaboratoryEffects, inssIn LHIVector
 		instructionsToUse = append(instructionsToUse, inssToUse)
 	}
 
+	return componentsToMove, instructionsToUse
+
+}
+
+// this function takes a set of instructions and, depending on whether parallelisation
+// is chosen, either groups components into simultaneously movable chunks or splits
+// the components up, to be found one at a time. The dichotomy here is necessary to
+// avoid this part overriding mix ordering requested by the user since the source matching
+// routine favours higher-volume components over lower ones, so that if all components
+// for single-channeling are fed in as a block they will actually be moved from highest
+// to lowest volume rather than preserving order.
+func makeComponentSets(labEffects *effects.LaboratoryEffects, inssIn LHIVector, multi int) ([][]*wtype.Liquid, []LHIVector) {
+	if multi == 1 {
+		return singlemakeComponentSets(labEffects, inssIn)
+	} else {
+		return multimakeComponentSets(labEffects, inssIn)
+	}
+
+}
+
+func convertInstructions(labEffects *effects.LaboratoryEffects, inssIn LHIVector, robot *LHProperties, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool) ([]*TransferInstruction, error) {
+	insOut := make([]*TransferInstruction, 0, 1)
+
+	componentsToMove, instructionsToUse := makeComponentSets(labEffects, inssIn, multi)
+
 	orientation := wtype.LHVChannel
 	independent := false
 
@@ -139,7 +163,6 @@ func convertInstructions(labEffects *effects.LaboratoryEffects, inssIn LHIVector
 	}
 
 	for i := 0; i < len(componentsToMove); i++ {
-
 		parallelTransfers, err := robot.GetComponents(
 			labEffects.IDGenerator,
 			GetComponentsOptions{

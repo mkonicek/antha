@@ -44,7 +44,7 @@ type LHTipbox struct {
 	Tiptype    *LHTip
 	AsWell     *LHWell
 	NTips      int
-	Tips       [][]*LHTip
+	Tips       [][]*LHTip // Tips[row][col]
 	TipXOffset float64
 	TipYOffset float64
 	TipXStart  float64
@@ -55,7 +55,7 @@ type LHTipbox struct {
 	parent LHObject `gotopb:"-"`
 }
 
-func NewLHTipbox(idGen *id.IDGenerator, nrows, ncols int, size Coordinates, manufacturer, boxtype string, tiptype *LHTip, well *LHWell, tipxoffset, tipyoffset, tipxstart, tipystart, tipzstart float64) *LHTipbox {
+func NewLHTipbox(idGen *id.IDGenerator, nrows, ncols int, size Coordinates3D, manufacturer, boxtype string, tiptype *LHTip, well *LHWell, tipxoffset, tipyoffset, tipxstart, tipystart, tipzstart float64) *LHTipbox {
 	var tipbox LHTipbox
 	tipbox.ID = idGen.NextID()
 	tipbox.Type = boxtype
@@ -234,26 +234,26 @@ func (tb *LHTipbox) HasEnoughTips(requested int) bool {
 //@implement LHObject
 //##############################################
 
-func (self *LHTipbox) GetPosition() Coordinates {
+func (self *LHTipbox) GetPosition() Coordinates3D {
 	if self.parent != nil {
 		return self.parent.GetPosition().Add(self.Bounds.GetPosition())
 	}
 	return self.Bounds.GetPosition()
 }
 
-func (self *LHTipbox) GetSize() Coordinates {
+func (self *LHTipbox) GetSize() Coordinates3D {
 	return self.Bounds.GetSize()
 }
 
 func (self *LHTipbox) GetTipBounds() BBox {
 	tipSize := self.Tiptype.GetSize()
 
-	pos := self.Bounds.GetPosition().Add(Coordinates{
+	pos := self.Bounds.GetPosition().Add(Coordinates3D{
 		X: self.TipXStart - 0.5*tipSize.X,
 		Y: self.TipYStart - 0.5*tipSize.Y,
 		Z: self.TipZStart})
 
-	size := Coordinates{
+	size := Coordinates3D{
 		X: self.TipXOffset*float64(self.NCols()-1) + tipSize.X,
 		Y: self.TipYOffset*float64(self.NRows()-1) + tipSize.Y,
 		Z: tipSize.Z,
@@ -331,7 +331,7 @@ func trimToMask(wells []string, mask []bool) []string {
 	return ret
 }
 
-func (self *LHTipbox) GetPointIntersections(point Coordinates) []LHObject {
+func (self *LHTipbox) GetPointIntersections(point Coordinates3D) []LHObject {
 	//relative point
 	relPoint := point.Subtract(OriginOf(self))
 	ret := []LHObject{}
@@ -350,7 +350,7 @@ func (self *LHTipbox) GetPointIntersections(point Coordinates) []LHObject {
 	return ret
 }
 
-func (self *LHTipbox) SetOffset(o Coordinates) error {
+func (self *LHTipbox) SetOffset(o Coordinates3D) error {
 	self.Bounds.SetPosition(o)
 	return nil
 }
@@ -416,7 +416,7 @@ func (tb *LHTipbox) GetChildByAddress(c WellCoords) LHObject {
 	return tb.Tips[c.X][c.Y]
 }
 
-func (tb *LHTipbox) CoordsToWellCoords(idGen *id.IDGenerator, r Coordinates) (WellCoords, Coordinates) {
+func (tb *LHTipbox) CoordsToWellCoords(idGen *id.IDGenerator, r Coordinates3D) (WellCoords, Coordinates3D) {
 	//get relative Coordinates
 	rel := r.Subtract(tb.GetPosition())
 	tipSize := tb.Tiptype.GetSize()
@@ -440,9 +440,9 @@ func (tb *LHTipbox) CoordsToWellCoords(idGen *id.IDGenerator, r Coordinates) (We
 	return wc, r.Subtract(r2)
 }
 
-func (tb *LHTipbox) WellCoordsToCoords(idGen *id.IDGenerator, wc WellCoords, r WellReference) (Coordinates, bool) {
+func (tb *LHTipbox) WellCoordsToCoords(idGen *id.IDGenerator, wc WellCoords, r WellReference) (Coordinates3D, bool) {
 	if !tb.AddressExists(wc) {
-		return Coordinates{}, false
+		return Coordinates3D{}, false
 	}
 
 	var z float64
@@ -451,10 +451,10 @@ func (tb *LHTipbox) WellCoordsToCoords(idGen *id.IDGenerator, wc WellCoords, r W
 	} else if r == TopReference {
 		z = tb.TipZStart + tb.Tiptype.GetSize().Z
 	} else {
-		return Coordinates{}, false
+		return Coordinates3D{}, false
 	}
 
-	return tb.GetPosition().Add(Coordinates{
+	return tb.GetPosition().Add(Coordinates3D{
 		tb.TipXStart + float64(wc.X)*tb.TipXOffset,
 		tb.TipYStart + float64(wc.Y)*tb.TipYOffset,
 		z}), true
@@ -774,7 +774,7 @@ func initialize_tips(idGen *id.IDGenerator, tipbox *LHTipbox, tiptype *LHTip) *L
 	for i := 0; i < nc; i++ {
 		for j := 0; j < nr; j++ {
 			tipbox.Tips[i][j] = tiptype.Dup(idGen)
-			tipbox.Tips[i][j].SetOffset(Coordinates{ //nolint
+			tipbox.Tips[i][j].SetOffset(Coordinates3D{ //nolint
 				X: tipbox.TipXStart + float64(i)*tipbox.TipXOffset + x_off,
 				Y: tipbox.TipYStart + float64(j)*tipbox.TipYOffset + y_off,
 				Z: tipbox.TipZStart,

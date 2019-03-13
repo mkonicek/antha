@@ -138,7 +138,7 @@ func (this *Liquidhandler) AddSetupInstructions(request *LHRequest) error {
 		return wtype.LHError(wtype.LH_ERR_OTHER, "Cannot execute request: no instructions")
 	}
 
-	setup_insts := this.get_setup_instructions()
+	setup_insts := this.Properties.GetSetupInstructions()
 	if request.Instructions[0].Type() == liquidhandling.INI {
 		request.Instructions = append(request.Instructions[:1], append(setup_insts, request.Instructions[1:]...)...)
 	} else {
@@ -479,26 +479,6 @@ func (this *Liquidhandler) updateIDs(idGen *id.IDGenerator) error {
 	return nil
 }
 
-func (this *Liquidhandler) get_setup_instructions() []liquidhandling.TerminalRobotInstruction {
-	instructions := make([]liquidhandling.TerminalRobotInstruction, 0, 1+len(this.Properties.PosLookup))
-
-	//first instruction is always to remove all plates
-	instructions = append(instructions, liquidhandling.NewRemoveAllPlatesInstruction())
-
-	for position, plateid := range this.Properties.PosLookup {
-		if plateid == "" {
-			continue
-		}
-		plate := this.Properties.PlateLookup[plateid]
-		name := plate.(wtype.Named).GetName()
-
-		ins := liquidhandling.NewAddPlateToInstruction(position, name, plate)
-
-		instructions = append(instructions, ins)
-	}
-	return instructions
-}
-
 func (this *Liquidhandler) update_metadata() error {
 	if drv, ok := this.Properties.Driver.(liquidhandling.LowLevelLiquidhandlingDriver); ok {
 		return drv.UpdateMetaData(this.Properties).GetError()
@@ -659,11 +639,9 @@ func (this *Liquidhandler) Plan(labEffects *effects.LaboratoryEffects, request *
 		return err
 	} else if final, err := root.Build(labEffects, request.Policies(), this.Properties); err != nil {
 		return err
-	} else if tri, err := root.Leaves(); err != nil {
-		return err
 	} else {
 		request.InstructionTree = root
-		request.Instructions = tri
+		request.Instructions = root.Leaves()
 		this.FinalProperties = final
 	}
 
@@ -858,15 +836,15 @@ func addWellTargetsPlate(adaptor *wtype.LHAdaptor, plate *wtype.Plate) {
 	}
 
 	//channelPositions should come from the adaptor
-	channelPositions := make([]wtype.Coordinates, 0, adaptor.Params.Multi)
+	channelPositions := make([]wtype.Coordinates3D, 0, adaptor.Params.Multi)
 	for i := 0; i < adaptor.Params.Multi; i++ {
-		channelPositions = append(channelPositions, wtype.Coordinates{Y: float64(i) * adaptorSpacing})
+		channelPositions = append(channelPositions, wtype.Coordinates3D{Y: float64(i) * adaptorSpacing})
 	}
 
 	//ystart and count should come from some geometric calculation between channelPositions and well size
 	ystart, count := getWellTargetYStart(plate.NRows())
 
-	targets := make([]wtype.Coordinates, count)
+	targets := make([]wtype.Coordinates3D, count)
 	copy(targets, channelPositions)
 
 	for i := 0; i < count; i++ {
@@ -880,9 +858,9 @@ func addWellTargetsTipWaste(adaptor *wtype.LHAdaptor, waste *wtype.LHTipwaste) {
 	// this may vary in future but for now we just need to add the following eight entries:
 	ystart := -31.5
 	yinc := 9.0
-	targets := make([]wtype.Coordinates, 0, adaptor.Params.Multi)
+	targets := make([]wtype.Coordinates3D, 0, adaptor.Params.Multi)
 	for i := 0; i < adaptor.Params.Multi; i++ {
-		targets = append(targets, wtype.Coordinates{Y: ystart + float64(i)*yinc})
+		targets = append(targets, wtype.Coordinates3D{Y: ystart + float64(i)*yinc})
 	}
 
 	waste.AsWell.SetWellTargets(adaptor.Name, targets)

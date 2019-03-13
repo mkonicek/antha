@@ -125,7 +125,9 @@ func getTestRobot(ctx context.Context, dstp *wtype.Plate, platetype string) *LHP
 
 	c.Vol = v
 	c.Vunit = "ul"
-	p.AddComponent(c, true)
+	if _, err := p.AddComponent(c, true); err != nil {
+		panic(err)
+	}
 
 	c, err = inventory.NewComponent(ctx, "tartrazine")
 	if err != nil {
@@ -134,7 +136,9 @@ func getTestRobot(ctx context.Context, dstp *wtype.Plate, platetype string) *LHP
 	c.Vol = v
 	c.Vunit = "ul"
 
-	p.AddComponent(c, true)
+	if _, err := p.AddComponent(c, true); err != nil {
+		panic(err)
+	}
 
 	c, err = inventory.NewComponent(ctx, "ethanol")
 	if err != nil {
@@ -143,12 +147,18 @@ func getTestRobot(ctx context.Context, dstp *wtype.Plate, platetype string) *LHP
 	c.Vol = v
 	c.Vunit = "ul"
 
-	p.AddComponent(c, true)
+	if _, err := p.AddComponent(c, true); err != nil {
+		panic(err)
+	}
 
-	rbt.AddPlateTo("position_4", p)
+	if err := rbt.AddPlateTo("position_4", p); err != nil {
+		panic(err)
+	}
 
 	// dst
-	rbt.AddPlateTo("position_8", dstp)
+	if err := rbt.AddPlateTo("position_8", dstp); err != nil {
+		panic(err)
+	}
 
 	return rbt
 
@@ -524,17 +534,23 @@ func testPositive(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPoli
 	single := 0
 	for _, ri := range ri2 {
 		switch ri.Type() {
-		case MCB:
-			multi += 1
-		case SCB:
-			single += 1
+		case CBI:
+			ma := ri.GetParameter(MULTI).([]int)
+
+			for _, m := range ma {
+				if m > 1 {
+					multi += 1
+				} else {
+					single += 1
+				}
+			}
 		case TFR:
 			t.Error("ERROR: Transfer generated from Transfer")
 		}
 	}
 
 	if multi == 0 {
-		t.Errorf("Multichannel block not generated")
+		t.Errorf("No multichannel transfers generated")
 	}
 
 	return ri2
@@ -554,15 +570,18 @@ func testNegative(ctx context.Context, ris []RobotInstruction, pol *wtype.LHPoli
 		}
 
 		for _, ri := range ri2 {
-			if ri.Type() != SCB {
-				t.Errorf("Multichannel block generated without permission: %v %v %v", ri.GetParameter(LIQUIDCLASS), ri.GetParameter(WELLFROM), ri.GetParameter(WELLTO))
+			if mcb, ok := ri.(*ChannelBlockInstruction); ok {
+				if mcb.MaxMulti() > 1 {
+					t.Errorf("Multichannel transfer(s) generated without permission: %v %v %v %v", ri.GetParameter(MULTI), ri.GetParameter(LIQUIDCLASS), ri.GetParameter(WELLFROM), ri.GetParameter(WELLTO))
+				}
+
 			}
 		}
 
 	}
 }
 
-func generateRobotInstructions(t *testing.T, ctx context.Context, inss []*wtype.LHInstruction, pol *wtype.LHPolicyRuleSet) []RobotInstruction {
+func generateRobotInstructions(t *testing.T, ctx context.Context, inss []*wtype.LHInstruction, pol *wtype.LHPolicyRuleSet) []TerminalRobotInstruction {
 
 	tb, dstp := getTransferBlock(ctx, inss, "pcrplate_skirted_riser40")
 
@@ -578,24 +597,16 @@ func generateRobotInstructions(t *testing.T, ctx context.Context, inss []*wtype.
 	}
 
 	//generate the low level instructions
-	tree := NewITree(tb)
-	if _, err := tree.Build(ctx, pol, rbt); err != nil {
+
+	iTree := NewITree(tb)
+	if _, err := iTree.Build(ctx, pol, rbt); err != nil {
 		t.Fatal(err)
-	} else if ris, err := tree.Leaves(); err != nil {
-		t.Fatal(err)
-	} else {
-		ret := make([]RobotInstruction, 0, len(ris))
-		for _, ti := range ris {
-			ret = append(ret, ti.(RobotInstruction))
-		}
-		return ret
 	}
-	panic("unreachable")
+	return iTree.Leaves()
 }
 
-func assertNumTipsUsed(t *testing.T, instructions []RobotInstruction, expectedTips int) {
+func assertNumTipsUsed(t *testing.T, instructions []TerminalRobotInstruction, expectedTips int) {
 	var loaded, unloaded int
-
 	for _, instruction := range instructions {
 		switch ins := instruction.(type) {
 		case *LoadTipsInstruction:
@@ -615,7 +626,7 @@ func assertNumTipsUsed(t *testing.T, instructions []RobotInstruction, expectedTi
 
 }
 
-func assertNumLoadUnloadInstructions(t *testing.T, instructions []RobotInstruction, expected int) {
+func assertNumLoadUnloadInstructions(t *testing.T, instructions []TerminalRobotInstruction, expected int) {
 	var loads, unloads int
 
 	for _, instruction := range instructions {
@@ -636,8 +647,8 @@ func assertNumLoadUnloadInstructions(t *testing.T, instructions []RobotInstructi
 	}
 }
 
-//TestMultiChannelTipReuseGood Move water to two columns of wells - shouldn't need to change tips in between
-func TestMultiChannelTipReuseGood(t *testing.T) {
+//TestChannelTipReuseGood Move water to two columns of wells - shouldn't need to change tips in between
+func TestChannelTipReuseGood(t *testing.T) {
 	ctx := GetContextForTest()
 
 	inss, err := getMixInstructions(ctx, 16, []string{inventory.WaterType}, []float64{50.0})
@@ -652,8 +663,8 @@ func TestMultiChannelTipReuseGood(t *testing.T) {
 	assertNumLoadUnloadInstructions(t, ris, 1)
 }
 
-//TestMultiChannelTipReuseDisabled identical to good, except disable tip reuse
-func TestMultiChannelTipReuseDisabled(t *testing.T) {
+//TestChannelTipReuseDisabled identical to good, except disable tip reuse
+func TestChannelTipReuseDisabled(t *testing.T) {
 	ctx := GetContextForTest()
 
 	inss, err := getMixInstructions(ctx, 16, []string{inventory.WaterType}, []float64{50.0})
@@ -730,8 +741,8 @@ func TestSingleChannelTipReuse2(t *testing.T) {
 	assertNumLoadUnloadInstructions(t, ris, 2)
 }
 
-//TestMultiChannelTipReuseBad Move water and ethanol to two separate columns of wells - should change tips in between
-func TestMultiChannelTipReuseBad(t *testing.T) {
+//TestChannelTipReuseBad Move water and ethanol to two separate columns of wells - should change tips in between
+func TestChannelTipReuseBad(t *testing.T) {
 	ctx := GetContextForTest()
 
 	inss, err := getMixInstructions(ctx, 8, []string{inventory.WaterType}, []float64{50.0})
@@ -753,8 +764,8 @@ func TestMultiChannelTipReuseBad(t *testing.T) {
 	assertNumLoadUnloadInstructions(t, ris, 2)
 }
 
-//TestMultiChannelTipReuseUgly Move water and ethanol to the same columns of wells - should change tips in between
-func TestMultiChannelTipReuseUgly(t *testing.T) {
+//TestChannelTipReuseUgly Move water and ethanol to the same columns of wells - should change tips in between
+func TestChannelTipReuseUgly(t *testing.T) {
 	ctx := GetContextForTest()
 
 	inss, err := getMixInstructions(ctx, 8, []string{inventory.WaterType, "ethanol"}, []float64{50.0, 50.0})
@@ -769,8 +780,8 @@ func TestMultiChannelTipReuseUgly(t *testing.T) {
 	assertNumLoadUnloadInstructions(t, ris, 2)
 }
 
-//TestMultiChannelTipReuseUgly Move water and ethanol to the same columns of wells - should change tips in between
-func BenchmarkMultiChannelTipReuseUgly(b *testing.B) {
+//TestChannelTipReuseUgly Move water and ethanol to the same columns of wells - should change tips in between
+func BenchmarkChannelTipReuseUgly(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		ctx := GetContextForTest()
 
@@ -783,7 +794,7 @@ func BenchmarkMultiChannelTipReuseUgly(b *testing.B) {
 	}
 }
 
-func generateRobotInstructions2(ctx context.Context, inss []*wtype.LHInstruction, pol *wtype.LHPolicyRuleSet) []RobotInstruction {
+func generateRobotInstructions2(ctx context.Context, inss []*wtype.LHInstruction, pol *wtype.LHPolicyRuleSet) []TerminalRobotInstruction {
 
 	tb, dstp := getTransferBlock(ctx, inss, "pcrplate_skirted_riser40")
 
@@ -795,18 +806,13 @@ func generateRobotInstructions2(ctx context.Context, inss []*wtype.LHInstruction
 	}
 
 	//generate the low level instructions
-	tree := NewITree(tb)
-	if _, err := tree.Build(ctx, pol, rbt); err != nil {
+	iTree := NewITree(tb)
+
+	if _, err := iTree.Build(ctx, pol, rbt); err != nil {
 		panic(err)
-	} else if tri, err := tree.Leaves(); err != nil {
-		panic(err)
-	} else {
-		ret := make([]RobotInstruction, 0, len(tri))
-		for _, ti := range tri {
-			ret = append(ret, ti.(RobotInstruction))
-		}
-		return ret
 	}
+
+	return iTree.Leaves()
 }
 
 // regression test for issue with additional transfers being
@@ -850,10 +856,10 @@ func TestMultiTransferError(t *testing.T) {
 		t.Errorf("Expected 1 instruction got %d", len(rr))
 	}
 
-	mcb, ok := rr[0].(*MultiChannelBlockInstruction)
+	mcb, ok := rr[0].(*ChannelBlockInstruction)
 
 	if !ok {
-		t.Errorf("Expected *MultiChannelBlockInstruction, got %T", rr)
+		t.Errorf("Expected *ChannelBlockInstruction, got %T", rr)
 	}
 
 	if len(mcb.What) != 2 {
@@ -865,8 +871,10 @@ func TestMultiTransferError(t *testing.T) {
 	volSums := []wunit.Volume{wunit.ZeroVolume(), wunit.ZeroVolume()}
 
 	for i := 0; i < len(mcb.What); i++ {
-		for j := 0; j < 2; j++ {
-			volSums[j].Add(mcb.Volume[i][j])
+		for j := 0; j < len(mcb.What[i]); j++ {
+			if mcb.What[i][j] != "" {
+				volSums[j].Add(mcb.Volume[i][j])
+			}
 		}
 	}
 
@@ -917,53 +925,118 @@ func TestGappedTransfer(t *testing.T) {
 		t.Error(err)
 	}
 
-	if len(rr) != 2 {
-		t.Errorf("Expected 2 instructions got %d", len(rr))
-	}
-
-	mcb, ok := rr[0].(*MultiChannelBlockInstruction)
+	mcb, ok := rr[0].(*ChannelBlockInstruction)
 
 	if !ok {
-		t.Errorf("Expected *MultiChannelBlockInstruction, got %T", rr)
+		t.Errorf("Expected *ChannelBlockInstruction, got %T", rr)
 	}
 
-	if len(mcb.What) != 1 {
-		t.Errorf("Expected 1 transfer, got %d", len(mcb.What))
+	if len(mcb.What) != 3 {
+		t.Errorf("Expected 3 transfers in ChannelBlock, got %d", len(mcb.What))
 	}
 
 	// we expect 50ul, 40ul, 50ul to be transferred
 
-	volSums := []wunit.Volume{wunit.ZeroVolume(), wunit.ZeroVolume(), wunit.ZeroVolume()}
+	volSums := map[string]wunit.Volume{"A1": wunit.ZeroVolume(), "B1": wunit.ZeroVolume(), "C1": wunit.ZeroVolume()}
 
 	for i := 0; i < len(mcb.What); i++ {
-		for j := 0; j < 3; j++ {
-			volSums[j].Add(mcb.Volume[i][j])
+		for j := 0; j < len(mcb.What[i]); j++ {
+			if !mcb.Volume[i][j].IsZero() {
+				volSums[mcb.WellTo[i][j]].Add(mcb.Volume[i][j])
+			}
 		}
-	}
-
-	if len(rr) == 2 {
-		scb, ok := rr[1].(*SingleChannelBlockInstruction)
-
-		if !ok {
-			t.Errorf("Expected *SingleChannelBlockInstruction, got %T", rr[1])
-		}
-
-		if len(scb.What) != 2 {
-			t.Errorf("Expected 2 transfers in single channel block, got %d", len(scb.What))
-		}
-
-		if !reflect.DeepEqual(scb.WellTo, []string{"A1", "C1"}) {
-			t.Errorf("Expected WellTo in single channel block to be %v, got %v", []string{"A1", "C1"}, scb.WellTo)
-		}
-
-		volSums[0].Add(scb.Volume[0])
-		volSums[2].Add(scb.Volume[1])
 	}
 
 	fiftyul := wunit.NewVolume(50.0, "ul")
 	fortyul := wunit.NewVolume(40.0, "ul")
 
-	if !reflect.DeepEqual(volSums, []wunit.Volume{fiftyul, fortyul, fiftyul}) {
-		t.Errorf("Volumes inconsistent: expected %v got %v", []wunit.Volume{fiftyul, fortyul, fiftyul}, volSums)
+	expect := map[string]wunit.Volume{"A1": fiftyul, "B1": fortyul, "C1": fiftyul}
+	if !reflect.DeepEqual(volSums, expect) {
+		t.Errorf("Volumes inconsistent: expected %v got %v", expect, volSums)
+	}
+}
+
+// another regression test for 2357
+// ensure that convertinstructions does not
+// modify execution order
+
+// -- the issue here is how getComponents works when getting
+// singles, it takes the highest volume first, rather than
+// preserving mix order. Feeding in components one at a time should fix this
+func TestTransferBlockMixOrdering(t *testing.T) {
+	ctx := GetContextForTest()
+
+	// transfer three things at volumes 30.0, 40.0, 50.0 in one instruction
+	inss, err := getMixInstructions(ctx, 1, []string{"ethanol", "tartrazine", inventory.WaterType}, []float64{30.0, 40.0, 50.0})
+
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+
+	tb, p := getTransferBlock(ctx, inss, "eppendorfrack424_1.5ml_lidholder")
+
+	rbt := getTestRobot(ctx, p, "pcrplate_skirted_riser40")
+
+	pol, err := wtype.GetLHPolicyForTest()
+	if err != nil {
+		t.Error(err)
+	}
+
+	pol.Policies["water"]["CAN_MULTI"] = true
+	pol.Policies["ethanol"] = map[string]interface{}{"CAN_MULTI": true}
+	pol.Policies["tartrazine"] = map[string]interface{}{"CAN_MULTI": true}
+
+	ris, err := tb.Generate(ctx, pol, rbt)
+	if err != nil {
+		t.Error(err)
+	}
+
+	rr, err := ris[0].Generate(ctx, pol, rbt)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	mcb, ok := rr[0].(*ChannelBlockInstruction)
+
+	if !ok {
+		t.Errorf("Expected *ChannelBlockInstruction, got %T", rr)
+	}
+
+	if len(mcb.What) != 3 {
+		t.Errorf("Expected 3 transfers in ChannelBlock, got %d", len(mcb.What))
+	}
+
+	// we expect 30ul, 40ul, 50ul to be transferred to A1
+
+	volSums := map[string]wunit.Volume{"A1": wunit.ZeroVolume()}
+
+	for i := 0; i < len(mcb.What); i++ {
+		for j := 0; j < len(mcb.What[i]); j++ {
+			if !mcb.Volume[i][j].IsZero() {
+				volSums[mcb.WellTo[i][j]].Add(mcb.Volume[i][j])
+			}
+		}
+	}
+
+	onetwentyul := wunit.NewVolume(120.0, "ul")
+
+	expect := map[string]wunit.Volume{"A1": onetwentyul}
+	if !reflect.DeepEqual(volSums, expect) {
+		t.Errorf("Volumes inconsistent: expected %v got %v", expect, volSums)
+	}
+
+	// check ordering, must be preserved
+
+	expectOrder := []string{"ethanol", "tartrazine", inventory.WaterType}
+
+	gotOrder := make([]string, 3)
+
+	for i := 0; i < len(mcb.What); i++ {
+		gotOrder[i] = mcb.Component[i][0]
+	}
+
+	if !reflect.DeepEqual(expectOrder, gotOrder) {
+		t.Errorf("Order inconsistent: Expected %v got %v", expectOrder, gotOrder)
 	}
 }

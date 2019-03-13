@@ -10,7 +10,7 @@ func makeTipboxForTest() *LHTipbox {
 	shp := NewShape("cylinder", "mm", 7.3, 7.3, 51.2)
 	w := NewLHWell("ul", 250.0, 10.0, shp, FlatWellBottom, 7.3, 7.3, 51.2, 0.0, "mm")
 	tiptype := makeTipForTest()
-	tb := NewLHTipbox(8, 12, Coordinates{127.76, 85.48, 120.0}, "me", "mytype", tiptype, w, 9.0, 9.0, 0.5, 0.5, 0.0)
+	tb := NewLHTipbox(8, 12, Coordinates3D{127.76, 85.48, 120.0}, "me", "mytype", tiptype, w, 9.0, 9.0, 0.5, 0.5, 0.0)
 	return tb
 }
 
@@ -147,7 +147,7 @@ func TestTipboxCoordsToWellCoords(t *testing.T) {
 
 	tb := makeTipboxForTest()
 
-	pos := Coordinates{
+	pos := Coordinates3D{
 		X: tb.TipXStart + 0.75*tb.TipXOffset,
 		Y: tb.TipYStart + 0.75*tb.TipYOffset,
 	}
@@ -169,12 +169,12 @@ func TestTipboxGetWellBounds(t *testing.T) {
 
 	tb := makeTipboxForTest()
 
-	eStart := Coordinates{
+	eStart := Coordinates3D{
 		X: 0.5 - 0.5*7.3,
 		Y: 0.5 - 0.5*7.3,
 		Z: 0.0,
 	}
-	eSize := Coordinates{
+	eSize := Coordinates3D{
 		X: 9.0*11 + 7.3,
 		Y: 9.0*7 + 7.3,
 		Z: 51.2,

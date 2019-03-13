@@ -85,7 +85,7 @@ func ORFs2Features(orfs []ORF) (features []wtype.Feature) {
 	for i, orf := range orfs {
 		// currently just names each orf + number of orf. Add Rename orf function and sort by struct field function to run first to put orfs in order
 		reverse := false
-		if strings.ToUpper(orf.Direction) == strings.ToUpper("REVERSE") {
+		if strings.EqualFold(orf.Direction, "REVERSE") {
 			reverse = true
 		}
 

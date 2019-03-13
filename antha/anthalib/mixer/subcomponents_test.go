@@ -285,7 +285,9 @@ func TestUpdateComponentDetails(t *testing.T) {
 		if conc != defaultConc {
 			c.SetConcentration(conc)
 		}
-		c.AddSubComponents(componentList)
+		if err := c.AddSubComponents(componentList); err != nil {
+			t.Fatal(err)
+		}
 
 		return c
 	}

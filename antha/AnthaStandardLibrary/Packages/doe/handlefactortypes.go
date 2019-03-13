@@ -37,11 +37,17 @@ import (
 
 // HandleStringFactor converts the value of a factor with an interface value to a string.
 func HandleStringFactor(header string, value interface{}) (string, error) {
-	str, found := value.(string)
-	if !found {
-		return "", fmt.Errorf("value %T is not a string", value)
+
+	switch str := value.(type) {
+	case int:
+		return fmt.Sprint(value), nil
+	case float64:
+		return fmt.Sprint(value), nil
+	case string:
+		return str, nil
+	default:
+		return "", fmt.Errorf("value %v %T is not a string", value, value)
 	}
-	return str, nil
 }
 
 // HandleConcFactor parses a factor name and value and returns an antha concentration.
@@ -191,7 +197,13 @@ func HandleVolumeFactor(header string, value interface{}) (anthaVolume wunit.Vol
 func HandleLHComponentFactor(lab *laboratory.Laboratory, header string, value interface{}) (*wtype.Liquid, error) {
 	str, found := value.(string)
 	if !found {
-		return nil, fmt.Errorf("value %T is not a string", value)
+		if flt, found := value.(float64); found {
+			str = strconv.FormatFloat(flt, 'G', -1, 64)
+		} else if integer, found := value.(int); found {
+			str = strconv.Itoa(integer)
+		} else {
+			return nil, fmt.Errorf("value %v %T is not a string", value, value)
+		}
 	}
 
 	component, err := lab.Inventory.Components.NewComponent(str)

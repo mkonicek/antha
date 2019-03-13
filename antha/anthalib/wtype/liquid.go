@@ -266,7 +266,7 @@ func containsSeq(seqs []DNASequence, seq DNASequence, checkSeqs bool) (bool, []i
 		} else {
 			if seqs[i].Name() == seq.Name() {
 				positionsFound = append(positionsFound, i)
-			} else if strings.ToUpper(seqs[i].Sequence()) == strings.ToUpper(seq.Sequence()) && seqs[i].Plasmid == seq.Plasmid {
+			} else if strings.EqualFold(seqs[i].Sequence(), seq.Sequence()) && seqs[i].Plasmid == seq.Plasmid {
 				positionsFound = append(positionsFound, i)
 			}
 		}

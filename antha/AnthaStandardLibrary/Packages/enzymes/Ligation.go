@@ -644,7 +644,8 @@ func MultipleAssemblies(parameters []Assemblyparameters) (s string, successfulas
 			if strings.Contains(err.Error(), "Failure Joining fragments after digestion") {
 				constructsitesstring := make([]string, 0)
 				constructsitesstring = append(constructsitesstring, output)
-				enzyme, err := lookup.RestrictionEnzyme(construct.Enzymename)
+				var enzyme wtype.RestrictionEnzyme
+				enzyme, err = lookup.RestrictionEnzyme(construct.Enzymename)
 				if err != nil {
 
 					originalerror := errors[construct.Constructname]

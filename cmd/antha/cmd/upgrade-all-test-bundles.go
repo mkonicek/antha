@@ -30,7 +30,7 @@ func updateTestBundles(cmd *cobra.Command, args []string) error {
 	}
 
 	if viper.GetString("driver") == "" {
-		return errors.New("--driver must be secified when converting test bundles; please specify one; e.g. go://github.com/Synthace/PipetMaxDriver/server")
+		return errors.New("--driver must be secified when converting test bundles; please specify one; e.g. go://github.com/Synthace/instruction-plugins/PipetMax")
 	}
 
 	for _, bundle := range allBundles {
@@ -64,6 +64,6 @@ func init() {
 
 	flags := c.Flags()
 	flags.String("bundlesDir", ".", "root directory to search for bundle files with test data to update")
-	flags.String("driver", "", "driver flag to add to antha run command, e.g. go://github.com/Synthace/PipetMaxDriver/server")
+	flags.String("driver", "", "driver flag to add to antha run command, e.g. go://github.com/Synthace/instruction-plugins/PipetMax")
 	flags.Bool("all", false, "by default, only bundles with existing test data will be updated; use this flag to attempt to add test information to all bundles.")
 }

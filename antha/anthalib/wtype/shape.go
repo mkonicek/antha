@@ -43,6 +43,24 @@ const (
 	RectangleShape ShapeTypeID = "rectangle"
 )
 
+var isRound = map[ShapeTypeID]bool{
+	CylinderShape:  true,
+	CircleShape:    true,
+	RoundShape:     true,
+	SphereShape:    true,
+	SquareShape:    false,
+	BoxShape:       false,
+	RectangleShape: false,
+}
+
+// IsRound returns true if wells with this shapetype are round, otherwise they are assumed to square or rectangular
+func (s ShapeTypeID) IsRound() bool {
+	if r, ok := isRound[s]; ok {
+		return r
+	}
+	panic(fmt.Sprintf("ShapeType %s not in isRound", s))
+}
+
 type Shape struct {
 	ShapeName  ShapeTypeID
 	LengthUnit string

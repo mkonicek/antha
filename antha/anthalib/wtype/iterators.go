@@ -26,7 +26,7 @@ type VerticalDirection int
 
 const (
 	BottomToTop VerticalDirection = -1
-	TopToBottom                   = 1
+	TopToBottom VerticalDirection = 1
 )
 
 func (s VerticalDirection) String() string {
@@ -43,7 +43,7 @@ type HorizontalDirection int
 
 const (
 	LeftToRight HorizontalDirection = 1
-	RightToLeft                     = -1
+	RightToLeft HorizontalDirection = -1
 )
 
 func (s HorizontalDirection) String() string {

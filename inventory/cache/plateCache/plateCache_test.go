@@ -39,7 +39,9 @@ func TestPlateReuse(t *testing.T) {
 		t.Fatal("Plate shouldn't be empty")
 	}
 
-	cache.ReturnObject(ctx, firstPlate)
+	if err := cache.ReturnObject(ctx, firstPlate); err != nil {
+		t.Fatal(err)
+	}
 
 	secondPlate, err := cache.NewPlate(ctx, plateType)
 	if err != nil {

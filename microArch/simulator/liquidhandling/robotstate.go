@@ -41,14 +41,14 @@ import (
 //ChannelState Represent the physical state of a single channel
 type ChannelState struct {
 	number   int
-	tip      *wtype.LHTip      //Nil if no tip loaded, otherwise the tip that's loaded
-	contents *wtype.Liquid     //What's in the tip?
-	position wtype.Coordinates //position relative to the adaptor
-	adaptor  *AdaptorState     //the channel's adaptor
+	tip      *wtype.LHTip        //Nil if no tip loaded, otherwise the tip that's loaded
+	contents *wtype.Liquid       //What's in the tip?
+	position wtype.Coordinates3D //position relative to the adaptor
+	adaptor  *AdaptorState       //the channel's adaptor
 	radius   float64
 }
 
-func NewChannelState(number int, adaptor *AdaptorState, position wtype.Coordinates, radius float64) *ChannelState {
+func NewChannelState(number int, adaptor *AdaptorState, position wtype.Coordinates3D, radius float64) *ChannelState {
 	r := ChannelState{}
 	r.number = number
 	r.position = position
@@ -93,24 +93,24 @@ func (self *ChannelState) GetBounds(channelClearance float64) wtype.BBox {
 	}
 
 	ret := wtype.NewBBox(
-		self.GetAbsolutePosition().Subtract(wtype.Coordinates{X: r, Y: r, Z: h}),
-		wtype.Coordinates{X: 2.0 * r, Y: 2.0 * r, Z: h})
+		self.GetAbsolutePosition().Subtract(wtype.Coordinates3D{X: r, Y: r, Z: h}),
+		wtype.Coordinates3D{X: 2.0 * r, Y: 2.0 * r, Z: h})
 
 	return *ret
 }
 
 //GetRelativePosition get the channel's position relative to the head
-func (self *ChannelState) GetRelativePosition() wtype.Coordinates {
+func (self *ChannelState) GetRelativePosition() wtype.Coordinates3D {
 	return self.position
 }
 
 //SetRelativePosition get the channel's position relative to the head
-func (self *ChannelState) SetRelativePosition(v wtype.Coordinates) {
+func (self *ChannelState) SetRelativePosition(v wtype.Coordinates3D) {
 	self.position = v
 }
 
 //GetAbsolutePosition get the channel's absolute position
-func (self *ChannelState) GetAbsolutePosition() wtype.Coordinates {
+func (self *ChannelState) GetAbsolutePosition() wtype.Coordinates3D {
 	return self.position.Add(self.adaptor.GetPosition())
 }
 
@@ -213,7 +213,7 @@ func coneInWell(cone wtype.BBox, well *wtype.LHWell) bool {
 type AdaptorState struct {
 	name         string
 	channels     []*ChannelState
-	offset       wtype.Coordinates
+	offset       wtype.Coordinates3D
 	independent  bool
 	params       *wtype.LHChannelParameter
 	group        *AdaptorGroup
@@ -221,11 +221,11 @@ type AdaptorState struct {
 	index        int
 }
 
-func NewAdaptorState(idGen *id.IDGenerator, name string, independent bool, channels int, channel_offset wtype.Coordinates, coneRadius float64, params *wtype.LHChannelParameter, tipBehaviour wtype.TipLoadingBehaviour) *AdaptorState {
+func NewAdaptorState(idGen *id.IDGenerator, name string, independent bool, channels int, channel_offset wtype.Coordinates3D, coneRadius float64, params *wtype.LHChannelParameter, tipBehaviour wtype.TipLoadingBehaviour) *AdaptorState {
 	as := AdaptorState{
 		name,
 		make([]*ChannelState, 0, channels),
-		wtype.Coordinates{},
+		wtype.Coordinates3D{},
 		independent,
 		params.Dup(idGen),
 		nil,
@@ -276,7 +276,7 @@ func (self *AdaptorState) SummariseTips() string {
 //displayed in the output.
 func (self *AdaptorState) SummarisePositions(channelsColliding []int) string {
 
-	positions := make([]wtype.Coordinates, len(self.channels))
+	positions := make([]wtype.Coordinates3D, len(self.channels))
 	for i, channel := range self.channels {
 		positions[i] = channel.GetAbsolutePosition()
 		positions[i].Z -= channel.GetTip().GetEffectiveHeight()
@@ -347,7 +347,7 @@ func (self *AdaptorState) GetName() string {
 }
 
 //GetPosition
-func (self *AdaptorState) GetPosition() wtype.Coordinates {
+func (self *AdaptorState) GetPosition() wtype.Coordinates3D {
 	return self.offset.Add(self.group.GetPosition())
 }
 
@@ -403,11 +403,11 @@ func (self *AdaptorState) SetGroup(g *AdaptorGroup) {
 	self.group = g
 }
 
-func (self *AdaptorState) SetPosition(p wtype.Coordinates) error {
+func (self *AdaptorState) SetPosition(p wtype.Coordinates3D) error {
 	return self.group.SetPosition(p.Subtract(self.offset))
 }
 
-func (self *AdaptorState) SetOffset(p wtype.Coordinates) {
+func (self *AdaptorState) SetOffset(p wtype.Coordinates3D) {
 	self.offset = p
 }
 
@@ -507,18 +507,18 @@ func (self *AdaptorState) GetTipCoordsToLoad(tb *wtype.LHTipbox, num int) ([][]w
 // AdaptorGroup simulate a set of adaptors which are physically attached
 type AdaptorGroup struct {
 	adaptors      []*AdaptorState
-	offsets       []wtype.Coordinates
+	offsets       []wtype.Coordinates3D
 	motionLimits  *wtype.BBox
 	velocity      *wunit.Velocity3D
 	velocityRange *wtype.VelocityRange
-	position      wtype.Coordinates
+	position      wtype.Coordinates3D
 	robot         *RobotState
 }
 
 // NewAdaptorGroup convert a HeadAssembly into an AdaptorGroup for simulation
 func NewAdaptorGroup(idGen *id.IDGenerator, assembly *wtype.LHHeadAssembly) *AdaptorGroup {
 
-	offsets := make([]wtype.Coordinates, len(assembly.Positions))
+	offsets := make([]wtype.Coordinates3D, len(assembly.Positions))
 	for i, pos := range assembly.Positions {
 		offsets[i] = pos.Offset
 	}
@@ -539,7 +539,7 @@ func NewAdaptorGroup(idGen *id.IDGenerator, assembly *wtype.LHHeadAssembly) *Ada
 		//9mm spacing currently hardcoded.
 		//At some point we'll either need to fetch this from the driver or
 		//infer it from the type of tipboxes/plates accepted
-		spacing := wtype.Coordinates{X: 0, Y: 0, Z: 0}
+		spacing := wtype.Coordinates3D{X: 0, Y: 0, Z: 0}
 		if p.Orientation == wtype.LHVChannel {
 			spacing.Y = 9.
 		} else if p.Orientation == wtype.LHHChannel {
@@ -578,7 +578,7 @@ func (self *AdaptorGroup) LoadAdaptor(pos int, adaptor *AdaptorState) {
 	}
 }
 
-func (self *AdaptorGroup) GetPosition() wtype.Coordinates {
+func (self *AdaptorGroup) GetPosition() wtype.Coordinates3D {
 	return self.position
 }
 
@@ -590,7 +590,7 @@ func oneDP(v float64) string {
 	return ret
 }
 
-func (self *AdaptorGroup) SetPosition(p wtype.Coordinates) error {
+func (self *AdaptorGroup) SetPosition(p wtype.Coordinates3D) error {
 	self.position = p
 	if self.motionLimits != nil && !self.motionLimits.Contains(p) {
 		template := "%smm too %s"

@@ -144,7 +144,9 @@ func TestBeforeVsAfterUserPlateDest(t *testing.T) {
 
 	rq.InputPlatetypes = append(rq.InputPlatetypes, pl)
 
-	lh.Plan(ctx, rq)
+	if err := lh.Plan(ctx, rq); err != nil {
+		t.Fatal(err)
+	}
 
 	expected := make(map[string][]initFinalCmp)
 
@@ -202,7 +204,9 @@ func TestBeforeVsAfterUserPlateAutoDest(t *testing.T) {
 
 	rq.AddUserPlate(pl2)
 
-	lh.Plan(ctx, rq)
+	if err := lh.Plan(ctx, rq); err != nil {
+		t.Fatal(err)
+	}
 
 	expected := make(map[string][]initFinalCmp)
 
@@ -264,7 +268,9 @@ func TestBeforeVsAfterUserPlate(t *testing.T) {
 
 	rq.AddUserPlate(pl2)
 
-	lh.Plan(ctx, rq)
+	if err := lh.Plan(ctx, rq); err != nil {
+		t.Fatal(err)
+	}
 
 	expected := make(map[string][]initFinalCmp)
 
@@ -350,7 +356,9 @@ func TestBeforeVsAfterAutoAllocateDest(t *testing.T) {
 	rq.InputPlatetypes = append(rq.InputPlatetypes, pl)
 	rq.OutputPlatetypes = append(rq.OutputPlatetypes, pl.Dup())
 
-	lh.Plan(ctx, rq)
+	if err := lh.Plan(ctx, rq); err != nil {
+		t.Fatal(err)
+	}
 
 	expected := make(map[string][]initFinalCmp)
 
@@ -390,7 +398,9 @@ func TestBeforeVsAfterAutoAllocate(t *testing.T) {
 
 	rq.InputPlatetypes = append(rq.InputPlatetypes, pl)
 
-	lh.Plan(ctx, rq)
+	if err := lh.Plan(ctx, rq); err != nil {
+		t.Fatal(err)
+	}
 
 	expected := make(map[string][]initFinalCmp)
 

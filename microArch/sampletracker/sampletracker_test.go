@@ -15,7 +15,7 @@ func assertLocation(t *testing.T, st *SampleTracker, id string, eloc string, eok
 func getPlateForTest() *wtype.Plate {
 	cone := wtype.NewShape("cylinder", "mm", 5.5, 5.5, 20.4)
 	welltype := wtype.NewLHWell("ul", 200, 5, cone, wtype.UWellBottom, 5.5, 5.5, 20.4, 1.4, "mm")
-	return wtype.NewLHPlate("pcrplate_skirted_riser", "Unknown", 8, 12, wtype.Coordinates{X: 127.76, Y: 85.48, Z: 25.7}, welltype, 9, 9, 0.0, 0.0, 38.5)
+	return wtype.NewLHPlate("pcrplate_skirted_riser", "Unknown", 8, 12, wtype.Coordinates3D{X: 127.76, Y: 85.48, Z: 25.7}, welltype, 9, 9, 0.0, 0.0, 38.5)
 }
 
 func getLiquidForTest(name string, volume float64) *wtype.Liquid {
@@ -80,7 +80,9 @@ func TestInputPlates(t *testing.T) {
 		cmp := getLiquidForTest("water", 100.0)
 		cmp.ID = it.Curr().FormatA1()
 
-		well.SetContents(cmp)
+		if err := well.SetContents(cmp); err != nil {
+			t.Fatal(err)
+		}
 	}
 
 	st := NewSampleTracker()

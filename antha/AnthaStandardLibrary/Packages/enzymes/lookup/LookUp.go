@@ -86,7 +86,7 @@ func FindEnzymesofClass(class string) (enzymelist []wtype.RestrictionEnzyme) {
 	rebaseFh := bytes.NewReader(enzymes)
 
 	for _, record := range rebase.Parse(rebaseFh) {
-		if strings.ToUpper(record.Class) == strings.ToUpper(class) {
+		if strings.EqualFold(record.Class, class) {
 			//RecognitionSeqs = append(RecognitionSeqs, record)
 			enzymelist = append(enzymelist, record)
 		}

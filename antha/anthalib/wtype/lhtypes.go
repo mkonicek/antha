@@ -217,15 +217,17 @@ func (lhd *LHDevice) Dup(idGen *id.IDGenerator) *LHDevice {
 
 // describes a position on the liquid handling deck
 type LHPosition struct {
-	Name     string      // human readable name of the position chosen by device driver
-	Location Coordinates // absolute position of read left corner of the position
+	Name     string        // human readable name of the position chosen by device driver
+	Location Coordinates3D // absolute position of read left corner of the position
+	Size     Coordinates2D // size of the position - equal to the footprint of objects which can be accepted
 }
 
 // NewLHPosition constructs a new position on a liquidhandling deck
-func NewLHPosition(name string, location Coordinates) *LHPosition {
+func NewLHPosition(name string, location Coordinates3D, size Coordinates2D) *LHPosition {
 	return &LHPosition{
 		Name:     name,
 		Location: location,
+		Size:     size,
 	}
 }
 
@@ -362,7 +364,7 @@ func (s TipLoadingBehaviour) String() string {
 
 // LHHeadAssemblyPosition a position within a head assembly
 type LHHeadAssemblyPosition struct {
-	Offset Coordinates
+	Offset Coordinates3D
 	Head   *LHHead
 }
 
@@ -413,7 +415,7 @@ func (self *LHHeadAssembly) DupWithoutHeads() *LHHeadAssembly {
 }
 
 //AddPosition add a position to the head assembly with the given offset
-func (self *LHHeadAssembly) AddPosition(Offset Coordinates) {
+func (self *LHHeadAssembly) AddPosition(Offset Coordinates3D) {
 	p := LHHeadAssemblyPosition{
 		Offset: Offset,
 	}

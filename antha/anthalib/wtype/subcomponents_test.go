@@ -20,7 +20,9 @@ func TestAddandGetComponent(t *testing.T) {
 		c.Type = typ
 		c.Smax = smax
 		c.SetConcentration(conc)
-		c.AddSubComponents(componentList)
+		if err := c.AddSubComponents(componentList); err != nil {
+			t.Fatal(err)
+		}
 
 		return c
 	}

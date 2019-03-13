@@ -24,31 +24,30 @@ package wtype
 
 import (
 	"fmt"
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"math"
 )
 
-type Coordinates struct {
+type Coordinates3D struct {
 	X float64
 	Y float64
 	Z float64
 }
 
-func (c Coordinates) Equals(c2 Coordinates) bool {
+func (c Coordinates3D) Equals(c2 Coordinates3D) bool {
 	return c.X == c2.X && c.Y == c2.Y && c.Z == c2.Z
 }
 
 //String implements Stringer
-func (self Coordinates) String() string {
+func (self Coordinates3D) String() string {
 	return fmt.Sprintf("%.1fx%.1fx%.1f mm", self.X, self.Y, self.Z)
 }
 
-func (self Coordinates) StringXY() string {
+func (self Coordinates3D) StringXY() string {
 	return fmt.Sprintf("%.1fx%.1f mm", self.X, self.Y)
 }
 
 //Dim Value for dimension
-func (a Coordinates) Dim(x int) float64 {
+func (a Coordinates3D) Dim(x int) float64 {
 	switch x {
 	case 0:
 		return a.X
@@ -62,71 +61,64 @@ func (a Coordinates) Dim(x int) float64 {
 }
 
 //Add Addition returns a new wtype.Coordinates
-func (self Coordinates) Add(rhs Coordinates) Coordinates {
-	return Coordinates{self.X + rhs.X,
+func (self Coordinates3D) Add(rhs Coordinates3D) Coordinates3D {
+	return Coordinates3D{self.X + rhs.X,
 		self.Y + rhs.Y,
 		self.Z + rhs.Z}
 }
 
 //Subtract returns a new wtype.Coordinates
-func (self Coordinates) Subtract(rhs Coordinates) Coordinates {
-	return Coordinates{self.X - rhs.X,
+func (self Coordinates3D) Subtract(rhs Coordinates3D) Coordinates3D {
+	return Coordinates3D{self.X - rhs.X,
 		self.Y - rhs.Y,
 		self.Z - rhs.Z}
 }
 
 //Multiply returns a new wtype.Coordinates
-func (self Coordinates) Multiply(v float64) Coordinates {
-	return Coordinates{self.X * v,
+func (self Coordinates3D) Multiply(v float64) Coordinates3D {
+	return Coordinates3D{self.X * v,
 		self.Y * v,
 		self.Z * v}
 }
 
 //Divide returns a new wtype.Coordinates divided by v. If v is zero, inf will be returned
-func (self Coordinates) Divide(v float64) Coordinates {
-	return Coordinates{self.X / v,
+func (self Coordinates3D) Divide(v float64) Coordinates3D {
+	return Coordinates3D{self.X / v,
 		self.Y / v,
 		self.Z / v}
 }
 
 //Dot product
-func (self Coordinates) Dot(rhs Coordinates) float64 {
+func (self Coordinates3D) Dot(rhs Coordinates3D) float64 {
 	return self.X*rhs.X + self.Y + rhs.Y + self.Z + rhs.Z
 }
 
 //Abs L2-Norm
-func (self Coordinates) Abs() float64 {
+func (self Coordinates3D) Abs() float64 {
 	return math.Sqrt(self.X*self.X + self.Y*self.Y + self.Z*self.Z)
 }
 
 //AbsXY L2-Norm in XY only
-func (self Coordinates) AbsXY() float64 {
+func (self Coordinates3D) AbsXY() float64 {
 	return math.Sqrt(self.X*self.X + self.Y*self.Y)
 }
 
 //Unit return a Unit vector in the same direction as the coordinates
-func (self Coordinates) Unit() Coordinates {
+func (self Coordinates3D) Unit() Coordinates3D {
 	return self.Divide(self.Abs())
 }
 
 //To2D return a two dimensional coordinate by dropping z dimension
-func (self Coordinates) To2D() Coordinates2D {
+func (self Coordinates3D) To2D() Coordinates2D {
 	return Coordinates2D{
 		X: self.X,
 		Y: self.Y,
 	}
 }
 
-//Geometry interface for 3D geometry
-type Geometry interface {
-	Height() wunit.Length
-	Width() wunit.Length
-	Depth() wunit.Length
-}
+type PointSet []Coordinates3D
 
-type PointSet []Coordinates
-
-func (ps PointSet) CentreTo(c Coordinates) PointSet {
+func (ps PointSet) CentreTo(c Coordinates3D) PointSet {
 	ret := make(PointSet, len(ps))
 
 	for i, p := range ps {
@@ -188,6 +180,9 @@ func (self Coordinates2D) Divide(factor float64) Coordinates2D {
 func (self Coordinates2D) Abs() float64 {
 	return math.Sqrt(self.X*self.X + self.Y*self.Y)
 }
+
+// SBSFootprint the size of standard SBS format plates
+var SBSFootprint = Coordinates2D{X: 127.76, Y: 85.48}
 
 //a rectangle
 type Rectangle struct {

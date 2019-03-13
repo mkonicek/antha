@@ -606,6 +606,32 @@ func formatMisMatches(alignment Alignment) (formattedAlignment Alignment) {
 	return
 }
 
+func revCompGappedDNA(seqin string) (string, error) {
+	// use wtype.RevComp, but handle GAP char; TODO: extend wtype.Comp to handle gap char
+	gapPositions := []int{}
+	seqLen := len(seqin)
+	// make a version of input which is safe for wtype.Comp - replace GAP with N, record the locations
+	safe := []byte(strings.Repeat("N", len(seqin)))
+	for pos := 0; pos < len(seqin); pos++ {
+		if GAP != rune(seqin[pos]) {
+			safe[pos] = seqin[pos]
+		} else {
+			gapPositions = append(gapPositions, pos)
+		}
+	}
+	// reverse complement, safe with N's
+	reversed := wtype.RevComp(string(safe))
+	if len(reversed) != seqLen {
+		return "", fmt.Errorf("unexpected reverse complement length")
+	}
+	// restore the gaps
+	revBytes := []byte(reversed)
+	for i := 0; i < len(gapPositions); i++ {
+		revBytes[seqLen-1-gapPositions[i]] = byte(GAP)
+	}
+	return string(revBytes), nil
+}
+
 // correctForRevComp corrects positions to be that of reverse complement following manual reverse complement of strand before alignment.
 // also corrects the query sequence back to the original.
 func correctForRevComp(alignment Result) (formattedAlignment Result) {
@@ -628,6 +654,9 @@ func correctForRevComp(alignment Result) (formattedAlignment Result) {
 
 	revQuery.Seq = wtype.RevComp(revQuery.Seq)
 
+	formattedAlignment.Alignment.TemplateResult, _ = revCompGappedDNA(formattedAlignment.Alignment.TemplateResult)
+	formattedAlignment.Alignment.QueryResult, _ = revCompGappedDNA(formattedAlignment.Alignment.QueryResult)
+
 	formattedAlignment.Query = revQuery
 	return
 }
@@ -645,5 +674,5 @@ func isMismatch(character1, character2 rune) bool {
 		return false
 	}
 
-	return strings.ToUpper(string(character1)) != strings.ToUpper(string(character2))
+	return !strings.EqualFold(string(character1), string(character2))
 }

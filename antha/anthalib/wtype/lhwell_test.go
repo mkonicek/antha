@@ -181,7 +181,9 @@ func TestGetNextWellOk(t *testing.T) {
 			t.Errorf("wellcoords don't match: expected %s, got %s", e.FormatA1(), g.FormatA1())
 		}
 
-		well.AddComponent(cmp)
+		if err := well.AddComponent(cmp); err != nil {
+			t.Fatal(err)
+		}
 	}
 
 	//now that the plate's full, should only return nil, false

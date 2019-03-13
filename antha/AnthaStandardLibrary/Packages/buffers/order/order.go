@@ -164,7 +164,7 @@ func SetOrderDetails(comp *wtype.Liquid, orderDetails Details, options ...Option
 
 func inOptions(query Option, options []Option) bool {
 	for _, option := range options {
-		if strings.ToUpper(string(query)) == strings.ToUpper(string(option)) {
+		if strings.EqualFold(string(query), string(option)) {
 			return true
 		}
 	}

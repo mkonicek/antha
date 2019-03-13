@@ -69,7 +69,9 @@ func TestDup(t *testing.T) {
 		c.Type = typ
 		c.Smax = smax
 		c.SetConcentration(conc)
-		c.AddSubComponents(componentList)
+		if err := c.AddSubComponents(componentList); err != nil {
+			t.Fatal(err)
+		}
 
 		return c
 	}
@@ -100,7 +102,9 @@ func TestDup(t *testing.T) {
 		t.Error(err.Error())
 	}
 
-	duplicated.AddSubComponent(newLiquid, wunit.NewConcentration(0.25, "g/l"))
+	if err := duplicated.AddSubComponent(newLiquid, wunit.NewConcentration(0.25, "g/l")); err != nil {
+		t.Fatal(err)
+	}
 
 	if err := EqualLists(mediaMixture.SubComponents, duplicated.SubComponents); err == nil {
 		t.Error("expecting lists to no longer be equal but this is not the case")
@@ -135,7 +139,9 @@ func TestDeepCopySubComponents(t *testing.T) {
 	l.CName = "water"
 	sc := NewLHComponent()
 	sc.CName = "mush"
-	l.AddSubComponent(sc, wunit.NewConcentration(50.0, "g/l"))
+	if err := l.AddSubComponent(sc, wunit.NewConcentration(50.0, "g/l")); err != nil {
+		t.Fatal(err)
+	}
 
 	l2 := l.Dup()
 

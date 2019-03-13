@@ -49,7 +49,7 @@ type LHProperties struct {
 	Washes         map[string]*wtype.Plate      // wash plates by position name
 	Model          string
 	Mnfr           string
-	LHType         LiquidHandlerLevel      // describes which liquidhandling API should be used to communicate with the device
+	LHType         LiquidHandlerLevel      // describes which liquidhandling API should be used to communicate with the device
 	TipType        TipType                 // defines the type of tips used by the liquidhandler
 	Heads          []*wtype.LHHead         // lists every head (whether loaded or not) that is available for the machine
 	Adaptors       []*wtype.LHAdaptor      // lists every adaptor (whether loaded or not) that is available for the machine
@@ -94,17 +94,14 @@ func (p LHProperties) GetLayout(idGen *id.IDGenerator) string {
 		} else {
 			lw := p.PlateLookup[plateID]
 
-			switch lw.(type) {
+			switch obj := lw.(type) {
 			case *wtype.Plate:
-				plt := lw.(*wtype.Plate)
-				s += fmt.Sprintln("Plate ", plt.PlateName, " type ", plt.Mnfr, " ", plt.Type, " Contents:")
-				s += plt.GetLayout(idGen)
+				s += fmt.Sprintln("Plate ", obj.PlateName, " type ", obj.Mnfr, " ", obj.Type, " Contents:")
+				s += obj.GetLayout(idGen)
 			case *wtype.LHTipbox:
-				tb := lw.(*wtype.LHTipbox)
-				s += fmt.Sprintln("Tip box ", tb.Mnfr, " ", tb.Type, " ", tb.Boxname, " ", tb.N_clean_tips())
+				s += fmt.Sprintln("Tip box ", obj.Mnfr, " ", obj.Type, " ", obj.Boxname, " ", obj.N_clean_tips())
 			case *wtype.LHTipwaste:
-				tw := lw.(*wtype.LHTipwaste)
-				s += fmt.Sprintln("Tip Waste ", tw.Mnfr, " ", tw.Type, " capacity ", tw.SpaceLeft())
+				s += fmt.Sprintln("Tip Waste ", obj.Mnfr, " ", obj.Type, " capacity ", obj.SpaceLeft())
 			default:
 				s += fmt.Sprintln("Labware :", lw)
 			}
@@ -236,14 +233,14 @@ func (lhp *LHProperties) dup(idGen *id.IDGenerator, keepIDs bool) *LHProperties 
 		var pt2 interface{}
 		var newid string
 		var addr string
-		switch pt.(type) {
+		switch obj := pt.(type) {
 		case *wtype.LHTipwaste:
 			var tmp *wtype.LHTipwaste
 			if keepIDs {
-				tmp = pt.(*wtype.LHTipwaste).Dup(idGen)
-				tmp.ID = pt.(*wtype.LHTipwaste).ID
+				tmp = obj.Dup(idGen)
+				tmp.ID = obj.ID
 			} else {
-				tmp = pt.(*wtype.LHTipwaste).Dup(idGen)
+				tmp = obj.Dup(idGen)
 			}
 			pt2 = tmp
 			newid = tmp.ID
@@ -252,9 +249,9 @@ func (lhp *LHProperties) dup(idGen *id.IDGenerator, keepIDs bool) *LHProperties 
 		case *wtype.Plate:
 			var tmp *wtype.Plate
 			if keepIDs {
-				tmp = pt.(*wtype.Plate).DupKeepIDs(idGen)
+				tmp = obj.DupKeepIDs(idGen)
 			} else {
-				tmp = pt.(*wtype.Plate).Dup(idGen)
+				tmp = obj.Dup(idGen)
 			}
 			pt2 = tmp
 			newid = tmp.ID
@@ -272,9 +269,9 @@ func (lhp *LHProperties) dup(idGen *id.IDGenerator, keepIDs bool) *LHProperties 
 		case *wtype.LHTipbox:
 			var tmp *wtype.LHTipbox
 			if keepIDs {
-				tmp = pt.(*wtype.LHTipbox).DupKeepIDs(idGen)
+				tmp = obj.DupKeepIDs(idGen)
 			} else {
-				tmp = pt.(*wtype.LHTipbox).Dup(idGen)
+				tmp = obj.Dup(idGen)
 			}
 			pt2 = tmp
 			newid = tmp.ID
@@ -1061,4 +1058,24 @@ func (p *LHProperties) DeckSummary() string {
 
 func (p *LHProperties) CarryVolume() wunit.Volume {
 	return wtype.GLOBALCARRYVOLUME
+}
+
+func (p *LHProperties) GetSetupInstructions() []TerminalRobotInstruction {
+	instructions := make([]TerminalRobotInstruction, 0, 1+len(p.PosLookup))
+
+	//first instruction is always to remove all plates
+	instructions = append(instructions, NewRemoveAllPlatesInstruction())
+
+	for position, plateid := range p.PosLookup {
+		if plateid == "" {
+			continue
+		}
+		plate := p.PlateLookup[plateid]
+		name := plate.(wtype.Named).GetName()
+
+		ins := NewAddPlateToInstruction(position, name, plate)
+
+		instructions = append(instructions, ins)
+	}
+	return instructions
 }

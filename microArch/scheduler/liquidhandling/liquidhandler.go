@@ -24,6 +24,7 @@ package liquidhandling
 
 import (
 	"fmt"
+	"io/ioutil"
 	"math"
 	"reflect"
 	"strings"
@@ -766,11 +767,11 @@ func OutputSetup(idGen *id.IDGenerator, robot *liquidhandling.LHProperties) {
 
 		fmt.Printf("%s %s: %s %s\n", k, robot.PlateIDLookup[k], v.PlateName, v.Type)
 
-		//TODO Deprecate
 		if strings.Contains(v.GetName(), "Input") {
-			_, err := wtype.AutoExportPlateCSV(idGen, v.GetName()+".csv", v)
-			if err != nil {
-				fmt.Printf("export plate csv (deprecated): %s\n", err.Error())
+			if bs, err := wtype.AutoExportPlateCSV(idGen, v); err != nil {
+				fmt.Printf("export plate csv: %s\n", err.Error())
+			} else if err := ioutil.WriteFile(v.GetName()+".csv", bs, 0400); err != nil {
+				fmt.Printf("export plate csv: %s\n", err.Error())
 			}
 		}
 

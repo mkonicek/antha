@@ -8,18 +8,18 @@ import (
 
 func ReadersFromPaths(paths []string) ([]io.ReadCloser, error) {
 	if len(paths) == 0 {
-		return nil, errors.New("No workflow files provided (use - to read from stdin).")
+		return nil, nil
 	}
 
-	stdinUnused := true
+	stdinUsed := false
 	rs := make([]io.ReadCloser, len(paths))
 	for idx, wfPath := range paths {
-		if wfPath == "-" {
-			if stdinUnused {
-				stdinUnused = false
-				rs[idx] = os.Stdin
+		if wfPath == "-" || wfPath == "" {
+			if stdinUsed {
+				return nil, errors.New("Stdin may only be used once")
 			} else {
-				return nil, errors.New("Workflow can only be read from stdin once")
+				stdinUsed = true
+				rs[idx] = os.Stdin
 			}
 
 		} else {

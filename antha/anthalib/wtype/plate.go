@@ -769,7 +769,7 @@ const SubComponentsHeader = "SubComponents"
 
 // ExportPlateCSV a exports an LHPlate and its contents as a csv file.
 // The caller is required to set the well locations and volumes explicitely with this function.
-func ExportPlateCSV(outputFileName string, plate *Plate, plateName string, wells []string, liquids []*Liquid, volumes []wunit.Volume) (data []byte, err error) {
+func ExportPlateCSV(plate *Plate, plateName string, wells []string, liquids []*Liquid, volumes []wunit.Volume) (data []byte, err error) {
 	if len(wells) != len(liquids) || len(liquids) != len(volumes) {
 		return nil, fmt.Errorf("Found %d liquids, %d wells and %d volumes. Cannot ExportPlateCSV unless these are all equal.", len(liquids), len(wells), len(volumes))
 	}
@@ -820,7 +820,7 @@ func ExportPlateCSV(outputFileName string, plate *Plate, plateName string, wells
 	}
 	records = append([][]string{headerrecord}, records...)
 
-	return exportCSV(records, outputFileName)
+	return exportCSV(records)
 }
 
 // AutoExportPlateCSV exports an LHPlate and its contents as a csv file.
@@ -828,7 +828,7 @@ func ExportPlateCSV(outputFileName string, plate *Plate, plateName string, wells
 // at the time of running an element, the scheduler  will not have allocated positions
 // for the components so, for example, accurate well information cannot currently be obtained with this function.
 // If allocating wells manually use the ExportPlateCSV function and explicitely set the sample locations and volumes.
-func AutoExportPlateCSV(idGen *id.IDGenerator, outputFileName string, plate *Plate) (data []byte, err error) {
+func AutoExportPlateCSV(idGen *id.IDGenerator, plate *Plate) (data []byte, err error) {
 
 	var platename string = plate.PlateName
 	var wells = make([]string, 0)
@@ -851,11 +851,11 @@ func AutoExportPlateCSV(idGen *id.IDGenerator, outputFileName string, plate *Pla
 			volumes = append(volumes, wunit.NewVolume(0.0, "ul"))
 		}
 	}
-	return ExportPlateCSV(outputFileName, plate, platename, wells, liquids, volumes)
+	return ExportPlateCSV(plate, platename, wells, liquids, volumes)
 }
 
 // Export a 2D array of string data as a csv file
-func exportCSV(records [][]string, filename string) ([]byte, error) {
+func exportCSV(records [][]string) ([]byte, error) {
 	var buf bytes.Buffer
 
 	/// use the buffer to create a csv writer

@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"io/ioutil"
 	"path"
@@ -27,6 +28,9 @@ type Workflow struct {
 }
 
 func WorkflowFromReaders(rs ...io.ReadCloser) (*Workflow, error) {
+	if len(rs) == 0 {
+		return nil, errors.New("No workflow sources provided.")
+	}
 	acc := &Workflow{}
 	for _, r := range rs {
 		defer r.Close()

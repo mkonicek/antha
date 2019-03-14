@@ -21,6 +21,7 @@ func (a *Workflow) merge(b *Workflow) error {
 	}
 
 	return utils.ErrorSlice{
+		b.SchemaVersion.Validate(), // every snippet must have a valid SchemaVersion
 		a.Repositories.merge(b.Repositories),
 		a.Elements.merge(b.Elements),
 		a.Inventory.merge(b.Inventory),

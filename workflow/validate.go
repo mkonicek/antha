@@ -13,15 +13,31 @@ import (
 )
 
 func (wf *Workflow) validate() error {
-	if wf.JobId == "" {
+	return utils.ErrorSlice{
+		wf.SchemaVersion.Validate(),
+		wf.JobId.Validate(),
+		wf.Repositories.validate(),
+		wf.Elements.validate(wf),
+		wf.Inventory.validate(),
+		wf.Config.validate(),
+	}.Pack()
+}
+
+func (sv SchemaVersion) Validate() error {
+	switch sv {
+	case CurrentSchemaVersion:
+		return nil
+	default:
+		return fmt.Errorf("Validation error: Invalid Schema Version. Migration required. Require version '%v'; Received version '%v'", CurrentSchemaVersion, sv)
+	}
+}
+
+func (jobId JobId) Validate() error {
+	switch jobId {
+	case "":
 		return errors.New("Validation error: Workflow has empty JobId")
-	} else {
-		return utils.ErrorSlice{
-			wf.Repositories.validate(),
-			wf.Elements.validate(wf),
-			wf.Inventory.validate(),
-			wf.Config.validate(),
-		}.Pack()
+	default:
+		return nil
 	}
 }
 

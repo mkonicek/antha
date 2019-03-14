@@ -13,7 +13,8 @@ import (
 )
 
 type Workflow struct {
-	JobId JobId `json:"JobId"`
+	SchemaVersion SchemaVersion `json:"SchemaVersion"`
+	JobId         JobId         `json:"JobId"`
 
 	Meta Meta `json:"Meta,omitempty"`
 
@@ -31,7 +32,7 @@ func WorkflowFromReaders(rs ...io.ReadCloser) (*Workflow, error) {
 	if len(rs) == 0 {
 		return nil, errors.New("No workflow sources provided.")
 	}
-	acc := &Workflow{}
+	acc := EmptyWorkflow()
 	for _, r := range rs {
 		defer r.Close()
 		wf := &Workflow{}
@@ -46,6 +47,12 @@ func WorkflowFromReaders(rs ...io.ReadCloser) (*Workflow, error) {
 		return nil, err
 	} else {
 		return acc, nil
+	}
+}
+
+func EmptyWorkflow() *Workflow {
+	return &Workflow{
+		SchemaVersion: CurrentSchemaVersion,
 	}
 }
 
@@ -182,3 +189,9 @@ type Inventory struct {
 	TipWastes  TipWastes  `json:"TipWastes"`
 	*/
 }
+
+const (
+	CurrentSchemaVersion SchemaVersion = "2.0"
+)
+
+type SchemaVersion string

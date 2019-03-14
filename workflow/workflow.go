@@ -39,7 +39,7 @@ func WorkflowFromReaders(rs ...io.ReadCloser) (*Workflow, error) {
 		dec := json.NewDecoder(r)
 		if err := dec.Decode(wf); err != nil {
 			return nil, err
-		} else if err := acc.merge(wf); err != nil {
+		} else if err := acc.Merge(wf); err != nil {
 			return nil, err
 		}
 	}

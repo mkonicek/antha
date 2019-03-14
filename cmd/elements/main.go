@@ -22,6 +22,7 @@ func main() {
 	subCmds := map[string]func(*logger.Logger, []string){
 		"find":          find,
 		"makeWorkflows": makeWorkflows,
+		"makeWorkflow":  makeWorkflow,
 	}
 
 	if cmd, found := subCmds[args[1]]; found {
@@ -38,6 +39,32 @@ func find(l *logger.Logger, paths []string) {
 	})
 }
 
+func makeWorkflow(l *logger.Logger, args []string) {
+	acc := workflow.EmptyWorkflow()
+	acc.JobId = workflow.JobId("underTest")
+	findElements(l, args, func(r *workflow.Repository, et *workflow.ElementType) error {
+		etCopy := *et
+		wf := &workflow.Workflow{
+			SchemaVersion: workflow.CurrentSchemaVersion,
+			Repositories: workflow.Repositories{
+				et.RepositoryPrefix: r,
+			},
+			Elements: workflow.Elements{
+				Types: workflow.ElementTypes{&etCopy},
+				Instances: workflow.ElementInstances{
+					workflow.ElementInstanceName(etCopy.Name()): &workflow.ElementInstance{
+						ElementTypeName: etCopy.Name(),
+					},
+				},
+			},
+		}
+		return acc.Merge(wf)
+	})
+	if err := acc.WriteToFile("/tmp/underTest.json"); err != nil {
+		l.Fatal(err)
+	}
+}
+
 func makeWorkflows(l *logger.Logger, args []string) {
 	outdir := ""
 	flagset := flag.NewFlagSet("makeWorkflows", flag.ContinueOnError)
@@ -50,16 +77,18 @@ func makeWorkflows(l *logger.Logger, args []string) {
 		l.Fatal(err)
 	}
 	findElements(l, paths, func(r *workflow.Repository, et *workflow.ElementType) error {
+		etCopy := *et
 		wf := &workflow.Workflow{
-			JobId: workflow.JobId("underTest"),
+			SchemaVersion: workflow.CurrentSchemaVersion,
+			JobId:         workflow.JobId("underTest"),
 			Repositories: workflow.Repositories{
 				et.RepositoryPrefix: r,
 			},
 			Elements: workflow.Elements{
-				Types: workflow.ElementTypes{et},
+				Types: workflow.ElementTypes{&etCopy},
 				Instances: workflow.ElementInstances{
-					workflow.ElementInstanceName("underTest"): &workflow.ElementInstance{
-						ElementTypeName: et.Name(),
+					workflow.ElementInstanceName(etCopy.Name()): &workflow.ElementInstance{
+						ElementTypeName: etCopy.Name(),
 					},
 				},
 			},

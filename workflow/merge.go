@@ -8,7 +8,7 @@ import (
 	"github.com/antha-lang/antha/utils"
 )
 
-func (a *Workflow) merge(b *Workflow) error {
+func (a *Workflow) Merge(b *Workflow) error {
 	switch {
 	case a == nil:
 		return errors.New("Cannot merge into a nil Workflow")

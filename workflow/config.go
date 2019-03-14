@@ -25,9 +25,8 @@ type GlobalMixerConfig struct {
 	UseDriverTipTracking     bool `json:"useDriverTipTracking"`
 	IgnorePhysicalSimulation bool `json:"ignorePhysicalSimulation"` //ignore errors in physical simulation
 
-	// Direct specification of input and output plates
-	InputPlates  []*wtype.Plate `json:"inputPlates,omitempty"`
-	OutputPlates []*wtype.Plate `json:"outputPlates,omitempty"`
+	// Direct specification of input plates
+	InputPlates []*wtype.Plate `json:"inputPlates,omitempty"`
 
 	CustomPolicyRuleSet *wtype.LHPolicyRuleSet `json:"customPolicyRuleSet,omitempty"`
 }

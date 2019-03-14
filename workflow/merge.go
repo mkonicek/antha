@@ -258,19 +258,12 @@ func (a *GlobalMixerConfig) Merge(b GlobalMixerConfig) error {
 	a.UseDriverTipTracking = a.UseDriverTipTracking || b.UseDriverTipTracking
 	a.IgnorePhysicalSimulation = a.IgnorePhysicalSimulation || b.IgnorePhysicalSimulation
 
-	// but we can't allow input or output plates to be speficied multiple times:
+	// but we can't allow input plates to be speficied multiple times:
 	switch inAEmpty, inBEmpty := len(a.InputPlates) == 0, len(b.InputPlates) == 0; {
 	case inAEmpty:
 		a.InputPlates = b.InputPlates
 	case !inBEmpty: // by implication, also !inAEmpty
 		return errors.New("Cannot merge: Config.GlobalMixer.InputPlates specified in multiple workflows. This is illegal")
-	}
-
-	switch outAEmpty, outBEmpty := len(a.OutputPlates) == 0, len(b.OutputPlates) == 0; {
-	case outAEmpty:
-		a.OutputPlates = b.OutputPlates
-	case !outBEmpty: // by implication, also !outAEmpty
-		return errors.New("Cannot merge: Config.GlobalMixer.OutputPlates specified in multiple workflows. This is illegal")
 	}
 
 	// for LHPolicyRuleSets, there's already a merge function!

@@ -226,11 +226,6 @@ func (global GlobalMixerConfig) validate() error {
 			return fmt.Errorf("GlobalMixer contains illegal nil input plate at index %d", idx)
 		}
 	}
-	for idx, p := range global.OutputPlates {
-		if p == nil {
-			return fmt.Errorf("GlobalMixer contains illegal nil Output plate at index %d", idx)
-		}
-	}
 	// We cannot validate plates and plate types until we have a
 	// working inventory system.
 	return nil

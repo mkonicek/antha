@@ -1,7 +1,6 @@
 package mixer
 
 import (
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/microArch/scheduler/liquidhandling"
 	"github.com/antha-lang/antha/workflow"
@@ -23,11 +22,9 @@ func NewGlobalMixerConfig(inv *inventory.Inventory, cfg *workflow.GlobalMixerCon
 }
 
 func (cfg *GlobalMixerConfig) Validate(inv *inventory.Inventory) error {
-	for _, plates := range [][]*wtype.Plate{cfg.InputPlates, cfg.OutputPlates} {
-		for _, plate := range plates {
-			if _, err := inv.PlateTypes.NewPlateType(plate.Type); err != nil {
-				return err
-			}
+	for _, plate := range cfg.InputPlates {
+		if _, err := inv.PlateTypes.NewPlateType(plate.Type); err != nil {
+			return err
 		}
 	}
 	return nil

@@ -9,7 +9,7 @@
         "GilsonPipetMax": {
             "Devices": {
                 "Gillian": {
-                    "Connection": "file:///home/matthew/src/Go_external_1.11/src/github.com/Synthace/PipetMaxDriver/server/server",
+                    "Connection": "file:///home/matthew/src/Go_external_1.11/src/github.com/Synthace/instruction-plugins/PipetMax/PipetMax",
                     "InputPlateTypes": ["pcrplate_skirted"]
                 }
             }
@@ -17,7 +17,7 @@
         "Labcyte": {
             "Devices": {
                 "Larry": {
-                    "Connection": "go://github.com/Synthace/LabCyteEchoDriver/server",
+                    "Connection": "go://github.com/Synthace/instruction-plugins/LabcyteEcho",
                     "Model": "525",
                     "InputPlateTypes": ["pcrplate_skirted"]
                 }
@@ -26,7 +26,7 @@
         "Tecan": {
             "Devices": {
                 "Trevor": {
-                    "Connection": "go://github.com/Synthace/TecanScriptDriver/server",
+                    "Connection": "go://github.com/Synthace/instruction-plugins/TecanScript",
                     "Model": "Evo",
                     "InputPlateTypes": ["pcrplate_skirted"]
                 }
@@ -35,7 +35,7 @@
         "CyBio": {
             "Devices": {
                 "Cydney": {
-                    "Connection": "go://github.com/Synthace/CyBioXMLDriver/server",
+                    "Connection": "go://github.com/Synthace/instruction-plugins/CyBioXML",
                     "Model": "Felix",
                     "InputPlateTypes": ["pcrplate_skirted"]
                 }

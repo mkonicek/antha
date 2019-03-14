@@ -20,6 +20,11 @@ func (rs Repositories) LongestMatching(importPath string) (RepositoryPrefix, *Re
 	// discriminate by length: we are guaranteed to find at most one
 	// match. This however may become more relevant if/when we move to
 	// go modules.
+	//
+	// This code says: if we have an importPath of
+	// foo/bar/baz/Aliquot_Liquid and we have repositories with
+	// prefixes foo/bar and foo/bar/baz then we choose to use the
+	// longest repo prefix (foo/bar/baz).
 	var winningRepo *Repository
 	winningPrefix := RepositoryPrefix("")
 	for repoPrefix, repo := range rs {

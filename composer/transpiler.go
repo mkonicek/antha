@@ -76,7 +76,7 @@ func (tet *TranspilableElementType) Transpile(c *Composer) error {
 
 func (tet *TranspilableElementType) maybeRewriteImport(c *Composer, ipt *compile.ImportReq) error {
 	// we don't expect imports inside antha files to have revisions
-	// within them. So, the strategy is:
+	// within them (or specify repositories in any non-standard way). So, the strategy is:
 	// 1. Look for longest matching repo and use that
 	// 2. Otherwise (and this is most likely), it's not an import we should be rewriting.
 

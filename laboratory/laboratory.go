@@ -374,11 +374,12 @@ func (eb *ElementBase) Completed(lab *Laboratory) {
 }
 
 func (eb *ElementBase) Save(lab *Laboratory) error {
-	if bs, err := json.Marshal(eb.element); err != nil {
+	p := filepath.Join(lab.outDir, "elements", fmt.Sprintf("%s.json", eb.element.Name()))
+	if fh, err := os.OpenFile(p, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0400); err != nil {
 		return err
 	} else {
-		p := filepath.Join(lab.outDir, "elements", fmt.Sprintf("%s.json", eb.element.Name()))
-		return ioutil.WriteFile(p, bs, 0400)
+		defer fh.Close()
+		return json.NewEncoder(fh).Encode(eb.element)
 	}
 }
 

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"io/ioutil"
+	"os"
 	"path"
 	"strings"
 
@@ -57,11 +57,16 @@ func EmptyWorkflow() *Workflow {
 }
 
 func (wf *Workflow) WriteToFile(p string) error {
-	if bs, err := json.Marshal(wf); err != nil {
+	if fh, err := os.OpenFile(p, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0400); err != nil {
 		return err
 	} else {
-		return ioutil.WriteFile(p, bs, 0400)
+		defer fh.Close()
+		return wf.ToWriter(fh)
 	}
+}
+
+func (wf *Workflow) ToWriter(w io.Writer) error {
+	return json.NewEncoder(w).Encode(wf)
 }
 
 type Meta struct {

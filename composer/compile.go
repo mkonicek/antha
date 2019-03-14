@@ -35,7 +35,7 @@ func (c *Composer) goBuild() error {
 	outBin := filepath.Join(c.OutDir, "bin", string(c.Workflow.JobId))
 	cmd := exec.Command("go", "build", "-o", outBin)
 	if c.LinkedDrivers {
-		cmd.Args = append(cmd.Args, "-tags", "linkedDrivers", "-tags", "protobuf")
+		cmd.Args = append(cmd.Args, "-tags", "linkedDrivers protobuf")
 	}
 	cmd.Dir = filepath.Join(c.OutDir, "workflow")
 

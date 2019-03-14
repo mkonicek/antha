@@ -5,10 +5,10 @@ package mixer
 import (
 	"fmt"
 
-	cb_driver "github.com/Synthace/CyBioXMLDriver/driver"
-	lc_driver "github.com/Synthace/LabCyteEchoDriver/driver"
-	pm_driver "github.com/Synthace/PipetMaxDriver/driver"
-	tecan_driver "github.com/Synthace/TecanScriptDriver/driver"
+	cb_driver "github.com/Synthace/instruction-plugins/CyBio/driver"
+	lc_driver "github.com/Synthace/instruction-plugins/LabcyteEcho/driver"
+	pm_driver "github.com/Synthace/instruction-plugins/PipetMax/driver"
+	tecan_driver "github.com/Synthace/instruction-plugins/TecanScript/driver"
 	lhdriver "github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/workflow"

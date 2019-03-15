@@ -1,6 +1,7 @@
 package parquet
 
 import (
+	"bytes"
 	"io/ioutil"
 	"math"
 	"os"
@@ -20,21 +21,47 @@ func TestParquet(t *testing.T) {
 		data.Must().NewSeriesFromSlice("timestamp_micros_column", []data.TimestampMicros{1000, 2000, 3000, 4000, 5000}, nil),
 	})
 
-	// write Table to Parquet
+	// file: write + read
 	fileName := parquetFileName(t)
 	defer os.Remove(fileName)
 
-	if err := WriteTable(table, fileName); err != nil {
-		t.Errorf("write table: %s", err)
+	if err := TableToFile(table, fileName); err != nil {
+		t.Errorf("TableToFile: %s", err)
 	}
 
-	// read Table to Parquet
-	readTable, err := ReadTable(fileName)
+	readTable, err := TableFromFile(fileName)
 	if err != nil {
-		t.Errorf("read table: %s", err)
+		t.Errorf("TableFromFile: %s", err)
 	}
 
-	assertEqual(t, table, readTable, "tables are different after serialization")
+	assertEqual(t, table, readTable, "tables are different after serialization to a file")
+
+	// bytes: write + read
+	blob, err := TableToBytes(table)
+	if err != nil {
+		t.Errorf("TableToBytes: %s", err)
+	}
+
+	readTable, err = TableFromBytes(blob)
+	if err != nil {
+		t.Errorf("TableFromBytes: %s", err)
+	}
+
+	assertEqual(t, table, readTable, "tables are different after serialization to a memory buffer")
+
+	// write to io.Writer + read from io.Reader
+	buffer := bytes.NewBuffer(nil)
+
+	if err := TableToWriter(table, buffer); err != nil {
+		t.Errorf("TableToWriter: %s", err)
+	}
+
+	readTable, err = TableFromReader(buffer)
+	if err != nil {
+		t.Errorf("TableFromReader: %s", err)
+	}
+
+	assertEqual(t, table, readTable, "tables are different after serialization to io.Writer")
 }
 
 func parquetFileName(t *testing.T) string {

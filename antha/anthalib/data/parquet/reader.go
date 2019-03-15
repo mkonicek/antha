@@ -1,6 +1,8 @@
 package parquet
 
 import (
+	"io"
+	"io/ioutil"
 	"reflect"
 	"strings"
 
@@ -11,10 +13,44 @@ import (
 	"github.com/xitongsys/parquet-go/parquet"
 )
 
-// ReadTable reads a data.Tablen eagerly from a Parquet file
-func ReadTable(filePath string) (*data.Table, error) {
+// TableFromReader reads a data.Table eagerly from io.Reader
+func TableFromReader(reader io.Reader) (*data.Table, error) {
+	// reading into a memory buffer
+	buffer, err := ioutil.ReadAll(reader)
+	if err != nil {
+		return nil, errors.Wrap(err, "read Parquet file bytes")
+	}
+
+	// reading the table
+	return TableFromBytes(buffer)
+}
+
+// TableFromBytes reads a data.Table eagerly from a memory buffer
+func TableFromBytes(buffer []byte) (*data.Table, error) {
+	// wrap a byte buffer into a ParquetFile object
+	file := newReadOnlyMemoryParquetFile(buffer)
+
+	// reading the table
+	return readTable(file)
+}
+
+// TableFromFile reads a data.Table eagerly from a Parquet file
+func TableFromFile(filePath string) (*data.Table, error) {
+	// opening the file on disk via ParquetFile object
+	file, err := ParquetFile.NewLocalFileReader(filePath)
+	if err != nil {
+		return nil, errors.Wrapf(err, "read Parquet file '%s'", filePath)
+	}
+	defer file.Close() //nolint
+
+	// reading the table
+	return readTable(file)
+}
+
+// reads a table from an arbitrary source (in the form of ParquetFile)
+func readTable(file ParquetFile.ParquetFile) (*data.Table, error) {
 	// reading Parquet file metadata
-	metadata, err := readMetadata(filePath)
+	metadata, err := readMetadata(file)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +77,7 @@ func ReadTable(filePath string) (*data.Table, error) {
 	}
 
 	// reading from Parquet
-	err = readFromParquet(filePath, jsonSchema, rowType, func(rowStruct interface{}) {
+	err = readFromParquet(file, jsonSchema, rowType, func(rowStruct interface{}) {
 		// populating row values from a dynamic row struct
 		row := rowValuesFromRowStruct(rowStruct, schema)
 		// appending the row to the table builder
@@ -56,11 +92,11 @@ func ReadTable(filePath string) (*data.Table, error) {
 }
 
 // reads Parquet file metadata
-func readMetadata(filePath string) (*parquet.FileMetaData, error) {
-	// parquet file
-	file, err := ParquetFile.NewLocalFileReader(filePath)
+func readMetadata(file ParquetFile.ParquetFile) (*parquet.FileMetaData, error) {
+	// opening the file copy
+	file, err := file.Open("")
 	if err != nil {
-		return nil, errors.Wrapf(err, "read Parquet file '%s'", filePath)
+		return nil, errors.Wrapf(err, "open Parquet file")
 	}
 	defer file.Close() //nolint
 
@@ -74,23 +110,23 @@ func readMetadata(filePath string) (*parquet.FileMetaData, error) {
 }
 
 // Reads rows from Parquet file
-func readFromParquet(filePath string, jsonSchema string, rowType reflect.Type, onRow func(interface{})) error {
+func readFromParquet(file ParquetFile.ParquetFile, jsonSchema string, rowType reflect.Type, onRow func(interface{})) error {
 	// for now, reading Parquet file in 1 thread, 100 rows at once
 	// TODO: which parameters to use for really large datasets?
 	np := 1
 	batchSize := 100
 
-	// parquet file
-	file, err := ParquetFile.NewLocalFileReader(filePath)
+	// opening the file copy
+	file, err := file.Open("")
 	if err != nil {
-		return errors.Wrapf(err, "open Parquet file '%s'", filePath)
+		return errors.Wrapf(err, "open Parquet file")
 	}
 	defer file.Close() //nolint
 
 	// parquet reader
 	parquetReader, err := ParquetReader.NewParquetReader(file, nil, int64(np))
 	if err != nil {
-		return errors.Wrapf(err, "create Parquet reader '%s'", filePath)
+		return errors.Wrapf(err, "create Parquet reader")
 	}
 	defer parquetReader.ReadStop()
 

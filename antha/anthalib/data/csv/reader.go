@@ -12,8 +12,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-// ReadTable reads a data.Table eagerly from a CSV file
-func ReadTable(filePath string) (*data.Table, error) {
+// TableFromFile reads a data.Table eagerly from a CSV file
+func TableFromFile(filePath string) (*data.Table, error) {
 	// CSV file
 	file, err := os.Open(filepath.Clean(filePath))
 	if err != nil {

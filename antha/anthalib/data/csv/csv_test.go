@@ -10,7 +10,7 @@ import (
 )
 
 func TestCSV(t *testing.T) {
-	// create a Table from Arrow Series
+	// create a Table
 	table := data.NewTable([]*data.Series{
 		data.Must().NewSeriesFromSlice("bool_column", []bool{true, true, false, false, true}, nil),
 		data.Must().NewSeriesFromSlice("int64_column", []int64{10, 10, 30, -1, 5}, []bool{true, true, true, false, true}),

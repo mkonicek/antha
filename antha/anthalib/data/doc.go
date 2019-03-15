@@ -42,10 +42,9 @@ might print:
 Each column in a Table has a Go datatype, but may also be nil, even for scalar types such as string.  nil is not
 thre same as zero or NaN.
 
-Another way to create tables is to provide Series instances directly, such as Arrow arrays, which provide nullable series
-via a mask, like this:
-	column1 := data.Must().NewArrowSeriesFromSlice("quantity", []float64{11.0, 12.0, 10.5, 0, 5.5}, []bool{true, true, true, false, true})
-	column2 := data.Must().NewArrowSeriesFromSlice("label", []string{"A", "B", "A", "C", "C"}, nil)
+Another way to create tables is to construct Series instances from a Go slice and a nullability mask, like this:
+	column1 := data.Must().NewSeriesFromSlice("quantity", []float64{11.0, 12.0, 10.5, 0, 5.5}, []bool{true, true, true, false, true})
+	column2 := data.Must().NewSeriesFromSlice("label", []string{"A", "B", "A", "C", "C"}, nil)
 	anotherTable := data.NewTable([]*data.Series{column1, column2})
 
 We can write data back to files, such as Parquet, using parquet.TableToBytes.

@@ -9,7 +9,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -252,6 +254,9 @@ type mixOpts struct {
 	InputPlateTypes  []wtype.PlateTypeName
 	OutputPlateTypes []wtype.PlateTypeName
 	TipTypes         []string
+
+	OutDir      string
+	ContentName string
 }
 
 func (mo mixOpts) mix() (*target.Mix, error) {
@@ -340,32 +345,54 @@ func (mo mixOpts) mix() (*target.Mix, error) {
 	bs, status := handler.Properties.Driver.GetOutputFile()
 	if err := status.GetError(); err != nil {
 		return nil, err
-	} else {
-		mimetype := "application/data"
-		if handler.Properties.Mnfr != "" {
-			mimetype = "application/" + strings.ToLower(handler.Properties.Mnfr)
-		}
-		return &target.Mix{
-			Dev:             mo.Device,
-			Request:         req,
-			Properties:      handler.Properties,
-			FinalProperties: handler.FinalProperties,
-			Final:           handler.PlateIDMap(),
-			Files: target.Files{
-				Tarball: bs,
-				Type:    mimetype,
-			},
-		}, nil
 	}
+
+	mimetype := "application/data"
+	if handler.Properties.Mnfr != "" {
+		mimetype = "application/" + strings.ToLower(handler.Properties.Mnfr)
+	}
+	mix := &target.Mix{
+		Dev:             mo.Device,
+		Request:         req,
+		Properties:      handler.Properties,
+		FinalProperties: handler.FinalProperties,
+		Final:           handler.PlateIDMap(),
+		Files: target.Files{
+			Tarball: bs,
+			Type:    mimetype,
+		},
+	}
+	idGen := mo.LabEffects.IDGenerator
+	mix.SetId(idGen)
+
+	dir := filepath.Join(mo.OutDir, mix.Id())
+	if err := os.MkdirAll(dir, 0700); err != nil {
+		return nil, err
+	} else if err := mo.writeToTarball(dir, bs); err != nil {
+		return nil, err
+	} else if layoutBs, err := mix.SummarizeLayout(idGen); err != nil {
+		return nil, err
+	} else if actionsBs, err := mix.SummarizeActions(idGen); err != nil {
+		return nil, err
+	} else if err := ioutil.WriteFile(filepath.Join(dir, ".layout.json"), layoutBs, 0400); err != nil {
+		return nil, err
+	} else if err := ioutil.WriteFile(filepath.Join(dir, ".actions.json"), actionsBs, 0400); err != nil {
+		return nil, err
+	}
+
+	return mix, nil
 }
 
-func writeToTarball(tarballPath, contentName string, content []byte) error {
+func (mo *mixOpts) writeToTarball(dir string, content []byte) error {
+	if mo.OutDir == "" {
+		return nil
+	}
 	var buf bytes.Buffer
 	gw := gzip.NewWriter(&buf)
 	tw := tar.NewWriter(gw)
 
 	if err := tw.WriteHeader(&tar.Header{
-		Name:    contentName,
+		Name:    mo.ContentName,
 		Mode:    0400,
 		Size:    int64(len(content)),
 		ModTime: time.Now(),
@@ -378,7 +405,7 @@ func writeToTarball(tarballPath, contentName string, content []byte) error {
 	} else if err := gw.Close(); err != nil {
 		return err
 	} else {
-		return ioutil.WriteFile(tarballPath, buf.Bytes(), 0400)
+		return ioutil.WriteFile(filepath.Join(dir, fmt.Sprintf("%v.tar.gz", mo.Device.Id())), buf.Bytes(), 0400)
 	}
 }
 

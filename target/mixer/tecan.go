@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"path/filepath"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/inventory"
@@ -19,7 +18,6 @@ var (
 )
 
 type TecanInstance struct {
-	ID                   workflow.DeviceInstanceID
 	MaxPlates            float64
 	MaxWells             float64
 	ResidualVolumeWeight float64
@@ -54,7 +52,6 @@ func NewTecanInstances(logger *logger.Logger, tgt *target.Target, inv *inventory
 
 	for id, instWF := range config.Devices {
 		instance := &TecanInstance{
-			ID:                   id,
 			MaxPlates:            floatValue(instWF.MaxPlates, &defaults.MaxPlates),
 			MaxWells:             floatValue(instWF.MaxWells, &defaults.MaxWells),
 			ResidualVolumeWeight: floatValue(instWF.MaxPlates, &defaults.ResidualVolumeWeight),
@@ -128,20 +125,13 @@ func (inst *TecanInstance) Compile(labEffects *effects.LaboratoryEffects, dir st
 		InputPlateTypes:  inst.InputPlateTypes,
 		OutputPlateTypes: inst.OutputPlateTypes,
 		TipTypes:         inst.TipTypes,
+
+		OutDir:      dir,
+		ContentName: fmt.Sprintf("%v-%v.txt", inst.Id(), instrs[0].BlockID),
 	}.mix()
-
 	if err != nil {
 		return nil, err
 	}
 
-	tarballPath := filepath.Join(dir, fmt.Sprintf("%v.tar.gz", inst.ID))
-	contentPath := fmt.Sprintf("%v-%v.txt", inst.ID, instrs[0].BlockID)
-
-	if err != nil {
-		return nil, err
-	} else if err := writeToTarball(tarballPath, contentPath, mix.Files.Tarball); err != nil {
-		return nil, err
-	} else {
-		return []effects.Inst{mix}, nil
-	}
+	return []effects.Inst{mix}, nil
 }

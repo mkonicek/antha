@@ -3,7 +3,6 @@ package mixer
 import (
 	"errors"
 	"fmt"
-	"path/filepath"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/inventory"
@@ -18,7 +17,6 @@ var (
 )
 
 type GilsonPipetMaxInstance struct {
-	ID                   workflow.DeviceInstanceID
 	MaxPlates            float64
 	MaxWells             float64
 	ResidualVolumeWeight float64
@@ -53,7 +51,6 @@ func NewGilsonPipetMaxInstances(logger *logger.Logger, tgt *target.Target, inv *
 
 	for id, instWF := range config.Devices {
 		instance := &GilsonPipetMaxInstance{
-			ID:                           id,
 			MaxPlates:                    floatValue(instWF.MaxPlates, &defaults.MaxPlates),
 			MaxWells:                     floatValue(instWF.MaxWells, &defaults.MaxWells),
 			ResidualVolumeWeight:         floatValue(instWF.MaxPlates, &defaults.ResidualVolumeWeight),
@@ -131,19 +128,13 @@ func (inst *GilsonPipetMaxInstance) Compile(labEffects *effects.LaboratoryEffect
 		InputPlateTypes:  inst.InputPlateTypes,
 		OutputPlateTypes: inst.OutputPlateTypes,
 		TipTypes:         inst.TipTypes,
+
+		OutDir:      dir,
+		ContentName: fmt.Sprintf("%v-%v.sqlite", inst.Id(), instrs[0].BlockID),
 	}.mix()
 	if err != nil {
 		return nil, err
 	}
 
-	tarballPath := filepath.Join(dir, fmt.Sprintf("%v.tar.gz", inst.ID))
-	contentPath := fmt.Sprintf("%v-%v.sqlite", inst.ID, instrs[0].BlockID)
-
-	if err != nil {
-		return nil, err
-	} else if err := writeToTarball(tarballPath, contentPath, mix.Files.Tarball); err != nil {
-		return nil, err
-	} else {
-		return []effects.Inst{mix}, nil
-	}
+	return []effects.Inst{mix}, nil
 }

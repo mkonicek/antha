@@ -25,18 +25,28 @@ package wunit
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"sort"
+
+	"github.com/pkg/errors"
 )
 
 var (
 	noValues error = fmt.Errorf("empty slice specified as argument to sort function")
 )
 
+// SortOption is an option to add to
+type SortOption string
+
+// DescendingOrder is an optional argument which can be used in SortConcentrations and
+// SortVolumes in order to sort by descending order.
+const DescendingOrder SortOption = "DescendingOrder"
+
 // SortConcentrations sorts a set of Concentration values.
 // An error will be returned if no values are specified or the base units of any of the concentrations are incompatible,
 // e.g. units of X and g/l would not be compatible.
-func SortConcentrations(concs []Concentration) (sorted []Concentration, err error) {
+// An optional second argument DescendingOrder can be specified to indicate that the sorting will be in descending order.
+// By default sorting will be in ascending order.
+func SortConcentrations(concs []Concentration, descending ...SortOption) (sorted []Concentration, err error) {
 	if len(concs) == 0 {
 		return concs, noValues
 	}
@@ -47,6 +57,15 @@ func SortConcentrations(concs []Concentration) (sorted []Concentration, err erro
 			}
 		}
 		sorted = append(sorted, concs[i])
+	}
+
+	if len(descending) > 0 {
+		if descending[0] == DescendingOrder {
+			sort.Sort(sort.Reverse(concentrationSet(sorted)))
+			return
+		} else {
+			err = fmt.Errorf("unrecognised sort option %s only %s is a valid option at present", descending, DescendingOrder)
+		}
 	}
 
 	sort.Sort(concentrationSet(sorted))
@@ -106,7 +125,9 @@ func (cs concentrationSet) Less(i, j int) bool {
 
 // SortVolumes sorts a set of Volume values.
 // An error will be returned if no values are specified or the base units of any of the volumes are incompatible,
-func SortVolumes(volumes []Volume) (sorted []Volume, err error) {
+// An optional second argument DescendingOrder can be specified to indicate that the sorting will be in descending order.
+// By default sorting will be in ascending order.
+func SortVolumes(volumes []Volume, descending ...SortOption) (sorted []Volume, err error) {
 	if len(volumes) == 0 {
 		return volumes, noValues
 	}
@@ -117,6 +138,15 @@ func SortVolumes(volumes []Volume) (sorted []Volume, err error) {
 			}
 		}
 		sorted = append(sorted, volumes[i])
+	}
+
+	if len(descending) > 0 {
+		if descending[0] == DescendingOrder {
+			sort.Sort(sort.Reverse(volumeSet(sorted)))
+			return
+		} else {
+			err = fmt.Errorf("unrecognised sort option %s only %s is a valid option at present", descending, DescendingOrder)
+		}
 	}
 
 	sort.Sort(volumeSet(sorted))

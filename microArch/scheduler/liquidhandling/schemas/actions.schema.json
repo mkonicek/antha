@@ -2,14 +2,25 @@
 	"$id": "https://antha.com/actions-schema",
 	"$schema": "http://json-schema.org/draft-07/schema#",
 	"description": "JSON Schema for describing actions carried out during liquidhandling",
-	"type": "array",
-    "minItems": 1,
-    "items": {
-        "oneOf": [
-            { "$ref": "#/definitions/transferAction" },
-            { "$ref": "#/definitions/promptAction" },
-            { "$ref": "#/definitions/waitAction" }
-        ]
+    "type": "object",
+    "required": ["version", "actions"],
+    "properties": {
+        "version": {
+            "description": "the version of the schema, for validation",
+            "const": "1.0"
+        },
+        "actions": {
+            "description": "the actions carried out during the liquidhandling operation",
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "oneOf": [
+                    { "$ref": "#/definitions/transferAction" },
+                    { "$ref": "#/definitions/promptAction" },
+                    { "$ref": "#/definitions/waitAction" }
+                ]
+            }
+        }
     },
 	"definitions": {
 		"liquid": {

@@ -14,6 +14,11 @@ import (
 	"github.com/antha-lang/antha/utils"
 )
 
+const (
+	LayoutSummaryVersion  = "1.0"
+	ActionsSummaryVersion = "1.0"
+)
+
 //go:generate go-bindata -o ./schemas.go -pkg liquidhandling -prefix schemas/ ./schemas/
 
 func validateJSON(schemaName string, jsonToValidate []byte) error {
@@ -137,6 +142,17 @@ type layoutSummary struct {
 	Before *deckSummary      `json:"before"`  // the layout before the liquidhandling takes place
 	After  *deckSummary      `json:"after"`   // the layout after the liquidhandling takes place
 	IDMap  map[string]string `json:"new_ids"` // maps from ids in "before" to ids in "after"
+}
+
+func (ls *layoutSummary) MarshalJSON() ([]byte, error) {
+	type LayoutSummaryAlias layoutSummary
+	return json.Marshal(struct {
+		*LayoutSummaryAlias
+		Version string `json:"version"`
+	}{
+		LayoutSummaryAlias: (*LayoutSummaryAlias)(ls),
+		Version:            LayoutSummaryVersion,
+	})
 }
 
 // deckSummary summarize the layout of the deck
@@ -404,6 +420,17 @@ type wellLocation struct {
 }
 
 type actionsSummary []action
+
+func (as actionsSummary) MarshalJSON() ([]byte, error) {
+	type ActionsSummaryAlias actionsSummary
+	return json.Marshal(struct {
+		Actions ActionsSummaryAlias `json:"actions"`
+		Version string              `json:"version"`
+	}{
+		Actions: ActionsSummaryAlias(as),
+		Version: ActionsSummaryVersion,
+	})
+}
 
 // contentUpdate
 type contentUpdate struct {

@@ -63,6 +63,24 @@ func (ls *layoutSummary) NormalizeIDs() {
 	ls.IDMap = newIDMap
 }
 
+func (ls *layoutSummary) UnmarshalJSON(bs []byte) error {
+	type LayoutSummaryAlias layoutSummary
+	var a struct {
+		LayoutSummaryAlias
+		Version string `json:"version"`
+	}
+	if err := json.Unmarshal(bs, &a); err != nil {
+		return errors.WithMessage(err, "unmarshalling layout")
+	}
+
+	if a.Version != LayoutSummaryVersion {
+		return errors.Errorf("layout version mismatch: expected %s, got %s", LayoutSummaryVersion, a.Version)
+	}
+
+	*ls = layoutSummary(a.LayoutSummaryAlias)
+	return nil
+}
+
 // AssertActionsEquivalent checks that the actions match, ignoring differences in object IDs
 func AssertActionsEquivalent(got, expected []byte) error {
 	var g, e actionsSummary
@@ -128,13 +146,20 @@ func (as *actionsSummary) UnmarshalJSON(bs []byte) error {
 		Kind string `json:"kind"`
 	}
 
-	var actions []*json.RawMessage
+	var actions struct {
+		Actions []*json.RawMessage `json:"actions"`
+		Version string             `json:"version"`
+	}
 	if err := json.Unmarshal(bs, &actions); err != nil {
 		return err
 	}
 
-	newActions := make(actionsSummary, 0, len(actions))
-	for _, rawAction := range actions {
+	if actions.Version != ActionsSummaryVersion {
+		return errors.Errorf("actions version mismatch: expected %s, got %s", ActionsSummaryVersion, actions.Version)
+	}
+
+	newActions := make(actionsSummary, 0, len(actions.Actions))
+	for _, rawAction := range actions.Actions {
 		var pa partialAction
 		if err := json.Unmarshal(*rawAction, &pa); err != nil {
 			return err

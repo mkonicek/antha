@@ -84,7 +84,7 @@ func listPlates(cmd *cobra.Command, args []string) error {
 			Type:          p.Type,
 			WellsX:        p.WellsX(),
 			WellsY:        p.WellsY(),
-			WellShape:     string(p.Welltype.Shape().ShapeName),
+			WellShape:     p.Welltype.Shape().Type.String(),
 			WellBottom:    p.Welltype.Bottom.String(),
 			MaxWellVolume: p.Welltype.MaxVolume(),
 		})

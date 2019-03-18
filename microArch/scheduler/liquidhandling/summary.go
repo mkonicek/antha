@@ -241,7 +241,7 @@ func newItemSummary(obj wtype.LHObject) *itemSummary {
 		}
 
 		shape := squareWell
-		if o.Welltype.Shape().ShapeName.IsRound() {
+		if o.Welltype.Shape().Type.IsRound() {
 			shape = roundWell
 		}
 
@@ -290,7 +290,7 @@ func newItemSummary(obj wtype.LHObject) *itemSummary {
 		}
 	case *wtype.LHTipwaste:
 		shape := squareWell
-		if o.AsWell.Shape().ShapeName.IsRound() {
+		if o.AsWell.Shape().Type.IsRound() {
 			shape = roundWell
 		}
 

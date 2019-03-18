@@ -9,7 +9,7 @@ import (
 )
 
 func makeTipForTest() *LHTip {
-	shp := NewShape("cylinder", "mm", 7.3, 7.3, 51.2)
+	shp := NewShape(CylinderShape, "mm", 7.3, 7.3, 51.2)
 	return NewLHTip("me", "mytype", 0.5, 1000.0, "ul", false, shp, 44.7)
 }
 

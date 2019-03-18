@@ -6,7 +6,7 @@ import (
 )
 
 func getTestWell(volUL, residualUL float64) *LHWell {
-	shp := NewShape("klein bottle", "mm", 10.0, 5.0, 5.0)
+	shp := NewShape(BoxShape, "mm", 10.0, 5.0, 5.0)
 	well := NewLHWell("ul", volUL, residualUL, shp, UWellBottom, 5.0, 5.0, 10.0, 1.0, "mm")
 	return well
 }

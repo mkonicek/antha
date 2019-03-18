@@ -1228,7 +1228,7 @@ func (p *Plate) AreWellTargetsEnabled(adaptorChannels int, channelSpacing float6
 		return false
 	}
 
-	if p.Welltype.Shape().ShapeName != "box" {
+	if !BoxShape.Equals(p.Welltype.Shape().Type) {
 		return false
 	}
 

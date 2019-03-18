@@ -103,6 +103,7 @@ import (
 
 func main() {
 	labBuild := laboratory.NewLaboratoryBuilder(ioutil.NopCloser(bytes.NewBuffer(MustAsset("data/workflow.json"))))
+	defer labBuild.Decommission()
 	jh := &codec.JsonHandle{}
 	labBuild.RegisterJsonExtensions(jh)
 

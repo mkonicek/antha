@@ -2,8 +2,6 @@ package laboratory
 
 import (
 	"fmt"
-	"io/ioutil"
-	"path/filepath"
 	"reflect"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -81,13 +79,5 @@ func (labBuild *LaboratoryBuilder) RegisterJsonExtensions(jh *codec.JsonHandle) 
 		labBuild.Fatal(err)
 	} else if err := jh.SetInterfaceExt(reflect.TypeOf(wtype.LHTipbox{}), 0, &tipboxJson{labBuild: labBuild}); err != nil {
 		labBuild.Fatal(err)
-	}
-}
-
-func (labBuild *LaboratoryBuilder) SaveErrors() error {
-	if len(labBuild.errors) != 0 {
-		return ioutil.WriteFile(filepath.Join(labBuild.outDir, "errors.txt"), []byte(labBuild.errors.Pack().Error()), 0400)
-	} else {
-		return nil
 	}
 }

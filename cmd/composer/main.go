@@ -33,21 +33,12 @@ func main() {
 		logger.Fatal(err)
 	} else if comp, err := composer.NewComposer(logger, wf, outdir, keep, run, linkedDrivers); err != nil {
 		logger.Fatal(err)
-	} else if err := comp.FindWorkflowElementTypes(); err != nil {
-		logger.Fatal(err)
-	} else if err := comp.Transpile(); err != nil {
-		logger.Fatal(err)
-	} else if err := comp.GenerateMain(); err != nil {
-		logger.Fatal(err)
-	} else if err := comp.PrepareDrivers(); err != nil { // Must do this before SaveWorkflow!
-		logger.Fatal(err)
-	} else if err := comp.SaveWorkflow(); err != nil {
-		logger.Fatal(err)
-	} else if err := comp.CompileWorkflow(); err != nil {
-		logger.Fatal(err)
-	} else if err := comp.RunWorkflow(); err != nil {
-		logger.Fatal(err)
 	} else {
-		logger.Log("progress", "complete")
+		defer comp.CloseLogs()
+		if err := comp.ComposeAndRun(); err != nil {
+			logger.Fatal(err)
+		} else {
+			logger.Log("progress", "complete")
+		}
 	}
 }

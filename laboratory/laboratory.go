@@ -42,6 +42,8 @@ type LaboratoryBuilder struct {
 	elemsUnrun int64
 	elements   map[Element]*ElementBase
 
+	// This lock is here to serialize access to errors (append and
+	// Pack()), and to avoid races around closing Errored chan
 	errLock sync.Mutex
 	errors  utils.ErrorSlice
 	Errored chan struct{}
@@ -50,6 +52,7 @@ type LaboratoryBuilder struct {
 
 	*lineMapManager
 	Logger      *logger.Logger
+	logFH       *os.File
 	FileManager *FileManager
 
 	*effects.LaboratoryEffects
@@ -65,6 +68,31 @@ func NewLaboratoryBuilder(fh io.ReadCloser) *LaboratoryBuilder {
 
 		lineMapManager: NewLineMapManager(),
 		Logger:         logger.NewLogger(),
+	}
+
+	flag.StringVar(&labBuild.outDir, "outdir", "", "Path to directory in which to write output files")
+	flag.Parse()
+
+	if labBuild.outDir == "" {
+		if d, err := ioutil.TempDir("", fmt.Sprintf("antha-run-%s", labBuild.workflow.JobId)); err != nil {
+			labBuild.Fatal(err)
+		} else {
+			labBuild.outDir = d
+			labBuild.Logger.Log("outdir", d)
+		}
+	}
+	for _, leaf := range []string{"elements", "data", "devices"} {
+		if err := os.MkdirAll(filepath.Join(labBuild.outDir, leaf), 0700); err != nil {
+			labBuild.Fatal(err)
+		}
+	}
+	labBuild.FileManager = NewFileManager(filepath.Join(labBuild.outDir, "data"))
+
+	if logFH, err := os.OpenFile(filepath.Join(labBuild.outDir, "logs.txt"), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0400); err != nil {
+		labBuild.Fatal(err)
+	} else {
+		labBuild.logFH = logFH
+		labBuild.Logger.SwapWriters(logFH, os.Stderr)
 	}
 
 	if wf, err := workflow.WorkflowFromReaders(fh); err != nil {
@@ -88,81 +116,27 @@ func NewLaboratoryBuilder(fh io.ReadCloser) *LaboratoryBuilder {
 
 	labBuild.Inventory.TipBoxes.LoadLibrary()
 
-	flag.StringVar(&labBuild.outDir, "outdir", "", "Path to directory in which to write output files")
-	flag.Parse()
-
-	if labBuild.outDir == "" {
-		if d, err := ioutil.TempDir("", fmt.Sprintf("antha-run-%s", labBuild.workflow.JobId)); err != nil {
-			labBuild.Fatal(err)
-		} else {
-			labBuild.outDir = d
-			labBuild.Logger.Log("outdir", d)
-		}
-	}
-	for _, leaf := range []string{"elements", "data", "devices"} {
-		if err := os.MkdirAll(filepath.Join(labBuild.outDir, leaf), 0700); err != nil {
-			labBuild.Fatal(err)
-		}
-	}
-	labBuild.FileManager = NewFileManager(filepath.Join(labBuild.outDir, "data"))
-
 	return labBuild
 }
 
-// This interface exists just to allow both the lab builder and
-// laboratory itself to trivially contain the InstallElement
-// method. It's used in transpiled elements.
-type ElementInstaller interface {
-	InstallElement(Element)
-}
-
-func (labBuild *LaboratoryBuilder) InstallElement(e Element) {
-	eb := NewElementBase(e)
-	labBuild.elemLock.Lock()
-	defer labBuild.elemLock.Unlock()
-	labBuild.elements[e] = eb
-	labBuild.elemsUnrun++
-}
-
-func (labBuild *LaboratoryBuilder) AddConnection(src, dst Element, fun func()) error {
-	if ebSrc, found := labBuild.elements[src]; !found {
-		return fmt.Errorf("Unknown src element: %v", src)
-	} else if ebDst, found := labBuild.elements[dst]; !found {
-		return fmt.Errorf("Unknown dst element: %v", dst)
+func (labBuild *LaboratoryBuilder) SaveErrors() error {
+	if err := labBuild.Errors(); err != nil {
+		return ioutil.WriteFile(filepath.Join(labBuild.outDir, "errors.txt"), []byte(err.Error()), 0400)
 	} else {
-		ebDst.AddBlockedInput()
-		ebSrc.AddOnExit(func() {
-			fun()
-			ebDst.InputReady()
-		})
 		return nil
 	}
 }
 
-// Run all the installed elements.
-func (labBuild *LaboratoryBuilder) RunElements() error {
-	labBuild.elemLock.Lock()
-	if labBuild.elemsUnrun == 0 {
-		labBuild.elemLock.Unlock()
-		close(labBuild.Completed)
-		return nil
-
-	} else {
-		for _, eb := range labBuild.elements {
-			eb.AddOnExit(labBuild.elementCompleted)
+func (labBuild *LaboratoryBuilder) Decommission() {
+	if labBuild.logFH != nil {
+		labBuild.Logger.SwapWriters(os.Stderr)
+		if err := labBuild.logFH.Sync(); err != nil {
+			labBuild.Logger.Log("msg", "Error when syncing log file handle", "error", err)
 		}
-		for e, eb := range labBuild.elements {
-			go eb.Run(labBuild.makeLab(e))
+		if err := labBuild.logFH.Close(); err != nil {
+			labBuild.Logger.Log("msg", "Error when closing log file handle", "error", err)
 		}
-		labBuild.elemLock.Unlock()
-		<-labBuild.Completed
-
-		select {
-		case <-labBuild.Errored:
-			return labBuild.errors
-		default:
-			return nil
-		}
+		labBuild.logFH = nil
 	}
 }
 
@@ -224,6 +198,58 @@ func (labBuild *LaboratoryBuilder) Export() {
 	}
 }
 
+// This interface exists just to allow both the lab builder and
+// laboratory itself to trivially contain the InstallElement
+// method. It's used in transpiled elements.
+type ElementInstaller interface {
+	InstallElement(Element)
+}
+
+func (labBuild *LaboratoryBuilder) InstallElement(e Element) {
+	eb := NewElementBase(e)
+	labBuild.elemLock.Lock()
+	defer labBuild.elemLock.Unlock()
+	labBuild.elements[e] = eb
+	labBuild.elemsUnrun++
+}
+
+func (labBuild *LaboratoryBuilder) AddConnection(src, dst Element, fun func()) error {
+	if ebSrc, found := labBuild.elements[src]; !found {
+		return fmt.Errorf("Unknown src element: %v", src)
+	} else if ebDst, found := labBuild.elements[dst]; !found {
+		return fmt.Errorf("Unknown dst element: %v", dst)
+	} else {
+		ebDst.AddBlockedInput()
+		ebSrc.AddOnExit(func() {
+			fun()
+			ebDst.InputReady()
+		})
+		return nil
+	}
+}
+
+// Run all the installed elements.
+func (labBuild *LaboratoryBuilder) RunElements() error {
+	labBuild.elemLock.Lock()
+	if labBuild.elemsUnrun == 0 {
+		labBuild.elemLock.Unlock()
+		close(labBuild.Completed)
+		return nil
+
+	} else {
+		for _, eb := range labBuild.elements {
+			eb.AddOnExit(labBuild.elementCompleted)
+		}
+		for e, eb := range labBuild.elements {
+			go eb.Run(labBuild.makeLab(e))
+		}
+		labBuild.elemLock.Unlock()
+		<-labBuild.Completed
+
+		return labBuild.Errors()
+	}
+}
+
 func (labBuild *LaboratoryBuilder) elementCompleted() {
 	labBuild.elemLock.Lock()
 	defer labBuild.elemLock.Unlock()
@@ -253,7 +279,7 @@ func (labBuild *LaboratoryBuilder) Errors() error {
 	case <-labBuild.Errored:
 		labBuild.errLock.Lock()
 		defer labBuild.errLock.Unlock()
-		return labBuild.errors
+		return labBuild.errors.Pack()
 	default:
 		return nil
 	}

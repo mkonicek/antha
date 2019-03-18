@@ -17,6 +17,7 @@ import (
 // - generating a suitable main.go from the workflow
 type Composer struct {
 	Logger   *logger.Logger
+	logFH    *os.File
 	Workflow *workflow.Workflow
 
 	OutDir        string
@@ -40,14 +41,20 @@ func NewComposer(logger *logger.Logger, wf *workflow.Workflow, outDir string, ke
 		return nil, err
 	} else if len(entries) != 0 {
 		return nil, fmt.Errorf("Provided outdir '%s' must be empty (or not exist)", outDir)
+	} else if err := os.MkdirAll(filepath.Join(outDir, "workflow", "data"), 0700); err != nil {
+		return nil, err
 	}
 
-	if err := os.MkdirAll(filepath.Join(outDir, "workflow", "data"), 0700); err != nil {
+	logFH, err := os.OpenFile(filepath.Join(outDir, "logs.txt"), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0400)
+	if err != nil {
 		return nil, err
+	} else {
+		logger.SwapWriters(logFH, os.Stderr)
 	}
 
 	return &Composer{
 		Logger:   logger,
+		logFH:    logFH,
 		Workflow: wf,
 
 		OutDir:        outDir,
@@ -57,6 +64,24 @@ func NewComposer(logger *logger.Logger, wf *workflow.Workflow, outDir string, ke
 
 		elementTypes: make(map[workflow.ElementTypeName]*TranspilableElementType),
 	}, nil
+}
+
+func (c *Composer) ComposeAndRun() error {
+	if err := c.FindWorkflowElementTypes(); err != nil {
+		return err
+	} else if err := c.Transpile(); err != nil {
+		return err
+	} else if err := c.GenerateMain(); err != nil {
+		return err
+	} else if err := c.PrepareDrivers(); err != nil { // Must do this before SaveWorkflow!
+		return err
+	} else if err := c.SaveWorkflow(); err != nil {
+		return err
+	} else if err := c.CompileWorkflow(); err != nil {
+		return err
+	} else {
+		return c.RunWorkflow()
+	}
 }
 
 func (c *Composer) FindWorkflowElementTypes() error {
@@ -100,4 +125,17 @@ func (c *Composer) GenerateMain() error {
 
 func (c *Composer) SaveWorkflow() error {
 	return c.Workflow.WriteToFile(filepath.Join(c.OutDir, "workflow", "data", "workflow.json"))
+}
+
+func (c *Composer) CloseLogs() {
+	if c.logFH != nil {
+		c.Logger.SwapWriters(os.Stderr)
+		if err := c.logFH.Sync(); err != nil {
+			c.Logger.Log("msg", "Error when syncing log file handle", "error", err)
+		}
+		if err := c.logFH.Close(); err != nil {
+			c.Logger.Log("msg", "Error when closing log file handle", "error", err)
+		}
+		c.logFH = nil
+	}
 }

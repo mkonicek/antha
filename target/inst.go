@@ -93,6 +93,7 @@ var (
 // A Mix is a task that runs a mixer
 type Mix struct {
 	dependsMixin
+	idMixin
 
 	Dev             effects.Device
 	Request         *lh.LHRequest
@@ -159,6 +160,7 @@ func (a *Mix) SummarizeActions(idGen *id.IDGenerator) ([]byte, error) {
 // A Manual is human-aided interaction
 type Manual struct {
 	dependsMixin
+	idMixin
 
 	Dev     effects.Device
 	Label   string
@@ -178,6 +180,7 @@ var (
 // Run calls on device
 type Run struct {
 	dependsMixin
+	idMixin
 
 	Dev     effects.Device
 	Label   string
@@ -209,6 +212,7 @@ func (a *Run) GetFinalizers() []effects.Inst {
 // Prompt is manual prompt instruction
 type Prompt struct {
 	dependsMixin
+	idMixin
 	noDeviceMixin
 
 	Message string
@@ -217,14 +221,30 @@ type Prompt struct {
 // Wait is a virtual instruction to hang dependencies on. A better name might
 // been no-op.
 type Wait struct {
-	noDeviceMixin
 	dependsMixin
+	idMixin
+	noDeviceMixin
 }
 
 // TimedWait is a wait for a period of time.
 type TimedWait struct {
 	dependsMixin
+	idMixin
 	noDeviceMixin
 
 	Duration time.Duration
+}
+
+type idMixin struct {
+	id string
+}
+
+func (a idMixin) Id() string {
+	return a.id
+}
+
+func (a *idMixin) SetId(idGen *id.IDGenerator) {
+	if a.id == "" {
+		a.id = idGen.NextID()
+	}
 }

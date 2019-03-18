@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	_ effects.Device = &ShakerIncubator{}
+	_ effects.Device = (*ShakerIncubator)(nil)
 )
 
 func NewShakerIncubatorsInstances(tgt *target.Target, config workflow.ShakerIncubatorConfig) error {
@@ -110,42 +110,43 @@ func (a *ShakerIncubator) shakeStart(rate wunit.Rate, length wunit.Length) drive
 	}
 }
 
-func (a *ShakerIncubator) generate(cmd interface{}) ([]effects.Inst, error) {
+func (a *ShakerIncubator) generate(cmd interface{}) (effects.Insts, error) {
 	inc, ok := cmd.(*effects.IncubateInst)
 	if !ok {
 		return nil, fmt.Errorf("expecting %T found %T instead", inc, cmd)
 	}
 
-	var initializers []effects.Inst
-	var finalizers []effects.Inst
+	initializers := effects.Insts{
+		&target.Run{
+			Dev:   a,
+			Label: "open incubator carrier",
+			Calls: []driver.Call{
+				a.carrierOpen(),
+			},
+		},
+
+		&target.Prompt{
+			Message: "close incubator carrier?",
+		},
+
+		&target.Run{
+			Dev:   a,
+			Label: "close incubator carrier",
+			Calls: []driver.Call{
+				a.carrierClose(),
+			},
+		},
+	}
+
+	finalizers := effects.Insts{
+		&target.Run{
+			Dev:   a,
+			Label: "turn off incubator",
+			Calls: a.reset(),
+		},
+	}
+
 	var insts effects.Insts
-
-	initializers = append(initializers, &target.Run{
-		Dev:   a,
-		Label: "open incubator carrier",
-		Calls: []driver.Call{
-			a.carrierOpen(),
-		},
-	})
-
-	initializers = append(initializers, &target.Prompt{
-		Message: "close incubator carrier?",
-	})
-
-	initializers = append(initializers, &target.Run{
-		Dev:   a,
-		Label: "close incubator carrier",
-		Calls: []driver.Call{
-			a.carrierClose(),
-		},
-	})
-
-	finalizers = append(finalizers, &target.Run{
-		Dev:   a,
-		Label: "turn off incubator",
-		Calls: a.reset(),
-	})
-
 	if !inc.PreTime.IsNil() {
 		var calls []driver.Call
 		if !inc.PreTemp.IsNil() {
@@ -155,14 +156,16 @@ func (a *ShakerIncubator) generate(cmd interface{}) ([]effects.Inst, error) {
 			calls = append(calls, a.shakeStart(inc.PreShakeRate, inc.PreShakeRadius))
 		}
 
-		insts = append(insts, &target.Run{
-			Dev:   a,
-			Label: "pre incubate",
-			Calls: calls,
-		})
-		insts = append(insts, &target.TimedWait{
-			Duration: time.Duration(inc.PreTime.Seconds() * float64(time.Second)),
-		})
+		insts = append(insts,
+			&target.Run{
+				Dev:   a,
+				Label: "pre incubate",
+				Calls: calls,
+			},
+			&target.TimedWait{
+				Duration: time.Duration(inc.PreTime.Seconds() * float64(time.Second)),
+			},
+		)
 	}
 
 	var calls []driver.Call

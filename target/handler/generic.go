@@ -19,7 +19,7 @@ var (
 // A GenericHandler is a configurable version of a Handler suitable for mixins
 type GenericHandler struct {
 	Labels             []effects.NameValue
-	GenFunc            func(cmd interface{}) ([]effects.Inst, error)
+	GenFunc            func(cmd interface{}) (effects.Insts, error)
 	FilterFieldsForKey func(interface{}) (interface{}, error)
 }
 
@@ -99,7 +99,7 @@ func (a GenericHandler) merge(nodes []effects.Node) (*effects.Command, error) {
 }
 
 // Compile implements a Device
-func (a *GenericHandler) Compile(labEffects *effects.LaboratoryEffects, dir string, nodes []effects.Node) ([]effects.Inst, error) {
+func (a *GenericHandler) Compile(labEffects *effects.LaboratoryEffects, dir string, nodes []effects.Node) (effects.Insts, error) {
 	g := effects.Deps(nodes)
 
 	entry := &target.Wait{}

@@ -11,6 +11,7 @@ import (
 
 	"github.com/antha-lang/antha/graph"
 	"github.com/antha-lang/antha/laboratory/effects"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 	"github.com/antha-lang/antha/target"
 )
 
@@ -349,7 +350,7 @@ func reverseInsts(insts []effects.Inst) (ret []effects.Inst) {
 }
 
 // Lower plan to instructions
-func (a *ir) genInsts() ([]effects.Inst, error) {
+func (a *ir) genInsts(idGen *id.IDGenerator) (effects.Insts, error) {
 	ig := newInstGraph()
 
 	// Insert instructions
@@ -392,13 +393,14 @@ func (a *ir) genInsts() ([]effects.Inst, error) {
 		return nil, err
 	}
 
-	var insts []effects.Inst
+	var insts effects.Insts
 	for _, n := range order {
 		in := n.(effects.Inst)
 		in.SetDependsOn() // reset to empty first
 		for j, jnum := 0, sg.NumOuts(n); j < jnum; j++ {
 			in.AppendDependsOn(sg.Out(n, j).(effects.Inst))
 		}
+		in.SetId(idGen)
 		insts = append(insts, in)
 	}
 
@@ -409,7 +411,7 @@ func (a *ir) genInsts() ([]effects.Inst, error) {
 // configuration. This supports incremental compilation, so roots may refer to
 // nodes that have already been compiled, in which case, the result may refer
 // to previously generated instructions.
-func Compile(labEffects *effects.LaboratoryEffects, dir string, t *target.Target, roots []effects.Node) ([]effects.Inst, error) {
+func Compile(labEffects *effects.LaboratoryEffects, dir string, t *target.Target, roots []effects.Node) (effects.Insts, error) {
 	if len(roots) == 0 {
 		return nil, nil
 	}
@@ -433,7 +435,7 @@ func Compile(labEffects *effects.LaboratoryEffects, dir string, t *target.Target
 		return nil, fmt.Errorf("error sorting devices: %s", err)
 	}
 
-	insts, err := ir.genInsts()
+	insts, err := ir.genInsts(labEffects.IDGenerator)
 	if err != nil {
 		return nil, fmt.Errorf("error generating instructions: %s", err)
 	}

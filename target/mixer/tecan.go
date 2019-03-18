@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	_ effects.Device = &TecanInstance{}
+	_ effects.Device = (*TecanInstance)(nil)
 )
 
 type TecanInstance struct {
@@ -108,7 +108,7 @@ func (inst *TecanInstance) Connect(wf *workflow.Workflow) error {
 	return nil
 }
 
-func (inst *TecanInstance) Compile(labEffects *effects.LaboratoryEffects, dir string, nodes []effects.Node) ([]effects.Inst, error) {
+func (inst *TecanInstance) Compile(labEffects *effects.LaboratoryEffects, dir string, nodes []effects.Node) (effects.Insts, error) {
 	instrs, err := checkInstructions(nodes)
 	if err != nil {
 		return nil, err

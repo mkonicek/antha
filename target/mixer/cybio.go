@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	_ effects.Device = &CyBioInstance{}
+	_ effects.Device = (*CyBioInstance)(nil)
 )
 
 type CyBioInstance struct {
@@ -114,7 +114,7 @@ func (inst *CyBioInstance) Connect(wf *workflow.Workflow) error {
 	return nil
 }
 
-func (inst *CyBioInstance) Compile(labEffects *effects.LaboratoryEffects, dir string, nodes []effects.Node) ([]effects.Inst, error) {
+func (inst *CyBioInstance) Compile(labEffects *effects.LaboratoryEffects, dir string, nodes []effects.Node) (effects.Insts, error) {
 	instrs, err := checkInstructions(nodes)
 	if err != nil {
 		return nil, err

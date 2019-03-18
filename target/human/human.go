@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	_ effects.Device = &Human{}
+	_ effects.Device = (*Human)(nil)
 )
 
 // A Human is a device that can do anything
@@ -58,7 +58,7 @@ func (hum *Human) CanCompile(req effects.Request) bool {
 }
 
 // Compile implements target.device Compile
-func (hum *Human) Compile(labEffects *effects.LaboratoryEffects, dir string, nodes []effects.Node) ([]effects.Inst, error) {
+func (hum *Human) Compile(labEffects *effects.LaboratoryEffects, dir string, nodes []effects.Node) (effects.Insts, error) {
 	return hum.impl.Compile(labEffects, dir, nodes)
 }
 
@@ -100,7 +100,7 @@ func (hum *Human) Connect(*workflow.Workflow) error {
 
 func (hum *Human) Close() {}
 
-func (hum *Human) generate(cmd interface{}) ([]effects.Inst, error) {
+func (hum *Human) generate(cmd interface{}) (effects.Insts, error) {
 	instrs := make([]effects.Inst, 1)
 
 	switch cmd := cmd.(type) {

@@ -1,6 +1,7 @@
 package effects
 
 import (
+	"github.com/antha-lang/antha/laboratory/effects/id"
 	"github.com/antha-lang/antha/workflow"
 )
 
@@ -10,7 +11,7 @@ type Device interface {
 
 	// Compile produces a single-entry, single-exit DAG of instructions where
 	// insts[0] is the entry point and insts[len(insts)-1] is the exit point
-	Compile(labEffects *LaboratoryEffects, dir string, cmds []Node) (insts []Inst, err error)
+	Compile(labEffects *LaboratoryEffects, dir string, cmds []Node) (insts Insts, err error)
 
 	// Must be idempotent and thread safe
 	Connect(*workflow.Workflow) error
@@ -22,6 +23,9 @@ type Device interface {
 
 // An Inst is a instruction
 type Inst interface {
+	Id() string
+	// Idempotent - will not change an id once set.
+	SetId(*id.IDGenerator)
 	// Device that this instruction was generated for
 	Device() Device
 	// DependsOn returns instructions that this instruction depends on

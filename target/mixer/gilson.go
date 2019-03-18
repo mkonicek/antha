@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	_ effects.Device = &GilsonPipetMaxInstance{}
+	_ effects.Device = (*GilsonPipetMaxInstance)(nil)
 )
 
 type GilsonPipetMaxInstance struct {
@@ -111,7 +111,7 @@ func (inst *GilsonPipetMaxInstance) Connect(wf *workflow.Workflow) error {
 	return nil
 }
 
-func (inst *GilsonPipetMaxInstance) Compile(labEffects *effects.LaboratoryEffects, dir string, nodes []effects.Node) ([]effects.Inst, error) {
+func (inst *GilsonPipetMaxInstance) Compile(labEffects *effects.LaboratoryEffects, dir string, nodes []effects.Node) (effects.Insts, error) {
 	instrs, err := checkInstructions(nodes)
 	if err != nil {
 		return nil, err

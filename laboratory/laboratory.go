@@ -57,7 +57,7 @@ type LaboratoryBuilder struct {
 
 	*effects.LaboratoryEffects
 
-	instrs []effects.Inst
+	instrs effects.Insts
 }
 
 func NewLaboratoryBuilder(fh io.ReadCloser) *LaboratoryBuilder {
@@ -68,6 +68,14 @@ func NewLaboratoryBuilder(fh io.ReadCloser) *LaboratoryBuilder {
 
 		lineMapManager: NewLineMapManager(),
 		Logger:         logger.NewLogger(),
+	}
+
+	// Got to load in the workflow first so we gain access to the JobId.
+	if wf, err := workflow.WorkflowFromReaders(fh); err != nil {
+		labBuild.Fatal(err)
+	} else {
+		labBuild.workflow = wf
+		labBuild.Logger = labBuild.Logger.With("jobId", wf.JobId)
 	}
 
 	flag.StringVar(&labBuild.outDir, "outdir", "", "Path to directory in which to write output files")
@@ -93,13 +101,6 @@ func NewLaboratoryBuilder(fh io.ReadCloser) *LaboratoryBuilder {
 	} else {
 		labBuild.logFH = logFH
 		labBuild.Logger.SwapWriters(logFH, os.Stderr)
-	}
-
-	if wf, err := workflow.WorkflowFromReaders(fh); err != nil {
-		labBuild.Fatal(err)
-	} else {
-		labBuild.workflow = wf
-		labBuild.Logger = labBuild.Logger.With("jobId", wf.JobId)
 	}
 
 	labBuild.LaboratoryEffects = effects.NewLaboratoryEffects(string(labBuild.workflow.JobId))

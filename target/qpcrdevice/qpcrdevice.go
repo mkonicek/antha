@@ -16,7 +16,7 @@ import (
 
 // Ensure satisfies Device interface
 var (
-	_ effects.Device = &QPCRDevice{}
+	_ effects.Device = (*QPCRDevice)(nil)
 )
 
 func NewQPCRInstances(tgt *target.Target, config workflow.QPCRConfig) error {
@@ -58,7 +58,7 @@ func (a *QPCRDevice) Connect(*workflow.Workflow) error {
 
 func (a *QPCRDevice) Close() {}
 
-func (dev *QPCRDevice) transform(inst *effects.QPCRInstruction) (effects.Inst, error) {
+func (dev *QPCRDevice) transform(inst *effects.QPCRInstruction) (*target.Run, error) {
 	if inst.Definition == "" {
 		return nil, errors.New("Blank experiment file for qPCR instruction.")
 	}
@@ -128,7 +128,7 @@ func (dev *QPCRDevice) makePrompt(inst *effects.QPCRInstruction) effects.Inst {
 }
 
 // Compile implements a qPCR device.
-func (dev *QPCRDevice) Compile(labEffects *effects.LaboratoryEffects, dir string, nodes []effects.Node) ([]effects.Inst, error) {
+func (dev *QPCRDevice) Compile(labEffects *effects.LaboratoryEffects, dir string, nodes []effects.Node) (effects.Insts, error) {
 	if len(nodes) > 1 {
 		return nil, fmt.Errorf("Currently only permit a single qPCR instruction per workflow. Received %d", len(nodes))
 	}

@@ -29,7 +29,7 @@ func NewWOPlateReaderInstances(tgt *target.Target, config workflow.PlateReaderCo
 
 // Ensure satisfies Device interface
 var (
-	_ effects.Device = &WOPlateReader{}
+	_ effects.Device = (*WOPlateReader)(nil)
 )
 
 // returns a new Write-Only Plate Reader Used by antha-runner
@@ -54,7 +54,7 @@ func (a *WOPlateReader) CanCompile(req effects.Request) bool {
 }
 
 // Compile implements a Device
-func (a *WOPlateReader) Compile(labEffects *effects.LaboratoryEffects, dir string, nodes []effects.Node) ([]effects.Inst, error) {
+func (a *WOPlateReader) Compile(labEffects *effects.LaboratoryEffects, dir string, nodes []effects.Node) (effects.Insts, error) {
 	// Find the LHComponentID for the samples to measure. We'll then search
 	// for these later.
 	prInsts := make([]*wtype.PRInstruction, 0, len(nodes))

@@ -241,7 +241,7 @@ func (labBuild *LaboratoryBuilder) RunElements() error {
 			eb.AddOnExit(labBuild.elementCompleted)
 		}
 		for e, eb := range labBuild.elements {
-			go eb.Run(labBuild.makeLab(e))
+			go eb.Run(labBuild.makeLab(e, labBuild.Logger))
 		}
 		labBuild.elemLock.Unlock()
 		<-labBuild.Completed
@@ -291,11 +291,11 @@ type Laboratory struct {
 	Logger  *logger.Logger
 }
 
-func (labBuild *LaboratoryBuilder) makeLab(e Element) *Laboratory {
+func (labBuild *LaboratoryBuilder) makeLab(e Element, logger *logger.Logger) *Laboratory {
 	return &Laboratory{
 		LaboratoryBuilder: labBuild,
 		element:           e,
-		Logger:            labBuild.Logger.With("name", e.Name(), "type", e.TypeName()),
+		Logger:            logger.With("name", e.Name(), "type", e.TypeName()),
 	}
 }
 
@@ -307,7 +307,9 @@ func (lab *Laboratory) CallSteps(e Element) error {
 	eb.AddOnExit(func() { close(finished) })
 	eb.AddOnExit(lab.elementCompleted)
 
-	go eb.Run(lab.makeLab(e), eb.element.Steps)
+	// take the root logger (from labBuild) and build up from there.
+	logger := lab.LaboratoryBuilder.Logger.With("parentName", lab.element.Name(), "parentType", lab.element.TypeName())
+	go eb.Run(lab.makeLab(e, logger), eb.element.Steps)
 	<-finished
 
 	select {

@@ -43,6 +43,7 @@ func (c *Composer) goBuild() error {
 	for idx, s := range env {
 		if len(s) >= 7 && "GOPATH=" == s[:7] {
 			env[idx] = fmt.Sprintf("GOPATH=%s:%s", c.OutDir, s[7:])
+			break
 		}
 	}
 	cmd.Env = env
@@ -78,9 +79,9 @@ func (c *Composer) RunWorkflow() error {
 	if err != nil {
 		return err
 	}
-	c.Logger.Log("progress", "running compiled workflow", "outdir", runOutDir)
+	c.Logger.Log("progress", "running compiled workflow", "outdir", runOutDir, "indir", c.InDir)
 	outBin := filepath.Join(c.OutDir, "bin", string(c.Workflow.JobId))
-	cmd := exec.Command(outBin, "-outdir", runOutDir)
+	cmd := exec.Command(outBin, "-outdir", runOutDir, "-indir", c.InDir)
 	cmd.Env = []string{}
 
 	// the workflow uses a proper logger these days so we don't need to do any wrapping

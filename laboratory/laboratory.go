@@ -35,6 +35,7 @@ type Element interface {
 }
 
 type LaboratoryBuilder struct {
+	inDir    string
 	outDir   string
 	workflow *workflow.Workflow
 
@@ -78,23 +79,23 @@ func NewLaboratoryBuilder(fh io.ReadCloser) *LaboratoryBuilder {
 		labBuild.Logger = labBuild.Logger.With("jobId", wf.JobId)
 	}
 
+	flag.StringVar(&labBuild.inDir, "indir", "", "Path to directory from which to read input files")
 	flag.StringVar(&labBuild.outDir, "outdir", "", "Path to directory in which to write output files")
 	flag.Parse()
 
 	if labBuild.outDir == "" {
-		if d, err := ioutil.TempDir("", fmt.Sprintf("antha-run-%s", labBuild.workflow.JobId)); err != nil {
+		if d, err := ioutil.TempDir("", fmt.Sprintf("antha-run-out-%s", labBuild.workflow.JobId)); err != nil {
 			labBuild.Fatal(err)
 		} else {
 			labBuild.outDir = d
-			labBuild.Logger.Log("outdir", d)
 		}
 	}
+	labBuild.Logger.Log("outdir", labBuild.outDir)
 	for _, leaf := range []string{"elements", "data", "devices"} {
 		if err := os.MkdirAll(filepath.Join(labBuild.outDir, leaf), 0700); err != nil {
 			labBuild.Fatal(err)
 		}
 	}
-	labBuild.FileManager = NewFileManager(filepath.Join(labBuild.outDir, "data"))
 
 	if logFH, err := os.OpenFile(filepath.Join(labBuild.outDir, "logs.txt"), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0400); err != nil {
 		labBuild.Fatal(err)
@@ -103,6 +104,23 @@ func NewLaboratoryBuilder(fh io.ReadCloser) *LaboratoryBuilder {
 		labBuild.Logger.SwapWriters(logFH, os.Stderr)
 	}
 
+	if labBuild.inDir == "" {
+		// We do this to make certain that we have a root path to join
+		// onto so we can't permit reading arbitrary parts of the
+		// filesystem.
+		if d, err := ioutil.TempDir("", fmt.Sprintf("antha-run-in-%s", labBuild.workflow.JobId)); err != nil {
+			labBuild.Fatal(err)
+		} else {
+			labBuild.inDir = d
+		}
+	}
+	labBuild.Logger.Log("indir", labBuild.inDir)
+
+	if fm, err := NewFileManager(filepath.Join(labBuild.inDir, "data"), filepath.Join(labBuild.outDir, "data")); err != nil {
+		labBuild.Fatal(err)
+	} else {
+		labBuild.FileManager = fm
+	}
 	labBuild.LaboratoryEffects = effects.NewLaboratoryEffects(string(labBuild.workflow.JobId))
 
 	// TODO: discuss this: not sure if we want to do this based off

@@ -3,7 +3,9 @@ package workflow
 import (
 	"errors"
 	"io"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 )
 
 func ReadersFromPaths(paths []string) ([]io.ReadCloser, error) {
@@ -32,4 +34,20 @@ func ReadersFromPaths(paths []string) ([]io.ReadCloser, error) {
 	}
 
 	return rs, nil
+}
+
+func JsonPathsWithin(dir string) ([]string, error) {
+	if entries, err := ioutil.ReadDir(dir); err != nil && os.IsNotExist(err) {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	} else {
+		results := make([]string, 0, len(entries))
+		for _, entry := range entries {
+			if entry.Mode().IsRegular() && filepath.Ext(entry.Name()) == ".json" {
+				results = append(results, filepath.Join(dir, entry.Name()))
+			}
+		}
+		return results, nil
+	}
 }

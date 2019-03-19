@@ -20,6 +20,7 @@ type Composer struct {
 	logFH    *os.File
 	Workflow *workflow.Workflow
 
+	InDir         string
 	OutDir        string
 	Keep          bool
 	Run           bool
@@ -29,7 +30,7 @@ type Composer struct {
 	worklist     []*TranspilableElementType
 }
 
-func NewComposer(logger *logger.Logger, wf *workflow.Workflow, outDir string, keep, run, linkedDrivers bool) (*Composer, error) {
+func NewComposer(logger *logger.Logger, wf *workflow.Workflow, inDir, outDir string, keep, run, linkedDrivers bool) (*Composer, error) {
 	if outDir == "" {
 		if d, err := ioutil.TempDir("", fmt.Sprintf("antha-build-%s", wf.JobId)); err != nil {
 			return nil, err
@@ -43,6 +44,8 @@ func NewComposer(logger *logger.Logger, wf *workflow.Workflow, outDir string, ke
 		return nil, fmt.Errorf("Provided outdir '%s' must be empty (or not exist)", outDir)
 	} else if err := os.MkdirAll(filepath.Join(outDir, "workflow", "data"), 0700); err != nil {
 		return nil, err
+	} else if outDir, err = filepath.Abs(outDir); err != nil {
+		return nil, err
 	}
 
 	logFH, err := os.OpenFile(filepath.Join(outDir, "logs.txt"), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0400)
@@ -52,11 +55,18 @@ func NewComposer(logger *logger.Logger, wf *workflow.Workflow, outDir string, ke
 		logger.SwapWriters(logFH, os.Stderr)
 	}
 
+	if inDir != "" {
+		if inDir, err = filepath.Abs(inDir); err != nil {
+			return nil, err
+		}
+	}
+
 	return &Composer{
 		Logger:   logger,
 		logFH:    logFH,
 		Workflow: wf,
 
+		InDir:         inDir,
 		OutDir:        outDir,
 		Keep:          keep,
 		Run:           run,

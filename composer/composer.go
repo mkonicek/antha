@@ -67,7 +67,7 @@ func NewComposer(logger *logger.Logger, wf *workflow.Workflow, outDir string, ke
 }
 
 func (c *Composer) ComposeAndRun() error {
-	if err := c.FindWorkflowElementTypes(); err != nil {
+	if err := c.Workflow.Repositories.Clone(filepath.Join(c.OutDir, "src")); err != nil {
 		return err
 	} else if err := c.Transpile(); err != nil {
 		return err
@@ -84,17 +84,6 @@ func (c *Composer) ComposeAndRun() error {
 	}
 }
 
-func (c *Composer) FindWorkflowElementTypes() error {
-	for _, et := range c.Workflow.Elements.Types {
-		if err := c.Workflow.Repositories.CloneRepository(et, filepath.Join(c.OutDir, "src")); err != nil {
-			return err
-		} else {
-			c.EnsureElementType(NewTranspilableElementType(et))
-		}
-	}
-	return nil
-}
-
 func (c *Composer) EnsureElementType(et *TranspilableElementType) {
 	if _, found := c.elementTypes[et.Name()]; !found {
 		c.elementTypes[et.Name()] = et
@@ -104,6 +93,9 @@ func (c *Composer) EnsureElementType(et *TranspilableElementType) {
 
 func (c *Composer) Transpile() error {
 	c.Logger.Log("progress", "transpiling Antha elements")
+	for _, et := range c.Workflow.Elements.Types {
+		c.EnsureElementType(NewTranspilableElementType(et))
+	}
 	for idx := 0; idx < len(c.worklist); idx++ {
 		if err := c.worklist[idx].Transpile(c); err != nil {
 			return err

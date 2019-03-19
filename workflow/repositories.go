@@ -2,7 +2,6 @@ package workflow
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -36,12 +35,13 @@ func (rs Repositories) LongestMatching(importPath string) (RepositoryPrefix, *Re
 	return winningPrefix, winningRepo
 }
 
-func (rs Repositories) CloneRepository(et *ElementType, dir string) error {
-	if r, found := rs[et.RepositoryPrefix]; !found {
-		return fmt.Errorf("Unknown RepositoryPrefix when FetchingFiles: '%v'", et.RepositoryPrefix)
-	} else {
-		return r.Clone(filepath.Join(dir, string(et.RepositoryPrefix)))
+func (rs Repositories) Clone(dir string) error {
+	for prefix, repo := range rs {
+		if err := repo.Clone(filepath.Join(dir, string(prefix))); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func (r *Repository) Clone(dir string) error {

@@ -6,10 +6,11 @@
             "UseDriverTipTracking": true
         },
 
-        "GilsonPipetMax": {
+        "Hamilton": {
             "Devices": {
-                "Gillian": {
-                    "InputPlateTypes": ["pcrplate_skirted"]
+                "Henrietta": {
+                    "Model": "MicrolabSTAR",
+                    "InputPlateTypes": ["DWST12"]
                 }
             }
         }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	cb_driver "github.com/Synthace/instruction-plugins/CyBio/driver"
+	hamilton_driver "github.com/Synthace/instruction-plugins/Hamilton/driver"
 	lc_driver "github.com/Synthace/instruction-plugins/LabcyteEcho/driver"
 	pm_driver "github.com/Synthace/instruction-plugins/PipetMax/driver"
 	tecan_driver "github.com/Synthace/instruction-plugins/TecanScript/driver"
@@ -26,6 +27,9 @@ var linkedDriverFuns = map[target.MixerDriverSubType](func() lhdriver.Liquidhand
 	},
 	target.TecanSubType: func() lhdriver.LiquidhandlingDriver {
 		return tecan_driver.New()
+	},
+	target.HamiltonSubType: func() lhdriver.LiquidhandlingDriver {
+		return hamilton_driver.NewHxStarDriver()
 	},
 }
 

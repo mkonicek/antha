@@ -115,6 +115,9 @@ func (c *Composer) PrepareDrivers() error {
 	for id, cfg := range c.Workflow.Config.Labcyte.Devices {
 		conns[id] = &cfg.ParsedConnection
 	}
+	for id, cfg := range c.Workflow.Config.Hamilton.Devices {
+		conns[id] = &cfg.ParsedConnection
+	}
 
 	for id, cfg := range conns {
 		outBin := filepath.Join(c.OutDir, "bin", "drivers", string(id))

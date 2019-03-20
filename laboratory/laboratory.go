@@ -195,6 +195,7 @@ func (labBuild *LaboratoryBuilder) connectDevices() (*target.Target, error) {
 			mixer.NewTecanInstances(labBuild.Logger, tgt, labBuild.Inventory, global, labBuild.workflow.Config.Tecan),
 			mixer.NewCyBioInstances(labBuild.Logger, tgt, labBuild.Inventory, global, labBuild.workflow.Config.CyBio),
 			mixer.NewLabcyteInstances(labBuild.Logger, tgt, labBuild.Inventory, global, labBuild.workflow.Config.Labcyte),
+			mixer.NewHamiltonInstances(labBuild.Logger, tgt, labBuild.Inventory, global, labBuild.workflow.Config.Hamilton),
 			qpcrdevice.NewQPCRInstances(tgt, labBuild.workflow.Config.QPCR),
 			shakerincubator.NewShakerIncubatorsInstances(tgt, labBuild.workflow.Config.ShakerIncubator),
 			woplatereader.NewWOPlateReaderInstances(tgt, labBuild.workflow.Config.PlateReader),

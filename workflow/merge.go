@@ -158,6 +158,7 @@ func (a *Config) merge(b Config) error {
 		a.Tecan.Merge(b.Tecan),
 		a.CyBio.Merge(b.CyBio),
 		a.Labcyte.Merge(b.Labcyte),
+		a.Hamilton.Merge(b.Hamilton),
 		a.QPCR.Merge(b.QPCR),
 		a.ShakerIncubator.Merge(b.ShakerIncubator),
 		a.PlateReader.Merge(b.PlateReader),
@@ -272,6 +273,28 @@ func (a *GlobalMixerConfig) Merge(b GlobalMixerConfig) error {
 		a.CustomPolicyRuleSet = b.CustomPolicyRuleSet
 	case b.CustomPolicyRuleSet != nil:
 		a.CustomPolicyRuleSet.MergeWith(b.CustomPolicyRuleSet)
+	}
+	return nil
+}
+
+func (a *HamiltonConfig) Merge(b HamiltonConfig) error {
+	if a.Devices == nil {
+		a.Devices = b.Devices
+	} else {
+		// simplest: we merge iff device ids are distinct
+		for id, cfg := range b.Devices {
+			if _, found := a.Devices[id]; found {
+				return fmt.Errorf("cannot merge: Hamilton device '%v' redefined", id)
+			}
+			a.Devices[id] = cfg
+		}
+	}
+	// for defaults, we just hope one of them is nil
+	switch {
+	case a.Defaults == nil:
+		a.Defaults = b.Defaults
+	case b.Defaults != nil:
+		return errors.New("cannot merge: Hamilton defaults redefined")
 	}
 	return nil
 }

@@ -14,6 +14,7 @@ type Config struct {
 	Tecan          TecanConfig          `json:"Tecan"`
 	CyBio          CyBioConfig          `json:"CyBio"`
 	Labcyte        LabcyteConfig        `json:"Labcyte"`
+	Hamilton       HamiltonConfig       `json:"Hamilton"`
 
 	QPCR            QPCRConfig            `json:"QPCR"`
 	ShakerIncubator ShakerIncubatorConfig `json:"ShakerIncubator"`
@@ -111,6 +112,25 @@ func (cfg *LabcyteInstanceConfig) UnmarshalJSON(bs []byte) error {
 	return UnmarshalMapsMerged(bs, &cfg.commonMixerInstanceConfig, &cfg.modelOnly)
 }
 
+// HamiltonConfig
+type HamiltonConfig struct {
+	Defaults *HamiltonInstanceConfig                      `json:"Defaults,omitempty"`
+	Devices  map[DeviceInstanceID]*HamiltonInstanceConfig `json:"Devices,omitempty"`
+}
+
+type HamiltonInstanceConfig struct {
+	commonMixerInstanceConfig
+	// tipsOnly - specifying tip types will be supported in later releases
+}
+
+func (cfg *HamiltonInstanceConfig) MarshalJSON() ([]byte, error) {
+	return MergeToMapAndMarshal(&cfg.commonMixerInstanceConfig)
+}
+
+func (cfg *HamiltonInstanceConfig) UnmarshalJSON(bs []byte) error {
+	return UnmarshalMapsMerged(bs, &cfg.commonMixerInstanceConfig)
+}
+
 type commonMixerInstanceConfig struct {
 	Connection string `json:"Connection,omitempty"`
 
@@ -135,7 +155,7 @@ type tipsOnly struct {
 }
 
 type modelOnly struct {
-	Model string `json:model`
+	Model string `json:"Model"`
 }
 
 // type aliases do not inherit methods, so this is a cheap way to

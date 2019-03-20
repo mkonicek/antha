@@ -7,4 +7,5 @@ const (
 	LabcyteSubType        MixerDriverSubType = "LabCyteEcho"
 	CyBioSubType          MixerDriverSubType = "CyBio"
 	TecanSubType          MixerDriverSubType = "Tecan"
+	HamiltonSubType       MixerDriverSubType = "Hamilton"
 )

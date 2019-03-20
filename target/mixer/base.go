@@ -44,6 +44,9 @@ var subTypeToConnDriverFun = map[target.MixerDriverSubType](func(*grpc.ClientCon
 	target.TecanSubType: func(conn *grpc.ClientConn) lhdriver.LiquidhandlingDriver {
 		return client.NewLowLevelClientFromConn(conn)
 	},
+	target.HamiltonSubType: func(conn *grpc.ClientConn) lhdriver.LiquidhandlingDriver {
+		return client.NewLowLevelClientFromConn(conn)
+	},
 }
 
 type BaseMixer struct {

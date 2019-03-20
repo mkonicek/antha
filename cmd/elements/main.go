@@ -74,11 +74,11 @@ func makeWorkflow(l *logger.Logger, args []string) error {
 		return err
 	} else if wfPaths, err := workflow.GatherPaths(flagSet, inDir); err != nil {
 		return err
-	} else if regex, err := regexp.Compile(regexStr); err != nil {
-		return err
 	} else if rs, err := workflow.ReadersFromPaths(wfPaths); err != nil {
 		return err
 	} else if acc, err := workflow.WorkflowFromReaders(rs...); err != nil {
+		return err
+	} else if regex, err := regexp.Compile(regexStr); err != nil {
 		return err
 	} else {
 		err := findElements(l, wfPaths, func(r *workflow.Repository, et *workflow.ElementType) error {

@@ -63,10 +63,9 @@ func list(l *logger.Logger, args []string) error {
 
 func makeWorkflow(l *logger.Logger, args []string) error {
 	flagSet := flag.NewFlagSet(flag.CommandLine.Name()+" makeWorkflow", flag.ContinueOnError)
-	flagSet.Usage = workflow.NewFlagUsage(flagSet, "Create new workflow")
+	flagSet.Usage = workflow.NewFlagUsage(flagSet, "Modify workflow adding selected elements")
 
-	var jobId, regexStr, inDir, toFile string
-	flagSet.StringVar(&jobId, "jobId", "myFirstWorkflow", "Job Id to apply to new workflow (optional)")
+	var regexStr, inDir, toFile string
 	flagSet.StringVar(&regexStr, "regex", "", "Regular expression to match against element type path (optional)")
 	flagSet.StringVar(&inDir, "indir", "", "Directory from which to read files (optional)")
 	flagSet.StringVar(&toFile, "to", "", "File to write to (default: will write to stdout)")
@@ -77,9 +76,11 @@ func makeWorkflow(l *logger.Logger, args []string) error {
 		return err
 	} else if regex, err := regexp.Compile(regexStr); err != nil {
 		return err
+	} else if rs, err := workflow.ReadersFromPaths(wfPaths); err != nil {
+		return err
+	} else if acc, err := workflow.WorkflowFromReaders(rs...); err != nil {
+		return err
 	} else {
-		acc := workflow.EmptyWorkflow()
-		acc.JobId = workflow.JobId(jobId)
 		err := findElements(l, wfPaths, func(r *workflow.Repository, et *workflow.ElementType) error {
 			if !regex.MatchString(string(et.ElementPath)) {
 				return nil
@@ -87,9 +88,6 @@ func makeWorkflow(l *logger.Logger, args []string) error {
 			etCopy := *et
 			wf := &workflow.Workflow{
 				SchemaVersion: workflow.CurrentSchemaVersion,
-				Repositories: workflow.Repositories{
-					et.RepositoryPrefix: r,
-				},
 				Elements: workflow.Elements{
 					Types: workflow.ElementTypes{&etCopy},
 					Instances: workflow.ElementInstances{

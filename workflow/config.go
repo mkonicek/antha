@@ -40,6 +40,15 @@ type GilsonPipetMaxConfig struct {
 	Devices  map[DeviceInstanceID]*GilsonPipetMaxInstanceConfig `json:"Devices,omitempty"`
 }
 
+// InsertDeviceConfig inserts or updates config for a device instance
+func (c *GilsonPipetMaxConfig) InsertDeviceConfig(d DeviceInstanceID, ic *GilsonPipetMaxInstanceConfig) {
+	if c.Devices == nil {
+		c.Devices = make(map[DeviceInstanceID]*GilsonPipetMaxInstanceConfig)
+	}
+
+	c.Devices[d] = ic
+}
+
 type GilsonPipetMaxInstanceConfig struct {
 	commonMixerInstanceConfig
 	tipsOnly

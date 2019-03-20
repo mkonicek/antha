@@ -107,6 +107,8 @@ func findElements(l *logger.Logger, paths []string, consumer func(*workflow.Repo
 		l.Fatal(err)
 	} else if wf, err := workflow.WorkflowFromReaders(rs...); err != nil {
 		l.Fatal(err)
+	} else if err := wf.Validate(); err != nil {
+		l.Fatal(err)
 	} else {
 		for rp, r := range wf.Repositories {
 			var et workflow.ElementType

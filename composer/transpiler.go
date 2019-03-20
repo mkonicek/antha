@@ -43,7 +43,7 @@ func (tet *TranspilableElementType) Transpile(c *Composer) error {
 	anthaFiles := compile.NewAnthaFiles()
 
 	if err := filepath.Walk(baseDir, func(p string, info os.FileInfo, err error) error {
-		if err != nil || !info.Mode().IsRegular() || filepath.Ext(p) != ".an" {
+		if err != nil || !info.Mode().IsRegular() || !workflow.IsAnthaFile(p) {
 			return err
 		}
 		c.Logger.Log("transpiling", p)

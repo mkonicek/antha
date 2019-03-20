@@ -74,6 +74,8 @@ func NewLaboratoryBuilder(fh io.ReadCloser) *LaboratoryBuilder {
 	// Got to load in the workflow first so we gain access to the JobId.
 	if wf, err := workflow.WorkflowFromReaders(fh); err != nil {
 		labBuild.Fatal(err)
+	} else if err := wf.Validate(); err != nil {
+		labBuild.Fatal(err)
 	} else {
 		labBuild.workflow = wf
 		labBuild.Logger = labBuild.Logger.With("jobId", wf.JobId)

@@ -182,3 +182,44 @@ func (r *Repository) ensureGitRepo() error {
 	}
 	return nil
 }
+
+func IsAnthaFile(path string) bool {
+	return strings.EqualFold(filepath.Ext(path), ".an")
+}
+
+type ElementTypeMap map[ElementTypeName]ElementType
+
+func (r *Repository) FindAllElementTypes(prefix RepositoryPrefix) (ElementTypeMap, error) {
+	etm := make(ElementTypeMap)
+
+	r.Walk(func(f *File) error {
+		if !IsAnthaFile(f.Name) {
+			return nil
+		}
+
+		dir := filepath.Dir(f.Name)
+		ename := filepath.Base(dir)
+		etm[ElementTypeName(ename)] = ElementType{
+			ElementPath:      ElementPath(dir),
+			RepositoryPrefix: RepositoryPrefix(prefix),
+		}
+		return nil
+	})
+
+	return etm, nil
+}
+
+type ElementTypesByRepository map[*Repository]ElementTypeMap
+
+func (rs Repositories) FindAllElementTypes() (ElementTypesByRepository, error) {
+	types := make(ElementTypesByRepository)
+	for prefix, rep := range rs {
+		rmap, err := rep.FindAllElementTypes(prefix)
+		if err != nil {
+			return nil, err
+		}
+		types[rep] = rmap
+	}
+
+	return types, nil
+}

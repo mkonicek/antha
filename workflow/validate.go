@@ -12,7 +12,7 @@ import (
 	"github.com/antha-lang/antha/utils"
 )
 
-func (wf *Workflow) validate() error {
+func (wf *Workflow) Validate() error {
 	return utils.ErrorSlice{
 		wf.SchemaVersion.Validate(),
 		wf.JobId.Validate(),

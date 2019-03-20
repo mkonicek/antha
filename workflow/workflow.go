@@ -43,11 +43,8 @@ func WorkflowFromReaders(rs ...io.ReadCloser) (*Workflow, error) {
 			return nil, err
 		}
 	}
-	if err := acc.validate(); err != nil {
-		return nil, err
-	} else {
-		return acc, nil
-	}
+
+	return acc, nil
 }
 
 func EmptyWorkflow() *Workflow {
@@ -90,6 +87,12 @@ func (m *Meta) UnmarshalJSON(bs []byte) error {
 	}
 	m.Rest = all
 	return nil
+}
+
+func (m *Meta) InitEmpty() {
+	if m.Rest == nil {
+		m.Rest = make(map[string]interface{})
+	}
 }
 
 func (m *Meta) MarshalJSON() ([]byte, error) {

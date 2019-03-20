@@ -42,9 +42,11 @@ func NewComposer(logger *logger.Logger, wf *workflow.Workflow, inDir, outDir str
 		return nil, err
 	} else if len(entries) != 0 {
 		return nil, fmt.Errorf("Provided outdir '%s' must be empty (or not exist)", outDir)
-	} else if err := os.MkdirAll(filepath.Join(outDir, "workflow", "data"), 0700); err != nil {
-		return nil, err
 	} else if outDir, err = filepath.Abs(outDir); err != nil {
+		return nil, err
+	}
+	// always need to do this:
+	if err := os.MkdirAll(filepath.Join(outDir, "workflow", "data"), 0700); err != nil {
 		return nil, err
 	}
 

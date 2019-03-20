@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 
@@ -194,14 +193,6 @@ func (m *Migrater) migrateJobIdAndMeta() error {
 		m.Cur.Meta.Rest["Description"] = desc
 	}
 	return nil
-}
-
-// WriteToPath writes the migrated file to given path (defaulting to stdout for '-' or the empty string)
-func (m *Migrater) WriteToPath(target string) error {
-	if target == "" || target == "-" {
-		return m.Cur.ToWriter(os.Stdout)
-	}
-	return m.Cur.WriteToFile(target)
 }
 
 func readWorkflows(migrate string, merges []string) (*workflowv1_2, *workflow.Workflow, error) {

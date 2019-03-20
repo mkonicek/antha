@@ -64,7 +64,9 @@ func EmptyWorkflow() *Workflow {
 }
 
 func (wf *Workflow) WriteToFile(p string) error {
-	if fh, err := os.OpenFile(p, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0400); err != nil {
+	if p == "" || p == "-" {
+		return wf.ToWriter(os.Stdout)
+	} else if fh, err := os.OpenFile(p, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0400); err != nil {
 		return err
 	} else {
 		defer fh.Close()

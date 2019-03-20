@@ -1,11 +1,10 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"os"
-	"path/filepath"
+	"regexp"
 
 	"github.com/antha-lang/antha/logger"
 	"github.com/antha-lang/antha/workflow"
@@ -14,118 +13,116 @@ import (
 func main() {
 	l := logger.NewLogger()
 
-	args := os.Args
-	if len(args) < 2 {
-		l.Fatal(errors.New("Subcommand needed"))
+	subCmds := subCommands{
+		"list":         list,
+		"makeWorkflow": makeWorkflow,
 	}
 
-	subCmds := map[string]func(*logger.Logger, []string){
-		"find":          find,
-		"makeWorkflows": makeWorkflows,
-		"makeWorkflow":  makeWorkflow,
+	args := os.Args
+	if len(args) < 2 {
+		l.Fatal(fmt.Errorf("Subcommand needed. One of: %v", subCmds.List()))
 	}
 
 	if cmd, found := subCmds[args[1]]; found {
-		cmd(l, args[2:])
+		if err := cmd(l, args[2:]); err != nil {
+			l.Fatal(err)
+		}
 	} else {
-		l.Fatal(fmt.Errorf("Unknown subcommand: %s", args[1]))
+		l.Fatal(fmt.Errorf("Unknown subcommand: %s. Available: %v", args[1], subCmds.List()))
 	}
 }
 
-func find(l *logger.Logger, paths []string) {
-	findElements(l, paths, func(r *workflow.Repository, et *workflow.ElementType) error {
-		l.Log("repositoryPrefix", et.RepositoryPrefix, "elementPath", et.ElementPath)
-		return nil
-	})
+type subCommands map[string]func(*logger.Logger, []string) error
+
+func (sc subCommands) List() []string {
+	res := make([]string, 0, len(sc))
+	for k := range sc {
+		res = append(res, k)
+	}
+	return res
 }
 
-func makeWorkflow(l *logger.Logger, args []string) {
-	acc := workflow.EmptyWorkflow()
-	acc.JobId = workflow.JobId("underTest")
-	findElements(l, args, func(r *workflow.Repository, et *workflow.ElementType) error {
-		etCopy := *et
-		wf := &workflow.Workflow{
-			SchemaVersion: workflow.CurrentSchemaVersion,
-			Repositories: workflow.Repositories{
-				et.RepositoryPrefix: r,
-			},
-			Elements: workflow.Elements{
-				Types: workflow.ElementTypes{&etCopy},
-				Instances: workflow.ElementInstances{
-					workflow.ElementInstanceName(etCopy.Name()): &workflow.ElementInstance{
-						ElementTypeName: etCopy.Name(),
+func list(l *logger.Logger, args []string) error {
+	flagSet := flag.NewFlagSet(flag.CommandLine.Name()+" list", flag.ContinueOnError)
+	flagSet.Usage = workflow.NewFlagUsage(flagSet, "List all found element types, tab separated")
+
+	inDir := ""
+	flagSet.StringVar(&inDir, "indir", "", "Directory from which to read files (optional)")
+
+	if err := flagSet.Parse(args); err != nil {
+		return err
+	} else if wfPaths, err := workflow.GatherPaths(flagSet, inDir); err != nil {
+		return err
+	} else {
+		return findElements(l, wfPaths, func(r *workflow.Repository, et *workflow.ElementType) error {
+			fmt.Printf("%v\t%v\t%v\n", et.Name(), et.ElementPath, et.RepositoryPrefix)
+			return nil
+		})
+	}
+}
+
+func makeWorkflow(l *logger.Logger, args []string) error {
+	flagSet := flag.NewFlagSet(flag.CommandLine.Name()+" makeWorkflow", flag.ContinueOnError)
+	flagSet.Usage = workflow.NewFlagUsage(flagSet, "Create new workflow")
+
+	jobId, regexStr, inDir, toFile := "", "", "", ""
+	flagSet.StringVar(&jobId, "jobId", "myFirstWorkflow", "Job Id to apply to new workflow (optional)")
+	flagSet.StringVar(&regexStr, "regex", "", "Regular expression to match against element type path (optional)")
+	flagSet.StringVar(&inDir, "indir", "", "Directory from which to read files (optional)")
+	flagSet.StringVar(&toFile, "to", "", "File to write to (default: will write to stdout)")
+
+	if err := flagSet.Parse(args); err != nil {
+		return err
+	} else if wfPaths, err := workflow.GatherPaths(flagSet, inDir); err != nil {
+		return err
+	} else if regex, err := regexp.Compile(regexStr); err != nil {
+		return err
+	} else {
+		acc := workflow.EmptyWorkflow()
+		acc.JobId = workflow.JobId(jobId)
+		err := findElements(l, wfPaths, func(r *workflow.Repository, et *workflow.ElementType) error {
+			if !regex.MatchString(string(et.ElementPath)) {
+				return nil
+			}
+			etCopy := *et
+			wf := &workflow.Workflow{
+				SchemaVersion: workflow.CurrentSchemaVersion,
+				Repositories: workflow.Repositories{
+					et.RepositoryPrefix: r,
+				},
+				Elements: workflow.Elements{
+					Types: workflow.ElementTypes{&etCopy},
+					Instances: workflow.ElementInstances{
+						workflow.ElementInstanceName(etCopy.Name()): &workflow.ElementInstance{
+							ElementTypeName: etCopy.Name(),
+						},
 					},
 				},
-			},
-		}
-		return acc.Merge(wf)
-	})
-	if err := acc.WriteToFile("/tmp/underTest.json"); err != nil {
-		l.Fatal(err)
-	}
-}
-
-func makeWorkflows(l *logger.Logger, args []string) {
-	outdir := ""
-	flagset := flag.NewFlagSet("makeWorkflows", flag.ContinueOnError)
-	flagset.StringVar(&outdir, "outdir", "", "Directory to write to")
-	if err := flagset.Parse(args); err != nil {
-		l.Fatal(err)
-	}
-	paths := flagset.Args()
-	if err := os.MkdirAll(outdir, 0700); err != nil {
-		l.Fatal(err)
-	}
-	findElements(l, paths, func(r *workflow.Repository, et *workflow.ElementType) error {
-		etCopy := *et
-		wf := &workflow.Workflow{
-			SchemaVersion: workflow.CurrentSchemaVersion,
-			JobId:         workflow.JobId("underTest"),
-			Repositories: workflow.Repositories{
-				et.RepositoryPrefix: r,
-			},
-			Elements: workflow.Elements{
-				Types: workflow.ElementTypes{&etCopy},
-				Instances: workflow.ElementInstances{
-					workflow.ElementInstanceName(etCopy.Name()): &workflow.ElementInstance{
-						ElementTypeName: etCopy.Name(),
-					},
-				},
-			},
-		}
-		dir := filepath.Join(outdir, filepath.FromSlash(string(et.ElementPath)))
-		if err := os.MkdirAll(dir, 0700); err != nil {
+			}
+			return acc.Merge(wf)
+		})
+		if err != nil {
 			return err
-		} else {
-			return wf.WriteToFile(filepath.Join(dir, "underTest.json"))
 		}
-	})
+		return acc.WriteToFile(toFile)
+	}
 }
 
-func findElements(l *logger.Logger, paths []string, consumer func(*workflow.Repository, *workflow.ElementType) error) {
+func findElements(l *logger.Logger, paths []string, consumer func(*workflow.Repository, *workflow.ElementType) error) error {
 	if rs, err := workflow.ReadersFromPaths(paths); err != nil {
-		l.Fatal(err)
+		return err
 	} else if wf, err := workflow.WorkflowFromReaders(rs...); err != nil {
-		l.Fatal(err)
-	} else if err := wf.Validate(); err != nil {
-		l.Fatal(err)
+		return err
+	} else if repoToEts, err := wf.Repositories.FindAllElementTypes(); err != nil {
+		return err
 	} else {
-		for rp, r := range wf.Repositories {
-			var et workflow.ElementType
-			err := r.Walk(func(f *workflow.File) error {
-				if f == nil || !f.IsRegular {
-					return nil
+		for repo, ets := range repoToEts {
+			for _, et := range ets {
+				if err := consumer(repo, &et); err != nil {
+					return err
 				}
-				if filepath.Ext(f.Name) != ".an" {
-					return nil
-				}
-				et.RepositoryPrefix = rp
-				et.ElementPath = workflow.ElementPath(filepath.ToSlash(filepath.Dir(f.Name)))
-				return consumer(r, &et)
-			})
-			if err != nil {
-				l.Fatal(err)
 			}
 		}
+		return nil
 	}
 }

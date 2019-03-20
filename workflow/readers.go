@@ -2,6 +2,8 @@ package workflow
 
 import (
 	"errors"
+	"flag"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -37,7 +39,9 @@ func ReadersFromPaths(paths []string) ([]io.ReadCloser, error) {
 }
 
 func JsonPathsWithin(dir string) ([]string, error) {
-	if entries, err := ioutil.ReadDir(dir); err != nil && os.IsNotExist(err) {
+	if dir == "" {
+		return nil, nil
+	} else if entries, err := ioutil.ReadDir(dir); err != nil && os.IsNotExist(err) {
 		return nil, nil
 	} else if err != nil {
 		return nil, err
@@ -49,5 +53,30 @@ func JsonPathsWithin(dir string) ([]string, error) {
 			}
 		}
 		return results, nil
+	}
+}
+
+func NewFlagUsage(fs *flag.FlagSet, summary string) func() {
+	if fs == nil {
+		fs = flag.CommandLine
+	}
+	output := fs.Output()
+	name := fs.Name()
+	return func() {
+		fmt.Fprintf(output, "%s: %s\nUsage of %s:\n", name, summary, name)
+		fs.PrintDefaults()
+		fmt.Fprintf(output, "All further args are interpreted as paths to workflows to be merged and composed. Use - to read a workflow from stdin.\n")
+	}
+}
+
+func GatherPaths(fs *flag.FlagSet, inDir string) ([]string, error) {
+	if fs == nil {
+		fs = flag.CommandLine
+	}
+	wfPaths := fs.Args()
+	if moreWfPaths, err := JsonPathsWithin(inDir); err != nil {
+		return nil, err
+	} else {
+		return append(wfPaths, moreWfPaths...), nil
 	}
 }

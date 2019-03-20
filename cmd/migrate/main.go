@@ -2,19 +2,14 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"os"
 
 	"github.com/antha-lang/antha/logger"
+	"github.com/antha-lang/antha/workflow"
 	"github.com/antha-lang/antha/workflow/v1_2"
 )
 
 func main() {
-	flag.Usage = func() {
-		fmt.Fprintf(flag.CommandLine.Output(), "Usage of %s:\n", os.Args[0])
-		flag.PrintDefaults()
-		fmt.Fprintf(flag.CommandLine.Output(), "All further args are interpreted as paths to up to date workflows to be merged and used as a basis for the upgrade.\n")
-	}
+	flag.Usage = workflow.NewFlagUsage(nil, "Migrate workflow to latest schema version")
 
 	var fromFile, toFile, gilsonDevice string
 	var validate bool
@@ -51,7 +46,7 @@ func main() {
 		}
 	}
 
-	if err = m.WriteToPath(toFile); err != nil {
+	if err := m.Cur.WriteToFile(toFile); err != nil {
 		logger.Fatal(err)
 	}
 }

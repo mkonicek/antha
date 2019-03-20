@@ -65,7 +65,7 @@ func makeWorkflow(l *logger.Logger, args []string) error {
 	flagSet := flag.NewFlagSet(flag.CommandLine.Name()+" makeWorkflow", flag.ContinueOnError)
 	flagSet.Usage = workflow.NewFlagUsage(flagSet, "Create new workflow")
 
-	jobId, regexStr, inDir, toFile := "", "", "", ""
+	var jobId, regexStr, inDir, toFile string
 	flagSet.StringVar(&jobId, "jobId", "myFirstWorkflow", "Job Id to apply to new workflow (optional)")
 	flagSet.StringVar(&regexStr, "regex", "", "Regular expression to match against element type path (optional)")
 	flagSet.StringVar(&inDir, "indir", "", "Directory from which to read files (optional)")

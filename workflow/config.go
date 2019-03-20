@@ -21,6 +21,36 @@ type Config struct {
 	PlateReader     PlateReaderConfig     `json:"PlateReader"`
 }
 
+func EmptyConfig() Config {
+	return Config{
+		GilsonPipetMax: GilsonPipetMaxConfig{
+			Devices: make(map[DeviceInstanceID]*GilsonPipetMaxInstanceConfig),
+		},
+		Tecan: TecanConfig{
+			Devices: make(map[DeviceInstanceID]*TecanInstanceConfig),
+		},
+		CyBio: CyBioConfig{
+			Devices: make(map[DeviceInstanceID]*CyBioInstanceConfig),
+		},
+		Labcyte: LabcyteConfig{
+			Devices: make(map[DeviceInstanceID]*LabcyteInstanceConfig),
+		},
+		Hamilton: HamiltonConfig{
+			Devices: make(map[DeviceInstanceID]*HamiltonInstanceConfig),
+		},
+
+		QPCR: QPCRConfig{
+			Devices: make(map[DeviceInstanceID]struct{}),
+		},
+		ShakerIncubator: ShakerIncubatorConfig{
+			Devices: make(map[DeviceInstanceID]struct{}),
+		},
+		PlateReader: PlateReaderConfig{
+			Devices: make(map[DeviceInstanceID]struct{}),
+		},
+	}
+}
+
 type GlobalMixerConfig struct {
 	PrintInstructions        bool `json:"printInstructions"`
 	UseDriverTipTracking     bool `json:"useDriverTipTracking"`
@@ -38,15 +68,6 @@ type DeviceInstanceID string
 type GilsonPipetMaxConfig struct {
 	Defaults *GilsonPipetMaxInstanceConfig                      `json:"Defaults,omitempty"`
 	Devices  map[DeviceInstanceID]*GilsonPipetMaxInstanceConfig `json:"Devices,omitempty"`
-}
-
-// InsertDeviceConfig inserts or updates config for a device instance
-func (c *GilsonPipetMaxConfig) InsertDeviceConfig(d DeviceInstanceID, ic *GilsonPipetMaxInstanceConfig) {
-	if c.Devices == nil {
-		c.Devices = make(map[DeviceInstanceID]*GilsonPipetMaxInstanceConfig)
-	}
-
-	c.Devices[d] = ic
 }
 
 type GilsonPipetMaxInstanceConfig struct {

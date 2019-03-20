@@ -196,6 +196,7 @@ func (cfg Config) validate() error {
 		cfg.Tecan.validate(seen),
 		cfg.CyBio.validate(seen),
 		cfg.Labcyte.validate(seen),
+		cfg.Hamilton.validate(seen),
 		cfg.QPCR.validate(seen),
 		cfg.ShakerIncubator.validate(seen),
 		cfg.PlateReader.validate(seen),
@@ -204,7 +205,7 @@ func (cfg Config) validate() error {
 }
 
 func (cfg Config) assertOnlyOneMixer() error {
-	if count := len(cfg.GilsonPipetMax.Devices) + len(cfg.Tecan.Devices) + len(cfg.CyBio.Devices) + len(cfg.Labcyte.Devices); count > 1 {
+	if count := len(cfg.GilsonPipetMax.Devices) + len(cfg.Tecan.Devices) + len(cfg.CyBio.Devices) + len(cfg.Labcyte.Devices) + len(cfg.Hamilton.Devices); count > 1 {
 		return fmt.Errorf("Currently a maximum of one mixer can be used per workflow. You have %d configured.", count)
 	}
 	return nil
@@ -358,6 +359,40 @@ func (inst *LabcyteInstanceConfig) validate(id DeviceInstanceID, isDefaults bool
 
 	} else if !isDefaults && strings.ToLower(string(id)) == "defaults" {
 		return fmt.Errorf("Confusion: Labcyte device '%s' exists. Did you mean to set Labcyte.Defaults instead?")
+
+	}
+	// NB because the instruction plugin itself does validation of the model, we don't do that here!
+	return inst.commonMixerInstanceConfig.validate(id)
+}
+
+// Hamilton
+func (hamiltons HamiltonConfig) validate(seen DeviceInstanceIDSet) error {
+	if err := hamiltons.Defaults.validate("Defaults", true); err != nil {
+		return err
+	}
+	for id, inst := range hamiltons.Devices {
+		if err := seen.Add(id); err != nil {
+			return err
+		} else if err := inst.validate(id, false); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (inst *HamiltonInstanceConfig) validate(id DeviceInstanceID, isDefaults bool) error {
+	if len(id) == 0 {
+		return errors.New("Hamilton: A device may not have an empty name.")
+
+	} else if inst == nil {
+		if isDefaults {
+			return nil
+		} else {
+			return fmt.Errorf("Hamilton device '%s' has no configuration!", id)
+		}
+
+	} else if !isDefaults && strings.ToLower(string(id)) == "defaults" {
+		return fmt.Errorf("Confusion: Hamilton device '%s' exists. Did you mean to set Hamilton.Defaults instead?")
 
 	}
 	// NB because the instruction plugin itself does validation of the model, we don't do that here!

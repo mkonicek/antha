@@ -35,7 +35,7 @@ func WorkflowFromReaders(rs ...io.ReadCloser) (*Workflow, error) {
 	acc := EmptyWorkflow()
 	for _, r := range rs {
 		defer r.Close()
-		wf := &Workflow{}
+		wf := &Workflow{} // we're never merging _into_ wf so it's safe to have nil maps here
 		dec := json.NewDecoder(r)
 		if err := dec.Decode(wf); err != nil {
 			return nil, err
@@ -47,9 +47,19 @@ func WorkflowFromReaders(rs ...io.ReadCloser) (*Workflow, error) {
 	return acc, nil
 }
 
+// returns a fresh but fully initialised Workflow. In particular, all
+// directly accessible empty maps are non-nil.
 func EmptyWorkflow() *Workflow {
 	return &Workflow{
 		SchemaVersion: CurrentSchemaVersion,
+		Meta: Meta{
+			Rest: make(map[string]interface{}),
+		},
+		Repositories: make(Repositories),
+		Elements: Elements{
+			Instances: make(ElementInstances),
+		},
+		Config: EmptyConfig(),
 	}
 }
 
@@ -87,12 +97,6 @@ func (m *Meta) UnmarshalJSON(bs []byte) error {
 	}
 	m.Rest = all
 	return nil
-}
-
-func (m *Meta) InitEmpty() {
-	if m.Rest == nil {
-		m.Rest = make(map[string]interface{})
-	}
 }
 
 func (m *Meta) MarshalJSON() ([]byte, error) {

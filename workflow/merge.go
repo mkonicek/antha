@@ -33,17 +33,13 @@ func (a *Repository) equals(b *Repository) bool {
 	return a.Directory == b.Directory && a.Branch == b.Branch && a.Commit == b.Commit
 }
 
-func (a *Repositories) merge(b Repositories) error {
+func (a Repositories) merge(b Repositories) error {
 	// It's an error if a and b contain the same prefix and they're not equal
-	if *a == nil {
-		*a = make(Repositories)
-	}
-	aMap := *a
 	for prefix, repoB := range b {
-		if repoA, found := aMap[prefix]; found && !repoA.equals(repoB) {
+		if repoA, found := a[prefix]; found && !repoA.equals(repoB) {
 			return fmt.Errorf("Cannot merge: repository with prefix '%v' redefined.", prefix)
 		} else if !found {
-			aMap[prefix] = repoB
+			a[prefix] = repoB
 		}
 	}
 	return nil
@@ -95,17 +91,13 @@ func (a *ElementTypes) merge(b ElementTypes) error {
 	return nil
 }
 
-func (a *ElementInstances) merge(b ElementInstances) error {
+func (a ElementInstances) merge(b ElementInstances) error {
 	// Element instances from different workflows must be entirely distinct
-	if *a == nil {
-		*a = make(ElementInstances)
-	}
-	aMap := *a
 	for name, elemB := range b {
-		if _, found := aMap[name]; found {
+		if _, found := a[name]; found {
 			return fmt.Errorf("Cannot merge: element instance '%v' exists in both workflows", name)
 		} else {
-			aMap[name] = elemB
+			a[name] = elemB
 		}
 	}
 	return nil
@@ -166,17 +158,14 @@ func (a *Config) merge(b Config) error {
 }
 
 func (a *GilsonPipetMaxConfig) Merge(b GilsonPipetMaxConfig) error {
-	if a.Devices == nil {
-		a.Devices = b.Devices
-	} else {
-		// simplest: we merge iff device ids are distinct
-		for id, cfg := range b.Devices {
-			if _, found := a.Devices[id]; found {
-				return fmt.Errorf("Cannot merge: GilsonPipetMax device '%v' redefined", id)
-			}
-			a.Devices[id] = cfg
+	// simplest: we merge iff device ids are distinct
+	for id, cfg := range b.Devices {
+		if _, found := a.Devices[id]; found {
+			return fmt.Errorf("Cannot merge: GilsonPipetMax device '%v' redefined", id)
 		}
+		a.Devices[id] = cfg
 	}
+
 	// for defaults, we just hope one of them is nil
 	switch {
 	case a.Defaults == nil:
@@ -188,17 +177,14 @@ func (a *GilsonPipetMaxConfig) Merge(b GilsonPipetMaxConfig) error {
 }
 
 func (a *TecanConfig) Merge(b TecanConfig) error {
-	if a.Devices == nil {
-		a.Devices = b.Devices
-	} else {
-		// simplest: we merge iff device ids are distinct
-		for id, cfg := range b.Devices {
-			if _, found := a.Devices[id]; found {
-				return fmt.Errorf("Cannot merge: Tecan device '%v' redefined", id)
-			}
-			a.Devices[id] = cfg
+	// simplest: we merge iff device ids are distinct
+	for id, cfg := range b.Devices {
+		if _, found := a.Devices[id]; found {
+			return fmt.Errorf("Cannot merge: Tecan device '%v' redefined", id)
 		}
+		a.Devices[id] = cfg
 	}
+
 	// for defaults, we just hope one of them is nil
 	switch {
 	case a.Defaults == nil:
@@ -210,17 +196,14 @@ func (a *TecanConfig) Merge(b TecanConfig) error {
 }
 
 func (a *CyBioConfig) Merge(b CyBioConfig) error {
-	if a.Devices == nil {
-		a.Devices = b.Devices
-	} else {
-		// simplest: we merge iff device ids are distinct
-		for id, cfg := range b.Devices {
-			if _, found := a.Devices[id]; found {
-				return fmt.Errorf("Cannot merge: CyBio device '%v' redefined", id)
-			}
-			a.Devices[id] = cfg
+	// simplest: we merge iff device ids are distinct
+	for id, cfg := range b.Devices {
+		if _, found := a.Devices[id]; found {
+			return fmt.Errorf("Cannot merge: CyBio device '%v' redefined", id)
 		}
+		a.Devices[id] = cfg
 	}
+
 	// for defaults, we just hope one of them is nil
 	switch {
 	case a.Defaults == nil:
@@ -232,23 +215,39 @@ func (a *CyBioConfig) Merge(b CyBioConfig) error {
 }
 
 func (a *LabcyteConfig) Merge(b LabcyteConfig) error {
-	if a.Devices == nil {
-		a.Devices = b.Devices
-	} else {
-		// simplest: we merge iff device ids are distinct
-		for id, cfg := range b.Devices {
-			if _, found := a.Devices[id]; found {
-				return fmt.Errorf("Cannot merge: Labcyte device '%v' redefined", id)
-			}
-			a.Devices[id] = cfg
+	// simplest: we merge iff device ids are distinct
+	for id, cfg := range b.Devices {
+		if _, found := a.Devices[id]; found {
+			return fmt.Errorf("Cannot merge: Labcyte device '%v' redefined", id)
 		}
+		a.Devices[id] = cfg
 	}
+
 	// for defaults, we just hope one of them is nil
 	switch {
 	case a.Defaults == nil:
 		a.Defaults = b.Defaults
 	case b.Defaults != nil:
 		return errors.New("Cannot merge: Labcyte defaults redefined")
+	}
+	return nil
+}
+
+func (a *HamiltonConfig) Merge(b HamiltonConfig) error {
+	// simplest: we merge iff device ids are distinct
+	for id, cfg := range b.Devices {
+		if _, found := a.Devices[id]; found {
+			return fmt.Errorf("cannot merge: Hamilton device '%v' redefined", id)
+		}
+		a.Devices[id] = cfg
+	}
+
+	// for defaults, we just hope one of them is nil
+	switch {
+	case a.Defaults == nil:
+		a.Defaults = b.Defaults
+	case b.Defaults != nil:
+		return errors.New("cannot merge: Hamilton defaults redefined")
 	}
 	return nil
 }
@@ -277,66 +276,32 @@ func (a *GlobalMixerConfig) Merge(b GlobalMixerConfig) error {
 	return nil
 }
 
-func (a *HamiltonConfig) Merge(b HamiltonConfig) error {
-	if a.Devices == nil {
-		a.Devices = b.Devices
-	} else {
-		// simplest: we merge iff device ids are distinct
-		for id, cfg := range b.Devices {
-			if _, found := a.Devices[id]; found {
-				return fmt.Errorf("cannot merge: Hamilton device '%v' redefined", id)
-			}
-			a.Devices[id] = cfg
-		}
-	}
-	// for defaults, we just hope one of them is nil
-	switch {
-	case a.Defaults == nil:
-		a.Defaults = b.Defaults
-	case b.Defaults != nil:
-		return errors.New("cannot merge: Hamilton defaults redefined")
-	}
-	return nil
-}
-
 func (a *QPCRConfig) Merge(b QPCRConfig) error {
-	if a.Devices == nil {
-		a.Devices = b.Devices
-	} else {
-		for id, cfg := range b.Devices {
-			if _, found := a.Devices[id]; found {
-				return fmt.Errorf("Cannot merge: QPCR device '%v' redefined", id)
-			}
-			a.Devices[id] = cfg
+	for id, cfg := range b.Devices {
+		if _, found := a.Devices[id]; found {
+			return fmt.Errorf("Cannot merge: QPCR device '%v' redefined", id)
 		}
+		a.Devices[id] = cfg
 	}
 	return nil
 }
 
 func (a *ShakerIncubatorConfig) Merge(b ShakerIncubatorConfig) error {
-	if a.Devices == nil {
-		a.Devices = b.Devices
-	} else {
-		for id, cfg := range b.Devices {
-			if _, found := a.Devices[id]; found {
-				return fmt.Errorf("Cannot merge: ShakerIncubator device '%v' redefined", id)
-			}
-			a.Devices[id] = cfg
+	for id, cfg := range b.Devices {
+		if _, found := a.Devices[id]; found {
+			return fmt.Errorf("Cannot merge: ShakerIncubator device '%v' redefined", id)
 		}
+		a.Devices[id] = cfg
 	}
 	return nil
 }
 
 func (a *PlateReaderConfig) Merge(b PlateReaderConfig) error {
-	if a.Devices == nil {
-		a.Devices = b.Devices
-	} else {
-		for id, cfg := range b.Devices {
-			if _, found := a.Devices[id]; found {
-				return fmt.Errorf("Cannot merge: PlateReader device '%v' redefined", id)
-			}
-			a.Devices[id] = cfg
+	for id, cfg := range b.Devices {
+		if _, found := a.Devices[id]; found {
+			return fmt.Errorf("Cannot merge: PlateReader device '%v' redefined", id)
 		}
+		a.Devices[id] = cfg
 	}
 	return nil
 }

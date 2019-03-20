@@ -40,7 +40,7 @@ func NewMigrater(logger *logger.Logger, merges []string, migrate string, gilsonD
 // MigrateAll perform all migration steps.
 func (m *Migrater) MigrateAll() error {
 	return utils.ErrorSlice{
-		m.migrateParameters(),
+		m.migrateJobIdAndMeta(),
 		m.migrateElements(),
 		m.migrateConnections(),
 		m.migrateConfig(),
@@ -59,11 +59,13 @@ func (m *Migrater) migrateGilsonConfigs() {
 		return
 	}
 
-	if _, ok := m.Cur.Config.GilsonPipetMax.Devices[workflow.DeviceInstanceID(m.GilsonDevice)]; ok {
+	devId := workflow.DeviceInstanceID(m.GilsonDevice)
+
+	if _, found := m.Cur.Config.GilsonPipetMax.Devices[devId]; found {
 		m.Logger.Log("warning", fmt.Sprintf("Gilson device %s already exists, and will have configuration replaced with migrated configuration.", m.GilsonDevice))
 	}
 
-	m.Cur.Config.GilsonPipetMax.InsertDeviceConfig(workflow.DeviceInstanceID(m.GilsonDevice), m.migrateGilsonConfig())
+	m.Cur.Config.GilsonPipetMax.Devices[devId] = m.migrateGilsonConfig()
 }
 
 func (m *Migrater) migrateGlobalMixerConfig() {
@@ -186,10 +188,11 @@ func (m *Migrater) migrateConnections() error {
 	return nil
 }
 
-func (m *Migrater) migrateParameters() error {
+func (m *Migrater) migrateJobIdAndMeta() error {
 	m.Cur.JobId = workflow.JobId(m.Old.Properties.Name)
-	m.Cur.Meta.InitEmpty()
-	m.Cur.Meta.Rest["Description"] = m.Old.Properties.Description
+	if desc := m.Old.Properties.Description; desc != "" {
+		m.Cur.Meta.Rest["Description"] = desc
+	}
 	return nil
 }
 

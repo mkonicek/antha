@@ -186,6 +186,51 @@ func correctPositions(positionPair PositionPair, originalSequence wtype.DNASeque
 	return start, end, false
 }
 
+// EqualFold compares whether two sequences are equivalent to each other.
+//
+// The comparison will be performed in a case insensitive manner with respect to
+// the actual sequence.
+// The orientation is not important;
+// i.e. a sequence and it's reverse complement will be classsified as equal.
+// The two sequences must have the same circularisation status (i.e. both plasmid or both linear).
+// If the sequences are plasmids then the rotation of the sequences is not important.
+// Feature Annotations, double or single stranded status and overhang information
+// are not taken into consideration.
+func EqualFold(a, b *wtype.DNASequence) bool {
+	if len(a.Seq) != len(b.Seq) {
+		return false
+	}
+	if b.Plasmid != a.Plasmid {
+		return false
+	}
+
+	if len(FindAll(a, b).Positions) == 1 {
+		return true
+	}
+
+	return false
+}
+
+// InSequences evaluates whether a query is present in a set of DNASequences
+// using the same criteria as the EqualFold function.
+//
+// The comparison will be performed in a case insensitive manner with respect to
+// the actual sequence.
+// The orientation is not important;
+// i.e. a sequence and it's reverse complement will be classsified as equal.
+// The two sequences must have the same circularisation status (i.e. both plasmid or both linear).
+// If the sequences are plasmids then the rotation of the sequences is not important.
+// Feature Annotations, double or single stranded status and overhang information
+// are not taken into consideration.
+func InSequences(seqs []*wtype.DNASequence, query *wtype.DNASequence) bool {
+	for _, seq := range seqs {
+		if EqualFold(seq, query) {
+			return true
+		}
+	}
+	return false
+}
+
 // FindAll searches for a DNA sequence within a larger DNA sequence and returns all matches on both coding and complimentary strands.
 func FindAll(bigSequence, smallSequence *wtype.DNASequence) (seqsFound SearchResult) {
 	if len(smallSequence.Sequence()) > len(bigSequence.Sequence()) {

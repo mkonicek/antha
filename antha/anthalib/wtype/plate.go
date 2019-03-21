@@ -656,7 +656,7 @@ func NewLHPlate(idGen *id.IDGenerator, platetype PlateTypeName, mfr string, nrow
 }
 
 func LHPlateFromType(idGen *id.IDGenerator, pt *PlateType) *LHPlate {
-	newWellShape := NewShape(ShapeTypeID(pt.WellShape), "mm", pt.WellH, pt.WellW, pt.WellD)
+	newWellShape := NewShape(ShapeTypeFromName(pt.WellShape), "mm", pt.WellH, pt.WellW, pt.WellD)
 
 	newWelltype := NewLHWell(idGen, "ul", pt.MaxVol, pt.MinVol, newWellShape, pt.BottomType, pt.WellX, pt.WellY, pt.WellZ, pt.BottomH, "mm")
 
@@ -1218,7 +1218,7 @@ func (p *Plate) AreWellTargetsEnabled(adaptorChannels int, channelSpacing float6
 		return false
 	}
 
-	if p.Welltype.Shape().ShapeName != "box" {
+	if !BoxShape.Equals(p.Welltype.Shape().Type) {
 		return false
 	}
 

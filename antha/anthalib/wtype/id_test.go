@@ -8,7 +8,7 @@ import (
 // tests on ID arithmetic
 
 func makeWell() *LHWell {
-	swshp := NewShape("box", "mm", 8.2, 8.2, 41.3)
+	swshp := NewShape(BoxShape, "mm", 8.2, 8.2, 41.3)
 	welltype := NewLHWell("ul", 1000, 100, swshp, VWellBottom, 8.2, 8.2, 41.3, 4.7, "mm")
 	welltype.WContents.Loc = "randomplate:A1"
 	return welltype

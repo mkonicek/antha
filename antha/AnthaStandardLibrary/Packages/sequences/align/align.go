@@ -1,4 +1,4 @@
-// package align allows aligning Antha sequences using the biogo implementation of the
+// Package align allows aligning Antha sequences using the biogo implementation of the
 // Needleman-Wunsch and Smith-Waterman alignment algorithms
 package align
 
@@ -120,23 +120,8 @@ func (r Result) LongestContinuousSequence() wtype.DNASequence {
 
 	var newSeq string
 
-	// if three positions in a row are in descending order
-	// the sequence looks like a reverse sequence
-	// it's possible that with a plasmid, two positions could be descending but not three
-	looksLikeReverseSequence := func(positions []int) bool {
-		var quitelookslikeRev bool
-		for i, position := range positions {
-			if i > 0 {
-				if position < positions[i-1] && quitelookslikeRev {
-					return true
-				} else if position < positions[i-1] {
-					quitelookslikeRev = true
-				}
-			}
-		}
-		return false
-	}
-	if looksLikeReverseSequence(r.Alignment.TemplatePositions) {
+	if r.Alignment.TemplateFrame() == -1 {
+		//if looksLikeReverseSequence(r.Alignment.TemplatePositions) {
 		newSeq = wtype.RevComp(strings.Join(longest, ""))
 	} else {
 		newSeq = strings.Join(longest, "")
@@ -261,7 +246,7 @@ var (
 		GapOpen: -5,
 	}
 
-	// SW is the Smith-Waterman aligner type. Matrix is a square scoring matrix with the last column and last row specifying gap penalties. Currently gap opening is not considered.
+	// SW1 is the Smith-Waterman aligner type. Matrix is a square scoring matrix with the last column and last row specifying gap penalties. Currently gap opening is not considered.
 	// w(gap) = -1
 	// w(match) = +2
 	// w(mismatch) = -1
@@ -273,7 +258,7 @@ var (
 		{-1, -1, -1, -1, 2},
 	}
 
-	// SW is the Smith-Waterman aligner type. Matrix is a square scoring matrix with the last column and last row specifying gap penalties. Currently gap opening is not considered.
+	// SW2 is the Smith-Waterman aligner type. Matrix is a square scoring matrix with the last column and last row specifying gap penalties. Currently gap opening is not considered.
 	// w(gap) = 0
 	// w(match) = +2
 	// w(mismatch) = -1
@@ -314,7 +299,7 @@ var (
 // NW: the Needleman-Wunsch algorithm
 // NWAffine: the affine gap penalty Needleman-Wunsch algorithm
 // SW1 and SW2: the Smith-Waterman algorithm
-var Algorithms map[string]ScoringMatrix = map[string]ScoringMatrix{
+var Algorithms = map[string]ScoringMatrix{
 	"Fitted":       Fitted,
 	"FittedAffine": FittedAffine,
 	"NW":           NW,
@@ -606,32 +591,6 @@ func formatMisMatches(alignment Alignment) (formattedAlignment Alignment) {
 	return
 }
 
-func revCompGappedDNA(seqin string) (string, error) {
-	// use wtype.RevComp, but handle GAP char; TODO: extend wtype.Comp to handle gap char
-	gapPositions := []int{}
-	seqLen := len(seqin)
-	// make a version of input which is safe for wtype.Comp - replace GAP with N, record the locations
-	safe := []byte(strings.Repeat("N", len(seqin)))
-	for pos := 0; pos < len(seqin); pos++ {
-		if GAP != rune(seqin[pos]) {
-			safe[pos] = seqin[pos]
-		} else {
-			gapPositions = append(gapPositions, pos)
-		}
-	}
-	// reverse complement, safe with N's
-	reversed := wtype.RevComp(string(safe))
-	if len(reversed) != seqLen {
-		return "", fmt.Errorf("unexpected reverse complement length")
-	}
-	// restore the gaps
-	revBytes := []byte(reversed)
-	for i := 0; i < len(gapPositions); i++ {
-		revBytes[seqLen-1-gapPositions[i]] = byte(GAP)
-	}
-	return string(revBytes), nil
-}
-
 // correctForRevComp corrects positions to be that of reverse complement following manual reverse complement of strand before alignment.
 // also corrects the query sequence back to the original.
 func correctForRevComp(alignment Result) (formattedAlignment Result) {
@@ -654,14 +613,14 @@ func correctForRevComp(alignment Result) (formattedAlignment Result) {
 
 	revQuery.Seq = wtype.RevComp(revQuery.Seq)
 
-	formattedAlignment.Alignment.TemplateResult, _ = revCompGappedDNA(formattedAlignment.Alignment.TemplateResult)
-	formattedAlignment.Alignment.QueryResult, _ = revCompGappedDNA(formattedAlignment.Alignment.QueryResult)
+	formattedAlignment.Alignment.TemplateResult = wtype.RevComp(formattedAlignment.Alignment.TemplateResult)
+	formattedAlignment.Alignment.QueryResult = wtype.RevComp(formattedAlignment.Alignment.QueryResult)
 
 	formattedAlignment.Query = revQuery
 	return
 }
 
-// standard character representing an alignment gap
+// GAP defines a standard character representing an alignment gap
 const GAP rune = rune('-')
 
 func isGap(character rune) bool {

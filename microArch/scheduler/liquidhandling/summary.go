@@ -16,6 +16,11 @@ import (
 	"github.com/antha-lang/antha/utils"
 )
 
+const (
+	LayoutSummaryVersion  = "1.0"
+	ActionsSummaryVersion = "1.0"
+)
+
 //go:generate go-bindata -o ./schemas.go -pkg liquidhandling -prefix schemas/ ./schemas/
 
 func validateJSON(schemaName string, jsonToValidate []byte) error {
@@ -141,6 +146,17 @@ type layoutSummary struct {
 	IDMap  map[string]string `json:"new_ids"` // maps from ids in "before" to ids in "after"
 }
 
+func (ls *layoutSummary) MarshalJSON() ([]byte, error) {
+	type LayoutSummaryAlias layoutSummary
+	return json.Marshal(struct {
+		*LayoutSummaryAlias
+		Version string `json:"version"`
+	}{
+		LayoutSummaryAlias: (*LayoutSummaryAlias)(ls),
+		Version:            LayoutSummaryVersion,
+	})
+}
+
 // deckSummary summarize the layout of the deck
 type deckSummary struct {
 	Positions map[string]*deckPosition `json:"positions"` // map from position name to object description
@@ -243,7 +259,7 @@ func newItemSummary(idGen *id.IDGenerator, obj wtype.LHObject) *itemSummary {
 		}
 
 		shape := squareWell
-		if o.Welltype.Shape().ShapeName.IsRound() {
+		if o.Welltype.Shape().Type.IsRound() {
 			shape = roundWell
 		}
 
@@ -292,7 +308,7 @@ func newItemSummary(idGen *id.IDGenerator, obj wtype.LHObject) *itemSummary {
 		}
 	case *wtype.LHTipwaste:
 		shape := squareWell
-		if o.AsWell.Shape().ShapeName.IsRound() {
+		if o.AsWell.Shape().Type.IsRound() {
 			shape = roundWell
 		}
 
@@ -406,6 +422,17 @@ type wellLocation struct {
 }
 
 type actionsSummary []action
+
+func (as actionsSummary) MarshalJSON() ([]byte, error) {
+	type ActionsSummaryAlias actionsSummary
+	return json.Marshal(struct {
+		Actions ActionsSummaryAlias `json:"actions"`
+		Version string              `json:"version"`
+	}{
+		Actions: ActionsSummaryAlias(as),
+		Version: ActionsSummaryVersion,
+	})
+}
 
 // contentUpdate
 type contentUpdate struct {

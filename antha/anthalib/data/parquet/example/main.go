@@ -9,7 +9,7 @@ import (
 
 func Example() {
 	// read a Table from Parquet
-	table, err := parquet.ReadTable("small.parquet")
+	table, err := parquet.TableFromFile("small.parquet")
 	if err != nil {
 		panic(errors.Wrapf(err, "read table"))
 	}

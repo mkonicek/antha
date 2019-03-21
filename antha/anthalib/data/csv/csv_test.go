@@ -10,7 +10,7 @@ import (
 )
 
 func TestCSV(t *testing.T) {
-	// create a Table from Arrow Series
+	// create a Table
 	table := data.NewTable([]*data.Series{
 		data.Must().NewSeriesFromSlice("bool_column", []bool{true, true, false, false, true}, nil),
 		data.Must().NewSeriesFromSlice("int64_column", []int64{10, 10, 30, -1, 5}, []bool{true, true, true, false, true}),
@@ -20,21 +20,20 @@ func TestCSV(t *testing.T) {
 		data.Must().NewSeriesFromSlice("timestamp_micros_column", []data.TimestampMicros{1000, 2000, 3000, 4000, 5000}, nil),
 	})
 
-	// write Table to CSV
+	// file: read + write
 	fileName := csvFileName(t)
 	defer os.Remove(fileName)
 
-	if err := WriteTable(table, fileName); err != nil {
+	if err := TableToFile(table, fileName); err != nil {
 		t.Errorf("write table: %s", err)
 	}
 
-	// read Table from CSV
-	readTable, err := ReadTable(fileName)
+	readTable, err := TableFromFile(fileName)
 	if err != nil {
 		t.Errorf("read table: %s", err)
 	}
 
-	assertEqual(t, table, readTable, "tables are different after serialization")
+	assertEqual(t, table, readTable, "tables are different after serialization to file")
 }
 
 func csvFileName(t *testing.T) string {

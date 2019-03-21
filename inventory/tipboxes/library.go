@@ -32,7 +32,7 @@ func getTipboxSize() wtype.Coordinates3D {
 
 func makeTipboxes(idGen *id.IDGenerator) (tipboxes []*wtype.LHTipbox) {
 
-	shp := wtype.NewShape("cylinder", "mm", 7.3, 7.3, 51.2)
+	shp := wtype.NewShape(wtype.CylinderShape, "mm", 7.3, 7.3, 51.2)
 	w := wtype.NewLHWell(idGen, "ul", 250.0, 10.0, shp, 0, 7.3, 7.3, 51.2, 0.0, "mm")
 	w.Extra["InnerL"] = 5.6
 	w.Extra["InnerW"] = 5.6
@@ -68,7 +68,7 @@ func makeTipboxes(idGen *id.IDGenerator) (tipboxes []*wtype.LHTipbox) {
 func makeGilsonTipboxes(idGen *id.IDGenerator) []*wtype.LHTipbox {
 	var ret []*wtype.LHTipbox
 
-	shp := wtype.NewShape("cylinder", "mm", 7.3, 7.3, 51.2)
+	shp := wtype.NewShape(wtype.CylinderShape, "mm", 7.3, 7.3, 51.2)
 
 	//Non-filter tips
 
@@ -139,7 +139,7 @@ func makeGilsonTipboxes(idGen *id.IDGenerator) []*wtype.LHTipbox {
 }
 
 func makeTecanTipBoxes(idGen *id.IDGenerator) []*wtype.LHTipbox {
-	shp := wtype.NewShape("cylinder", "mm", 7.3, 7.3, 51.2)
+	shp := wtype.NewShape(wtype.CylinderShape, "mm", 7.3, 7.3, 51.2)
 
 	ret := make([]*wtype.LHTipbox, 0, 4)
 
@@ -172,14 +172,14 @@ func makeHamiltonTipboxes(idGen *id.IDGenerator) []*wtype.LHTipbox {
 	//Filter tips
 
 	// 300ul, see https://www.hamiltoncompany.com/automated-liquid-handling/disposable-tips/300-%CE%BCl-conductive-sterile-filter-tips
-	shp := wtype.NewShape("cylinder", "mm", 7.3, 7.3, 59.9)
+	shp := wtype.NewShape(wtype.CylinderShape, "mm", 7.3, 7.3, 59.9)
 	w := wtype.NewLHWell(idGen, "ul", 300.0, 20.0, shp, 0, 7.3, 7.3, 59.9, 0.0, "mm")
 	tip := wtype.NewLHTip(idGen, "Hamilton", "Hx300F", 20.0, 300.0, "ul", false, shp, 59.9)
 	tb := wtype.NewLHTipbox(idGen, 8, 12, getTipboxSize(), "Hamilton", "Hx300F Tipbox", tip, w, 9.0, 9.0, XOffset, YOffset, 59.9)
 	ret = append(ret, tb)
 
 	// 50ul, see https://www.hamiltoncompany.com/automated-liquid-handling/disposable-tips/50-%CE%BCl-conductive-sterile-filter-tips
-	shp = wtype.NewShape("cylinder", "mm", 7.3, 7.3, 50.4)
+	shp = wtype.NewShape(wtype.CylinderShape, "mm", 7.3, 7.3, 50.4)
 	w = wtype.NewLHWell(idGen, "ul", 50.0, 1.0, shp, 0, 7.3, 7.3, 50.4, 0.0, "mm")
 	tip = wtype.NewLHTip(idGen, "Hamilton", "Hx50F", 1.0, 50.0, "ul", false, shp, 50.4)
 	tb = wtype.NewLHTipbox(idGen, 8, 12, getTipboxSize(), "Hamilton", "Hx50F Tipbox", tip, w, 9.0, 9.0, XOffset, YOffset, 50.4)

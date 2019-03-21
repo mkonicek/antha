@@ -1,6 +1,8 @@
 package parquet
 
 import (
+	"bytes"
+	"io"
 	"reflect"
 
 	"github.com/antha-lang/antha/antha/anthalib/data"
@@ -10,8 +12,45 @@ import (
 	"github.com/xitongsys/parquet-go/parquet"
 )
 
-// WriteTable writes a data.Table to a Parquet file
-func WriteTable(table *data.Table, filePath string) error {
+// TableToWriter writes a data.Table to io.Writer
+func TableToWriter(table *data.Table, writer io.Writer) error {
+	// wrapping io.Writer in a ParquetFile.ParquetFile
+	file := newWriteOnlyParquetFile(writer)
+
+	// writing the table
+	return writeTable(table, file)
+}
+
+// TableToBytes writes a data.Table to a memory buffer
+func TableToBytes(table *data.Table) ([]byte, error) {
+	// a memory buffer writer
+	buffer := bytes.NewBuffer(nil)
+
+	// a ParquetFile.ParquetFile on the top of the memory buffer writer
+	file := newWriteOnlyParquetFile(buffer)
+
+	// writing the table
+	if err := TableToWriter(table, file); err != nil {
+		return nil, err
+	}
+	return buffer.Bytes(), nil
+}
+
+// TableToFile writes a data.Table to a file on disk
+func TableToFile(table *data.Table, filePath string) error {
+	// opening the file
+	file, err := ParquetFile.NewLocalFileWriter(filePath)
+	if err != nil {
+		return errors.Wrapf(err, "opening Parquet file '%s' for writing", filePath)
+	}
+	defer file.Close() //nolint
+
+	// writing a table
+	return writeTable(table, file)
+}
+
+// writes a data.Table to ParquetFile.ParquetFile
+func writeTable(table *data.Table, file ParquetFile.ParquetFile) error {
 	// parquet schema
 	tableSchema := table.Schema()
 	schema := newParquetSchema(&tableSchema)
@@ -30,7 +69,7 @@ func WriteTable(table *data.Table, filePath string) error {
 	defer done()
 
 	// writing to Parquet
-	return writeToParquet(filePath, jsonSchema, rowType, func() (interface{}, error) {
+	return writeToParquet(file, jsonSchema, rowType, func() (interface{}, error) {
 		row, ok := <-iter
 		if !ok {
 			return nil, nil
@@ -40,14 +79,7 @@ func WriteTable(table *data.Table, filePath string) error {
 }
 
 // Writes rows to Parquet file
-func writeToParquet(filePath string, jsonSchema string, rowType reflect.Type, rowIter func() (interface{}, error)) error {
-	// Opening the file
-	file, err := ParquetFile.NewLocalFileWriter(filePath)
-	if err != nil {
-		return errors.Wrapf(err, "opening Parquet file '%s' for writing", filePath)
-	}
-	defer file.Close() //nolint
-
+func writeToParquet(file ParquetFile.ParquetFile, jsonSchema string, rowType reflect.Type, rowIter func() (interface{}, error)) error {
 	// Parquet writer and its settings
 	writer, err := ParquetWriter.NewParquetWriter(file, nil, 1)
 	if err != nil {

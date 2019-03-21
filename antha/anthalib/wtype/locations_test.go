@@ -33,19 +33,19 @@ func TestSameLocation(t *testing.T) {
 	testLevel := make([]int, 3)
 
 	testSuite[0] = make([]Location, 2)
-	testSuite[0][0] = NewLocation("origin", 1, NewShape("Device", "", 0, 0, 0))
+	testSuite[0][0] = NewLocation("origin", 1, NewShape(BoxShape, "", 0, 0, 0))
 	testSuite[0][1] = testSuite[0][0]
 	testResult[0] = true
 	testLevel[0] = 0
 
 	testSuite[1] = make([]Location, 2)
-	testSuite[1][0] = NewLocation("origin", 1, NewShape("Device", "", 0, 0, 0))
-	testSuite[1][1] = NewLocation("origin", 1, NewShape("Device", "", 0, 0, 0))
+	testSuite[1][0] = NewLocation("origin", 1, NewShape(BoxShape, "", 0, 0, 0))
+	testSuite[1][1] = NewLocation("origin", 1, NewShape(BoxShape, "", 0, 0, 0))
 	testResult[1] = false
 	testLevel[1] = 0
 
 	testSuite[2] = make([]Location, 2)
-	testSuite[2][0] = NewLocation("origin", 1, NewShape("Device", "", 0, 0, 0))
+	testSuite[2][0] = NewLocation("origin", 1, NewShape(BoxShape, "", 0, 0, 0))
 	testSuite[2][1] = testSuite[2][0].Positions()[0]
 	testResult[2] = true
 	testLevel[2] = 1

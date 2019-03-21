@@ -30,7 +30,9 @@ package search
 import (
 	"testing"
 
+	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/text"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/go-test/deep"
 )
 
 type searchIntsTest struct {
@@ -130,11 +132,11 @@ func TestBinarySearch(t *testing.T) {
 }
 
 type seqSearchTest struct {
-	slice          []wtype.DNASequence
-	value          wtype.DNASequence
-	expectedResult bool
-	checkNames     Option
-	ignoreCase     Option
+	slice           []wtype.DNASequence
+	value           wtype.DNASequence
+	expectedResult  bool
+	ignoreSequences Option
+	ignoreCase      Option
 }
 
 var seqTests = []seqSearchTest{
@@ -150,10 +152,10 @@ var seqTests = []seqSearchTest{
 		slice: []wtype.DNASequence{
 			{Nm: "Bob", Seq: "AACCACACTT"},
 		},
-		value:          wtype.DNASequence{Nm: "bob", Seq: "AACCACACTT"},
-		expectedResult: false,
-		checkNames:     MatchName,
-		ignoreCase:     "",
+		value:           wtype.DNASequence{Nm: "bob", Seq: "AACCACACTT"},
+		expectedResult:  false,
+		ignoreSequences: IgnoreSequence,
+		ignoreCase:      "",
 	},
 }
 
@@ -177,7 +179,7 @@ func TestNamed(t *testing.T) {
 func TestInSequences(t *testing.T) {
 	for _, test := range seqTests {
 
-		present, positions := InSequences(test.slice, test.value, test.checkNames, test.ignoreCase)
+		present, positions := InSequences(test.slice, test.value, test.ignoreSequences, test.ignoreCase)
 
 		if present != test.expectedResult {
 			t.Error(
@@ -203,5 +205,85 @@ func TestInStrings(t *testing.T) {
 			)
 		}
 
+	}
+}
+
+type removalTest struct {
+	Values         []interface{}
+	ExpectedResult []interface{}
+	ExpectedErr    bool
+}
+
+func TestRemoveDuplicateValues(t *testing.T) {
+	tests := []removalTest{
+		{
+			Values: []interface{}{
+				&wtype.DNASequence{
+					Nm:      "GATCGTAGTGT",
+					Seq:     "GATCGTAGTGT",
+					Plasmid: true,
+				},
+				&wtype.DNASequence{
+					Nm:      "GATCGTAGTGT",
+					Seq:     "GATCGTAGTGT",
+					Plasmid: true,
+				},
+			},
+			ExpectedResult: []interface{}{
+				&wtype.DNASequence{
+					Nm:      "GATCGTAGTGT",
+					Seq:     "GATCGTAGTGT",
+					Plasmid: true,
+				},
+			},
+		},
+		{
+			Values: []interface{}{
+				&wtype.DNASequence{
+					Nm:             "GATCGTAGTGT",
+					Seq:            "GATCGTAGTGT",
+					Plasmid:        true,
+					Singlestranded: false,
+				},
+				&wtype.DNASequence{
+					Nm:             "GATCGTAGTGT",
+					Seq:            "GATCGTAGTGT",
+					Plasmid:        true,
+					Singlestranded: true,
+				},
+			},
+			ExpectedResult: []interface{}{
+				&wtype.DNASequence{
+					Nm:             "GATCGTAGTGT",
+					Seq:            "GATCGTAGTGT",
+					Plasmid:        true,
+					Singlestranded: false,
+				},
+				&wtype.DNASequence{
+					Nm:             "GATCGTAGTGT",
+					Seq:            "GATCGTAGTGT",
+					Plasmid:        true,
+					Singlestranded: true,
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		result, err := RemoveDuplicateValues(test.Values)
+
+		if (err != nil) && test.ExpectedErr {
+			t.Error(
+				"Unexpected test result for ", text.PrettyPrint(test), "\n",
+				"Got error: ", err, "\n ",
+			)
+		}
+
+		if diffs := deep.Equal(test.ExpectedResult, result); len(diffs) > 0 {
+			t.Error(
+				"Unexpected test result for ", text.PrettyPrint(test), "\n",
+				"Differences detected: ", diffs, "\n ",
+			)
+		}
 	}
 }

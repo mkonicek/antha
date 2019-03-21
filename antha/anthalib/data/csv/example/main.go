@@ -9,7 +9,7 @@ import (
 
 func Example() {
 	// read a Table from CSV
-	table, err := csv.ReadTable("sample.csv")
+	table, err := csv.TableFromFile("sample.csv")
 	if err != nil {
 		panic(errors.Wrapf(err, "read table"))
 	}

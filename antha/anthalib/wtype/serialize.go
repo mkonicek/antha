@@ -188,54 +188,6 @@ func makeCols(p *Plate) {
 	}
 }
 
-// this is for keeping track of the well type
-
-type LHWellType struct {
-	Vol       float64
-	Vunit     string
-	Rvol      float64
-	ShapeName string
-	Bottom    WellBottomType
-	Xdim      float64
-	Ydim      float64
-	Zdim      float64
-	Bottomh   float64
-	Dunit     string
-}
-
-func (w *LHWell) AddDimensions(lhwt *LHWellType) {
-	w.MaxVol = wunit.NewVolume(lhwt.Vol, lhwt.Vunit).ConvertToString("ul")
-	w.Rvol = wunit.NewVolume(lhwt.Rvol, lhwt.Vunit).ConvertToString("ul")
-	w.WShape = NewShape(ShapeTypeID(lhwt.ShapeName), lhwt.Dunit, lhwt.Xdim, lhwt.Ydim, lhwt.Zdim)
-	w.Bottom = lhwt.Bottom
-	w.Bounds.SetSize(Coordinates3D{
-		wunit.NewLength(lhwt.Xdim, lhwt.Dunit).ConvertToString("mm"),
-		wunit.NewLength(lhwt.Ydim, lhwt.Dunit).ConvertToString("mm"),
-		wunit.NewLength(lhwt.Zdim, lhwt.Dunit).ConvertToString("mm"),
-	})
-	w.Bottomh = wunit.NewLength(lhwt.Bottomh, lhwt.Dunit).ConvertToString("mm")
-}
-
-func (plate *Plate) Welldimensions() *LHWellType {
-	t := plate.Welltype
-	lhwt := LHWellType{t.MaxVol, "ul", t.Rvol, string(t.WShape.ShapeName), t.Bottom, t.GetSize().X, t.GetSize().Y, t.GetSize().Z, t.Bottomh, "mm"}
-	return &lhwt
-}
-
-type SLHWell struct {
-	ID       string
-	Inst     string
-	Coords   WellCoords
-	Contents *Liquid
-}
-
-func (slw SLHWell) FillWell(lw *LHWell) {
-	lw.ID = slw.ID
-	lw.Inst = slw.Inst
-	lw.Crds = slw.Coords
-	lw.WContents = slw.Contents
-}
-
 type FromFactory struct {
 	String string
 }

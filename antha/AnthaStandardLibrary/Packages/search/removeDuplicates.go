@@ -30,6 +30,7 @@ package search
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -107,39 +108,76 @@ func RemoveDuplicateFloats(elements []float64) []float64 {
 	return result
 }
 
-// RemoveDuplicateSequences checks for exact sequence matches only and by default will ignore the name.
-// If MatchName option is added, only sequences with duplicate names will be removed.
+// RemoveDuplicateSequences checks for sequence and name matches only
+// and will remove any duplicates based on only these criteria.
+// To remove duplicates based on absolute equality use the RemoveDuplicateValues function.
+//
+//
+// If ignoreName option is added, only duplicate sequences with duplicate plasmid status will be removed.
+// If ignoreSequences option is added, sequences with duplicate names will be removed.
 // If IgnoreCase is included as an option, case insensitive name comparison will be used.
 // Sequence comparison will always be case insensitive
-// Any leading or traling space is always removed before comparing elements.
+// Any leading or trailing space is always removed before comparing elements.
+// Ignores any sequence annotations, overhang information and distinction between linear and plasmid DNA.
+// To require matches to be strict and identical (annotations, overhand info and all)
+// use the ExactMatch option. If ExactMatch is specified, all other Options
+// are ignored.
 func RemoveDuplicateSequences(elements []wtype.DNASequence, options ...Option) []wtype.DNASequence {
+
+	// Exact Match takes priority and overrides other options.
+	if containsExactMatch(options...) {
+
+		// must cast to slice of interface{}
+		var elems = make([]interface{}, len(elements))
+
+		for i := range elems {
+			elems[i] = interface{}(elements[i])
+		}
+
+		noDuplicates, err := RemoveDuplicateValues(elems)
+
+		if err != nil {
+			panic(err)
+		}
+
+		noDuplicateSeqs := make([]wtype.DNASequence, len(noDuplicates))
+
+		for i := range noDuplicateSeqs {
+			noDuplicateSeqs[i] = noDuplicates[i].(wtype.DNASequence)
+		}
+		return noDuplicateSeqs
+	}
+
 	// Use map to record duplicates as we find them.
 	encountered := map[string]bool{}
 	result := []wtype.DNASequence{}
 
 	for v := range elements {
 
-		var key string
+		var query string
 
-		if containsMatchName(options...) {
+		if !containsIgnoreName(options...) {
 			if containsIgnoreCase(options...) {
-				key = strings.ToUpper(strings.TrimSpace(elements[v].Name()))
+				query = strings.ToUpper(strings.TrimSpace(elements[v].Name()))
 			} else {
-				key = strings.TrimSpace(elements[v].Name())
-			}
-		} else {
-			if containsIgnoreCase(options...) {
-				key = strings.ToUpper(strings.TrimSpace(elements[v].Sequence()))
-			} else {
-				key = strings.TrimSpace(elements[v].Sequence())
+				query = strings.TrimSpace(elements[v].Name())
 			}
 		}
 
-		if encountered[key] {
+		if !containsIgnoreSequence(options...) {
+			if containsIgnoreCase(options...) {
+				query += "_" + strings.ToUpper(strings.TrimSpace(elements[v].Sequence()))
+			} else {
+				query += "_" + strings.TrimSpace(elements[v].Sequence())
+			}
+			query += "_" + strconv.FormatBool(elements[v].Plasmid)
+		}
+
+		if encountered[query] {
 			// Do not add duplicate.
 		} else {
 			// Record this element as an encountered element.
-			encountered[key] = true
+			encountered[query] = true
 			// Append to result slice.
 			result = append(result, elements[v])
 		}
@@ -148,21 +186,22 @@ func RemoveDuplicateSequences(elements []wtype.DNASequence, options ...Option) [
 	return result
 }
 
-func removeDuplicateInterface(elements []interface{}) []interface{} {
+func removeDuplicateInterface(sliceOfElements []interface{}) []interface{} {
 
-	length := len(elements) - 1
+	length := len(sliceOfElements) - 1
 
 	for i := 0; i < length; i++ {
 		for j := i + 1; j <= length; j++ {
-			if reflect.DeepEqual(elements[i], elements[j]) {
-				elements[j] = elements[length]
-				elements = elements[0:length]
+			if reflect.DeepEqual(sliceOfElements[i], sliceOfElements[j]) {
+				sliceOfElements[j] = sliceOfElements[length]
+				sliceOfElements = sliceOfElements[0:length]
 				length--
 				j--
 			}
 		}
 	}
-	return elements
+
+	return sliceOfElements
 }
 
 // CheckArrayType reflects the type name as a string of all elements in a slice of interface values.

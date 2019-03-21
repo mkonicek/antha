@@ -10,8 +10,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-// WriteTable writes a data.Table to a CSV file
-func WriteTable(table *data.Table, filePath string) error {
+// TableToFile writes a data.Table to a CSV file
+func TableToFile(table *data.Table, filePath string) error {
 	// CSV file
 	file, err := os.Create(filePath)
 	if err != nil {

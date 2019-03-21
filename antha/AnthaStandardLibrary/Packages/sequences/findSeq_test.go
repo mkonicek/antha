@@ -28,6 +28,7 @@ import (
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/wutil/text"
 )
 
 type regionTest struct {
@@ -221,6 +222,157 @@ var regionTests = []regionTest{
 			},
 		},
 	},
+}
+
+func TestEqualFold(t *testing.T) {
+
+	type equalityTest struct {
+		A, B           *wtype.DNASequence
+		ExpectedResult bool
+	}
+
+	tests := []equalityTest{
+		{
+			A: &wtype.DNASequence{
+				Nm:      "equal sequence",
+				Seq:     "GATCGTAGTGT",
+				Plasmid: true,
+			},
+			B: &wtype.DNASequence{
+				Nm:      "GATCGTAGTGT",
+				Seq:     "GATCGTAGTGT",
+				Plasmid: true,
+			},
+			ExpectedResult: true,
+		},
+		{
+			A: &wtype.DNASequence{
+				Nm:      "case change",
+				Seq:     "GATcgtAGTGT",
+				Plasmid: true,
+			},
+			B: &wtype.DNASequence{
+				Nm:      "GATCGTAGTGT",
+				Seq:     "GATCGTAGTGT",
+				Plasmid: true,
+			},
+			ExpectedResult: true,
+		},
+		{
+			A: &wtype.DNASequence{
+				Nm:      "rotated sequence",
+				Seq:     "ATCGTAGTGTG",
+				Plasmid: true,
+			},
+			B: &wtype.DNASequence{
+				Nm:      "GATCGTAGTGT",
+				Seq:     "GATCGTAGTGT",
+				Plasmid: true,
+			},
+			ExpectedResult: true,
+		},
+		{
+			A: &wtype.DNASequence{
+				Nm:      "reverse complement",
+				Seq:     "GAT",
+				Plasmid: true,
+			},
+			B: &wtype.DNASequence{
+				Nm:      "ATC",
+				Seq:     "ATC",
+				Plasmid: true,
+			},
+			ExpectedResult: true,
+		},
+		{
+			A: &wtype.DNASequence{
+				Nm:      "reverse complement rotated",
+				Seq:     "TGA",
+				Plasmid: true,
+			},
+			B: &wtype.DNASequence{
+				Nm:      "ATC",
+				Seq:     "ATC",
+				Plasmid: true,
+			},
+			ExpectedResult: true,
+		},
+		{
+			A: &wtype.DNASequence{
+				Nm:      "different sequence",
+				Seq:     "TAA",
+				Plasmid: true,
+			},
+			B: &wtype.DNASequence{
+				Nm:      "ATC",
+				Seq:     "ATC",
+				Plasmid: true,
+			},
+			ExpectedResult: false,
+		},
+		{
+			A: &wtype.DNASequence{
+				Nm:      "double",
+				Seq:     "ATCATC",
+				Plasmid: true,
+			},
+			B: &wtype.DNASequence{
+				Nm:      "ATC",
+				Seq:     "ATC",
+				Plasmid: true,
+			},
+			ExpectedResult: false,
+		},
+		{
+			A: &wtype.DNASequence{
+				Nm:      "different circularisation",
+				Seq:     "ATC",
+				Plasmid: true,
+			},
+			B: &wtype.DNASequence{
+				Nm:      "ATC",
+				Seq:     "ATC",
+				Plasmid: false,
+			},
+			ExpectedResult: false,
+		},
+		{
+			A: &wtype.DNASequence{
+				Nm:      "rotated linear sequence",
+				Seq:     "ATCGTAGTGTG",
+				Plasmid: false,
+			},
+			B: &wtype.DNASequence{
+				Nm:      "GATCGTAGTGT",
+				Seq:     "GATCGTAGTGT",
+				Plasmid: false,
+			},
+			ExpectedResult: false,
+		},
+		{
+			A: &wtype.DNASequence{
+				Nm:      "case change",
+				Seq:     "GATcgtAGTGT",
+				Plasmid: true,
+			},
+			B: &wtype.DNASequence{
+				Nm:      "revcomp",
+				Seq:     wtype.RevComp("GATCGTAGTGT"),
+				Plasmid: true,
+			},
+			ExpectedResult: true,
+		},
+	}
+
+	for _, test := range tests {
+		result := EqualFold(test.A, test.B)
+		if test.ExpectedResult != result {
+			t.Error(
+				"Unexpected test result for ", text.PrettyPrint(test), "\n",
+				"Got result: ", result, "\n ",
+			)
+		}
+	}
 }
 
 func equalPositionPairs(pair1, pair2 PositionPair) bool {

@@ -201,7 +201,7 @@ func (r *Repository) FindAllElementTypes(prefix RepositoryPrefix) (ElementTypeMa
 		ename := filepath.Base(dir)
 		etm[ElementTypeName(ename)] = ElementType{
 			ElementPath:      ElementPath(dir),
-			RepositoryPrefix: RepositoryPrefix(prefix),
+			RepositoryPrefix: prefix,
 		}
 		return nil
 	})

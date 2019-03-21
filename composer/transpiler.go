@@ -39,39 +39,57 @@ func (tet TranspilableElementType) IsAnthaElement() bool {
 func (tet *TranspilableElementType) Transpile(c *Composer) error {
 	baseDir := filepath.Join(c.OutDir, "src", filepath.FromSlash(tet.ImportPath()))
 
-	fSet := token.NewFileSet()
 	anthaFiles := compile.NewAnthaFiles()
-
-	if err := filepath.Walk(baseDir, func(p string, info os.FileInfo, err error) error {
+	anthaFound := false
+	err := filepath.Walk(baseDir, func(p string, info os.FileInfo, err error) error {
 		if err != nil || !info.Mode().IsRegular() || !workflow.IsAnthaFile(p) {
 			return err
-		}
-		c.Logger.Log("transpiling", p)
-		if tet.transpiler != nil {
+		} else if anthaFound {
 			return fmt.Errorf("Multiple .an files found in %v", baseDir)
-		} else if bs, err := ioutil.ReadFile(p); err != nil {
+		}
+		anthaFound = true
+		c.Logger.Log("transpiling", tet.ImportPath())
+		if bs, err := ioutil.ReadFile(p); err != nil {
 			return err
-		} else if src, err := parser.ParseFile(fSet, p, bs, parser.ParseComments); err != nil {
-			return err
-		} else if antha, err := compile.NewAntha(fSet, src); err != nil {
+		} else if err := tet.CreateTranspiler(bs, p); err != nil {
 			return err
 		} else {
-			for _, ipt := range antha.ImportReqs {
+			for _, ipt := range tet.transpiler.ImportReqs {
 				if err := tet.maybeRewriteImport(c, ipt); err != nil {
 					return err
 				}
 			}
-			if err := antha.Transform(anthaFiles); err != nil {
-				return err
-			} else {
-				tet.transpiler = antha
-				return nil
-			}
+			return tet.transpiler.Transform(anthaFiles)
 		}
-	}); err != nil {
+	})
+	if err != nil {
 		return err
+	} else {
+		return writeAnthaFiles(anthaFiles, filepath.Dir(baseDir))
 	}
-	return writeAnthaFiles(anthaFiles, filepath.Dir(baseDir))
+}
+
+func (tet *TranspilableElementType) Meta(bs []byte, path string) (*compile.Meta, error) {
+	if err := tet.CreateTranspiler(bs, path); err != nil {
+		return nil, err
+	} else {
+		return tet.transpiler.Meta()
+	}
+}
+
+// path is deliberately separate from bs because path might be some
+// symbolic name unrelated to the actual source of the file (eg think
+// some git repo). I.e. we can't just do an ioutil.ReadFile on path.
+func (tet *TranspilableElementType) CreateTranspiler(bs []byte, path string) error {
+	fSet := token.NewFileSet()
+	if src, err := parser.ParseFile(fSet, path, bs, parser.ParseComments); err != nil {
+		return err
+	} else if antha, err := compile.NewAntha(fSet, src); err != nil {
+		return err
+	} else {
+		tet.transpiler = antha
+		return nil
+	}
 }
 
 func (tet *TranspilableElementType) maybeRewriteImport(c *Composer, ipt *compile.ImportReq) error {

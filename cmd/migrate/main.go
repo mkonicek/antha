@@ -46,7 +46,7 @@ func main() {
 		}
 	}
 
-	if err := m.Cur.WriteToFile(toFile); err != nil {
+	if err := m.Cur.WriteToFile(toFile, true); err != nil {
 		logger.Fatal(err)
 	}
 }

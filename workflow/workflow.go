@@ -63,19 +63,23 @@ func EmptyWorkflow() *Workflow {
 	}
 }
 
-func (wf *Workflow) WriteToFile(p string) error {
+func (wf *Workflow) WriteToFile(p string, pretty bool) error {
 	if p == "" || p == "-" {
-		return wf.ToWriter(os.Stdout)
+		return wf.ToWriter(os.Stdout, pretty)
 	} else if fh, err := os.OpenFile(p, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0400); err != nil {
 		return err
 	} else {
 		defer fh.Close()
-		return wf.ToWriter(fh)
+		return wf.ToWriter(fh, pretty)
 	}
 }
 
-func (wf *Workflow) ToWriter(w io.Writer) error {
-	return json.NewEncoder(w).Encode(wf)
+func (wf *Workflow) ToWriter(w io.Writer, pretty bool) error {
+	enc := json.NewEncoder(w)
+	if pretty {
+		enc.SetIndent("", "\t")
+	}
+	return enc.Encode(wf)
 }
 
 type Meta struct {

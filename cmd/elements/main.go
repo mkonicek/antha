@@ -102,7 +102,7 @@ func makeWorkflow(l *logger.Logger, args []string) error {
 		if err != nil {
 			return err
 		}
-		return acc.WriteToFile(toFile)
+		return acc.WriteToFile(toFile, true)
 	}
 }
 

@@ -128,7 +128,7 @@ func (c *Composer) GenerateMain() error {
 }
 
 func (c *Composer) SaveWorkflow() error {
-	return c.Workflow.WriteToFile(filepath.Join(c.OutDir, "workflow", "data", "workflow.json"))
+	return c.Workflow.WriteToFile(filepath.Join(c.OutDir, "workflow", "data", "workflow.json"), false)
 }
 
 func (c *Composer) CloseLogs() {

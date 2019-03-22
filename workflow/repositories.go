@@ -186,6 +186,9 @@ func (r *Repository) ensureGitRepo() error {
 func IsAnthaFile(path string) bool {
 	return strings.EqualFold(filepath.Ext(path), ".an")
 }
+func IsAnthaMetadata(path string) bool {
+	return filepath.Base(path) == "metadata.json"
+}
 
 type ElementTypeMap map[ElementTypeName]ElementType
 

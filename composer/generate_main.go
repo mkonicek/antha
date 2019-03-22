@@ -75,10 +75,10 @@ func (mr *mainRenderer) token(elem workflow.ElementInstanceName, param workflow.
 	} else if elemType, found := mr.composer.elementTypes[elemInstance.ElementTypeName]; !found {
 		return "", fmt.Errorf("No such element type with name '%v' (element instance '%v')",
 			elemInstance.ElementTypeName, elem)
-	} else if elemType.transpiler == nil {
+	} else if elemType.Transpiler == nil {
 		return "", fmt.Errorf("The element type '%v' does not appear to contain an Antha element",
 			elemInstance.ElementTypeName)
-	} else if tok, found := elemType.transpiler.TokenByParamName[string(param)]; !found {
+	} else if tok, found := elemType.Transpiler.TokenByParamName[string(param)]; !found {
 		return "", fmt.Errorf("The element type '%v' has no parameter named '%v' (element instance '%v')",
 			elemInstance.ElementTypeName, param, elem)
 	} else {

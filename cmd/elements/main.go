@@ -1,12 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/antha-lang/antha/antha/compile"
@@ -160,63 +162,96 @@ func describe(l *logger.Logger, args []string) error {
 	} else if regex, err := regexp.Compile(regexStr); err != nil {
 		return err
 	} else {
+		type elementWithMeta struct {
+			elementPath string
+			prefix      workflow.RepositoryPrefix
+			element     []byte
+			meta        []byte
+		}
+		elements := make(map[string]*elementWithMeta)
+		elementNames := []string{}
+
 		for prefix, repo := range wf.Repositories {
 			err := repo.Walk(func(f *workflow.File) error {
-				if !workflow.IsAnthaFile(f.Name) {
+				dir := filepath.Dir(f.Name)
+				if (!workflow.IsAnthaFile(f.Name) && !workflow.IsAnthaMetadata(f.Name)) || !regex.MatchString(dir) {
 					return nil
 				}
-				et := &workflow.ElementType{
-					ElementPath:      workflow.ElementPath(filepath.Dir(f.Name)),
-					RepositoryPrefix: prefix,
+
+				ewm, found := elements[dir]
+				if !found {
+					ewm = &elementWithMeta{
+						prefix: prefix,
+					}
+					elements[dir] = ewm
+					elementNames = append(elementNames, dir)
 				}
-				if !regex.MatchString(string(et.ElementPath)) {
-					return nil
-				}
-				tet := composer.NewTranspilableElementType(et)
-				if reader, err := f.Contents(); err != nil {
+
+				if rc, err := f.Contents(); err != nil {
 					return err
 				} else {
-					defer reader.Close()
-					if bs, err := ioutil.ReadAll(reader); err != nil {
+					defer rc.Close()
+					if bs, err := ioutil.ReadAll(rc); err != nil {
 						return err
-					} else if meta, err := tet.Meta(bs, f.Name); err != nil {
-						return err
-					} else {
-						desc := indent2 + strings.Replace(strings.Trim(meta.Description, "\n"), "\n", "\n"+indent2, -1)
-						if inputs, err := formatFields(meta.Ports[token.INPUTS], indent3, indent); err != nil {
-							return err
-						} else if outputs, err := formatFields(meta.Ports[token.OUTPUTS], indent3, indent); err != nil {
-							return err
-						} else if params, err := formatFields(meta.Ports[token.PARAMETERS], indent3, indent); err != nil {
-							return err
-						} else if data, err := formatFields(meta.Ports[token.DATA], indent3, indent); err != nil {
-							return err
-						} else {
-							fmt.Printf(fmtStr,
-								et.Name(),
-								indent, et.RepositoryPrefix,
-								indent, et.ElementPath,
-								indent, desc,
-								indent,
-								indent2, inputs,
-								indent2, outputs,
-								indent2, params,
-								indent2, data,
-							)
-							return nil
-						}
+					} else if workflow.IsAnthaFile(f.Name) {
+						ewm.elementPath = f.Name
+						ewm.element = bs
+					} else if workflow.IsAnthaMetadata(f.Name) {
+						ewm.meta = bs
 					}
+					return nil
 				}
 			})
 			if err != nil {
 				return err
 			}
 		}
+
+		sort.Strings(elementNames)
+		for _, name := range elementNames {
+			ewm := elements[name]
+			if ewm.element == nil || ewm.meta == nil {
+				continue
+			}
+
+			et := &workflow.ElementType{
+				ElementPath:      workflow.ElementPath(ewm.elementPath),
+				RepositoryPrefix: ewm.prefix,
+			}
+			tet := composer.NewTranspilableElementType(et)
+			if antha, err := tet.EnsureTranspiler(ewm.elementPath, ewm.element, ewm.meta); err != nil {
+				return err
+			} else {
+				meta := antha.Meta
+				desc := indent2 + strings.Replace(strings.Trim(meta.Description, "\n"), "\n", "\n"+indent2, -1)
+				if inputs, err := formatFields(meta.Defaults, meta.Ports[token.INPUTS], indent3, indent); err != nil {
+					return err
+				} else if outputs, err := formatFields(meta.Defaults, meta.Ports[token.OUTPUTS], indent3, indent); err != nil {
+					return err
+				} else if params, err := formatFields(meta.Defaults, meta.Ports[token.PARAMETERS], indent3, indent); err != nil {
+					return err
+				} else if data, err := formatFields(meta.Defaults, meta.Ports[token.DATA], indent3, indent); err != nil {
+					return err
+				} else {
+					fmt.Printf(fmtStr,
+						et.Name(),
+						indent, et.RepositoryPrefix,
+						indent, et.ElementPath,
+						indent, desc,
+						indent,
+						indent2, inputs,
+						indent2, outputs,
+						indent2, params,
+						indent2, data,
+					)
+				}
+			}
+		}
 		return nil
 	}
 }
 
-func formatFields(fields []*compile.Field, prefix, indent string) (string, error) {
+func formatFields(defaults map[string]json.RawMessage, fields []*compile.Field, prefix, indent string) (string, error) {
 	if len(fields) == 0 {
 		return prefix + "None", nil
 	}
@@ -228,7 +263,11 @@ func formatFields(fields []*compile.Field, prefix, indent string) (string, error
 		if typeStr, err := field.TypeString(); err != nil {
 			return "", err
 		} else {
-			acc = append(acc, fmt.Sprintf("%s%s: %v", prefix, field.Name, typeStr))
+			def := ""
+			if v, found := defaults[field.Name]; found {
+				def = fmt.Sprintf(" (default: %s)", v)
+			}
+			acc = append(acc, fmt.Sprintf("%s%s%s: %v", prefix, field.Name, def, typeStr))
 			doc := strings.Trim(field.Doc, "\n")
 			if len(doc) != 0 {
 				acc = append(acc, prefix+indent+strings.Replace(doc, "\n", "\n"+prefix+indent, -1))

@@ -184,6 +184,7 @@ type Antha struct {
 	// Imports in protocol and imports to add
 	ImportReqs   ImportReqs
 	importByName map[string]struct{}
+	Meta         *Meta
 }
 
 var (
@@ -251,7 +252,7 @@ var (
 )
 
 // NewAntha creates a new antha pass
-func NewAntha(fileSet *token.FileSet, src *ast.File) (*Antha, error) {
+func NewAntha(fileSet *token.FileSet, src *ast.File, metaBs []byte) (*Antha, error) {
 	if src.Tok != token.PROTOCOL {
 		return nil, errNotAnthaFile
 	}
@@ -303,6 +304,10 @@ func NewAntha(fileSet *token.FileSet, src *ast.File) (*Antha, error) {
 	p.recordImports()
 	p.recordMessages()
 	if err := p.validateMessages(); err != nil {
+		return nil, err
+	}
+
+	if err := p.meta(metaBs); err != nil {
 		return nil, err
 	}
 
@@ -603,17 +608,13 @@ func RegisterLineMap(labBuild *laboratory.LaboratoryBuilder) {
 		Defaults        map[string]json.RawMessage
 	}
 
-	meta, err := p.Meta()
-	if err != nil {
-		return err
-	}
 	tv := TVars{
 		antha:           p,
 		ElementTypeName: p.protocolName,
 		GeneratedPath:   filepath.Join(filepath.Dir(p.elementPath), elementFilename),
 		Path:            p.elementPath,
 		LineMap:         lineMap,
-		Defaults:        meta.Defaults,
+		Defaults:        p.Meta.Defaults,
 	}
 	funcs := template.FuncMap{
 		"token": func(name string) string {

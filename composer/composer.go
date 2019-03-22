@@ -109,7 +109,7 @@ func (c *Composer) Transpile() error {
 		c.EnsureElementType(NewTranspilableElementType(et))
 	}
 	for idx := 0; idx < len(c.worklist); idx++ {
-		if err := c.worklist[idx].Transpile(c); err != nil {
+		if err := c.worklist[idx].TranspileFromFS(c); err != nil {
 			return err
 		}
 	}

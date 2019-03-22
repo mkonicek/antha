@@ -23,7 +23,7 @@ type TranspilableElementType struct {
 	// actually contain .an files, because we can only assume certain
 	// functions (eg RegisterLineMap) exist for packages which really
 	// contain elements.
-	transpiler *compile.Antha
+	Transpiler *compile.Antha
 }
 
 func NewTranspilableElementType(et *workflow.ElementType) *TranspilableElementType {
@@ -33,14 +33,16 @@ func NewTranspilableElementType(et *workflow.ElementType) *TranspilableElementTy
 }
 
 func (tet TranspilableElementType) IsAnthaElement() bool {
-	return tet.transpiler != nil
+	return tet.Transpiler != nil
 }
 
-func (tet *TranspilableElementType) Transpile(c *Composer) error {
+// This only works based on the elements already having been cloned to
+// the c.OutDir. I.e. this does not work Repositories (eg git etc)
+func (tet *TranspilableElementType) TranspileFromFS(c *Composer) error {
 	baseDir := filepath.Join(c.OutDir, "src", filepath.FromSlash(tet.ImportPath()))
 
-	anthaFiles := compile.NewAnthaFiles()
 	anthaFound := false
+	anthaFiles := compile.NewAnthaFiles()
 	err := filepath.Walk(baseDir, func(p string, info os.FileInfo, err error) error {
 		if err != nil || !info.Mode().IsRegular() || !workflow.IsAnthaFile(p) {
 			return err
@@ -49,17 +51,19 @@ func (tet *TranspilableElementType) Transpile(c *Composer) error {
 		}
 		anthaFound = true
 		c.Logger.Log("transpiling", tet.ImportPath())
-		if bs, err := ioutil.ReadFile(p); err != nil {
+		if elemBs, err := ioutil.ReadFile(p); err != nil {
 			return err
-		} else if err := tet.CreateTranspiler(bs, p); err != nil {
+		} else if metaBs, err := ioutil.ReadFile(filepath.Join(filepath.Dir(p), "metadata.json")); err != nil && !os.IsNotExist(err) {
+			return err
+		} else if antha, err := tet.EnsureTranspiler(p, elemBs, metaBs); err != nil {
 			return err
 		} else {
-			for _, ipt := range tet.transpiler.ImportReqs {
+			for _, ipt := range antha.ImportReqs {
 				if err := tet.maybeRewriteImport(c, ipt); err != nil {
 					return err
 				}
 			}
-			return tet.transpiler.Transform(anthaFiles)
+			return antha.Transform(anthaFiles)
 		}
 	})
 	if err != nil {
@@ -69,27 +73,21 @@ func (tet *TranspilableElementType) Transpile(c *Composer) error {
 	}
 }
 
-func (tet *TranspilableElementType) Meta(bs []byte, path string) (*compile.Meta, error) {
-	if err := tet.CreateTranspiler(bs, path); err != nil {
-		return nil, err
-	} else {
-		return tet.transpiler.Meta()
-	}
-}
-
 // path is deliberately separate from bs because path might be some
 // symbolic name unrelated to the actual source of the file (eg think
 // some git repo). I.e. we can't just do an ioutil.ReadFile on path.
-func (tet *TranspilableElementType) CreateTranspiler(bs []byte, path string) error {
-	fSet := token.NewFileSet()
-	if src, err := parser.ParseFile(fSet, path, bs, parser.ParseComments); err != nil {
-		return err
-	} else if antha, err := compile.NewAntha(fSet, src); err != nil {
-		return err
-	} else {
-		tet.transpiler = antha
-		return nil
+func (tet *TranspilableElementType) EnsureTranspiler(path string, elemBs, metaBs []byte) (*compile.Antha, error) {
+	if tet.Transpiler == nil {
+		fSet := token.NewFileSet()
+		if src, err := parser.ParseFile(fSet, path, elemBs, parser.ParseComments); err != nil {
+			return nil, err
+		} else if antha, err := compile.NewAntha(fSet, src, metaBs); err != nil {
+			return nil, err
+		} else {
+			tet.Transpiler = antha
+		}
 	}
+	return tet.Transpiler, nil
 }
 
 func (tet *TranspilableElementType) maybeRewriteImport(c *Composer, ipt *compile.ImportReq) error {

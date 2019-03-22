@@ -142,8 +142,8 @@ func describe(l *logger.Logger, args []string) error {
 `
 	)
 
-	flagSet := flag.NewFlagSet(flag.CommandLine.Name()+" list", flag.ContinueOnError)
-	flagSet.Usage = workflow.NewFlagUsage(flagSet, "Show descriptions elements")
+	flagSet := flag.NewFlagSet(flag.CommandLine.Name()+" describe", flag.ContinueOnError)
+	flagSet.Usage = workflow.NewFlagUsage(flagSet, "Show descriptions of elements")
 
 	var regexStr, inDir string
 	flagSet.StringVar(&regexStr, "regex", "", "Regular expression to match against element type path (optional)")
@@ -185,9 +185,9 @@ func describe(l *logger.Logger, args []string) error {
 						desc := indent2 + strings.Replace(strings.Trim(meta.Description, "\n"), "\n", "\n"+indent2, -1)
 						if inputs, err := formatFields(meta.Ports[token.INPUTS], indent3, indent); err != nil {
 							return err
-						} else if params, err := formatFields(meta.Ports[token.PARAMETERS], indent3, indent); err != nil {
-							return err
 						} else if outputs, err := formatFields(meta.Ports[token.OUTPUTS], indent3, indent); err != nil {
+							return err
+						} else if params, err := formatFields(meta.Ports[token.PARAMETERS], indent3, indent); err != nil {
 							return err
 						} else if data, err := formatFields(meta.Ports[token.DATA], indent3, indent); err != nil {
 							return err
@@ -199,8 +199,8 @@ func describe(l *logger.Logger, args []string) error {
 								indent, desc,
 								indent,
 								indent2, inputs,
-								indent2, params,
 								indent2, outputs,
+								indent2, params,
 								indent2, data,
 							)
 							return nil

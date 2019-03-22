@@ -24,6 +24,7 @@ package compile
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -265,6 +266,9 @@ func NewAntha(fileSet *token.FileSet, src *ast.File) (*Antha, error) {
 	}
 
 	// TODO: add usage tracking to replace useExpr
+	p.addImportReq(&ImportReq{
+		Path: "github.com/ugorji/go/codec",
+	})
 	p.addImportReq(&ImportReq{
 		Path: "github.com/antha-lang/antha/laboratory",
 	})
@@ -570,6 +574,15 @@ func (element *{{.ElementTypeName}}) TypeName() workflow.ElementTypeName {
 	return {{printf "%q" .ElementTypeName}}
 }
 
+func Defaults(jh *codec.JsonHandle) (*{{.ElementTypeName}}, error) {
+	element := &{{.ElementTypeName}}{}
+{{range $key, $value := .Defaults}}	if err := codec.NewDecoderBytes([]byte({{printf "%q" $value}}), jh).Decode(&element.{{token $key}}.{{$key}}); err != nil {
+		return nil, err
+	}
+{{end}}
+	return element, nil
+}
+
 func RegisterLineMap(labBuild *laboratory.LaboratoryBuilder) {
 	lineMap := map[int]int{
 		{{range $key, $value := .LineMap}}{{$key}}: {{$value}}, {{end}}
@@ -582,20 +595,32 @@ func RegisterLineMap(labBuild *laboratory.LaboratoryBuilder) {
 }
 `
 	type TVars struct {
+		antha           *Antha
 		ElementTypeName string
 		GeneratedPath   string
 		Path            string
 		LineMap         map[int]int
+		Defaults        map[string]json.RawMessage
 	}
 
+	meta, err := p.Meta()
+	if err != nil {
+		return err
+	}
 	tv := TVars{
+		antha:           p,
 		ElementTypeName: p.protocolName,
 		GeneratedPath:   filepath.Join(filepath.Dir(p.elementPath), elementFilename),
 		Path:            p.elementPath,
 		LineMap:         lineMap,
+		Defaults:        meta.Defaults,
 	}
-
-	return template.Must(template.New("").Parse(tmpl)).Execute(out, tv)
+	funcs := template.FuncMap{
+		"token": func(name string) string {
+			return p.TokenByParamName[name].String()
+		},
+	}
+	return template.Must(template.New("").Funcs(funcs).Parse(tmpl)).Execute(out, tv)
 }
 
 // desugar updates AST for antha semantics

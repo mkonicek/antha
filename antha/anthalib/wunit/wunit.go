@@ -30,6 +30,9 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 )
 
+// Epsilon a small delta used when to avoid floating point errors when comparing
+const Epsilon = 0.00000000001
+
 // PrefixedUnit a unit with an SI prefix
 type PrefixedUnit interface {
 	// Name get the full name of the unit
@@ -264,10 +267,7 @@ func (cm *ConcreteMeasurement) IsNil() bool {
 }
 
 func (cm *ConcreteMeasurement) IsZero() bool {
-	if isNil(cm) || math.Abs(cm.Mvalue) < 0.00000000001 {
-		return true
-	}
-	return false
+	return isNil(cm) || math.Abs(cm.Mvalue) < Epsilon
 }
 
 // IsPositive true if the measurement is positive by more than a very small delta
@@ -314,6 +314,28 @@ func (cm *ConcreteMeasurement) EqualToRounded(m Measurement, p int) bool {
 		panic(err)
 	} else {
 		return wutil.RoundIgnoreNan(rhs.RawValue(), p) == wutil.RoundIgnoreNan(cm.RawValue(), p)
+	}
+}
+
+// MinusEpsillon returns a new measurement whose value is a very small amount less than the original
+// useful for comparison ignoring floating point errors, for example:
+//   a.LessThan(b.MinusEpilon())
+// returns true if a is meaningfully less than b
+func (cm *ConcreteMeasurement) MinusEpsilon() *ConcreteMeasurement {
+	return &ConcreteMeasurement{
+		Mvalue: cm.RawValue() - Epsilon,
+		Munit:  cm.Munit.Copy(),
+	}
+}
+
+// PlusEpsillon returns a new measurement whose value is a very small amount larger than the original
+// useful for comparison ignoring floating point errors, for example:
+//   a.GreaterThan(b.PlusEpilon())
+// returns true if a is meaningfully greater than b
+func (cm *ConcreteMeasurement) PlusEpsilon() *ConcreteMeasurement {
+	return &ConcreteMeasurement{
+		Mvalue: cm.RawValue() + Epsilon,
+		Munit:  cm.Munit.Copy(),
 	}
 }
 

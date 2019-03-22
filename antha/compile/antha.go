@@ -74,10 +74,23 @@ func throwErrorf(pos token.Pos, format string, args ...interface{}) {
 
 // A Field is a field of a message
 type Field struct {
+	*Antha
 	Name string
 	Type ast.Expr // Fully qualified go type name
 	Doc  string
 	Tag  string
+}
+
+func (f *Field) TypeString() (string, error) {
+	buf := new(bytes.Buffer)
+	compiler := &Config{
+		Mode:     printerMode,
+		Tabwidth: tabWidth,
+	}
+	if _, err := compiler.Fprint(buf, f.fileSet, f.Type); err != nil {
+		return "", err
+	}
+	return string(buf.Bytes()), nil
 }
 
 // A Message is an input or an output or user defined type
@@ -417,9 +430,10 @@ func (p *Antha) recordMessages() {
 			for _, field := range typ.Fields.List {
 				for _, name := range field.Names {
 					f := &Field{
-						Name: name.String(),
-						Type: p.desugarTypeExpr(field.Type),
-						Doc:  join(field.Comment.Text(), field.Doc.Text()),
+						Antha: p,
+						Name:  name.String(),
+						Type:  p.desugarTypeExpr(field.Type),
+						Doc:   join(field.Comment.Text(), field.Doc.Text()),
 					}
 					if field.Tag != nil {
 						f.Tag = field.Tag.Value

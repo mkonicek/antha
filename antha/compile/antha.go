@@ -172,7 +172,9 @@ type Antha struct {
 	file    *ast.File
 	// Description of this element
 	description string
-	// Path to element file
+	// Path to element file. This does not need to be the absolute fs
+	// path, but it must be in filepath format, and indicate the source
+	// file of the element (i.e. can be a suffix)
 	elementPath string
 	// messages of an element as well as inputs and outputs
 	messages []*Message

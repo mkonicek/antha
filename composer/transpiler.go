@@ -73,9 +73,11 @@ func (tet *TranspilableElementType) TranspileFromFS(c *Composer) error {
 	}
 }
 
-// path is deliberately separate from bs because path might be some
-// symbolic name unrelated to the actual source of the file (eg think
-// some git repo). I.e. we can't just do an ioutil.ReadFile on path.
+// Path should be the path in filepath format, to the antha element
+// file. It does not have to be absolute. It is deliberately separate
+// from bs because path might be some symbolic name unrelated to the
+// actual source of the file (eg think some git repo). I.e. we can't
+// just do an ioutil.ReadFile on path.
 func (tet *TranspilableElementType) EnsureTranspiler(path string, elemBs, metaBs []byte) (*compile.Antha, error) {
 	if tet.Transpiler == nil {
 		fSet := token.NewFileSet()
@@ -104,9 +106,6 @@ func (tet *TranspilableElementType) maybeRewriteImport(c *Composer, ipt *compile
 		RepositoryPrefix: repoPrefix,
 		ElementPath:      workflow.ElementPath(strings.TrimPrefix(ipt.Path, string(repoPrefix))),
 	})
-	if err := repo.Clone(filepath.Join(c.OutDir, "src")); err != nil {
-		return err
-	}
 	ipt.Path = tet2.ImportPath()
 	c.EnsureElementType(tet2)
 

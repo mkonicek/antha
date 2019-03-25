@@ -19,8 +19,10 @@ func (a *Antha) meta(bs []byte) error {
 		Ports: make(map[token.Token][]*Field),
 	}
 
-	if err := json.Unmarshal(bs, meta); err != nil {
-		return err
+	if len(bs) != 0 {
+		if err := json.Unmarshal(bs, meta); err != nil {
+			return err
+		}
 	}
 
 	meta.Name = a.protocolName

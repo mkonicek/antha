@@ -19,14 +19,17 @@ func NewLineMapManager() *lineMapManager {
 
 type elementMap struct {
 	anthaElementPath string
-	elementName      string
+	elementTypeName  string
 	lineMap          map[int]int
 }
 
-func (lmm *lineMapManager) RegisterLineMap(goElementPath, anElementPath, elementName string, lineMap map[int]int) {
+// Neither the goElementPath nor the anElementPath need to be full
+// paths, but they should be in filepath format, and they will be
+// tested as suffixes against the frames in the stack.
+func (lmm *lineMapManager) RegisterLineMap(goElementPath, anElementPath, elementTypeName string, lineMap map[int]int) {
 	em := &elementMap{
 		anthaElementPath: anElementPath,
-		elementName:      elementName,
+		elementTypeName:  elementTypeName,
 		lineMap:          lineMap,
 	}
 	lmm.elementMaps[goElementPath] = em
@@ -116,9 +119,9 @@ func (lmm *lineMapManager) ElementStackTrace() string {
 				if line, foundLine := em.lineMap[frame.Line]; foundLine {
 					lineStr = fmt.Sprint(line)
 				}
-				strs = append(strs, fmt.Sprintf("- [Element %s] %s:%s", em.elementName, em.anthaElementPath, lineStr))
-				strs = append(strs, fmt.Sprintf("       [Go] %s", frame.Function))
-				strs = append(strs, fmt.Sprintf("            %s:%d", frame.File, frame.Line))
+				strs = append(strs, fmt.Sprintf("- [ElementType %s] %s:%s", em.elementTypeName, em.anthaElementPath, lineStr))
+				strs = append(strs, fmt.Sprintf("              [Go] %s", frame.Function))
+				strs = append(strs, fmt.Sprintf("                   %s:%d", frame.File, frame.Line))
 				break
 			}
 		}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -163,11 +164,12 @@ func describe(l *logger.Logger, args []string) error {
 		return err
 	} else {
 		type elementWithMeta struct {
-			elementPath string
-			prefix      workflow.RepositoryPrefix
-			element     []byte
-			meta        []byte
+			prefix        workflow.RepositoryPrefix
+			anthaFilePath string
+			element       []byte
+			meta          []byte
 		}
+		// the map keys are the dir paths of the element so that it's the same for the antha file and the metadata
 		elements := make(map[string]*elementWithMeta)
 		elementNames := []string{}
 
@@ -194,7 +196,7 @@ func describe(l *logger.Logger, args []string) error {
 					if bs, err := ioutil.ReadAll(rc); err != nil {
 						return err
 					} else if workflow.IsAnthaFile(f.Name) {
-						ewm.elementPath = f.Name
+						ewm.anthaFilePath = f.Name
 						ewm.element = bs
 					} else if workflow.IsAnthaMetadata(f.Name) {
 						ewm.meta = bs
@@ -210,16 +212,16 @@ func describe(l *logger.Logger, args []string) error {
 		sort.Strings(elementNames)
 		for _, name := range elementNames {
 			ewm := elements[name]
-			if ewm.element == nil || ewm.meta == nil {
+			if ewm.element == nil { // we cope with meta being nil
 				continue
 			}
 
 			et := &workflow.ElementType{
-				ElementPath:      workflow.ElementPath(ewm.elementPath),
+				ElementPath:      workflow.ElementPath(filepath.ToSlash(filepath.Dir(ewm.anthaFilePath))),
 				RepositoryPrefix: ewm.prefix,
 			}
 			tet := composer.NewTranspilableElementType(et)
-			if antha, err := tet.EnsureTranspiler(ewm.elementPath, ewm.element, ewm.meta); err != nil {
+			if antha, err := tet.EnsureTranspiler(ewm.anthaFilePath, ewm.element, ewm.meta); err != nil {
 				return err
 			} else {
 				meta := antha.Meta
@@ -263,11 +265,18 @@ func formatFields(defaults map[string]json.RawMessage, fields []*compile.Field, 
 		if typeStr, err := field.TypeString(); err != nil {
 			return "", err
 		} else {
+			// the default can be a multiline thing, eg a map. So we have to be careful:
 			def := ""
 			if v, found := defaults[field.Name]; found {
-				def = fmt.Sprintf(" (default: %s)", v)
+				if bs, err := json.MarshalIndent(v, prefix+indent+indent, indent); err != nil {
+					return "", err
+				} else if bytes.ContainsRune(bs, '\n') {
+					def = fmt.Sprintf("\n%s%sdefault:\n%s%s", prefix, indent, prefix+indent+indent, bs)
+				} else {
+					def = fmt.Sprintf(" (default: %s)", v)
+				}
 			}
-			acc = append(acc, fmt.Sprintf("%s%s%s: %v", prefix, field.Name, def, typeStr))
+			acc = append(acc, fmt.Sprintf("%s%s: %s%s", prefix, field.Name, typeStr, def))
 			doc := strings.Trim(field.Doc, "\n")
 			if len(doc) != 0 {
 				acc = append(acc, prefix+indent+strings.Replace(doc, "\n", "\n"+prefix+indent, -1))

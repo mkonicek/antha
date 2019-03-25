@@ -34,12 +34,12 @@ func (a *Repository) equals(b *Repository) bool {
 }
 
 func (a Repositories) merge(b Repositories) error {
-	// It's an error if a and b contain the same prefix and they're not equal
-	for prefix, repoB := range b {
-		if repoA, found := a[prefix]; found && !repoA.equals(repoB) {
-			return fmt.Errorf("Cannot merge: repository with prefix '%v' redefined.", prefix)
+	// It's an error if a and b contain the same repoName and they're not equal
+	for repoName, repoB := range b {
+		if repoA, found := a[repoName]; found && !repoA.equals(repoB) {
+			return fmt.Errorf("Cannot merge: repository with name '%v' redefined.", repoName)
 		} else if !found {
-			a[prefix] = repoB
+			a[repoName] = repoB
 		}
 	}
 	return nil
@@ -60,12 +60,12 @@ func (ets ElementTypes) sort() {
 }
 
 func (a *ElementType) lessThan(b *ElementType) bool {
-	return a.RepositoryPrefix < b.RepositoryPrefix ||
-		(a.RepositoryPrefix == b.RepositoryPrefix && a.ElementPath < b.ElementPath)
+	return a.RepositoryName < b.RepositoryName ||
+		(a.RepositoryName == b.RepositoryName && a.ElementPath < b.ElementPath)
 }
 
 func (a *ElementType) equals(b *ElementType) bool {
-	return a.RepositoryPrefix == b.RepositoryPrefix && a.ElementPath == b.ElementPath
+	return a.RepositoryName == b.RepositoryName && a.ElementPath == b.ElementPath
 }
 
 func (a *ElementTypes) merge(b ElementTypes) error {

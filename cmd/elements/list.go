@@ -28,7 +28,7 @@ func list(l *logger.Logger, args []string) error {
 			if !regex.MatchString(string(et.ElementPath)) {
 				return nil
 			}
-			fmt.Printf("%v\t%v\t%v\n", et.Name(), et.ElementPath, et.RepositoryPrefix)
+			fmt.Printf("%v\t%v\t%v\n", et.Name(), et.ElementPath, et.RepositoryName)
 			return nil
 		})
 	}

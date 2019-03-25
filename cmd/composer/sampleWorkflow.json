@@ -12,7 +12,7 @@
     "Elements": {
         "Types": [
             {
-                "RepositoryPrefix": "repos.antha.com/antha-ninja/elements-westeros",
+                "RepositoryName": "repos.antha.com/antha-ninja/elements-westeros",
                 "ElementPath": "Tests/FileOutput"
             }
         ],

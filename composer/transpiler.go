@@ -98,13 +98,13 @@ func (tet *TranspilableElementType) maybeRewriteImport(c *Composer, ipt *compile
 	// 1. Look for longest matching repo and use that
 	// 2. Otherwise (and this is most likely), it's not an import we should be rewriting.
 
-	repoPrefix, repo := c.Workflow.Repositories.LongestMatching(ipt.Path)
+	repoName, repo := c.Workflow.Repositories.LongestMatching(ipt.Path)
 	if repo == nil {
 		return nil // (2)
 	}
 	tet2 := NewTranspilableElementType(&workflow.ElementType{
-		RepositoryPrefix: repoPrefix,
-		ElementPath:      workflow.ElementPath(strings.TrimPrefix(ipt.Path, string(repoPrefix))),
+		RepositoryName: repoName,
+		ElementPath:    workflow.ElementPath(strings.TrimPrefix(ipt.Path, string(repoName))),
 	})
 	ipt.Path = tet2.ImportPath()
 	c.EnsureElementType(tet2)

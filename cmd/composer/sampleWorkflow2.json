@@ -5,7 +5,7 @@
     "Elements": {
         "Types": [
             {
-                "RepositoryPrefix": "repos.antha.com/antha-ninja/elements-westeros",
+                "RepositoryName": "repos.antha.com/antha-ninja/elements-westeros",
                 "ElementPath": "Elements/New-MVL/Aliquot_Liquid"
             }
         ],

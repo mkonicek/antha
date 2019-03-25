@@ -25,7 +25,7 @@ func describe(l *logger.Logger, args []string) error {
 		indent3 = "\t\t\t"
 
 		fmtStr = `%v
-%sRepositoryPrefix: %v
+%sRepositoryName: %v
 %sElementPath: %v
 %sDescription:
 %v
@@ -60,7 +60,7 @@ func describe(l *logger.Logger, args []string) error {
 		return err
 	} else {
 		type elementWithMeta struct {
-			prefix        workflow.RepositoryPrefix
+			repoName      workflow.RepositoryName
 			anthaFilePath string
 			element       []byte
 			meta          []byte
@@ -69,7 +69,7 @@ func describe(l *logger.Logger, args []string) error {
 		elements := make(map[string]*elementWithMeta)
 		elementNames := []string{}
 
-		for prefix, repo := range wf.Repositories {
+		for repoName, repo := range wf.Repositories {
 			err := repo.Walk(func(f *workflow.File) error {
 				dir := filepath.Dir(f.Name)
 				if (!workflow.IsAnthaFile(f.Name) && !workflow.IsAnthaMetadata(f.Name)) || !regex.MatchString(dir) {
@@ -79,7 +79,7 @@ func describe(l *logger.Logger, args []string) error {
 				ewm, found := elements[dir]
 				if !found {
 					ewm = &elementWithMeta{
-						prefix: prefix,
+						repoName: repoName,
 					}
 					elements[dir] = ewm
 					elementNames = append(elementNames, dir)
@@ -113,8 +113,8 @@ func describe(l *logger.Logger, args []string) error {
 			}
 
 			et := &workflow.ElementType{
-				ElementPath:      workflow.ElementPath(filepath.ToSlash(filepath.Dir(ewm.anthaFilePath))),
-				RepositoryPrefix: ewm.prefix,
+				ElementPath:    workflow.ElementPath(filepath.ToSlash(filepath.Dir(ewm.anthaFilePath))),
+				RepositoryName: ewm.repoName,
 			}
 			tet := composer.NewTranspilableElementType(et)
 			if antha, err := tet.EnsureTranspiler(ewm.anthaFilePath, ewm.element, ewm.meta); err != nil {
@@ -133,7 +133,7 @@ func describe(l *logger.Logger, args []string) error {
 				} else {
 					fmt.Printf(fmtStr,
 						et.Name(),
-						indent, et.RepositoryPrefix,
+						indent, et.RepositoryName,
 						indent, et.ElementPath,
 						indent, desc,
 						indent,

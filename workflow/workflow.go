@@ -122,13 +122,13 @@ func (m *Meta) MarshalJSON() ([]byte, error) {
 }
 
 type JobId string
-type RepositoryPrefix string
+type RepositoryName string
 type ElementInstanceName string
 type ElementPath string
 type ElementTypeName string
 type ElementParameterName string
 
-type Repositories map[RepositoryPrefix]*Repository
+type Repositories map[RepositoryName]*Repository
 
 type Repository struct {
 	Directory string `json:"Directory"`
@@ -147,8 +147,8 @@ type Elements struct {
 type ElementTypes []*ElementType
 
 type ElementType struct {
-	RepositoryPrefix RepositoryPrefix `json:"RepositoryPrefix"`
-	ElementPath      ElementPath      `json:"ElementPath"`
+	RepositoryName RepositoryName `json:"RepositoryName"`
+	ElementPath    ElementPath    `json:"ElementPath"`
 }
 
 func (et ElementType) Name() ElementTypeName {
@@ -156,7 +156,7 @@ func (et ElementType) Name() ElementTypeName {
 }
 
 func (et ElementType) ImportPath() string {
-	return path.Join(string(et.RepositoryPrefix), string(et.ElementPath))
+	return path.Join(string(et.RepositoryName), string(et.ElementPath))
 }
 
 type ElementInstances map[ElementInstanceName]*ElementInstance

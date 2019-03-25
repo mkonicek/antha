@@ -120,8 +120,8 @@ func (ets ElementTypes) validate(wf *Workflow) error {
 func (et *ElementType) validate(wf *Workflow) error {
 	if et == nil {
 		return errors.New("Validation error: ElementType cannot be nil")
-	} else if _, found := wf.Repositories[et.RepositoryPrefix]; !found {
-		return fmt.Errorf("Validation error: ElementType uses unknown RepositoryPrefix: '%s'", et.RepositoryPrefix)
+	} else if _, found := wf.Repositories[et.RepositoryName]; !found {
+		return fmt.Errorf("Validation error: ElementType uses unknown RepositoryName: '%s'", et.RepositoryName)
 	} else {
 		return nil
 	}

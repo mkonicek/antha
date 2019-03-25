@@ -12,7 +12,7 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing"
 )
 
-func (rs Repositories) LongestMatching(importPath string) (RepositoryPrefix, *Repository) {
+func (rs Repositories) LongestMatching(importPath string) (RepositoryName, *Repository) {
 	// Currently, because of the limitations of using GOPATH and not go
 	// mod, and hence the limitations imposed by
 	// Repositories.validate(), there is no chance that we ever need to
@@ -25,14 +25,14 @@ func (rs Repositories) LongestMatching(importPath string) (RepositoryPrefix, *Re
 	// prefixes foo/bar and foo/bar/baz then we choose to use the
 	// longest repo prefix (foo/bar/baz).
 	var winningRepo *Repository
-	winningPrefix := RepositoryPrefix("")
-	for repoPrefix, repo := range rs {
-		if strings.HasPrefix(importPath, string(repoPrefix)) && len(repoPrefix) > len(winningPrefix) {
+	winningName := RepositoryName("")
+	for repoName, repo := range rs {
+		if strings.HasPrefix(importPath, string(repoName)) && len(repoName) > len(winningName) {
 			winningRepo = repo
-			winningPrefix = repoPrefix
+			winningName = repoName
 		}
 	}
-	return winningPrefix, winningRepo
+	return winningName, winningRepo
 }
 
 func (rs Repositories) Clone(dir string) error {
@@ -192,7 +192,7 @@ func IsAnthaMetadata(path string) bool {
 
 type ElementTypeMap map[ElementTypeName]ElementType
 
-func (r *Repository) FindAllElementTypes(prefix RepositoryPrefix) (ElementTypeMap, error) {
+func (r *Repository) FindAllElementTypes(repoName RepositoryName) (ElementTypeMap, error) {
 	etm := make(ElementTypeMap)
 
 	r.Walk(func(f *File) error {
@@ -203,8 +203,8 @@ func (r *Repository) FindAllElementTypes(prefix RepositoryPrefix) (ElementTypeMa
 		dir := filepath.Dir(f.Name)
 		ename := filepath.Base(dir)
 		etm[ElementTypeName(ename)] = ElementType{
-			ElementPath:      ElementPath(dir),
-			RepositoryPrefix: prefix,
+			ElementPath:    ElementPath(dir),
+			RepositoryName: repoName,
 		}
 		return nil
 	})
@@ -216,8 +216,8 @@ type ElementTypesByRepository map[*Repository]ElementTypeMap
 
 func (rs Repositories) FindAllElementTypes() (ElementTypesByRepository, error) {
 	types := make(ElementTypesByRepository)
-	for prefix, rep := range rs {
-		rmap, err := rep.FindAllElementTypes(prefix)
+	for repoName, rep := range rs {
+		rmap, err := rep.FindAllElementTypes(repoName)
 		if err != nil {
 			return nil, err
 		}

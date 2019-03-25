@@ -12,8 +12,9 @@ func main() {
 
 	subCmds := subCommands{
 		"list":         list,
-		"makeWorkflow": makeWorkflow,
+		"makeWorkflow": makeWorkflowCmd,
 		"describe":     describe,
+		"test":         test,
 	}
 
 	args := os.Args

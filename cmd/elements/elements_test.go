@@ -125,7 +125,7 @@ func runBundle(t *testing.T, l *logger.Logger, wf *workflow.Workflow, bundleName
 		t.Fatal(err)
 	} else {
 		l.Log("bundle", bundleName, "outdir", outDir)
-
+		//                                                                                                keep and run and linkedDrivers
 		if comp, err := composer.NewComposer(l, wf, filepath.Join(outDir, "src", filepath.Dir(bundleName)), outDir, true, true, true); err != nil {
 			t.Fatal(err)
 		} else {

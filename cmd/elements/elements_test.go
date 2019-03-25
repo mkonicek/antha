@@ -132,9 +132,14 @@ func runBundle(t *testing.T, l *logger.Logger, wf *workflow.Workflow, bundleName
 		if comp, err := composer.NewComposer(l, wf, filepath.Join(outDir, "src", filepath.Dir(bundleName)), outDir, true, true, true); err != nil {
 			t.Fatal(err)
 		} else {
-			defer comp.CloseLogs()
 			if err := comp.ComposeAndRun(); err != nil {
+				comp.CloseLogs()
 				t.Fatal(err)
+			} else {
+				comp.CloseLogs()
+				if err := os.RemoveAll(outDir); err != nil { // tidy up iff the test was successful to avoid exhausting disk space!
+					t.Fatal(err)
+				}
 			}
 		}
 	}

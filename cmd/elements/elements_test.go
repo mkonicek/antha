@@ -105,6 +105,7 @@ func bundles(t *testing.T, l *logger.Logger, inDir, outDir string, wf *workflow.
 					return nil
 				} else {
 					t.Run(f.Name, func(t *testing.T) {
+						// calling parallel means that t.Run won't wait for this test to finish.
 						t.Parallel()
 						runBundle(t, l, wfTest, f.Name, outDir)
 					})
@@ -118,6 +119,8 @@ func bundles(t *testing.T, l *logger.Logger, inDir, outDir string, wf *workflow.
 			t.Fatal(err)
 		}
 	}
+	// once this function returns, testing will re-schedule all the
+	// tests marked Parallel() and wait for them all.
 }
 
 func runBundle(t *testing.T, l *logger.Logger, wf *workflow.Workflow, bundleName, outDir string) {

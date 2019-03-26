@@ -38,15 +38,7 @@ func (c *Composer) goBuild() error {
 		cmd.Args = append(cmd.Args, "-tags", "linkedDrivers protobuf")
 	}
 	cmd.Dir = filepath.Join(c.OutDir, "workflow")
-
-	env := os.Environ()
-	for idx, s := range env {
-		if len(s) >= 7 && "GOPATH=" == s[:7] {
-			env[idx] = fmt.Sprintf("GOPATH=%s:%s", c.OutDir, s[7:])
-			break
-		}
-	}
-	cmd.Env = env
+	cmd.Env = SetEnvGoPath(os.Environ(), c.OutDir)
 
 	if err := RunAndLogCommand(cmd, c.Logger.With("cmd", "build").Log); err != nil {
 		return err
@@ -54,6 +46,17 @@ func (c *Composer) goBuild() error {
 		c.Logger.Log("compilation", "successful", "binary", outBin)
 		return nil
 	}
+}
+
+// NB: this may well need revising when we move to go mod
+func SetEnvGoPath(env []string, outDir string) []string {
+	for idx, s := range env {
+		if len(s) >= 7 && "GOPATH=" == s[:7] {
+			env[idx] = fmt.Sprintf("GOPATH=%s:%s", outDir, s[7:])
+			break
+		}
+	}
+	return env
 }
 
 func (c *Composer) cleanOutDir() error {

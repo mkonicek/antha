@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -48,8 +47,13 @@ func TestElements(t *testing.T) {
 		// compileDir must be shared between CompileElements and GoTest, and must be distinct from bundleDir:
 		compileDir := filepath.Join(outDir, "compile")
 		bundleDir := filepath.Join(outDir, "bundle")
-		t.Run("CompileElements", func(t *testing.T) { compileElements(t, l, inDir, compileDir, wf) })
-		t.Run("GoTest", func(t *testing.T) { goTest(t, l, compileDir) })
+		t.Run("CompileAndTest", func(t *testing.T) {
+			compileElements(t, l, inDir, compileDir, wf)
+			// go test relies on the checkout of the elements so it makes
+			// some sense for that to depend on the
+			// checkout/transpilation/compilation of the elements.
+			goTest(t, l, compileDir)
+		})
 		t.Run("Bundles", func(t *testing.T) { bundles(t, l, inDir, bundleDir, wf) })
 	}
 }
@@ -68,15 +72,7 @@ func compileElements(t *testing.T, l *logger.Logger, inDir, outDir string, wf *w
 func goTest(t *testing.T, l *logger.Logger, outDir string) {
 	cmd := exec.Command("go", "test", "-v", "./...")
 	cmd.Dir = filepath.Join(outDir, "src")
-
-	env := os.Environ()
-	for idx, s := range env {
-		if len(s) >= 7 && "GOPATH=" == s[:7] {
-			env[idx] = fmt.Sprintf("GOPATH=%s:%s", outDir, s[7:])
-			break
-		}
-	}
-	cmd.Env = env
+	cmd.Env = composer.SetEnvGoPath(os.Environ(), outDir)
 
 	if err := composer.RunAndLogCommand(cmd, l.With("cmd", "go test").Log); err != nil {
 		t.Fatal(err)

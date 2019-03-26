@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/antha-lang/antha/logger"
 )
@@ -12,7 +13,7 @@ func main() {
 
 	subCmds := subCommands{
 		"list":         list,
-		"makeWorkflow": makeWorkflowCmd,
+		"makeworkflow": makeWorkflowCmd,
 		"describe":     describe,
 	}
 
@@ -21,7 +22,7 @@ func main() {
 		l.Fatal(fmt.Errorf("Subcommand needed. One of: %v", subCmds.List()))
 	}
 
-	if cmd, found := subCmds[args[1]]; found {
+	if cmd, found := subCmds[strings.ToLower(args[1])]; found {
 		if err := cmd(l, args[2:]); err != nil {
 			l.Fatal(err)
 		}

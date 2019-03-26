@@ -167,18 +167,6 @@ func (lhp Plate) String() string {
 	)
 }
 
-func (lhp *Plate) GetContentVector(wv []WellCoords) ComponentVector {
-	ret := make([]*Liquid, len(wv))
-
-	for i, wc := range wv {
-		ret[i] = lhp.Wellcoords[wc.FormatA1()].WContents.Dup()
-		wv := lhp.Wellcoords[wc.FormatA1()].CurrentWorkingVolume()
-		ret[i].Vol = wv.ConvertToString(ret[i].Vunit)
-	}
-
-	return ret
-}
-
 // deprecated
 /*
 func (lhp *LHPlate) FindComponentsMulti(cmps ComponentVector, ori, multi int, independent bool) (plateIDs, wellCoords [][]string, vols [][]wunit.Volume, err error) {
@@ -1258,47 +1246,23 @@ func (p *Plate) DeclareSpecial() {
 	}
 }
 
-func componentList(vec ComponentVector) map[string]bool {
-	r := make(map[string]bool, len(vec))
-	for _, c := range vec {
-		if c != nil {
-			if c.Vol > 0.0 {
-				r[c.IDOrName()] = true
-			}
+// AvailableContents accepts a slice of well coordinates, wv, and returns the Liquids that could be taken from each well in subsequent steps.
+// if any well coordinate in wv does not exist, a nil liquid is returned in that position
+func (lhp *Plate) AvailableContents(wv []WellCoords) ComponentVector {
+	ret := make(ComponentVector, len(wv))
+
+	for i, wc := range wv {
+		if well := lhp.Wellcoords[wc.FormatA1()]; well != nil {
+			l := well.Contents().Dup()
+			// don't include the residual volume, since it can't be accessed
+			l.SetVolume(well.CurrentWorkingVolume())
+			ret[i] = l
 		}
 	}
 
-	return r
+	return ret
 }
 
-func (p *Plate) GetVolumeFilteredContentVector(wv []WellCoords, cmps ComponentVector, mpv wunit.Volume, ignoreInstances bool) ComponentVector {
-	cv := p.GetFilteredContentVector(wv, cmps, ignoreInstances)
-	cv.DeleteAllBelowVolume(mpv)
-	return cv
-}
-
-func (p *Plate) GetFilteredContentVector(wv []WellCoords, cmps ComponentVector, ignoreInstances bool) ComponentVector {
-	wants := componentList(cmps)
-
-	cv := p.GetContentVector(wv)
-
-	fcv := make([]*Liquid, len(cv))
-
-	for i := 0; i < len(cv); i++ {
-		identifier := cv[i].IDOrName()
-
-		// ignoreInstances can only work for initial inputs
-		if ignoreInstances && cv[i].Generation() == 0 {
-			identifier = cv[i].CName
-		}
-
-		if cv[i] != nil && wants[identifier] {
-			fcv[i] = cv[i]
-		}
-	}
-
-	return fcv
-}
 func (p *Plate) FindAndUpdateID(before string, after *Liquid) bool {
 	for _, w := range p.Wellcoords {
 		if w.UpdateContentID(before, after) {

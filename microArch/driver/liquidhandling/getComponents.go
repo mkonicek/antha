@@ -2,62 +2,18 @@ package liquidhandling
 
 import (
 	"fmt"
+	"strings"
+
+	"github.com/pkg/errors"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
 
-type ComponentVolumeHash map[string]wunit.Volume
-
-func (h ComponentVolumeHash) AllVolsPosOrZero() bool {
-	for _, v := range h {
-		if v.LessThan(wunit.ZeroVolume()) && !v.IsZero() {
-			return false
-		}
-	}
-	return true
-}
-
-func (h ComponentVolumeHash) Dup() ComponentVolumeHash {
-	r := make(ComponentVolumeHash, len(h))
-	for k, v := range h {
-		r[k] = v.Dup()
-	}
-
-	return r
-}
-
-type GetComponentsOptions struct {
-	Cmps            wtype.ComponentVector
-	Ori             wtype.ChannelOrientation
-	Multi           int
-	Independent     bool
-	LegacyVolume    bool
-	IgnoreInstances bool // treat everything as virtual?
-}
-
 type ParallelTransfer struct {
 	PlateIDs   []string
 	WellCoords []string
 	Vols       []wunit.Volume
-}
-
-type GetComponentsReply struct {
-	Transfers []ParallelTransfer
-}
-
-func newReply() GetComponentsReply {
-	return GetComponentsReply{Transfers: make([]ParallelTransfer, 0, 1)}
-}
-
-func areWeDoneYet(cmps wtype.ComponentVector) bool {
-	for _, c := range cmps {
-		if c != nil && c.Vol != 0 {
-			return false
-		}
-	}
-
-	return true
 }
 
 func matchToParallelTransfer(m wtype.Match) ParallelTransfer {
@@ -97,26 +53,26 @@ func getPlateIterator(lhp *wtype.Plate, ori wtype.ChannelOrientation, multi int)
 	}
 }
 
-func (lhp *LHProperties) GetSourcesFor(cmps wtype.ComponentVector, ori wtype.ChannelOrientation, multi int, minPossibleVolume wunit.Volume, ignoreInstances bool) []wtype.ComponentVector {
-	ret := make([]wtype.ComponentVector, 0, 1)
+// GetSourcesFor find all liquids in LHProperties which could be used to supply the requested cmps with the given configuration
+func (lhp *LHProperties) GetSourcesFor(ori wtype.ChannelOrientation, multi int, filters ...func(*wtype.Liquid) bool) []wtype.ComponentVector {
+	ret := make([]wtype.ComponentVector, 0)
 
 	for _, ipref := range lhp.OrderedMergedPlatePrefs() {
-		p, ok := lhp.Plates[ipref]
 
-		if ok {
+		if p, ok := lhp.Plates[ipref]; ok {
+
 			it := getPlateIterator(p, ori, multi)
 			for wv := it.Curr(); it.Valid(); wv = it.Next() {
-				// cmps needs duping here
-				mycmps := p.GetVolumeFilteredContentVector(wv, cmps, minPossibleVolume, ignoreInstances) // dups components
-				if mycmps.Empty() {
-					continue
+
+				available := p.AvailableContents(wv).Filter(filters...)
+
+				if !available.IsEmpty() {
+
+					// found has incorrect volumes when more than one tip is in each well, try correcting them here
+					correctMultiTipsPerWell(available)
+
+					ret = append(ret, available)
 				}
-
-				// mycmps has incorrect volumes, try correcting them here
-
-				correct_volumes(mycmps)
-
-				ret = append(ret, mycmps)
 			}
 		}
 	}
@@ -124,7 +80,8 @@ func (lhp *LHProperties) GetSourcesFor(cmps wtype.ComponentVector, ori wtype.Cha
 	return ret
 }
 
-func correct_volumes(cmps wtype.ComponentVector) {
+// correctMultiTipsPerWell when there's more than one tip in a well, share the available volume in each tip equally between them
+func correctMultiTipsPerWell(cmps wtype.ComponentVector) {
 	nW := make(map[string]int)
 	for _, c := range cmps {
 		if c == nil {
@@ -147,91 +104,123 @@ func correct_volumes(cmps wtype.ComponentVector) {
 	}
 }
 
-func cullZeroes(m map[string]wunit.Volume) map[string]wunit.Volume {
-	r := make(map[string]wunit.Volume, len(m))
-
-	for k, v := range m {
-		if v.IsZero() {
-			continue
-		}
-
-		r[k] = v
-	}
-
-	return r
+type volumeCheck struct {
+	Available wtype.ComponentVector
+	Requested wtype.ComponentVector
 }
 
-func sourceVolumesOK(srcs []wtype.ComponentVector, dests wtype.ComponentVector) (bool, string) {
-	collSrcs := sumSources(srcs)
-	collDsts := dests.ToSumHash()
-	collDsts = cullZeroes(collDsts)
+type volumesByLiquidName map[string]*volumeCheck
 
-	result := subHash(collSrcs, collDsts)
-
-	if len(collSrcs) < len(collDsts) {
-		return false, collateDifference(collDsts, collSrcs, result)
-	}
-
-	r := result.AllVolsPosOrZero()
-
-	if r {
-		return r, ""
-	} else {
-		return r, collateDifference(collDsts, collSrcs, result)
-	}
-}
-
-func collateDifference(a, b, c map[string]wunit.Volume) string {
-	s := ""
-
-	for k := range a {
-		_, ok := b[k]
-
-		if !ok {
-			s += fmt.Sprintf("%s; ", k)
-			continue
-		}
-
-		v := c[k]
-
-		if v.RawValue() < 0.0 {
-			v.MultiplyBy(-1.0)
-			s += fmt.Sprintf("%s - missing %s; ", k, v.ToString())
+// Summary a nice user-friendly string summary of the remaining volumes
+func (vbln volumesByLiquidName) Summary(lhp *LHProperties) string {
+	cVectorSummary := func(cv wtype.ComponentVector) string {
+		if len(cv) == 0 {
+			return "nothing"
+		} else if len(cv) == 1 {
+			return cv[0].Volume().String()
+		} else {
+			return fmt.Sprintf("%v %s total", cv.GetVols(), cv.Volume())
 		}
 	}
 
-	return s
-}
+	ret := make([]string, 0, 4*len(vbln))
+	for _, check := range vbln {
 
-func subHash(h1, h2 ComponentVolumeHash) ComponentVolumeHash {
-	r := h1.Dup()
-	for k, v := range h2 {
-		_, ok := r[k]
-
-		if ok {
-			r[k].Subtract(v)
+		idMap := make(map[string]bool, len(check.Requested))
+		for _, l := range check.Requested {
+			idMap[l.ID] = true
 		}
-	}
+		ids := make([]string, 0, len(idMap))
+		for id := range idMap {
+			ids = append(ids, id)
+		}
 
-	return r
-}
+		nameMap := make(map[string]bool, len(check.Requested))
+		for _, l := range check.Requested {
+			nameMap[l.CName] = true
+		}
+		names := make([]string, 0, len(idMap))
+		for name := range nameMap {
+			names = append(names, name)
+		}
 
-func sumSources(cmpV []wtype.ComponentVector) ComponentVolumeHash {
-	ret := make(ComponentVolumeHash, len(cmpV))
-	for _, cV2 := range cmpV {
-		for _, c := range cV2 {
-			if c != nil && c.CName != "" {
-				v, ok := ret[c.FullyQualifiedName()]
-				if !ok {
-					v = wunit.NewVolume(0.0, "ul")
-					ret[c.FullyQualifiedName()] = v
+		var extraAvailable []string
+		if len(check.Available) == 0 {
+			// we found nothing that matched
+			// a common problem is mixing a liquid whose ID has changed for some reason
+			// here we see if we can find some liquids which match name _only_, in the hope
+			// that this was their intended target
+			// element writers can then investigate why ID matching has failed and hopefully
+			// discover the root cause of the issue
+			other := lhp.GetSourcesFor(wtype.LHVChannel, 1, func(l *wtype.Liquid) bool {
+				return nameMap[l.CName]
+			})
+			if len(other) > 0 {
+				extraAvailable = make([]string, 0, len(other)+1)
+				extraAvailable = append(extraAvailable, ", but did find potential source(s) with matching name:")
+				for _, o := range other {
+					extraAvailable = append(extraAvailable, fmt.Sprintf(`        "%s"`, strings.Join(o.GetNames(), `", "`)))
 				}
-				v.Add(c.Volume())
 			}
 		}
+
+		// name:
+		//   available: [v1, ..., v2] v3 total
+		//   requested: [v4, ..., v5] v6 total
+		//   shortfall: v6 - v3
+		ret = append(ret, fmt.Sprintf("  %s [\"%s\"]:\n    available: %s%s\n    requested: %s\n    shortfall: %s",
+			strings.Join(ids, `, `),
+			strings.Join(names, `", "`),
+			cVectorSummary(check.Available),
+			strings.Join(extraAvailable, "\n"),
+			cVectorSummary(check.Requested),
+			wunit.SubtractVolumes(check.Requested.Volume(), check.Available.Volume())))
 	}
 
-	return ret
+	return strings.Join(ret, "\n")
+}
+
+// findInsufficientSources check that there's enough volume in found to satisfy all the volumes in requested
+func findInsufficientSources(found []wtype.ComponentVector, requested wtype.ComponentVector) volumesByLiquidName {
+	ret := make(volumesByLiquidName)
+
+	// add everything we found
+	for _, cv := range found {
+		for _, liquid := range cv {
+			if liquid == nil {
+				continue
+			}
+			vc, ok := ret[liquid.IDOrName()]
+			if !ok {
+				vc = &volumeCheck{}
+				ret[liquid.IDOrName()] = vc
+			}
+			vc.Available = append(vc.Available, liquid)
+		}
+	}
+
+	// add everything we wanted
+	for _, liquid := range requested {
+		if liquid == nil {
+			continue
+		}
+		vc, ok := ret[liquid.IDOrName()]
+		if !ok {
+			vc = &volumeCheck{}
+			ret[liquid.IDOrName()] = vc
+		}
+		vc.Requested = append(vc.Requested, liquid)
+	}
+
+	// remove everything where there's enough
+	insufficient := make(volumesByLiquidName, len(ret))
+	for name, check := range ret {
+		if check.Available.Volume().LessThan(check.Requested.Volume().MinusEpsilon()) {
+			insufficient[name] = check
+		}
+	}
+
+	return insufficient
 }
 
 func cmpVecsEqual(v1, v2 wtype.ComponentVector) bool {
@@ -252,65 +241,69 @@ func cmpsEqual(c1, c2 *wtype.Liquid) bool {
 	return c1.ID == c2.ID && c1.Vol == c2.Vol
 }
 
-func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsReply, error) {
-	rep := newReply()
+func (lhp *LHProperties) GetComponents(cmps wtype.ComponentVector, ori wtype.ChannelOrientation, multi int, independent bool, legacyVolume bool) ([]ParallelTransfer, error) {
+	ret := make([]ParallelTransfer, 0)
+
+	// build the filters that we'll use later
+	cmpNames := make(map[string]bool, len(cmps))
+	for _, l := range cmps {
+		if l != nil {
+			cmpNames[l.IDOrName()] = true
+		}
+	}
+	nameFilter := func(l *wtype.Liquid) bool {
+		return l != nil || cmpNames[l.IDOrName()]
+	}
+
+	mpvMinusE := lhp.MinPossibleVolume().MinusEpsilon()
+	volumeFilter := func(l *wtype.Liquid) bool {
+		// allow volumes which are trivially less than minPossibleVolume
+		return l != nil || !l.Volume().LessThan(mpvMinusE)
+	}
 
 	// build list of possible sources -- this is a list of ComponentVectors
 
-	srcs := lhp.GetSourcesFor(opt.Cmps, opt.Ori, opt.Multi, lhp.MinPossibleVolume(), opt.IgnoreInstances)
+	srcs := lhp.GetSourcesFor(ori, multi, nameFilter, volumeFilter)
 
 	// keep taking chunks until either we get everything or run out
 	// optimization options apply here as parameters for the next level down
 
-	currCmps := opt.Cmps.Dup()
+	currCmps := cmps.Dup()
 	var lastCmps wtype.ComponentVector
 
-	var done bool
+	for !currCmps.IsEmpty() {
 
-	for {
-		done = areWeDoneYet(currCmps)
-		if done {
-			break
-		}
-
-		if ok, s := sourceVolumesOK(srcs, currCmps); !ok {
-
-			if opt.IgnoreInstances {
-				return GetComponentsReply{}, fmt.Errorf("Insufficient source volumes for components %s", s)
-			} else {
-				opt.IgnoreInstances = true
-				return lhp.GetComponents(opt)
-			}
+		if insufficient := findInsufficientSources(srcs, currCmps); len(insufficient) > 0 {
+			return nil, errors.Errorf("found insufficient sources for %d requested liquids\n%s", len(insufficient), insufficient.Summary(lhp))
 		}
 
 		if cmpVecsEqual(lastCmps, currCmps) {
 			// if we are here we should be able to service the request but not
 			// as-is...
-			break
+			return ret, nil
 		}
 
 		bestMatch := wtype.Match{Sc: -1.0}
-		var bestSrc wtype.ComponentVector
+		bestSrcIdx := -1
 		// srcs is chunked up to conform to what can be accessed by the LH
-		for _, src := range srcs {
-			if src.Empty() {
-				continue
-			}
+		for i, src := range srcs {
+			if !src.IsEmpty() {
 
-			match, err := wtype.MatchComponents(currCmps, src, opt.Independent, false)
+				match, err := wtype.MatchComponents(currCmps, src, independent, false)
 
-			if err != nil && err.Error() != wtype.NotFoundError {
-				return rep, err
-			}
+				if err != nil && !wtype.IsNotFound(err) {
+					return ret, err
+				}
 
-			if match.Sc > bestMatch.Sc {
-				bestMatch = match
-				bestSrc = src
+				if match.Sc > bestMatch.Sc {
+					bestMatch = match
+					bestSrcIdx = i
+				}
 			}
 		}
 
 		if bestMatch.Sc == -1 {
-			return rep, fmt.Errorf("Components %s %s -- try increasing source volumes, if this does not work or is not possible please report to the authors\n", currCmps.String(), wtype.NotFoundError)
+			return ret, errors.WithMessage(wtype.NotFoundError, fmt.Sprintf("components %s -- try increasing source volumes", currCmps.String()))
 		}
 
 		// adjust finally to ensure we don't leave too little
@@ -318,16 +311,16 @@ func (lhp *LHProperties) GetComponents(opt GetComponentsOptions) (GetComponentsR
 		bestMatch = makeMatchSafe(currCmps, bestMatch, lhp.MinPossibleVolume())
 
 		// update sources
-		updateSources(bestSrc, bestMatch, lhp.CarryVolume(), lhp.MinPossibleVolume())
+		srcs[bestSrcIdx] = updateSources(srcs[bestSrcIdx], bestMatch, lhp.CarryVolume()).Filter(volumeFilter)
 		lastCmps = currCmps.Dup()
 		updateDests(currCmps, bestMatch)
-		rep.Transfers = append(rep.Transfers, matchToParallelTransfer(bestMatch))
+		ret = append(ret, matchToParallelTransfer(bestMatch))
 	}
 
-	return rep, nil
+	return ret, nil
 }
 
-func updateSources(src wtype.ComponentVector, match wtype.Match, carryVol, minPossibleVolume wunit.Volume) wtype.ComponentVector {
+func updateSources(src wtype.ComponentVector, match wtype.Match, carryVol wunit.Volume) wtype.ComponentVector {
 	for i := 0; i < len(match.M); i++ {
 		if match.M[i] != -1 {
 			volSub := wunit.CopyVolume(match.Vols[i])
@@ -335,8 +328,6 @@ func updateSources(src wtype.ComponentVector, match wtype.Match, carryVol, minPo
 			src[match.M[i]].Vol -= volSub.ConvertToString(src[match.M[i]].Vunit)
 		}
 	}
-
-	src.DeleteAllBelowVolume(minPossibleVolume)
 
 	return src
 }

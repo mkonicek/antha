@@ -524,7 +524,7 @@ func TestNonMatchComponent(t *testing.T) {
 
 	m, err := MatchComponents(want, got, false, false)
 
-	if err.Error() != NotFoundError {
+	if !IsNotFound(err) {
 		t.Errorf(err.Error())
 	}
 

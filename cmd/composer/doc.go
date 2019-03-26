@@ -98,4 +98,7 @@
 // to json files (in addition to -indir, if provided) and are loaded
 // and merged as workflow snippets. If you provide - as an argument
 // then composer will try to parse a workflow snippet from stdin.
+//
+// Log messages are produced on stderr, and the composer command exits
+// with a code of 0 iff no fatal error in encountered.
 package main

@@ -30,7 +30,6 @@ func (a *Workflow) Merge(b *Workflow) error {
 }
 
 func (a Repositories) merge(b Repositories) error {
-	// It's an error if a and b contain the same repoName and they're not equal
 	for repoName, repoB := range b {
 		if repoA, found := a[repoName]; found {
 			if repoA.Branch != repoB.Branch || repoA.Commit != repoB.Commit {

@@ -29,15 +29,22 @@ func (a *Workflow) Merge(b *Workflow) error {
 	}.Pack()
 }
 
-func (a *Repository) equals(b *Repository) bool {
-	return a.Directory == b.Directory && a.Branch == b.Branch && a.Commit == b.Commit
-}
-
 func (a Repositories) merge(b Repositories) error {
 	// It's an error if a and b contain the same repoName and they're not equal
 	for repoName, repoB := range b {
-		if repoA, found := a[repoName]; found && !repoA.equals(repoB) {
-			return fmt.Errorf("Cannot merge: repository with name '%v' redefined.", repoName)
+		if repoA, found := a[repoName]; found {
+			if repoA.Branch != repoB.Branch || repoA.Commit != repoB.Commit {
+				return fmt.Errorf("Cannot merge: repository with name '%v' redefined illegally.", repoName)
+			}
+			// We're ok if:
+			// .Directory in both are equal (includes both being "")
+			// repoA.Directory is "" (we just copy in from repoB.Directory)
+			// If both != "" and repoA.Directory != repoB.Directory then error
+			if repoA.Directory == "" {
+				repoA.Directory = repoB.Directory
+			} else if repoB.Directory != "" && repoA.Directory != repoB.Directory {
+				return fmt.Errorf("Cannot merge: repository with name '%v' redefined illegally (Directory fields not empty and not equal).", repoName)
+			}
 		} else if !found {
 			a[repoName] = repoB
 		}

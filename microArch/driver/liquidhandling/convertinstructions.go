@@ -150,46 +150,34 @@ func makeComponentSets(labEffects *effects.LaboratoryEffects, inssIn LHIVector, 
 }
 
 func convertInstructions(labEffects *effects.LaboratoryEffects, inssIn LHIVector, robot *LHProperties, channelprms *wtype.LHChannelParameter, multi int, legacyVolume bool) ([]*TransferInstruction, error) {
-	insOut := make([]*TransferInstruction, 0, 1)
 
 	componentsToMove, instructionsToUse := makeComponentSets(labEffects, inssIn, multi)
 
 	orientation := wtype.LHVChannel
 	independent := false
-
 	if channelprms != nil {
 		orientation = channelprms.Orientation
 		independent = channelprms.Independent
 	}
 
+	ret := make([]*TransferInstruction, 0)
 	for i := 0; i < len(componentsToMove); i++ {
-		parallelTransfers, err := robot.GetComponents(
-			labEffects.IDGenerator,
-			GetComponentsOptions{
-				Cmps:         componentsToMove[i],
-				Ori:          orientation,
-				Multi:        multi,
-				Independent:  independent,
-				LegacyVolume: legacyVolume,
-			})
-
+		parallelTransfers, err := robot.GetComponents(labEffects, componentsToMove[i], orientation, multi, independent, legacyVolume)
 		if err != nil {
 			return nil, err
 		}
 
-		for _, t := range parallelTransfers.Transfers {
-			transfers, err := makeTransfers(labEffects, t, componentsToMove[i], robot, instructionsToUse[i])
-
-			if err != nil {
+		for _, t := range parallelTransfers {
+			if transfers, err := makeTransfers(labEffects, t, componentsToMove[i], robot, instructionsToUse[i]); err != nil {
 				return nil, err
+			} else {
+				ret = append(ret, transfers...)
 			}
-
-			insOut = append(insOut, transfers...)
 		}
 
 	}
 
-	return insOut, nil
+	return ret, nil
 }
 
 func makeTransfers(labEffects *effects.LaboratoryEffects, parallelTransfer ParallelTransfer, cmps []*wtype.Liquid, robot *LHProperties, inssIn []*wtype.LHInstruction) ([]*TransferInstruction, error) {

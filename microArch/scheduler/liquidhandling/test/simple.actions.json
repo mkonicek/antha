@@ -1,1 +1,2719 @@
-{"actions":[{"kind":"transfer","children":[{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"8e588feb-a5d2-473a-a824-4f4ff4a926bd","row":0,"col":0}}},{"kind":"parallel_transfer","channels":{"0":{"from":{"loc":{"deck_item_id":"fc9850e8-6886-46b9-9403-8f238e518059","row":0,"col":2},"new_content":{"name":"water","total_volume":{"value":5060,"unit":"ul"}}},"to":[{"loc":{"deck_item_id":"3b13c034-32fa-476e-8e05-2c519f0c3e28","row":0,"col":0},"new_content":{"name":"water","total_volume":{"value":8,"unit":"ul"}}}],"volume":{"value":8,"unit":"ul"},"wasted":{"value":0,"unit":""},"policy":"SingleChannel","asp":{"height":{"value":0.5,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false},"dsp":{"height":{"value":1,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false,"blowout":{"volume":{"value":50,"unit":"ul"},"height":{"value":0,"unit":"mm","reference":"well_top"},"flow_rate":{"value":3.7,"unit":"ml/min"}},"touchoff":false},"head":1}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"2a29410b-ecf2-49cf-8f74-43cce18acd84","row":0,"col":0}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"8e588feb-a5d2-473a-a824-4f4ff4a926bd","row":1,"col":0}}},{"kind":"parallel_transfer","channels":{"0":{"from":{"loc":{"deck_item_id":"fc9850e8-6886-46b9-9403-8f238e518059","row":0,"col":0},"new_content":{"name":"mastermix_sapI","total_volume":{"value":5060,"unit":"ul"}}},"to":[{"loc":{"deck_item_id":"3b13c034-32fa-476e-8e05-2c519f0c3e28","row":0,"col":0},"new_content":{"name":"mastermix_sapI+water","total_volume":{"value":16,"unit":"ul"}}}],"volume":{"value":8,"unit":"ul"},"wasted":{"value":0,"unit":""},"policy":"SingleChannel","asp":{"height":{"value":0.5,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false},"dsp":{"height":{"value":1,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false,"blowout":{"volume":{"value":50,"unit":"ul"},"height":{"value":0,"unit":"mm","reference":"well_top"},"flow_rate":{"value":3.7,"unit":"ml/min"}},"touchoff":false},"head":1}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"2a29410b-ecf2-49cf-8f74-43cce18acd84","row":0,"col":0}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"8e588feb-a5d2-473a-a824-4f4ff4a926bd","row":2,"col":0}}},{"kind":"parallel_transfer","channels":{"0":{"from":{"loc":{"deck_item_id":"fc9850e8-6886-46b9-9403-8f238e518059","row":0,"col":4},"new_content":{"name":"dna","total_volume":{"value":5011,"unit":"ul"}}},"to":[{"loc":{"deck_item_id":"3b13c034-32fa-476e-8e05-2c519f0c3e28","row":0,"col":0},"new_content":{"name":"dna+mastermix_sapI+water","total_volume":{"value":17,"unit":"ul"}}}],"volume":{"value":1,"unit":"ul"},"wasted":{"value":0,"unit":""},"policy":"SingleChannel","asp":{"height":{"value":0.5,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false},"dsp":{"height":{"value":1,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false,"blowout":{"volume":{"value":50,"unit":"ul"},"height":{"value":0,"unit":"mm","reference":"well_top"},"flow_rate":{"value":3.7,"unit":"ml/min"}},"touchoff":false},"head":1}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"2a29410b-ecf2-49cf-8f74-43cce18acd84","row":0,"col":0}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"8e588feb-a5d2-473a-a824-4f4ff4a926bd","row":3,"col":0}}},{"kind":"parallel_transfer","channels":{"0":{"from":{"loc":{"deck_item_id":"fc9850e8-6886-46b9-9403-8f238e518059","row":0,"col":2},"new_content":{"name":"water","total_volume":{"value":5052,"unit":"ul"}}},"to":[{"loc":{"deck_item_id":"3b13c034-32fa-476e-8e05-2c519f0c3e28","row":1,"col":0},"new_content":{"name":"water","total_volume":{"value":8,"unit":"ul"}}}],"volume":{"value":8,"unit":"ul"},"wasted":{"value":0,"unit":""},"policy":"SingleChannel","asp":{"height":{"value":0.5,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false},"dsp":{"height":{"value":1,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false,"blowout":{"volume":{"value":50,"unit":"ul"},"height":{"value":0,"unit":"mm","reference":"well_top"},"flow_rate":{"value":3.7,"unit":"ml/min"}},"touchoff":false},"head":1}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"2a29410b-ecf2-49cf-8f74-43cce18acd84","row":0,"col":0}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"8e588feb-a5d2-473a-a824-4f4ff4a926bd","row":4,"col":0}}},{"kind":"parallel_transfer","channels":{"0":{"from":{"loc":{"deck_item_id":"fc9850e8-6886-46b9-9403-8f238e518059","row":0,"col":0},"new_content":{"name":"mastermix_sapI","total_volume":{"value":5052,"unit":"ul"}}},"to":[{"loc":{"deck_item_id":"3b13c034-32fa-476e-8e05-2c519f0c3e28","row":1,"col":0},"new_content":{"name":"mastermix_sapI+water","total_volume":{"value":16,"unit":"ul"}}}],"volume":{"value":8,"unit":"ul"},"wasted":{"value":0,"unit":""},"policy":"SingleChannel","asp":{"height":{"value":0.5,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false},"dsp":{"height":{"value":1,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false,"blowout":{"volume":{"value":50,"unit":"ul"},"height":{"value":0,"unit":"mm","reference":"well_top"},"flow_rate":{"value":3.7,"unit":"ml/min"}},"touchoff":false},"head":1}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"2a29410b-ecf2-49cf-8f74-43cce18acd84","row":0,"col":0}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"8e588feb-a5d2-473a-a824-4f4ff4a926bd","row":5,"col":0}}},{"kind":"parallel_transfer","channels":{"0":{"from":{"loc":{"deck_item_id":"fc9850e8-6886-46b9-9403-8f238e518059","row":0,"col":4},"new_content":{"name":"dna","total_volume":{"value":5010,"unit":"ul"}}},"to":[{"loc":{"deck_item_id":"3b13c034-32fa-476e-8e05-2c519f0c3e28","row":1,"col":0},"new_content":{"name":"dna+mastermix_sapI+water","total_volume":{"value":17,"unit":"ul"}}}],"volume":{"value":1,"unit":"ul"},"wasted":{"value":0,"unit":""},"policy":"SingleChannel","asp":{"height":{"value":0.5,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false},"dsp":{"height":{"value":1,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false,"blowout":{"volume":{"value":50,"unit":"ul"},"height":{"value":0,"unit":"mm","reference":"well_top"},"flow_rate":{"value":3.7,"unit":"ml/min"}},"touchoff":false},"head":1}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"2a29410b-ecf2-49cf-8f74-43cce18acd84","row":0,"col":0}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"8e588feb-a5d2-473a-a824-4f4ff4a926bd","row":6,"col":0}}},{"kind":"parallel_transfer","channels":{"0":{"from":{"loc":{"deck_item_id":"fc9850e8-6886-46b9-9403-8f238e518059","row":0,"col":2},"new_content":{"name":"water","total_volume":{"value":5044,"unit":"ul"}}},"to":[{"loc":{"deck_item_id":"3b13c034-32fa-476e-8e05-2c519f0c3e28","row":2,"col":0},"new_content":{"name":"water","total_volume":{"value":8,"unit":"ul"}}}],"volume":{"value":8,"unit":"ul"},"wasted":{"value":0,"unit":""},"policy":"SingleChannel","asp":{"height":{"value":0.5,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false},"dsp":{"height":{"value":1,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false,"blowout":{"volume":{"value":50,"unit":"ul"},"height":{"value":0,"unit":"mm","reference":"well_top"},"flow_rate":{"value":3.7,"unit":"ml/min"}},"touchoff":false},"head":1}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"2a29410b-ecf2-49cf-8f74-43cce18acd84","row":0,"col":0}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"8e588feb-a5d2-473a-a824-4f4ff4a926bd","row":7,"col":0}}},{"kind":"parallel_transfer","channels":{"0":{"from":{"loc":{"deck_item_id":"fc9850e8-6886-46b9-9403-8f238e518059","row":0,"col":0},"new_content":{"name":"mastermix_sapI","total_volume":{"value":5044,"unit":"ul"}}},"to":[{"loc":{"deck_item_id":"3b13c034-32fa-476e-8e05-2c519f0c3e28","row":2,"col":0},"new_content":{"name":"mastermix_sapI+water","total_volume":{"value":16,"unit":"ul"}}}],"volume":{"value":8,"unit":"ul"},"wasted":{"value":0,"unit":""},"policy":"SingleChannel","asp":{"height":{"value":0.5,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false},"dsp":{"height":{"value":1,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false,"blowout":{"volume":{"value":50,"unit":"ul"},"height":{"value":0,"unit":"mm","reference":"well_top"},"flow_rate":{"value":3.7,"unit":"ml/min"}},"touchoff":false},"head":1}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"2a29410b-ecf2-49cf-8f74-43cce18acd84","row":0,"col":0}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"8e588feb-a5d2-473a-a824-4f4ff4a926bd","row":0,"col":1}}},{"kind":"parallel_transfer","channels":{"0":{"from":{"loc":{"deck_item_id":"fc9850e8-6886-46b9-9403-8f238e518059","row":0,"col":4},"new_content":{"name":"dna","total_volume":{"value":5009,"unit":"ul"}}},"to":[{"loc":{"deck_item_id":"3b13c034-32fa-476e-8e05-2c519f0c3e28","row":2,"col":0},"new_content":{"name":"dna+mastermix_sapI+water","total_volume":{"value":17,"unit":"ul"}}}],"volume":{"value":1,"unit":"ul"},"wasted":{"value":0,"unit":""},"policy":"SingleChannel","asp":{"height":{"value":0.5,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false},"dsp":{"height":{"value":1,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false,"blowout":{"volume":{"value":50,"unit":"ul"},"height":{"value":0,"unit":"mm","reference":"well_top"},"flow_rate":{"value":3.7,"unit":"ml/min"}},"touchoff":false},"head":1}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"2a29410b-ecf2-49cf-8f74-43cce18acd84","row":0,"col":0}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"8e588feb-a5d2-473a-a824-4f4ff4a926bd","row":1,"col":1}}},{"kind":"parallel_transfer","channels":{"0":{"from":{"loc":{"deck_item_id":"fc9850e8-6886-46b9-9403-8f238e518059","row":0,"col":2},"new_content":{"name":"water","total_volume":{"value":5036,"unit":"ul"}}},"to":[{"loc":{"deck_item_id":"3b13c034-32fa-476e-8e05-2c519f0c3e28","row":3,"col":0},"new_content":{"name":"water","total_volume":{"value":8,"unit":"ul"}}}],"volume":{"value":8,"unit":"ul"},"wasted":{"value":0,"unit":""},"policy":"SingleChannel","asp":{"height":{"value":0.5,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false},"dsp":{"height":{"value":1,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false,"blowout":{"volume":{"value":50,"unit":"ul"},"height":{"value":0,"unit":"mm","reference":"well_top"},"flow_rate":{"value":3.7,"unit":"ml/min"}},"touchoff":false},"head":1}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"2a29410b-ecf2-49cf-8f74-43cce18acd84","row":0,"col":0}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"8e588feb-a5d2-473a-a824-4f4ff4a926bd","row":2,"col":1}}},{"kind":"parallel_transfer","channels":{"0":{"from":{"loc":{"deck_item_id":"fc9850e8-6886-46b9-9403-8f238e518059","row":0,"col":0},"new_content":{"name":"mastermix_sapI","total_volume":{"value":5036,"unit":"ul"}}},"to":[{"loc":{"deck_item_id":"3b13c034-32fa-476e-8e05-2c519f0c3e28","row":3,"col":0},"new_content":{"name":"mastermix_sapI+water","total_volume":{"value":16,"unit":"ul"}}}],"volume":{"value":8,"unit":"ul"},"wasted":{"value":0,"unit":""},"policy":"SingleChannel","asp":{"height":{"value":0.5,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false},"dsp":{"height":{"value":1,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false,"blowout":{"volume":{"value":50,"unit":"ul"},"height":{"value":0,"unit":"mm","reference":"well_top"},"flow_rate":{"value":3.7,"unit":"ml/min"}},"touchoff":false},"head":1}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"2a29410b-ecf2-49cf-8f74-43cce18acd84","row":0,"col":0}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"8e588feb-a5d2-473a-a824-4f4ff4a926bd","row":3,"col":1}}},{"kind":"parallel_transfer","channels":{"0":{"from":{"loc":{"deck_item_id":"fc9850e8-6886-46b9-9403-8f238e518059","row":0,"col":4},"new_content":{"name":"dna","total_volume":{"value":5008,"unit":"ul"}}},"to":[{"loc":{"deck_item_id":"3b13c034-32fa-476e-8e05-2c519f0c3e28","row":3,"col":0},"new_content":{"name":"dna+mastermix_sapI+water","total_volume":{"value":17,"unit":"ul"}}}],"volume":{"value":1,"unit":"ul"},"wasted":{"value":0,"unit":""},"policy":"SingleChannel","asp":{"height":{"value":0.5,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false},"dsp":{"height":{"value":1,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false,"blowout":{"volume":{"value":50,"unit":"ul"},"height":{"value":0,"unit":"mm","reference":"well_top"},"flow_rate":{"value":3.7,"unit":"ml/min"}},"touchoff":false},"head":1}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"2a29410b-ecf2-49cf-8f74-43cce18acd84","row":0,"col":0}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"8e588feb-a5d2-473a-a824-4f4ff4a926bd","row":4,"col":1}}},{"kind":"parallel_transfer","channels":{"0":{"from":{"loc":{"deck_item_id":"fc9850e8-6886-46b9-9403-8f238e518059","row":0,"col":2},"new_content":{"name":"water","total_volume":{"value":5028,"unit":"ul"}}},"to":[{"loc":{"deck_item_id":"3b13c034-32fa-476e-8e05-2c519f0c3e28","row":4,"col":0},"new_content":{"name":"water","total_volume":{"value":8,"unit":"ul"}}}],"volume":{"value":8,"unit":"ul"},"wasted":{"value":0,"unit":""},"policy":"SingleChannel","asp":{"height":{"value":0.5,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false},"dsp":{"height":{"value":1,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false,"blowout":{"volume":{"value":50,"unit":"ul"},"height":{"value":0,"unit":"mm","reference":"well_top"},"flow_rate":{"value":3.7,"unit":"ml/min"}},"touchoff":false},"head":1}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"2a29410b-ecf2-49cf-8f74-43cce18acd84","row":0,"col":0}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"8e588feb-a5d2-473a-a824-4f4ff4a926bd","row":5,"col":1}}},{"kind":"parallel_transfer","channels":{"0":{"from":{"loc":{"deck_item_id":"fc9850e8-6886-46b9-9403-8f238e518059","row":0,"col":0},"new_content":{"name":"mastermix_sapI","total_volume":{"value":5028,"unit":"ul"}}},"to":[{"loc":{"deck_item_id":"3b13c034-32fa-476e-8e05-2c519f0c3e28","row":4,"col":0},"new_content":{"name":"mastermix_sapI+water","total_volume":{"value":16,"unit":"ul"}}}],"volume":{"value":8,"unit":"ul"},"wasted":{"value":0,"unit":""},"policy":"SingleChannel","asp":{"height":{"value":0.5,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false},"dsp":{"height":{"value":1,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false,"blowout":{"volume":{"value":50,"unit":"ul"},"height":{"value":0,"unit":"mm","reference":"well_top"},"flow_rate":{"value":3.7,"unit":"ml/min"}},"touchoff":false},"head":1}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"2a29410b-ecf2-49cf-8f74-43cce18acd84","row":0,"col":0}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"8e588feb-a5d2-473a-a824-4f4ff4a926bd","row":6,"col":1}}},{"kind":"parallel_transfer","channels":{"0":{"from":{"loc":{"deck_item_id":"fc9850e8-6886-46b9-9403-8f238e518059","row":0,"col":4},"new_content":{"name":"dna","total_volume":{"value":5007,"unit":"ul"}}},"to":[{"loc":{"deck_item_id":"3b13c034-32fa-476e-8e05-2c519f0c3e28","row":4,"col":0},"new_content":{"name":"dna+mastermix_sapI+water","total_volume":{"value":17,"unit":"ul"}}}],"volume":{"value":1,"unit":"ul"},"wasted":{"value":0,"unit":""},"policy":"SingleChannel","asp":{"height":{"value":0.5,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false},"dsp":{"height":{"value":1,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false,"blowout":{"volume":{"value":50,"unit":"ul"},"height":{"value":0,"unit":"mm","reference":"well_top"},"flow_rate":{"value":3.7,"unit":"ml/min"}},"touchoff":false},"head":1}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"2a29410b-ecf2-49cf-8f74-43cce18acd84","row":0,"col":0}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"8e588feb-a5d2-473a-a824-4f4ff4a926bd","row":7,"col":1}}},{"kind":"parallel_transfer","channels":{"0":{"from":{"loc":{"deck_item_id":"fc9850e8-6886-46b9-9403-8f238e518059","row":0,"col":2},"new_content":{"name":"water","total_volume":{"value":5020,"unit":"ul"}}},"to":[{"loc":{"deck_item_id":"3b13c034-32fa-476e-8e05-2c519f0c3e28","row":5,"col":0},"new_content":{"name":"water","total_volume":{"value":8,"unit":"ul"}}}],"volume":{"value":8,"unit":"ul"},"wasted":{"value":0,"unit":""},"policy":"SingleChannel","asp":{"height":{"value":0.5,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false},"dsp":{"height":{"value":1,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false,"blowout":{"volume":{"value":50,"unit":"ul"},"height":{"value":0,"unit":"mm","reference":"well_top"},"flow_rate":{"value":3.7,"unit":"ml/min"}},"touchoff":false},"head":1}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"2a29410b-ecf2-49cf-8f74-43cce18acd84","row":0,"col":0}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"8e588feb-a5d2-473a-a824-4f4ff4a926bd","row":0,"col":2}}},{"kind":"parallel_transfer","channels":{"0":{"from":{"loc":{"deck_item_id":"fc9850e8-6886-46b9-9403-8f238e518059","row":0,"col":0},"new_content":{"name":"mastermix_sapI","total_volume":{"value":5020,"unit":"ul"}}},"to":[{"loc":{"deck_item_id":"3b13c034-32fa-476e-8e05-2c519f0c3e28","row":5,"col":0},"new_content":{"name":"mastermix_sapI+water","total_volume":{"value":16,"unit":"ul"}}}],"volume":{"value":8,"unit":"ul"},"wasted":{"value":0,"unit":""},"policy":"SingleChannel","asp":{"height":{"value":0.5,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false},"dsp":{"height":{"value":1,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false,"blowout":{"volume":{"value":50,"unit":"ul"},"height":{"value":0,"unit":"mm","reference":"well_top"},"flow_rate":{"value":3.7,"unit":"ml/min"}},"touchoff":false},"head":1}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"2a29410b-ecf2-49cf-8f74-43cce18acd84","row":0,"col":0}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"8e588feb-a5d2-473a-a824-4f4ff4a926bd","row":1,"col":2}}},{"kind":"parallel_transfer","channels":{"0":{"from":{"loc":{"deck_item_id":"fc9850e8-6886-46b9-9403-8f238e518059","row":0,"col":4},"new_content":{"name":"dna","total_volume":{"value":5006,"unit":"ul"}}},"to":[{"loc":{"deck_item_id":"3b13c034-32fa-476e-8e05-2c519f0c3e28","row":5,"col":0},"new_content":{"name":"dna+mastermix_sapI+water","total_volume":{"value":17,"unit":"ul"}}}],"volume":{"value":1,"unit":"ul"},"wasted":{"value":0,"unit":""},"policy":"SingleChannel","asp":{"height":{"value":0.5,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false},"dsp":{"height":{"value":1,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false,"blowout":{"volume":{"value":50,"unit":"ul"},"height":{"value":0,"unit":"mm","reference":"well_top"},"flow_rate":{"value":3.7,"unit":"ml/min"}},"touchoff":false},"head":1}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"2a29410b-ecf2-49cf-8f74-43cce18acd84","row":0,"col":0}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"8e588feb-a5d2-473a-a824-4f4ff4a926bd","row":2,"col":2}}},{"kind":"parallel_transfer","channels":{"0":{"from":{"loc":{"deck_item_id":"fc9850e8-6886-46b9-9403-8f238e518059","row":0,"col":2},"new_content":{"name":"water","total_volume":{"value":5012,"unit":"ul"}}},"to":[{"loc":{"deck_item_id":"3b13c034-32fa-476e-8e05-2c519f0c3e28","row":6,"col":0},"new_content":{"name":"water","total_volume":{"value":8,"unit":"ul"}}}],"volume":{"value":8,"unit":"ul"},"wasted":{"value":0,"unit":""},"policy":"SingleChannel","asp":{"height":{"value":0.5,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false},"dsp":{"height":{"value":1,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false,"blowout":{"volume":{"value":50,"unit":"ul"},"height":{"value":0,"unit":"mm","reference":"well_top"},"flow_rate":{"value":3.7,"unit":"ml/min"}},"touchoff":false},"head":1}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"2a29410b-ecf2-49cf-8f74-43cce18acd84","row":0,"col":0}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"8e588feb-a5d2-473a-a824-4f4ff4a926bd","row":3,"col":2}}},{"kind":"parallel_transfer","channels":{"0":{"from":{"loc":{"deck_item_id":"fc9850e8-6886-46b9-9403-8f238e518059","row":0,"col":0},"new_content":{"name":"mastermix_sapI","total_volume":{"value":5012,"unit":"ul"}}},"to":[{"loc":{"deck_item_id":"3b13c034-32fa-476e-8e05-2c519f0c3e28","row":6,"col":0},"new_content":{"name":"mastermix_sapI+water","total_volume":{"value":16,"unit":"ul"}}}],"volume":{"value":8,"unit":"ul"},"wasted":{"value":0,"unit":""},"policy":"SingleChannel","asp":{"height":{"value":0.5,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false},"dsp":{"height":{"value":1,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false,"blowout":{"volume":{"value":50,"unit":"ul"},"height":{"value":0,"unit":"mm","reference":"well_top"},"flow_rate":{"value":3.7,"unit":"ml/min"}},"touchoff":false},"head":1}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"2a29410b-ecf2-49cf-8f74-43cce18acd84","row":0,"col":0}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"8e588feb-a5d2-473a-a824-4f4ff4a926bd","row":4,"col":2}}},{"kind":"parallel_transfer","channels":{"0":{"from":{"loc":{"deck_item_id":"fc9850e8-6886-46b9-9403-8f238e518059","row":0,"col":4},"new_content":{"name":"dna","total_volume":{"value":5005,"unit":"ul"}}},"to":[{"loc":{"deck_item_id":"3b13c034-32fa-476e-8e05-2c519f0c3e28","row":6,"col":0},"new_content":{"name":"dna+mastermix_sapI+water","total_volume":{"value":17,"unit":"ul"}}}],"volume":{"value":1,"unit":"ul"},"wasted":{"value":0,"unit":""},"policy":"SingleChannel","asp":{"height":{"value":0.5,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false},"dsp":{"height":{"value":1,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false,"blowout":{"volume":{"value":50,"unit":"ul"},"height":{"value":0,"unit":"mm","reference":"well_top"},"flow_rate":{"value":3.7,"unit":"ml/min"}},"touchoff":false},"head":1}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"2a29410b-ecf2-49cf-8f74-43cce18acd84","row":0,"col":0}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"8e588feb-a5d2-473a-a824-4f4ff4a926bd","row":5,"col":2}}},{"kind":"parallel_transfer","channels":{"0":{"from":{"loc":{"deck_item_id":"fc9850e8-6886-46b9-9403-8f238e518059","row":0,"col":2},"new_content":{"name":"water","total_volume":{"value":5004,"unit":"ul"}}},"to":[{"loc":{"deck_item_id":"3b13c034-32fa-476e-8e05-2c519f0c3e28","row":7,"col":0},"new_content":{"name":"water","total_volume":{"value":8,"unit":"ul"}}}],"volume":{"value":8,"unit":"ul"},"wasted":{"value":0,"unit":""},"policy":"SingleChannel","asp":{"height":{"value":0.5,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false},"dsp":{"height":{"value":1,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false,"blowout":{"volume":{"value":50,"unit":"ul"},"height":{"value":0,"unit":"mm","reference":"well_top"},"flow_rate":{"value":3.7,"unit":"ml/min"}},"touchoff":false},"head":1}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"2a29410b-ecf2-49cf-8f74-43cce18acd84","row":0,"col":0}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"8e588feb-a5d2-473a-a824-4f4ff4a926bd","row":6,"col":2}}},{"kind":"parallel_transfer","channels":{"0":{"from":{"loc":{"deck_item_id":"fc9850e8-6886-46b9-9403-8f238e518059","row":0,"col":0},"new_content":{"name":"mastermix_sapI","total_volume":{"value":5004,"unit":"ul"}}},"to":[{"loc":{"deck_item_id":"3b13c034-32fa-476e-8e05-2c519f0c3e28","row":7,"col":0},"new_content":{"name":"mastermix_sapI+water","total_volume":{"value":16,"unit":"ul"}}}],"volume":{"value":8,"unit":"ul"},"wasted":{"value":0,"unit":""},"policy":"SingleChannel","asp":{"height":{"value":0.5,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false},"dsp":{"height":{"value":1,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false,"blowout":{"volume":{"value":50,"unit":"ul"},"height":{"value":0,"unit":"mm","reference":"well_top"},"flow_rate":{"value":3.7,"unit":"ml/min"}},"touchoff":false},"head":1}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"2a29410b-ecf2-49cf-8f74-43cce18acd84","row":0,"col":0}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"8e588feb-a5d2-473a-a824-4f4ff4a926bd","row":7,"col":2}}},{"kind":"parallel_transfer","channels":{"0":{"from":{"loc":{"deck_item_id":"fc9850e8-6886-46b9-9403-8f238e518059","row":0,"col":4},"new_content":{"name":"dna","total_volume":{"value":5004,"unit":"ul"}}},"to":[{"loc":{"deck_item_id":"3b13c034-32fa-476e-8e05-2c519f0c3e28","row":7,"col":0},"new_content":{"name":"dna+mastermix_sapI+water","total_volume":{"value":17,"unit":"ul"}}}],"volume":{"value":1,"unit":"ul"},"wasted":{"value":0,"unit":""},"policy":"SingleChannel","asp":{"height":{"value":0.5,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false},"dsp":{"height":{"value":1,"unit":"mm","reference":"well_bottom"},"flow_rate":{"value":3.7,"unit":"ml/min"},"liquid_level_follow":false,"blowout":{"volume":{"value":50,"unit":"ul"},"height":{"value":0,"unit":"mm","reference":"well_top"},"flow_rate":{"value":3.7,"unit":"ml/min"}},"touchoff":false},"head":1}}},{"kind":"load","head":1,"channels":{"0":{"deck_item_id":"2a29410b-ecf2-49cf-8f74-43cce18acd84","row":0,"col":0}}}]}],"version":"1.0"}
+{
+	"actions": [{
+		"kind": "transfer",
+		"children": [{
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_0",
+					"row": 0,
+					"col": 0
+				}
+			}
+		}, {
+			"kind": "parallel_transfer",
+			"channels": {
+				"0": {
+					"from": {
+						"loc": {
+							"deck_item_id": "ID_1",
+							"row": 0,
+							"col": 2
+						},
+						"new_content": {
+							"name": "water",
+							"total_volume": {
+								"value": 5059.5,
+								"unit": "ul"
+							}
+						}
+					},
+					"to": [{
+						"loc": {
+							"deck_item_id": "ID_2",
+							"row": 0,
+							"col": 0
+						},
+						"new_content": {
+							"name": "1 v/v water",
+							"total_volume": {
+								"value": 8,
+								"unit": "ul"
+							},
+							"components": [{
+								"name": "water",
+								"concentration": 1,
+								"unit": "v/v"
+							}]
+						}
+					}],
+					"volume": {
+						"value": 8,
+						"unit": "ul"
+					},
+					"wasted": {
+						"value": 0,
+						"unit": ""
+					},
+					"policy": "SingleChannel",
+					"asp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false
+					},
+					"dsp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false,
+						"blowout": {
+							"volume": {
+								"value": 50,
+								"unit": "ul"
+							},
+							"height": {
+								"value": 0,
+								"unit": "",
+								"reference": "well_bottom"
+							},
+							"flow_rate": {
+								"value": 3.7,
+								"unit": "ml/min"
+							}
+						},
+						"touchoff": false
+					},
+					"head": 1
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_3",
+					"row": 0,
+					"col": 0
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_0",
+					"row": 1,
+					"col": 0
+				}
+			}
+		}, {
+			"kind": "parallel_transfer",
+			"channels": {
+				"0": {
+					"from": {
+						"loc": {
+							"deck_item_id": "ID_1",
+							"row": 0,
+							"col": 0
+						},
+						"new_content": {
+							"name": "mastermix_sapI",
+							"total_volume": {
+								"value": 5059.5,
+								"unit": "ul"
+							}
+						}
+					},
+					"to": [{
+						"loc": {
+							"deck_item_id": "ID_2",
+							"row": 0,
+							"col": 0
+						},
+						"new_content": {
+							"name": "0.5 v/v mastermix_sapI+0.5 v/v water",
+							"total_volume": {
+								"value": 16,
+								"unit": "ul"
+							},
+							"components": [{
+								"name": "mastermix_sapI",
+								"concentration": 0.5,
+								"unit": "v/v"
+							}, {
+								"name": "water",
+								"concentration": 0.5,
+								"unit": "v/v"
+							}]
+						}
+					}],
+					"volume": {
+						"value": 8,
+						"unit": "ul"
+					},
+					"wasted": {
+						"value": 0,
+						"unit": ""
+					},
+					"policy": "SingleChannel",
+					"asp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false
+					},
+					"dsp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false,
+						"blowout": {
+							"volume": {
+								"value": 50,
+								"unit": "ul"
+							},
+							"height": {
+								"value": 0,
+								"unit": "",
+								"reference": "well_bottom"
+							},
+							"flow_rate": {
+								"value": 3.7,
+								"unit": "ml/min"
+							}
+						},
+						"touchoff": false
+					},
+					"head": 1
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_3",
+					"row": 0,
+					"col": 0
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_0",
+					"row": 2,
+					"col": 0
+				}
+			}
+		}, {
+			"kind": "parallel_transfer",
+			"channels": {
+				"0": {
+					"from": {
+						"loc": {
+							"deck_item_id": "ID_1",
+							"row": 0,
+							"col": 4
+						},
+						"new_content": {
+							"name": "dna",
+							"total_volume": {
+								"value": 5010.5,
+								"unit": "ul"
+							}
+						}
+					},
+					"to": [{
+						"loc": {
+							"deck_item_id": "ID_2",
+							"row": 0,
+							"col": 0
+						},
+						"new_content": {
+							"name": "0.0588 v/v dna+0.471 v/v mastermix_sapI+0.471 v/v water",
+							"total_volume": {
+								"value": 17,
+								"unit": "ul"
+							},
+							"components": [{
+								"name": "dna",
+								"concentration": 0.058823529411764705,
+								"unit": "v/v"
+							}, {
+								"name": "mastermix_sapI",
+								"concentration": 0.47058823529411764,
+								"unit": "v/v"
+							}, {
+								"name": "water",
+								"concentration": 0.47058823529411764,
+								"unit": "v/v"
+							}]
+						}
+					}],
+					"volume": {
+						"value": 1,
+						"unit": "ul"
+					},
+					"wasted": {
+						"value": 0,
+						"unit": ""
+					},
+					"policy": "SingleChannel",
+					"asp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false
+					},
+					"dsp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false,
+						"blowout": {
+							"volume": {
+								"value": 50,
+								"unit": "ul"
+							},
+							"height": {
+								"value": 0,
+								"unit": "",
+								"reference": "well_bottom"
+							},
+							"flow_rate": {
+								"value": 3.7,
+								"unit": "ml/min"
+							}
+						},
+						"touchoff": false
+					},
+					"head": 1
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_3",
+					"row": 0,
+					"col": 0
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_0",
+					"row": 3,
+					"col": 0
+				}
+			}
+		}, {
+			"kind": "parallel_transfer",
+			"channels": {
+				"0": {
+					"from": {
+						"loc": {
+							"deck_item_id": "ID_1",
+							"row": 0,
+							"col": 2
+						},
+						"new_content": {
+							"name": "water",
+							"total_volume": {
+								"value": 5051,
+								"unit": "ul"
+							}
+						}
+					},
+					"to": [{
+						"loc": {
+							"deck_item_id": "ID_2",
+							"row": 1,
+							"col": 0
+						},
+						"new_content": {
+							"name": "1 v/v water",
+							"total_volume": {
+								"value": 8,
+								"unit": "ul"
+							},
+							"components": [{
+								"name": "water",
+								"concentration": 1,
+								"unit": "v/v"
+							}]
+						}
+					}],
+					"volume": {
+						"value": 8,
+						"unit": "ul"
+					},
+					"wasted": {
+						"value": 0,
+						"unit": ""
+					},
+					"policy": "SingleChannel",
+					"asp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false
+					},
+					"dsp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false,
+						"blowout": {
+							"volume": {
+								"value": 50,
+								"unit": "ul"
+							},
+							"height": {
+								"value": 0,
+								"unit": "",
+								"reference": "well_bottom"
+							},
+							"flow_rate": {
+								"value": 3.7,
+								"unit": "ml/min"
+							}
+						},
+						"touchoff": false
+					},
+					"head": 1
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_3",
+					"row": 0,
+					"col": 0
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_0",
+					"row": 4,
+					"col": 0
+				}
+			}
+		}, {
+			"kind": "parallel_transfer",
+			"channels": {
+				"0": {
+					"from": {
+						"loc": {
+							"deck_item_id": "ID_1",
+							"row": 0,
+							"col": 0
+						},
+						"new_content": {
+							"name": "mastermix_sapI",
+							"total_volume": {
+								"value": 5051,
+								"unit": "ul"
+							}
+						}
+					},
+					"to": [{
+						"loc": {
+							"deck_item_id": "ID_2",
+							"row": 1,
+							"col": 0
+						},
+						"new_content": {
+							"name": "0.5 v/v mastermix_sapI+0.5 v/v water",
+							"total_volume": {
+								"value": 16,
+								"unit": "ul"
+							},
+							"components": [{
+								"name": "mastermix_sapI",
+								"concentration": 0.5,
+								"unit": "v/v"
+							}, {
+								"name": "water",
+								"concentration": 0.5,
+								"unit": "v/v"
+							}]
+						}
+					}],
+					"volume": {
+						"value": 8,
+						"unit": "ul"
+					},
+					"wasted": {
+						"value": 0,
+						"unit": ""
+					},
+					"policy": "SingleChannel",
+					"asp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false
+					},
+					"dsp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false,
+						"blowout": {
+							"volume": {
+								"value": 50,
+								"unit": "ul"
+							},
+							"height": {
+								"value": 0,
+								"unit": "",
+								"reference": "well_bottom"
+							},
+							"flow_rate": {
+								"value": 3.7,
+								"unit": "ml/min"
+							}
+						},
+						"touchoff": false
+					},
+					"head": 1
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_3",
+					"row": 0,
+					"col": 0
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_0",
+					"row": 5,
+					"col": 0
+				}
+			}
+		}, {
+			"kind": "parallel_transfer",
+			"channels": {
+				"0": {
+					"from": {
+						"loc": {
+							"deck_item_id": "ID_1",
+							"row": 0,
+							"col": 4
+						},
+						"new_content": {
+							"name": "dna",
+							"total_volume": {
+								"value": 5009,
+								"unit": "ul"
+							}
+						}
+					},
+					"to": [{
+						"loc": {
+							"deck_item_id": "ID_2",
+							"row": 1,
+							"col": 0
+						},
+						"new_content": {
+							"name": "0.0588 v/v dna+0.471 v/v mastermix_sapI+0.471 v/v water",
+							"total_volume": {
+								"value": 17,
+								"unit": "ul"
+							},
+							"components": [{
+								"name": "dna",
+								"concentration": 0.058823529411764705,
+								"unit": "v/v"
+							}, {
+								"name": "mastermix_sapI",
+								"concentration": 0.47058823529411764,
+								"unit": "v/v"
+							}, {
+								"name": "water",
+								"concentration": 0.47058823529411764,
+								"unit": "v/v"
+							}]
+						}
+					}],
+					"volume": {
+						"value": 1,
+						"unit": "ul"
+					},
+					"wasted": {
+						"value": 0,
+						"unit": ""
+					},
+					"policy": "SingleChannel",
+					"asp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false
+					},
+					"dsp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false,
+						"blowout": {
+							"volume": {
+								"value": 50,
+								"unit": "ul"
+							},
+							"height": {
+								"value": 0,
+								"unit": "",
+								"reference": "well_bottom"
+							},
+							"flow_rate": {
+								"value": 3.7,
+								"unit": "ml/min"
+							}
+						},
+						"touchoff": false
+					},
+					"head": 1
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_3",
+					"row": 0,
+					"col": 0
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_0",
+					"row": 6,
+					"col": 0
+				}
+			}
+		}, {
+			"kind": "parallel_transfer",
+			"channels": {
+				"0": {
+					"from": {
+						"loc": {
+							"deck_item_id": "ID_1",
+							"row": 0,
+							"col": 2
+						},
+						"new_content": {
+							"name": "water",
+							"total_volume": {
+								"value": 5042.5,
+								"unit": "ul"
+							}
+						}
+					},
+					"to": [{
+						"loc": {
+							"deck_item_id": "ID_2",
+							"row": 2,
+							"col": 0
+						},
+						"new_content": {
+							"name": "1 v/v water",
+							"total_volume": {
+								"value": 8,
+								"unit": "ul"
+							},
+							"components": [{
+								"name": "water",
+								"concentration": 1,
+								"unit": "v/v"
+							}]
+						}
+					}],
+					"volume": {
+						"value": 8,
+						"unit": "ul"
+					},
+					"wasted": {
+						"value": 0,
+						"unit": ""
+					},
+					"policy": "SingleChannel",
+					"asp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false
+					},
+					"dsp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false,
+						"blowout": {
+							"volume": {
+								"value": 50,
+								"unit": "ul"
+							},
+							"height": {
+								"value": 0,
+								"unit": "",
+								"reference": "well_bottom"
+							},
+							"flow_rate": {
+								"value": 3.7,
+								"unit": "ml/min"
+							}
+						},
+						"touchoff": false
+					},
+					"head": 1
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_3",
+					"row": 0,
+					"col": 0
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_0",
+					"row": 7,
+					"col": 0
+				}
+			}
+		}, {
+			"kind": "parallel_transfer",
+			"channels": {
+				"0": {
+					"from": {
+						"loc": {
+							"deck_item_id": "ID_1",
+							"row": 0,
+							"col": 0
+						},
+						"new_content": {
+							"name": "mastermix_sapI",
+							"total_volume": {
+								"value": 5042.5,
+								"unit": "ul"
+							}
+						}
+					},
+					"to": [{
+						"loc": {
+							"deck_item_id": "ID_2",
+							"row": 2,
+							"col": 0
+						},
+						"new_content": {
+							"name": "0.5 v/v mastermix_sapI+0.5 v/v water",
+							"total_volume": {
+								"value": 16,
+								"unit": "ul"
+							},
+							"components": [{
+								"name": "mastermix_sapI",
+								"concentration": 0.5,
+								"unit": "v/v"
+							}, {
+								"name": "water",
+								"concentration": 0.5,
+								"unit": "v/v"
+							}]
+						}
+					}],
+					"volume": {
+						"value": 8,
+						"unit": "ul"
+					},
+					"wasted": {
+						"value": 0,
+						"unit": ""
+					},
+					"policy": "SingleChannel",
+					"asp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false
+					},
+					"dsp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false,
+						"blowout": {
+							"volume": {
+								"value": 50,
+								"unit": "ul"
+							},
+							"height": {
+								"value": 0,
+								"unit": "",
+								"reference": "well_bottom"
+							},
+							"flow_rate": {
+								"value": 3.7,
+								"unit": "ml/min"
+							}
+						},
+						"touchoff": false
+					},
+					"head": 1
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_3",
+					"row": 0,
+					"col": 0
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_0",
+					"row": 0,
+					"col": 1
+				}
+			}
+		}, {
+			"kind": "parallel_transfer",
+			"channels": {
+				"0": {
+					"from": {
+						"loc": {
+							"deck_item_id": "ID_1",
+							"row": 0,
+							"col": 4
+						},
+						"new_content": {
+							"name": "dna",
+							"total_volume": {
+								"value": 5007.5,
+								"unit": "ul"
+							}
+						}
+					},
+					"to": [{
+						"loc": {
+							"deck_item_id": "ID_2",
+							"row": 2,
+							"col": 0
+						},
+						"new_content": {
+							"name": "0.0588 v/v dna+0.471 v/v mastermix_sapI+0.471 v/v water",
+							"total_volume": {
+								"value": 17,
+								"unit": "ul"
+							},
+							"components": [{
+								"name": "dna",
+								"concentration": 0.058823529411764705,
+								"unit": "v/v"
+							}, {
+								"name": "mastermix_sapI",
+								"concentration": 0.47058823529411764,
+								"unit": "v/v"
+							}, {
+								"name": "water",
+								"concentration": 0.47058823529411764,
+								"unit": "v/v"
+							}]
+						}
+					}],
+					"volume": {
+						"value": 1,
+						"unit": "ul"
+					},
+					"wasted": {
+						"value": 0,
+						"unit": ""
+					},
+					"policy": "SingleChannel",
+					"asp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false
+					},
+					"dsp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false,
+						"blowout": {
+							"volume": {
+								"value": 50,
+								"unit": "ul"
+							},
+							"height": {
+								"value": 0,
+								"unit": "",
+								"reference": "well_bottom"
+							},
+							"flow_rate": {
+								"value": 3.7,
+								"unit": "ml/min"
+							}
+						},
+						"touchoff": false
+					},
+					"head": 1
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_3",
+					"row": 0,
+					"col": 0
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_0",
+					"row": 1,
+					"col": 1
+				}
+			}
+		}, {
+			"kind": "parallel_transfer",
+			"channels": {
+				"0": {
+					"from": {
+						"loc": {
+							"deck_item_id": "ID_1",
+							"row": 0,
+							"col": 2
+						},
+						"new_content": {
+							"name": "water",
+							"total_volume": {
+								"value": 5034,
+								"unit": "ul"
+							}
+						}
+					},
+					"to": [{
+						"loc": {
+							"deck_item_id": "ID_2",
+							"row": 3,
+							"col": 0
+						},
+						"new_content": {
+							"name": "1 v/v water",
+							"total_volume": {
+								"value": 8,
+								"unit": "ul"
+							},
+							"components": [{
+								"name": "water",
+								"concentration": 1,
+								"unit": "v/v"
+							}]
+						}
+					}],
+					"volume": {
+						"value": 8,
+						"unit": "ul"
+					},
+					"wasted": {
+						"value": 0,
+						"unit": ""
+					},
+					"policy": "SingleChannel",
+					"asp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false
+					},
+					"dsp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false,
+						"blowout": {
+							"volume": {
+								"value": 50,
+								"unit": "ul"
+							},
+							"height": {
+								"value": 0,
+								"unit": "",
+								"reference": "well_bottom"
+							},
+							"flow_rate": {
+								"value": 3.7,
+								"unit": "ml/min"
+							}
+						},
+						"touchoff": false
+					},
+					"head": 1
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_3",
+					"row": 0,
+					"col": 0
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_0",
+					"row": 2,
+					"col": 1
+				}
+			}
+		}, {
+			"kind": "parallel_transfer",
+			"channels": {
+				"0": {
+					"from": {
+						"loc": {
+							"deck_item_id": "ID_1",
+							"row": 0,
+							"col": 0
+						},
+						"new_content": {
+							"name": "mastermix_sapI",
+							"total_volume": {
+								"value": 5034,
+								"unit": "ul"
+							}
+						}
+					},
+					"to": [{
+						"loc": {
+							"deck_item_id": "ID_2",
+							"row": 3,
+							"col": 0
+						},
+						"new_content": {
+							"name": "0.5 v/v mastermix_sapI+0.5 v/v water",
+							"total_volume": {
+								"value": 16,
+								"unit": "ul"
+							},
+							"components": [{
+								"name": "mastermix_sapI",
+								"concentration": 0.5,
+								"unit": "v/v"
+							}, {
+								"name": "water",
+								"concentration": 0.5,
+								"unit": "v/v"
+							}]
+						}
+					}],
+					"volume": {
+						"value": 8,
+						"unit": "ul"
+					},
+					"wasted": {
+						"value": 0,
+						"unit": ""
+					},
+					"policy": "SingleChannel",
+					"asp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false
+					},
+					"dsp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false,
+						"blowout": {
+							"volume": {
+								"value": 50,
+								"unit": "ul"
+							},
+							"height": {
+								"value": 0,
+								"unit": "",
+								"reference": "well_bottom"
+							},
+							"flow_rate": {
+								"value": 3.7,
+								"unit": "ml/min"
+							}
+						},
+						"touchoff": false
+					},
+					"head": 1
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_3",
+					"row": 0,
+					"col": 0
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_0",
+					"row": 3,
+					"col": 1
+				}
+			}
+		}, {
+			"kind": "parallel_transfer",
+			"channels": {
+				"0": {
+					"from": {
+						"loc": {
+							"deck_item_id": "ID_1",
+							"row": 0,
+							"col": 4
+						},
+						"new_content": {
+							"name": "dna",
+							"total_volume": {
+								"value": 5006,
+								"unit": "ul"
+							}
+						}
+					},
+					"to": [{
+						"loc": {
+							"deck_item_id": "ID_2",
+							"row": 3,
+							"col": 0
+						},
+						"new_content": {
+							"name": "0.0588 v/v dna+0.471 v/v mastermix_sapI+0.471 v/v water",
+							"total_volume": {
+								"value": 17,
+								"unit": "ul"
+							},
+							"components": [{
+								"name": "dna",
+								"concentration": 0.058823529411764705,
+								"unit": "v/v"
+							}, {
+								"name": "mastermix_sapI",
+								"concentration": 0.47058823529411764,
+								"unit": "v/v"
+							}, {
+								"name": "water",
+								"concentration": 0.47058823529411764,
+								"unit": "v/v"
+							}]
+						}
+					}],
+					"volume": {
+						"value": 1,
+						"unit": "ul"
+					},
+					"wasted": {
+						"value": 0,
+						"unit": ""
+					},
+					"policy": "SingleChannel",
+					"asp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false
+					},
+					"dsp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false,
+						"blowout": {
+							"volume": {
+								"value": 50,
+								"unit": "ul"
+							},
+							"height": {
+								"value": 0,
+								"unit": "",
+								"reference": "well_bottom"
+							},
+							"flow_rate": {
+								"value": 3.7,
+								"unit": "ml/min"
+							}
+						},
+						"touchoff": false
+					},
+					"head": 1
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_3",
+					"row": 0,
+					"col": 0
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_0",
+					"row": 4,
+					"col": 1
+				}
+			}
+		}, {
+			"kind": "parallel_transfer",
+			"channels": {
+				"0": {
+					"from": {
+						"loc": {
+							"deck_item_id": "ID_1",
+							"row": 0,
+							"col": 2
+						},
+						"new_content": {
+							"name": "water",
+							"total_volume": {
+								"value": 5025.5,
+								"unit": "ul"
+							}
+						}
+					},
+					"to": [{
+						"loc": {
+							"deck_item_id": "ID_2",
+							"row": 4,
+							"col": 0
+						},
+						"new_content": {
+							"name": "1 v/v water",
+							"total_volume": {
+								"value": 8,
+								"unit": "ul"
+							},
+							"components": [{
+								"name": "water",
+								"concentration": 1,
+								"unit": "v/v"
+							}]
+						}
+					}],
+					"volume": {
+						"value": 8,
+						"unit": "ul"
+					},
+					"wasted": {
+						"value": 0,
+						"unit": ""
+					},
+					"policy": "SingleChannel",
+					"asp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false
+					},
+					"dsp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false,
+						"blowout": {
+							"volume": {
+								"value": 50,
+								"unit": "ul"
+							},
+							"height": {
+								"value": 0,
+								"unit": "",
+								"reference": "well_bottom"
+							},
+							"flow_rate": {
+								"value": 3.7,
+								"unit": "ml/min"
+							}
+						},
+						"touchoff": false
+					},
+					"head": 1
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_3",
+					"row": 0,
+					"col": 0
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_0",
+					"row": 5,
+					"col": 1
+				}
+			}
+		}, {
+			"kind": "parallel_transfer",
+			"channels": {
+				"0": {
+					"from": {
+						"loc": {
+							"deck_item_id": "ID_1",
+							"row": 0,
+							"col": 0
+						},
+						"new_content": {
+							"name": "mastermix_sapI",
+							"total_volume": {
+								"value": 5025.5,
+								"unit": "ul"
+							}
+						}
+					},
+					"to": [{
+						"loc": {
+							"deck_item_id": "ID_2",
+							"row": 4,
+							"col": 0
+						},
+						"new_content": {
+							"name": "0.5 v/v mastermix_sapI+0.5 v/v water",
+							"total_volume": {
+								"value": 16,
+								"unit": "ul"
+							},
+							"components": [{
+								"name": "mastermix_sapI",
+								"concentration": 0.5,
+								"unit": "v/v"
+							}, {
+								"name": "water",
+								"concentration": 0.5,
+								"unit": "v/v"
+							}]
+						}
+					}],
+					"volume": {
+						"value": 8,
+						"unit": "ul"
+					},
+					"wasted": {
+						"value": 0,
+						"unit": ""
+					},
+					"policy": "SingleChannel",
+					"asp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false
+					},
+					"dsp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false,
+						"blowout": {
+							"volume": {
+								"value": 50,
+								"unit": "ul"
+							},
+							"height": {
+								"value": 0,
+								"unit": "",
+								"reference": "well_bottom"
+							},
+							"flow_rate": {
+								"value": 3.7,
+								"unit": "ml/min"
+							}
+						},
+						"touchoff": false
+					},
+					"head": 1
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_3",
+					"row": 0,
+					"col": 0
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_0",
+					"row": 6,
+					"col": 1
+				}
+			}
+		}, {
+			"kind": "parallel_transfer",
+			"channels": {
+				"0": {
+					"from": {
+						"loc": {
+							"deck_item_id": "ID_1",
+							"row": 0,
+							"col": 4
+						},
+						"new_content": {
+							"name": "dna",
+							"total_volume": {
+								"value": 5004.5,
+								"unit": "ul"
+							}
+						}
+					},
+					"to": [{
+						"loc": {
+							"deck_item_id": "ID_2",
+							"row": 4,
+							"col": 0
+						},
+						"new_content": {
+							"name": "0.0588 v/v dna+0.471 v/v mastermix_sapI+0.471 v/v water",
+							"total_volume": {
+								"value": 17,
+								"unit": "ul"
+							},
+							"components": [{
+								"name": "dna",
+								"concentration": 0.058823529411764705,
+								"unit": "v/v"
+							}, {
+								"name": "mastermix_sapI",
+								"concentration": 0.47058823529411764,
+								"unit": "v/v"
+							}, {
+								"name": "water",
+								"concentration": 0.47058823529411764,
+								"unit": "v/v"
+							}]
+						}
+					}],
+					"volume": {
+						"value": 1,
+						"unit": "ul"
+					},
+					"wasted": {
+						"value": 0,
+						"unit": ""
+					},
+					"policy": "SingleChannel",
+					"asp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false
+					},
+					"dsp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false,
+						"blowout": {
+							"volume": {
+								"value": 50,
+								"unit": "ul"
+							},
+							"height": {
+								"value": 0,
+								"unit": "",
+								"reference": "well_bottom"
+							},
+							"flow_rate": {
+								"value": 3.7,
+								"unit": "ml/min"
+							}
+						},
+						"touchoff": false
+					},
+					"head": 1
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_3",
+					"row": 0,
+					"col": 0
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_0",
+					"row": 7,
+					"col": 1
+				}
+			}
+		}, {
+			"kind": "parallel_transfer",
+			"channels": {
+				"0": {
+					"from": {
+						"loc": {
+							"deck_item_id": "ID_1",
+							"row": 0,
+							"col": 2
+						},
+						"new_content": {
+							"name": "water",
+							"total_volume": {
+								"value": 5017,
+								"unit": "ul"
+							}
+						}
+					},
+					"to": [{
+						"loc": {
+							"deck_item_id": "ID_2",
+							"row": 5,
+							"col": 0
+						},
+						"new_content": {
+							"name": "1 v/v water",
+							"total_volume": {
+								"value": 8,
+								"unit": "ul"
+							},
+							"components": [{
+								"name": "water",
+								"concentration": 1,
+								"unit": "v/v"
+							}]
+						}
+					}],
+					"volume": {
+						"value": 8,
+						"unit": "ul"
+					},
+					"wasted": {
+						"value": 0,
+						"unit": ""
+					},
+					"policy": "SingleChannel",
+					"asp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false
+					},
+					"dsp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false,
+						"blowout": {
+							"volume": {
+								"value": 50,
+								"unit": "ul"
+							},
+							"height": {
+								"value": 0,
+								"unit": "",
+								"reference": "well_bottom"
+							},
+							"flow_rate": {
+								"value": 3.7,
+								"unit": "ml/min"
+							}
+						},
+						"touchoff": false
+					},
+					"head": 1
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_3",
+					"row": 0,
+					"col": 0
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_0",
+					"row": 0,
+					"col": 2
+				}
+			}
+		}, {
+			"kind": "parallel_transfer",
+			"channels": {
+				"0": {
+					"from": {
+						"loc": {
+							"deck_item_id": "ID_1",
+							"row": 0,
+							"col": 0
+						},
+						"new_content": {
+							"name": "mastermix_sapI",
+							"total_volume": {
+								"value": 5017,
+								"unit": "ul"
+							}
+						}
+					},
+					"to": [{
+						"loc": {
+							"deck_item_id": "ID_2",
+							"row": 5,
+							"col": 0
+						},
+						"new_content": {
+							"name": "0.5 v/v mastermix_sapI+0.5 v/v water",
+							"total_volume": {
+								"value": 16,
+								"unit": "ul"
+							},
+							"components": [{
+								"name": "mastermix_sapI",
+								"concentration": 0.5,
+								"unit": "v/v"
+							}, {
+								"name": "water",
+								"concentration": 0.5,
+								"unit": "v/v"
+							}]
+						}
+					}],
+					"volume": {
+						"value": 8,
+						"unit": "ul"
+					},
+					"wasted": {
+						"value": 0,
+						"unit": ""
+					},
+					"policy": "SingleChannel",
+					"asp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false
+					},
+					"dsp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false,
+						"blowout": {
+							"volume": {
+								"value": 50,
+								"unit": "ul"
+							},
+							"height": {
+								"value": 0,
+								"unit": "",
+								"reference": "well_bottom"
+							},
+							"flow_rate": {
+								"value": 3.7,
+								"unit": "ml/min"
+							}
+						},
+						"touchoff": false
+					},
+					"head": 1
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_3",
+					"row": 0,
+					"col": 0
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_0",
+					"row": 1,
+					"col": 2
+				}
+			}
+		}, {
+			"kind": "parallel_transfer",
+			"channels": {
+				"0": {
+					"from": {
+						"loc": {
+							"deck_item_id": "ID_1",
+							"row": 0,
+							"col": 4
+						},
+						"new_content": {
+							"name": "dna",
+							"total_volume": {
+								"value": 5003,
+								"unit": "ul"
+							}
+						}
+					},
+					"to": [{
+						"loc": {
+							"deck_item_id": "ID_2",
+							"row": 5,
+							"col": 0
+						},
+						"new_content": {
+							"name": "0.0588 v/v dna+0.471 v/v mastermix_sapI+0.471 v/v water",
+							"total_volume": {
+								"value": 17,
+								"unit": "ul"
+							},
+							"components": [{
+								"name": "dna",
+								"concentration": 0.058823529411764705,
+								"unit": "v/v"
+							}, {
+								"name": "mastermix_sapI",
+								"concentration": 0.47058823529411764,
+								"unit": "v/v"
+							}, {
+								"name": "water",
+								"concentration": 0.47058823529411764,
+								"unit": "v/v"
+							}]
+						}
+					}],
+					"volume": {
+						"value": 1,
+						"unit": "ul"
+					},
+					"wasted": {
+						"value": 0,
+						"unit": ""
+					},
+					"policy": "SingleChannel",
+					"asp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false
+					},
+					"dsp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false,
+						"blowout": {
+							"volume": {
+								"value": 50,
+								"unit": "ul"
+							},
+							"height": {
+								"value": 0,
+								"unit": "",
+								"reference": "well_bottom"
+							},
+							"flow_rate": {
+								"value": 3.7,
+								"unit": "ml/min"
+							}
+						},
+						"touchoff": false
+					},
+					"head": 1
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_3",
+					"row": 0,
+					"col": 0
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_0",
+					"row": 2,
+					"col": 2
+				}
+			}
+		}, {
+			"kind": "parallel_transfer",
+			"channels": {
+				"0": {
+					"from": {
+						"loc": {
+							"deck_item_id": "ID_1",
+							"row": 0,
+							"col": 2
+						},
+						"new_content": {
+							"name": "water",
+							"total_volume": {
+								"value": 5008.5,
+								"unit": "ul"
+							}
+						}
+					},
+					"to": [{
+						"loc": {
+							"deck_item_id": "ID_2",
+							"row": 6,
+							"col": 0
+						},
+						"new_content": {
+							"name": "1 v/v water",
+							"total_volume": {
+								"value": 8,
+								"unit": "ul"
+							},
+							"components": [{
+								"name": "water",
+								"concentration": 1,
+								"unit": "v/v"
+							}]
+						}
+					}],
+					"volume": {
+						"value": 8,
+						"unit": "ul"
+					},
+					"wasted": {
+						"value": 0,
+						"unit": ""
+					},
+					"policy": "SingleChannel",
+					"asp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false
+					},
+					"dsp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false,
+						"blowout": {
+							"volume": {
+								"value": 50,
+								"unit": "ul"
+							},
+							"height": {
+								"value": 0,
+								"unit": "",
+								"reference": "well_bottom"
+							},
+							"flow_rate": {
+								"value": 3.7,
+								"unit": "ml/min"
+							}
+						},
+						"touchoff": false
+					},
+					"head": 1
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_3",
+					"row": 0,
+					"col": 0
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_0",
+					"row": 3,
+					"col": 2
+				}
+			}
+		}, {
+			"kind": "parallel_transfer",
+			"channels": {
+				"0": {
+					"from": {
+						"loc": {
+							"deck_item_id": "ID_1",
+							"row": 0,
+							"col": 0
+						},
+						"new_content": {
+							"name": "mastermix_sapI",
+							"total_volume": {
+								"value": 5008.5,
+								"unit": "ul"
+							}
+						}
+					},
+					"to": [{
+						"loc": {
+							"deck_item_id": "ID_2",
+							"row": 6,
+							"col": 0
+						},
+						"new_content": {
+							"name": "0.5 v/v mastermix_sapI+0.5 v/v water",
+							"total_volume": {
+								"value": 16,
+								"unit": "ul"
+							},
+							"components": [{
+								"name": "mastermix_sapI",
+								"concentration": 0.5,
+								"unit": "v/v"
+							}, {
+								"name": "water",
+								"concentration": 0.5,
+								"unit": "v/v"
+							}]
+						}
+					}],
+					"volume": {
+						"value": 8,
+						"unit": "ul"
+					},
+					"wasted": {
+						"value": 0,
+						"unit": ""
+					},
+					"policy": "SingleChannel",
+					"asp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false
+					},
+					"dsp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false,
+						"blowout": {
+							"volume": {
+								"value": 50,
+								"unit": "ul"
+							},
+							"height": {
+								"value": 0,
+								"unit": "",
+								"reference": "well_bottom"
+							},
+							"flow_rate": {
+								"value": 3.7,
+								"unit": "ml/min"
+							}
+						},
+						"touchoff": false
+					},
+					"head": 1
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_3",
+					"row": 0,
+					"col": 0
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_0",
+					"row": 4,
+					"col": 2
+				}
+			}
+		}, {
+			"kind": "parallel_transfer",
+			"channels": {
+				"0": {
+					"from": {
+						"loc": {
+							"deck_item_id": "ID_1",
+							"row": 0,
+							"col": 4
+						},
+						"new_content": {
+							"name": "dna",
+							"total_volume": {
+								"value": 5001.5,
+								"unit": "ul"
+							}
+						}
+					},
+					"to": [{
+						"loc": {
+							"deck_item_id": "ID_2",
+							"row": 6,
+							"col": 0
+						},
+						"new_content": {
+							"name": "0.0588 v/v dna+0.471 v/v mastermix_sapI+0.471 v/v water",
+							"total_volume": {
+								"value": 17,
+								"unit": "ul"
+							},
+							"components": [{
+								"name": "dna",
+								"concentration": 0.058823529411764705,
+								"unit": "v/v"
+							}, {
+								"name": "mastermix_sapI",
+								"concentration": 0.47058823529411764,
+								"unit": "v/v"
+							}, {
+								"name": "water",
+								"concentration": 0.47058823529411764,
+								"unit": "v/v"
+							}]
+						}
+					}],
+					"volume": {
+						"value": 1,
+						"unit": "ul"
+					},
+					"wasted": {
+						"value": 0,
+						"unit": ""
+					},
+					"policy": "SingleChannel",
+					"asp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false
+					},
+					"dsp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false,
+						"blowout": {
+							"volume": {
+								"value": 50,
+								"unit": "ul"
+							},
+							"height": {
+								"value": 0,
+								"unit": "",
+								"reference": "well_bottom"
+							},
+							"flow_rate": {
+								"value": 3.7,
+								"unit": "ml/min"
+							}
+						},
+						"touchoff": false
+					},
+					"head": 1
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_3",
+					"row": 0,
+					"col": 0
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_0",
+					"row": 5,
+					"col": 2
+				}
+			}
+		}, {
+			"kind": "parallel_transfer",
+			"channels": {
+				"0": {
+					"from": {
+						"loc": {
+							"deck_item_id": "ID_1",
+							"row": 0,
+							"col": 2
+						},
+						"new_content": {
+							"name": "water",
+							"total_volume": {
+								"value": 5000,
+								"unit": "ul"
+							}
+						}
+					},
+					"to": [{
+						"loc": {
+							"deck_item_id": "ID_2",
+							"row": 7,
+							"col": 0
+						},
+						"new_content": {
+							"name": "1 v/v water",
+							"total_volume": {
+								"value": 8,
+								"unit": "ul"
+							},
+							"components": [{
+								"name": "water",
+								"concentration": 1,
+								"unit": "v/v"
+							}]
+						}
+					}],
+					"volume": {
+						"value": 8,
+						"unit": "ul"
+					},
+					"wasted": {
+						"value": 0,
+						"unit": ""
+					},
+					"policy": "SingleChannel",
+					"asp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false
+					},
+					"dsp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false,
+						"blowout": {
+							"volume": {
+								"value": 50,
+								"unit": "ul"
+							},
+							"height": {
+								"value": 0,
+								"unit": "",
+								"reference": "well_bottom"
+							},
+							"flow_rate": {
+								"value": 3.7,
+								"unit": "ml/min"
+							}
+						},
+						"touchoff": false
+					},
+					"head": 1
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_3",
+					"row": 0,
+					"col": 0
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_0",
+					"row": 6,
+					"col": 2
+				}
+			}
+		}, {
+			"kind": "parallel_transfer",
+			"channels": {
+				"0": {
+					"from": {
+						"loc": {
+							"deck_item_id": "ID_1",
+							"row": 0,
+							"col": 0
+						},
+						"new_content": {
+							"name": "mastermix_sapI",
+							"total_volume": {
+								"value": 5000,
+								"unit": "ul"
+							}
+						}
+					},
+					"to": [{
+						"loc": {
+							"deck_item_id": "ID_2",
+							"row": 7,
+							"col": 0
+						},
+						"new_content": {
+							"name": "0.5 v/v mastermix_sapI+0.5 v/v water",
+							"total_volume": {
+								"value": 16,
+								"unit": "ul"
+							},
+							"components": [{
+								"name": "mastermix_sapI",
+								"concentration": 0.5,
+								"unit": "v/v"
+							}, {
+								"name": "water",
+								"concentration": 0.5,
+								"unit": "v/v"
+							}]
+						}
+					}],
+					"volume": {
+						"value": 8,
+						"unit": "ul"
+					},
+					"wasted": {
+						"value": 0,
+						"unit": ""
+					},
+					"policy": "SingleChannel",
+					"asp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false
+					},
+					"dsp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false,
+						"blowout": {
+							"volume": {
+								"value": 50,
+								"unit": "ul"
+							},
+							"height": {
+								"value": 0,
+								"unit": "",
+								"reference": "well_bottom"
+							},
+							"flow_rate": {
+								"value": 3.7,
+								"unit": "ml/min"
+							}
+						},
+						"touchoff": false
+					},
+					"head": 1
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_3",
+					"row": 0,
+					"col": 0
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_0",
+					"row": 7,
+					"col": 2
+				}
+			}
+		}, {
+			"kind": "parallel_transfer",
+			"channels": {
+				"0": {
+					"from": {
+						"loc": {
+							"deck_item_id": "ID_1",
+							"row": 0,
+							"col": 4
+						},
+						"new_content": {
+							"name": "dna",
+							"total_volume": {
+								"value": 5000,
+								"unit": "ul"
+							}
+						}
+					},
+					"to": [{
+						"loc": {
+							"deck_item_id": "ID_2",
+							"row": 7,
+							"col": 0
+						},
+						"new_content": {
+							"name": "0.0588 v/v dna+0.471 v/v mastermix_sapI+0.471 v/v water",
+							"total_volume": {
+								"value": 17,
+								"unit": "ul"
+							},
+							"components": [{
+								"name": "dna",
+								"concentration": 0.058823529411764705,
+								"unit": "v/v"
+							}, {
+								"name": "mastermix_sapI",
+								"concentration": 0.47058823529411764,
+								"unit": "v/v"
+							}, {
+								"name": "water",
+								"concentration": 0.47058823529411764,
+								"unit": "v/v"
+							}]
+						}
+					}],
+					"volume": {
+						"value": 1,
+						"unit": "ul"
+					},
+					"wasted": {
+						"value": 0,
+						"unit": ""
+					},
+					"policy": "SingleChannel",
+					"asp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false
+					},
+					"dsp": {
+						"height": {
+							"value": 0,
+							"unit": "",
+							"reference": "well_bottom"
+						},
+						"flow_rate": {
+							"value": 3.7,
+							"unit": "ml/min"
+						},
+						"liquid_level_follow": false,
+						"blowout": {
+							"volume": {
+								"value": 50,
+								"unit": "ul"
+							},
+							"height": {
+								"value": 0,
+								"unit": "",
+								"reference": "well_bottom"
+							},
+							"flow_rate": {
+								"value": 3.7,
+								"unit": "ml/min"
+							}
+						},
+						"touchoff": false
+					},
+					"head": 1
+				}
+			}
+		}, {
+			"kind": "load",
+			"head": 1,
+			"channels": {
+				"0": {
+					"deck_item_id": "ID_3",
+					"row": 0,
+					"col": 0
+				}
+			}
+		}]
+	}],
+	"version": "1.0"
+}

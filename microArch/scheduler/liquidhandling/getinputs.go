@@ -37,9 +37,9 @@ func (self *InputSolutions) String() string {
 	}
 	sort.Strings(allNames)
 
-	ret := []string{"InputSolutions: name, supplied, required, wanting"}
+	ret := []string{"name, supplied, required, wanting"}
 	for _, name := range allNames {
-		ret = append(ret, fmt.Sprintf("    %s, %v, %v, %v", name, self.VolumesSupplied[name], self.VolumesRequired[name], self.VolumesWanting[name]))
+		ret = append(ret, fmt.Sprintf("%s, %v, %v, %v", name, self.VolumesSupplied[name], self.VolumesRequired[name], self.VolumesWanting[name]))
 	}
 
 	return strings.Join(ret, "\n")

@@ -2,6 +2,7 @@ package wtype
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"reflect"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -208,7 +209,12 @@ func align(idGen *id.IDGenerator, want, got ComponentVector, independent, debug 
 	return m
 }
 
-const NotFoundError = "Not found"
+var NotFoundError = errors.New("not found")
+
+// IsNotFound returns true if the underlying error is NotFoundError
+func IsNotFound(err error) bool {
+	return errors.Cause(err) == NotFoundError
+}
 
 // matchComponents takes one bite each time... the best it can find
 // needs to be run repeatedly to pick everything up
@@ -217,7 +223,7 @@ func MatchComponents(idGen *id.IDGenerator, want, got ComponentVector, independe
 	match := align(idGen, want, got, independent, debug)
 
 	if match.Sc <= 0.0 {
-		return Match{}, fmt.Errorf(NotFoundError)
+		return Match{}, NotFoundError
 	}
 
 	return match, nil

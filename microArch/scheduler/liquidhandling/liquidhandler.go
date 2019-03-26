@@ -611,6 +611,11 @@ func (this *Liquidhandler) Plan(labEffects *effects.LaboratoryEffects, request *
 		return err
 	} else {
 		request.InputSolutions = inputSolutions
+		if request.Options.PrintInstructions {
+			// print out a summary of the input solutions
+			s := strings.Join(strings.Split(inputSolutions.String(), "\n"), "\n  ")
+			fmt.Printf("===================\n  Input Solutions\n-------------------\n  %s\n===================\n", s)
+		}
 	}
 
 	// define the input plates

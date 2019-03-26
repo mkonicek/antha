@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path"
 
 	webdav "github.com/studio-b12/gowebdav"
 )
@@ -92,6 +93,36 @@ type File struct {
 	IsDir bool
 }
 
+// dirsToFiles will walk through all sub directories of files and append the list of
+// files returned with files found in that sub directory and sub directories of that.
+func dirsToFiles(c *Client, files []*File) ([]*File, error) {
+	for _, f := range files {
+		if f.IsDir {
+			subDir := path.Join(f.Dir, f.Name)
+			fis, err := c.webdavClient.ReadDir(subDir)
+			if err != nil {
+				return nil, err
+			}
+			var subDirFiles []*File
+			for _, fi := range fis {
+				subDirFiles = append(subDirFiles, &File{
+					Name:  fi.Name(),
+					Dir:   subDir,
+					IsDir: fi.IsDir(),
+					Size:  fi.Size(),
+				})
+			}
+			// run recursively to expand any sub directories
+			subDirFiles, err = dirsToFiles(c, subDirFiles)
+			if err != nil {
+				return nil, err
+			}
+			files = append(files, subDirFiles...)
+		}
+	}
+	return files, nil
+}
+
 // ListFiles returns files for a job. If jobID is empty, list files for the
 // current job.
 func (c *Client) ListFiles(jobID JobID) ([]*File, error) {
@@ -106,6 +137,7 @@ func (c *Client) ListFiles(jobID JobID) ([]*File, error) {
 	}
 
 	var files []*File
+
 	for _, fi := range fis {
 		files = append(files, &File{
 			Name:  fi.Name(),
@@ -114,8 +146,7 @@ func (c *Client) ListFiles(jobID JobID) ([]*File, error) {
 			Size:  fi.Size(),
 		})
 	}
-
-	return files, err
+	return dirsToFiles(c, files)
 }
 
 // NewWriter returns a writer to the filename in the current job

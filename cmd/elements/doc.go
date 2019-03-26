@@ -8,6 +8,8 @@
 // Additionally, this package facilitates the testing of elements
 // through the usual `go test` mechanism, documented below.
 //
+// In all cases, log messages are produced on stderr.
+//
 // List
 //
 // The list subcommand lists elements in a structured way. This makes

@@ -9,19 +9,23 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"time"
 
 	"github.com/antha-lang/antha/workflow"
 )
 
 func (c *Composer) CompileWorkflow() error {
 	c.Logger.Log("progress", "compiling workflow")
+	genStart := time.Now()
 	if err := c.goGenerate(); err != nil {
 		return err
-	} else if err := c.goBuild(); err != nil {
-		return err
-	} else {
-		return c.cleanOutDir()
 	}
+	buildStart := time.Now()
+	if err := c.goBuild(); err != nil {
+		return err
+	}
+	c.Logger.Log("go_generate", buildStart.Sub(genStart), "go_build", time.Now().Sub(buildStart))
+	return c.cleanOutDir()
 }
 
 func (c *Composer) goGenerate() error {

@@ -43,7 +43,36 @@ func (m *Migrater) MigrateAll() error {
 		m.migrateElements(),
 		m.migrateConnections(),
 		m.migrateConfig(),
+		m.migrateTesting(),
 	}.Pack()
+}
+
+func (m *Migrater) migrateTesting() error {
+	if len(m.Old.testOpt.Results.MixTaskResults) == 0 {
+		return nil
+	}
+
+	mixChecks := make([]workflow.MixTaskCheck, 0, len(m.Old.testOpt.Results.MixTaskResults))
+
+	for _, check := range m.Old.testOpt.Results.MixTaskResults {
+
+		instructions, err := json.Marshal(check.Instructions)
+		if err != nil {
+			return err
+		}
+
+		mixChecks = append(mixChecks, workflow.MixTaskCheck{
+			Instructions: json.RawMessage(instructions),
+			Outputs:      check.Outputs,
+			TimeEstimate: check.TimeEstimate,
+		})
+	}
+
+	m.Cur.Testing = &workflow.Testing{
+		MixTaskChecks: mixChecks,
+	}
+
+	return nil
 }
 
 func (m *Migrater) migrateConfig() error {

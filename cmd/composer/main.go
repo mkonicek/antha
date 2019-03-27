@@ -31,14 +31,15 @@ func main() {
 		logger.Fatal(err)
 	} else if err := wf.Validate(); err != nil {
 		logger.Fatal(err)
-	} else if comp, err := composer.NewComposer(logger, wf, inDir, outDir, keep, run, linkedDrivers); err != nil {
+	} else if cb, err := composer.NewComposerBase(logger, inDir, outDir); err != nil {
 		logger.Fatal(err)
 	} else {
-		defer comp.CloseLogs()
-		if err := comp.ComposeAndRun(); err != nil {
-			logger.Fatal(err)
-		} else {
+		err := cb.ComposeMainAndRun(wf, keep, run, linkedDrivers)
+		defer cb.CloseLogs()
+		if err == nil {
 			logger.Log("progress", "complete")
+		} else {
+			logger.Fatal(err)
 		}
 	}
 }

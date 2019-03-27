@@ -38,8 +38,8 @@ func (tet TranspilableElementType) IsAnthaElement() bool {
 
 // This only works based on the elements already having been cloned to
 // the c.OutDir. I.e. this does not work Repositories (eg git etc)
-func (tet *TranspilableElementType) TranspileFromFS(c *Composer) error {
-	baseDir := filepath.Join(c.OutDir, "src", filepath.FromSlash(tet.ImportPath()))
+func (tet *TranspilableElementType) TranspileFromFS(cb *ComposerBase, wf *workflow.Workflow) error {
+	baseDir := filepath.Join(cb.OutDir, "src", filepath.FromSlash(tet.ImportPath()))
 
 	anthaFound := false
 	anthaFiles := compile.NewAnthaFiles()
@@ -50,7 +50,7 @@ func (tet *TranspilableElementType) TranspileFromFS(c *Composer) error {
 			return fmt.Errorf("Multiple .an files found in %v", baseDir)
 		}
 		anthaFound = true
-		c.Logger.Log("transpiling", tet.ImportPath())
+		cb.Logger.Log("transpiling", tet.ImportPath())
 		if elemBs, err := ioutil.ReadFile(p); err != nil {
 			return err
 		} else if metaBs, err := ioutil.ReadFile(filepath.Join(filepath.Dir(p), "metadata.json")); err != nil && !os.IsNotExist(err) {
@@ -59,7 +59,7 @@ func (tet *TranspilableElementType) TranspileFromFS(c *Composer) error {
 			return err
 		} else {
 			for _, ipt := range antha.ImportReqs {
-				if err := tet.maybeRewriteImport(c, ipt); err != nil {
+				if err := tet.maybeRewriteImport(cb, wf, ipt); err != nil {
 					return err
 				}
 			}
@@ -92,13 +92,13 @@ func (tet *TranspilableElementType) EnsureTranspiler(path string, elemBs, metaBs
 	return tet.Transpiler, nil
 }
 
-func (tet *TranspilableElementType) maybeRewriteImport(c *Composer, ipt *compile.ImportReq) error {
+func (tet *TranspilableElementType) maybeRewriteImport(cb *ComposerBase, wf *workflow.Workflow, ipt *compile.ImportReq) error {
 	// we don't expect imports inside antha files to have revisions
 	// within them (or specify repositories in any non-standard way). So, the strategy is:
 	// 1. Look for longest matching repo and use that
 	// 2. Otherwise (and this is most likely), it's not an import we should be rewriting.
 
-	repoName, repo := c.Workflow.Repositories.LongestMatching(ipt.Path)
+	repoName, repo := wf.Repositories.LongestMatching(ipt.Path)
 	if repo == nil {
 		return nil // (2)
 	}
@@ -107,7 +107,7 @@ func (tet *TranspilableElementType) maybeRewriteImport(c *Composer, ipt *compile
 		ElementPath:    workflow.ElementPath(strings.TrimPrefix(ipt.Path, string(repoName))),
 	})
 	ipt.Path = tet2.ImportPath()
-	c.EnsureElementType(tet2)
+	cb.ensureElementType(tet2)
 
 	return nil
 }

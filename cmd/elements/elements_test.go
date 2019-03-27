@@ -59,12 +59,12 @@ func TestElements(t *testing.T) {
 }
 
 func compileElements(t *testing.T, l *logger.Logger, inDir, outDir string, wf *workflow.Workflow) {
-	if comp, err := composer.NewComposer(l, wf, inDir, outDir, true, false, false); err != nil {
-		t.Fatal(err) //                                                ^^ keep is set to true because we need the source for go test
+	if cb, err := composer.NewComposerBase(l, inDir, outDir); err != nil {
+		t.Fatal(err)
 	} else {
-		defer comp.CloseLogs()
-		if err := comp.ComposeAndRun(); err != nil {
-			t.Fatal(err)
+		defer cb.CloseLogs()
+		if err := cb.ComposeMainAndRun(wf, true, false, false); err != nil {
+			t.Fatal(err) //                 ^^ keep is true because we need the source for go test
 		}
 	}
 }
@@ -124,18 +124,16 @@ func runBundle(t *testing.T, l *logger.Logger, wf *workflow.Workflow, bundleName
 		t.Fatal(err)
 	} else {
 		l.Log("bundle", bundleName, "outdir", outDir)
-		//                                                                                                keep and run and linkedDrivers
-		if comp, err := composer.NewComposer(l, wf, filepath.Join(outDir, "src", filepath.Dir(bundleName)), outDir, true, true, true); err != nil {
+		if cb, err := composer.NewComposerBase(l, filepath.Join(outDir, "src", filepath.Dir(bundleName)), outDir); err != nil {
+			t.Fatal(err)
+		} else if err := cb.ComposeMainAndRun(wf, true, true, true); err != nil {
+			//                                     keep and run and linkedDrivers
+			cb.CloseLogs()
 			t.Fatal(err)
 		} else {
-			if err := comp.ComposeAndRun(); err != nil {
-				comp.CloseLogs()
+			cb.CloseLogs()
+			if err := os.RemoveAll(outDir); err != nil { // tidy up iff the test was successful to avoid exhausting disk space!
 				t.Fatal(err)
-			} else {
-				comp.CloseLogs()
-				if err := os.RemoveAll(outDir); err != nil { // tidy up iff the test was successful to avoid exhausting disk space!
-					t.Fatal(err)
-				}
 			}
 		}
 	}

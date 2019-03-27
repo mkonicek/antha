@@ -28,7 +28,7 @@
 //        workflow.json # the merged and validated workflow
 //    logs.txt # logs from the composer only
 //    bin/
-//      jobId # the compiled binary for the whole workflow (result of compiling main.go)
+//      workflow # the compiled binary for the whole workflow (result of compiling main.go)
 //      drivers/
 //        driverId # binary instruction plugin (iff go:// or file:// Connection string in driver config)
 //

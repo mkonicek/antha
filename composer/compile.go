@@ -14,40 +14,40 @@ import (
 	"github.com/antha-lang/antha/workflow"
 )
 
-func (c *Composer) CompileWorkflow() error {
-	c.Logger.Log("progress", "compiling workflow")
+func (mc *mainComposer) compileWorkflow() error {
+	mc.Logger.Log("progress", "compiling workflow")
 	genStart := time.Now()
-	if err := c.goGenerate(); err != nil {
+	if err := mc.goGenerate(); err != nil {
 		return err
 	}
 	buildStart := time.Now()
-	if err := c.goBuild(); err != nil {
+	if err := mc.goBuild(); err != nil {
 		return err
 	}
-	c.Logger.Log("go_generate", buildStart.Sub(genStart), "go_build", time.Now().Sub(buildStart))
-	return c.cleanOutDir()
+	mc.Logger.Log("go_generate", buildStart.Sub(genStart), "go_build", time.Now().Sub(buildStart))
+	return mc.cleanOutDir()
 }
 
-func (c *Composer) goGenerate() error {
+func (mc *mainComposer) goGenerate() error {
 	cmd := exec.Command("go", "generate", "-x")
-	cmd.Dir = filepath.Join(c.OutDir, "workflow")
+	cmd.Dir = filepath.Join(mc.OutDir, "workflow")
 
-	return RunAndLogCommand(cmd, c.Logger.With("cmd", "generate").Log)
+	return RunAndLogCommand(cmd, mc.Logger.With("cmd", "generate").Log)
 }
 
-func (c *Composer) goBuild() error {
-	outBin := filepath.Join(c.OutDir, "bin", string(c.Workflow.JobId))
+func (mc *mainComposer) goBuild() error {
+	outBin := filepath.Join(mc.OutDir, "bin", "workflow")
 	cmd := exec.Command("go", "build", "-o", outBin)
-	if c.LinkedDrivers {
+	if mc.LinkedDrivers {
 		cmd.Args = append(cmd.Args, "-tags", "linkedDrivers protobuf")
 	}
-	cmd.Dir = filepath.Join(c.OutDir, "workflow")
-	cmd.Env = SetEnvGoPath(os.Environ(), c.OutDir)
+	cmd.Dir = filepath.Join(mc.OutDir, "workflow")
+	cmd.Env = SetEnvGoPath(os.Environ(), mc.OutDir)
 
-	if err := RunAndLogCommand(cmd, c.Logger.With("cmd", "build").Log); err != nil {
+	if err := RunAndLogCommand(cmd, mc.Logger.With("cmd", "build").Log); err != nil {
 		return err
 	} else {
-		c.Logger.Log("compilation", "successful", "binary", outBin)
+		mc.Logger.Log("compilation", "successful", "binary", outBin)
 		return nil
 	}
 }
@@ -63,32 +63,32 @@ func SetEnvGoPath(env []string, outDir string) []string {
 	return env
 }
 
-func (c *Composer) cleanOutDir() error {
-	if c.Keep {
-		c.Logger.Log("msg", "-keep set; not cleaning up", "path", c.OutDir)
+func (mc *mainComposer) cleanOutDir() error {
+	if mc.Keep {
+		mc.Logger.Log("msg", "-keep set; not cleaning up", "path", mc.OutDir)
 		return nil
 	}
 	for _, leaf := range []string{"src", "workflow"} {
-		if err := os.RemoveAll(filepath.Join(c.OutDir, leaf)); err != nil {
+		if err := os.RemoveAll(filepath.Join(mc.OutDir, leaf)); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (c *Composer) RunWorkflow() error {
-	if !c.Run {
-		c.Logger.Log("msg", "running workflow disabled by flags")
+func (mc *mainComposer) runWorkflow() error {
+	if !mc.Run {
+		mc.Logger.Log("msg", "running workflow disabled by flags")
 		return nil
 	}
 
-	runOutDir, err := ioutil.TempDir(c.OutDir, fmt.Sprintf("antha-run-%s", c.Workflow.JobId))
+	runOutDir, err := ioutil.TempDir(mc.OutDir, "antha-run")
 	if err != nil {
 		return err
 	}
-	c.Logger.Log("progress", "running compiled workflow", "outdir", runOutDir, "indir", c.InDir)
-	outBin := filepath.Join(c.OutDir, "bin", string(c.Workflow.JobId))
-	cmd := exec.Command(outBin, "-outdir", runOutDir, "-indir", c.InDir)
+	mc.Logger.Log("progress", "running compiled workflow", "outdir", runOutDir, "indir", mc.InDir)
+	outBin := filepath.Join(mc.OutDir, "bin", "workflow")
+	cmd := exec.Command(outBin, "-outdir", runOutDir, "-indir", mc.InDir)
 	cmd.Env = []string{}
 
 	// the workflow uses a proper logger these days so we don't need to do any wrapping
@@ -100,7 +100,7 @@ func (c *Composer) RunWorkflow() error {
 	return RunAndLogCommand(cmd, logFunc)
 }
 
-func (c *Composer) PrepareDrivers() error {
+func (cb *ComposerBase) prepareDrivers(cfg *workflow.Config) error {
 	// Here, if we're meant to compile something, we attempt that, on
 	// the basis that when we come to run the workflow itself, we may
 	// not have the necessary sources around or build environment.  If
@@ -110,32 +110,32 @@ func (c *Composer) PrepareDrivers() error {
 	// when we come to workflow execution.
 	conns := make(map[workflow.DeviceInstanceID]*workflow.ParsedConnection)
 
-	for id, cfg := range c.Workflow.Config.GilsonPipetMax.Devices {
+	for id, cfg := range cfg.GilsonPipetMax.Devices {
 		conns[id] = &cfg.ParsedConnection
 	}
-	for id, cfg := range c.Workflow.Config.Tecan.Devices {
+	for id, cfg := range cfg.Tecan.Devices {
 		conns[id] = &cfg.ParsedConnection
 	}
-	for id, cfg := range c.Workflow.Config.CyBio.Devices {
+	for id, cfg := range cfg.CyBio.Devices {
 		conns[id] = &cfg.ParsedConnection
 	}
-	for id, cfg := range c.Workflow.Config.Labcyte.Devices {
+	for id, cfg := range cfg.Labcyte.Devices {
 		conns[id] = &cfg.ParsedConnection
 	}
-	for id, cfg := range c.Workflow.Config.Hamilton.Devices {
+	for id, cfg := range cfg.Hamilton.Devices {
 		conns[id] = &cfg.ParsedConnection
 	}
 
 	for id, cfg := range conns {
-		outBin := filepath.Join(c.OutDir, "bin", "drivers", string(id))
+		outBin := filepath.Join(cb.OutDir, "bin", "drivers", string(id))
 		if err := os.MkdirAll(filepath.Dir(outBin), 0700); err != nil {
 			return err
 
 		} else if cfg.CompileAndRun != "" {
-			c.Logger.Log("instructionPlugin", string(id), "building", cfg.CompileAndRun)
+			cb.Logger.Log("instructionPlugin", string(id), "building", cfg.CompileAndRun)
 			cmd := exec.Command("go", "build", "-o", outBin, cfg.CompileAndRun)
 			cmd.Dir = filepath.Dir(outBin)
-			if err := RunAndLogCommand(cmd, c.Logger.With("cmd", "build", "instructionPlugin", string(id)).Log); err != nil {
+			if err := RunAndLogCommand(cmd, cb.Logger.With("cmd", "build", "instructionPlugin", string(id)).Log); err != nil {
 				return err
 			}
 			cfg.ExecFile = outBin

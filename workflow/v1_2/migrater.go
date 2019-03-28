@@ -217,7 +217,9 @@ func (m *Migrater) migrateConnections() error {
 }
 
 func (m *Migrater) migrateJobIdAndMeta() error {
-	m.Cur.JobId = workflow.JobId(m.Old.Properties.Name)
+	if m.Old.Properties.Name != "" {
+		m.Cur.JobId = workflow.JobId(m.Old.Properties.Name)
+	}
 	if desc := m.Old.Properties.Description; desc != "" {
 		m.Cur.Meta.Rest["Description"] = desc
 	}
@@ -259,7 +261,7 @@ func (m *Migrater) ValidateCur() error {
 
 // ValidateOld checks that the workflow supplied as input is of the correct version
 func (m *Migrater) ValidateOld() error {
-	if m.Old.Version != "1.2.0" {
+	if !(m.Old.Version == "1.2.0" || m.Old.Version == "") {
 		return fmt.Errorf("Unexpected version '%s'", m.Old.Version)
 	}
 	return nil

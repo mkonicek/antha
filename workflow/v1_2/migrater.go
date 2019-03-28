@@ -4,8 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/laboratory/effects"
 
 	"github.com/antha-lang/antha/logger"
 	"github.com/antha-lang/antha/utils"
@@ -18,21 +22,43 @@ type Migrater struct {
 	Cur          *workflow.Workflow
 	Old          *workflowv1_2
 	GilsonDevice string // The name of a gilson device to create
+	OutDir       string
+	FileManager  *effects.FileManager
 }
 
 // NewMigrater creates a new migration object.
-func NewMigrater(logger *logger.Logger, merges []string, migrate string, gilsonDevice string) (*Migrater, error) {
-	owf, cwf, err := readWorkflows(migrate, merges)
-
+func NewMigrater(logger *logger.Logger, mergePaths []string, migratePath, outDir string, gilsonDevice string) (*Migrater, error) {
+	owf, cwf, err := readWorkflows(migratePath, mergePaths)
 	if err != nil {
 		return nil, err
 	}
+
+	if outDir == "" {
+		if outDir, err = ioutil.TempDir("", "antha-migrater"); err != nil {
+			return nil, err
+		}
+	}
+	for _, leaf := range []string{"workflow", "data"} {
+		if err := os.MkdirAll(filepath.Join(outDir, leaf), 0700); err != nil {
+			return nil, err
+		}
+	}
+
+	dataDir := filepath.Join(outDir, "data")
+	fm, err := effects.NewFileManager(dataDir, dataDir)
+	if err != nil {
+		return nil, err
+	}
+
+	logger.Log("outdir", outDir)
 
 	return &Migrater{
 		Logger:       logger,
 		Cur:          cwf,
 		Old:          owf,
 		GilsonDevice: gilsonDevice,
+		OutDir:       outDir,
+		FileManager:  fm,
 	}, nil
 }
 
@@ -45,6 +71,11 @@ func (m *Migrater) MigrateAll() error {
 		m.migrateConfig(),
 		m.migrateTesting(),
 	}.Pack()
+}
+
+func (m *Migrater) SaveCur() error {
+	p := filepath.Join(m.OutDir, "workflow", "workflow.json")
+	return m.Cur.WriteToFile(p, true)
 }
 
 func (m *Migrater) migrateTesting() error {
@@ -146,7 +177,7 @@ func (m *Migrater) migrateElements() error {
 func (m *Migrater) migrateElementInstances() error {
 	for k := range m.Old.Processes {
 		name := workflow.ElementInstanceName(k)
-		ei, err := m.Old.MigrateElement(k)
+		ei, err := m.Old.MigrateElement(m.FileManager, k)
 		if err != nil {
 			return err
 		}

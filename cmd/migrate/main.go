@@ -11,9 +11,9 @@ import (
 func main() {
 	flag.Usage = workflow.NewFlagUsage(nil, "Migrate workflow to latest schema version")
 
-	var fromFile, toFile, gilsonDevice string
+	var fromFile, outDir, gilsonDevice string
 	var validate bool
-	flag.StringVar(&toFile, "to", "", "File to write to (default: will write to stdout)")
+	flag.StringVar(&outDir, "outdir", "", "Directory to write to (default: a temporary directory will be created)")
 	flag.StringVar(&fromFile, "from", "", "File to migrate from (default: will be read from stdin)")
 	flag.StringVar(&gilsonDevice, "gilson-device", "", "A gilson device name to use for migrated config. If not present, device specific configuration will not be migrated.")
 	flag.BoolVar(&validate, "validate", true, "Validate input and output files.")
@@ -21,7 +21,7 @@ func main() {
 
 	logger := logger.NewLogger()
 
-	m, err := v1_2.NewMigrater(logger, flag.Args(), fromFile, gilsonDevice)
+	m, err := v1_2.NewMigrater(logger, flag.Args(), fromFile, outDir, gilsonDevice)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -46,7 +46,8 @@ func main() {
 		}
 	}
 
-	if err := m.Cur.WriteToFile(toFile, true); err != nil {
+	if err := m.SaveCur(); err != nil {
 		logger.Fatal(err)
 	}
+	m.FileManager.SummarizeWritten(logger)
 }

@@ -5,15 +5,28 @@
 // accept version=1.2 workflow files as inputs, and will produce
 // SchemaVersion=2.0 workflows.
 //
+// The version=1.2 format is deficient in that it does not contain
+// enough information for workflow to be repeatedly executed. Thus
+// when migrating, you are required to provide additional information
+// (particularly Repositories) in the SchemaVersion=2.0 format which
+// is then combined with the old workflow to create a workflow.
+//
 // The following flags are available:
 //
 //  -from=path/to/file.json
 //    The workflow to migrate. If not provided, the command reads from
 //    stdin.
 //
-//  -to=path/to/file.json
-//    The file to write the migrated workflow to. If not provided, the
-//    command writes to stdout.
+//  -outdir=path/to/directory
+//    A directory to write the results to. In SchemaVersion=2.0, the
+//    workflow.json itself cannot contain file content. Thus a
+//    directory must be provided so that file content that was within
+//    the old workflow can be extracted and written out. The new
+//    workflow is written to directory/workflow/workflow.json, and any
+//    file contents are written to directory/data/. The new workflow
+//    will contain references to any extracted files, and the
+//    directory layout matches the requirements of the composer -indir
+//    flag. If not provided, a fresh temporary directory is used.
 //
 //  -validate=true (default: true)
 //    Whether or not to attempt to validate the migrated workflow. In
@@ -36,6 +49,9 @@
 // Repositories such that every element instance in the input
 // historical workflow (version=1.2) can be located within one of the
 // Repositories. If this is not possible then migration will fail.
+//
+// Example:
+//   migrate -from=path/to/old.json myRepositories.json
 //
 // Log messages are produced on stderr.
 package main

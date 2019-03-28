@@ -27,6 +27,7 @@ func describe(l *logger.Logger, args []string) error {
 		fmtStr = `%v
 %sRepositoryName: %v
 %sElementPath: %v
+%sTags: %v
 %sDescription:
 %v
 %sPorts:
@@ -135,6 +136,7 @@ func describe(l *logger.Logger, args []string) error {
 						et.Name(),
 						indent, et.RepositoryName,
 						indent, et.ElementPath,
+						indent, strings.Join(meta.Tags, ", "),
 						indent, desc,
 						indent,
 						indent2, inputs,

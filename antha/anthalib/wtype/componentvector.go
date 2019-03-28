@@ -14,6 +14,21 @@ func (cv ComponentVector) String() string {
 	return s
 }
 
+// Map return a new componentvector which is the result calling each function in maps sequentially on
+// each element
+func (cv ComponentVector) Map(maps ...func(*Liquid) *Liquid) ComponentVector {
+	ret := make(ComponentVector, len(cv))
+
+	for i := range cv {
+		ret[i] = cv[i]
+		for _, m := range maps {
+			ret[i] = m(ret[i])
+		}
+	}
+
+	return ret
+}
+
 // Filter returns the subset of the liquids in cv for which every filter returns true
 // does not guarantee to call every filter on every liquid
 func (cv ComponentVector) Filter(filters ...func(*Liquid) bool) ComponentVector {

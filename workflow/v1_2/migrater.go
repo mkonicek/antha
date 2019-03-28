@@ -43,7 +43,36 @@ func (m *Migrater) MigrateAll() error {
 		m.migrateElements(),
 		m.migrateConnections(),
 		m.migrateConfig(),
+		m.migrateTesting(),
 	}.Pack()
+}
+
+func (m *Migrater) migrateTesting() error {
+	if len(m.Old.testOpt.Results.MixTaskResults) == 0 {
+		return nil
+	}
+
+	mixChecks := make([]workflow.MixTaskCheck, 0, len(m.Old.testOpt.Results.MixTaskResults))
+
+	for _, check := range m.Old.testOpt.Results.MixTaskResults {
+
+		instructions, err := json.Marshal(check.Instructions)
+		if err != nil {
+			return err
+		}
+
+		mixChecks = append(mixChecks, workflow.MixTaskCheck{
+			Instructions: json.RawMessage(instructions),
+			Outputs:      check.Outputs,
+			TimeEstimate: check.TimeEstimate,
+		})
+	}
+
+	m.Cur.Testing = &workflow.Testing{
+		MixTaskChecks: mixChecks,
+	}
+
+	return nil
 }
 
 func (m *Migrater) migrateConfig() error {
@@ -188,7 +217,9 @@ func (m *Migrater) migrateConnections() error {
 }
 
 func (m *Migrater) migrateJobIdAndMeta() error {
-	m.Cur.JobId = workflow.JobId(m.Old.Properties.Name)
+	if m.Old.Properties.Name != "" {
+		m.Cur.JobId = workflow.JobId(m.Old.Properties.Name)
+	}
 	if desc := m.Old.Properties.Description; desc != "" {
 		m.Cur.Meta.Rest["Description"] = desc
 	}
@@ -230,7 +261,7 @@ func (m *Migrater) ValidateCur() error {
 
 // ValidateOld checks that the workflow supplied as input is of the correct version
 func (m *Migrater) ValidateOld() error {
-	if m.Old.Version != "1.2.0" {
+	if !(m.Old.Version == "1.2.0" || m.Old.Version == "") {
 		return fmt.Errorf("Unexpected version '%s'", m.Old.Version)
 	}
 	return nil

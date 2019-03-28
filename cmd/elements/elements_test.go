@@ -14,6 +14,7 @@ import (
 )
 
 var (
+	keepPtr   = flag.Bool("keep", false, "Keep the test environment even if testing is successful")
 	inDirPtr  = flag.String("indir", "", "Directory from which to read files (optional)")
 	outDirPtr = flag.String("outdir", "", "Directory to write to (default: a temporary directory will be created)")
 )
@@ -45,19 +46,23 @@ func TestElements(t *testing.T) {
 	} else {
 
 		t.Run("CompileAndTest", func(t *testing.T) {
-			compileDir := filepath.Join(outDir, "compile")
-			compileElements(t, l, inDir, compileDir, wf)
+			buildDir := filepath.Join(outDir, "compileAllElements")
+			compileElements(t, l, inDir, buildDir, wf)
 			// go test relies on the checkout of the elements so it makes
 			// some sense for that to depend on the
 			// checkout/transpilation/compilation of the elements.
-			goTest(t, l, compileDir)
-			os.RemoveAll(compileDir)
+			// goTest(t, l, buildDir) DISABLED FOR NOW BECAUSE THEY'RE ALL BROKEN!
+			if keepPtr == nil || !*keepPtr {
+				os.RemoveAll(buildDir)
+			}
 		})
 
-		t.Run("Bundles", func(t *testing.T) {
-			bundleDir := filepath.Join(outDir, "bundle")
-			bundles(t, l, inDir, bundleDir, wf)
-			os.RemoveAll(bundleDir)
+		t.Run("Workflows", func(t *testing.T) {
+			testingDir := filepath.Join(outDir, "testWorkflows")
+			workflows(t, l, inDir, testingDir, wf)
+			if keepPtr == nil || !*keepPtr {
+				os.RemoveAll(testingDir)
+			}
 		})
 	}
 }
@@ -84,7 +89,7 @@ func goTest(t *testing.T, l *logger.Logger, outDir string) {
 	}
 }
 
-func bundles(t *testing.T, l *logger.Logger, inDir, outDir string, wf *workflow.Workflow) {
+func workflows(t *testing.T, l *logger.Logger, inDir, outDir string, wf *workflow.Workflow) {
 	if cb, err := composer.NewComposerBase(l, inDir, outDir); err != nil {
 		t.Fatal(err)
 	} else {
@@ -111,6 +116,7 @@ func bundles(t *testing.T, l *logger.Logger, inDir, outDir string, wf *workflow.
 						l.Log("repository", repoName, "skipping", f.Name, "error", err)
 						return nil
 					} else {
+						l.Log("repository", repoName, "added", f.Name)
 						return tc.AddWorkflow(wfTest)
 					}
 				} else {

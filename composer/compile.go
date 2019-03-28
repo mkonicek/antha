@@ -55,7 +55,7 @@ func (mc *mainComposer) goBuild() error {
 func (tc *testComposer) goTest() error {
 	cmd := exec.Command("go", "test", "-v")
 	if tc.LinkedDrivers {
-		cmd.Args = append(cmd.Args, "-tags", "linkedDrivers")
+		cmd.Args = append(cmd.Args, "-tags", "linkedDrivers", "-args", "-outdir", filepath.Join(tc.OutDir, "test"))
 	}
 	cmd.Dir = filepath.Join(tc.OutDir, "workflow")
 	cmd.Env = SetEnvGoPath(os.Environ(), tc.OutDir)

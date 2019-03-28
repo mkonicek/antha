@@ -39,9 +39,10 @@ type LaboratoryBuilder struct {
 	outDir   string
 	workflow *workflow.Workflow
 
-	elemLock   sync.Mutex
-	elemsUnrun int64
-	elements   map[Element]*ElementBase
+	elemLock      sync.Mutex
+	elemsUnrun    int64
+	elements      map[Element]*ElementBase
+	nextElementId uint64
 
 	// This lock is here to serialize access to errors (append and
 	// Pack()), and to avoid races around closing Errored chan
@@ -259,7 +260,7 @@ type ElementInstaller interface {
 }
 
 func (labBuild *LaboratoryBuilder) InstallElement(e Element) {
-	eb := NewElementBase(e)
+	eb := labBuild.NewElementBase(e)
 	labBuild.elemLock.Lock()
 	defer labBuild.elemLock.Unlock()
 	labBuild.elements[e] = eb
@@ -293,8 +294,8 @@ func (labBuild *LaboratoryBuilder) RunElements() error {
 		for _, eb := range labBuild.elements {
 			eb.AddOnExit(labBuild.elementCompleted)
 		}
-		for e, eb := range labBuild.elements {
-			go eb.Run(labBuild.makeLab(e, labBuild.Logger))
+		for _, eb := range labBuild.elements {
+			go eb.Run(labBuild.makeLab(eb, labBuild.Logger))
 		}
 		labBuild.elemLock.Unlock()
 		<-labBuild.Completed
@@ -342,11 +343,12 @@ type Laboratory struct {
 	*effects.LaboratoryEffects
 }
 
-func (labBuild *LaboratoryBuilder) makeLab(e Element, logger *logger.Logger) *Laboratory {
+func (labBuild *LaboratoryBuilder) makeLab(eb *ElementBase, logger *logger.Logger) *Laboratory {
+	e := eb.element
 	return &Laboratory{
 		labBuild:          labBuild,
 		element:           e,
-		Logger:            logger.With("name", e.Name(), "type", e.TypeName()),
+		Logger:            logger.With("id", eb.id, "name", e.Name(), "type", e.TypeName()),
 		LaboratoryEffects: labBuild.effects,
 	}
 }
@@ -357,7 +359,7 @@ func (lab *Laboratory) InstallElement(e Element) {
 
 // Only for use when you're in an element and want to call another element.
 func (lab *Laboratory) CallSteps(e Element) error {
-	eb := NewElementBase(e)
+	eb := lab.labBuild.NewElementBase(e)
 
 	finished := make(chan struct{})
 	eb.AddOnExit(func() { close(finished) })
@@ -365,7 +367,7 @@ func (lab *Laboratory) CallSteps(e Element) error {
 
 	// take the root logger (from labBuild) and build up from there.
 	logger := lab.labBuild.Logger.With("parentName", lab.element.Name(), "parentType", lab.element.TypeName())
-	go eb.Run(lab.labBuild.makeLab(e, logger), eb.element.Steps)
+	go eb.Run(lab.labBuild.makeLab(eb, logger), eb.element.Steps)
 	<-finished
 
 	select {
@@ -387,6 +389,8 @@ func (lab *Laboratory) errorf(fmtStr string, args ...interface{}) {
 
 // ElementBase
 type ElementBase struct {
+	// every element has a unique id to ensure we don't collide on names.
+	id uint64
 	// count of inputs that are not yet ready (plus 1)
 	pendingCount int64
 	// this gets closed when all inputs become ready
@@ -397,8 +401,9 @@ type ElementBase struct {
 	element Element
 }
 
-func NewElementBase(e Element) *ElementBase {
+func (labBuild *LaboratoryBuilder) NewElementBase(e Element) *ElementBase {
 	return &ElementBase{
+		id:           atomic.AddUint64(&labBuild.nextElementId, 1),
 		pendingCount: 1,
 		InputsReady:  make(chan struct{}),
 		element:      e,
@@ -458,7 +463,7 @@ func (eb *ElementBase) Completed(lab *Laboratory) {
 }
 
 func (eb *ElementBase) Save(lab *Laboratory) error {
-	p := filepath.Join(lab.labBuild.outDir, "elements", fmt.Sprintf("%s.json", eb.element.Name()))
+	p := filepath.Join(lab.labBuild.outDir, "elements", fmt.Sprintf("%d_%s.json", eb.id, eb.element.Name()))
 	if fh, err := os.OpenFile(p, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0400); err != nil {
 		return err
 	} else {

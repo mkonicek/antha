@@ -359,7 +359,13 @@ func (lab *Laboratory) InstallElement(e Element) {
 
 // Only for use when you're in an element and want to call another element.
 func (lab *Laboratory) CallSteps(e Element) error {
-	eb := lab.labBuild.NewElementBase(e)
+	// it should already be in the map because the element constructor
+	// will have called through to InstallElement which would have
+	// added it.
+	eb, found := lab.labBuild.elements[e]
+	if !found {
+		return fmt.Errorf("CallSteps called on unknown element '%s'", e.Name())
+	}
 
 	finished := make(chan struct{})
 	eb.AddOnExit(func() { close(finished) })

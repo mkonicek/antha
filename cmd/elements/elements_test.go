@@ -44,17 +44,21 @@ func TestElements(t *testing.T) {
 		t.Fatal(err)
 	} else {
 
-		// compileDir must be shared between CompileElements and GoTest, and must be distinct from bundleDir:
-		compileDir := filepath.Join(outDir, "compile")
-		bundleDir := filepath.Join(outDir, "bundle")
 		t.Run("CompileAndTest", func(t *testing.T) {
+			compileDir := filepath.Join(outDir, "compile")
 			compileElements(t, l, inDir, compileDir, wf)
 			// go test relies on the checkout of the elements so it makes
 			// some sense for that to depend on the
 			// checkout/transpilation/compilation of the elements.
 			goTest(t, l, compileDir)
+			os.RemoveAll(compileDir)
 		})
-		t.Run("Bundles", func(t *testing.T) { bundles(t, l, inDir, bundleDir, wf) })
+
+		t.Run("Bundles", func(t *testing.T) {
+			bundleDir := filepath.Join(outDir, "bundle")
+			bundles(t, l, inDir, bundleDir, wf)
+			os.RemoveAll(bundleDir)
+		})
 	}
 }
 
@@ -63,8 +67,9 @@ func compileElements(t *testing.T, l *logger.Logger, inDir, outDir string, wf *w
 		t.Fatal(err)
 	} else {
 		defer cb.CloseLogs()
+		//                             /-- keep is true because we need the source for go test
 		if err := cb.ComposeMainAndRun(true, false, false, wf); err != nil {
-			t.Fatal(err) //             ^^ keep is true because we need the source for go test
+			t.Fatal(err)
 		}
 	}
 }
@@ -74,67 +79,50 @@ func goTest(t *testing.T, l *logger.Logger, outDir string) {
 	cmd.Dir = filepath.Join(outDir, "src")
 	cmd.Env = composer.SetEnvGoPath(os.Environ(), outDir)
 
-	if err := composer.RunAndLogCommand(cmd, l.With("cmd", "go test").Log); err != nil {
+	if err := composer.RunAndLogCommand(cmd, l.With("cmd", "test").Log); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func bundles(t *testing.T, l *logger.Logger, inDir, outDir string, wf *workflow.Workflow) {
-	wfPaths, err := workflow.GatherPaths(nil, inDir)
-	if err != nil {
+	if cb, err := composer.NewComposerBase(l, inDir, outDir); err != nil {
 		t.Fatal(err)
-	}
-	for repoName, repo := range wf.Repositories {
-		err := repo.Walk(func(f *workflow.File) error {
-			if filepath.Ext(f.Name) == ".json" {
-				// attempt to parse it as a workflow, but don't worry too
-				// much if we fail.
-				if rc, err := f.Contents(); err != nil {
-					return err // this is an error we need to report on!
-				} else if rs, err := workflow.ReadersFromPaths(wfPaths); err != nil {
-					return err
-				} else if wfTest, err := workflow.WorkflowFromReaders(append(rs, rc)...); err != nil {
-					l.Log("repository", repoName, "skipping", f.Name, "error", err)
-					return nil
-				} else if err := wfTest.Validate(); err != nil {
-					l.Log("repository", repoName, "skipping", f.Name, "error", err)
-					return nil
-				} else {
-					t.Run(f.Name, func(t *testing.T) {
-						// calling parallel means that t.Run won't wait for this test to finish.
-						t.Parallel()
-						runBundle(t, l, wfTest, f.Name, outDir)
-					})
-					return nil
-				}
-			} else {
-				return nil // not json
-			}
-		})
+	} else {
+		defer cb.CloseLogs()
+		tc := cb.NewTestsComposer(true, true, true)
+
+		wfPaths, err := workflow.GatherPaths(nil, inDir)
 		if err != nil {
 			t.Fatal(err)
 		}
-	}
-	// once this function returns, testing will re-schedule all the
-	// tests marked Parallel() and wait for them all.
-}
-
-func runBundle(t *testing.T, l *logger.Logger, wf *workflow.Workflow, bundleName, outDir string) {
-	if outDir, err := ioutil.TempDir(outDir, ""); err != nil {
-		t.Fatal(err)
-	} else {
-		l.Log("bundle", bundleName, "outdir", outDir)
-		if cb, err := composer.NewComposerBase(l, filepath.Join(outDir, "src", filepath.Dir(bundleName)), outDir); err != nil {
-			t.Fatal(err)
-		} else if err := cb.ComposeMainAndRun(true, true, true, wf); err != nil {
-			//                                 keep and run and linkedDrivers
-			cb.CloseLogs()
-			t.Fatal(err)
-		} else {
-			cb.CloseLogs()
-			if err := os.RemoveAll(outDir); err != nil { // tidy up iff the test was successful to avoid exhausting disk space!
+		for repoName, repo := range wf.Repositories {
+			err := repo.Walk(func(f *workflow.File) error {
+				if filepath.Ext(f.Name) == ".json" {
+					// attempt to parse it as a workflow, but don't worry too
+					// much if we fail.
+					if rc, err := f.Contents(); err != nil {
+						return err // this is an error we need to report on!
+					} else if rs, err := workflow.ReadersFromPaths(wfPaths); err != nil {
+						return err
+					} else if wfTest, err := workflow.WorkflowFromReaders(append(rs, rc)...); err != nil {
+						l.Log("repository", repoName, "skipping", f.Name, "error", err)
+						return nil
+					} else if err := wfTest.Validate(); err != nil {
+						l.Log("repository", repoName, "skipping", f.Name, "error", err)
+						return nil
+					} else {
+						return tc.AddWorkflow(wfTest)
+					}
+				} else {
+					return nil // not json
+				}
+			})
+			if err != nil {
 				t.Fatal(err)
 			}
+		}
+		if err := tc.ComposeTestsAndRun(); err != nil {
+			t.Fatal(err)
 		}
 	}
 }

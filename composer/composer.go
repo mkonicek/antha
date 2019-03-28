@@ -205,6 +205,9 @@ func (tc *testComposer) AddWorkflow(wf *workflow.Workflow) error {
 }
 
 func (tc *testComposer) ComposeTestsAndRun() error {
+	if len(tc.Workflows) == 0 {
+		return nil
+	}
 	idx := 0
 	for _, wf := range tc.Workflows {
 		efs := utils.ErrorFuncs{
@@ -220,7 +223,10 @@ func (tc *testComposer) ComposeTestsAndRun() error {
 		idx++
 	}
 
-	return nil
+	return utils.ErrorFuncs{
+		tc.goGenerate,
+		tc.goTest,
+	}.Run()
 }
 
 func (tc *testComposer) generateTest(wf *workflow.Workflow, idx int) error {

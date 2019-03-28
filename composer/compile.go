@@ -28,11 +28,11 @@ func (mc *mainComposer) compileWorkflow() error {
 	return mc.cleanOutDir()
 }
 
-func (mc *mainComposer) goGenerate() error {
+func (cb *ComposerBase) goGenerate() error {
 	cmd := exec.Command("go", "generate", "-x")
-	cmd.Dir = filepath.Join(mc.OutDir, "workflow")
+	cmd.Dir = filepath.Join(cb.OutDir, "workflow")
 
-	return RunAndLogCommand(cmd, mc.Logger.With("cmd", "generate").Log)
+	return RunAndLogCommand(cmd, cb.Logger.With("cmd", "generate").Log)
 }
 
 func (mc *mainComposer) goBuild() error {
@@ -48,6 +48,22 @@ func (mc *mainComposer) goBuild() error {
 		return err
 	} else {
 		mc.Logger.Log("compilation", "successful", "binary", outBin)
+		return nil
+	}
+}
+
+func (tc *testComposer) goTest() error {
+	cmd := exec.Command("go", "test", "-v")
+	if tc.LinkedDrivers {
+		cmd.Args = append(cmd.Args, "-tags", "linkedDrivers")
+	}
+	cmd.Dir = filepath.Join(tc.OutDir, "workflow")
+	cmd.Env = SetEnvGoPath(os.Environ(), tc.OutDir)
+
+	if err := RunAndLogCommand(cmd, tc.Logger.With("cmd", "test").Log); err != nil {
+		return err
+	} else {
+		tc.Logger.Log("testing", "successful")
 		return nil
 	}
 }

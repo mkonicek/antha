@@ -29,3 +29,16 @@ func (es ErrorSlice) Pack() error {
 		return nil
 	}
 }
+
+type ErrorFunc func() error
+
+type ErrorFuncs []ErrorFunc
+
+func (efs ErrorFuncs) Run() error {
+	for _, ef := range efs {
+		if err := ef(); err != nil {
+			return err
+		}
+	}
+	return nil
+}

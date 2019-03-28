@@ -10,6 +10,7 @@ import (
 type LaboratoryEffects struct {
 	JobId string
 
+	FileManager   *FileManager
 	Trace         *Trace
 	Maker         *Maker
 	SampleTracker *sampletracker.SampleTracker
@@ -19,10 +20,11 @@ type LaboratoryEffects struct {
 	IDGenerator *id.IDGenerator
 }
 
-func NewLaboratoryEffects(jobId string) *LaboratoryEffects {
+func NewLaboratoryEffects(jobId string, fm *FileManager) *LaboratoryEffects {
 	idGen := id.NewIDGenerator(jobId)
 	le := &LaboratoryEffects{
 		JobId:         jobId,
+		FileManager:   fm,
 		Trace:         NewTrace(),
 		Maker:         NewMaker(),
 		SampleTracker: sampletracker.NewSampleTracker(),

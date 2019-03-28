@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/antha-lang/antha/logger"
+	"github.com/antha-lang/antha/utils"
 	"github.com/antha-lang/antha/workflow"
 )
 
@@ -22,8 +23,9 @@ type ComposerBase struct {
 	InDir  string
 	OutDir string
 
-	elementTypes map[workflow.ElementTypeName]*TranspilableElementType
-	worklist     []*TranspilableElementType
+	clonedRepositories workflow.Repositories
+	elementTypes       map[workflow.ElementTypeName]*TranspilableElementType
+	worklist           []*TranspilableElementType
 }
 
 func NewComposerBase(logger *logger.Logger, inDir, outDir string) (*ComposerBase, error) {
@@ -66,7 +68,8 @@ func NewComposerBase(logger *logger.Logger, inDir, outDir string) (*ComposerBase
 		InDir:  inDir,
 		OutDir: outDir,
 
-		elementTypes: make(map[workflow.ElementTypeName]*TranspilableElementType),
+		clonedRepositories: make(workflow.Repositories),
+		elementTypes:       make(map[workflow.ElementTypeName]*TranspilableElementType),
 	}, nil
 }
 
@@ -83,6 +86,14 @@ func (cb *ComposerBase) CloseLogs() {
 	}
 }
 
+func (cb *ComposerBase) cloneRepositories(wf *workflow.Workflow) error {
+	if err := cb.clonedRepositories.Merge(wf.Repositories); err != nil {
+		return err
+	} else {
+		return cb.clonedRepositories.Clone(filepath.Join(cb.OutDir, "src"))
+	}
+}
+
 func (cb *ComposerBase) ensureElementType(et *TranspilableElementType) {
 	if _, found := cb.elementTypes[et.Name()]; !found {
 		cb.elementTypes[et.Name()] = et
@@ -92,6 +103,7 @@ func (cb *ComposerBase) ensureElementType(et *TranspilableElementType) {
 
 func (cb *ComposerBase) transpile(wf *workflow.Workflow) error {
 	cb.Logger.Log("progress", "transpiling Antha elements")
+	cb.worklist = cb.worklist[:0]
 	for _, et := range wf.Elements.Types {
 		cb.ensureElementType(NewTranspilableElementType(et))
 	}
@@ -103,6 +115,22 @@ func (cb *ComposerBase) transpile(wf *workflow.Workflow) error {
 	return nil
 }
 
+func (cb *ComposerBase) token(wf *workflow.Workflow, elem workflow.ElementInstanceName, param workflow.ElementParameterName) (string, error) {
+	if elemInstance, found := wf.Elements.Instances[elem]; !found {
+		return "", fmt.Errorf("No such element instance with name '%v'", elem)
+	} else if elemType, found := cb.elementTypes[elemInstance.ElementTypeName]; !found {
+		return "", fmt.Errorf("No such element type with name '%v' (element instance '%v')", elemInstance.ElementTypeName, elem)
+	} else if elemType.Transpiler == nil {
+		return "", fmt.Errorf("The element type '%v' does not appear to contain an Antha element", elemInstance.ElementTypeName)
+	} else if tok, found := elemType.Transpiler.TokenByParamName[string(param)]; !found {
+		return "", fmt.Errorf("The element type '%v' has no parameter named '%v' (element instance '%v')",
+			elemInstance.ElementTypeName, param, elem)
+	} else {
+		return tok.String(), nil
+	}
+}
+
+// management for writing a single workflow as main
 type mainComposer struct {
 	*ComposerBase
 
@@ -110,12 +138,9 @@ type mainComposer struct {
 	Keep          bool
 	Run           bool
 	LinkedDrivers bool
-
-	varCount uint64
-	varMemo  map[workflow.ElementInstanceName]string
 }
 
-func (cb *ComposerBase) ComposeMainAndRun(wf *workflow.Workflow, keep, run, linkedDrivers bool) error {
+func (cb *ComposerBase) ComposeMainAndRun(keep, run, linkedDrivers bool, wf *workflow.Workflow) error {
 	mc := &mainComposer{
 		ComposerBase:  cb,
 		Workflow:      wf,
@@ -124,21 +149,15 @@ func (cb *ComposerBase) ComposeMainAndRun(wf *workflow.Workflow, keep, run, link
 		LinkedDrivers: linkedDrivers,
 	}
 
-	if err := wf.Repositories.Clone(filepath.Join(mc.OutDir, "src")); err != nil {
-		return err
-	} else if err := mc.transpile(wf); err != nil {
-		return err
-	} else if err := mc.generateMain(); err != nil {
-		return err
-	} else if err := mc.prepareDrivers(&wf.Config); err != nil { // Must do this before SaveWorkflow!
-		return err
-	} else if err := mc.saveWorkflow(); err != nil {
-		return err
-	} else if err := mc.compileWorkflow(); err != nil {
-		return err
-	} else {
-		return mc.runWorkflow()
-	}
+	return utils.ErrorFuncs{
+		func() error { return mc.cloneRepositories(wf) },
+		func() error { return mc.transpile(wf) },
+		func() error { return mc.generateMain() },
+		func() error { return mc.prepareDrivers(&wf.Config) }, // Must do this before SaveWorkflow!
+		func() error { return mc.saveWorkflow() },
+		func() error { return mc.compileWorkflow() },
+		func() error { return mc.runWorkflow() },
+	}.Run()
 }
 
 func (mc *mainComposer) generateMain() error {
@@ -148,10 +167,74 @@ func (mc *mainComposer) generateMain() error {
 		return err
 	} else {
 		defer fh.Close()
-		return newMainRenderer(mc).render(fh)
+		return renderMain(fh, mc)
 	}
 }
 
 func (mc *mainComposer) saveWorkflow() error {
 	return mc.Workflow.WriteToFile(filepath.Join(mc.OutDir, "workflow", "data", "workflow.json"), false)
+}
+
+// management for writing workflows as tests
+type testComposer struct {
+	*ComposerBase
+
+	Workflows     map[workflow.JobId]*workflow.Workflow
+	Keep          bool
+	Run           bool
+	LinkedDrivers bool
+}
+
+func (cb *ComposerBase) NewTestsComposer(keep, run, linkedDrivers bool) *testComposer {
+	return &testComposer{
+		ComposerBase:  cb,
+		Workflows:     make(map[workflow.JobId]*workflow.Workflow),
+		Keep:          keep,
+		Run:           run,
+		LinkedDrivers: linkedDrivers,
+	}
+}
+
+func (tc *testComposer) AddWorkflow(wf *workflow.Workflow) error {
+	if _, found := tc.Workflows[wf.JobId]; found {
+		return fmt.Errorf("Workflow with JobId %v already added. JobIds must be unique", wf.JobId)
+	} else {
+		tc.Workflows[wf.JobId] = wf
+		return nil
+	}
+}
+
+func (tc *testComposer) ComposeTestsAndRun() error {
+	idx := 0
+	for _, wf := range tc.Workflows {
+		efs := utils.ErrorFuncs{
+			func() error { return tc.cloneRepositories(wf) },
+			func() error { return tc.transpile(wf) },
+			func() error { return tc.generateTest(wf, idx) },
+			func() error { return tc.prepareDrivers(&wf.Config) },
+			func() error { return tc.saveWorkflow(wf, idx) },
+		}
+		if err := efs.Run(); err != nil {
+			return err
+		}
+		idx++
+	}
+
+	return nil
+}
+
+func (tc *testComposer) generateTest(wf *workflow.Workflow, idx int) error {
+	path := filepath.Join(tc.OutDir, "workflow", fmt.Sprintf("workflow%d_test.go", idx))
+	tc.Logger.Log("progress", "generating workflow test", "path", path)
+	if fh, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0400); err != nil {
+		return err
+	} else {
+		defer fh.Close()
+		return renderTest(fh, tc, wf, idx)
+	}
+}
+
+func (tc *testComposer) saveWorkflow(wf *workflow.Workflow, idx int) error {
+	leaf := fmt.Sprintf("workflow%d.json", idx)
+	return wf.WriteToFile(filepath.Join(tc.OutDir, "workflow", "data", leaf), false)
 }

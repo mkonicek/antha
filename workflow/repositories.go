@@ -46,6 +46,7 @@ func (rs Repositories) Clone(dir string) error {
 
 func (r *Repository) Clone(dir string) error {
 	if info, err := os.Stat(dir); err == nil && info.IsDir() {
+		// if the dir already exists, we assume we've already cloned it
 		return nil
 	} else if err != nil && !os.IsNotExist(err) {
 		return err

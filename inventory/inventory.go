@@ -6,6 +6,7 @@ import (
 	"github.com/antha-lang/antha/inventory/tipboxes"
 	"github.com/antha-lang/antha/inventory/tipwastes"
 	"github.com/antha-lang/antha/laboratory/effects/id"
+	"github.com/antha-lang/antha/workflow"
 )
 
 type Inventory struct {
@@ -22,4 +23,17 @@ func NewInventory(idGen *id.IDGenerator) *Inventory {
 		TipBoxes:   tipboxes.NewInventory(idGen),
 		PlateTypes: plates.NewInventory(idGen),
 	}
+}
+
+func (inv *Inventory) LoadForWorkflow(wf *workflow.Workflow) {
+	// TODO: discuss this: not sure if we want to do this based off
+	// zero plate types defined, or if we want an explicit flag or
+	// something?
+	if len(wf.Inventory.PlateTypes) == 0 {
+		inv.PlateTypes.LoadLibrary()
+	} else {
+		inv.PlateTypes.SetPlateTypes(wf.Inventory.PlateTypes)
+	}
+
+	inv.TipBoxes.LoadLibrary()
 }

@@ -22,14 +22,14 @@ func (a *Workflow) Merge(b *Workflow) error {
 
 	return utils.ErrorSlice{
 		b.SchemaVersion.Validate(), // every snippet must have a valid SchemaVersion
-		a.Repositories.merge(b.Repositories),
+		a.Repositories.Merge(b.Repositories),
 		a.Elements.merge(b.Elements),
 		a.Inventory.merge(b.Inventory),
 		a.Config.merge(b.Config),
 	}.Pack()
 }
 
-func (a Repositories) merge(b Repositories) error {
+func (a Repositories) Merge(b Repositories) error {
 	for repoName, repoB := range b {
 		if repoA, found := a[repoName]; found {
 			if repoA.Branch != repoB.Branch || repoA.Commit != repoB.Commit {

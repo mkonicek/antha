@@ -18,7 +18,7 @@ func (lj *liquidJson) ConvertExt(v interface{}) interface{} {
 
 func (lj *liquidJson) UpdateExt(dst interface{}, src interface{}) {
 	if name, ok := src.(string); ok {
-		if liquid, err := lj.labBuild.Inventory.Components.NewComponent(name); err != nil {
+		if liquid, err := lj.labBuild.effects.Inventory.Components.NewComponent(name); err != nil {
 			lj.labBuild.Fatal(err)
 		} else {
 			// nb dst is *always* a pointer (so *Liquid in this case)
@@ -40,7 +40,7 @@ func (pj *plateJson) ConvertExt(v interface{}) interface{} {
 
 func (pj *plateJson) UpdateExt(dst interface{}, src interface{}) {
 	if name, ok := src.(string); ok {
-		if plate, err := pj.labBuild.Inventory.PlateTypes.NewPlate(wtype.PlateTypeName(name)); err != nil {
+		if plate, err := pj.labBuild.effects.Inventory.PlateTypes.NewPlate(wtype.PlateTypeName(name)); err != nil {
 			pj.labBuild.Fatal(err)
 		} else {
 			dstPlate := dst.(*wtype.Plate)
@@ -61,7 +61,7 @@ func (tj *tipboxJson) ConvertExt(v interface{}) interface{} {
 
 func (tj *tipboxJson) UpdateExt(dst interface{}, src interface{}) {
 	if name, ok := src.(string); ok {
-		if tipbox, err := tj.labBuild.Inventory.TipBoxes.NewTipbox(name); err != nil {
+		if tipbox, err := tj.labBuild.effects.Inventory.TipBoxes.NewTipbox(name); err != nil {
 			tj.labBuild.Fatal(err)
 		} else {
 			dstTipBox := dst.(*wtype.LHTipbox)

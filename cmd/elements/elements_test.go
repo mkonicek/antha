@@ -63,8 +63,8 @@ func compileElements(t *testing.T, l *logger.Logger, inDir, outDir string, wf *w
 		t.Fatal(err)
 	} else {
 		defer cb.CloseLogs()
-		if err := cb.ComposeMainAndRun(wf, true, false, false); err != nil {
-			t.Fatal(err) //                 ^^ keep is true because we need the source for go test
+		if err := cb.ComposeMainAndRun(true, false, false, wf); err != nil {
+			t.Fatal(err) //             ^^ keep is true because we need the source for go test
 		}
 	}
 }
@@ -126,8 +126,8 @@ func runBundle(t *testing.T, l *logger.Logger, wf *workflow.Workflow, bundleName
 		l.Log("bundle", bundleName, "outdir", outDir)
 		if cb, err := composer.NewComposerBase(l, filepath.Join(outDir, "src", filepath.Dir(bundleName)), outDir); err != nil {
 			t.Fatal(err)
-		} else if err := cb.ComposeMainAndRun(wf, true, true, true); err != nil {
-			//                                     keep and run and linkedDrivers
+		} else if err := cb.ComposeMainAndRun(true, true, true, wf); err != nil {
+			//                                 keep and run and linkedDrivers
 			cb.CloseLogs()
 			t.Fatal(err)
 		} else {

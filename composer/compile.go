@@ -82,7 +82,7 @@ func (mc *mainComposer) runWorkflow() error {
 		return nil
 	}
 
-	runOutDir, err := ioutil.TempDir(mc.OutDir, "antha-run")
+	runOutDir, err := ioutil.TempDir(mc.OutDir, "antha-run-outputs")
 	if err != nil {
 		return err
 	}

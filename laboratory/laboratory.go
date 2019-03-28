@@ -51,93 +51,124 @@ type LaboratoryBuilder struct {
 
 	Completed chan struct{}
 
-	*lineMapManager
-	Logger      *logger.Logger
-	logFH       *os.File
-	FileManager *FileManager
+	Fatal func(error) // Fatal is a field and not a method so that we can dynamically change it
 
-	*effects.LaboratoryEffects
+	*lineMapManager
+	Logger *logger.Logger
+	logFH  *os.File
+
+	effects *effects.LaboratoryEffects
 
 	instrs effects.Insts
 }
 
-func NewLaboratoryBuilder(fh io.ReadCloser) *LaboratoryBuilder {
+func EmptyLaboratoryBuilder(fatalFunc func(error)) *LaboratoryBuilder {
 	labBuild := &LaboratoryBuilder{
 		elements:  make(map[Element]*ElementBase),
 		Errored:   make(chan struct{}),
 		Completed: make(chan struct{}),
+		Fatal:     fatalFunc,
 
 		lineMapManager: NewLineMapManager(),
 		Logger:         logger.NewLogger(),
 	}
+	if fatalFunc == nil {
+		// we wrap in a func here because we may change the value of
+		// Logger (see SetupWorkflow) and so don't want to capture an
+		// old value here.
+		labBuild.Fatal = func(err error) { labBuild.Logger.Fatal(err) }
+	}
+	return labBuild
+}
 
+func parseFlags() (inDir, outDir string) {
+	flag.StringVar(&inDir, "indir", "", "Path to directory from which to read input files")
+	flag.StringVar(&outDir, "outdir", "", "Path to directory in which to write output files")
+	flag.Parse()
+	return
+}
+
+func NewLaboratoryBuilder(fh io.ReadCloser) *LaboratoryBuilder {
+	labBuild := EmptyLaboratoryBuilder(nil)
+	inDir, outDir := parseFlags()
+	if err := labBuild.Setup(fh, inDir, outDir); err != nil {
+		labBuild.Fatal(err)
+	}
+	return labBuild
+}
+
+func (labBuild *LaboratoryBuilder) Setup(fh io.ReadCloser, inDir, outDir string) error {
+	return utils.ErrorFuncs{
+		func() error { return labBuild.SetupWorkflow(fh) },
+		func() error { return labBuild.SetupPaths(inDir, outDir) },
+		func() error { return labBuild.SetupEffects() },
+	}.Run()
+}
+
+func (labBuild *LaboratoryBuilder) SetupWorkflow(fh io.ReadCloser) error {
 	// Got to load in the workflow first so we gain access to the JobId.
 	if wf, err := workflow.WorkflowFromReaders(fh); err != nil {
-		labBuild.Fatal(err)
+		return err
 	} else if err := wf.Validate(); err != nil {
-		labBuild.Fatal(err)
+		return err
 	} else {
 		labBuild.workflow = wf
 		labBuild.Logger = labBuild.Logger.With("jobId", wf.JobId)
+		return nil
 	}
+}
 
-	flag.StringVar(&labBuild.inDir, "indir", "", "Path to directory from which to read input files")
-	flag.StringVar(&labBuild.outDir, "outdir", "", "Path to directory in which to write output files")
-	flag.Parse()
+func (labBuild *LaboratoryBuilder) SetupPaths(inDir, outDir string) error {
+	labBuild.inDir, labBuild.outDir = inDir, outDir
 
+	// Make sure we have a valid working outDir:
 	if labBuild.outDir == "" {
-		if d, err := ioutil.TempDir("", fmt.Sprintf("antha-run-out-%s", labBuild.workflow.JobId)); err != nil {
-			labBuild.Fatal(err)
+		if d, err := ioutil.TempDir("", "antha-run-outputs"); err != nil {
+			return err
 		} else {
 			labBuild.outDir = d
 		}
 	}
 	labBuild.Logger.Log("outdir", labBuild.outDir)
+
+	// Create subdirs within it:
 	for _, leaf := range []string{"elements", "data", "devices"} {
 		if err := os.MkdirAll(filepath.Join(labBuild.outDir, leaf), 0700); err != nil {
-			labBuild.Fatal(err)
+			return err
 		}
 	}
 
+	// Switch the logger over to write to disk too:
 	if logFH, err := os.OpenFile(filepath.Join(labBuild.outDir, "logs.txt"), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0400); err != nil {
-		labBuild.Fatal(err)
+		return err
 	} else {
 		labBuild.logFH = logFH
 		labBuild.Logger.SwapWriters(logFH, os.Stderr)
 	}
 
+	// Sort out inDir:
 	if labBuild.inDir == "" {
 		// We do this to make certain that we have a root path to join
 		// onto so we can't permit reading arbitrary parts of the
 		// filesystem.
-		if d, err := ioutil.TempDir("", fmt.Sprintf("antha-run-in-%s", labBuild.workflow.JobId)); err != nil {
-			labBuild.Fatal(err)
+		if d, err := ioutil.TempDir("", "antha-run-inputs"); err != nil {
+			return err
 		} else {
 			labBuild.inDir = d
 		}
 	}
 	labBuild.Logger.Log("indir", labBuild.inDir)
+	return nil
+}
 
-	if fm, err := NewFileManager(filepath.Join(labBuild.inDir, "data"), filepath.Join(labBuild.outDir, "data")); err != nil {
-		labBuild.Fatal(err)
+func (labBuild *LaboratoryBuilder) SetupEffects() error {
+	if fm, err := effects.NewFileManager(filepath.Join(labBuild.inDir, "data"), filepath.Join(labBuild.outDir, "data")); err != nil {
+		return err
 	} else {
-		labBuild.FileManager = fm
+		labBuild.effects = effects.NewLaboratoryEffects(string(labBuild.workflow.JobId), fm)
+		labBuild.effects.Inventory.LoadForWorkflow(labBuild.workflow)
+		return nil
 	}
-	labBuild.LaboratoryEffects = effects.NewLaboratoryEffects(string(labBuild.workflow.JobId))
-
-	// TODO: discuss this: not sure if we want to do this based off
-	// zero plate types defined, or if we want an explicit flag or
-	// something?
-	if len(labBuild.workflow.Inventory.PlateTypes) == 0 {
-		labBuild.Logger.Log("PlateTypeInventory", "loading built in plate types")
-		labBuild.Inventory.PlateTypes.LoadLibrary()
-	} else {
-		labBuild.Inventory.PlateTypes.SetPlateTypes(labBuild.workflow.Inventory.PlateTypes)
-	}
-
-	labBuild.Inventory.TipBoxes.LoadLibrary()
-
-	return labBuild
 }
 
 func (labBuild *LaboratoryBuilder) SaveErrors() error {
@@ -171,14 +202,14 @@ func (labBuild *LaboratoryBuilder) Compile() {
 		// We have to do this this late because we need the connections
 		// to the plugins established to eg figure out if the device
 		// supports prompting.
-		human.New(labBuild.IDGenerator).DetermineRole(devices)
+		human.New(labBuild.effects.IDGenerator).DetermineRole(devices)
 
 		devDir := filepath.Join(labBuild.outDir, "devices")
 
-		if nodes, err := labBuild.Maker.MakeNodes(labBuild.Trace.Instructions()); err != nil {
+		if nodes, err := labBuild.effects.Maker.MakeNodes(labBuild.effects.Trace.Instructions()); err != nil {
 			labBuild.Fatal(err)
 
-		} else if instrs, err := codegen.Compile(labBuild.LaboratoryEffects, devDir, devices, nodes); err != nil {
+		} else if instrs, err := codegen.Compile(labBuild.effects, devDir, devices, nodes); err != nil {
 			labBuild.Fatal(err)
 
 		} else {
@@ -189,15 +220,15 @@ func (labBuild *LaboratoryBuilder) Compile() {
 
 func (labBuild *LaboratoryBuilder) connectDevices() (*target.Target, error) {
 	tgt := target.New()
-	if global, err := mixer.NewGlobalMixerConfig(labBuild.Inventory, &labBuild.workflow.Config.GlobalMixer); err != nil {
+	if global, err := mixer.NewGlobalMixerConfig(labBuild.effects.Inventory, &labBuild.workflow.Config.GlobalMixer); err != nil {
 		return nil, err
 	} else {
 		err := utils.ErrorSlice{
-			mixer.NewGilsonPipetMaxInstances(labBuild.Logger, tgt, labBuild.Inventory, global, labBuild.workflow.Config.GilsonPipetMax),
-			mixer.NewTecanInstances(labBuild.Logger, tgt, labBuild.Inventory, global, labBuild.workflow.Config.Tecan),
-			mixer.NewCyBioInstances(labBuild.Logger, tgt, labBuild.Inventory, global, labBuild.workflow.Config.CyBio),
-			mixer.NewLabcyteInstances(labBuild.Logger, tgt, labBuild.Inventory, global, labBuild.workflow.Config.Labcyte),
-			mixer.NewHamiltonInstances(labBuild.Logger, tgt, labBuild.Inventory, global, labBuild.workflow.Config.Hamilton),
+			mixer.NewGilsonPipetMaxInstances(labBuild.Logger, tgt, labBuild.effects.Inventory, global, labBuild.workflow.Config.GilsonPipetMax),
+			mixer.NewTecanInstances(labBuild.Logger, tgt, labBuild.effects.Inventory, global, labBuild.workflow.Config.Tecan),
+			mixer.NewCyBioInstances(labBuild.Logger, tgt, labBuild.effects.Inventory, global, labBuild.workflow.Config.CyBio),
+			mixer.NewLabcyteInstances(labBuild.Logger, tgt, labBuild.effects.Inventory, global, labBuild.workflow.Config.Labcyte),
+			mixer.NewHamiltonInstances(labBuild.Logger, tgt, labBuild.effects.Inventory, global, labBuild.workflow.Config.Hamilton),
 			qpcrdevice.NewQPCRInstances(tgt, labBuild.workflow.Config.QPCR),
 			shakerincubator.NewShakerIncubatorsInstances(tgt, labBuild.workflow.Config.ShakerIncubator),
 			woplatereader.NewWOPlateReaderInstances(tgt, labBuild.workflow.Config.PlateReader),
@@ -214,15 +245,15 @@ func (labBuild *LaboratoryBuilder) connectDevices() (*target.Target, error) {
 }
 
 func (labBuild *LaboratoryBuilder) Export() {
-	labBuild.FileManager.SummarizeWritten(labBuild.Logger)
-	if err := export(labBuild.IDGenerator, labBuild.outDir, labBuild.instrs); err != nil {
+	labBuild.effects.FileManager.SummarizeWritten(labBuild.Logger)
+	if err := export(labBuild.effects.IDGenerator, labBuild.outDir, labBuild.instrs); err != nil {
 		labBuild.Fatal(err)
 	}
 }
 
 // This interface exists just to allow both the lab builder and
-// laboratory itself to trivially contain the InstallElement
-// method. It's used in transpiled elements.
+// laboratory itself to contain the InstallElement method. We need the
+// method on both due to the dynamic inter-element calls.
 type ElementInstaller interface {
 	InstallElement(Element)
 }
@@ -292,10 +323,6 @@ func (labBuild *LaboratoryBuilder) recordError(err error) {
 	}
 }
 
-func (labBuild *LaboratoryBuilder) Fatal(err error) {
-	labBuild.Logger.Fatal(err)
-}
-
 func (labBuild *LaboratoryBuilder) Errors() error {
 	select {
 	case <-labBuild.Errored:
@@ -308,17 +335,24 @@ func (labBuild *LaboratoryBuilder) Errors() error {
 }
 
 type Laboratory struct {
-	*LaboratoryBuilder
-	element Element
-	Logger  *logger.Logger
+	labBuild *LaboratoryBuilder
+	element  Element
+
+	Logger *logger.Logger
+	*effects.LaboratoryEffects
 }
 
 func (labBuild *LaboratoryBuilder) makeLab(e Element, logger *logger.Logger) *Laboratory {
 	return &Laboratory{
-		LaboratoryBuilder: labBuild,
+		labBuild:          labBuild,
 		element:           e,
 		Logger:            logger.With("name", e.Name(), "type", e.TypeName()),
+		LaboratoryEffects: labBuild.effects,
 	}
+}
+
+func (lab *Laboratory) InstallElement(e Element) {
+	lab.labBuild.InstallElement(e)
 }
 
 // Only for use when you're in an element and want to call another element.
@@ -327,23 +361,23 @@ func (lab *Laboratory) CallSteps(e Element) error {
 
 	finished := make(chan struct{})
 	eb.AddOnExit(func() { close(finished) })
-	eb.AddOnExit(lab.elementCompleted)
+	eb.AddOnExit(lab.labBuild.elementCompleted)
 
 	// take the root logger (from labBuild) and build up from there.
-	logger := lab.LaboratoryBuilder.Logger.With("parentName", lab.element.Name(), "parentType", lab.element.TypeName())
-	go eb.Run(lab.makeLab(e, logger), eb.element.Steps)
+	logger := lab.labBuild.Logger.With("parentName", lab.element.Name(), "parentType", lab.element.TypeName())
+	go eb.Run(lab.labBuild.makeLab(e, logger), eb.element.Steps)
 	<-finished
 
 	select {
-	case <-lab.Errored:
-		return lab.errors
+	case <-lab.labBuild.Errored:
+		return lab.labBuild.errors
 	default:
 		return nil
 	}
 }
 
 func (lab *Laboratory) error(err error) {
-	lab.recordError(err)
+	lab.labBuild.recordError(err)
 	lab.Logger.Log("error", err.Error())
 }
 
@@ -388,7 +422,7 @@ func (eb *ElementBase) Run(lab *Laboratory, funs ...func(*Laboratory) error) {
 		if res := recover(); res != nil {
 			lab.errorf("panic: %v", res)
 			// Use println because of the embedded \n in the Stack Trace
-			fmt.Println(lab.lineMapManager.ElementStackTrace())
+			fmt.Println(lab.labBuild.lineMapManager.ElementStackTrace())
 		}
 	}()
 
@@ -397,7 +431,7 @@ func (eb *ElementBase) Run(lab *Laboratory, funs ...func(*Laboratory) error) {
 		lab.Logger.Log("progress", "starting")
 		for _, fun := range funs {
 			select {
-			case <-lab.Errored:
+			case <-lab.labBuild.Errored:
 				return
 			default:
 				if err := fun(lab); err != nil {
@@ -406,7 +440,7 @@ func (eb *ElementBase) Run(lab *Laboratory, funs ...func(*Laboratory) error) {
 				}
 			}
 		}
-	case <-lab.Errored:
+	case <-lab.labBuild.Errored:
 		return
 	}
 }
@@ -424,7 +458,7 @@ func (eb *ElementBase) Completed(lab *Laboratory) {
 }
 
 func (eb *ElementBase) Save(lab *Laboratory) error {
-	p := filepath.Join(lab.outDir, "elements", fmt.Sprintf("%s.json", eb.element.Name()))
+	p := filepath.Join(lab.labBuild.outDir, "elements", fmt.Sprintf("%s.json", eb.element.Name()))
 	if fh, err := os.OpenFile(p, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0400); err != nil {
 		return err
 	} else {

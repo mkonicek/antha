@@ -34,7 +34,7 @@ func main() {
 	} else if cb, err := composer.NewComposerBase(logger, inDir, outDir); err != nil {
 		logger.Fatal(err)
 	} else {
-		err := cb.ComposeMainAndRun(wf, keep, run, linkedDrivers)
+		err := cb.ComposeMainAndRun(keep, run, linkedDrivers, wf)
 		defer cb.CloseLogs()
 		if err == nil {
 			logger.Log("progress", "complete")

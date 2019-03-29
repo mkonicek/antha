@@ -502,7 +502,7 @@ func makeBasicPlates() (plates []*wtype.Plate) {
 	bottomh = 2
 
 	//E-PAGE 48 (reverse) position
-	ep48g := wtype.NewShape("trapezoid", "mm", xdim, ydim, zdim)
+	ep48g := wtype.NewShape(wtype.TrapezoidShape, "mm", xdim, ydim, zdim)
 	//can't reach all wells; change to 24 wells per row? yes!
 	egelwell := wtype.NewLHWell("ul", 20, 0, ep48g, wtype.FlatWellBottom, xdim, ydim, zdim, bottomh, "mm")
 	gelplate := wtype.NewLHPlate("EPAGE48", "Invitrogen", 2, 24, makePlateCoords(eplateheight), egelwell, wellxoffset, wellyoffset, xstart, ystart, zstart)

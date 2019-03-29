@@ -27,7 +27,6 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/pkg/errors"
-	"sort"
 	"strings"
 )
 
@@ -258,28 +257,6 @@ func pluralClassOf(o interface{}, num int) string {
 		return p
 	}
 	return r
-}
-
-//addComponent add a component to the container without storing component history
-//all we care about are the volume and Cname
-func addComponent(container wtype.LHContainer, rhs *wtype.Liquid) error {
-
-	lhs := container.Contents()
-
-	ret := wtype.NewLHComponent()
-
-	var names []string
-	names = append(names, strings.Split(lhs.CName, "+")...)
-	names = append(names, strings.Split(rhs.CName, "+")...)
-	names = getUnique(names, true)
-	sort.Strings(names)
-	ret.CName = strings.Join(names, "+")
-
-	fV := wunit.AddVolumes(lhs.Volume(), rhs.Volume())
-	ret.Vol = fV.RawValue()
-	ret.Vunit = fV.Unit().PrefixedSymbol()
-
-	return container.SetContents(ret)
 }
 
 func coordsMatch(tc [][]wtype.WellCoords, wc []wtype.WellCoords) bool {

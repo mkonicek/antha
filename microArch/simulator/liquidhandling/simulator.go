@@ -49,6 +49,7 @@ type VirtualLiquidHandler struct {
 	settings           *SimulatorSettings
 	lastMove           string
 	lastTarget         wtype.LHObject
+	properties         *liquidhandling.LHProperties
 }
 
 //coneRadius hardcoded radius to assume for cones
@@ -100,6 +101,8 @@ func NewVirtualLiquidHandler(props *liquidhandling.LHProperties, settings *Simul
 
 	vlh.state.SetDeck(deck)
 
+	vlh.properties = props
+
 	return &vlh, nil
 }
 
@@ -139,6 +142,13 @@ func (self *VirtualLiquidHandler) GetLastTarget() wtype.LHObject {
 		return nil
 	}
 	return self.lastTarget
+}
+
+func (self *VirtualLiquidHandler) GetProperties() *liquidhandling.LHProperties {
+	if self == nil {
+		return nil
+	}
+	return self.properties
 }
 
 //CountErrors
@@ -811,7 +821,7 @@ func (self *VirtualLiquidHandler) Aspirate(volume []float64, overstroke []bool, 
 
 		if wells[i] == nil {
 			no_well = append(no_well, i)
-		} else if wells[i].CurrentWorkingVolume().LessThan(v) {
+		} else if wells[i].CurrentWorkingVolume().LessThan(v.MinusEpsilon()) {
 			self.AddErrorf("%s: well %s only contains %s working volume",
 				describe(), wells[i].GetName(), wells[i].CurrentWorkingVolume())
 		} else if fv.GreaterThan(tip.MaxVol) {
@@ -823,9 +833,17 @@ func (self *VirtualLiquidHandler) Aspirate(volume []float64, overstroke []bool, 
 			self.AddWarningf("%s: minimum tip volume is %s",
 				describe(), tip.MinVol)
 			//will get an error here, but ignore it since we're already raising a warning
-			addComponent(tip, c) //nolint
-		} else if err := addComponent(tip, c); err != nil {
+			tip.AddComponent(c) //nolint
+		} else if err := tip.AddComponent(c); err != nil {
 			self.AddErrorf("%s: unexpected tip error \"%s\"", describe(), err.Error())
+		}
+	}
+
+	// silently remove the carry volume for each well - this may leave the well volume lower than the residual volume
+	// do this after removing everything else so carry volumes don't interfere with multichannel aspiration
+	for _, well := range wells {
+		if well != nil {
+			well.RemoveCarry(self.properties.CarryVolume())
 		}
 	}
 
@@ -987,7 +1005,7 @@ func (self *VirtualLiquidHandler) Dispense(volume []float64, blowout []bool, hea
 		}
 		if c, err := tip.RemoveVolume(v); err != nil {
 			self.AddErrorf("%s: unexpected tip error \"%s\"", describe(), err.Error())
-		} else if err := addComponent(wells[i], c); err != nil {
+		} else if err := wells[i].AddComponent(c); err != nil {
 			self.AddErrorf("%s: unexpected well error \"%s\"", describe(), err.Error())
 		}
 	}
@@ -1601,35 +1619,17 @@ func (self *VirtualLiquidHandler) Mix(head int, volume []float64, platetype []st
 		}
 	}
 
-	//do the mixing
+	// tips should be empty
+	nonEmptyChannels := make([]int, 0, len(arg.channels))
+	nonEmptyVolumes := make([]float64, 0, len(arg.channels))
 	for _, ch := range arg.channels {
-		v := wunit.NewVolume(volume[ch], "ul")
-		tip := arg.adaptor.GetChannel(ch).GetTip()
-
-		//this is pretty pointless unless the tip already contained something
-		//it also makes sure the tip.Contents().Name() is set properly
-		for c := 0; c < cycles[ch]; c++ {
-			com, err := wells[ch].RemoveVolume(v)
-			if err != nil {
-				self.AddErrorf("Unexpected well error - %s", err.Error())
-				continue
-			}
-			err = addComponent(tip, com)
-			if err != nil {
-				self.AddErrorf("Unexpected well error - %s", err.Error())
-				continue
-			}
-			com, err = tip.RemoveVolume(v)
-			if err != nil {
-				self.AddErrorf("Unexpected tip error - %s", err.Error())
-				continue
-			}
-			err = addComponent(wells[ch], com)
-			if err != nil {
-				self.AddErrorf("Unexpected well error - %s", err.Error())
-				continue
-			}
+		if tip := arg.adaptor.GetChannel(ch).GetTip(); !tip.IsEmpty() {
+			nonEmptyChannels = append(nonEmptyChannels, ch)
+			nonEmptyVolumes = append(nonEmptyVolumes, tip.CurrentVolume().MustInStringUnit("ul").RawValue())
 		}
+	}
+	if len(nonEmptyChannels) > 0 {
+		self.AddErrorf("%s: mixing when tips on %s contain %s", describe(), summariseChannels(nonEmptyChannels), summariseVolumes(nonEmptyVolumes))
 	}
 
 	return ret

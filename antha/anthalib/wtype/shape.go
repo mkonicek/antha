@@ -23,46 +23,71 @@
 package wtype
 
 import (
+	"encoding/json"
 	"fmt"
-	"strings"
+	"github.com/pkg/errors"
+	"math"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-
-	"math"
 )
 
-type ShapeTypeID string
-
-const (
-	CylinderShape  ShapeTypeID = "cylinder"
-	CircleShape    ShapeTypeID = "circle"
-	RoundShape     ShapeTypeID = "round"
-	SphereShape    ShapeTypeID = "sphere"
-	SquareShape    ShapeTypeID = "square"
-	BoxShape       ShapeTypeID = "box"
-	RectangleShape ShapeTypeID = "rectangle"
-)
-
-var isRound = map[ShapeTypeID]bool{
-	CylinderShape:  true,
-	CircleShape:    true,
-	RoundShape:     true,
-	SphereShape:    true,
-	SquareShape:    false,
-	BoxShape:       false,
-	RectangleShape: false,
+type shapeType struct {
+	Name  string
+	Round bool
 }
 
-// IsRound returns true if wells with this shapetype are round, otherwise they are assumed to square or rectangular
-func (s ShapeTypeID) IsRound() bool {
-	if r, ok := isRound[s]; ok {
-		return r
+func newShapeType(name string, isRound bool) *shapeType {
+	ret := &shapeType{
+		Name:  name,
+		Round: isRound,
 	}
-	panic(fmt.Sprintf("ShapeType %s not in isRound", s))
+	shapeTypeByName[name] = ret
+	return ret
 }
+
+// String returns a string description of the shape type
+func (sti *shapeType) String() string {
+	if sti == nil {
+		return "unknown"
+	}
+	return sti.Name
+}
+
+// IsRound returns whether or not the shape is rounded
+func (sti *shapeType) IsRound() bool {
+	if sti == nil {
+		return false
+	}
+	return sti.Round
+}
+
+// Equals returns true if the shape types are the same
+func (sti *shapeType) Equals(rhs *shapeType) bool {
+	return sti == rhs
+}
+
+var shapeTypeByName = make(map[string]*shapeType)
+
+// shapeTypeFromName get a shape type by string name, required for deserialisation
+// returns nil if the name is unknown
+func ShapeTypeFromName(name string) *shapeType {
+	return shapeTypeByName[name]
+}
+
+var (
+	UnknownShape   = (*shapeType)(nil)
+	CylinderShape  = newShapeType("cylinder", true)
+	CircleShape    = newShapeType("circle", true)
+	RoundShape     = newShapeType("round", true)
+	SphereShape    = newShapeType("sphere", true)
+	SquareShape    = newShapeType("square", false)
+	BoxShape       = newShapeType("box", false)
+	RectangleShape = newShapeType("rectangle", false)
+	TrapezoidShape = newShapeType("trapezoid", false)
+)
 
 type Shape struct {
-	ShapeName  ShapeTypeID
+	Type       *shapeType
 	LengthUnit string
 	H          float64
 	W          float64
@@ -70,7 +95,7 @@ type Shape struct {
 }
 
 func (sh *Shape) Equals(sh2 *Shape) bool {
-	return sh.ShapeName == sh2.ShapeName && sh.LengthUnit == sh2.LengthUnit && sh.H == sh2.H && sh.W == sh2.W && sh.D == sh2.D
+	return sh.Type.Equals(sh2.Type) && sh.LengthUnit == sh2.LengthUnit && sh.H == sh2.H && sh.W == sh2.W && sh.D == sh2.D
 }
 
 // let shape implement geometry
@@ -86,81 +111,91 @@ func (sh *Shape) Depth() wunit.Length { // Z?
 }
 
 func (sh *Shape) Dup() *Shape {
-	return &(Shape{sh.ShapeName, sh.LengthUnit, sh.H, sh.W, sh.D})
+	return &Shape{
+		Type:       sh.Type,
+		LengthUnit: sh.LengthUnit,
+		H:          sh.H,
+		W:          sh.W,
+		D:          sh.D,
+	}
 }
 
 func (sh *Shape) String() string {
-	return fmt.Sprintf("%s [%fx%fx%f]", sh.ShapeName, sh.H, sh.W, sh.D)
+	return fmt.Sprintf("%s [%fx%fx%f]", sh.Type, sh.H, sh.W, sh.D)
 }
 
-func (sh *Shape) MaxCrossSectionalArea() (area wunit.Area, err error) {
+func (sh *Shape) MaxCrossSectionalArea() (wunit.Area, error) {
 
-	shapename := strings.ToLower(string(sh.ShapeName))
-	var areaunit string
-	if sh.LengthUnit == "mm" {
-		areaunit = "mm^2" //sh.LengthUnit + `^` + strconv.Itoa(2)
+	// attempt to get H and W in mm
+	// nb. "Width" and "Height" are X and Y. Z is "Depth"
+	if height, err := sh.Height().InStringUnit("mm"); err != nil {
+		return wunit.ZeroArea(), errors.WithMessage(err, "while converting height to mm")
+	} else if width, err := sh.Width().InStringUnit("mm"); err != nil {
+		return wunit.ZeroArea(), errors.WithMessage(err, "while converting width to mm")
+	} else if sh.Type.IsRound() {
+		radius := width.RawValue() / 2.0
+		return wunit.NewArea(math.Pi*radius*radius, "mm^2"), nil
 	} else {
-		err = fmt.Errorf("sh.Lengthunit = %s", sh.LengthUnit)
-		fmt.Println(err.Error())
+		return wunit.NewArea(height.RawValue()*width.RawValue(), "mm^2"), nil
 	}
-	var circular bool
-	var boxlike bool
-
-	if shapename == "circle" || shapename == "cylinder" || shapename == "round" || shapename == "sphere" {
-		circular = true
-	} else if shapename == "square" || shapename == "rectangle" || shapename == "box" {
-		boxlike = true
-	}
-
-	if circular /*&& sh.Height() == sh.Width() */ {
-		area = wunit.NewArea(math.Pi*(sh.W/2)*(sh.W/2), areaunit)
-	} else if boxlike {
-		area = wunit.NewArea(sh.H*sh.W, areaunit)
-	} else {
-		err = fmt.Errorf("No method to work out cross sectional area for shape \"%s\" yet Circular? %t", sh.ShapeName, circular)
-	}
-	return
 }
 
 func (sh *Shape) Volume() (volume wunit.Volume, err error) {
 
-	shapename := strings.ToLower(string(sh.ShapeName))
-	var volumeunit string
-	if sh.LengthUnit == "mm" {
-		volumeunit = "ul"
+	// attempt to get H, W and D in mm
+	// nb. "Width" and "Height" are X and Y. Z is "Depth"
+	if height, err := sh.Height().InStringUnit("mm"); err != nil {
+		return wunit.ZeroVolume(), errors.WithMessage(err, "while converting height to mm")
+	} else if width, err := sh.Width().InStringUnit("mm"); err != nil {
+		return wunit.ZeroVolume(), errors.WithMessage(err, "while converting width to mm")
+	} else if depth, err := sh.Depth().InStringUnit("mm"); err != nil {
+		return wunit.ZeroVolume(), errors.WithMessage(err, "while converting depth to mm")
+	} else if sh.Type.IsRound() {
+		// assume the top shape is an ellipse
+		return wunit.NewVolume(math.Pi*height.RawValue()*width.RawValue()*depth.RawValue(), "mm^3"), nil
 	} else {
-		err = fmt.Errorf("can't handle conversion of %s to volume unit yet", sh.LengthUnit)
+		// assume the shape is a cuboid
+		return wunit.NewVolume(height.RawValue()*width.RawValue()*depth.RawValue(), "mm^3"), nil
 	}
-
-	var cylinder bool
-	var boxlike bool
-
-	if shapename == "cylinder" {
-		cylinder = true
-	} else if shapename == "square" || shapename == "rectangle" || shapename == "box" {
-		boxlike = true
-	}
-
-	if cylinder && sh.Height().EqualTo(sh.Width()) {
-		volume = wunit.NewVolume(math.Pi*sh.H*sh.H*sh.D, volumeunit)
-	} else if boxlike {
-		volume = wunit.NewVolume(sh.H*sh.W*sh.D, volumeunit)
-	} else {
-		err = fmt.Errorf("No method to work out volume for shape %s yet. ", sh.ShapeName)
-	}
-	return
 }
 
-func NewShape(name ShapeTypeID, lengthunit string, h, w, d float64) *Shape {
-	sh := Shape{name, lengthunit, h, w, d}
-	return &sh
+func NewShape(shapetype *shapeType, lengthunit string, h, w, d float64) *Shape {
+	return &Shape{
+		Type:       shapetype,
+		LengthUnit: lengthunit,
+		H:          h,
+		W:          w,
+		D:          d,
+	}
 }
 
-func NewNilShape() *Shape {
-	sh := Shape{"", "", 0.0, 0.0, 0.0}
-	return &sh
+func (st *Shape) MarshalJSON() ([]byte, error) {
+	// avoid calling in a loop
+	type ShapeAlias Shape
+	return json.Marshal(struct {
+		ShapeAlias
+		Type string `json:"type"` // serialize type as string
+	}{
+		ShapeAlias: ShapeAlias(*st),
+		Type:       st.Type.String(),
+	})
 }
 
-func (sh *Shape) IsZero() bool {
-	return len(sh.ShapeName) == 0
+func (st *Shape) UnmarshalJSON(bs []byte) error {
+	// avoid calling in a loop
+	type ShapeAlias Shape
+	var s struct {
+		ShapeAlias
+		Type string `json:"type"` // serialize type as string
+	}
+
+	if err := json.Unmarshal(bs, &s); err != nil {
+		return errors.WithMessage(err, "unmarshalling shape type")
+	}
+
+	*st = Shape(s.ShapeAlias)
+
+	// set the correct *shapeType to preserve pointer equality
+	st.Type = ShapeTypeFromName(s.Type)
+	return nil
 }

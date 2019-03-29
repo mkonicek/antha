@@ -14,14 +14,38 @@ func (cv ComponentVector) String() string {
 	return s
 }
 
-//DeleteAllBelowVolume set all components whose volume is below vol to nil
-func (cv ComponentVector) DeleteAllBelowVolume(vol wunit.Volume) {
-	for i := 0; i < len(cv); i++ {
-		//Volume.isZero() checks that volume is zero or within a small tolerace to zero
-		if v := cv[i].Volume(); v.LessThan(vol) && !wunit.SubtractVolumes(vol, v).IsZero() {
-			cv[i] = nil
+// Map return a new componentvector which is the result calling each function in maps sequentially on
+// each element
+func (cv ComponentVector) Map(maps ...func(*Liquid) *Liquid) ComponentVector {
+	ret := make(ComponentVector, len(cv))
+
+	for i := range cv {
+		ret[i] = cv[i]
+		for _, m := range maps {
+			ret[i] = m(ret[i])
 		}
 	}
+
+	return ret
+}
+
+// Filter returns the subset of the liquids in cv for which every filter returns true
+// does not guarantee to call every filter on every liquid
+func (cv ComponentVector) Filter(filters ...func(*Liquid) bool) ComponentVector {
+	ret := make(ComponentVector, 0, len(cv))
+
+Outer:
+	for _, l := range cv {
+		for _, filter := range filters {
+			if !filter(l) {
+				// don't bother checking the rest once one fails
+				// continue the outer for loop
+				continue Outer
+			}
+		}
+		ret = append(ret, l)
+	}
+	return ret
 }
 
 func (cv ComponentVector) SubtractVolume(vol wunit.Volume) {
@@ -74,39 +98,15 @@ func (cv ComponentVector) GetVols() []wunit.Volume {
 	return ret
 }
 
-func (cv ComponentVector) Empty() bool {
+// IsEmpty returns true if there is no volume in the component vector
+func (cv ComponentVector) IsEmpty() bool {
 	for _, c := range cv {
-		if c != nil && c.Vol > 0.0 {
+		if !c.Volume().IsZero() {
 			return false
 		}
 	}
 
 	return true
-}
-
-func (cv ComponentVector) ToSumHash() map[string]wunit.Volume {
-	ret := make(map[string]wunit.Volume, len(cv))
-
-	for _, c := range cv {
-		// skip nil components
-		if c == nil {
-			continue
-		}
-
-		if c.CName == "" {
-			continue
-		}
-
-		v, ok := ret[c.FullyQualifiedName()]
-
-		if !ok {
-			v = wunit.ZeroVolume()
-			ret[c.FullyQualifiedName()] = v
-		}
-		v.Add(c.Volume())
-	}
-
-	return ret
 }
 
 func (cv ComponentVector) GetPlateIds() []string {
@@ -152,4 +152,13 @@ func (cv1 ComponentVector) Equal(cv2 ComponentVector) bool {
 	}
 
 	return true
+}
+
+// Volume get the total volume of liquid in the component vector
+func (cv ComponentVector) Volume() wunit.Volume {
+	r := wunit.ZeroVolume()
+	for _, l := range cv {
+		r.Add(l.Volume())
+	}
+	return r
 }

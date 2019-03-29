@@ -7,7 +7,7 @@ import (
 )
 
 func makeTipboxForTest() *LHTipbox {
-	shp := NewShape("cylinder", "mm", 7.3, 7.3, 51.2)
+	shp := NewShape(CylinderShape, "mm", 7.3, 7.3, 51.2)
 	w := NewLHWell("ul", 250.0, 10.0, shp, FlatWellBottom, 7.3, 7.3, 51.2, 0.0, "mm")
 	tiptype := makeTipForTest()
 	tb := NewLHTipbox(8, 12, Coordinates3D{127.76, 85.48, 120.0}, "me", "mytype", tiptype, w, 9.0, 9.0, 0.5, 0.5, 0.0)

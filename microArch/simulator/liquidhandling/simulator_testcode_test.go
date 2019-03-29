@@ -34,11 +34,6 @@ import (
 	"github.com/antha-lang/antha/microArch/simulator"
 )
 
-const (
-	testShape       wtype.ShapeTypeID = "test_shap3"
-	testTipboxShape wtype.ShapeTypeID = "test_tipb0x"
-)
-
 //
 // Code for specifying a VLH
 //
@@ -169,24 +164,12 @@ func makeLHProperties(p *LHPropertiesParams) *liquidhandling.LHProperties {
 	return lhp
 }
 
-type ShapeParams struct {
-	name       wtype.ShapeTypeID
-	lengthunit string
-	h          float64
-	w          float64
-	d          float64
-}
-
-func makeShape(p *ShapeParams) *wtype.Shape {
-	return wtype.NewShape(p.name, p.lengthunit, p.h, p.w, p.d)
-}
-
 type LHWellParams struct {
 	crds             wtype.WellCoords
 	vunit            string
 	vol              float64
 	rvol             float64
-	shape            ShapeParams
+	shape            *wtype.Shape
 	bott             wtype.WellBottomType
 	xdim             float64
 	ydim             float64
@@ -201,7 +184,7 @@ func makeLHWell(p *LHWellParams) *wtype.LHWell {
 		p.vunit,
 		p.vol,
 		p.rvol,
-		makeShape(&p.shape),
+		p.shape.Dup(),
 		p.bott,
 		p.xdim,
 		p.ydim,
@@ -250,7 +233,7 @@ type LHTipParams struct {
 	maxvol          float64
 	volunit         string
 	filtered        bool
-	shape           ShapeParams
+	shape           *wtype.Shape
 	effectiveHeight float64
 }
 
@@ -261,7 +244,7 @@ func makeLHTip(p *LHTipParams) *wtype.LHTip {
 		p.maxvol,
 		p.volunit,
 		p.filtered,
-		makeShape(&p.shape),
+		p.shape.Dup(),
 		p.effectiveHeight)
 }
 
@@ -369,17 +352,11 @@ func defaultLHPlateProps() *LHPlateParams {
 		ncols:     12,
 		size:      wtype.Coordinates3D{X: 127.76, Y: 85.48, Z: 25.7},
 		welltype: LHWellParams{
-			crds:  wtype.ZeroWellCoords(),
-			vunit: "ul",
-			vol:   200,
-			rvol:  5,
-			shape: ShapeParams{
-				name:       testShape,
-				lengthunit: "mm",
-				h:          5.5,
-				w:          5.5,
-				d:          20.4,
-			},
+			crds:    wtype.ZeroWellCoords(),
+			vunit:   "ul",
+			vol:     200,
+			rvol:    5,
+			shape:   wtype.NewShape(wtype.BoxShape, "mm", 5.5, 5.5, 20.4),
 			bott:    wtype.VWellBottom,
 			xdim:    5.5,
 			ydim:    5.5,
@@ -423,17 +400,11 @@ func troughLHPlateProps() *LHPlateParams {
 		ncols:     12,
 		size:      wtype.Coordinates3D{X: 127.76, Y: 85.48, Z: 45.8},
 		welltype: LHWellParams{
-			crds:  wtype.ZeroWellCoords(),
-			vunit: "ul",
-			vol:   15000,
-			rvol:  5000,
-			shape: ShapeParams{
-				name:       testShape,
-				lengthunit: "mm",
-				h:          8.2,
-				w:          72.0,
-				d:          41.3,
-			},
+			crds:    wtype.ZeroWellCoords(),
+			vunit:   "ul",
+			vol:     15000,
+			rvol:    5000,
+			shape:   wtype.NewShape(wtype.BoxShape, "mm", 8.2, 72.0, 41.3),
 			bott:    wtype.FlatWellBottom,
 			xdim:    8.2,
 			ydim:    72.0,
@@ -476,33 +447,21 @@ func defaultLHTipbox(name string) *wtype.LHTipbox {
 		manufacturer: "test Tipbox mfg",
 		boxtype:      "tipbox",
 		tiptype: LHTipParams{
-			mfr:      "test_tip mfg",
-			ttype:    "test_tip type",
-			minvol:   50,
-			maxvol:   1000,
-			volunit:  "ul",
-			filtered: false,
-			shape: ShapeParams{
-				name:       testShape,
-				lengthunit: "mm",
-				h:          7.3,
-				w:          7.3,
-				d:          51.2,
-			},
+			mfr:             "test_tip mfg",
+			ttype:           "test_tip type",
+			minvol:          50,
+			maxvol:          1000,
+			volunit:         "ul",
+			filtered:        false,
+			shape:           wtype.NewShape(wtype.BoxShape, "mm", 7.3, 7.3, 51.2),
 			effectiveHeight: 44.7,
 		},
 		well: LHWellParams{
-			crds:  wtype.ZeroWellCoords(),
-			vunit: "ul",
-			vol:   1000,
-			rvol:  50,
-			shape: ShapeParams{
-				name:       testShape,
-				lengthunit: "mm",
-				h:          7.3,
-				w:          7.3,
-				d:          51.2,
-			},
+			crds:    wtype.ZeroWellCoords(),
+			vunit:   "ul",
+			vol:     1000,
+			rvol:    50,
+			shape:   wtype.NewShape(wtype.BoxShape, "mm", 7.3, 7.3, 51.2),
 			bott:    wtype.VWellBottom,
 			xdim:    7.3,
 			ydim:    7.3,
@@ -528,33 +487,21 @@ func smallLHTipbox(name string) *wtype.LHTipbox {
 		manufacturer: "test Tipbox mfg",
 		boxtype:      "tipbox",
 		tiptype: LHTipParams{
-			mfr:      "test_tip mfg",
-			ttype:    "test_tip type",
-			minvol:   0,
-			maxvol:   200,
-			volunit:  "ul",
-			filtered: false,
-			shape: ShapeParams{
-				name:       testShape,
-				lengthunit: "mm",
-				h:          7.3,
-				w:          7.3,
-				d:          51.2,
-			},
+			mfr:             "test_tip mfg",
+			ttype:           "test_tip type",
+			minvol:          0,
+			maxvol:          200,
+			volunit:         "ul",
+			filtered:        false,
+			shape:           wtype.NewShape(wtype.CircleShape, "mm", 7.3, 7.3, 51.2),
 			effectiveHeight: 44.7,
 		},
 		well: LHWellParams{
-			crds:  wtype.ZeroWellCoords(),
-			vunit: "ul",
-			vol:   1000,
-			rvol:  50,
-			shape: ShapeParams{
-				name:       testShape,
-				lengthunit: "mm",
-				h:          7.3,
-				w:          7.3,
-				d:          51.2,
-			},
+			crds:    wtype.ZeroWellCoords(),
+			vunit:   "ul",
+			vol:     1000,
+			rvol:    50,
+			shape:   wtype.NewShape(wtype.CircleShape, "mm", 7.3, 7.3, 51.2),
 			bott:    wtype.VWellBottom,
 			xdim:    7.3,
 			ydim:    7.3,
@@ -579,17 +526,11 @@ func defaultLHTipwaste(name string) *wtype.LHTipwaste {
 		mfr:      "testTipwaste mfr",
 		size:     wtype.Coordinates3D{X: 127.76, Y: 85.48, Z: 92.0},
 		w: LHWellParams{
-			crds:  wtype.ZeroWellCoords(),
-			vunit: "ul",
-			vol:   800000.0,
-			rvol:  800000.0,
-			shape: ShapeParams{
-				name:       testTipboxShape,
-				lengthunit: "mm",
-				h:          123.0,
-				w:          80.0,
-				d:          92.0,
-			},
+			crds:    wtype.ZeroWellCoords(),
+			vunit:   "ul",
+			vol:     800000.0,
+			rvol:    800000.0,
+			shape:   wtype.NewShape(wtype.CircleShape, "mm", 123.0, 80.0, 92.0),
 			bott:    wtype.VWellBottom,
 			xdim:    123.0,
 			ydim:    80.0,

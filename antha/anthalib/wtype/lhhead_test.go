@@ -9,7 +9,7 @@ func makeTestPlate(wellsX, wellsY int, offsetX, offsetY float64) *LHPlate {
 	plateSize := Coordinates3D{X: 127.76, Y: 85.48, Z: 15.0}
 	wellSize := Coordinates3D{X: plateSize.X / float64(wellsX), Y: plateSize.Y / float64(wellsY), Z: 15.0}
 
-	shape := NewShape("box", "mm", wellSize.X, wellSize.Y, wellSize.Z)
+	shape := NewShape(BoxShape, "mm", wellSize.X, wellSize.Y, wellSize.Z)
 	well := NewLHWell("ul", 100.0, 10.0, shape, FlatWellBottom, wellSize.X, wellSize.Y, wellSize.Z, 0.0, "mm")
 	return NewLHPlate("testplate", "", wellsX, wellsY, plateSize, well, offsetX, offsetY, 0.0, 0.0, 0.0)
 }

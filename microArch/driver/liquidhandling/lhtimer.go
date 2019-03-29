@@ -1,9 +1,10 @@
 package liquidhandling
 
 import (
+	"time"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
-	"time"
 )
 
 // LHTimer provides timing for instructions
@@ -37,6 +38,10 @@ func (t *OldLHTimer) TimeFor(r RobotInstruction) time.Duration {
 				return res
 			}
 			d = time.Duration(int64(max(cyc)) * int64(d))
+		},
+		HandleWait: func(wait *WaitInstruction) {
+			nano := 1e9
+			d = time.Duration(int64(wait.Time * nano))
 		},
 	})
 

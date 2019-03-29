@@ -93,49 +93,26 @@ func TestDeserializeGenericMatter(t *testing.T) {
 }
 */
 func TestLHWellSerialize(t *testing.T) {
-	//	LHWELL{
-	//		ID        : 15cf94b7-ae06-443d-bc9a-9aadc30790fd,
-	//		Inst      : ,
-	//		Plateinst : ,
-	//		Plateid   : ,
-	//		Platetype : Gilson20Tipbox,
-	//		Crds      : A1,
-	//		Vol       : 20,
-	//		Vunit     : ul,
-	//		WContents : [],
-	//		Rvol      : 1,
-	//		Currvol   : 0,
-	//		WShape    : &{cylinder mm 7.3 7.3 51.2},
-	//	Bottom    : 0,
-	//	Xdim      : 7.3,
-	//	Ydim      : 7.3,
-	//	Zdim      : 46,
-	//	Bottomh   : 0,
-	//	Dunit     : mm,
-	//	Extra     : map[InnerL:5.5 InnerW:5.5 Tipeffectiveheight:34.6],
-	//	Plate     : <nil>,
-	//}
 
 	wellExtra := make(map[string]interface{})
 	lhwell := LHWell{
-		"15cf94b7-ae06-443d-bc9a-9aadc30790fd",
-		"",
-		MakeWellCoords("A1"),
-		20,
-		NewLHComponent(),
-		1.0,
-		&Shape{
-			"cylinder",
-			"mm",
-			7.3,
-			7.3,
-			51.2,
+		ID:        "15cf94b7-ae06-443d-bc9a-9aadc30790fd",
+		Inst:      "",
+		Crds:      MakeWellCoords("A1"),
+		MaxVol:    20,
+		WContents: NewLHComponent(),
+		Rvol:      1.0,
+		WShape: &Shape{
+			Type:       CylinderShape,
+			LengthUnit: "mm",
+			H:          7.3,
+			W:          7.3,
+			D:          51.2,
 		},
-		FlatWellBottom,
-		BBox{Coordinates3D{}, Coordinates3D{7.3, 7.3, 51.2}},
-		46,
-		wellExtra,
-		nil,
+		Bottom:  FlatWellBottom,
+		Bounds:  BBox{Coordinates3D{}, Coordinates3D{7.3, 7.3, 51.2}},
+		Bottomh: 46,
+		Extra:   wellExtra,
 	}
 
 	j, err := json.Marshal(lhwell)
@@ -150,6 +127,10 @@ func TestLHWellSerialize(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(lhwell, dest) {
-		t.Fatal(fmt.Sprintf("Initial well (%+v) and dest well (%+v) differ. Differences are: %s", lhwell.WContents, dest.WContents, strings.Join(deep.Equal(lhwell, dest), "\n")))
+		t.Fatalf("Initial well (%+v) and dest well (%+v) differ. Differences are: %s", lhwell.WContents, dest.WContents, strings.Join(deep.Equal(lhwell, dest), "\n"))
+	}
+
+	if !CylinderShape.Equals(dest.WShape.Type) {
+		t.Errorf(`well.WShape.Type changed: "%s" (@%p) -> "%s" (%p)`, lhwell.WShape.Type, lhwell.WShape.Type, dest.WShape.Type, dest.WShape.Type)
 	}
 }

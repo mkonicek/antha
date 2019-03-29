@@ -378,11 +378,11 @@ func (lhw *LHWell) Location_Name() string {
 
 func (lhw *LHWell) Shape() *Shape {
 	if lhw == nil {
-		return NewNilShape()
+		return nil
 	}
 	if lhw.WShape == nil {
 		// return the non-shape
-		return NewNilShape()
+		return nil
 	}
 	return lhw.WShape
 }
@@ -493,40 +493,7 @@ func (lhw *LHWell) CalculateMaxCrossSectionArea() (ca wunit.Area, err error) {
 	if lhw == nil {
 		return
 	}
-
-	ca, err = lhw.Shape().MaxCrossSectionalArea()
-
-	return
-}
-
-func (lhw *LHWell) AreaForVolume() wunit.Area {
-
-	if lhw == nil {
-		return wunit.ZeroArea()
-	}
-	ret := wunit.NewArea(0.0, "m^2")
-
-	vf := lhw.GetAfVFunc()
-
-	if vf == nil {
-		ret, _ := lhw.CalculateMaxCrossSectionArea()
-		return ret
-	} else {
-		vol := lhw.WContents.Volume()
-		r := vf.F(vol.ConvertToString("ul"))
-		ret = wunit.NewArea(r, "mm^2")
-	}
-
-	return ret
-}
-
-func (lhw *LHWell) HeightForVolume() wunit.Length {
-	if lhw == nil {
-		return wunit.ZeroLength()
-	}
-	ret := wunit.NewLength(0.0, "m")
-
-	return ret
+	return lhw.Shape().MaxCrossSectionalArea()
 }
 
 func (lhw *LHWell) SetAfVFunc(f string) {

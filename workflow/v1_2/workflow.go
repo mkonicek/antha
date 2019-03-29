@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/workflow"
 )
@@ -70,7 +71,31 @@ type mixTaskResult struct {
 	TimeEstimate time.Duration
 }
 
-func (wf *workflowv1_2) MigrateElementParameters(name string) (workflow.ElementParameterSet, error) {
+type bakedInFile struct {
+	Name  string `json:"name"`
+	Bytes struct {
+		Bytes []byte `json:"bytes"`
+	} `json:"bytes"`
+}
+
+func maybeMigrateFileParam(fm *effects.FileManager, param json.RawMessage) (json.RawMessage, error) {
+	bif := &bakedInFile{}
+	if err := json.Unmarshal([]byte(param), bif); err != nil {
+		return param, nil
+	} else if bif.Name == "" && len(bif.Bytes.Bytes) == 0 {
+		return param, nil
+	} else {
+		if f, err := fm.WriteAll(bif.Bytes.Bytes, bif.Name); err != nil {
+			return nil, err
+		} else if fbs, err := json.Marshal(f); err != nil {
+			return nil, err
+		} else {
+			return json.RawMessage(fbs), nil
+		}
+	}
+}
+
+func (wf *workflowv1_2) MigrateElementParameters(fm *effects.FileManager, name string) (workflow.ElementParameterSet, error) {
 	v, pr := wf.Parameters[name]
 	if !pr {
 		return nil, errors.New("parameters not present for element" + name)
@@ -78,12 +103,16 @@ func (wf *workflowv1_2) MigrateElementParameters(name string) (workflow.ElementP
 	pset := make(workflow.ElementParameterSet)
 
 	for pname, pval := range v {
-		pset[workflow.ElementParameterName(pname)] = pval
+		if param, err := maybeMigrateFileParam(fm, pval); err != nil {
+			return nil, err
+		} else {
+			pset[workflow.ElementParameterName(pname)] = param
+		}
 	}
 	return pset, nil
 }
 
-func (wf *workflowv1_2) MigrateElement(name string) (*workflow.ElementInstance, error) {
+func (wf *workflowv1_2) MigrateElement(fm *effects.FileManager, name string) (*workflow.ElementInstance, error) {
 	ei := &workflow.ElementInstance{}
 
 	v, pr := wf.Processes[name]
@@ -98,7 +127,7 @@ func (wf *workflowv1_2) MigrateElement(name string) (*workflow.ElementInstance, 
 	}
 	ei.Meta = json.RawMessage(enc)
 
-	params, err := wf.MigrateElementParameters(name)
+	params, err := wf.MigrateElementParameters(fm, name)
 	if err != nil {
 		return nil, err
 	}

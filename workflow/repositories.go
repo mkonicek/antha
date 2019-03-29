@@ -158,16 +158,25 @@ func (r *Repository) walkFromGitCommit(fun TreeWalker) error {
 func (r *Repository) walkFromGitBranch(fun TreeWalker) error {
 	if err := r.ensureGitRepo(); err != nil {
 		return err
-	}
-	if branch, err := r.gitRepo.Branch(r.Branch); err != nil {
-		return err
-	} else if ch, err := r.gitRepo.ResolveRevision(plumbing.Revision(branch.Merge)); err != nil {
-		return err
 	} else {
-		// we switch from branch to commit
-		r.Commit = ch.String()
-		r.Branch = ""
-		return r.walkFromGitCommit(fun)
+		// Sadly, a branch name is problematic: in a fully checked out
+		// repo, the plain branch name can work. In a fresh full clone you
+		// need to add a `refs/remotes/origin` prefix, and in a bare
+		// clone, you need to add `refs/heads` prefix. WHY GIT? WHY?!!
+		var ch *plumbing.Hash
+		for _, prefix := range []string{"", "refs/remotes/origin/", "refs/heads/"} {
+			if ch, err = r.gitRepo.ResolveRevision(plumbing.Revision(prefix + r.Branch)); err == nil {
+				break
+			}
+		}
+		if err != nil {
+			return err
+		} else {
+			// we switch from branch to commit
+			r.Commit = ch.String()
+			r.Branch = ""
+			return r.walkFromGitCommit(fun)
+		}
 	}
 }
 

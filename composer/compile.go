@@ -60,7 +60,7 @@ func (tc *testComposer) goTest() error {
 	cmd.Dir = filepath.Join(tc.OutDir, "workflow")
 	cmd.Env = SetEnvGoPath(os.Environ(), tc.OutDir)
 
-	if err := RunAndLogCommand(cmd, tc.Logger.With("cmd", "test").Log); err != nil {
+	if err := RunAndLogCommand(cmd, RawLogger); err != nil {
 		return err
 	} else {
 		tc.Logger.Log("testing", "successful")
@@ -108,12 +108,7 @@ func (mc *mainComposer) runWorkflow() error {
 	cmd.Env = []string{}
 
 	// the workflow uses a proper logger these days so we don't need to do any wrapping
-	logFunc := func(vals ...interface{}) error {
-		// we are guaranteed len(vals) == 2, and that at [0] we have the key, which we ignore here
-		fmt.Println(vals[1])
-		return nil
-	}
-	return RunAndLogCommand(cmd, logFunc)
+	return RunAndLogCommand(cmd, RawLogger)
 }
 
 func (cb *ComposerBase) prepareDrivers(cfg *workflow.Config) error {
@@ -214,4 +209,16 @@ func drainToLogger(logger func(...interface{}) error, fh io.ReadCloser, key stri
 	if err := scanner.Err(); err != nil {
 		logger("error", err.Error())
 	}
+}
+
+func RawLogger(vs ...interface{}) error {
+	if len(vs) > 0 {
+		w := os.Stdout
+		if str, ok := vs[0].(string); !ok || str != "stdout" {
+			w = os.Stderr
+		}
+		_, err := fmt.Fprintln(w, vs[1:]...)
+		return err
+	}
+	return nil
 }

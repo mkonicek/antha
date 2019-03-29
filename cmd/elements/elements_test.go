@@ -84,7 +84,7 @@ func goTest(t *testing.T, l *logger.Logger, outDir string) {
 	cmd.Dir = filepath.Join(outDir, "src")
 	cmd.Env = composer.SetEnvGoPath(os.Environ(), outDir)
 
-	if err := composer.RunAndLogCommand(cmd, l.With("cmd", "test").Log); err != nil {
+	if err := composer.RunAndLogCommand(cmd, composer.RawLogger); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -117,7 +117,7 @@ func workflows(t *testing.T, l *logger.Logger, inDir, outDir string, wf *workflo
 						return nil
 					} else {
 						l.Log("repository", repoName, "added", f.Name)
-						inDir := filepath.Join(outDir, "src", filepath.Dir(f.Name), "testdata")
+						inDir := filepath.Join(outDir, "src", filepath.Dir(filepath.Dir(f.Name)), "data")
 						return tc.AddWorkflow(wfTest, inDir)
 					}
 				} else {

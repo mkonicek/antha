@@ -799,7 +799,8 @@ func (cmp *Liquid) MixPreserveTvol(cmp2 *Liquid) {
 }
 
 // add cmp2 to cmp
-// inherits tags from both liquids, Diluent is removed unless, both liquids are tagged Diluent.
+// The product or Mix inherits tags from both liquids,
+// "Diluent" is a special case which is removed as a tag unless both liquids are tagged "Diluent".
 func (cmp *Liquid) Mix(cmp2 *Liquid) {
 	wasEmpty := cmp.IsZero()
 	cmp.Smax = mergeSolubilities(cmp, cmp2)
@@ -816,7 +817,7 @@ func (cmp *Liquid) Mix(cmp2 *Liquid) {
 	cmp.addTagsFromLiquid(cmp2)
 
 	// Step 3. unless both were classified as Diluent we'll remove the Diluent tag
-	// since it's unlikely it's still a diluent after being mixed.
+	// since it's unlikely it's still a diluent after being mixed with a non diluent.
 	if !cmpIsDiluent || !cmp2IsDiluent {
 		cmp.RemoveTag(Diluent)
 	}

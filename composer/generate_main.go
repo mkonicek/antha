@@ -62,6 +62,7 @@ func renderMain(w io.Writer, mc *mainComposer) error {
 		"token":        mr.token,
 		"id":           func() string { return "" },
 		"jobName":      func() string { return "" },
+		"inDir":        func() string { return "" },
 	}
 	if t, err := template.New("generate").Funcs(funcs).Parse(tpl); err != nil {
 		return err
@@ -80,38 +81,37 @@ func (mr *mainRenderer) token(elem workflow.ElementInstanceName, param workflow.
 
 type testRenderer struct {
 	renderer
-	testComposer *testComposer
-	wf           *workflow.Workflow
+	testWorkflow *testWorkflow
 }
 
-func renderTest(w io.Writer, tc *testComposer, wf *workflow.Workflow, idx int) error {
+func renderTest(w io.Writer, twf *testWorkflow) error {
 	tr := &testRenderer{
 		renderer: renderer{
 			varMemo: make(map[workflow.ElementInstanceName]string),
 		},
-		testComposer: tc,
-		wf:           wf,
+		testWorkflow: twf,
 	}
 	funcs := template.FuncMap{
 		"elementTypes": tr.elementTypes,
 		"varName":      tr.varName,
 		"token":        tr.token,
-		"id":           func() string { return fmt.Sprintf("%d", idx) },
-		"jobName":      func() string { return strings.Title(string(tr.wf.JobId)) },
+		"id":           func() string { return fmt.Sprintf("%d", tr.testWorkflow.index) },
+		"jobName":      func() string { return strings.Title(string(tr.testWorkflow.workflow.JobId)) },
+		"inDir":        func() string { return tr.testWorkflow.inDir },
 	}
 	if t, err := template.New("generate").Funcs(funcs).Parse(tpl); err != nil {
 		return err
 	} else {
-		return t.ExecuteTemplate(w, "test", tr.wf)
+		return t.ExecuteTemplate(w, "test", tr.testWorkflow.workflow)
 	}
 }
 
 func (tr *testRenderer) elementTypes() map[workflow.ElementTypeName]*TranspilableElementType {
-	return tr.testComposer.elementTypes
+	return tr.testWorkflow.elementTypes
 }
 
 func (tr *testRenderer) token(elem workflow.ElementInstanceName, param workflow.ElementParameterName) (string, error) {
-	return tr.testComposer.token(tr.wf, elem, param)
+	return tr.testWorkflow.token(tr.testWorkflow.workflow, elem, param)
 }
 
 var tpl = `
@@ -156,7 +156,7 @@ package main
 
 {{define "test-test"}}func TestWorkflow{{jobName}}(t *testing.T) {
 	t.Parallel()
-	labBuild := testLab.NewTestLabBuilder(t, ioutil.NopCloser(bytes.NewBuffer(MustAsset("data/workflow{{id}}.json"))))
+	labBuild := testLab.NewTestLabBuilder(t, {{printf "%q" inDir}}, ioutil.NopCloser(bytes.NewBuffer(MustAsset("data/workflow{{id}}.json"))))
 	defer labBuild.Decommission()
 	if err := runWorkflow{{id}}(labBuild); err != nil {
 		labBuild.Fatal(err)

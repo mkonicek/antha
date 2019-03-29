@@ -179,27 +179,39 @@ func (mc *mainComposer) saveWorkflow() error {
 type testComposer struct {
 	*ComposerBase
 
-	Workflows     map[workflow.JobId]*workflow.Workflow
+	Workflows     map[workflow.JobId]*testWorkflow
 	Keep          bool
 	Run           bool
 	LinkedDrivers bool
 }
 
+type testWorkflow struct {
+	*testComposer
+	index    int
+	workflow *workflow.Workflow
+	inDir    string
+}
+
 func (cb *ComposerBase) NewTestsComposer(keep, run, linkedDrivers bool) *testComposer {
 	return &testComposer{
 		ComposerBase:  cb,
-		Workflows:     make(map[workflow.JobId]*workflow.Workflow),
+		Workflows:     make(map[workflow.JobId]*testWorkflow),
 		Keep:          keep,
 		Run:           run,
 		LinkedDrivers: linkedDrivers,
 	}
 }
 
-func (tc *testComposer) AddWorkflow(wf *workflow.Workflow) error {
+func (tc *testComposer) AddWorkflow(wf *workflow.Workflow, inDir string) error {
 	if _, found := tc.Workflows[wf.JobId]; found {
 		return fmt.Errorf("Workflow with JobId %v already added. JobIds must be unique", wf.JobId)
 	} else {
-		tc.Workflows[wf.JobId] = wf
+		tc.Workflows[wf.JobId] = &testWorkflow{
+			testComposer: tc,
+			index:        len(tc.Workflows),
+			workflow:     wf,
+			inDir:        inDir,
+		}
 		return nil
 	}
 }
@@ -208,19 +220,17 @@ func (tc *testComposer) ComposeTestsAndRun() error {
 	if len(tc.Workflows) == 0 {
 		return nil
 	}
-	idx := 0
-	for _, wf := range tc.Workflows {
+	for _, twf := range tc.Workflows {
 		efs := utils.ErrorFuncs{
-			func() error { return tc.cloneRepositories(wf) },
-			func() error { return tc.transpile(wf) },
-			func() error { return tc.generateTest(wf, idx) },
-			func() error { return tc.prepareDrivers(&wf.Config) },
-			func() error { return tc.saveWorkflow(wf, idx) },
+			func() error { return tc.cloneRepositories(twf.workflow) },
+			func() error { return tc.transpile(twf.workflow) },
+			func() error { return twf.generateTest() },
+			func() error { return tc.prepareDrivers(&twf.workflow.Config) },
+			func() error { return twf.saveWorkflow() },
 		}
 		if err := efs.Run(); err != nil {
 			return err
 		}
-		idx++
 	}
 
 	return utils.ErrorFuncs{
@@ -229,18 +239,18 @@ func (tc *testComposer) ComposeTestsAndRun() error {
 	}.Run()
 }
 
-func (tc *testComposer) generateTest(wf *workflow.Workflow, idx int) error {
-	path := filepath.Join(tc.OutDir, "workflow", fmt.Sprintf("workflow%d_test.go", idx))
-	tc.Logger.Log("progress", "generating workflow test", "path", path)
+func (twf *testWorkflow) generateTest() error {
+	path := filepath.Join(twf.OutDir, "workflow", fmt.Sprintf("workflow%d_test.go", twf.index))
+	twf.Logger.Log("progress", "generating workflow test", "path", path)
 	if fh, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0400); err != nil {
 		return err
 	} else {
 		defer fh.Close()
-		return renderTest(fh, tc, wf, idx)
+		return renderTest(fh, twf)
 	}
 }
 
-func (tc *testComposer) saveWorkflow(wf *workflow.Workflow, idx int) error {
-	leaf := fmt.Sprintf("workflow%d.json", idx)
-	return wf.WriteToFile(filepath.Join(tc.OutDir, "workflow", "data", leaf), false)
+func (twf *testWorkflow) saveWorkflow() error {
+	leaf := fmt.Sprintf("workflow%d.json", twf.index)
+	return twf.workflow.WriteToFile(filepath.Join(twf.OutDir, "workflow", "data", leaf), false)
 }

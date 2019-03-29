@@ -22,7 +22,7 @@ var (
 	outDirPtr = flag.String("outdir", "", "Directory to write to (default: a temporary directory will be created)")
 )
 
-func NewTestLabBuilder(t *testing.T, fh io.ReadCloser) *laboratory.LaboratoryBuilder {
+func NewTestLabBuilder(t *testing.T, inDir string, fh io.ReadCloser) *laboratory.LaboratoryBuilder {
 	outDir := ""
 	if outDirPtr != nil {
 		outDir = *outDirPtr
@@ -41,7 +41,7 @@ func NewTestLabBuilder(t *testing.T, fh io.ReadCloser) *laboratory.LaboratoryBui
 	}
 
 	labBuild := laboratory.EmptyLaboratoryBuilder(func(err error) { t.Fatal(err) })
-	if err := labBuild.Setup(fh, "", outDir); err != nil {
+	if err := labBuild.Setup(fh, inDir, outDir); err != nil {
 		labBuild.Fatal(err)
 	}
 

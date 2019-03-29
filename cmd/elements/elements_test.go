@@ -117,7 +117,8 @@ func workflows(t *testing.T, l *logger.Logger, inDir, outDir string, wf *workflo
 						return nil
 					} else {
 						l.Log("repository", repoName, "added", f.Name)
-						return tc.AddWorkflow(wfTest)
+						inDir := filepath.Join(outDir, "src", filepath.Dir(f.Name), "testdata")
+						return tc.AddWorkflow(wfTest, inDir)
 					}
 				} else {
 					return nil // not json

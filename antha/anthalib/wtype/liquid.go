@@ -62,6 +62,7 @@ type Liquid struct {
 	Loc                string // refactor to PlateLocation
 	Destination        string
 	Policy             LHPolicy // Policy is where a custom liquid policy is stored
+	Tags               []LiquidPurpose
 }
 
 // AddSubComponent adds a subcomponent with concentration to a component.
@@ -102,8 +103,6 @@ func (c *Liquid) HasSubComponent(subComponentName string) bool {
 	return hasSubComponent(c, subComponentName)
 }
 
-const liquidPurposeKey = "LiquidPurpose"
-
 type LiquidPurpose string
 
 const (
@@ -114,81 +113,94 @@ const (
 	TestSample      LiquidPurpose = "TestSample"
 )
 
-func CustomLiquidPurpose(s string) LiquidPurpose {
-	return LiquidPurpose(s)
+func CustomTag(tag string) LiquidPurpose {
+	return LiquidPurpose(tag)
 }
 
-func (c *Liquid) SetLiquidPurpose(purpose LiquidPurpose) {
-	c.Extra[liquidPurposeKey] = purpose
+func (c *Liquid) Tag(purpose LiquidPurpose) {
+	trimmed := strings.TrimSpace(string(purpose))
+
+	if !inTags(c.Tags, purpose) {
+		c.Tags = append(c.Tags, LiquidPurpose(trimmed))
+	}
 }
 
 func (c *Liquid) SetAsNegativeControl() {
-	c.SetLiquidPurpose(NegativeControl)
+	c.Tag(NegativeControl)
 }
 
 func (c *Liquid) SetAsPositiveControl() {
-	c.SetLiquidPurpose(PositiveControl)
+	c.Tag(PositiveControl)
 }
 
 func (c *Liquid) SetAsStandard() {
-	c.SetLiquidPurpose(Standard)
+	c.Tag(Standard)
 }
 
 func (c *Liquid) SetAsDiluent() {
-	c.SetLiquidPurpose(Diluent)
+	c.Tag(Diluent)
 }
 
 func (c *Liquid) SetAsTestSample() {
-	c.SetLiquidPurpose(TestSample)
+	c.Tag(TestSample)
 }
 
-func (c *Liquid) GetLiquidPurpose() LiquidPurpose {
-	liquidPurpose, found := c.Extra[liquidPurposeKey]
-	if !found {
-		return ""
-	}
+func (c *Liquid) GetTags() []LiquidPurpose {
+	return c.Tags
+}
 
-	return liquidPurpose.(LiquidPurpose)
+func (c *Liquid) HasTag(query LiquidPurpose) bool {
+	return inTags(c.Tags, query)
+}
+
+func (cmp *Liquid) addTagsFromLiquid(giverOfTags *Liquid) {
+	for _, tag := range giverOfTags.Tags {
+		if !cmp.HasTag(tag) {
+			cmp.Tag(tag)
+		}
+	}
+}
+
+func (cmp *Liquid) RemoveTag(imNotThisTag LiquidPurpose) {
+	var newTags []LiquidPurpose
+
+	trimmed := strings.TrimSpace(string(imNotThisTag))
+	for _, tag := range cmp.Tags {
+		if !strings.EqualFold(string(tag), trimmed) {
+			newTags = append(newTags, tag)
+		}
+	}
+	cmp.Tags = newTags
+}
+
+func inTags(tags []LiquidPurpose, query LiquidPurpose) bool {
+	trimmed := strings.TrimSpace(string(query))
+	for _, tag := range tags {
+		if strings.EqualFold(string(tag), trimmed) {
+			return true
+		}
+	}
+	return false
 }
 
 func (c *Liquid) IsNegativeControl() bool {
-	liquidPurpose, found := c.Extra[liquidPurposeKey]
-	if !found {
-		return false
-	}
-	return liquidPurpose.(LiquidPurpose) == NegativeControl
+	return c.HasTag(NegativeControl)
 }
 
 func (c *Liquid) IsPositiveControl() bool {
-	liquidPurpose, found := c.Extra[liquidPurposeKey]
-	if !found {
-		return false
-	}
-	return liquidPurpose.(LiquidPurpose) == PositiveControl
+	return c.HasTag(PositiveControl)
 }
 
 func (c *Liquid) IsStandard() bool {
-	liquidPurpose, found := c.Extra[liquidPurposeKey]
-	if !found {
-		return false
-	}
-	return liquidPurpose.(LiquidPurpose) == Standard
+	return c.HasTag(Standard)
 }
 
 func (c *Liquid) IsDiluent() bool {
-	liquidPurpose, found := c.Extra[liquidPurposeKey]
-	if !found {
-		return false
-	}
-	return liquidPurpose.(LiquidPurpose) == Diluent
+	return c.HasTag(Diluent)
 }
 
 func (c *Liquid) IsTestSample() bool {
-	liquidPurpose, found := c.Extra[liquidPurposeKey]
-	if !found {
-		return false
-	}
-	return liquidPurpose.(LiquidPurpose) == TestSample
+	return c.HasTag(TestSample)
 }
 
 func (cmp *Liquid) Matches(cmp2 *Liquid) bool {
@@ -708,6 +720,7 @@ func (lhc *Liquid) Dup() *Liquid {
 		for k, v := range lhc.DaughtersID {
 			c.DaughtersID[k] = v
 		}
+		c.Tags = lhc.Tags
 	}
 	return c
 }
@@ -786,12 +799,27 @@ func (cmp *Liquid) MixPreserveTvol(cmp2 *Liquid) {
 }
 
 // add cmp2 to cmp
+// inherits tags from both liquids, Diluent is removed unless, both liquids are tagged Diluent.
 func (cmp *Liquid) Mix(cmp2 *Liquid) {
 	wasEmpty := cmp.IsZero()
 	cmp.Smax = mergeSolubilities(cmp, cmp2)
 	// determine type of final
 	cmp.Type = mergeTypes(cmp, cmp2)
 	// add cmp2 to cmp
+
+	// Manage the merging of tags:
+	// Step 1. Check if both components are classified as Diluent
+	cmpIsDiluent := cmp.IsDiluent()
+	cmp2IsDiluent := cmp2.IsDiluent()
+
+	// Step 2. add all tags from cmp2 to cmp
+	cmp.addTagsFromLiquid(cmp2)
+
+	// Step 3. unless both were classified as Diluent we'll remove the Diluent tag
+	// since it's unlikely it's still a diluent after being mixed.
+	if !cmpIsDiluent || !cmp2IsDiluent {
+		cmp.RemoveTag(Diluent)
+	}
 
 	// add parent IDs... this is recursive
 
@@ -922,6 +950,7 @@ func (cmp *Liquid) Clean() {
 	cmp.Loc = ""
 	cmp.Destination = ""
 	cmp.Policy = make(map[string]interface{})
+	cmp.Tags = []LiquidPurpose{}
 }
 
 func (cmp *Liquid) String() string {

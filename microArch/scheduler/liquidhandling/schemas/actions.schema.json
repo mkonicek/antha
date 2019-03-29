@@ -246,7 +246,7 @@
         "parallelTransfer": {
             "description": "represents a list of transfers that are carried out simultaneously by a set of channels",
             "type": "object",
-            "required": [ "channels", "kind" ],
+            "required": [ "channels", "kind" , "time_estimate", "cumulative_time_estimate"],
             "properties": {
                 "kind": { "const": "parallel_transfer" },
                 "channels": {
@@ -256,14 +256,24 @@
                         "^[0-9]+": { "$ref": "#/definitions/singleTransfer" }
                     },
                     "additionalProperties": false
-                }
+                },
+				"time_estimate" : {
+				    "description": "estimate of time taken for this instruction, in seconds",
+                    "type": "number",
+                    "minimum": 0.0
+				},
+				"cumulative_time_estimate" : {
+				    "description": "estimate of total time taken for the run so far after this instruction has completed, in seconds",
+                    "type": "number",
+                    "minimum": 0.0
+				}
             },
             "additionalProperties": false
         },
         "tipAction": {
             "description": "describe the action of loading or unloading tips",
             "type": "object",
-            "required": [ "channels", "kind", "head" ],
+            "required": [ "channels", "kind", "head", "time_estimate", "cumulative_time_estimate"],
             "properties": {
                 "kind": {
                     "enum": [ "load", "unload" ]
@@ -281,13 +291,23 @@
                         "^[0-9]+": { "$ref": "#/definitions/wellLocation" }
                     },
                     "additionalProperties": false
-                }
+                },
+				"time_estimate" : {
+				    "description": "estimate of time taken for this instruction, in seconds",
+                    "type": "number",
+                    "minimum": 0.0
+				},
+				"cumulative_time_estimate" : {
+				    "description": "estimate of total time taken for the run so far after this instruction has completed, in seconds",
+                    "type": "number",
+                    "minimum": 0.0
+				}
             }
         },
         "transferAction": {
             "description": "describe an entire transfer action, which is a list of load, unload & parallelTransfer operations that are logically grouped",
             "type": "object",
-            "required": [ "kind", "children" ],
+            "required": [ "kind", "children", "time_estimate", "cumulative_time_estimate"],
             "properties": {
                 "kind": { "const": "transfer" },
                 "children": {
@@ -300,7 +320,17 @@
                         ]
                     },
                     "minItems": 1
-                }
+                },
+				"time_estimate" : {
+				    "description": "estimate of time taken for this instruction, in seconds",
+                    "type": "number",
+                    "minimum": 0.0
+				},
+				"cumulative_time_estimate" : {
+				    "description": "estimate of total time taken for the run so far after this instruction has completed, in seconds",
+                    "type": "number",
+                    "minimum": 0.0
+				}
             },
             "additionalProperties": false
         },
@@ -320,7 +350,7 @@
         "waitAction": {
             "description": "describes an on-screen prompt which waits for user input",
             "type": "object",
-            "required": [ "kind", "duration_seconds" ],
+            "required": [ "kind", "duration_seconds", "time_estimate", "cumulative_time_estimate"],
             "properties": {
                 "kind": { "const": "wait" },
                 "duration_seconds": {
@@ -328,6 +358,16 @@
                     "type": "number",
                     "minimum": 0.0
                 },
+				"time_estimate" : {
+				    "description": "estimate of time taken for this instruction, in seconds",
+                    "type": "number",
+                    "minimum": 0.0
+				},
+				"cumulative_time_estimate" : {
+				    "description": "estimate of total time taken for the run so far after this instruction has completed, in seconds",
+                    "type": "number",
+                    "minimum": 0.0
+				},
                 "message": {
                     "description": "the (optional) message that is shown to the user while waiting",
                     "type": "string"

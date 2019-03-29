@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -174,10 +175,13 @@ func (r *Repository) walkFromGitBranch(fun TreeWalker) error {
 func (r *Repository) ensureGitRepo() error {
 	if r.gitRepo == nil {
 		if repo, err := git.PlainOpen(filepath.FromSlash(r.Directory)); err != nil {
+			fmt.Println("A", err)
 			return err
 		} else if _, err := repo.Head(); err != nil { // basically just check it works
+			fmt.Println("B", err)
 			return err
 		} else {
+			fmt.Println("C", err)
 			r.gitRepo = repo
 		}
 	}
@@ -196,7 +200,7 @@ type ElementTypeMap map[ElementTypeName]ElementType
 func (r *Repository) FindAllElementTypes(repoName RepositoryName) (ElementTypeMap, error) {
 	etm := make(ElementTypeMap)
 
-	r.Walk(func(f *File) error {
+	err := r.Walk(func(f *File) error {
 		if !IsAnthaFile(f.Name) {
 			return nil
 		}
@@ -210,7 +214,11 @@ func (r *Repository) FindAllElementTypes(repoName RepositoryName) (ElementTypeMa
 		return nil
 	})
 
-	return etm, nil
+	if err != nil {
+		return nil, err
+	} else {
+		return etm, nil
+	}
 }
 
 type ElementTypesByRepository map[*Repository]ElementTypeMap

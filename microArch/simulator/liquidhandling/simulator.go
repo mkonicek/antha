@@ -148,6 +148,13 @@ func (self *VirtualLiquidHandler) GetLastTarget() wtype.LHObject {
 	return self.lastTarget
 }
 
+func (self *VirtualLiquidHandler) GetProperties() *liquidhandling.LHProperties {
+	if self == nil {
+		return nil
+	}
+	return self.properties
+}
+
 //CountErrors
 func (self *VirtualLiquidHandler) CountErrors() int {
 	ret := 0

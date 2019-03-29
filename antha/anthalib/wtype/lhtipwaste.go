@@ -139,8 +139,10 @@ func (lht *LHTipwaste) Empty() {
 	lht.Contents = 0
 }
 
+// Dispose attempt to eject the tips from non-nil channels into the tipwaste.
+// Returns a slice of well coordinates which specify where each tip should be ejected (undefined for nil channels),
+// and a bool which is true if the tips were disposed of successfully, false if the tipbox is over capacity
 func (lht *LHTipwaste) Dispose(channels []*LHChannelParameter) ([]WellCoords, bool) {
-	// this just checks numbers for now
 	n := 0
 
 	for _, c := range channels {
@@ -149,14 +151,9 @@ func (lht *LHTipwaste) Dispose(channels []*LHChannelParameter) ([]WellCoords, bo
 		}
 	}
 
-	//currently tipwastes only ever have one well
-	wcS := make([]WellCoords, 0, n)
-	wc := WellCoords{0, 0}
-	for i := 0; i < n; i++ {
-		wcS = append(wcS, wc)
-	}
-
-	return wcS, lht.DisposeNum(n)
+	// currently returning default wellcoords (i.e. A1) for each position is fine, since that's the only position tipboxes have
+	// DisponseNum checks that there's space available and increments the contents
+	return make([]WellCoords, len(channels)), lht.DisposeNum(n)
 }
 
 func (lht *LHTipwaste) DisposeNum(num int) bool {

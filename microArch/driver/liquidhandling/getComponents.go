@@ -56,7 +56,7 @@ func getPlateIterator(lhp *wtype.Plate, ori wtype.ChannelOrientation, multi int)
 }
 
 // GetSourcesFor find all liquids in LHProperties which could be used to supply the requested cmps with the given configuration
-func (lhp *LHProperties) GetSourcesFor(idGen *id.IDGenerator, ori wtype.ChannelOrientation, multi int, filters ...func(*wtype.Liquid) bool) []wtype.ComponentVector {
+func (lhp *LHProperties) GetSourcesFor(idGen *id.IDGenerator, ori wtype.ChannelOrientation, multi int, maps ...func(*wtype.Liquid) *wtype.Liquid) []wtype.ComponentVector {
 	ret := make([]wtype.ComponentVector, 0)
 
 	for _, ipref := range lhp.OrderedMergedPlatePrefs() {
@@ -66,7 +66,7 @@ func (lhp *LHProperties) GetSourcesFor(idGen *id.IDGenerator, ori wtype.ChannelO
 			it := getPlateIterator(p, ori, multi)
 			for wv := it.Curr(); it.Valid(); wv = it.Next() {
 
-				available := p.AvailableContents(idGen, wv).Filter(filters...)
+				available := p.AvailableContents(idGen, wv).Map(maps...)
 
 				if !available.IsEmpty() {
 
@@ -154,9 +154,21 @@ func (vbln volumesByLiquidName) Summary(labEffects *effects.LaboratoryEffects, l
 			// that this was their intended target
 			// element writers can then investigate why ID matching has failed and hopefully
 			// discover the root cause of the issue
-			other := lhp.GetSourcesFor(labEffects.IDGenerator, wtype.LHVChannel, 1, func(l *wtype.Liquid) bool {
-				return nameMap[l.CName]
+			sources := lhp.GetSourcesFor(labEffects.IDGenerator, wtype.LHVChannel, 1, func(l *wtype.Liquid) *wtype.Liquid {
+				if l != nil && nameMap[l.CName] {
+					return l
+				}
+				return nil
 			})
+
+			// filter out sources which are all nils
+			other := make([]wtype.ComponentVector, 0, len(sources))
+			for _, s := range sources {
+				if filtered := s.Filter(func(l *wtype.Liquid) bool { return l != nil }); len(filtered) > 0 {
+					other = append(other, filtered)
+				}
+			}
+
 			if len(other) > 0 {
 				extraAvailable = make([]string, 0, len(other)+1)
 				extraAvailable = append(extraAvailable, ", but did find potential source(s) with matching name:")
@@ -253,19 +265,25 @@ func (lhp *LHProperties) GetComponents(labEffects *effects.LaboratoryEffects, cm
 			cmpNames[l.IDOrName()] = true
 		}
 	}
-	nameFilter := func(l *wtype.Liquid) bool {
-		return l != nil || cmpNames[l.IDOrName()]
+	nameMap := func(l *wtype.Liquid) *wtype.Liquid {
+		if l == nil || !cmpNames[l.IDOrName()] {
+			return nil
+		}
+		return l
 	}
 
 	mpvMinusE := lhp.MinPossibleVolume().MinusEpsilon()
-	volumeFilter := func(l *wtype.Liquid) bool {
+	volumeMap := func(l *wtype.Liquid) *wtype.Liquid {
 		// allow volumes which are trivially less than minPossibleVolume
-		return l != nil || !l.Volume().LessThan(mpvMinusE)
+		if l.Volume().LessThan(mpvMinusE) {
+			return nil
+		}
+		return l
 	}
 
 	// build list of possible sources -- this is a list of ComponentVectors
 
-	srcs := lhp.GetSourcesFor(labEffects.IDGenerator, ori, multi, nameFilter, volumeFilter)
+	srcs := lhp.GetSourcesFor(labEffects.IDGenerator, ori, multi, nameMap, volumeMap)
 
 	// keep taking chunks until either we get everything or run out
 	// optimization options apply here as parameters for the next level down
@@ -313,7 +331,7 @@ func (lhp *LHProperties) GetComponents(labEffects *effects.LaboratoryEffects, cm
 		bestMatch = makeMatchSafe(currCmps, bestMatch, lhp.MinPossibleVolume())
 
 		// update sources
-		srcs[bestSrcIdx] = updateSources(srcs[bestSrcIdx], bestMatch, lhp.CarryVolume()).Filter(volumeFilter)
+		srcs[bestSrcIdx] = updateSources(srcs[bestSrcIdx], bestMatch, lhp.CarryVolume()).Map(volumeMap)
 		lastCmps = currCmps.Dup(labEffects.IDGenerator)
 		updateDests(currCmps, bestMatch)
 		ret = append(ret, matchToParallelTransfer(bestMatch))

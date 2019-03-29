@@ -801,6 +801,8 @@ func (lhp *LHProperties) getCleanTipSubset(labEffects *effects.LaboratoryEffects
 	return
 }
 
+// DropDirtyTips figure out where tips attached to the non-nil channels in channels can be disposed
+// The return arrays are the same length as channels
 func (lhp *LHProperties) DropDirtyTips(channels []*wtype.LHChannelParameter) (wells, positions, boxtypes []string) {
 	multi := len(channels)
 

@@ -14,16 +14,15 @@ import (
 	"sync"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/logger"
 )
 
 type FileManager struct {
 	lock         sync.Mutex
 	inDir        string
 	outDir       string
-	contents     map[string][]byte
+	inCache      map[string][]byte
+	outCache     map[string][]byte
 	writtenCount uint64
-	writtenSet   map[*wtype.File]struct{}
 }
 
 func NewFileManager(inDir, outDir string) (*FileManager, error) {
@@ -33,10 +32,10 @@ func NewFileManager(inDir, outDir string) (*FileManager, error) {
 		return nil, err
 	} else {
 		return &FileManager{
-			inDir:      inDir,
-			outDir:     outDir,
-			contents:   make(map[string][]byte),
-			writtenSet: make(map[*wtype.File]struct{}),
+			inDir:    inDir,
+			outDir:   outDir,
+			inCache:  make(map[string][]byte),
+			outCache: make(map[string][]byte),
 		}, nil
 	}
 }
@@ -49,7 +48,16 @@ func (fm *FileManager) ReadAll(f *wtype.File) ([]byte, error) {
 	defer fm.lock.Unlock()
 
 	p := f.Path()
-	if bs, found := fm.contents[p]; found {
+	if f.IsOutput() {
+		if bs, found := fm.outCache[p]; found {
+			return copyBytes(bs), nil
+		} else {
+			return nil, fmt.Errorf("Attempt to read unknown but written file: %#v", f)
+		}
+	}
+
+	// input only from here on
+	if bs, found := fm.inCache[p]; found {
 		return copyBytes(bs), nil
 	}
 
@@ -70,9 +78,8 @@ func (fm *FileManager) ReadAll(f *wtype.File) ([]byte, error) {
 			if err != nil {
 				return nil, err
 			} else {
-				// guaranteed to exist (see WithWriter):
-				bs := fm.contents[f.Path()]
-				fm.contents[p] = bs
+				// guaranteed to exist now (see WithWriter):
+				bs := fm.outCache[f.Path()]
 				return copyBytes(bs), nil
 			}
 
@@ -89,25 +96,18 @@ func (fm *FileManager) ReadAll(f *wtype.File) ([]byte, error) {
 	// file:// or we could and there was an empty scheme.
 
 	// we need to be a bit careful here to make sure there is no way to escape from inDir
-	pLocal = filepath.Clean(pLocal)
-	if !filepath.IsAbs(pLocal) {
-		if pLocalAbs, err := filepath.Abs(filepath.Join(fm.inDir, pLocal)); err != nil {
-			return nil, err
-		} else {
-			pLocal = pLocalAbs
-		}
-	}
-	// The use of Clean (Join also calls Clean) should mean that we
-	// don't have any .. in the path, so if we have inDir as a prefix,
-	// we should be able to be confident that we really are accessing a
-	// file within inDir.
+	pLocal = filepath.Join(fm.inDir, pLocal)
+
+	// The use of Clean (Join calls Clean) should mean that we don't
+	// have any .. in the path, so if we have inDir as a prefix, we are
+	// confident that we really are accessing a file within inDir.
 	if !strings.HasPrefix(pLocal, fm.inDir+string(os.PathSeparator)) {
-		return nil, fmt.Errorf("Invalid path: %v", p)
+		return nil, fmt.Errorf("Invalid file: %#v", f)
 	}
 	if bs, err := ioutil.ReadFile(pLocal); err != nil {
 		return nil, err
 	} else {
-		fm.contents[p] = bs
+		fm.inCache[p] = bs
 		return copyBytes(bs), nil
 	}
 }
@@ -117,24 +117,23 @@ func (fm *FileManager) WithWriter(fun func(io.Writer) error, fileName string) (*
 	defer fm.lock.Unlock()
 
 	fm.writtenCount++
-	pLocal := filepath.Join(fm.outDir, fmt.Sprintf("%d", fm.writtenCount))
+	leaf := fmt.Sprintf("%d", fm.writtenCount)
+	pLocal := filepath.Join(fm.outDir, leaf)
 	if fh, err := os.OpenFile(pLocal, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0400); err != nil {
 		return nil, err
 	} else {
 		buf := new(bytes.Buffer)
 		mfh := io.MultiWriter(fh, buf)
-		err := fun(mfh)
-		if err != nil {
+		if err := fun(mfh); err != nil {
 			return nil, err
 		} else if err := fh.Sync(); err != nil {
 			return nil, err
 		} else if err := fh.Close(); err != nil {
 			return nil, err
 		} else {
-			fm.contents[pLocal] = buf.Bytes()
-			f := wtype.NewFile(pLocal)
+			fm.outCache[leaf] = buf.Bytes()
+			f := wtype.NewFile(leaf)
 			f.Name = fileName
-			fm.writtenSet[f] = struct{}{}
 			return f, nil
 		}
 	}
@@ -145,36 +144,20 @@ func (fm *FileManager) WriteAll(bs []byte, fileName string) (*wtype.File, error)
 	defer fm.lock.Unlock()
 
 	fm.writtenCount++
-	pLocal := filepath.Join(fm.outDir, fmt.Sprintf("%d", fm.writtenCount))
+	leaf := fmt.Sprintf("%d", fm.writtenCount)
+	pLocal := filepath.Join(fm.outDir, leaf)
 	if err := ioutil.WriteFile(pLocal, bs, 0400); err != nil {
 		return nil, err
 	} else {
-		bsCopy := make([]byte, len(bs))
-		copy(bsCopy, bs)
-		fm.contents[pLocal] = bsCopy
-		f := wtype.NewFile(pLocal)
+		fm.outCache[leaf] = copyBytes(bs)
+		f := wtype.NewFile(leaf)
 		f.Name = fileName
-		fm.writtenSet[f] = struct{}{}
 		return f, nil
 	}
 }
 
 func (fm *FileManager) WriteString(str string, fileName string) (*wtype.File, error) {
 	return fm.WriteAll([]byte(str), fileName)
-}
-
-func (fm *FileManager) SummarizeWritten(logger *logger.Logger) {
-	logger = logger.With("fileManager", "summary")
-	fm.lock.Lock()
-	defer fm.lock.Unlock()
-
-	for f := range fm.writtenSet {
-		name := "<unnamed>"
-		if f.Name != "" {
-			name = f.Name
-		}
-		logger.Log("name", name, "path", f.Path())
-	}
 }
 
 func copyBytes(bs []byte) []byte {

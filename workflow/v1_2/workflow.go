@@ -87,7 +87,7 @@ func maybeMigrateFileParam(fm *effects.FileManager, param json.RawMessage) (json
 	} else {
 		if f, err := fm.WriteAll(bif.Bytes.Bytes, bif.Name); err != nil {
 			return nil, err
-		} else if fbs, err := json.Marshal(f); err != nil {
+		} else if fbs, err := json.Marshal(f.AsInput()); err != nil {
 			return nil, err
 		} else {
 			return json.RawMessage(fbs), nil

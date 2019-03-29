@@ -49,5 +49,4 @@ func main() {
 	if err := m.SaveCur(); err != nil {
 		logger.Fatal(err)
 	}
-	m.FileManager.SummarizeWritten(logger)
 }

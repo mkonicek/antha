@@ -246,7 +246,6 @@ func (labBuild *LaboratoryBuilder) connectDevices() (*target.Target, error) {
 }
 
 func (labBuild *LaboratoryBuilder) Export() {
-	labBuild.effects.FileManager.SummarizeWritten(labBuild.Logger)
 	if err := export(labBuild.effects.IDGenerator, labBuild.outDir, labBuild.instrs); err != nil {
 		labBuild.Fatal(err)
 	}

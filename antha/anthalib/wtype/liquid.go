@@ -799,7 +799,7 @@ func (cmp *Liquid) MixPreserveTvol(cmp2 *Liquid) {
 }
 
 // add cmp2 to cmp
-// The product or Mix inherits tags from both liquids,
+// The product of Mix inherits tags from both liquids,
 // "Diluent" is a special case which is removed as a tag unless both liquids are tagged "Diluent".
 func (cmp *Liquid) Mix(cmp2 *Liquid) {
 	wasEmpty := cmp.IsZero()

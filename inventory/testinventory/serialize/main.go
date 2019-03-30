@@ -33,30 +33,7 @@ func main() {
 
 	for _, p := range plateNames {
 		plate := thePlateMap[p]
-		sPlate := testinventory.PlateForSerializing{
-			PlateType:    p,
-			Manufacturer: plate.Mnfr,
-			WellShape:    string(plate.Welltype.Shape().ShapeName),
-			WellH:        plate.Welltype.Shape().H,
-			WellW:        plate.Welltype.Shape().W,
-			WellD:        plate.Welltype.Shape().D,
-			MaxVol:       plate.Welltype.MaxVol,
-			MinVol:       plate.Welltype.Rvol,
-			BottomType:   plate.Welltype.Bottom,
-			BottomH:      plate.Welltype.Bottomh,
-			WellX:        plate.Welltype.Bounds.Size.X,
-			WellY:        plate.Welltype.Bounds.Size.Y,
-			WellZ:        plate.Welltype.Bounds.Size.Z,
-			ColSize:      plate.WellsY(),
-			RowSize:      plate.WellsX(),
-			Height:       plate.Height(),
-			WellXOffset:  plate.WellXOffset,
-			WellYOffset:  plate.WellYOffset,
-			WellXStart:   plate.WellXStart,
-			WellYStart:   plate.WellYStart,
-			WellZStart:   plate.WellZStart,
-			Extra:        plate.Welltype.Extra,
-		}
+		sPlate := testinventory.NewPlateForSerializing(plate)
 
 		if !strings.Contains(sPlate.PlateType, "FromSpec") {
 			// add offset values to WellX,Y,ZStart

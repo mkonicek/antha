@@ -243,6 +243,10 @@ func (self *LHTip) CurrentVolume() wunit.Volume {
 	return self.contents.Volume()
 }
 
+func (self *LHTip) IsEmpty() bool {
+	return self.CurrentVolume().IsZero()
+}
+
 //@implement LHContainer
 func (self *LHTip) ResidualVolume() wunit.Volume {
 	//currently not really supported

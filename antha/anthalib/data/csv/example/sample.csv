@@ -1,0 +1,6 @@
+"bool_column,bool","int64_column,int64","float32_column,float64","string_column,string","timestamp_millis_column,TimestampMillis","timestamp_micros_column,TimestampMicros"
+true,10,1.5,aa,1,1000
+true,10,2.5,bb,2,2000
+false,30,3.5,xx,3,3000
+false,,,aa,4,4000
+true,5,5.5,cc,5,5000

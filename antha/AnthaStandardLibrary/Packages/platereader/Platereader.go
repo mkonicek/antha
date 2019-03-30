@@ -24,8 +24,8 @@
 package platereader
 
 import (
-	"errors"
 	"fmt"
+	"github.com/pkg/errors"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -55,36 +55,47 @@ func Blankcorrect(blank wtype.Absorbance, sample wtype.Absorbance) (blankcorrect
 	return
 }
 
-func EstimatePathLength(plate *wtype.Plate, volume wunit.Volume) (pathlength wunit.Length, err error) {
+// EstimatePathLength estimate the height of liquid of the given volume in the plates welltype - the length of the light path
+func EstimatePathLength(plate *wtype.Plate, volume wunit.Volume) (wunit.Length, error) {
 
-	if plate.Welltype.Bottom == 0 /* i.e. flat */ && plate.Welltype.Shape().LengthUnit == "mm" {
-		wellarea, err := plate.Welltype.CalculateMaxCrossSectionArea()
-		if err != nil {
-
-			return pathlength, err
-		}
-		wellvol, err := plate.Welltype.CalculateMaxVolume()
-		if err != nil {
-			return pathlength, err
-		}
-
-		if volume.Unit().PrefixedSymbol() == "ul" && wellvol.Unit().PrefixedSymbol() == "ul" && wellarea.Unit().PrefixedSymbol() == "mm^2" || wellarea.Unit().PrefixedSymbol() == "mm" /* mm generated previously - wrong and needs fixing */ {
-			ratio := volume.RawValue() / wellvol.RawValue()
-
-			wellheightinmm := wellvol.RawValue() / wellarea.RawValue()
-
-			pathlengthinmm := wellheightinmm * ratio
-
-			pathlength = wunit.NewLength(pathlengthinmm, "mm")
-
-		} else {
-			fmt.Println(volume.Unit().PrefixedSymbol(), wellvol.Unit().PrefixedSymbol(), wellarea.Unit().PrefixedSymbol(), wellarea.ToString())
-		}
-	} else {
-		err = errors.New(fmt.Sprint("Can't yet estimate pathlength for this welltype shape unit ", plate.Welltype.Shape().LengthUnit, "or non flat bottom type"))
+	if plate.Welltype.Bottom != wtype.FlatWellBottom {
+		return wunit.ZeroLength(), errors.Errorf("Can't estimate pathlength for non flat bottom type: %s", plate.Welltype.Bottom)
 	}
 
-	return
+	// get the maximum cross-sectional area in mm^2
+	var maxWellAreaMM2 float64
+	if area, err := plate.Welltype.CalculateMaxCrossSectionArea(); err != nil {
+		return wunit.ZeroLength(), errors.WithMessage(err, "while calculating max cross-section")
+	} else if area, err := area.InStringUnit("mm^2"); err != nil {
+		return wunit.ZeroLength(), errors.WithMessage(err, "while converting max cross-section")
+	} else {
+		maxWellAreaMM2 = area.RawValue()
+	}
+
+	// get the geometric well volume in ul
+	var wellVolumeUL float64
+	if vol, err := plate.Welltype.CalculateMaxVolume(); err != nil {
+		return wunit.ZeroLength(), errors.WithMessage(err, "while calculating well volume")
+	} else if vol, err := vol.InStringUnit("ul"); err != nil {
+		return wunit.ZeroLength(), errors.WithMessage(err, "while converting well volume")
+	} else {
+		wellVolumeUL = vol.RawValue()
+	}
+
+	// get the volume argument in ul
+	var volumeUL float64
+	if vol, err := volume.InStringUnit("ul"); err != nil {
+		return wunit.ZeroLength(), errors.WithMessage(err, "while converting volume argument")
+	} else {
+		volumeUL = vol.RawValue()
+	}
+
+	ratio := volumeUL / wellVolumeUL
+
+	wellheightinmm := wellVolumeUL / maxWellAreaMM2
+
+	return wunit.NewLength(wellheightinmm*ratio, "mm"), nil
+
 }
 
 func PathlengthCorrect(pathlength wunit.Length, reading wtype.Absorbance) (pathlengthcorrected wtype.Absorbance) {

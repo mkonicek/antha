@@ -28,6 +28,7 @@
 package search
 
 import (
+	"reflect"
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -38,28 +39,71 @@ func trimmedEqual(a, b string) bool {
 }
 
 // InSequences searches the positions of any matching instances of a sequence in a slice of sequences.
-// By default, only the sequence will be checked;
-// if MatchName is included as an option, only name must match.
+// By default, the name and the sequence will be checked for equality;
+// If IgnoreName is included as an option, matching by name is excluded.
+// If IgnoreSequences is included as an option, matching by sequence is excluded.
 // If IgnoreCase is added as an option the case will be ignored.
+// Ignores any sequence annotations and overhang information.
+// Circularisation is taken into account. i.e. i.e a plasmid will not match with a linear sequence.
+// To require matches to be strict and identical (annotations, overhand info and all)
+// use the ExactMatch option. If ExactMatch is specified, all other Options
+// are ignored.
+//
+// Important Note: this function will not detect sequence equality if the sequence is:
+// (A) a reverse complement
+// (B) is a plasmid sequence which has been rotated.
+// To handle these cases please use sequences.EqualFold and sequences.InSet:
+// github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/findSeq.go
 func InSequences(seqs []wtype.DNASequence, seq wtype.DNASequence, options ...Option) (bool, []int) {
 
 	var positionsFound []int
 
+	// ExactMatch takes priority and overrides other options.
+	if containsExactMatch(options...) {
+		for i := range seqs {
+			if reflect.DeepEqual(seqs[i], seq) {
+				positionsFound = append(
+					positionsFound,
+					i,
+				)
+			}
+		}
+		if len(positionsFound) > 0 {
+			return true, positionsFound
+		}
+	}
+
 	caseInsensitive := containsIgnoreCase(options...)
 
-	checkNames := containsMatchName(options...)
+	ignoreNames := containsIgnoreName(options...)
+
+	ignoreSequences := containsIgnoreSequence(options...)
 
 	for i := range seqs {
-		if !checkNames {
-			if caseInsensitive && EqualFold(seqs[i].Sequence(), seq.Sequence()) && seqs[i].Plasmid == seq.Plasmid {
-				positionsFound = append(positionsFound, i)
-			} else if trimmedEqual(seqs[i].Sequence(), seq.Sequence()) {
-				positionsFound = append(positionsFound, i)
-			}
-		} else {
+		var nameMatches, seqMatches bool
+
+		if !ignoreNames {
 			if caseInsensitive && EqualFold(seqs[i].Name(), seq.Name()) {
-				positionsFound = append(positionsFound, i)
+				nameMatches = true
 			} else if trimmedEqual(seqs[i].Name(), seq.Name()) {
+				nameMatches = true
+			}
+		}
+
+		if !ignoreSequences {
+			if caseInsensitive && EqualFold(seqs[i].Sequence(), seq.Sequence()) && seqs[i].Plasmid == seq.Plasmid {
+				seqMatches = true
+			} else if trimmedEqual(seqs[i].Sequence(), seq.Sequence()) && seqs[i].Plasmid == seq.Plasmid {
+				seqMatches = true
+			}
+		}
+
+		if !ignoreNames && nameMatches {
+			positionsFound = append(positionsFound, i)
+		} else if !ignoreSequences && seqMatches {
+			positionsFound = append(positionsFound, i)
+		} else {
+			if nameMatches && seqMatches {
 				positionsFound = append(positionsFound, i)
 			}
 		}

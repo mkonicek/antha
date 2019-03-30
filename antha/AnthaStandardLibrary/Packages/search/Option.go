@@ -43,11 +43,28 @@ const (
 	//
 	IgnoreCase Option = "IgnoreCase"
 
-	// MatchName is an option which can be added to the InSequences
-	// functions to specify that the name must also be matched.
-	// By default sequence searches only check sequence equality.
+	// IgnoreName is an option which can be added to the InSequences
+	// function to specify that matching will not include matching on the name.
+	// By default sequence searches check both sequence and name equality.
 	//
-	MatchName Option = "MatchName"
+	IgnoreName Option = "IgnoreName"
+
+	// IgnoreSequence is an option which can be added to the InSequences
+	// function to specify that matching not include matching on DNA Sequence.
+	// By default sequence searches check both sequence and name equality.
+	//
+	IgnoreSequence Option = "IgnoreSequence"
+
+	// ExactMatch is an option which can be added to the InSequences function
+	// to specify that all properties of the DNASequence must match to be
+	// classified as a match. If ExactMatch is specified, currently, all other Options
+	// are ignored and ExactMatch takes priority.
+	//
+	ExactMatch Option = "ExactMatch"
+
+	// MatchName is now deprecated and IgnoreSequence should be used instead
+	//
+	MatchName Option = "IgnoreSequence"
 )
 
 func containsOption(options []Option, target Option) bool {
@@ -63,6 +80,14 @@ func containsIgnoreCase(options ...Option) bool {
 	return containsOption(options, IgnoreCase)
 }
 
-func containsMatchName(options ...Option) bool {
-	return containsOption(options, MatchName)
+func containsIgnoreName(options ...Option) bool {
+	return containsOption(options, IgnoreName)
+}
+
+func containsIgnoreSequence(options ...Option) bool {
+	return containsOption(options, IgnoreSequence)
+}
+
+func containsExactMatch(options ...Option) bool {
+	return containsOption(options, ExactMatch)
 }

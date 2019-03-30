@@ -10,11 +10,12 @@ var (
 )
 
 // PlateForSerializing contains required measurements and other properties for creating a plate of a given type
+// but doesn't represent each well individually
 type PlateForSerializing struct {
 	PlateType    string // name of plate type, potentially including tiser
 	Manufacturer string // name of plate manufacturer
 	// shape "box", "mm", 8.2, 8.2, 41.3 	-- defines well shape
-	WellShape string  // Name of well shape, one of "cylinder", "box", "trapezoid"
+	WellShape string  // Name of well shape
 	WellH     float64 // size of well in X direction (long side of plate)
 	WellW     float64 // size of well in Y direction (short side of plate)
 	WellD     float64 // size of well in Z direction (vertical from plane of plate)
@@ -38,9 +39,37 @@ type PlateForSerializing struct {
 	Extra       map[string]interface{} // container for additional well properties such as constraints
 }
 
+// NewPlateForSerializing get an easily serializable version of the plate
+func NewPlateForSerializing(plate *wtype.LHPlate) PlateForSerializing {
+	return PlateForSerializing{
+		PlateType:    plate.Type,
+		Manufacturer: plate.Mnfr,
+		WellShape:    plate.Welltype.Shape().Type.String(),
+		WellH:        plate.Welltype.Shape().H,
+		WellW:        plate.Welltype.Shape().W,
+		WellD:        plate.Welltype.Shape().D,
+		MaxVol:       plate.Welltype.MaxVol,
+		MinVol:       plate.Welltype.Rvol,
+		BottomType:   plate.Welltype.Bottom,
+		BottomH:      plate.Welltype.Bottomh,
+		WellX:        plate.Welltype.Bounds.Size.X,
+		WellY:        plate.Welltype.Bounds.Size.Y,
+		WellZ:        plate.Welltype.Bounds.Size.Z,
+		ColSize:      plate.WellsY(),
+		RowSize:      plate.WellsX(),
+		Height:       plate.Height(),
+		WellXOffset:  plate.WellXOffset,
+		WellYOffset:  plate.WellYOffset,
+		WellXStart:   plate.WellXStart,
+		WellYStart:   plate.WellYStart,
+		WellZStart:   plate.WellZStart,
+		Extra:        plate.Welltype.Extra,
+	}
+}
+
 // LHPlate returns an initialized, empty, LHPlate of the type corresponding to this PlateForSerializing
 func (pt PlateForSerializing) LHPlate() *wtype.Plate {
-	newWellShape := wtype.NewShape(wtype.ShapeTypeID(pt.WellShape), lunit, pt.WellH, pt.WellW, pt.WellD)
+	newWellShape := wtype.NewShape(wtype.ShapeTypeFromName(pt.WellShape), lunit, pt.WellH, pt.WellW, pt.WellD)
 
 	newWelltype := wtype.NewLHWell(vunit, pt.MaxVol, pt.MinVol, newWellShape, pt.BottomType, pt.WellX, pt.WellY, pt.WellZ, pt.BottomH, lunit)
 

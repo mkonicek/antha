@@ -53,7 +53,7 @@ func GetPlateForTest() *wtype.Plate {
 	riserheightinmm := 40.0 - offset
 
 	// pcr plate skirted (on riser)
-	cone := wtype.NewShape("cylinder", "mm", 5.5, 5.5, 20.4)
+	cone := wtype.NewShape(wtype.CylinderShape, "mm", 5.5, 5.5, 20.4)
 	welltype := wtype.NewLHWell("ul", 200, 5, cone, wtype.UWellBottom, 5.5, 5.5, 20.4, 1.4, "mm")
 
 	plate := wtype.NewLHPlate("pcrplate_skirted_riser", "Unknown", 8, 12, wtype.Coordinates3D{X: 127.76, Y: 85.48, Z: 25.7}, welltype, 9, 9, 0.0, 0.0, riserheightinmm-1.25)
@@ -72,14 +72,14 @@ func PrefillPlateForTest(ctx context.Context, plate *wtype.LHPlate, liquidType s
 }
 
 func GetTipwasteForTest() *wtype.LHTipwaste {
-	shp := wtype.NewShape("box", "mm", 123.0, 80.0, 92.0)
+	shp := wtype.NewShape(wtype.BoxShape, "mm", 123.0, 80.0, 92.0)
 	w := wtype.NewLHWell("ul", 800000.0, 800000.0, shp, 0, 123.0, 80.0, 92.0, 0.0, "mm")
 	lht := wtype.NewLHTipwaste(6000, "Gilsontipwaste", "gilson", wtype.Coordinates3D{X: 127.76, Y: 85.48, Z: 92.0}, w, 49.5, 31.5, 0.0)
 	return lht
 }
 
 func GetTroughForTest() *wtype.Plate {
-	stshp := wtype.NewShape("box", "mm", 8.2, 72, 41.3)
+	stshp := wtype.NewShape(wtype.BoxShape, "mm", 8.2, 72, 41.3)
 	trough12 := wtype.NewLHWell("ul", 1500, 500, stshp, wtype.VWellBottom, 8.2, 72, 41.3, 4.7, "mm")
 	plate := wtype.NewLHPlate("DWST12", "Unknown", 1, 12, wtype.Coordinates3D{X: 127.76, Y: 85.48, Z: 44.1}, trough12, 9, 9, 0, 30.0, 4.5)
 	return plate

@@ -24,7 +24,7 @@ type alignmentTest struct {
 }
 
 var (
-	tests []alignmentTest = []alignmentTest{
+	tests = []alignmentTest{
 		{
 			Name: "Test1",
 			Seq1: wtype.DNASequence{
@@ -172,6 +172,25 @@ var (
 			AlignmentStartPos: 9,
 			AlignmentEndPos:   1,
 			Score:             76, // 3 * 10 (A) + 1 * 9 (C) + 3 * 7 (G) + 2 * 8 (T)
+		},
+		{
+			Name: "revTestGapped",
+			Seq1: wtype.DNASequence{
+				Nm:      "Other",
+				Seq:     "GTTGCCACAGACTAGATTCACG",
+				Plasmid: false,
+			},
+			Seq2: wtype.DNASequence{
+				Nm:  "Seq4",
+				Seq: wtype.RevComp("GTTGACAGACTAGATTCACG"), // missing CC at position [5, 6]
+			},
+			Reverse:           true,
+			Identity:          0.9090909090909091,
+			Alignment:         fmt.Sprintf("%s\n%s\n", wtype.RevComp("GTTGCCACAGACTAGATTCACG"), wtype.RevComp("GTTG--ACAGACTAGATTCACG")),
+			ScoringMatrix:     Fitted,
+			AlignmentStartPos: 22,
+			AlignmentEndPos:   7,   // longest continuous match start, not alignment start
+			Score:             161, // 6 * 10 (A) + 4 * 9 (C) + 5 * 7 (G) + 5 * 8 (T) - 2 * 5 (aligned gap)
 		},
 		{
 			Name: "plasmidRevTest",

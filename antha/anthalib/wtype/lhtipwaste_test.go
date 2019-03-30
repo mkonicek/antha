@@ -7,7 +7,7 @@ import (
 )
 
 func makeTipwasteForTest() *LHTipwaste {
-	shp := NewShape("box", "mm", 123.0, 80.0, 92.0)
+	shp := NewShape(BoxShape, "mm", 123.0, 80.0, 92.0)
 	w := NewLHWell("ul", 800000.0, 800000.0, shp, 0, 123.0, 80.0, 92.0, 0.0, "mm")
 	lht := NewLHTipwaste(6000, "TipwasteForTest", "ACME Corp.", Coordinates3D{X: 127.76, Y: 85.48, Z: 92.0}, w, 49.5, 31.5, 0.0)
 	return lht

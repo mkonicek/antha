@@ -811,7 +811,7 @@ func newTipAction(vlh *simulator.VirtualLiquidHandler, kind tipActionType, multi
 	}
 
 	return &tipAction{
-		Kind:                   loadTipAction,
+		Kind:                   kind,
 		Head:                   head,
 		Channels:               tipSources,
 		TimeEstimate:           timeEstimate.Seconds(),

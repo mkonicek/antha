@@ -21,24 +21,25 @@ func (r *renderer) varName(name workflow.ElementInstanceName) string {
 	}
 
 	res := make([]rune, 0, len(name))
-	ensureUpper := false
+	ensureUpper := true
 	for _, r := range []rune(name) {
 		switch {
 		case 'a' <= r && r <= 'z' && ensureUpper:
-			ensureUpper = false
 			res = append(res, unicode.ToUpper(r))
+			ensureUpper = false
 		case 'a' <= r && r <= 'z':
 			res = append(res, r)
-		case 'A' <= r && r <= 'Z' && len(res) == 0:
-			res = append(res, unicode.ToLower(r))
 		case 'A' <= r && r <= 'Z':
 			res = append(res, r)
 			ensureUpper = false
 		case strings.ContainsRune(" -_", r):
 			ensureUpper = true
+		case unicode.IsDigit(r):
+			res = append(res, r)
+			ensureUpper = true
 		}
 	}
-	resStr := fmt.Sprintf("%s%d", string(res), r.varCount)
+	resStr := fmt.Sprintf("elem%s%d", string(res), r.varCount)
 	r.varCount++
 	r.varMemo[name] = resStr
 	return resStr

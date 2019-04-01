@@ -13,16 +13,23 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"sync"
 	"testing"
 
+	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/laboratory"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 var (
 	outDirPtr = flag.String("outdir", "", "Directory to write to (default: a temporary directory will be created)")
+
+	sharedInventoryGuard sync.Once
+	sharedInventory      *inventory.Inventory
 )
 
 func NewTestLabBuilder(t *testing.T, inDir string, fh io.ReadCloser) *laboratory.LaboratoryBuilder {
+	ensureSharedInventory()
 	outDir := ""
 	if outDirPtr != nil {
 		outDir = *outDirPtr
@@ -41,9 +48,17 @@ func NewTestLabBuilder(t *testing.T, inDir string, fh io.ReadCloser) *laboratory
 	}
 
 	labBuild := laboratory.EmptyLaboratoryBuilder(func(err error) { t.Fatal(err) })
-	if err := labBuild.Setup(fh, inDir, outDir); err != nil {
+	if err := labBuild.Setup(fh, inDir, outDir, sharedInventory); err != nil {
 		labBuild.Fatal(err)
 	}
 
 	return labBuild
+}
+
+func ensureSharedInventory() {
+	sharedInventoryGuard.Do(func() {
+		id := id.NewIDGenerator("testing")
+		sharedInventory = inventory.NewInventory(id)
+		sharedInventory.LoadForWorkflow(nil)
+	})
 }

@@ -5,10 +5,11 @@ import (
 	"github.com/antha-lang/antha/inventory/cache/plateCache"
 	"github.com/antha-lang/antha/laboratory/effects/id"
 	"github.com/antha-lang/antha/microArch/sampletracker"
+	"github.com/antha-lang/antha/workflow"
 )
 
 type LaboratoryEffects struct {
-	JobId string
+	JobId workflow.JobId
 
 	FileManager   *FileManager
 	Trace         *Trace
@@ -20,15 +21,18 @@ type LaboratoryEffects struct {
 	IDGenerator *id.IDGenerator
 }
 
-func NewLaboratoryEffects(jobId string, fm *FileManager) *LaboratoryEffects {
-	idGen := id.NewIDGenerator(jobId)
+func NewLaboratoryEffects(jobId workflow.JobId, fm *FileManager, inv *inventory.Inventory) *LaboratoryEffects {
+	idGen := id.NewIDGenerator(string(jobId))
+	if inv == nil {
+		inv = inventory.NewInventory(idGen)
+	}
 	le := &LaboratoryEffects{
 		JobId:         jobId,
 		FileManager:   fm,
 		Trace:         NewTrace(),
 		Maker:         NewMaker(),
 		SampleTracker: sampletracker.NewSampleTracker(),
-		Inventory:     inventory.NewInventory(idGen),
+		Inventory:     inv,
 		IDGenerator:   idGen,
 	}
 	le.PlateCache = plateCache.NewPlateCache(le.Inventory.PlateTypes)

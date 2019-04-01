@@ -41,7 +41,7 @@ type IncubateOpt struct {
 func newCompFromComp(lab *laboratory.Laboratory, in *wtype.Liquid) *wtype.Liquid {
 	comp := in.Dup(lab.IDGenerator)
 	comp.ID = lab.IDGenerator.NextID()
-	comp.BlockID = wtype.NewBlockID(lab.JobId)
+	comp.BlockID = wtype.NewBlockID(string(lab.JobId))
 	comp.SetGeneration(comp.Generation() + 1)
 
 	lab.Maker.UpdateAfterInst(in.ID, comp.ID)
@@ -256,7 +256,7 @@ func NewPlate(lab *laboratory.Laboratory, typ wtype.PlateTypeName) *wtype.Plate 
 }
 
 func mix(lab *laboratory.Laboratory, inst *wtype.LHInstruction) *effects.CommandInst {
-	inst.BlockID = wtype.NewBlockID(lab.JobId)
+	inst.BlockID = wtype.NewBlockID(string(lab.JobId))
 	inst.Outputs[0].BlockID = inst.BlockID
 	result := inst.Outputs[0]
 	//result.BlockID = inst.BlockID // DELETEME

@@ -12,6 +12,7 @@ import (
 	"sync/atomic"
 
 	"github.com/antha-lang/antha/codegen"
+	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/logger"
 	"github.com/antha-lang/antha/target"
@@ -92,17 +93,18 @@ func parseFlags() (inDir, outDir string) {
 func NewLaboratoryBuilder(fh io.ReadCloser) *LaboratoryBuilder {
 	labBuild := EmptyLaboratoryBuilder(nil)
 	inDir, outDir := parseFlags()
-	if err := labBuild.Setup(fh, inDir, outDir); err != nil {
+	if err := labBuild.Setup(fh, inDir, outDir, nil); err != nil {
 		labBuild.Fatal(err)
 	}
+	labBuild.effects.Inventory.LoadForWorkflow(labBuild.workflow)
 	return labBuild
 }
 
-func (labBuild *LaboratoryBuilder) Setup(fh io.ReadCloser, inDir, outDir string) error {
+func (labBuild *LaboratoryBuilder) Setup(fh io.ReadCloser, inDir, outDir string, inv *inventory.Inventory) error {
 	return utils.ErrorFuncs{
 		func() error { return labBuild.SetupWorkflow(fh) },
 		func() error { return labBuild.SetupPaths(inDir, outDir) },
-		func() error { return labBuild.SetupEffects() },
+		func() error { return labBuild.SetupEffects(inv) },
 	}.Run()
 }
 
@@ -162,12 +164,11 @@ func (labBuild *LaboratoryBuilder) SetupPaths(inDir, outDir string) error {
 	return nil
 }
 
-func (labBuild *LaboratoryBuilder) SetupEffects() error {
+func (labBuild *LaboratoryBuilder) SetupEffects(inv *inventory.Inventory) error {
 	if fm, err := effects.NewFileManager(filepath.Join(labBuild.inDir, "data"), filepath.Join(labBuild.outDir, "data")); err != nil {
 		return err
 	} else {
-		labBuild.effects = effects.NewLaboratoryEffects(string(labBuild.workflow.JobId), fm)
-		labBuild.effects.Inventory.LoadForWorkflow(labBuild.workflow)
+		labBuild.effects = effects.NewLaboratoryEffects(labBuild.workflow.JobId, fm, inv)
 		return nil
 	}
 }

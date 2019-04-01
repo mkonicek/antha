@@ -29,7 +29,7 @@ func (inv *Inventory) LoadForWorkflow(wf *workflow.Workflow) {
 	// TODO: discuss this: not sure if we want to do this based off
 	// zero plate types defined, or if we want an explicit flag or
 	// something?
-	if len(wf.Inventory.PlateTypes) == 0 {
+	if wf == nil || len(wf.Inventory.PlateTypes) == 0 {
 		inv.PlateTypes.LoadLibrary()
 	} else {
 		inv.PlateTypes.SetPlateTypes(wf.Inventory.PlateTypes)

@@ -42,37 +42,33 @@ func (jobId JobId) Validate() error {
 }
 
 func (rs Repositories) validate() error {
-	if len(rs) == 0 {
-		return errors.New("Validation error: Workflow has no Repositories")
-	} else {
-		// Until we switch to go modules, we have to enforce that all
-		// repositories are not only unique, but that no one repository
-		// is a prefix of another. To enforce this, we sort the prefixes
-		// (so shortest will come first) and then we need to only test
-		// against the tail of the list.
-		prefixes := make([]string, 0, len(rs))
-		for prefix := range rs {
-			prefixes = append(prefixes, string(prefix))
-		}
-		sort.Strings(prefixes)
-		// Yes there's probably some algorithm to make this even more
-		// efficient, but for now we're only dealing with a very small
-		// number of repos, so less code and simpler code wins.
-		for idx, prefix := range prefixes {
-			for _, later := range prefixes[idx+1:] {
-				if strings.HasPrefix(later, prefix) {
-					return fmt.Errorf("Validation error: Two repositories found where one is a prefix of the other. This is not allowed, sorry. '%s' is a prefix of '%s'", prefix, later)
-				}
-			}
-		}
-
-		for _, repo := range rs {
-			if err := repo.validate(); err != nil {
-				return err
-			}
-		}
-		return nil
+	// Until we switch to go modules, we have to enforce that all
+	// repositories are not only unique, but that no one repository
+	// is a prefix of another. To enforce this, we sort the prefixes
+	// (so shortest will come first) and then we need to only test
+	// against the tail of the list.
+	prefixes := make([]string, 0, len(rs))
+	for prefix := range rs {
+		prefixes = append(prefixes, string(prefix))
 	}
+	sort.Strings(prefixes)
+	// Yes there's probably some algorithm to make this even more
+	// efficient, but for now we're only dealing with a very small
+	// number of repos, so less code and simpler code wins.
+	for idx, prefix := range prefixes {
+		for _, later := range prefixes[idx+1:] {
+			if strings.HasPrefix(later, prefix) {
+				return fmt.Errorf("Validation error: Two repositories found where one is a prefix of the other. This is not allowed, sorry. '%s' is a prefix of '%s'", prefix, later)
+			}
+		}
+	}
+
+	for _, repo := range rs {
+		if err := repo.validate(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (r *Repository) validate() error {

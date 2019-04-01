@@ -138,7 +138,7 @@ package main
 	"testing"
 
 	"github.com/antha-lang/antha/laboratory"
-	testLab "github.com/antha-lang/antha/laboratory/testing"
+	"github.com/antha-lang/antha/laboratory/testlab"
 	"github.com/ugorji/go/codec"
 
 {{range elementTypes}}{{if .IsAnthaElement}}	{{printf "%q" .ImportPath}}
@@ -157,7 +157,7 @@ package main
 
 {{define "test-test"}}func TestWorkflow{{jobName}}(t *testing.T) {
 	t.Parallel()
-	labBuild := testLab.NewTestLabBuilder(t, {{printf "%q" inDir}}, ioutil.NopCloser(bytes.NewBuffer(MustAsset("data/workflow{{id}}.json"))))
+	labBuild := testlab.NewTestLabBuilder(t, {{printf "%q" inDir}}, ioutil.NopCloser(bytes.NewBuffer(MustAsset("data/workflow{{id}}.json"))))
 	defer labBuild.Decommission()
 	if err := runWorkflow{{id}}(labBuild); err != nil {
 		labBuild.Fatal(err)

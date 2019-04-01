@@ -32,6 +32,10 @@ func (f File) AsInput() *File {
 	}
 }
 
+func (f File) String() string {
+	return f.Name
+}
+
 type fileJSON struct {
 	Path     string `json:"Path"`
 	IsOutput bool   `json:"IsOutput"`

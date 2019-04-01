@@ -96,7 +96,7 @@ func renderTest(w io.Writer, twf *testWorkflow) error {
 		"varName":      tr.varName,
 		"token":        tr.token,
 		"id":           func() string { return fmt.Sprintf("%d", tr.testWorkflow.index) },
-		"jobName":      func() string { return strings.Title(string(tr.testWorkflow.workflow.JobId)) },
+		"jobName":      func() string { return strings.Title(tr.testWorkflow.workflow.JobId.AsIdentifier()) },
 		"inDir":        func() string { return tr.testWorkflow.inDir },
 	}
 	if t, err := template.New("generate").Funcs(funcs).Parse(tpl); err != nil {

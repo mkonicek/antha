@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"unicode"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	git "gopkg.in/src-d/go-git.v4"
@@ -124,6 +125,22 @@ func (m *Meta) MarshalJSON() ([]byte, error) {
 }
 
 type JobId string
+
+func (jid JobId) AsIdentifier() string {
+	res := make([]rune, 0, len(jid))
+	for _, r := range jid {
+		switch {
+		// see https://golang.org/ref/spec#identifier
+		// However, we allow the first rune to be a digit
+		case r == '_', unicode.IsLetter(r), unicode.IsDigit(r):
+			res = append(res, r)
+		case r == ' ', r == '-', r == '/':
+			res = append(res, '_')
+		}
+	}
+	return string(res)
+}
+
 type RepositoryName string
 type ElementInstanceName string
 type ElementPath string

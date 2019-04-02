@@ -4,6 +4,7 @@
 TYPE_SUPPORT = [
 	{'Raw':'float64', 'Type':'Float64', 'Zero':'float64(0)', 'ArrowArrayType':'Float64', 'ArrowRawType':'float64'},
 	{'Raw':'int64', 'Type':'Int64', 'Zero':'int64(0)', 'ArrowArrayType':'Int64', 'ArrowRawType':'int64'},
+	{'Raw':'int', 'Type':'Int', 'Zero':'0', 'ArrowArrayType':'Int64', 'ArrowRawType':'int64'},
 	{'Raw':'string', 'Type':'String', 'Zero':'""', 'ArrowArrayType':'String', 'ArrowRawType':'string'},
 	{'Raw':'bool', 'Type':'Bool', 'Zero':'false', 'ArrowArrayType':'Boolean', 'ArrowRawType':'bool'},
 	# TODO: make decision on how many time/timestamp types we need

@@ -69,9 +69,9 @@ func fieldTag(columnIndex int, column data.Column) (string, error) {
 	switch column.Type {
 	case reflect.TypeOf(false):
 		tagBuilder.addType("BOOLEAN")
-	case reflect.TypeOf(int8(0)), reflect.TypeOf(int16(0)), reflect.TypeOf(int32(0)):
+	case reflect.TypeOf(int32(0)):
 		tagBuilder.addType("INT32")
-	case reflect.TypeOf(int(0)), reflect.TypeOf(int64(0)):
+	case reflect.TypeOf(int64(0)):
 		tagBuilder.addType("INT64")
 	case reflect.TypeOf(float32(0)):
 		tagBuilder.addType("FLOAT")

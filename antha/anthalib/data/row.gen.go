@@ -34,6 +34,22 @@ func (o Observation) Int64() (int64, bool) {
 	}
 }
 
+// int
+
+// MustInt extracts a value of type int from an observation. Panics on error.
+func (o Observation) MustInt() int {
+	return o.value.(int)
+}
+
+// Int extracts a value of type int from an observation. Returns false on error.
+func (o Observation) Int() (int, bool) {
+	if o.IsNull() {
+		return 0, false
+	} else {
+		return o.MustInt(), true
+	}
+}
+
 // string
 
 // MustString extracts a value of type string from an observation. Panics on error.

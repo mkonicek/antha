@@ -78,6 +78,41 @@ func (a *asInt64) Int64() (int64, bool) {
 	return v.(int64), true
 }
 
+// boxInt represents a nullable int value
+type boxInt interface {
+	Int() (int, bool) // returns false = nil
+}
+
+// iterInt iterates over nullable int values
+type iterInt interface {
+	advanceable
+	boxInt
+}
+
+// iterateInt is a fallback to convert dynamic series to static iterator type.
+// an error is returned if the series' declared type is not assignable to int
+func (s *Series) iterateInt(iter iterator) (iterInt, error) {
+	if cast, ok := iter.(iterInt); ok {
+		return cast, nil
+	}
+	if err := s.assignableTo(typeInt); err != nil {
+		return nil, err
+	}
+	return &asInt{iterator: iter}, nil
+}
+
+type asInt struct {
+	iterator
+}
+
+func (a *asInt) Int() (int, bool) {
+	v := a.iterator.Value()
+	if v == nil {
+		return 0, false
+	}
+	return v.(int), true
+}
+
 // boxString represents a nullable string value
 type boxString interface {
 	String() (string, bool) // returns false = nil

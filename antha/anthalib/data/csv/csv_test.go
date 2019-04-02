@@ -15,6 +15,7 @@ func TestCSV(t *testing.T) {
 	table := data.NewTable([]*data.Series{
 		data.Must().NewSeriesFromSlice("bool_column", []bool{true, true, false, false, true}, nil),
 		data.Must().NewSeriesFromSlice("int64_column", []int64{10, 10, 30, -1, 5}, []bool{true, true, true, false, true}),
+		data.Must().NewSeriesFromSlice("int_column", []int{10, 10, 30, -1, 5}, []bool{true, true, true, false, true}),
 		data.Must().NewSeriesFromSlice("float32_column", []float64{1.5, 2.5, 3.5, math.NaN(), 5.5}, []bool{true, true, true, false, true}),
 		data.Must().NewSeriesFromSlice("string_column", []string{"aa", "bb", "xx", "aa", "cc"}, nil),
 		data.Must().NewSeriesFromSlice("timestamp_millis_column", []data.TimestampMillis{1, 2, 3, 4, 5}, nil),

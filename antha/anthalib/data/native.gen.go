@@ -8,6 +8,8 @@ func (m *nativeSeriesMeta) read(cache *seriesIterCache) iterator {
 		return m.readFloat64(cache)
 	case typeInt64:
 		return m.readInt64(cache)
+	case typeInt:
+		return m.readInt(cache)
 	case typeString:
 		return m.readString(cache)
 	case typeBool:
@@ -214,6 +216,103 @@ func (i *nativeSeriesIterInt64) Value() interface{} {
 }
 
 var _ iterInt64 = (*nativeSeriesIterInt64)(nil)
+
+// int
+
+// typed series builder
+
+type nativeSeriesBuilderInt struct {
+	column  Column
+	data    []int
+	notNull []bool
+}
+
+func newNativeSeriesBuilderInt(columnName ColumnName) *nativeSeriesBuilderInt {
+	return &nativeSeriesBuilderInt{
+		column: Column{
+			Name: columnName,
+			Type: typeInt,
+		},
+		data:    []int{},
+		notNull: []bool{},
+	}
+}
+
+func (b *nativeSeriesBuilderInt) Column() Column {
+	return b.column
+}
+
+func (b *nativeSeriesBuilderInt) Reserve(capacity int) {
+	if capacity > cap(b.data) {
+		size := len(b.data)
+
+		newData := make([]int, size, capacity)
+		copy(newData, b.data)
+		b.data = newData
+
+		newNotNull := make([]bool, size, capacity)
+		copy(newNotNull, b.notNull)
+		b.notNull = newNotNull
+	}
+}
+
+func (b *nativeSeriesBuilderInt) Size() int {
+	return len(b.data)
+}
+
+func (b *nativeSeriesBuilderInt) Append(value interface{}) {
+	if value != nil {
+		b.AppendInt(value.(int), true)
+	} else {
+		b.AppendInt(0, false)
+	}
+}
+
+func (b *nativeSeriesBuilderInt) AppendInt(value int, notNull bool) {
+	b.data = append(b.data, value)
+	b.notNull = append(b.notNull, notNull)
+}
+
+func (b *nativeSeriesBuilderInt) Build() *Series {
+	return mustNewNativeSeriesFromSlice(b.column.Name, b.data, b.notNull)
+}
+
+var _ seriesBuilderInt = (*nativeSeriesBuilderInt)(nil)
+
+// typed iterator
+
+func (m *nativeSeriesMeta) readInt(_ *seriesIterCache) iterator {
+	return &nativeSeriesIterInt{
+		data:    m.rValue.Interface().([]int),
+		notNull: m.notNull,
+		pos:     -1,
+	}
+}
+
+type nativeSeriesIterInt struct {
+	data    []int
+	notNull notNullMask
+	pos     int
+}
+
+func (i *nativeSeriesIterInt) Next() bool {
+	i.pos++
+	return i.pos < len(i.data)
+}
+
+func (i *nativeSeriesIterInt) Int() (int, bool) {
+	return i.data[i.pos], i.notNull.Test(i.pos)
+}
+
+func (i *nativeSeriesIterInt) Value() interface{} {
+	if val, ok := i.Int(); ok {
+		return val
+	} else {
+		return nil
+	}
+}
+
+var _ iterInt = (*nativeSeriesIterInt)(nil)
 
 // string
 

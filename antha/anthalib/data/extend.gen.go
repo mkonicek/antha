@@ -258,6 +258,132 @@ func (m *MustExtendOn) InterfaceInt64(f func(v ...interface{}) (int64, bool)) *T
 	return t
 }
 
+// Int adds a int col using int inputs.  Null on any null inputs.
+// Returns error if any column cannot be assigned to int; no conversions are performed.
+func (e *ExtendOn) Int(f func(v ...int) int) (*Table, error) {
+	typ := typeInt
+	inputs, err := e.inputs(typ)
+	if err != nil {
+		return nil, err
+	}
+	return newFromSeries(append(append([]*Series(nil), e.extension.t.series...), &Series{
+		col:  e.extension.newCol,
+		typ:  typ,
+		meta: e.meta,
+		read: func(cache *seriesIterCache) iterator {
+			colReader := make([]iterInt, len(inputs))
+			var err error
+			for i, ser := range inputs {
+				iter := cache.Ensure(ser)
+				colReader[i], err = ser.iterateInt(iter) // note colReader[i] is not itself in the cache!
+				if err != nil {
+					panic(errors.Wrapf(err, "SHOULD NOT HAPPEN; when extending new column %q", e.extension.newCol))
+				}
+			}
+			// end when table exhausted
+			e.extension.extensionSource(cache)
+			return &extendInt{f: f, source: colReader}
+		}},
+	), e.extension.t.sortKey...), nil
+}
+
+var _ iterInt = (*extendInt)(nil)
+
+type extendInt struct {
+	f      func(v ...int) int
+	source []iterInt
+}
+
+func (x *extendInt) Next() bool {
+	return true
+}
+
+func (x *extendInt) Value() interface{} {
+	v, ok := x.Int()
+	if !ok {
+		return nil
+	}
+	return v
+}
+func (x *extendInt) Int() (int, bool) {
+	args := make([]int, len(x.source))
+	var ok bool
+	for i, s := range x.source {
+		args[i], ok = s.Int()
+		if !ok {
+			return 0, false
+		}
+	}
+	v := x.f(args...)
+	return v, true
+}
+
+// Int adds a int col using int inputs.  Null on any null inputs.
+// Panics on error.
+func (m *MustExtendOn) Int(f func(v ...int) int) *Table {
+	t, err := m.ExtendOn.Int(f)
+	handle(err)
+	return t
+}
+
+// InterfaceInt adds a int col using arbitrary (interface{}) inputs.
+func (e *ExtendOn) InterfaceInt(f func(v ...interface{}) (int, bool)) (*Table, error) {
+	projection, err := newProjection(e.extension.t.schema, e.inputCols...)
+	if err != nil {
+		return nil, err
+	}
+
+	return newFromSeries(append(append([]*Series(nil), e.extension.t.series...), &Series{
+		col:  e.extension.newCol,
+		typ:  typeInt,
+		meta: e.meta,
+		read: func(cache *seriesIterCache) iterator {
+			colReader := make([]iterator, len(projection.newToOld))
+			for new, old := range projection.newToOld {
+				colReader[new] = cache.Ensure(e.extension.t.series[old])
+			}
+			// end when table exhausted
+			//e.extension.extensionSource(cache)
+			return &extendInterfaceInt{f: f, source: colReader}
+		}},
+	), e.extension.t.sortKey...), nil
+}
+
+var _ iterInt = (*extendInterfaceInt)(nil)
+
+type extendInterfaceInt struct {
+	f      func(v ...interface{}) (int, bool)
+	source []iterator
+}
+
+func (x *extendInterfaceInt) Next() bool {
+	return true
+}
+
+func (x *extendInterfaceInt) Value() interface{} {
+	v, ok := x.Int()
+	if !ok {
+		return nil
+	}
+	return v
+}
+
+func (x *extendInterfaceInt) Int() (int, bool) {
+	args := make([]interface{}, len(x.source))
+	for i, s := range x.source {
+		args[i] = s.Value()
+	}
+	return x.f(args...)
+}
+
+// InterfaceInt adds a int col using arbitrary (interface{}) inputs.
+// Panics on error.
+func (m *MustExtendOn) InterfaceInt(f func(v ...interface{}) (int, bool)) *Table {
+	t, err := m.ExtendOn.InterfaceInt(f)
+	handle(err)
+	return t
+}
+
 // String adds a string col using string inputs.  Null on any null inputs.
 // Returns error if any column cannot be assigned to string; no conversions are performed.
 func (e *ExtendOn) String(f func(v ...string) string) (*Table, error) {

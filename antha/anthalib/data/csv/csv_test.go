@@ -1,6 +1,7 @@
 package csv
 
 import (
+	"bytes"
 	"io/ioutil"
 	"math"
 	"os"
@@ -34,6 +35,33 @@ func TestCSV(t *testing.T) {
 	}
 
 	assertEqual(t, table, readTable, "tables are different after serialization to file")
+
+	// bytes: write + read
+	blob, err := TableToBytes(table)
+	if err != nil {
+		t.Errorf("TableToBytes: %s", err)
+	}
+
+	readTable, err = TableFromBytes(blob)
+	if err != nil {
+		t.Errorf("TableFromBytes: %s", err)
+	}
+
+	assertEqual(t, table, readTable, "tables are different after serialization to a memory buffer")
+
+	// write to io.Writer + read from io.Reader
+	buffer := bytes.NewBuffer(nil)
+
+	if err := TableToWriter(table, buffer); err != nil {
+		t.Errorf("TableToWriter: %s", err)
+	}
+
+	readTable, err = TableFromReader(buffer)
+	if err != nil {
+		t.Errorf("TableFromReader: %s", err)
+	}
+
+	assertEqual(t, table, readTable, "tables are different after serialization to io.Writer")
 }
 
 func csvFileName(t *testing.T) string {

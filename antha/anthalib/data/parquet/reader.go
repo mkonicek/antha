@@ -14,7 +14,7 @@ import (
 )
 
 // TableFromReader reads a data.Table eagerly from io.Reader
-func TableFromReader(reader io.Reader) (*data.Table, error) {
+func TableFromReader(reader io.Reader, columnNames ...data.ColumnName) (*data.Table, error) {
 	// reading into a memory buffer
 	buffer, err := ioutil.ReadAll(reader)
 	if err != nil {
@@ -22,20 +22,20 @@ func TableFromReader(reader io.Reader) (*data.Table, error) {
 	}
 
 	// reading the table
-	return TableFromBytes(buffer)
+	return TableFromBytes(buffer, columnNames...)
 }
 
 // TableFromBytes reads a data.Table eagerly from a memory buffer
-func TableFromBytes(buffer []byte) (*data.Table, error) {
+func TableFromBytes(buffer []byte, columnNames ...data.ColumnName) (*data.Table, error) {
 	// wrap a byte buffer into a ParquetFile object
 	file := newReadOnlyMemoryParquetFile(buffer)
 
 	// reading the table
-	return readTable(file)
+	return readTable(file, columnNames)
 }
 
 // TableFromFile reads a data.Table eagerly from a Parquet file
-func TableFromFile(filePath string) (*data.Table, error) {
+func TableFromFile(filePath string, columnNames ...data.ColumnName) (*data.Table, error) {
 	// opening the file on disk via ParquetFile object
 	file, err := ParquetFile.NewLocalFileReader(filePath)
 	if err != nil {
@@ -44,11 +44,11 @@ func TableFromFile(filePath string) (*data.Table, error) {
 	defer file.Close() //nolint
 
 	// reading the table
-	return readTable(file)
+	return readTable(file, columnNames)
 }
 
 // reads a table from an arbitrary source (in the form of ParquetFile)
-func readTable(file ParquetFile.ParquetFile) (*data.Table, error) {
+func readTable(file ParquetFile.ParquetFile, columnNames []data.ColumnName) (*data.Table, error) {
 	// reading Parquet file metadata
 	metadata, err := readMetadata(file)
 	if err != nil {
@@ -56,7 +56,7 @@ func readTable(file ParquetFile.ParquetFile) (*data.Table, error) {
 	}
 
 	// transforming Parquet file metadata into parquetSchema
-	schema, err := schemaFromParquetMetadata(metadata)
+	schema, err := schemaFromParquetMetadata(metadata, columnNames)
 	if err != nil {
 		return nil, err
 	}

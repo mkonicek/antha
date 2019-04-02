@@ -168,7 +168,7 @@ func rowFieldType(columnType reflect.Type) reflect.Type {
 }
 
 // transforming Parquet file metadata into schema
-func schemaFromParquetMetadata(metadata *parquet.FileMetaData) (*parquetSchema, error) {
+func schemaFromParquetMetadata(metadata *parquet.FileMetaData, columnNames []data.ColumnName) (*parquetSchema, error) {
 	// currently using Parquet schema only; in future we might store something useful in metadata.KeyValueMetadata
 	schema := metadata.Schema
 	if len(schema) == 0 {
@@ -183,20 +183,42 @@ func schemaFromParquetMetadata(metadata *parquet.FileMetaData) (*parquetSchema, 
 	}
 
 	// 2) list of other elements, each of them corresponds to one column
-	columns := make([]data.Column, columnsCount)
-	for i := range columns {
-		columnType, err := columnTypeFromSchemaElement(schema[i+1])
+	columns := []data.Column{}
+	for i := 0; i < columnsCount; i++ {
+		element := schema[i+1]
+		name := data.ColumnName(element.Name)
+
+		if !doAddColumn(name, columnNames) {
+			continue
+		}
+
+		columnType, err := columnTypeFromSchemaElement(element)
 		if err != nil {
 			return nil, err
 		}
 
-		columns[i] = data.Column{
-			Name: data.ColumnName(schema[i+1].Name),
+		columns = append(columns, data.Column{
+			Name: name,
 			Type: columnType,
-		}
+		})
 	}
 
 	return &parquetSchema{data.NewSchema(columns), schema[0].Name}, nil
+}
+
+// determines whether to read the column from Parquet
+func doAddColumn(name data.ColumnName, columnNames []data.ColumnName) bool {
+	// if no column names are specified by user, then reading all columns
+	if len(columnNames) == 0 {
+		return true
+	}
+	// otherwise, looking for this column name in the user-defined list
+	for _, columnName := range columnNames {
+		if name == columnName {
+			return true
+		}
+	}
+	return false
 }
 
 // nolint

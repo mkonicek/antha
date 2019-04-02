@@ -1,6 +1,7 @@
 package data
 
 import (
+	"math"
 	"reflect"
 	"testing"
 )
@@ -586,6 +587,54 @@ func TestJoin(t *testing.T) {
 		})
 
 		assertEqual(t, jointReference, joint, "multiple columns left outer join")
+	})
+}
+
+func TestForeach(t *testing.T) {
+	runSubTests(t, func(t *testing.T, makeSeries makeSeriesType) {
+		table := NewTable([]*Series{
+			makeSeries("bool", []bool{true, true, false, false, true}, nil),
+			makeSeries("int64", []int64{10, 10, 30, -1, 5}, []bool{true, true, true, false, true}),
+			makeSeries("int", []int{10, 10, 30, -1, 5}, []bool{true, true, true, false, true}),
+			makeSeries("float64", []float64{1.5, 2.5, 3.5, math.NaN(), 5.5}, []bool{true, true, true, false, true}),
+			makeSeries("string", []string{"aa", "bb", "xx", "aa", "cc"}, nil),
+			makeSeries("timestamp_millis", []TimestampMillis{1, 2, 3, 4, 5}, nil),
+			makeSeries("timestamp_micros", []TimestampMicros{1000, 2000, 3000, 4000, 5000}, nil),
+		})
+
+		int64TableWithNulls := table.Must().Project("int64")
+
+		stringTable := table.Must().Project("string")
+
+		// specialized Foreach on a table of another type (shouldn't work)
+		err := stringTable.Foreach().On("string").Int64(func(v ...int64) {
+		})
+		if err == nil {
+			t.Error("no err, specialized Foreach on a column of another type")
+		}
+
+		// specialized Foreach on a table containing nulls (shouldn't work)
+		err = int64TableWithNulls.Foreach().On("int64").Int64(func(v ...int64) {
+		})
+		if err == nil {
+			t.Error("no err, specialized Foreach on a column containing nulls")
+		}
+
+		// specialized Foreach
+		copyBuilder := Must().NewTableBuilder(stringTable.Schema().Columns)
+		stringTable.Must().Foreach().On("string").String(func(v ...string) {
+			copyBuilder.Append([]interface{}{v[0]})
+		})
+
+		assertEqual(t, stringTable, copyBuilder.Build(), "specialized Foreach")
+
+		// generic Foreach
+		copyBuilder = Must().NewTableBuilder(table.Schema().Columns)
+		table.Must().Foreach().On("bool", "int64", "int", "float64", "string", "timestamp_millis", "timestamp_micros").Interface(func(v ...interface{}) {
+			copyBuilder.Append(v)
+		})
+
+		assertEqual(t, table, copyBuilder.Build(), "generic Foreach")
 	})
 }
 

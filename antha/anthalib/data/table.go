@@ -444,3 +444,15 @@ func (t *Table) Pivot() *PivotSelection {
 func (t *Table) Join() *JoinSelection {
 	return &JoinSelection{t: t}
 }
+
+// Foreach iterates over a subset of columns of a table using a user-defined function.
+// May be useful for:
+//
+// - reading table contents into some user-defined data struct (e.g. a map)
+//
+// - computing some scalar aggregate (e.g. MIN(column))
+//
+// Use the returned object to specify the columns and the function.
+func (t *Table) Foreach() *ForeachSelection {
+	return &ForeachSelection{t: t}
+}

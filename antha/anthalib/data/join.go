@@ -142,7 +142,7 @@ func (jq *joinQuery) check() error {
 	}
 	// checking that the numbers of columns are equal
 	if len(jq.left.cols) != len(jq.right.cols) {
-		return errors.Errorf("different number of columns for joining: %d on the left, %d on the right", jq.left.cols, jq.right.cols)
+		return errors.Errorf("different number of columns for joining: %d on the left, %d on the right", len(jq.left.cols), len(jq.right.cols))
 	}
 	// checking that the types of columns are equal
 	for i := range jq.left.cols {

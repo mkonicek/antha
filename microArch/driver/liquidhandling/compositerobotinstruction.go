@@ -958,8 +958,15 @@ func (ins *BlowoutInstruction) OutputTo(lhdriver LiquidhandlingDriver) error {
 		volumes[i] = vol.ConvertToString("ul")
 	}
 	bo := make([]bool, ins.Multi)
+	var nonZero bool
 	for i := 0; i < ins.Multi; i++ {
-		bo[i] = true
+		if volumes[i] > 0.0 {
+			bo[i] = true
+			nonZero = true
+		}
+	}
+	if !nonZero {
+		return nil
 	}
 	return driver.Dispense(volumes, bo, ins.Head, ins.Multi, ins.Plt, ins.What, ins.LLF).GetError()
 }
@@ -2893,6 +2900,7 @@ func (ins *ResetInstruction) Generate(ctx context.Context, policy *wtype.LHPolic
 	for i := 0; i < blow.Multi; i++ {
 		blow.Volume = append(blow.Volume, bov)
 	}
+
 	blow.Plt = ins.TPlateType
 	blow.What = ins.What
 
@@ -2917,8 +2925,10 @@ func (ins *ResetInstruction) Generate(ctx context.Context, policy *wtype.LHPolic
 	ptz.Head = ins.Prms.Head
 	ptz.Channel = -1 // all channels
 
-	ret = append(ret, mov)
-	ret = append(ret, blow)
+	if bov.RawValue() > 0.0 {
+		ret = append(ret, mov)
+		ret = append(ret, blow)
+	}
 
 	// when needed we will add this pistons-to-zero instruction
 	manptz := SafeGetBool(pol, "MANUALPTZ")

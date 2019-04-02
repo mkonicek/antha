@@ -117,10 +117,10 @@ func (t *Table) UnmarshalJSON(b []byte) (err error) {
 		}
 	}()
 	row := make([]interface{}, schema.NumColumns())
+	// reading each cell into a **Object (looks like it's the only way to deserialize nulls correctly)
 	colBaseVals := make([]reflect.Value, schema.NumColumns())
 	for cIdx, c := range schema.Columns {
-		// ptr
-		colBaseVals[cIdx] = reflect.New(c.Type)
+		colBaseVals[cIdx] = reflect.New(reflect.PtrTo(c.Type))
 	}
 	for idx, values = range partiallyParsed.Data {
 		// if err := json.Unmarshal(*values, row); err != nil {
@@ -133,25 +133,20 @@ func (t *Table) UnmarshalJSON(b []byte) (err error) {
 
 		// convert values back to reqd types using reflective call
 		for cIdx := range schema.Columns {
+			pointer := colBaseVals[cIdx]
 			// note: this won't work
 			// 			val := reflect.NewAt(c.Type, unsafe.Pointer(uintptr(0)))
-
-			// do a sneaky hack to peek at the next value and see if it is nil.  this is horrific because of brittle whitespace.
-			// However it seems to be a relatively (?) quick way of doing this
-			hackBuf := make([]byte, 2)
-			_, err := dec.Buffered().Read(hackBuf)
-			checkErr(err)
-			isNull := hackBuf[0] == 'n' || (hackBuf[0] == ',' && hackBuf[1] == 'n')
-			if isNull {
-				row[cIdx] = nil
-				continue
-			}
-			err = dec.Decode(colBaseVals[cIdx].Interface())
+			err = dec.Decode(pointer.Interface())
 			if err != nil {
 				return errors.Wrapf(err, "failed to build table with schema %v: parsing table at row %d: %s", schema, idx, *values)
 			}
-			row[cIdx] = colBaseVals[cIdx].Elem().Interface()
 
+			value := pointer.Elem().Elem()
+			if !value.IsValid() {
+				row[cIdx] = nil
+				continue
+			}
+			row[cIdx] = value.Interface()
 		}
 		builder.Append(row)
 	}

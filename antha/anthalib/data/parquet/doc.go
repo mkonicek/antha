@@ -1,5 +1,7 @@
 /*
-Package parquet provides tools for data tables seriaization to/from Parquet files.
+Package parquet provides tools for data tables serialization to and from Parquet files - in the form of files on disk, memory buffer or io.Reader/io.Writer.
+Now read methods work pretty slowly with files having hundreds of columns.
+As a workaround for now, Read methods support specifying a subset of columns to read.
 
 Current implementation
 

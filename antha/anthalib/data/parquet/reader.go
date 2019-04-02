@@ -13,7 +13,8 @@ import (
 	"github.com/xitongsys/parquet-go/parquet"
 )
 
-// TableFromReader reads a data.Table eagerly from io.Reader
+// TableFromReader reads a data.Table eagerly from io.Reader.
+// If at least one column name is specified, reads a subset of the columns from the source. Otherwise, reads all the columns.
 func TableFromReader(reader io.Reader, columnNames ...data.ColumnName) (*data.Table, error) {
 	// reading into a memory buffer
 	buffer, err := ioutil.ReadAll(reader)
@@ -26,6 +27,7 @@ func TableFromReader(reader io.Reader, columnNames ...data.ColumnName) (*data.Ta
 }
 
 // TableFromBytes reads a data.Table eagerly from a memory buffer
+// If at least one column name is specified, reads a subset of the columns from the source. Otherwise, reads all the columns.
 func TableFromBytes(buffer []byte, columnNames ...data.ColumnName) (*data.Table, error) {
 	// wrap a byte buffer into a ParquetFile object
 	file := newReadOnlyMemoryParquetFile(buffer)
@@ -35,6 +37,7 @@ func TableFromBytes(buffer []byte, columnNames ...data.ColumnName) (*data.Table,
 }
 
 // TableFromFile reads a data.Table eagerly from a Parquet file
+// If at least one column name is specified, reads a subset of the columns from the source. Otherwise, reads all the columns.
 func TableFromFile(filePath string, columnNames ...data.ColumnName) (*data.Table, error) {
 	// opening the file on disk via ParquetFile object
 	file, err := ParquetFile.NewLocalFileReader(filePath)

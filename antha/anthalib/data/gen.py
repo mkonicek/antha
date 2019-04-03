@@ -739,7 +739,7 @@ import "github.com/pkg/errors"
 // {{ t['Raw'] }}
 
 // {{ t['Type'] }} invokes a user-supplied function passing the named column values as {{ t['Raw'] }} arguments.
-// If a null value is encountered, the function fails.
+// An error is returned and execution is aborted at the first null value encountered.
 // If given any SchemaAssertions, they are called in the beginning and may have side effects.
 func (o *ForeachOn) {{ t['Type'] }}(fn func(...{{ t['Raw'] }}), assertions ...SchemaAssertion) error {
 	// schema checks

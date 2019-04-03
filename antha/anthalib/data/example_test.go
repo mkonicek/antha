@@ -378,8 +378,8 @@ func ExampleTable_Foreach_generic() {
 
 func ExampleTable_Foreach_specialized() {
 	quantity := int64(0)
-	_ = pirateBooty.Foreach().On("Quantity").Interface(func(v ...interface{}) {
-		quantity += v[0].(int64)
+	_ = pirateBooty.Foreach().On("Quantity").Int64(func(v ...int64) {
+		quantity += v[0]
 	})
 	fmt.Printf("Total quantity: %d\n", quantity)
 	// Output: Total quantity: 1276

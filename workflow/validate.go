@@ -255,7 +255,7 @@ func (inst *GilsonPipetMaxInstanceConfig) validate(id DeviceInstanceID, isDefaul
 		}
 
 	} else if !isDefaults && strings.ToLower(string(id)) == "defaults" {
-		return fmt.Errorf("Confusion: GilsonPipetMax device '%s' exists. Did you mean to set GilsonPipetMax.Defaults instead?")
+		return fmt.Errorf("Confusion: GilsonPipetMax device '%s' exists. Did you mean to set GilsonPipetMax.Defaults instead?", id)
 
 	}
 	return inst.commonMixerInstanceConfig.validate(id)
@@ -288,7 +288,7 @@ func (inst *TecanInstanceConfig) validate(id DeviceInstanceID, isDefaults bool) 
 		}
 
 	} else if !isDefaults && strings.ToLower(string(id)) == "defaults" {
-		return fmt.Errorf("Confusion: Tecan device '%s' exists. Did you mean to set Tecan.Defaults instead?")
+		return fmt.Errorf("Confusion: Tecan device '%s' exists. Did you mean to set Tecan.Defaults instead?", id)
 
 	}
 	return inst.commonMixerInstanceConfig.validate(id)
@@ -321,7 +321,7 @@ func (inst *CyBioInstanceConfig) validate(id DeviceInstanceID, isDefaults bool) 
 		}
 
 	} else if !isDefaults && strings.ToLower(string(id)) == "defaults" {
-		return fmt.Errorf("Confusion: CyBio device '%s' exists. Did you mean to set CyBio.Defaults instead?")
+		return fmt.Errorf("Confusion: CyBio device '%s' exists. Did you mean to set CyBio.Defaults instead?", id)
 
 	}
 	return inst.commonMixerInstanceConfig.validate(id)
@@ -354,7 +354,7 @@ func (inst *LabcyteInstanceConfig) validate(id DeviceInstanceID, isDefaults bool
 		}
 
 	} else if !isDefaults && strings.ToLower(string(id)) == "defaults" {
-		return fmt.Errorf("Confusion: Labcyte device '%s' exists. Did you mean to set Labcyte.Defaults instead?")
+		return fmt.Errorf("Confusion: Labcyte device '%s' exists. Did you mean to set Labcyte.Defaults instead?", id)
 
 	}
 	// NB because the instruction plugin itself does validation of the model, we don't do that here!
@@ -388,7 +388,7 @@ func (inst *HamiltonInstanceConfig) validate(id DeviceInstanceID, isDefaults boo
 		}
 
 	} else if !isDefaults && strings.ToLower(string(id)) == "defaults" {
-		return fmt.Errorf("Confusion: Hamilton device '%s' exists. Did you mean to set Hamilton.Defaults instead?")
+		return fmt.Errorf("Confusion: Hamilton device '%s' exists. Did you mean to set Hamilton.Defaults instead?", id)
 
 	}
 	// NB because the instruction plugin itself does validation of the model, we don't do that here!

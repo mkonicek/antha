@@ -38,14 +38,12 @@ func (pc *PlateCache) NewPlate(typ wtype.PlateTypeName) (*wtype.Plate, error) {
 	}
 
 	if len(plates) == 0 {
-		for idx := 0; idx < batchSize; idx++ {
-			plate, err := pc.inventory.NewPlate(typ)
-			if err != nil {
-				return nil, err
-			}
-			pc.platesFromCache[plate.ID] = struct{}{}
-			plates = append(plates, plate)
+		plate, err := pc.inventory.NewPlate(typ)
+		if err != nil {
+			return nil, err
 		}
+		pc.platesFromCache[plate.ID] = struct{}{}
+		plates = append(plates, plate)
 	}
 
 	plate := plates[0]

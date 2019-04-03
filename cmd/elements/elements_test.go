@@ -51,7 +51,7 @@ func TestElements(t *testing.T) {
 			// go test relies on the checkout of the elements so it makes
 			// some sense for that to depend on the
 			// checkout/transpilation/compilation of the elements.
-			// goTest(t, l, buildDir) DISABLED FOR NOW BECAUSE THEY'RE ALL BROKEN!
+			goTest(t, l, buildDir)
 			if keepPtr == nil || !*keepPtr {
 				os.RemoveAll(buildDir)
 			}

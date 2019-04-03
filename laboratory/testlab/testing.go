@@ -75,10 +75,15 @@ func WithTestLab(t *testing.T, inDir string, callbacks *TestElementCallbacks) {
 	if err := labBuild.Setup(ioutil.NopCloser(wfBuf), inDir, "", inv); err != nil {
 		labBuild.Fatal(err)
 	}
-	defer labBuild.Decommission()
 	NewTestElement(t, labBuild, callbacks)
 	if err := labBuild.RunElements(); err != nil {
 		labBuild.Fatal(err)
+	}
+	labBuild.Decommission()
+	if !t.Failed() {
+		if err := labBuild.RemoveOutDir(); err != nil {
+			t.Fatal(err)
+		}
 	}
 }
 
@@ -97,6 +102,7 @@ type TestElement struct {
 }
 
 type TestElementCallbacks struct {
+	// If left blank, the name is extracted from the test that is currently being run.
 	Name       string
 	Setup      func(*laboratory.Laboratory) error
 	Steps      func(*laboratory.Laboratory) error

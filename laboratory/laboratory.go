@@ -194,6 +194,10 @@ func (labBuild *LaboratoryBuilder) Decommission() {
 	}
 }
 
+func (labBuild *LaboratoryBuilder) RemoveOutDir() error {
+	return os.RemoveAll(labBuild.outDir)
+}
+
 func (labBuild *LaboratoryBuilder) Compile() {
 	if devices, err := labBuild.connectDevices(); err != nil {
 		labBuild.Fatal(err)

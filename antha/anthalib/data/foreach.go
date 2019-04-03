@@ -11,6 +11,15 @@ type ForeachSelection struct {
 	t *Table
 }
 
+// By performs Foreach on the whole table rows.
+// For wide tables this might be inefficient, consider using On(...) instead.
+func (fs *ForeachSelection) By(fn func(r Row)) {
+	iter := fs.t.read(fs.t.series)
+	for iter.Next() {
+		fn(iter.Value())
+	}
+}
+
 // On selects columns for iterating on. Note this does not panic yet, even if the
 // columns do not exist.  (However subsequent calls to the returned object will
 // error.)

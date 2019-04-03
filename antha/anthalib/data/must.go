@@ -241,6 +241,12 @@ type MustForeachSelection struct {
 	fs *ForeachSelection
 }
 
+// By performs Foreach on the whole table rows.
+// For wide tables this might be inefficient, consider using On(...) instead.
+func (fs *MustForeachSelection) By(fn func(r Row)) {
+	fs.fs.By(fn)
+}
+
 // MustForeachOn is a proxy for ForeachOn.
 type MustForeachOn struct {
 	on *ForeachOn

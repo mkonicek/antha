@@ -635,6 +635,14 @@ func TestForeach(t *testing.T) {
 		})
 
 		assertEqual(t, table, copyBuilder.Build(), "generic Foreach")
+
+		// whole row Foreach
+		copyBuilder = Must().NewTableBuilder(table.Schema().Columns)
+		table.Must().Foreach().By(func(r Row) {
+			copyBuilder.Append(r.raw())
+		})
+
+		assertEqual(t, table, copyBuilder.Build(), "whole row Foreach")
 	})
 }
 

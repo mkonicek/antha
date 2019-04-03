@@ -351,6 +351,19 @@ func ExampleTable_Join_inner() {
 	// |0|doubloon|      1|    1200|    doubloon|                 0.5|
 }
 
+func ExampleTable_Foreach_wholerow() {
+	nonNullCount := 0
+	pirateBooty.Foreach().By(func(r Row) {
+		for _, v := range r.Values {
+			if !v.IsNull() {
+				nonNullCount++
+			}
+		}
+	})
+	fmt.Printf("Non null count: %d\n", nonNullCount)
+	// Output: Non null count: 11
+}
+
 func ExampleTable_Foreach_generic() {
 	cost := 0.
 	_ = pirateBooty.Foreach().On("Price", "Quantity").Interface(func(v ...interface{}) {

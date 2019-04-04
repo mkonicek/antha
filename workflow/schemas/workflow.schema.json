@@ -28,6 +28,32 @@
                     "$ref": "#/definitions/repository"
                 }
             }
+        },
+        "Elements": {
+            "type": "object",
+            "properties": {
+                "Types": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/elementType"
+                    }
+                },
+                "Instances": {
+                    "type": "object",
+                    "minProperties": 1,
+                    "propertyNames": {
+                        "$comment": "TODO: confirm this",
+                        "pattern": "^[a-zA-Z0-9_-]+$"
+                    },
+                    "patternProperties": {
+                        ".*": {
+                            "$ref": "#definitions/elementInstance"
+                        }
+                    }
+                }
+            },
+            "required": ["Types", "Instances"]
         }
     },
     "definitions": {
@@ -42,6 +68,41 @@
                 }
             },
             "required": ["Directory", "Branch"]
+        },
+        "elementType": {
+            "type": "object",
+            "properties": {
+                "RepositoryName": {
+                    "type": "string"
+                },
+                "ElementPath": {
+                    "type": "string"
+                }
+            },
+            "required": ["RepositoryName", "ElementPath"]
+        },
+        "elementInstance": {
+            "type": "object",
+            "properties": {
+                "ElementTypeName": {
+                    "type": "string"
+                },
+                "Meta": {
+                    "type": "object",
+                    "properties": {
+                        "x": {
+                            "type": "number"
+                        },
+                        "y": {
+                            "type": "number"
+                        }
+                    }
+                },
+                "Parameters": {
+                    "type": "object"
+                }
+            },
+            "required": ["ElementTypeName", "Parameters"]
         }
     }
 }

@@ -3,15 +3,20 @@ package workflow
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path"
 	"strings"
 	"unicode"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/qri-io/jsonschema"
 	git "gopkg.in/src-d/go-git.v4"
 )
+
+//go:generate go-bindata -o ./schemas.go -pkg workflow -prefix schemas/ ./schemas/
 
 type Workflow struct {
 	SchemaVersion SchemaVersion `json:"SchemaVersion"`
@@ -39,8 +44,29 @@ func WorkflowFromReaders(rs ...io.ReadCloser) (*Workflow, error) {
 	for _, r := range rs {
 		defer r.Close()
 		wf := &Workflow{} // we're never merging _into_ wf so it's safe to have nil maps here
-		dec := json.NewDecoder(r)
-		if err := dec.Decode(wf); err != nil {
+
+		schema, err := Asset("workflow.schema.json")
+		if err != nil {
+			return nil, err
+		}
+
+		rs := &jsonschema.RootSchema{}
+		if err := json.Unmarshal(schema, rs); err != nil {
+			return nil, err
+		}
+
+		workflowJSON, err := ioutil.ReadAll(r)
+		if err != nil {
+			return nil, err
+		}
+
+		if errors, _ := rs.ValidateBytes(workflowJSON); len(errors) > 0 {
+			fmt.Println(rs.Path())
+			fmt.Printf("%s\n", workflowJSON)
+			return nil, errors[0]
+		}
+
+		if err := json.Unmarshal(workflowJSON, wf); err != nil {
 			return nil, err
 		} else if err := acc.Merge(wf); err != nil {
 			return nil, err

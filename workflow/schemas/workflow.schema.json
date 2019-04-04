@@ -6,7 +6,11 @@
     "required": [
         "SchemaVersion"
     ],
+    "additionalProperties": false,
     "properties": {
+        "$schema": {
+            "type": "string"
+        },
         "JobId": {
             "type": "string",
             "pattern": "^[a-zA-Z][a-zA-Z0-9_ -]*$"
@@ -58,6 +62,7 @@
                     }
                 }
             },
+            "additionalProperties": false,
             "required": ["Types", "Instances"]
         }
     },
@@ -72,6 +77,7 @@
                     "type": "string"
                 }
             },
+            "additionalProperties": false,
             "required": ["Directory", "Branch"]
         },
         "elementType": {
@@ -84,6 +90,7 @@
                     "type": "string"
                 }
             },
+            "additionalProperties": false,
             "required": ["RepositoryName", "ElementPath"]
         },
         "elementInstance": {
@@ -107,6 +114,7 @@
                     "type": "object"
                 }
             },
+            "additionalProperties": false,
             "required": ["ElementTypeName", "Parameters"]
         },
         "elementInstanceConnection": {
@@ -119,6 +127,7 @@
                     "$ref": "#/definitions/connectionTerminal"
                 }
             },
+            "additionalProperties": false,
             "required": ["Source", "Target"]
         },
         "connectionTerminal": {
@@ -131,6 +140,7 @@
                     "type": "string"
                 }
             },
+            "additionalProperties": false,
             "required": ["ElementInstance", "ParameterName"]
         }
     }

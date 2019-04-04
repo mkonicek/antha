@@ -1,0 +1,12 @@
+{
+    "$id": "https://antha.com/workflows-schema",
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "description": "JSON Schema for describing workflows",
+    "type": "object",
+    "required": [
+    ],
+    "properties": {
+    },
+    "definitions": {
+    }
+}

@@ -1,4 +1,5 @@
 {
+    "$schema": "../../workflow/schemas/workflow.schema.json",
     "SchemaVersion": "2.0",
     "Repositories": {
         "repos.antha.com/antha-ninja/elements-westeros": {

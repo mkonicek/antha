@@ -1,4 +1,6 @@
 {
+    "$schema": "../../workflow/schemas/workflow.schema.json",
+
     "SchemaVersion": "2.0",
     "JobId": "abc"
 }

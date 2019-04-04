@@ -24,7 +24,6 @@
             },
             "patternProperties": {
                 ".*": {
-                    "$comment": "For any key (anything matching the regex .*), the value should be a repository",
                     "$ref": "#/definitions/repository"
                 }
             }
@@ -48,7 +47,7 @@
                     },
                     "patternProperties": {
                         ".*": {
-                            "$ref": "#definitions/elementInstance"
+                            "$ref": "#/definitions/elementInstance"
                         }
                     }
                 }

@@ -2,12 +2,14 @@ package workflow
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/antha-lang/antha/utils"
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 )
@@ -90,13 +92,12 @@ type File struct {
 }
 
 func (r *Repository) Walk(fun TreeWalker) error {
-	switch {
-	case r.Branch == "" && r.Commit == "":
+	if err := r.maybeResolveGit(); err != nil {
+		return err
+	} else if r.Commit == "" {
 		return r.walkFromDirectory(fun)
-	case r.Commit != "":
+	} else {
 		return r.walkFromGitCommit(fun)
-	default:
-		return r.walkFromGitBranch(fun)
 	}
 }
 
@@ -155,31 +156,6 @@ func (r *Repository) walkFromGitCommit(fun TreeWalker) error {
 	}
 }
 
-func (r *Repository) walkFromGitBranch(fun TreeWalker) error {
-	if err := r.ensureGitRepo(); err != nil {
-		return err
-	} else {
-		// Sadly, a branch name is problematic: in a fully checked out
-		// repo, the plain branch name can work. In a fresh full clone you
-		// need to add a `refs/remotes/origin` prefix, and in a bare
-		// clone, you need to add `refs/heads` prefix. WHY GIT? WHY?!!
-		var ch *plumbing.Hash
-		for _, prefix := range []string{"", "refs/remotes/origin/", "refs/heads/"} {
-			if ch, err = r.gitRepo.ResolveRevision(plumbing.Revision(prefix + r.Branch)); err == nil {
-				break
-			}
-		}
-		if err != nil {
-			return err
-		} else {
-			// we switch from branch to commit
-			r.Commit = ch.String()
-			r.Branch = ""
-			return r.walkFromGitCommit(fun)
-		}
-	}
-}
-
 func (r *Repository) ensureGitRepo() error {
 	if r.gitRepo == nil {
 		if repo, err := git.PlainOpen(filepath.FromSlash(r.Directory)); err != nil {
@@ -191,6 +167,58 @@ func (r *Repository) ensureGitRepo() error {
 		}
 	}
 	return nil
+}
+
+func (r *Repository) maybeResolveGit() error {
+	return utils.ErrorFuncs{
+		r.maybeResolveBranch,
+		r.maybeResolveCommit,
+	}.Run()
+}
+
+func (r *Repository) maybeResolveCommit() error {
+	if r.Commit == "" {
+		return nil
+	} else if err := r.ensureGitRepo(); err != nil {
+		return err
+	}
+	commitHash := plumbing.NewHash(r.Commit)
+	if commit, err := r.gitRepo.CommitObject(commitHash); err != nil {
+		return err
+	} else if _, err := r.gitRepo.TreeObject(commit.TreeHash); err != nil {
+		return err
+	} else {
+		return nil
+	}
+}
+
+func (r *Repository) maybeResolveBranch() error {
+	if r.Branch == "" {
+		return nil
+	} else if err := r.ensureGitRepo(); err != nil {
+		return err
+	}
+
+	// Sadly, a branch name is problematic: in a fully checked out
+	// repo, the plain branch name can work. In a fresh full clone you
+	// need to add a `refs/remotes/origin` prefix, and in a bare clone,
+	// you need to add `refs/heads` prefix. WHY GIT? WHY?!!
+	var ch *plumbing.Hash
+	var err error
+	for _, prefix := range []string{"", "refs/remotes/origin/", "refs/heads/"} {
+		if ch, err = r.gitRepo.ResolveRevision(plumbing.Revision(prefix + r.Branch)); err == nil {
+			break
+		}
+	}
+	if err != nil {
+		return err
+	} else if commit := ch.String(); r.Commit != "" && r.Commit != commit {
+		return fmt.Errorf("Branch %s resolves to commit %s, but commit %s specified.",
+			r.Branch, commit, r.Commit)
+	} else {
+		r.Commit = commit
+		return nil
+	}
 }
 
 func IsAnthaFile(path string) bool {

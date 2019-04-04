@@ -15,8 +15,33 @@
             "$comment": "TODO: Do we need this? Seems redundant to have $schema and SchemaVersion both defined.",
             "type": "string",
             "enum": ["2.0"]
+        },
+        "Repositories": {
+            "type": "object",
+            "minProperties": 1,
+            "propertyNames": {
+                "pattern": "^(repos.antha.com|github.com)/"
+            },
+            "patternProperties": {
+                ".*": {
+                    "$comment": "For any key (anything matching the regex .*), the value should be a repository",
+                    "$ref": "#/definitions/repository"
+                }
+            }
         }
     },
     "definitions": {
+        "repository": {
+            "type": "object",
+            "properties": {
+                "Directory": {
+                    "type": "string"
+                },
+                "Branch": {
+                    "type": "string"
+                }
+            },
+            "required": ["Directory", "Branch"]
+        }
     }
 }

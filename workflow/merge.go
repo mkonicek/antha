@@ -32,18 +32,50 @@ func (a *Workflow) Merge(b *Workflow) error {
 func (a Repositories) Merge(b Repositories) error {
 	for repoName, repoB := range b {
 		if repoA, found := a[repoName]; found {
-			if repoA.Branch != repoB.Branch || repoA.Commit != repoB.Commit {
-				return fmt.Errorf("Cannot merge: repository with name '%v' redefined illegally.", repoName)
-			}
 			// We're ok if:
 			// .Directory in both are equal (includes both being "")
 			// repoA.Directory is "" (we just copy in from repoB.Directory)
 			// If both != "" and repoA.Directory != repoB.Directory then error
-			if repoA.Directory == "" {
+			switch {
+			case repoA.Directory == repoB.Directory, repoB.Directory == "":
+				// all good
+			case repoA.Directory == "":
 				repoA.Directory = repoB.Directory
-			} else if repoB.Directory != "" && repoA.Directory != repoB.Directory {
-				return fmt.Errorf("Cannot merge: repository with name '%v' redefined illegally (Directory fields not empty and not equal).", repoName)
+			default: // both != "" and != each other
+				return fmt.Errorf("Cannot merge: repository with name '%v' redefined illegally (Directory fields not empty and not equal: %s vs %s).",
+					repoName, repoA.Directory, repoB.Directory)
 			}
+
+			// Merge needs to work even in the absence of the Directory
+			// field, which means we really can't start using git at this
+			// point.  Consequently, all we can do safely here is basic
+			// string equality and allow empty fields to be set. This is
+			// slightly more restrictive than we might want, for example,
+			// it could be valid to have two different branch names that
+			// happen to resolve to the same commit, but we can't test
+			// for that here so we play it safe and enforce strict
+			// equality.
+
+			switch {
+			case repoA.Commit == repoB.Commit, repoB.Commit == "":
+				// all good - covers "" and != "" cases
+			case repoA.Commit == "":
+				repoA.Commit = repoB.Commit
+			default: // both != "" and != each other
+				return fmt.Errorf("Cannot merge: repository with name '%v' redefined illegally (Commit fields not empty and not equal; %s vs %s).",
+					repoName, repoA.Commit, repoB.Commit)
+			}
+
+			// same but for branch
+			switch {
+			case repoA.Branch == repoB.Branch, repoB.Branch == "":
+			case repoA.Branch == "":
+				repoA.Branch = repoB.Branch
+			default:
+				return fmt.Errorf("Cannot merge: repository with name '%v' redefined illegally (Branch fields not empty and not equal; %s vs %s).",
+					repoName, repoA.Branch, repoB.Branch)
+			}
+
 		} else if !found {
 			a[repoName] = repoB
 		}

@@ -87,8 +87,8 @@ func (r *Repository) validate() error {
 		return err
 	} else if !info.Mode().IsDir() {
 		return fmt.Errorf("Validation error: Repository Directory is not a directory: '%s'", r.Directory)
-	} else if bEmpty, cEmpty := r.Branch == "", r.Commit == ""; !bEmpty && !cEmpty {
-		return fmt.Errorf("Validation error: Repository cannot have both Branch and Commit specified. At most one. ('%s', '%s')", r.Branch, r.Commit)
+	} else if err := r.maybeResolveGit(); err != nil {
+		return err
 	} else {
 		return nil
 	}

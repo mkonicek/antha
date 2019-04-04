@@ -50,6 +50,12 @@
                             "$ref": "#/definitions/elementInstance"
                         }
                     }
+                },
+                "InstancesConnections": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/elementInstanceConnection"
+                    }
                 }
             },
             "required": ["Types", "Instances"]
@@ -102,6 +108,30 @@
                 }
             },
             "required": ["ElementTypeName", "Parameters"]
+        },
+        "elementInstanceConnection": {
+            "type": "object",
+            "properties": {
+                "Source": {
+                    "$ref": "#/definitions/connectionTerminal"
+                },
+                "Target": {
+                    "$ref": "#/definitions/connectionTerminal"
+                }
+            },
+            "required": ["Source", "Target"]
+        },
+        "connectionTerminal": {
+            "type": "object",
+            "properties": {
+                "ElementInstance": {
+                    "type": "string"
+                },
+                "ParameterName": {
+                    "type": "string"
+                }
+            },
+            "required": ["ElementInstance", "ParameterName"]
         }
     }
 }

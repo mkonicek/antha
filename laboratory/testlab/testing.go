@@ -62,6 +62,18 @@ func NewTestLabBuilder(t *testing.T, inDir string, fh io.ReadCloser) *laboratory
 }
 
 func WithTestLab(t *testing.T, inDir string, callbacks *TestElementCallbacks) {
+	// this wrapping is just a nicity to get the testing framework to
+	// use a nice name.
+	if callbacks.Name != "" {
+		t.Run(callbacks.Name, func(t *testing.T) {
+			withTestLab(t, inDir, callbacks)
+		})
+	} else {
+		withTestLab(t, inDir, callbacks)
+	}
+}
+
+func withTestLab(t *testing.T, inDir string, callbacks *TestElementCallbacks) {
 	wf := workflow.EmptyWorkflow()
 	wf.JobId = workflow.JobId("testing")
 	wfBuf := new(bytes.Buffer)

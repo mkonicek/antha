@@ -16,8 +16,12 @@ func (a *Workflow) Merge(b *Workflow) error {
 		return nil
 	case a.JobId == "":
 		a.JobId = b.JobId
-	case a.JobId != b.JobId && b.JobId != "":
-		return fmt.Errorf("Cannot merge: different JobIds: %v vs %v", a.JobId, b.JobId)
+	case b.JobId == "":
+		a.JobId = a.JobId
+	case a.JobId != b.JobId:
+		a.JobId = b.JobId // MTG hack for testing - b is the test workflow, and should take preference in case of conflicts.
+		//case a.JobId != b.JobId && b.JobId != "":
+		//return fmt.Errorf("Cannot merge: different JobIds: %v vs %v", a.JobId, b.JobId)
 	}
 
 	return utils.ErrorSlice{
@@ -26,7 +30,22 @@ func (a *Workflow) Merge(b *Workflow) error {
 		a.Elements.merge(b.Elements),
 		a.Inventory.merge(b.Inventory),
 		a.Config.merge(b.Config),
+		a.mergeTesting(b),
 	}.Pack()
+}
+
+func (a *Workflow) mergeTesting(b *Workflow) error {
+	switch {
+	case b == nil:
+		return nil
+	case a.Testing == nil:
+		a.Testing = b.Testing
+		return nil
+	case a.Testing != nil && b.Testing != nil:
+		return errors.New("Cannot merge two sets of testing data")
+	}
+
+	return nil
 }
 
 func (a Repositories) Merge(b Repositories) error {

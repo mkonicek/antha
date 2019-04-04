@@ -6,10 +6,15 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 
 	"github.com/antha-lang/antha/utils"
+)
+
+const (
+	ValidJobId string = "^[a-zA-Z][0-9a-zA-Z_ -]*$"
 )
 
 func (wf *Workflow) Validate() error {
@@ -33,9 +38,13 @@ func (sv SchemaVersion) Validate() error {
 }
 
 func (jobId JobId) Validate() error {
-	switch jobId {
-	case "":
+	rxValidJobId := regexp.MustCompile(ValidJobId)
+
+	switch true {
+	case jobId == "":
 		return errors.New("Validation error: Workflow has empty JobId")
+	case !rxValidJobId.MatchString(string(jobId)):
+		return fmt.Errorf("Invalid jobId '%v': job IDs must match the pattern %v", jobId, ValidJobId)
 	default:
 		return nil
 	}

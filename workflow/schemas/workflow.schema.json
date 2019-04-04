@@ -15,6 +15,14 @@
             "type": "string",
             "pattern": "^[a-zA-Z][a-zA-Z0-9_ -]*$"
         },
+        "Meta": {
+            "type": "null",
+            "$comment": "TODO: implement schema. Haven't seen one of these in the wild yet"
+        },
+        "Inventory": {
+            "type": "object",
+            "$comment": "TODO: implement schema. Haven't seen one of these in the wild yet"
+        },
         "SchemaVersion": {
             "$comment": "TODO: Do we need this? Seems redundant to have $schema and SchemaVersion both defined.",
             "type": "string",
@@ -46,7 +54,7 @@
                     "type": "object",
                     "minProperties": 1,
                     "propertyNames": {
-                        "$comment": "TODO: confirm this",
+                        "$comment": "TODO: confirm this regex. This is the name of an element instance, e.g. 'my_aliquot'",
                         "pattern": "^[a-zA-Z0-9_-]+$"
                     },
                     "patternProperties": {
@@ -68,7 +76,7 @@
         "Config": {
             "type": "object",
             "propertyNames": {
-                "$comment": "TODO: check this regex. This is the name of a device class, e.g. GilsonPipetMax",
+                "$comment": "TODO: check this regex. This is the name of a device class, e.g. 'GilsonPipetMax'",
                 "pattern": "^[a-zA-Z0-9_-]+$"
             },
             "patternProperties": {
@@ -91,10 +99,13 @@
                 },
                 "Branch": {
                     "type": "string"
+                },
+                "Commit": {
+                    "type": "string"
                 }
             },
             "additionalProperties": false,
-            "required": ["Directory", "Branch"]
+            "required": ["Directory"]
         },
         "elementType": {
             "type": "object",
@@ -165,7 +176,7 @@
                 "Devices": {
                     "type": "object",
                     "propertyNames": {
-                        "$comment": "TODO: check this regex. This is the name of a device instance, e.g. Doris",
+                        "$comment": "TODO: check this regex. This is the name of a device instance, e.g. 'Doris'",
                         "pattern": "^[a-zA-Z0-9_-]+$"
                     },
                     "patternProperties": {
@@ -177,7 +188,7 @@
                 }
             },
             "additionalProperties": false,
-            "required": ["Devices"]
+            "required": []
         }
     }
 }

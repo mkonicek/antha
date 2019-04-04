@@ -160,10 +160,22 @@ func (cb *ComposerBase) ComposeMainAndRun(keep, run, linkedDrivers bool, wf *wor
 	}.Run()
 }
 
+func (cb *ComposerBase) generateGoGenerate() error {
+	path := filepath.Join(cb.OutDir, "workflow", "generate_assets.go")
+	if fh, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0400); err != nil {
+		return err
+	} else {
+		defer fh.Close()
+		return renderGoGenerate(fh)
+	}
+}
+
 func (mc *mainComposer) generateMain() error {
 	path := filepath.Join(mc.OutDir, "workflow", "main.go")
 	mc.Logger.Log("progress", "generating workflow main", "path", path)
-	if fh, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0400); err != nil {
+	if err := mc.generateGoGenerate(); err != nil {
+		return err
+	} else if fh, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0400); err != nil {
 		return err
 	} else {
 		defer fh.Close()
@@ -234,6 +246,7 @@ func (tc *testComposer) ComposeTestsAndRun() error {
 	}
 
 	return utils.ErrorFuncs{
+		tc.generateGoGenerate,
 		tc.goGenerate,
 		tc.goTest,
 	}.Run()

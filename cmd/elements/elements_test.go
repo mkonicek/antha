@@ -117,7 +117,7 @@ func workflows(t *testing.T, l *logger.Logger, inDir, outDir string, wf *workflo
 						return nil
 					} else {
 						l.Log("repository", repoName, "added", f.Name)
-						inDir := filepath.Join(outDir, "src", filepath.Dir(filepath.Dir(f.Name)))
+						inDir := filepath.Join(outDir, "src", string(repoName), filepath.Dir(filepath.Dir(f.Name)))
 						return tc.AddWorkflow(wfTest, inDir)
 					}
 				} else {

@@ -64,6 +64,22 @@
             },
             "additionalProperties": false,
             "required": ["Types", "Instances"]
+        },
+        "Config": {
+            "type": "object",
+            "propertyNames": {
+                "$comment": "TODO: check this regex. This is the name of a device class, e.g. GilsonPipetMax",
+                "pattern": "^[a-zA-Z0-9_-]+$"
+            },
+            "patternProperties": {
+                "^GlobalMixer$": {
+                    "type": "object"
+                }
+            },
+            "additionalProperties": {
+                "$ref": "#/definitions/deviceClass"
+            },
+            "required": []
         }
     },
     "definitions": {
@@ -142,6 +158,26 @@
             },
             "additionalProperties": false,
             "required": ["ElementInstance", "ParameterName"]
+        },
+        "deviceClass": {
+            "type": "object",
+            "properties": {
+                "Devices": {
+                    "type": "object",
+                    "propertyNames": {
+                        "$comment": "TODO: check this regex. This is the name of a device instance, e.g. Doris",
+                        "pattern": "^[a-zA-Z0-9_-]+$"
+                    },
+                    "patternProperties": {
+                        ".*": {
+                            "$comment": "The properties of a device instance, e.g. InputPlateTypes. Currently, any key/values are valid here",
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "additionalProperties": false,
+            "required": ["Devices"]
         }
     }
 }

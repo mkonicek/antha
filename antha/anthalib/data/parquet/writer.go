@@ -15,7 +15,7 @@ import (
 // TableToWriter writes a data.Table to io.Writer
 func TableToWriter(table *data.Table, writer io.Writer) error {
 	// wrapping io.Writer in a ParquetFile.ParquetFile
-	file := newWriteOnlyParquetFile(writer)
+	file := ParquetFile.NewWriterFile(writer)
 
 	// writing the table
 	return writeTable(table, file)
@@ -27,7 +27,7 @@ func TableToBytes(table *data.Table) ([]byte, error) {
 	buffer := bytes.NewBuffer(nil)
 
 	// a ParquetFile.ParquetFile on the top of the memory buffer writer
-	file := newWriteOnlyParquetFile(buffer)
+	file := ParquetFile.NewWriterFile(buffer)
 
 	// writing the table
 	if err := TableToWriter(table, file); err != nil {

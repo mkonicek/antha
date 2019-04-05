@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	ValidJobId string = "^[0-9a-zA-Z_ -]*$"
+	ValidJobId string = "^[a-zA-Z][0-9a-zA-Z_ -]*$"
 )
 
 func (wf *Workflow) Validate() error {

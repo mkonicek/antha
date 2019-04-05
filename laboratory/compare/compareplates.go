@@ -14,13 +14,13 @@ type wellInfo struct {
 	VolumeUl  string
 }
 
-func infoForWell(w *wtype.LHWell, p *wtype.Plate, idGen *id.IDGenerator) (wellInfo, error) {
+func infoForWell(idGen *id.IDGenerator, w *wtype.LHWell, p *wtype.Plate) (*wellInfo, error) {
 	volUl, err := w.CurrentVolume(idGen).InStringUnit("ul")
 	if err != nil {
-		return wellInfo{}, err
+		return nil, err
 	}
 
-	return wellInfo{
+	return &wellInfo{
 		PlateName: p.Name(),
 		PlateType: wtype.TypeOf(w.Plate),
 		VolumeUl:  volUl.ToString(),
@@ -28,7 +28,7 @@ func infoForWell(w *wtype.LHWell, p *wtype.Plate, idGen *id.IDGenerator) (wellIn
 }
 
 // Plates checks that two sets of plates are equivalent
-func Plates(expected, got map[string]*wtype.Plate, idGen *id.IDGenerator) error {
+func Plates(idGen *id.IDGenerator, expected, got map[string]*wtype.Plate) utils.ErrorSlice {
 	errs := make(utils.ErrorSlice, 0, len(expected)+len(got))
 
 	eSeen := make(map[string]struct{})
@@ -37,8 +37,8 @@ func Plates(expected, got map[string]*wtype.Plate, idGen *id.IDGenerator) error 
 		eSeen[pos] = struct{}{}
 		if gp, ok := got[pos]; !ok {
 			errs = append(errs, fmt.Errorf("expected to find plate at position '%s' but was not in generated output", pos))
-		} else if err := comparePlate(ep, gp, idGen); err != nil {
-			errs = append(errs, err)
+		} else {
+			errs = append(errs, comparePlate(idGen, ep, gp)...)
 		}
 	}
 
@@ -48,34 +48,32 @@ func Plates(expected, got map[string]*wtype.Plate, idGen *id.IDGenerator) error 
 		}
 	}
 
-	return errs.Pack()
+	return errs
 }
 
-func plateWellInfo(p *wtype.Plate, idGen *id.IDGenerator) (map[wellInfo]int, error) {
+func plateWellInfo(idGen *id.IDGenerator, p *wtype.Plate) (map[wellInfo]int, error) {
 	pwi := make(map[wellInfo]int)
 	for _, col := range p.Cols {
 		for _, w := range col {
-			if wi, err := infoForWell(w, p, idGen); err != nil {
+			if wi, err := infoForWell(idGen, w, p); err != nil {
 				return nil, err
-			} else if v, ok := pwi[wi]; ok {
-				pwi[wi] = v + 1
 			} else {
-				pwi[wi] = 0
+				pwi[*wi] = pwi[*wi] + 1
 			}
 		}
 	}
 	return pwi, nil
 }
 
-func comparePlate(expected, got *wtype.Plate, idGen *id.IDGenerator) error {
-	ewi, err := plateWellInfo(expected, idGen)
+func comparePlate(idGen *id.IDGenerator, expected, got *wtype.Plate) utils.ErrorSlice {
+	ewi, err := plateWellInfo(idGen, expected)
 	if err != nil {
-		return err
+		return utils.ErrorSlice{err}
 	}
 
-	gwi, err := plateWellInfo(got, idGen)
+	gwi, err := plateWellInfo(idGen, got)
 	if err != nil {
-		return err
+		return utils.ErrorSlice{err}
 	}
 
 	eSeen := make(map[wellInfo]struct{})
@@ -90,9 +88,9 @@ func comparePlate(expected, got *wtype.Plate, idGen *id.IDGenerator) error {
 
 	for w, v := range gwi {
 		if _, ok := eSeen[w]; !ok {
-			errs = append(errs, fmt.Errorf("Saw %d of unexpect well %v", v, w))
+			errs = append(errs, fmt.Errorf("Saw %d instances of unexpected well %v", v, w))
 		}
 	}
 
-	return errs.Pack()
+	return errs
 }

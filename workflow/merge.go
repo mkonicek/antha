@@ -17,11 +17,9 @@ func (a *Workflow) Merge(b *Workflow) error {
 	case a.JobId == "":
 		a.JobId = b.JobId
 	case b.JobId == "":
-		a.JobId = a.JobId
+		// Don't overwrite with blank value.
 	case a.JobId != b.JobId:
-		a.JobId = b.JobId // MTG hack for testing - b is the test workflow, and should take preference in case of conflicts.
-		//case a.JobId != b.JobId && b.JobId != "":
-		//return fmt.Errorf("Cannot merge: different JobIds: %v vs %v", a.JobId, b.JobId)
+		a.JobId = b.JobId
 	}
 
 	return utils.ErrorSlice{

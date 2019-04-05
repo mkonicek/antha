@@ -122,8 +122,8 @@ type TestElementCallbacks struct {
 	// However, if Name is provided explicitly, then internally a call
 	// to t.Run will be made, passing in the given Name. This then
 	// means that any error which is returned from the callbacks,
-	// internally routed to t.Fatal will only abort the current subtest
-	// and not the encompassing test. It will also improve the
+	// internally routed to t.Fatal, will only abort the current
+	// subtest and not the encompassing test. It will also improve the
 	// presentation of the test results.
 	Name       string
 	Setup      func(*laboratory.Laboratory) error

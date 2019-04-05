@@ -3,8 +3,11 @@ package liquidhandling
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
 	"reflect"
+	"strings"
+
+	"github.com/go-test/deep"
+	"github.com/pkg/errors"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
@@ -93,15 +96,8 @@ func AssertActionsEquivalent(got, expected []byte) error {
 	e.NormalizeIDs()
 	g.NormalizeIDs()
 
-	if !reflect.DeepEqual(e, g) {
-		// serialize to make tracking down the actual differeces easier
-		if eJSON, err := json.Marshal(e); err != nil {
-			panic(err)
-		} else if gJSON, err := json.Marshal(g); err != nil {
-			panic(err)
-		} else {
-			return errors.Errorf("generated action summary differs from expected:\n\te: %s\n\tg: %s", string(eJSON), string(gJSON))
-		}
+	if diffs := deep.Equal(e, g); len(diffs) > 0 {
+		return errors.Errorf("generated action summary differs from expected: %s", strings.Join(diffs, "; "))
 	}
 	return nil
 }

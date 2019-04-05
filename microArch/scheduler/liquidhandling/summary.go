@@ -109,33 +109,30 @@ func SummarizeActions(initialState *driver.LHProperties, itree *driver.ITree) ([
 
 	actions := make(actionsSummary, 0, len(acts))
 	for _, act := range acts {
-		var timeForInstruction time.Duration
+		var timeForAct time.Duration
 		if timer != nil {
-			lowLevelInstructions := act.Leaves()
-			for _, leaf := range lowLevelInstructions {
-				timeForInstruction += timer.TimeFor(leaf)
+			// find cumulative time estimate for all sub instructions
+			for _, leaf := range act.Leaves() {
+				timeForAct += timer.TimeFor(leaf)
 			}
-			cumulativeTime += timeForInstruction
 		}
 		switch act.Instruction().Type() {
 		case driver.MSG:
 			// record messages as a prompt action
-			if action, err := newPromptAction(vlh, act); err != nil {
+			if action, err := newPromptAction(vlh, act, cumulativeTime); err != nil {
 				return nil, err
 			} else {
-				if action.DurationSeconds > 0 {
-					action.TimeEstimate = action.DurationSeconds
-					action.CumulativeTimeEstimate = cumulativeTime.Seconds()
-				}
+				action.TimeEstimate = timeForAct.Seconds()
+				cumulativeTime = time.Duration(action.CumulativeTimeEstimate * 1e9)
 				actions = append(actions, action)
 			}
 		case driver.TFR:
 			// record transfer instructions as transfer actions
-			if action, err := newTransferAction(vlh, act); err != nil {
+			if action, err := newTransferAction(vlh, act, timer, cumulativeTime); err != nil {
 				return nil, err
 			} else {
-				action.TimeEstimate = timeForInstruction.Seconds()
-				action.CumulativeTimeEstimate = cumulativeTime.Seconds()
+				action.TimeEstimate = timeForAct.Seconds()
+				cumulativeTime = time.Duration(action.CumulativeTimeEstimate * 1e9)
 				actions = append(actions, action)
 			}
 		default:
@@ -143,6 +140,8 @@ func SummarizeActions(initialState *driver.LHProperties, itree *driver.ITree) ([
 			if err := vlh.Simulate(act.Leaves()); err != nil {
 				return nil, err
 			}
+			// keep cumulativeTime up to date for any instructions not included in actions
+			cumulativeTime += timeForAct
 		}
 	}
 
@@ -714,14 +713,11 @@ type transferAction struct {
 
 // newTransferAction create a new transfer action from the act, which is assumed to have generated ChannelTransferInstructions
 // and outputs all leaves of the act to the simulator
-func newTransferAction(vlh *simulator.VirtualLiquidHandler, act *driver.ITree) (*transferAction, error) {
+func newTransferAction(vlh *simulator.VirtualLiquidHandler, act *driver.ITree, timer driver.LHTimer, cumulativeTimeEstimate time.Duration) (*transferAction, error) {
 
 	instructions := act.Refine(driver.CTI)
 
 	children := make([]transferChild, 0, len(act.Children()))
-
-	var cumulativeTimeEstimate time.Duration
-	timer := vlh.GetProperties().GetTimer()
 
 	for _, ins := range instructions {
 		var timeEstimate time.Duration
@@ -762,7 +758,7 @@ func newTransferAction(vlh *simulator.VirtualLiquidHandler, act *driver.ITree) (
 		}
 	}
 
-	return &transferAction{Children: children}, nil
+	return &transferAction{Children: children, CumulativeTimeEstimate: cumulativeTimeEstimate.Seconds()}, nil
 }
 
 func (*transferAction) isAction() {}
@@ -828,14 +824,15 @@ type promptAction struct {
 	Message                string  `json:"message"`
 }
 
-func newPromptAction(vlh *simulator.VirtualLiquidHandler, act *driver.ITree) (*promptAction, error) {
+func newPromptAction(vlh *simulator.VirtualLiquidHandler, act *driver.ITree, cumulativeTime time.Duration) (*promptAction, error) {
 	msg := act.Instruction().(*driver.MessageInstruction)
 
 	if err := msg.OutputTo(vlh); err != nil {
 		return nil, err
 	}
 	return &promptAction{
-		Message: msg.Message,
+		Message:                msg.Message,
+		CumulativeTimeEstimate: cumulativeTime.Seconds(),
 	}, nil
 }
 

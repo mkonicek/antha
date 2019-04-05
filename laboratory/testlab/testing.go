@@ -114,7 +114,17 @@ type TestElement struct {
 }
 
 type TestElementCallbacks struct {
-	// If left blank, the name is extracted from the test that is currently being run.
+	// If left blank, the name is extracted from the test that is
+	// currently being run, and the callbacks are called as part of the
+	// current test. This means that an error, which will internally
+	// call t.Fatal, will abort the entire test.
+	//
+	// However, if Name is provided explicitly, then internally a call
+	// to t.Run will be made, passing in the given Name. This then
+	// means that any error which is returned from the callbacks,
+	// internally routed to t.Fatal will only abort the current subtest
+	// and not the encompassing test. It will also improve the
+	// presentation of the test results.
 	Name       string
 	Setup      func(*laboratory.Laboratory) error
 	Steps      func(*laboratory.Laboratory) error

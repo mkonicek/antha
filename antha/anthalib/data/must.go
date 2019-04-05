@@ -74,21 +74,6 @@ func (m MustTable) Convert(col ColumnName, typ reflect.Type) *Table {
 	return t
 }
 
-// Filter returns a proxy for *Table.Filter.
-func (m MustTable) Filter() *MustFilterSelection {
-	return &MustFilterSelection{m.Table.Filter()}
-}
-
-// Distinct returns a proxy for *Table.Distinct.
-func (m MustTable) Distinct() *MustDistinctSelection {
-	return &MustDistinctSelection{m.Table.Distinct()}
-}
-
-// Extend returns a proxy for *Table.Extend.
-func (m MustTable) Extend(newCol ColumnName) *MustExtension {
-	return &MustExtension{m.Table.Extend(newCol)}
-}
-
 // Sort panics unless *Table.Sort.
 func (m MustTable) Sort(key Key) *Table {
 	t, err := m.Table.Sort(key)
@@ -103,14 +88,11 @@ func (m MustTable) SortByFunc(f SortFunc) *Table {
 	return t
 }
 
-// Pivot returns a proxy for *Table.Pivot.
-func (m MustTable) Pivot() *MustPivotSelection {
-	return &MustPivotSelection{m.Table.Pivot()}
-}
+// Filter
 
-// Join returns a proxy for *Table.Join.
-func (m MustTable) Join() *MustJoinSelection {
-	return &MustJoinSelection{m.Table.Join()}
+// Filter returns a proxy for *Table.Filter.
+func (m MustTable) Filter() *MustFilterSelection {
+	return &MustFilterSelection{m.Table.Filter()}
 }
 
 // MustFilterSelection panics on any error when creating derived tables.
@@ -128,6 +110,13 @@ type MustFilterOn struct {
 	*FilterOn
 }
 
+// Distinct
+
+// Distinct returns a proxy for *Table.Distinct.
+func (m MustTable) Distinct() *MustDistinctSelection {
+	return &MustDistinctSelection{m.Table.Distinct()}
+}
+
 // MustDistinctSelection panics on any error when creating derived tables.
 type MustDistinctSelection struct {
 	*DistinctSelection
@@ -138,6 +127,13 @@ func (s *MustDistinctSelection) On(cols ...ColumnName) *Table {
 	t, err := s.DistinctSelection.On(cols...)
 	handle(err)
 	return t
+}
+
+// Extend
+
+// Extend returns a proxy for *Table.Extend.
+func (m MustTable) Extend(newCol ColumnName) *MustExtension {
+	return &MustExtension{m.Table.Extend(newCol)}
 }
 
 // MustExtension panics on any error when creating derived tables.
@@ -160,6 +156,68 @@ func (e *MustExtension) On(cols ...ColumnName) *MustExtendOn {
 // MustExtendOn panics on any error when creating derived tables.
 type MustExtendOn struct {
 	*ExtendOn
+}
+
+// Interface panics on any error when creating derived tables.
+func (on *MustExtendOn) Interface(f func(v ...interface{}) interface{}, newType reflect.Type) *Table {
+	t, err := on.ExtendOn.Interface(f, newType)
+	handle(err)
+	return t
+}
+
+// Update
+
+// Update returns a proxy for *Table.Update.
+func (m MustTable) Update(col ColumnName) *MustUpdateSelection {
+	return &MustUpdateSelection{m.Table.Update(col)}
+}
+
+// MustUpdateSelection panics on any error when creating derived tables.
+type MustUpdateSelection struct {
+	*UpdateSelection
+}
+
+// By performs Update using the whole table row as input.
+// For wide tables this might be inefficient, consider using On(...) instead.
+func (us *MustUpdateSelection) By(fn func(r Row) interface{}) *Table {
+	t, err := us.UpdateSelection.By(fn)
+	handle(err)
+	return t
+}
+
+// Constant makes column a constant column with the given value, but of the same type.
+// Returns error if a non-nil value cannot be converted to the column type.
+func (us *MustUpdateSelection) Constant(value interface{}) *Table {
+	t, err := us.UpdateSelection.Constant(value)
+	handle(err)
+	return t
+}
+
+// On selects a subset of columns to use as an extension source. If duplicate columns
+// exist, the first so named is used.  Note this does not panic yet, even if the
+// columns do not exist.  (However subsequent calls to the returned object will
+// error.)
+func (us *MustUpdateSelection) On(cols ...ColumnName) *MustUpdateOn {
+	return &MustUpdateOn{us.UpdateSelection.On(cols...)}
+}
+
+// MustUpdateOn panics on any error when creating derived tables.
+type MustUpdateOn struct {
+	*UpdateOn
+}
+
+// Interface updates a column of an arbitrary type using a subset of source columns of arbitrary types.
+func (on *MustUpdateOn) Interface(fn func(v ...interface{}) interface{}) *Table {
+	t, err := on.UpdateOn.Interface(fn)
+	handle(err)
+	return t
+}
+
+// Pivot
+
+// Pivot returns a proxy for *Table.Pivot.
+func (m MustTable) Pivot() *MustPivotSelection {
+	return &MustPivotSelection{m.Table.Pivot()}
 }
 
 // MustPivotSelection is a proxy for PivotSelection.
@@ -185,6 +243,11 @@ func (mpk *MustPivotKey) Columns(pivot ColumnName, value ColumnName) *Table {
 }
 
 // Join
+
+// Join returns a proxy for *Table.Join.
+func (m MustTable) Join() *MustJoinSelection {
+	return &MustJoinSelection{m.Table.Join()}
+}
 
 // MustJoinSelection is a proxy for JoinSelection.
 type MustJoinSelection struct {

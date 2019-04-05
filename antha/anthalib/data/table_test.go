@@ -68,6 +68,7 @@ func TestSlice(t *testing.T) {
 		}), slice910, "slice910")
 	})
 }
+
 func TestExtend(t *testing.T) {
 	runSubTests(t, func(t *testing.T, makeSeries makeSeriesType) {
 		a := NewTable([]*Series{
@@ -88,13 +89,23 @@ func TestExtend(t *testing.T) {
 		extendedStatic := floats.
 			Must().Extend("e_static").
 			On("floats").
-			Float64(func(v ...float64) float64 {
-				return v[0] * 2.0
+			Float64(func(v ...float64) (float64, bool) {
+				return v[0] * 2.0, true
 			})
 
 		assertEqual(t, NewTable([]*Series{
 			makeSeries("e_static", []float64{2, 4, 6}, nil),
 		}), extendedStatic.Must().Project("e_static"), "extend static")
+
+		extendedInterface := floats.
+			Must().Extend("e_interface").
+			On("floats").
+			Interface(func(v ...interface{}) interface{} {
+				return v[0].(float64) * 2.0
+			}, reflect.TypeOf(float64(0)))
+		assertEqual(t, NewTable([]*Series{
+			makeSeries("e_interface", []float64{2, 4, 6}, nil),
+		}), extendedInterface.Must().Project("e_interface"), "extend interface")
 
 		extendedInterfaceStatic := floats.
 			Must().Extend("e_static").
@@ -112,9 +123,9 @@ func TestExtend(t *testing.T) {
 		extendedStaticNullary := EmptyTable().
 			Must().Extend("generator").
 			On().
-			Int64(func(_ ...int64) int64 {
+			Int64(func(_ ...int64) (int64, bool) {
 				i++
-				return i * 10
+				return i * 10, true
 			}).
 			Head(3)
 
@@ -139,22 +150,129 @@ func TestExtend(t *testing.T) {
 		// error cases
 		_, err := floats.Extend("another").
 			On("no-such-col").
-			Int64(func(_ ...int64) int64 {
-				return 1
+			Int64(func(_ ...int64) (int64, bool) {
+				return 1, true
 			})
 		if err == nil {
 			t.Error("no err on missing col")
 		}
 		_, err = floats.Extend("another").
 			On("floats").
-			Int64(func(_ ...int64) int64 {
-				return 1
+			Int64(func(_ ...int64) (int64, bool) {
+				return 1, true
 			})
 		if err == nil {
 			t.Error("no err on col type")
 		}
 	})
 }
+
+func TestUpdate(t *testing.T) {
+	runSubTests(t, func(t *testing.T, makeSeries makeSeriesType) {
+		// update on the whole rows
+		table := NewTable([]*Series{
+			makeSeries("a", []float64{1, 2, 3}, nil),
+			makeSeries("b", []float64{4, -1, 6}, []bool{true, false, true}),
+		})
+
+		updated := table.Must().Update("a").By(func(r Row) interface{} {
+			a, _ := r.Observation("a")
+			b, _ := r.Observation("b")
+			if a.IsNull() || b.IsNull() {
+				return nil
+			}
+			return a.MustFloat64() + b.MustFloat64()
+		})
+		assertEqual(t, NewTable([]*Series{
+			makeSeries("a", []float64{5, -1, 9}, []bool{true, false, true}),
+		}), updated.Must().Project("a"), "update on the whole rows")
+
+		// update on selected columns (not specialized)
+		updated = table.
+			Must().Update("a").
+			On("b").
+			Interface(func(v ...interface{}) interface{} {
+				if v[0] == nil {
+					return nil
+				}
+				return v[0].(float64) * 2.0
+			})
+		assertEqual(t, NewTable([]*Series{
+			makeSeries("a", []float64{8, -1, 12}, []bool{true, false, true}),
+		}), updated.Must().Project("a"), "update on selected columns (not specialized)")
+
+		// update on selected columns (specialized by output column type)
+		updated = table.
+			Must().Update("a").
+			On("b").
+			InterfaceFloat64(func(v ...interface{}) (float64, bool) {
+				if v[0] == nil {
+					return -1, false
+				}
+				return v[0].(float64) * 2.0, true
+			})
+		assertEqual(t, NewTable([]*Series{
+			makeSeries("a", []float64{8, -1, 12}, []bool{true, false, true}),
+		}), updated.Must().Project("a"), "update on selected columns (specialized by output column type)")
+
+		// update on selected columns (fully specialized)
+		updated = table.
+			Must().Update("a").
+			On("b").
+			Float64(func(v ...float64) (float64, bool) {
+				return v[0] * 2.0, true
+			})
+		assertEqual(t, NewTable([]*Series{
+			// contains null because the corresponding input value is null (in spite of the fact that our predicate never returns null explicitly)
+			makeSeries("a", []float64{8, -1, 12}, []bool{true, false, true}),
+		}), updated.Must().Project("a"), "update on selected columns (fully specialized)")
+
+		// update by const column
+		updated = table.
+			Must().Update("a").
+			Constant(float64(8)).
+			Head(3)
+		assertEqual(t, NewTable([]*Series{
+			makeSeries("a", []float64{8, 8, 8}, nil),
+		}), updated.Must().Project("a"), "update by const column")
+
+		// update by nil
+		updated = table.
+			Must().Update("a").
+			Constant(nil).
+			Head(3)
+		assertEqual(t, NewTable([]*Series{
+			makeSeries("a", []float64{-1, -1, -1}, []bool{false, false, false}),
+		}), updated.Must().Project("a"), "update by nil")
+
+		// error cases
+		_, err := table.Update("another").
+			On("a").
+			Int64(func(_ ...int64) (int64, bool) {
+				return 1, true
+			})
+		if err == nil {
+			t.Error("no err on missing col to update")
+		}
+		_, err = table.Update("a").
+			On("another").
+			Int64(func(_ ...int64) (int64, bool) {
+				return 1, true
+			})
+		if err == nil {
+			t.Error("no err on missing 'on' col")
+		}
+		_, err = table.Update("a").
+			On("b").
+			Int64(func(_ ...int64) (int64, bool) {
+				return 1, true
+			})
+		if err == nil {
+			t.Error("no err on wrong specialization type")
+		}
+	})
+}
+
 func TestEmpty(t *testing.T) {
 	empty := EmptyTable()
 	if empty.Size() != 0 {

@@ -256,8 +256,8 @@ func ExampleTable_Extend_constant() {
 	// |3|   chest|    600|       2| BOOTY|
 }
 
-func ExampleTable_Extend_dynamicType() {
-	// calculate new column value using dynamic type.
+func ExampleTable_Extend_dynamicTypes() {
+	// calculate new column value on the whole row using dynamic types.
 	totals := pirateBooty.Extend("Total").
 		By(func(r Row) interface{} {
 			q, _ := r.Observation("Quantity")
@@ -278,12 +278,36 @@ func ExampleTable_Extend_dynamicType() {
 	// |3|   chest|    600|       2|   1200|
 }
 
-func ExampleTable_Extend_staticType() {
-	// calculate new column value using static type.
+func ExampleTable_Extend_onSelectedColsDynamicTypes() {
+	// calculate new column value on selected columns using dynamic types.
 	salePrices, _ := pirateBooty.Extend("Reduced Price").On("Price").
-		Float64(func(v ...float64) float64 {
+		Interface(func(v ...interface{}) interface{} {
 			// 25% off
-			return v[0] * 0.75
+			if v[0] == nil {
+				return nil
+			}
+			return v[0].(float64) * 0.75
+		}, reflect.TypeOf(float64(0)))
+	fmt.Println(salePrices.ToRows())
+	// Output: 4 Row(s):
+	// | |    Name|  Price|Quantity|Reduced Price|
+	// | |  string|float64|   int64|      float64|
+	// -------------------------------------------
+	// |0|doubloon|      1|    1200|         0.75|
+	// |1|    grog|  <nil>|      44|        <nil>|
+	// |2| cutlass|    5.5|      30|        4.125|
+	// |3|   chest|    600|       2|          450|
+}
+
+func ExampleTable_Extend_onSelectedColsMixedTypes() {
+	// calculate new column value on selected columns using dynamic types for inputs and static type for output.
+	salePrices, _ := pirateBooty.Extend("Reduced Price").On("Price").
+		InterfaceFloat64(func(v ...interface{}) (float64, bool) {
+			// 25% off
+			if v[0] == nil {
+				return float64(0), false
+			}
+			return v[0].(float64) * 0.75, true
 		})
 	fmt.Println(salePrices.ToRows())
 	// Output: 4 Row(s):
@@ -294,6 +318,121 @@ func ExampleTable_Extend_staticType() {
 	// |1|    grog|  <nil>|      44|        <nil>|
 	// |2| cutlass|    5.5|      30|        4.125|
 	// |3|   chest|    600|       2|          450|
+}
+
+func ExampleTable_Extend_onSelectedColsStaticType() {
+	// calculate new column value on selected columns using static type.
+	salePrices, _ := pirateBooty.Extend("Reduced Price").On("Price").
+		Float64(func(v ...float64) (float64, bool) {
+			// 25% off
+			return v[0] * 0.75, true
+		})
+	fmt.Println(salePrices.ToRows())
+	// Output: 4 Row(s):
+	// | |    Name|  Price|Quantity|Reduced Price|
+	// | |  string|float64|   int64|      float64|
+	// -------------------------------------------
+	// |0|doubloon|      1|    1200|         0.75|
+	// |1|    grog|  <nil>|      44|        <nil>|
+	// |2| cutlass|    5.5|      30|        4.125|
+	// |3|   chest|    600|       2|          450|
+}
+
+func ExampleTable_Update_constant() {
+	// add a constant column value.
+	withSource, _ := pirateBooty.Update("Quantity").
+		Constant(int64(0))
+	fmt.Println(withSource.ToRows())
+	// Output: 4 Row(s):
+	// | |    Name|  Price|Quantity|
+	// | |  string|float64|   int64|
+	// -----------------------------
+	// |0|doubloon|      1|       0|
+	// |1|    grog|  <nil>|       0|
+	// |2| cutlass|    5.5|       0|
+	// |3|   chest|    600|       0|
+}
+
+func ExampleTable_Update_dynamicTypes() {
+	// calculate updated column value on the whole row using dynamic types.
+	totals, _ := pirateBooty.Update("Quantity").
+		By(func(r Row) interface{} {
+			q, _ := r.Observation("Quantity")
+			p, _ := r.Observation("Price")
+			if p.IsNull() {
+				return 0
+			}
+			return q.MustInt64()
+		})
+	fmt.Println(totals.ToRows())
+	// Output: 4 Row(s):
+	// | |    Name|  Price|Quantity|
+	// | |  string|float64|   int64|
+	// -----------------------------
+	// |0|doubloon|      1|    1200|
+	// |1|    grog|  <nil>|       0|
+	// |2| cutlass|    5.5|      30|
+	// |3|   chest|    600|       2|
+}
+
+func ExampleTable_Update_onSelectedColsDynamicTypes() {
+	// calculate updated column value on selected columns using dynamic types.
+	salePrices, _ := pirateBooty.Update("Price").On("Price").
+		Interface(func(v ...interface{}) interface{} {
+			// 25% off
+			if v[0] == nil {
+				return nil
+			}
+			return v[0].(float64) * 0.75
+		})
+	fmt.Println(salePrices.ToRows())
+	// Output: 4 Row(s):
+	// | |    Name|  Price|Quantity|
+	// | |  string|float64|   int64|
+	// -----------------------------
+	// |0|doubloon|   0.75|    1200|
+	// |1|    grog|  <nil>|      44|
+	// |2| cutlass|  4.125|      30|
+	// |3|   chest|    450|       2|
+}
+
+func ExampleTable_Update_onSelectedColsMixedTypes() {
+	// calculate new column value on selected columns using dynamic types for inputs and static type for output.
+	salePrices, _ := pirateBooty.Update("Price").On("Price").
+		InterfaceFloat64(func(v ...interface{}) (float64, bool) {
+			// 25% off
+			if v[0] == nil {
+				return float64(0), false
+			}
+			return v[0].(float64) * 0.75, true
+		})
+	fmt.Println(salePrices.ToRows())
+	// Output: 4 Row(s):
+	// | |    Name|  Price|Quantity|
+	// | |  string|float64|   int64|
+	// -----------------------------
+	// |0|doubloon|   0.75|    1200|
+	// |1|    grog|  <nil>|      44|
+	// |2| cutlass|  4.125|      30|
+	// |3|   chest|    450|       2|
+}
+
+func ExampleTable_Update_onSelectedColsStaticType() {
+	// calculate new column value on selected columns using static type.
+	salePrices, _ := pirateBooty.Update("Price").On("Price").
+		Float64(func(v ...float64) (float64, bool) {
+			// 25% off
+			return v[0] * 0.75, true
+		})
+	fmt.Println(salePrices.ToRows())
+	// Output: 4 Row(s):
+	// | |    Name|  Price|Quantity|
+	// | |  string|float64|   int64|
+	// -----------------------------
+	// |0|doubloon|   0.75|    1200|
+	// |1|    grog|  <nil>|      44|
+	// |2| cutlass|  4.125|      30|
+	// |3|   chest|    450|       2|
 }
 
 func ExampleTable_Pivot() {

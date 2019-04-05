@@ -389,6 +389,12 @@ func (t *Table) Extend(newCol ColumnName) *Extension {
 	return &Extension{newCol: newCol, t: t}
 }
 
+// Update replaces the values in the column 'col'.  Use the returned
+// object to construct a derived table.
+func (t *Table) Update(col ColumnName) *UpdateSelection {
+	return &UpdateSelection{t: t, col: col}
+}
+
 // Pivot takes a "narrow" table containing "column names" and "column values", for instance:
 //
 //  | |    Key|    Pivot|    Value|

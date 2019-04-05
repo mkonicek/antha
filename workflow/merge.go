@@ -36,14 +36,11 @@ func (a Repositories) Merge(b Repositories) error {
 			// .Directory in both are equal (includes both being "")
 			// repoA.Directory is "" (we just copy in from repoB.Directory)
 			// If both != "" and repoA.Directory != repoB.Directory then error
-			switch {
-			case repoA.Directory == repoB.Directory, repoB.Directory == "":
-				// all good
-			case repoA.Directory == "":
-				repoA.Directory = repoB.Directory
-			default: // both != "" and != each other
+			if dir, ok := tryMergeStrings(repoA.Directory, repoB.Directory); !ok {
 				return fmt.Errorf("Cannot merge: repository with name '%v' redefined illegally (Directory fields not empty and not equal: %s vs %s).",
 					repoName, repoA.Directory, repoB.Directory)
+			} else {
+				repoA.Directory = dir
 			}
 
 			// Merge needs to work even in the absence of the Directory
@@ -56,24 +53,18 @@ func (a Repositories) Merge(b Repositories) error {
 			// for that here so we play it safe and enforce strict
 			// equality.
 
-			switch {
-			case repoA.Commit == repoB.Commit, repoB.Commit == "":
-				// all good - covers "" and != "" cases
-			case repoA.Commit == "":
-				repoA.Commit = repoB.Commit
-			default: // both != "" and != each other
+			if commit, ok := tryMergeStrings(repoA.Commit, repoB.Commit); !ok {
 				return fmt.Errorf("Cannot merge: repository with name '%v' redefined illegally (Commit fields not empty and not equal; %s vs %s).",
 					repoName, repoA.Commit, repoB.Commit)
+			} else {
+				repoA.Commit = commit
 			}
 
-			// same but for branch
-			switch {
-			case repoA.Branch == repoB.Branch, repoB.Branch == "":
-			case repoA.Branch == "":
-				repoA.Branch = repoB.Branch
-			default:
+			if branch, ok := tryMergeStrings(repoA.Branch, repoB.Branch); !ok {
 				return fmt.Errorf("Cannot merge: repository with name '%v' redefined illegally (Branch fields not empty and not equal; %s vs %s).",
 					repoName, repoA.Branch, repoB.Branch)
+			} else {
+				repoA.Branch = branch
 			}
 
 		} else if !found {
@@ -81,6 +72,16 @@ func (a Repositories) Merge(b Repositories) error {
 		}
 	}
 	return nil
+}
+
+func tryMergeStrings(a, b string) (string, bool) {
+	if a != "" && b != "" && a != b {
+		return "", false
+	} else if a == "" {
+		return b, true
+	} else {
+		return a, true
+	}
 }
 
 func (a *Elements) merge(b Elements) error {

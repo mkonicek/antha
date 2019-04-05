@@ -7,7 +7,7 @@ import "github.com/pkg/errors"
 // float64
 
 // Float64 invokes a user-supplied function passing the named column values as float64 arguments.
-// If a null value is encountered, the function fails.
+// An error is returned and execution is aborted at the first null value encountered.
 // If given any SchemaAssertions, they are called in the beginning and may have side effects.
 func (o *ForeachOn) Float64(fn func(...float64), assertions ...SchemaAssertion) error {
 	// schema checks
@@ -46,7 +46,7 @@ func (on *MustForeachOn) Float64(fn func(...float64), assertions ...SchemaAssert
 // int64
 
 // Int64 invokes a user-supplied function passing the named column values as int64 arguments.
-// If a null value is encountered, the function fails.
+// An error is returned and execution is aborted at the first null value encountered.
 // If given any SchemaAssertions, they are called in the beginning and may have side effects.
 func (o *ForeachOn) Int64(fn func(...int64), assertions ...SchemaAssertion) error {
 	// schema checks
@@ -85,7 +85,7 @@ func (on *MustForeachOn) Int64(fn func(...int64), assertions ...SchemaAssertion)
 // int
 
 // Int invokes a user-supplied function passing the named column values as int arguments.
-// If a null value is encountered, the function fails.
+// An error is returned and execution is aborted at the first null value encountered.
 // If given any SchemaAssertions, they are called in the beginning and may have side effects.
 func (o *ForeachOn) Int(fn func(...int), assertions ...SchemaAssertion) error {
 	// schema checks
@@ -124,7 +124,7 @@ func (on *MustForeachOn) Int(fn func(...int), assertions ...SchemaAssertion) {
 // string
 
 // String invokes a user-supplied function passing the named column values as string arguments.
-// If a null value is encountered, the function fails.
+// An error is returned and execution is aborted at the first null value encountered.
 // If given any SchemaAssertions, they are called in the beginning and may have side effects.
 func (o *ForeachOn) String(fn func(...string), assertions ...SchemaAssertion) error {
 	// schema checks
@@ -163,7 +163,7 @@ func (on *MustForeachOn) String(fn func(...string), assertions ...SchemaAssertio
 // bool
 
 // Bool invokes a user-supplied function passing the named column values as bool arguments.
-// If a null value is encountered, the function fails.
+// An error is returned and execution is aborted at the first null value encountered.
 // If given any SchemaAssertions, they are called in the beginning and may have side effects.
 func (o *ForeachOn) Bool(fn func(...bool), assertions ...SchemaAssertion) error {
 	// schema checks
@@ -202,7 +202,7 @@ func (on *MustForeachOn) Bool(fn func(...bool), assertions ...SchemaAssertion) {
 // TimestampMillis
 
 // TimestampMillis invokes a user-supplied function passing the named column values as TimestampMillis arguments.
-// If a null value is encountered, the function fails.
+// An error is returned and execution is aborted at the first null value encountered.
 // If given any SchemaAssertions, they are called in the beginning and may have side effects.
 func (o *ForeachOn) TimestampMillis(fn func(...TimestampMillis), assertions ...SchemaAssertion) error {
 	// schema checks
@@ -241,7 +241,7 @@ func (on *MustForeachOn) TimestampMillis(fn func(...TimestampMillis), assertions
 // TimestampMicros
 
 // TimestampMicros invokes a user-supplied function passing the named column values as TimestampMicros arguments.
-// If a null value is encountered, the function fails.
+// An error is returned and execution is aborted at the first null value encountered.
 // If given any SchemaAssertions, they are called in the beginning and may have side effects.
 func (o *ForeachOn) TimestampMicros(fn func(...TimestampMicros), assertions ...SchemaAssertion) error {
 	// schema checks

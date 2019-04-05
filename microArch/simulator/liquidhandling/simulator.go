@@ -781,61 +781,58 @@ func (self *VirtualLiquidHandler) Aspirate(volume []float64, overstroke []bool, 
 	}
 
 	//check total volumes taken from each unique well
-	uniqueWells := make(map[string]*wtype.LHWell)
-	uniqueWellVolumes := make(map[string]float64)
-	uniqueWellVolumeIndexes := make(map[string][]int)
+	volumeTakenByWell := make(map[*wtype.LHWell]float64, len(wells))
 	for i := 0; i < len(wells); i++ {
-		if wells[i] == nil {
-			continue
+		if wells[i] != nil {
+			volumeTakenByWell[wells[i]] = volumeTakenByWell[wells[i]] + volume[i]
 		}
-		if _, ok := uniqueWells[wells[i].ID]; !ok {
-			uniqueWells[wells[i].ID] = wells[i]
-			uniqueWellVolumes[wells[i].ID] = 0.0
-			uniqueWellVolumeIndexes[wells[i].ID] = make([]int, 0, len(wells))
-		}
-		uniqueWellVolumes[wells[i].ID] += volume[i]
-		uniqueWellVolumeIndexes[wells[i].ID] = append(uniqueWellVolumeIndexes[wells[i].ID], i)
 	}
-	for id, well := range uniqueWells {
-		v := wunit.NewVolume(uniqueWellVolumes[id], "ul")
-		//vol.IsZero() checks whether vol is within a small tolerance of zero
-		if d := wunit.SubtractVolumes(v, well.CurrentWorkingVolume()); v.GreaterThan(well.CurrentWorkingVolume()) && !d.IsZero() {
-			//the volume is taken from len(uniqueWellVolumeIndexes[id]) wells, so the delta is split equally between them
-			reduction := wunit.DivideVolume(d, float64(len(uniqueWellVolumeIndexes[id])))
-			reductionUl := reduction.ConvertToString("ul")
-			for _, i := range uniqueWellVolumeIndexes[id] {
-				volume[i] -= reductionUl
-			}
-			self.AddWarningf("%s: well %s only contains %s working volume, reducing aspirated volume by %v",
-				describe(), well.GetName(), well.CurrentWorkingVolume(), reduction)
+	for well, v := range volumeTakenByWell {
+		volume := wunit.NewVolume(v, "ul")
+		if volume.GreaterThan(well.CurrentVolume().PlusEpsilon()) {
+			// we've completely exhausted the well, raise an error
+			self.AddErrorf("%s: taking %s from %s which contains only %s working plus %s residual volume (possibly a side effect of ANTHA-2704, try using a plate with a larger residual volume)",
+				describe(), volume, well.GetName(), well.CurrentVolume(), well.ResidualVolume())
+
+		} else if volume.GreaterThan(well.CurrentWorkingVolume().PlusEpsilon()) {
+			// the total volume taken from this well is greater than the working volume available in the well
+			// this will appear as though liquid has been aspirated from the residual volume
+			//
+			// This happens when several "bites" are taken from the same well during GetComponents and the
+			// unaccounted for carry volume causes the well volume to be exhausted: see ANTHA-2704
+			//
+			// Once that issue has been resolved, this warning should become fatal
+			self.AddWarningf("%s: taking %s from %s which contains only %s working volume, possible aspiration of residual (see ANTHA-2704)",
+				describe(), volume, well.GetName(), well.CurrentWorkingVolume())
 		}
 	}
 
 	//move liquid
 	no_well := []int{}
 	for _, i := range arg.channels {
-		v := wunit.NewVolume(volume[i], "ul")
-		tip := arg.adaptor.GetChannel(i).GetTip()
-		fv := tip.CurrentVolume()
-		fv.Add(v)
-
 		if wells[i] == nil {
 			no_well = append(no_well, i)
-		} else if wells[i].CurrentWorkingVolume().LessThan(v.MinusEpsilon()) {
-			self.AddErrorf("%s: well %s only contains %s working volume",
-				describe(), wells[i].GetName(), wells[i].CurrentWorkingVolume())
-		} else if fv.GreaterThan(tip.MaxVol) {
-			self.AddErrorf("%s: channel %d contains %s, command exceeds maximum volume %s",
-				describe(), i, tip.CurrentVolume(), tip.MaxVol)
-		} else if c, err := wells[i].RemoveVolume(v); err != nil {
-			self.AddErrorf("%s: unexpected well error \"%s\"", describe(), err.Error())
-		} else if fv.LessThan(tip.MinVol) {
-			self.AddWarningf("%s: minimum tip volume is %s",
-				describe(), tip.MinVol)
-			//will get an error here, but ignore it since we're already raising a warning
-			tip.AddComponent(c) //nolint
-		} else if err := tip.AddComponent(c); err != nil {
-			self.AddErrorf("%s: unexpected tip error \"%s\"", describe(), err.Error())
+		} else {
+
+			aspVol := wunit.NewVolume(volume[i], "ul")
+			tip := arg.adaptor.GetChannel(i).GetTip()
+			tipVol := tip.CurrentVolume()
+			tipVol.Add(aspVol)
+
+			if tipVol.GreaterThan(tip.MaxVol.PlusEpsilon()) {
+				self.AddErrorf("%s: channel %d contains %s, command exceeds maximum volume %s",
+					describe(), i, tip.CurrentVolume(), tip.MaxVol)
+			} else if c, err := wells[i].RemoveVolume(aspVol); err != nil {
+				self.AddErrorf("%s: unexpected well error \"%s\"", describe(), err.Error())
+			} else {
+				err := tip.AddComponent(c)
+				if tipVol.LessThan(tip.MinVol.MinusEpsilon()) {
+					// ignore the error returned from AddComponent and add a warning instead
+					self.AddWarningf("%s: minimum tip volume is %s", describe(), tip.MinVol)
+				} else if err != nil {
+					self.AddErrorf("%s: unexpected tip error \"%s\"", describe(), err.Error())
+				}
+			}
 		}
 	}
 

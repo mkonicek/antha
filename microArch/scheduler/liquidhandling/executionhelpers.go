@@ -97,48 +97,26 @@ func thisNode(ic *wtype.IChain, n graph.Node, tg graph.Graph, deps map[graph.Nod
 	return false
 }
 
-// is n1 an ancestor of n2?
-func ancestor(n1, n2 graph.Node, topolGraph graph.Graph) bool {
-	if n1 == n2 {
-		return true
-	}
-
-	for i := 0; i < topolGraph.NumOuts(n2); i++ {
-		if ancestor(n1, topolGraph.Out(n2, i), topolGraph) {
+// reachable return true if ins can reach, or be reached by, any of ar
+func reachable(ar []*wtype.LHInstruction, ins *wtype.LHInstruction, reachability graph.Reachability) bool {
+	n1 := graph.Node(ins)
+	for _, i2 := range ar {
+		n2 := graph.Node(i2)
+		if reachability[n1][n2] || reachability[n2][n1] {
 			return true
 		}
 	}
-
 	return false
-}
-
-// track back and see if one depends on the other
-func related(i1, i2 *wtype.LHInstruction, topolGraph graph.Graph) bool {
-	if ancestor(graph.Node(i1), graph.Node(i2), topolGraph) || ancestor(graph.Node(i2), graph.Node(i1), topolGraph) {
-		return true
-	}
-
-	return false
-}
-
-func canAggHere(ar []*wtype.LHInstruction, ins *wtype.LHInstruction, topolGraph graph.Graph) bool {
-	for _, i2 := range ar {
-		if related(ins, i2, topolGraph) {
-			return false
-		}
-	}
-
-	return true
 }
 
 // we can only append if we don't create cycles
 // this function makes sure this is OK
-func appendSensitively(iar [][]*wtype.LHInstruction, ins *wtype.LHInstruction, topolGraph graph.Graph) [][]*wtype.LHInstruction {
+func appendSensitively(iar [][]*wtype.LHInstruction, ins *wtype.LHInstruction, reachability graph.Reachability) [][]*wtype.LHInstruction {
 	done := false
 	for i := 0; i < len(iar); i++ {
 		ar := iar[i]
 		// just add to the first available one
-		if canAggHere(ar, ins, topolGraph) {
+		if !reachable(ar, ins, reachability) {
 			ar = append(ar, ins)
 			iar[i] = ar
 			done = true
@@ -156,6 +134,9 @@ func appendSensitively(iar [][]*wtype.LHInstruction, ins *wtype.LHInstruction, t
 }
 
 func aggregatePromptsWithSameMessage(inss []*wtype.LHInstruction, topolGraph graph.Graph) []graph.Node {
+
+	reachability := graph.NewReachability(topolGraph)
+
 	// merge dependencies of any prompts which have a message in common
 	prMessage := make(map[string][][]*wtype.LHInstruction, len(inss))
 	insOut := make([]graph.Node, 0, len(inss))
@@ -168,9 +149,7 @@ func aggregatePromptsWithSameMessage(inss []*wtype.LHInstruction, topolGraph gra
 				iar = make([][]*wtype.LHInstruction, 0, len(inss)/2)
 			}
 
-			//iar = append(iar, ins)
-
-			iar = appendSensitively(iar, ins, topolGraph)
+			iar = appendSensitively(iar, ins, reachability)
 
 			prMessage[ins.Message] = iar
 		} else {

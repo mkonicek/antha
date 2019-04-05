@@ -6,15 +6,16 @@ var (
 	errReachesSeen = errors.New("reaches already seen")
 )
 
-// Reaches computes reachability over graph. A reaches B if there is a path
-// from A to B.
-func Reaches(g Graph) Graph {
-	reaches := make(map[Node]map[Node]bool)
+type Reachability map[Node]map[Node]bool
+
+// NewReachability compute the reachability matrix for the graph
+func NewReachability(g Graph) Reachability {
+	reaches := make(Reachability, g.NumNodes())
 
 	// Compute reachability of nodes in turn; reuse reachability of previously
 	// processed nodes
 	for i, inum := 0, g.NumNodes(); i < inum; i++ {
-		sameAs := make(map[Node]bool)
+		sameAs := make(map[Node]bool, g.NumNodes())
 		root := g.Node(i)
 		// Visiting always includes root, differentiate between cyclic and
 		// acyclic cases
@@ -39,7 +40,7 @@ func Reaches(g Graph) Graph {
 			},
 		})
 
-		rs := make(map[Node]bool)
+		rs := make(map[Node]bool, g.NumNodes())
 		for _, v := range vr.Seen.Values() {
 			rs[v] = true
 		}
@@ -55,6 +56,14 @@ func Reaches(g Graph) Graph {
 
 		reaches[root] = rs
 	}
+
+	return reaches
+}
+
+// Reaches computes reachability over graph. A reaches B if there is a path
+// from A to B.
+func Reaches(g Graph) Graph {
+	reaches := NewReachability(g)
 
 	ret := &qgraph{
 		Outs: make(map[Node][]Node),

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 
-	runner "github.com/Synthace/antha-runner/export"
 	"github.com/antha-lang/antha/laboratory/compare"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/workflow"
@@ -18,7 +17,6 @@ func (lb *LaboratoryBuilder) Compare() error {
 		return nil
 	}
 
-	tasks, err := runner.InstrsToTasks(lb.effects.IDGenerator, lb.instrs)
 	mixIdx := 0
 
 	for i, instr := range lb.instrs {
@@ -29,21 +27,6 @@ func (lb *LaboratoryBuilder) Compare() error {
 			lb.compareOutputs(t, mixIdx)
 			mixIdx++
 		}
-	}
-
-	if mixIdx != len(lb.workflow.Testing.MixTaskChecks) {
-		return fmt.Errorf("Expected %d mix tasks, found %d", len(lb.workflow.Testing.MixTaskChecks), mixIdx)
-	}
-
-	if err != nil {
-		lb.Logger.Log("msg", "Error in task generation.", "err", err)
-		return err
-	}
-
-	lb.Logger.Log("msg", fmt.Sprint("Generated ", len(tasks), " tasks."))
-
-	for i, t := range tasks {
-		lb.Logger.Log("msg", fmt.Sprintf("Task [%d] : %v", i, t))
 	}
 
 	lb.Logger.Log("msg", "Comparison test data passed.")
@@ -76,10 +59,6 @@ func compareToPercent(expected float64, actual float64, percent float64) error {
 		return fmt.Errorf("expected %.2g but found %.2g (checked to %.2g%%)", expected, actual, percent)
 	}
 
-	return nil
-}
-
-func compareInstructions(w *workflow.Workflow, m *target.Mix, idx int) error {
 	return nil
 }
 

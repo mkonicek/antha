@@ -291,3 +291,38 @@ func (jo *MustJoinOn) LeftOuter(t *Table, cols ...ColumnName) *Table {
 	handle(err)
 	return table
 }
+
+// Foreach
+
+// Foreach returns a proxy for *Table.Foreach.
+func (m MustTable) Foreach() *MustForeachSelection {
+	return &MustForeachSelection{m.Table.Foreach()}
+}
+
+// MustForeachSelection is a proxy for ForeachSelection.
+type MustForeachSelection struct {
+	fs *ForeachSelection
+}
+
+// By performs Foreach on the whole table rows.
+// For wide tables this might be inefficient, consider using On(...) instead.
+func (fs *MustForeachSelection) By(fn func(r Row)) {
+	fs.fs.By(fn)
+}
+
+// MustForeachOn is a proxy for ForeachOn.
+type MustForeachOn struct {
+	on *ForeachOn
+}
+
+// On selects columns for iterating on.
+func (fs *MustForeachSelection) On(cols ...ColumnName) *MustForeachOn {
+	return &MustForeachOn{on: fs.fs.On(cols...)}
+}
+
+// Interface invokes a user-supplied function passing the named column values as interface{} arguments, including nil.
+// If given any SchemaAssertions, they are called in the beginning and may have side effects.
+func (on *MustForeachOn) Interface(fn func(v ...interface{}), assertions ...SchemaAssertion) {
+	err := on.on.Interface(fn, assertions...)
+	handle(err)
+}

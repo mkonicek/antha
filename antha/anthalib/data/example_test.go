@@ -490,6 +490,40 @@ func ExampleTable_Join_inner() {
 	// |0|doubloon|      1|    1200|    doubloon|                 0.5|
 }
 
+func ExampleTable_Foreach_wholerow() {
+	nonNullCount := 0
+	pirateBooty.Foreach().By(func(r Row) {
+		for _, v := range r.Values {
+			if !v.IsNull() {
+				nonNullCount++
+			}
+		}
+	})
+	fmt.Printf("Non null count: %d\n", nonNullCount)
+	// Output: Non null count: 11
+}
+
+func ExampleTable_Foreach_generic() {
+	cost := 0.
+	_ = pirateBooty.Foreach().On("Price", "Quantity").Interface(func(v ...interface{}) {
+		if v[0] == nil {
+			return
+		}
+		cost += v[0].(float64) * float64(v[1].(int64))
+	})
+	fmt.Printf("Total cost: %f\n", cost)
+	// Output: Total cost: 2565.000000
+}
+
+func ExampleTable_Foreach_specialized() {
+	quantity := int64(0)
+	_ = pirateBooty.Foreach().On("Quantity").Int64(func(v ...int64) {
+		quantity += v[0]
+	})
+	fmt.Printf("Total quantity: %d\n", quantity)
+	// Output: Total quantity: 1276
+}
+
 func ExampleTable_ToStructs() {
 	type price struct {
 		Price float64

@@ -65,7 +65,7 @@ func NewMigrater(logger *logger.Logger, mergePaths []string, migratePath, outDir
 // MigrateAll perform all migration steps.
 func (m *Migrater) MigrateAll() error {
 	return utils.ErrorSlice{
-		m.migrateJobIdAndMeta(),
+		m.migrateMeta(),
 		m.migrateElements(),
 		m.migrateConnections(),
 		m.migrateConfig(),
@@ -247,9 +247,9 @@ func (m *Migrater) migrateConnections() error {
 	return nil
 }
 
-func (m *Migrater) migrateJobIdAndMeta() error {
+func (m *Migrater) migrateMeta() error {
 	if m.Old.Properties.Name != "" {
-		m.Cur.JobId = workflow.JobId(m.Old.Properties.Name)
+		m.Cur.Meta.Name = m.Old.Properties.Name
 	}
 	if desc := m.Old.Properties.Description; desc != "" {
 		m.Cur.Meta.Rest["Description"] = desc
@@ -267,12 +267,15 @@ func readWorkflows(migrate string, merges []string) (*workflowv1_2, *workflow.Wo
 	cwf, err := workflow.WorkflowFromReaders(rs[:len(rs)-1]...)
 	if err != nil {
 		return nil, nil, err
+	} else if err := cwf.EnsureWorkflowId(); err != nil {
+		return nil, nil, err
 	}
 
 	owf, err := readWorkflowV1_2(rs[len(rs)-1])
 	if err != nil {
 		return nil, nil, err
 	}
+
 	return owf, cwf, nil
 }
 

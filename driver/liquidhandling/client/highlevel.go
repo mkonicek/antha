@@ -116,9 +116,9 @@ func (hlc *HighLevelClient) GetOutputFile() ([]byte, driver.CommandStatus) {
 	}
 }
 
-func (hlc *HighLevelClient) Configure(jobId workflow.JobId, jobName string, devId workflow.DeviceInstanceID, data []byte) (*liquidhandling.LHProperties, driver.CommandStatus) {
+func (hlc *HighLevelClient) Configure(simId workflow.SimpleId, jobName string, devId workflow.DeviceInstanceID, data []byte) (*liquidhandling.LHProperties, driver.CommandStatus) {
 	req := &pb.ConfigureRequest{
-		JobId:            string(jobId),
+		SimulationId:     string(simId),
 		JobName:          jobName,
 		DeviceInstanceId: string(devId),
 		Data:             data,

@@ -1,9 +1,13 @@
 package workflow
 
 import (
+	crand "crypto/rand"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
+	"math"
+	"math/big"
 	"os"
 	"path"
 	"strings"
@@ -15,7 +19,8 @@ import (
 
 type Workflow struct {
 	SchemaVersion SchemaVersion `json:"SchemaVersion"`
-	JobId         JobId         `json:"JobId"`
+	WorkflowId    SimpleId      `json:"WorkflowId,omitempty"`
+	SimulationId  SimpleId      `json:"SimulationId,omitempty"`
 
 	Meta Meta `json:"Meta,omitempty"`
 
@@ -66,6 +71,17 @@ func EmptyWorkflow() *Workflow {
 	}
 }
 
+func (wf *Workflow) EnsureWorkflowId() error {
+	if wf.WorkflowId == "" {
+		if id, err := RandomSimpleId(""); err != nil {
+			return err
+		} else {
+			wf.WorkflowId = id
+		}
+	}
+	return nil
+}
+
 func (wf *Workflow) WriteToFile(p string, pretty bool) error {
 	if p == "" || p == "-" {
 		return wf.ToWriter(os.Stdout, pretty)
@@ -88,6 +104,21 @@ func (wf *Workflow) ToWriter(w io.Writer, pretty bool) error {
 type Meta struct {
 	Name string                 `json:"Name,omitempty"`
 	Rest map[string]interface{} `json:"-"`
+}
+
+func (m *Meta) NameAsIdentifier() string {
+	res := []rune{}
+	for _, r := range m.Name {
+		switch {
+		// see https://golang.org/ref/spec#identifier
+		// However, we allow the first rune to be a digit
+		case r == '_', unicode.IsLetter(r), unicode.IsDigit(r):
+			res = append(res, r)
+		case r == ' ', r == '-', r == '/':
+			res = append(res, '_')
+		}
+	}
+	return string(res)
 }
 
 func (m *Meta) UnmarshalJSON(bs []byte) error {
@@ -124,21 +155,17 @@ func (m *Meta) MarshalJSON() ([]byte, error) {
 	return json.Marshal(all)
 }
 
-type JobId string
+type SimpleId string
 
-func (jid JobId) AsIdentifier() string {
-	res := make([]rune, 0, len(jid))
-	for _, r := range jid {
-		switch {
-		// see https://golang.org/ref/spec#identifier
-		// However, we allow the first rune to be a digit
-		case r == '_', unicode.IsLetter(r), unicode.IsDigit(r):
-			res = append(res, r)
-		case r == ' ', r == '-', r == '/':
-			res = append(res, '_')
-		}
+func RandomSimpleId(prefix SimpleId) (SimpleId, error) {
+	max := big.NewInt(0).SetUint64(math.MaxUint64)
+	if suffix, err := crand.Int(crand.Reader, max); err != nil {
+		return "", err
+	} else if prefix == "" {
+		return SimpleId(suffix.Text(62)), nil
+	} else {
+		return SimpleId(fmt.Sprintf("%s-%s", prefix, suffix.Text(62))), nil
 	}
-	return string(res)
 }
 
 type RepositoryName string

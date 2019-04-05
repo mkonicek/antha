@@ -141,6 +141,10 @@ type mainComposer struct {
 }
 
 func (cb *ComposerBase) ComposeMainAndRun(keep, run, linkedDrivers bool, wf *workflow.Workflow) error {
+	if wf.SimulationId != "" {
+		return fmt.Errorf("Workflow has already been simulated (SimulationId %v); aborting", wf.SimulationId)
+	}
+
 	mc := &mainComposer{
 		ComposerBase:  cb,
 		Workflow:      wf,
@@ -191,7 +195,7 @@ func (mc *mainComposer) saveWorkflow() error {
 type testComposer struct {
 	*ComposerBase
 
-	Workflows     map[workflow.JobId]*testWorkflow
+	Workflows     map[workflow.SimpleId]*testWorkflow
 	Keep          bool
 	Run           bool
 	LinkedDrivers bool
@@ -207,7 +211,7 @@ type testWorkflow struct {
 func (cb *ComposerBase) NewTestsComposer(keep, run, linkedDrivers bool) *testComposer {
 	return &testComposer{
 		ComposerBase:  cb,
-		Workflows:     make(map[workflow.JobId]*testWorkflow),
+		Workflows:     make(map[workflow.SimpleId]*testWorkflow),
 		Keep:          keep,
 		Run:           run,
 		LinkedDrivers: linkedDrivers,
@@ -215,10 +219,12 @@ func (cb *ComposerBase) NewTestsComposer(keep, run, linkedDrivers bool) *testCom
 }
 
 func (tc *testComposer) AddWorkflow(wf *workflow.Workflow, inDir string) error {
-	if _, found := tc.Workflows[wf.JobId]; found {
-		return fmt.Errorf("Workflow with JobId %v already added. JobIds must be unique", wf.JobId)
+	if wf.SimulationId != "" {
+		return fmt.Errorf("Workflow has already been simulated (SimulationId %v); aborting", wf.SimulationId)
+	} else if _, found := tc.Workflows[wf.WorkflowId]; found {
+		return fmt.Errorf("Workflow with Id %v already added. Workflow Ids must be unique", wf.WorkflowId)
 	} else {
-		tc.Workflows[wf.JobId] = &testWorkflow{
+		tc.Workflows[wf.WorkflowId] = &testWorkflow{
 			testComposer: tc,
 			index:        len(tc.Workflows),
 			workflow:     wf,

@@ -36,6 +36,9 @@ type Element interface {
 }
 
 type LaboratoryBuilder struct {
+	WorkflowId   workflow.SimpleId
+	SimulationId workflow.SimpleId
+
 	inDir    string
 	outDir   string
 	workflow *workflow.Workflow
@@ -105,19 +108,27 @@ func (labBuild *LaboratoryBuilder) Setup(fh io.ReadCloser, inDir, outDir string,
 		func() error { return labBuild.SetupWorkflow(fh) },
 		func() error { return labBuild.SetupPaths(inDir, outDir) },
 		func() error { return labBuild.SetupEffects(inv) },
+		func() error { return labBuild.SaveWorkflow() },
 	}.Run()
 }
 
 func (labBuild *LaboratoryBuilder) SetupWorkflow(fh io.ReadCloser) error {
-	// Got to load in the workflow first so we gain access to the JobId.
 	if wf, err := workflow.WorkflowFromReaders(fh); err != nil {
 		return err
 	} else if err := wf.Validate(); err != nil {
 		return err
 	} else {
 		labBuild.workflow = wf
-		labBuild.Logger = labBuild.Logger.With("jobId", wf.JobId)
-		return nil
+		labBuild.WorkflowId = wf.WorkflowId
+
+		if simId, err := workflow.RandomSimpleId(labBuild.WorkflowId); err != nil {
+			return err
+		} else {
+			labBuild.SimulationId = simId
+			wf.SimulationId = simId
+			labBuild.Logger = labBuild.Logger.With("simulationId", labBuild.SimulationId)
+			return nil
+		}
 	}
 }
 
@@ -135,7 +146,7 @@ func (labBuild *LaboratoryBuilder) SetupPaths(inDir, outDir string) error {
 	labBuild.Logger.Log("outdir", labBuild.outDir)
 
 	// Create subdirs within it:
-	for _, leaf := range []string{"elements", "data", "devices"} {
+	for _, leaf := range []string{"elements", "data", "devices", "workflow"} {
 		if err := os.MkdirAll(filepath.Join(labBuild.outDir, leaf), 0700); err != nil {
 			return err
 		}
@@ -168,9 +179,13 @@ func (labBuild *LaboratoryBuilder) SetupEffects(inv *inventory.Inventory) error 
 	if fm, err := effects.NewFileManager(filepath.Join(labBuild.inDir, "data"), filepath.Join(labBuild.outDir, "data")); err != nil {
 		return err
 	} else {
-		labBuild.effects = effects.NewLaboratoryEffects(labBuild.workflow.JobId, fm, inv)
+		labBuild.effects = effects.NewLaboratoryEffects(labBuild.WorkflowId, labBuild.SimulationId, fm, inv)
 		return nil
 	}
+}
+
+func (labBuild *LaboratoryBuilder) SaveWorkflow() error {
+	return labBuild.workflow.WriteToFile(filepath.Join(labBuild.outDir, "workflow", "workflow.json"), false)
 }
 
 func (labBuild *LaboratoryBuilder) SaveErrors() error {

@@ -9,19 +9,17 @@ import (
 )
 
 type wellInfo struct {
-	PlateName string
 	PlateType string
 	VolumeUl  string
 }
 
-func infoForWell(idGen *id.IDGenerator, w *wtype.LHWell, p *wtype.Plate) (*wellInfo, error) {
+func infoForWell(idGen *id.IDGenerator, w *wtype.LHWell) (*wellInfo, error) {
 	volUl, err := w.CurrentVolume(idGen).InStringUnit("ul")
 	if err != nil {
 		return nil, err
 	}
 
 	return &wellInfo{
-		PlateName: p.Name(),
 		PlateType: wtype.TypeOf(w.Plate),
 		VolumeUl:  volUl.ToString(),
 	}, nil
@@ -55,11 +53,11 @@ func plateWellInfo(idGen *id.IDGenerator, p *wtype.Plate) (map[wellInfo]int, err
 	pwi := make(map[wellInfo]int)
 	for _, col := range p.Cols {
 		for _, w := range col {
-			if wi, err := infoForWell(idGen, w, p); err != nil {
+			wi, err := infoForWell(idGen, w)
+			if err != nil {
 				return nil, err
-			} else {
-				pwi[*wi] = pwi[*wi] + 1
 			}
+			pwi[*wi] = pwi[*wi] + 1
 		}
 	}
 	return pwi, nil

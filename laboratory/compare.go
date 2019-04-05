@@ -5,10 +5,12 @@ import (
 	"math"
 
 	runner "github.com/Synthace/antha-runner/export"
+	"github.com/antha-lang/antha/laboratory/compare"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/workflow"
 )
 
+// Compare compares output generated with any supplied test data in the workflow
 func (lb *LaboratoryBuilder) Compare() error {
 	// No testing data available.
 	if lb.workflow.Testing == nil {
@@ -24,6 +26,7 @@ func (lb *LaboratoryBuilder) Compare() error {
 		case *target.Mix:
 			lb.Logger.Log("msg", fmt.Sprintf("[%d] Checking mix instruction, %f seconds", i, t.GetTimeEstimate()))
 			lb.compareTimings(t, mixIdx)
+			lb.compareOutputs(t, mixIdx)
 			mixIdx++
 		}
 	}
@@ -80,6 +83,16 @@ func compareInstructions(w *workflow.Workflow, m *target.Mix, idx int) error {
 	return nil
 }
 
-func compareOutputs(w *workflow.Workflow, m *target.Mix, idx int) error {
-	return nil
+func (lb *LaboratoryBuilder) compareOutputs(m *target.Mix, idx int) error {
+	em, err := expectedMix(lb.workflow, idx)
+	if err != nil {
+		return err
+	}
+
+	if em.Outputs == nil || len(em.Outputs) == 0 {
+		lb.Logger.Log("msg", fmt.Sprintf("No output comparison data supplied for mix task %d", idx))
+		return nil
+	}
+
+	return compare.Plates(em.Outputs, m.FinalProperties.Plates, lb.effects.IDGenerator)
 }

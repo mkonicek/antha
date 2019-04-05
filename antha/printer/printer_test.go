@@ -252,7 +252,7 @@ func TestLineComments(t *testing.T) {
 	`
 
 	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, "", src, parser.ParseComments)
+	f, err := parser.ParseFile(fset, "", []byte(src), parser.ParseComments)
 	if err != nil {
 		panic(err) // error in test
 	}
@@ -295,7 +295,7 @@ func init() {
 func TestBadNodes(t *testing.T) {
 	const src = "package p\n("
 	const res = "package p\nBadDecl\n"
-	f, err := parser.ParseFile(fset, "", src, parser.ParseComments)
+	f, err := parser.ParseFile(fset, "", []byte(src), parser.ParseComments)
 	if err == nil {
 		t.Error("expected illegal program") // error in test
 	}
@@ -351,7 +351,7 @@ func fibo(n int) {
 }
 `
 
-	f, err := parser.ParseFile(fset, "", src, parser.ParseComments)
+	f, err := parser.ParseFile(fset, "", []byte(src), parser.ParseComments)
 	if err != nil {
 		t.Error(err) // error in test
 	}
@@ -414,7 +414,7 @@ func (t *t) foo(a, b, c int) int {
 `
 
 	// parse original
-	f1, err := parser.ParseFile(fset, "src", src, parser.ParseComments)
+	f1, err := parser.ParseFile(fset, "src", []byte(src), parser.ParseComments)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -475,7 +475,7 @@ var decls = []string{
 
 func TestDeclLists(t *testing.T) {
 	for _, src := range decls {
-		file, err := parser.ParseFile(fset, "", "package p;"+src, parser.ParseComments)
+		file, err := parser.ParseFile(fset, "", []byte("package p;"+src), parser.ParseComments)
 		if err != nil {
 			panic(err) // error in test
 		}
@@ -501,7 +501,7 @@ var stmts = []string{
 
 func TestStmtLists(t *testing.T) {
 	for _, src := range stmts {
-		file, err := parser.ParseFile(fset, "", "package p; func _() {"+src+"}", parser.ParseComments)
+		file, err := parser.ParseFile(fset, "", []byte("package p; func _() {"+src+"}"), parser.ParseComments)
 		if err != nil {
 			panic(err) // error in test
 		}

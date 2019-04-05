@@ -127,7 +127,7 @@ func ctext(list []*CommentGroup) string {
 
 func TestCommentMap(t *testing.T) {
 	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, "", src, parser.ParseComments)
+	f, err := parser.ParseFile(fset, "", []byte(src), parser.ParseComments)
 	if err != nil {
 		t.Fatal(err)
 	}

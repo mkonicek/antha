@@ -23,6 +23,7 @@ import (
 
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/laboratory"
+	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/laboratory/effects/id"
 	"github.com/antha-lang/antha/workflow"
 )
@@ -97,6 +98,10 @@ func withTestLab(t *testing.T, inDir string, callbacks *TestElementCallbacks) {
 			t.Fatal(err)
 		}
 	}
+}
+
+func NewTestLabEffects(fm *effects.FileManager, inv *inventory.Inventory) *effects.LaboratoryEffects {
+	return effects.NewLaboratoryEffects(workflow.JobId("testing"), fm, inv)
 }
 
 func EnsureSharedInventory() *inventory.Inventory {

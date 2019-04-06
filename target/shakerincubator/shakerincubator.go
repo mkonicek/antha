@@ -118,8 +118,8 @@ func (a *ShakerIncubator) generate(cmd interface{}) (effects.Insts, error) {
 
 	initializers := effects.Insts{
 		&target.Run{
-			Dev:   a,
-			Label: "open incubator carrier",
+			DeviceMixin: effects.DeviceMixin{Dev: a},
+			Label:       "open incubator carrier",
 			Calls: []driver.Call{
 				a.carrierOpen(),
 			},
@@ -130,8 +130,8 @@ func (a *ShakerIncubator) generate(cmd interface{}) (effects.Insts, error) {
 		},
 
 		&target.Run{
-			Dev:   a,
-			Label: "close incubator carrier",
+			DeviceMixin: effects.DeviceMixin{Dev: a},
+			Label:       "close incubator carrier",
 			Calls: []driver.Call{
 				a.carrierClose(),
 			},
@@ -140,9 +140,9 @@ func (a *ShakerIncubator) generate(cmd interface{}) (effects.Insts, error) {
 
 	finalizers := effects.Insts{
 		&target.Run{
-			Dev:   a,
-			Label: "turn off incubator",
-			Calls: a.reset(),
+			DeviceMixin: effects.DeviceMixin{Dev: a},
+			Label:       "turn off incubator",
+			Calls:       a.reset(),
 		},
 	}
 
@@ -158,9 +158,9 @@ func (a *ShakerIncubator) generate(cmd interface{}) (effects.Insts, error) {
 
 		insts = append(insts,
 			&target.Run{
-				Dev:   a,
-				Label: "pre incubate",
-				Calls: calls,
+				DeviceMixin: effects.DeviceMixin{Dev: a},
+				Label:       "pre incubate",
+				Calls:       calls,
 			},
 			&target.TimedWait{
 				Duration: time.Duration(inc.PreTime.Seconds() * float64(time.Second)),
@@ -177,7 +177,7 @@ func (a *ShakerIncubator) generate(cmd interface{}) (effects.Insts, error) {
 	}
 
 	insts = append(insts, &target.Run{
-		Dev:          a,
+		DeviceMixin:  effects.DeviceMixin{Dev: a},
 		Label:        "start incubator",
 		Calls:        calls,
 		Initializers: initializers,

@@ -5,7 +5,6 @@ import (
 	"github.com/antha-lang/antha/workflow"
 )
 
-// A Device is a scheduling plugin
 type Device interface {
 	CanCompile(Request) bool // Can this device compile this request
 
@@ -21,7 +20,9 @@ type Device interface {
 	Id() workflow.DeviceInstanceID
 }
 
-// An Inst is a instruction
+// An Inst is a instruction. These are "low-level" - i.e. the results
+// of calls to Device.Compile(), *not* instructions issued by
+// intrinsics.
 type Inst interface {
 	Id() string
 	// Idempotent - will not change an id once set.
@@ -48,4 +49,48 @@ func (insts Insts) SequentialOrder() {
 			prev = cur
 		}
 	}
+}
+
+type DependsMixin struct {
+	Depends []Inst
+}
+
+func (a *DependsMixin) DependsOn() []Inst {
+	return a.Depends
+}
+
+func (a *DependsMixin) SetDependsOn(x ...Inst) {
+	a.Depends = x
+}
+
+func (a *DependsMixin) AppendDependsOn(x ...Inst) {
+	a.Depends = append(a.Depends, x...)
+}
+
+type NoDeviceMixin struct{}
+
+func (a NoDeviceMixin) Device() Device {
+	return nil
+}
+
+type IdMixin struct {
+	id string
+}
+
+func (a IdMixin) Id() string {
+	return a.id
+}
+
+func (a *IdMixin) SetId(idGen *id.IDGenerator) {
+	if a.id == "" {
+		a.id = idGen.NextID()
+	}
+}
+
+type DeviceMixin struct {
+	Dev Device
+}
+
+func (a *DeviceMixin) Device() Device {
+	return a.Dev
 }

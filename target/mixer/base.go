@@ -355,7 +355,7 @@ func (mo mixOpts) mix() (*target.Mix, error) {
 		mimetype = "application/" + strings.ToLower(handler.Properties.Mnfr)
 	}
 	mix := &target.Mix{
-		Dev:             mo.Device,
+		DeviceMixin:     effects.DeviceMixin{Dev: mo.Device},
 		Request:         req,
 		Properties:      handler.Properties,
 		FinalProperties: handler.FinalProperties,

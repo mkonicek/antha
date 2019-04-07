@@ -114,7 +114,6 @@ var invalids = []string{
 }
 
 func TestInvalid(t *testing.T) {
-	t.Skip("external files")
 	for _, src := range invalids {
 		checkErrors(t, src, []byte(src))
 	}

@@ -24,6 +24,7 @@ package compile
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/ast"
@@ -31,35 +32,42 @@ import (
 	"github.com/antha-lang/antha/antha/token"
 )
 
+func processExpr(antha *Antha, expr string) (string, error) {
+	parsed, err := parser.ParseExpr(expr)
+	if err != nil {
+		return "", err
+	}
+	ast.Inspect(parsed, antha.inspectTypes)
+	buf := new(bytes.Buffer)
+	if _, err := (&Config{}).Fprint(buf, antha.fileSet, parsed); err != nil {
+		return "", err
+	}
+	s := strings.Replace(buf.String(), "\t", " ", -1)
+	return strings.Replace(s, "\n", " ", -1), nil
+}
+
 func TestTypeSugaring(t *testing.T) {
-	nodeSizes := make(map[ast.Node]int)
-	cfg := &Config{}
-	compiler := &compiler{}
 	fset := token.NewFileSet()
-	compiler.init(cfg, fset, nodeSizes)
-
-	expr, err := parser.ParseExpr("func(x Volume) Concentration { x := Volume }")
+	file, err := parser.ParseFile(fset, "testProtocol/element.an", []byte("protocol testProtocol"), parser.ParseComments)
 	if err != nil {
 		t.Fatal(err)
 	}
-	desired, err := parser.ParseExpr("func(x wunit.Volume) wunit.Concentration { x := Volume }")
+	antha, err := NewAntha(fset, file, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	antha, err := NewAntha(fset, &ast.File{}, nil)
+	got, err := processExpr(antha, "func (x Volume) Concentration { x := Volume }")
 	if err != nil {
 		t.Fatal(err)
 	}
-	ast.Inspect(expr, antha.inspectTypes)
-	var buf1, buf2 bytes.Buffer
-	if _, err := compiler.Fprint(&buf1, fset, expr); err != nil {
+
+	wanted, err := processExpr(antha, "func (x wunit.Volume) wunit.Concentration { x := Volume }")
+	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := compiler.Fprint(&buf2, fset, desired); err != nil {
-		t.Fatal(err)
-	}
-	if !bytes.Equal(buf1.Bytes(), buf2.Bytes()) {
-		t.Errorf("wanted\n'''%s'''\ngot\n'''%s'''\n", buf2.String(), buf1.String())
+
+	if got != wanted {
+		t.Errorf("wanted\n%s\ngot\n%s\n", wanted, got)
 	}
 }

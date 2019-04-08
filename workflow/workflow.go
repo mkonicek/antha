@@ -55,6 +55,13 @@ func WorkflowFromReaders(rs ...io.ReadCloser) (*Workflow, error) {
 			return nil, err
 		}
 
+		// Note: ValidateBytes unmarshals the JSON data we send it. Then we
+		// unmarshal it ourselves a few lines later. It would be nice to only
+		// unmarshal once, but we unmarshal into a struct, and ValidateBytes
+		// unmarshals into an interface{} (which renders a value of type
+		// `map[string]interface{}`). The jsonschema package doesn't (currently)
+		// know how to validate a struct type. So for now, we'll live with
+		// double-unmarshaling.
 		if errors, _ := rs.ValidateBytes(workflowJSON); len(errors) > 0 {
 			return nil, errors[0]
 		}

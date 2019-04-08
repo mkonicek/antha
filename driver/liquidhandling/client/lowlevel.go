@@ -123,7 +123,7 @@ func (llc *LowLevelClient) GetOutputFile() ([]byte, driver.CommandStatus) {
 	}
 }
 
-func (llc *LowLevelClient) Configure(simId workflow.SimpleId, jobName string, devId workflow.DeviceInstanceID, data []byte) (*liquidhandling.LHProperties, driver.CommandStatus) {
+func (llc *LowLevelClient) Configure(simId workflow.BasicId, jobName string, devId workflow.DeviceInstanceID, data []byte) (*liquidhandling.LHProperties, driver.CommandStatus) {
 	req := &pb.ConfigureRequest{
 		SimulationId:     string(simId),
 		JobName:          jobName,

@@ -195,7 +195,7 @@ func (mc *mainComposer) saveWorkflow() error {
 type testComposer struct {
 	*ComposerBase
 
-	Workflows     map[workflow.SimpleId]*testWorkflow
+	Workflows     map[workflow.BasicId]*testWorkflow
 	Keep          bool
 	Run           bool
 	LinkedDrivers bool
@@ -211,7 +211,7 @@ type testWorkflow struct {
 func (cb *ComposerBase) NewTestsComposer(keep, run, linkedDrivers bool) *testComposer {
 	return &testComposer{
 		ComposerBase:  cb,
-		Workflows:     make(map[workflow.SimpleId]*testWorkflow),
+		Workflows:     make(map[workflow.BasicId]*testWorkflow),
 		Keep:          keep,
 		Run:           run,
 		LinkedDrivers: linkedDrivers,

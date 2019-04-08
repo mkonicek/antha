@@ -14,11 +14,11 @@ import (
 )
 
 const (
-	ValidSimpleId string = `^[0-9a-zA-Z_:-]*$`
+	ValidBasicId string = `^[0-9a-zA-Z_:-]*$`
 )
 
 var (
-	rxValidSimpleId = regexp.MustCompile(ValidSimpleId)
+	rxValidBasicId = regexp.MustCompile(ValidBasicId)
 )
 
 func (wf *Workflow) Validate() error {
@@ -42,11 +42,11 @@ func (sv SchemaVersion) Validate() error {
 	}
 }
 
-func (simpleId SimpleId) Validate(permitEmpty bool) error {
-	if simpleId == "" && !permitEmpty {
+func (basicId BasicId) Validate(permitEmpty bool) error {
+	if basicId == "" && !permitEmpty {
 		return errors.New("Invalid Id: may not be empty")
-	} else if !rxValidSimpleId.MatchString(string(simpleId)) {
-		return fmt.Errorf("Invalid Id '%v': Id must match the pattern %v", simpleId, ValidSimpleId)
+	} else if !rxValidBasicId.MatchString(string(basicId)) {
+		return fmt.Errorf("Invalid Id '%v': Id must match the pattern %v", basicId, ValidBasicId)
 	}
 	return nil
 }

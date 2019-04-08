@@ -4,30 +4,30 @@ import (
 	"testing"
 )
 
-func TestValidateSimpleId(t *testing.T) {
+func TestValidateBasicId(t *testing.T) {
 	type testCase struct {
-		sid            SimpleId
+		sid            BasicId
 		shouldValidate bool
 	}
 	testCases := []testCase{
-		{SimpleId(""), true},
-		{SimpleId("abc"), true},
-		{SimpleId("ABC"), true},
-		{SimpleId("a b"), false},
-		{SimpleId("a"), true},
-		{SimpleId("a0"), true},
-		{SimpleId("0a"), false},
-		{SimpleId("*"), false},
-		{SimpleId("åbc"), false},
-		{SimpleId("🤡"), false},
+		{BasicId(""), true},
+		{BasicId("abc"), true},
+		{BasicId("ABC"), true},
+		{BasicId("a b"), false},
+		{BasicId("a"), true},
+		{BasicId("a0"), true},
+		{BasicId("0a"), true},
+		{BasicId("*"), false},
+		{BasicId("åbc"), false},
+		{BasicId("🤡"), false},
 	}
 
 	for _, testCase := range testCases {
-		err := testCase.sid.Validate()
+		err := testCase.sid.Validate(true)
 		if err != nil && testCase.shouldValidate {
-			t.Errorf("SimpleId %v expected to be valid but failed validation", testCase.sid)
+			t.Errorf("BasicId %v expected to be valid but failed validation", testCase.sid)
 		} else if err == nil && !testCase.shouldValidate {
-			t.Errorf("SimpleId %v expected to be invalid but passed validation", testCase.sid)
+			t.Errorf("BasicId %v expected to be invalid but passed validation", testCase.sid)
 		}
 	}
 }

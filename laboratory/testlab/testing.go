@@ -75,7 +75,7 @@ func WithTestLab(t *testing.T, inDir string, callbacks *TestElementCallbacks) {
 
 func withTestLab(t *testing.T, inDir string, callbacks *TestElementCallbacks) {
 	wf := workflow.EmptyWorkflow()
-	wf.WorkflowId = workflow.SimpleId("TestLab")
+	wf.WorkflowId = workflow.BasicId("TestLab")
 	wfBuf := new(bytes.Buffer)
 	if err := wf.ToWriter(wfBuf, false); err != nil {
 		t.Fatal(err)

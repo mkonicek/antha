@@ -19,8 +19,13 @@ import (
 
 type Workflow struct {
 	SchemaVersion SchemaVersion `json:"SchemaVersion"`
-	WorkflowId    SimpleId      `json:"WorkflowId,omitempty"`
-	SimulationId  SimpleId      `json:"SimulationId,omitempty"`
+	// The WorkflowId is the unique Id of this workflow itself, and is
+	// not modified by the event of simulation.
+	WorkflowId BasicId `json:"WorkflowId,omitempty"`
+	// The SimulationId is an Id created by the act of simulation. Thus
+	// a workflow that is simulated twice will have the same WorkflowId
+	// but different SimulationIds.
+	SimulationId BasicId `json:"SimulationId,omitempty"`
 
 	Meta Meta `json:"Meta,omitempty"`
 
@@ -73,7 +78,7 @@ func EmptyWorkflow() *Workflow {
 
 func (wf *Workflow) EnsureWorkflowId() error {
 	if wf.WorkflowId == "" {
-		if id, err := RandomSimpleId(""); err != nil {
+		if id, err := RandomBasicId(""); err != nil {
 			return err
 		} else {
 			wf.WorkflowId = id
@@ -106,12 +111,13 @@ type Meta struct {
 	Rest map[string]interface{} `json:"-"`
 }
 
-func (m *Meta) NameAsIdentifier() string {
+// See https://golang.org/ref/spec#identifier However, we allow the
+// first rune to be a digit, because currently the call sites all
+// ensure the result of this call is prefixed with some constant text.
+func (m *Meta) NameAsGoIdentifier() string {
 	res := []rune{}
 	for _, r := range m.Name {
 		switch {
-		// see https://golang.org/ref/spec#identifier
-		// However, we allow the first rune to be a digit
 		case r == '_', unicode.IsLetter(r), unicode.IsDigit(r):
 			res = append(res, r)
 		case r == ' ', r == '-', r == '/':
@@ -155,16 +161,16 @@ func (m *Meta) MarshalJSON() ([]byte, error) {
 	return json.Marshal(all)
 }
 
-type SimpleId string
+type BasicId string
 
-func RandomSimpleId(prefix SimpleId) (SimpleId, error) {
+func RandomBasicId(prefix BasicId) (BasicId, error) {
 	max := big.NewInt(0).SetUint64(math.MaxUint64)
 	if suffix, err := crand.Int(crand.Reader, max); err != nil {
 		return "", err
 	} else if prefix == "" {
-		return SimpleId(suffix.Text(62)), nil
+		return BasicId(suffix.Text(62)), nil
 	} else {
-		return SimpleId(fmt.Sprintf("%s-%s", prefix, suffix.Text(62))), nil
+		return BasicId(fmt.Sprintf("%s-%s", prefix, suffix.Text(62))), nil
 	}
 }
 

@@ -48,7 +48,7 @@ func (lhs *liquidHandlingServer) Finalize(context.Context, *pb.FinalizeRequest) 
 }
 
 func (lhs *liquidHandlingServer) Configure(ctx context.Context, req *pb.ConfigureRequest) (*pb.ConfigureReply, error) {
-	props, cs := lhs.driver.Configure(workflow.SimpleId(req.GetSimulationId()), req.GetJobName(), workflow.DeviceInstanceID(req.GetDeviceInstanceId()), req.GetData())
+	props, cs := lhs.driver.Configure(workflow.BasicId(req.GetSimulationId()), req.GetJobName(), workflow.DeviceInstanceID(req.GetDeviceInstanceId()), req.GetData())
 
 	if propsJSON, err := json.Marshal(props); err != nil {
 		return nil, err

@@ -27,9 +27,9 @@ func (a *Workflow) Merge(b *Workflow) error {
 	}.Pack()
 }
 
-func (a *SimpleId) Merge(b SimpleId) error {
+func (a *BasicId) Merge(b BasicId) error {
 	if id, ok := tryMergeStrings(string(*a), string(b)); ok {
-		*a = SimpleId(id)
+		*a = BasicId(id)
 		return nil
 	} else {
 		return fmt.Errorf("Cannot merge: ids both not empty and not equal: %v vs %v", *a, b)

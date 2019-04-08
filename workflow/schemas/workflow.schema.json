@@ -1,0 +1,192 @@
+{
+    "$id": "https://antha.com/workflows-schema",
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "description": "JSON Schema for describing workflows",
+    "type": "object",
+    "required": [
+        "SchemaVersion"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "WorkflowId": {
+            "type": "string",
+            "pattern": "^[a-zA-Z][a-zA-Z0-9_ -]*$"
+        },
+        "Meta": {
+            "type": "null",
+            "$comment": "TODO: implement schema. Haven't seen one of these in the wild yet"
+        },
+        "Inventory": {
+            "type": "object",
+            "$comment": "TODO: implement schema. Haven't seen one of these in the wild yet"
+        },
+        "SchemaVersion": {
+            "type": "string",
+            "enum": ["2.0"]
+        },
+        "Repositories": {
+            "type": "object",
+            "minProperties": 1,
+            "propertyNames": {
+                "pattern": "^(repos.antha.com|github.com)/"
+            },
+            "patternProperties": {
+                ".*": {
+                    "$ref": "#/definitions/repository"
+                }
+            }
+        },
+        "Elements": {
+            "type": "object",
+            "properties": {
+                "Types": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/elementType"
+                    }
+                },
+                "Instances": {
+                    "type": "object",
+                    "minProperties": 1,
+                    "propertyNames": {
+                        "$comment": "TODO: confirm this regex. This is the name of an element instance, e.g. 'my_aliquot'",
+                        "pattern": "^[a-zA-Z0-9_ -]+$"
+                    },
+                    "patternProperties": {
+                        ".*": {
+                            "$ref": "#/definitions/elementInstance"
+                        }
+                    }
+                },
+                "InstancesConnections": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/elementInstanceConnection"
+                    }
+                }
+            },
+            "additionalProperties": false,
+            "required": ["Types", "Instances"]
+        },
+        "Config": {
+            "type": "object",
+            "propertyNames": {
+                "$comment": "TODO: check this regex. This is the name of a device class, e.g. 'GilsonPipetMax'",
+                "pattern": "^[a-zA-Z0-9_-]+$"
+            },
+            "patternProperties": {
+                "^GlobalMixer$": {
+                    "type": "object"
+                }
+            },
+            "additionalProperties": {
+                "$ref": "#/definitions/deviceClass"
+            },
+            "required": []
+        }
+    },
+    "definitions": {
+        "repository": {
+            "type": "object",
+            "properties": {
+                "Directory": {
+                    "type": "string"
+                },
+                "Branch": {
+                    "type": "string"
+                },
+                "Commit": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": false,
+            "required": ["Directory"]
+        },
+        "elementType": {
+            "type": "object",
+            "properties": {
+                "RepositoryName": {
+                    "type": "string"
+                },
+                "ElementPath": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": false,
+            "required": ["RepositoryName", "ElementPath"]
+        },
+        "elementInstance": {
+            "type": "object",
+            "properties": {
+                "ElementTypeName": {
+                    "type": "string"
+                },
+                "Meta": {
+                    "type": "object",
+                    "properties": {
+                        "x": {
+                            "type": "number"
+                        },
+                        "y": {
+                            "type": "number"
+                        }
+                    },
+                    "additionalProperties": true,
+                    "required": []
+                },
+                "Parameters": {
+                    "type": "object"
+                }
+            },
+            "additionalProperties": false,
+            "required": ["ElementTypeName", "Parameters"]
+        },
+        "elementInstanceConnection": {
+            "type": "object",
+            "properties": {
+                "Source": {
+                    "$ref": "#/definitions/connectionTerminal"
+                },
+                "Target": {
+                    "$ref": "#/definitions/connectionTerminal"
+                }
+            },
+            "additionalProperties": false,
+            "required": ["Source", "Target"]
+        },
+        "connectionTerminal": {
+            "type": "object",
+            "properties": {
+                "ElementInstance": {
+                    "type": "string"
+                },
+                "ParameterName": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": false,
+            "required": ["ElementInstance", "ParameterName"]
+        },
+        "deviceClass": {
+            "type": "object",
+            "properties": {
+                "Devices": {
+                    "type": "object",
+                    "propertyNames": {
+                        "$comment": "TODO: check this regex. This is the name of a device instance, e.g. 'Doris'",
+                        "pattern": "^[a-zA-Z0-9_-]+$"
+                    },
+                    "patternProperties": {
+                        ".*": {
+                            "$comment": "The properties of a device instance, e.g. InputPlateTypes. Currently, any key/values are valid here",
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "additionalProperties": false,
+            "required": []
+        }
+    }
+}

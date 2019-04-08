@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"math"
 	"math/big"
 	"os"
@@ -13,9 +14,14 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/antha-lang/antha/utils"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/qri-io/jsonschema"
 	git "gopkg.in/src-d/go-git.v4"
 )
+
+//go:generate go-bindata -o ./schemas.go -pkg workflow -prefix schemas/ ./schemas/
 
 type Workflow struct {
 	SchemaVersion SchemaVersion `json:"SchemaVersion"`
@@ -49,8 +55,40 @@ func WorkflowFromReaders(rs ...io.ReadCloser) (*Workflow, error) {
 	for _, r := range rs {
 		defer r.Close()
 		wf := &Workflow{} // we're never merging _into_ wf so it's safe to have nil maps here
-		dec := json.NewDecoder(r)
-		if err := dec.Decode(wf); err != nil {
+
+		schema := MustAsset("workflow.schema.json")
+		rs := &jsonschema.RootSchema{}
+		if err := json.Unmarshal(schema, rs); err != nil {
+			panic(err)
+		}
+
+		workflowJSON, err := ioutil.ReadAll(r)
+		if err != nil {
+			return nil, err
+		}
+
+		// Note: ValidateBytes unmarshals the JSON data we send it. Then we
+		// unmarshal it ourselves a few lines later. It would be nice to only
+		// unmarshal once, but we unmarshal into a struct, and ValidateBytes
+		// unmarshals into an interface{} (which renders a value of type
+		// `map[string]interface{}`). The jsonschema package doesn't (currently)
+		// know how to validate a struct type. So for now, we'll live with
+		// double-unmarshaling.
+		valErrs, err := rs.ValidateBytes(workflowJSON)
+		if err != nil {
+			// ValidateBytes got an unmarshalling error
+			return nil, err
+		}
+		if len(valErrs) > 0 {
+			// ValidateBytes got validation errors
+			errs := make(utils.ErrorSlice, len(valErrs))
+			for i, err := range valErrs {
+				errs[i] = err
+			}
+			return nil, errs.Pack()
+		}
+
+		if err := json.Unmarshal(workflowJSON, wf); err != nil {
 			return nil, err
 		} else if err := acc.Merge(wf); err != nil {
 			return nil, err

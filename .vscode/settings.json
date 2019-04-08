@@ -1,0 +1,10 @@
+{
+    "json.schemas": [
+        {
+            "fileMatch": [
+                "/cmd/composer/*.json"
+            ],
+            "url": "/workflow/schemas/workflow.schema.json"
+        }
+    ]
+}

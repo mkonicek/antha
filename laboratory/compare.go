@@ -1,11 +1,8 @@
 package laboratory
 
 import (
-	"errors"
 	"fmt"
-	"io"
 	"math"
-	"os"
 	"path/filepath"
 
 	"github.com/antha-lang/antha/laboratory/compare"
@@ -16,9 +13,7 @@ import (
 
 // Compare compares output generated with any supplied test data in the workflow
 func (labBuild *LaboratoryBuilder) Compare() error {
-
 	if labBuild.workflow.Testing == nil {
-		labBuild.Logger.Log("msg", "No comparison test data supplied.")
 		return nil
 	}
 
@@ -32,42 +27,21 @@ func (labBuild *LaboratoryBuilder) Compare() error {
 			if expected, err := expectedMix(labBuild.workflow, mixIdx); err != nil {
 				errs = append(errs, err)
 			} else {
-				if err := labBuild.compareTimings(t, expected); err != nil {
-					errs = append(errs, err)
-				}
+				errs = append(errs, labBuild.compareTimings(t, expected))
 				errs = append(errs, labBuild.compareOutputs(t, expected)...)
 			}
 			mixIdx++
 		}
 	}
 
-	if len(errs) > 0 {
-		if ef, err := labBuild.errorsToFile(errs); err != nil {
-			return errors.New("errors in test comparisons, and failed to create error file")
-		} else {
-			return fmt.Errorf("errors in comparison tests, details in %s", ef)
-		}
-	}
-
-	labBuild.Logger.Log("msg", "Comparison test data passed.")
-	return nil
-}
-
-func (labBuild *LaboratoryBuilder) errorsToFile(errs utils.ErrorSlice) (string, error) {
 	filename := filepath.Join(labBuild.outDir, "comparisons.txt")
-	f, err := os.OpenFile(filename, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0400)
-	if err != nil {
-		return "", err
-	}
-
-	defer f.Close()
-	errorsToWriter(f, errs)
-	return filename, nil
-}
-
-func errorsToWriter(w io.Writer, errs utils.ErrorSlice) {
-	for i, e := range errs {
-		fmt.Fprintf(w, "[%d] %v\n", i, e)
+	if err := errs.WriteToFile(filename); err != nil {
+		return fmt.Errorf("errors writing comparison results to file, %v", err)
+	} else if errs.Pack() != nil {
+		return fmt.Errorf("errors in comparison tests, details in %s", filename)
+	} else {
+		labBuild.Logger.Log("msg", "Comparison test data passed.")
+		return nil
 	}
 }
 
@@ -81,7 +55,6 @@ func expectedMix(w *workflow.Workflow, idx int) (*workflow.MixTaskCheck, error) 
 
 func (labBuild *LaboratoryBuilder) compareTimings(m *target.Mix, expectedMix *workflow.MixTaskCheck) error {
 	const timeAccuracyPercent = 10
-
 	if err := compareToPercent(expectedMix.TimeEstimate.Seconds(), m.GetTimeEstimate(), timeAccuracyPercent); err != nil {
 		return fmt.Errorf("timing check failed, %v", err)
 	}

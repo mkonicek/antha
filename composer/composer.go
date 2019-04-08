@@ -141,6 +141,10 @@ type mainComposer struct {
 }
 
 func (cb *ComposerBase) ComposeMainAndRun(keep, run, linkedDrivers bool, wf *workflow.Workflow) error {
+	if wf.SimulationId != "" {
+		return fmt.Errorf("Workflow has already been simulated (SimulationId %v); aborting", wf.SimulationId)
+	}
+
 	mc := &mainComposer{
 		ComposerBase:  cb,
 		Workflow:      wf,
@@ -160,10 +164,22 @@ func (cb *ComposerBase) ComposeMainAndRun(keep, run, linkedDrivers bool, wf *wor
 	}.Run()
 }
 
+func (cb *ComposerBase) generateGoGenerate() error {
+	path := filepath.Join(cb.OutDir, "workflow", "generate_assets.go")
+	if fh, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0400); err != nil {
+		return err
+	} else {
+		defer fh.Close()
+		return renderGoGenerate(fh)
+	}
+}
+
 func (mc *mainComposer) generateMain() error {
 	path := filepath.Join(mc.OutDir, "workflow", "main.go")
 	mc.Logger.Log("progress", "generating workflow main", "path", path)
-	if fh, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0400); err != nil {
+	if err := mc.generateGoGenerate(); err != nil {
+		return err
+	} else if fh, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0400); err != nil {
 		return err
 	} else {
 		defer fh.Close()
@@ -179,7 +195,7 @@ func (mc *mainComposer) saveWorkflow() error {
 type testComposer struct {
 	*ComposerBase
 
-	Workflows     map[workflow.JobId]*testWorkflow
+	Workflows     map[workflow.BasicId]*testWorkflow
 	Keep          bool
 	Run           bool
 	LinkedDrivers bool
@@ -195,7 +211,7 @@ type testWorkflow struct {
 func (cb *ComposerBase) NewTestsComposer(keep, run, linkedDrivers bool) *testComposer {
 	return &testComposer{
 		ComposerBase:  cb,
-		Workflows:     make(map[workflow.JobId]*testWorkflow),
+		Workflows:     make(map[workflow.BasicId]*testWorkflow),
 		Keep:          keep,
 		Run:           run,
 		LinkedDrivers: linkedDrivers,
@@ -203,10 +219,12 @@ func (cb *ComposerBase) NewTestsComposer(keep, run, linkedDrivers bool) *testCom
 }
 
 func (tc *testComposer) AddWorkflow(wf *workflow.Workflow, inDir string) error {
-	if _, found := tc.Workflows[wf.JobId]; found {
-		return fmt.Errorf("Workflow with JobId %v already added. JobIds must be unique", wf.JobId)
+	if wf.SimulationId != "" {
+		return fmt.Errorf("Workflow has already been simulated (SimulationId %v); aborting", wf.SimulationId)
+	} else if _, found := tc.Workflows[wf.WorkflowId]; found {
+		return fmt.Errorf("Workflow with Id %v already added. Workflow Ids must be unique", wf.WorkflowId)
 	} else {
-		tc.Workflows[wf.JobId] = &testWorkflow{
+		tc.Workflows[wf.WorkflowId] = &testWorkflow{
 			testComposer: tc,
 			index:        len(tc.Workflows),
 			workflow:     wf,
@@ -234,6 +252,7 @@ func (tc *testComposer) ComposeTestsAndRun() error {
 	}
 
 	return utils.ErrorFuncs{
+		tc.generateGoGenerate,
 		tc.goGenerate,
 		tc.goTest,
 	}.Run()

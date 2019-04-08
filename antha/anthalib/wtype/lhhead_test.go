@@ -2,19 +2,22 @@ package wtype
 
 import (
 	"testing"
+
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 //makeAlignmentTestPlate make a plate setting only the important things
-func makeTestPlate(wellsX, wellsY int, offsetX, offsetY float64) *LHPlate {
+func makeTestPlate(idGen *id.IDGenerator, wellsX, wellsY int, offsetX, offsetY float64) *LHPlate {
 	plateSize := Coordinates3D{X: 127.76, Y: 85.48, Z: 15.0}
 	wellSize := Coordinates3D{X: plateSize.X / float64(wellsX), Y: plateSize.Y / float64(wellsY), Z: 15.0}
 
 	shape := NewShape(BoxShape, "mm", wellSize.X, wellSize.Y, wellSize.Z)
-	well := NewLHWell("ul", 100.0, 10.0, shape, FlatWellBottom, wellSize.X, wellSize.Y, wellSize.Z, 0.0, "mm")
-	return NewLHPlate("testplate", "", wellsX, wellsY, plateSize, well, offsetX, offsetY, 0.0, 0.0, 0.0)
+	well := NewLHWell(idGen, "ul", 100.0, 10.0, shape, FlatWellBottom, wellSize.X, wellSize.Y, wellSize.Z, 0.0, "mm")
+	return NewLHPlate(idGen, "testplate", "", wellsX, wellsY, plateSize, well, offsetX, offsetY, 0.0, 0.0, 0.0)
 }
 
 func TestHeadDup(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 	head := &LHHead{
 		Name:         "headName",
 		Manufacturer: "headMfg",
@@ -28,8 +31,8 @@ func TestHeadDup(t *testing.T) {
 		},
 	}
 
-	newID := head.Dup()
-	oldID := head.DupKeepIDs()
+	newID := head.Dup(idGen)
+	oldID := head.DupKeepIDs(idGen)
 
 	if head.ID != oldID.ID {
 		t.Error("head.ID was changed by DupKeepIDs")
@@ -61,6 +64,7 @@ type headCanReachTest struct {
 	Plate         *LHPlate           //the plate to use for the test
 	WellAddresses []string           //well addresses that we want to move to
 	Expected      bool
+	idGen         *id.IDGenerator
 }
 
 func (self *headCanReachTest) Run(t *testing.T) {
@@ -68,7 +72,6 @@ func (self *headCanReachTest) Run(t *testing.T) {
 }
 
 func (self *headCanReachTest) run(t *testing.T) {
-
 	head := &LHHead{
 		Adaptor: &LHAdaptor{
 			Params: &LHChannelParameter{
@@ -80,14 +83,15 @@ func (self *headCanReachTest) run(t *testing.T) {
 	}
 
 	wc := WCArrayFromStrings(self.WellAddresses)
-	if g := head.CanReach(self.Plate, wc); g != self.Expected {
+	if g := head.CanReach(self.idGen, self.Plate, wc); g != self.Expected {
 		t.Errorf("got %t, expected %t", g, self.Expected)
 	}
 }
 
 func TestHeadCanReachVChannel96Plate(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 
-	plate := makeTestPlate(8, 12, 9.0, 9.0)
+	plate := makeTestPlate(idGen, 8, 12, 9.0, 9.0)
 
 	tests := []*headCanReachTest{
 		{
@@ -98,6 +102,7 @@ func TestHeadCanReachVChannel96Plate(t *testing.T) {
 			Plate:         plate,
 			WellAddresses: []string{"A1"},
 			Expected:      true,
+			idGen:         idGen,
 		},
 		{
 			Name:          "non-independent 8-well in A1-H1",
@@ -107,6 +112,7 @@ func TestHeadCanReachVChannel96Plate(t *testing.T) {
 			Plate:         plate,
 			WellAddresses: []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"},
 			Expected:      true,
+			idGen:         idGen,
 		},
 		{
 			Name:          "independent skipping a well",
@@ -116,6 +122,7 @@ func TestHeadCanReachVChannel96Plate(t *testing.T) {
 			Plate:         plate,
 			WellAddresses: []string{"A1", "B1", "D1", "E1", "F1", "G1", "H1"}, //double the gap between channels 1 and 2
 			Expected:      true,
+			idGen:         idGen,
 		},
 		{
 			Name:          "wrong rows",
@@ -125,6 +132,7 @@ func TestHeadCanReachVChannel96Plate(t *testing.T) {
 			Plate:         plate,
 			WellAddresses: []string{"A1", "C1"},
 			Expected:      false,
+			idGen:         idGen,
 		},
 		{
 			Name:          "wrong columns",
@@ -134,6 +142,7 @@ func TestHeadCanReachVChannel96Plate(t *testing.T) {
 			Plate:         plate,
 			WellAddresses: []string{"A1", "B2"},
 			Expected:      false,
+			idGen:         idGen,
 		},
 		{
 			Name:          "wrong order",
@@ -143,6 +152,7 @@ func TestHeadCanReachVChannel96Plate(t *testing.T) {
 			Plate:         plate,
 			WellAddresses: []string{"B1", "A1"},
 			Expected:      false,
+			idGen:         idGen,
 		},
 		{
 			Name:          "independent rows",
@@ -152,6 +162,7 @@ func TestHeadCanReachVChannel96Plate(t *testing.T) {
 			Plate:         plate,
 			WellAddresses: []string{"A1", "", "C1"},
 			Expected:      true,
+			idGen:         idGen,
 		},
 		{
 			Name:          "independent columns",
@@ -161,6 +172,7 @@ func TestHeadCanReachVChannel96Plate(t *testing.T) {
 			Plate:         plate,
 			WellAddresses: []string{"A1", "B2"},
 			Expected:      false,
+			idGen:         idGen,
 		},
 		{
 			Name:          "independent wrong order",
@@ -170,6 +182,7 @@ func TestHeadCanReachVChannel96Plate(t *testing.T) {
 			Plate:         plate,
 			WellAddresses: []string{"B1", "A1"},
 			Expected:      false,
+			idGen:         idGen,
 		},
 	}
 
@@ -179,7 +192,9 @@ func TestHeadCanReachVChannel96Plate(t *testing.T) {
 }
 
 func TestHeadCanReachHChannelPCRPlate(t *testing.T) {
-	plate := makeTestPlate(8, 12, 9.0, 9.0)
+	idGen := id.NewIDGenerator("testing")
+
+	plate := makeTestPlate(idGen, 8, 12, 9.0, 9.0)
 
 	tests := []*headCanReachTest{
 		{
@@ -190,6 +205,7 @@ func TestHeadCanReachHChannelPCRPlate(t *testing.T) {
 			Plate:         plate,
 			WellAddresses: []string{"A1"},
 			Expected:      true,
+			idGen:         idGen,
 		},
 		{
 			Name:          "non-independent 8-well in A1-H1",
@@ -199,6 +215,7 @@ func TestHeadCanReachHChannelPCRPlate(t *testing.T) {
 			Plate:         plate,
 			WellAddresses: []string{"A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "A11", "A12"},
 			Expected:      true,
+			idGen:         idGen,
 		},
 		{
 			Name:          "wrong rows",
@@ -208,6 +225,7 @@ func TestHeadCanReachHChannelPCRPlate(t *testing.T) {
 			Plate:         plate,
 			WellAddresses: []string{"A1", "B2"},
 			Expected:      false,
+			idGen:         idGen,
 		},
 		{
 			Name:          "wrong columns",
@@ -217,6 +235,7 @@ func TestHeadCanReachHChannelPCRPlate(t *testing.T) {
 			Plate:         plate,
 			WellAddresses: []string{"A1", "B1"},
 			Expected:      false,
+			idGen:         idGen,
 		},
 		{
 			Name:          "wrong order",
@@ -226,6 +245,7 @@ func TestHeadCanReachHChannelPCRPlate(t *testing.T) {
 			Plate:         plate,
 			WellAddresses: []string{"A2", "A1"},
 			Expected:      false,
+			idGen:         idGen,
 		},
 		{
 			Name:          "independent rows",
@@ -235,6 +255,7 @@ func TestHeadCanReachHChannelPCRPlate(t *testing.T) {
 			Plate:         plate,
 			WellAddresses: []string{"A1", "", "A3"},
 			Expected:      true,
+			idGen:         idGen,
 		},
 		{
 			Name:          "independent columns",
@@ -244,6 +265,7 @@ func TestHeadCanReachHChannelPCRPlate(t *testing.T) {
 			Plate:         plate,
 			WellAddresses: []string{"A1", "B2"},
 			Expected:      false,
+			idGen:         idGen,
 		},
 		{
 			Name:          "independent wrong order",
@@ -253,6 +275,7 @@ func TestHeadCanReachHChannelPCRPlate(t *testing.T) {
 			Plate:         plate,
 			WellAddresses: []string{"A2", "A1"},
 			Expected:      false,
+			idGen:         idGen,
 		},
 	}
 
@@ -262,8 +285,9 @@ func TestHeadCanReachHChannelPCRPlate(t *testing.T) {
 }
 
 func TestHeadCanReach384Plate(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 
-	plate := makeTestPlate(16, 24, 4.5, 4.5)
+	plate := makeTestPlate(idGen, 16, 24, 4.5, 4.5)
 
 	tests := []*headCanReachTest{
 		{
@@ -274,6 +298,7 @@ func TestHeadCanReach384Plate(t *testing.T) {
 			Plate:         plate,
 			WellAddresses: []string{"A1"},
 			Expected:      true,
+			idGen:         idGen,
 		},
 		{
 			Name:          "non-independent every other well",
@@ -283,6 +308,7 @@ func TestHeadCanReach384Plate(t *testing.T) {
 			Plate:         plate,
 			WellAddresses: []string{"A1", "C1", "E1", "G1", "I1", "K1", "M1", "O1"},
 			Expected:      true,
+			idGen:         idGen,
 		},
 		{
 			Name:          "non-independent every other well offset",
@@ -292,6 +318,7 @@ func TestHeadCanReach384Plate(t *testing.T) {
 			Plate:         plate,
 			WellAddresses: []string{"B1", "D1", "F1", "H1", "J1", "L1", "N1", "P1"},
 			Expected:      true,
+			idGen:         idGen,
 		},
 		{
 			Name:          "non-independent can't skip wells",
@@ -301,6 +328,7 @@ func TestHeadCanReach384Plate(t *testing.T) {
 			Plate:         plate,
 			WellAddresses: []string{"A1", "C1", "E1", "I1", "K1", "M1", "O1"}, //missing G1
 			Expected:      false,
+			idGen:         idGen,
 		},
 		{
 			Name:          "non-independent can't do adjacent wells",
@@ -310,6 +338,7 @@ func TestHeadCanReach384Plate(t *testing.T) {
 			Plate:         plate,
 			WellAddresses: []string{"A1", "B1"},
 			Expected:      false,
+			idGen:         idGen,
 		},
 	}
 
@@ -319,8 +348,10 @@ func TestHeadCanReach384Plate(t *testing.T) {
 }
 
 func TestHeadCanReachTrough(t *testing.T) {
-	troughY := makeTestPlate(8, 1, 9.0, 0.0)
-	troughX := makeTestPlate(1, 12, 0.0, 9.0)
+	idGen := id.NewIDGenerator("testing")
+
+	troughY := makeTestPlate(idGen, 8, 1, 9.0, 0.0)
+	troughX := makeTestPlate(idGen, 1, 12, 0.0, 9.0)
 
 	tests := []*headCanReachTest{
 		{
@@ -331,6 +362,7 @@ func TestHeadCanReachTrough(t *testing.T) {
 			Plate:         troughY,
 			WellAddresses: []string{"A1"},
 			Expected:      true,
+			idGen:         idGen,
 		},
 		{
 			Name:          "non-independent all channels in A1",
@@ -340,6 +372,7 @@ func TestHeadCanReachTrough(t *testing.T) {
 			Plate:         troughY,
 			WellAddresses: []string{"A1", "A1", "A1", "A1", "A1", "A1", "A1", "A1"},
 			Expected:      true,
+			idGen:         idGen,
 		},
 		{
 			Name:          "non-independent in A1",
@@ -349,6 +382,7 @@ func TestHeadCanReachTrough(t *testing.T) {
 			Plate:         troughX,
 			WellAddresses: []string{"A1"},
 			Expected:      true,
+			idGen:         idGen,
 		},
 		{
 			Name:          "non-independent all channels in A1",
@@ -358,6 +392,7 @@ func TestHeadCanReachTrough(t *testing.T) {
 			Plate:         troughX,
 			WellAddresses: []string{"A1", "A1", "A1", "A1", "A1", "A1", "A1", "A1"},
 			Expected:      true,
+			idGen:         idGen,
 		},
 	}
 
@@ -367,7 +402,9 @@ func TestHeadCanReachTrough(t *testing.T) {
 }
 
 func TestHeadCanReachTwoRowTrough(t *testing.T) {
-	trough := makeTestPlate(2, 12, 36.0, 9.0)
+	idGen := id.NewIDGenerator("testing")
+
+	trough := makeTestPlate(idGen, 2, 12, 36.0, 9.0)
 
 	tests := []*headCanReachTest{
 		{
@@ -378,6 +415,7 @@ func TestHeadCanReachTwoRowTrough(t *testing.T) {
 			Plate:         trough,
 			WellAddresses: []string{"A1"},
 			Expected:      true,
+			idGen:         idGen,
 		},
 		{
 			Name:          "non-independent all channels in A1 and B1",
@@ -387,6 +425,7 @@ func TestHeadCanReachTwoRowTrough(t *testing.T) {
 			Plate:         trough,
 			WellAddresses: []string{"A1", "A1", "A1", "A1", "B1", "B1", "B1", "B1"},
 			Expected:      false, //we don't support this functionality currently
+			idGen:         idGen,
 		},
 	}
 
@@ -396,7 +435,9 @@ func TestHeadCanReachTwoRowTrough(t *testing.T) {
 }
 
 func TestHeadCanReachWeirdPlate(t *testing.T) {
-	plate := makeTestPlate(16, 24, 4, 4)
+	idGen := id.NewIDGenerator("testing")
+
+	plate := makeTestPlate(idGen, 16, 24, 4, 4)
 
 	tests := []*headCanReachTest{
 		{
@@ -407,6 +448,7 @@ func TestHeadCanReachWeirdPlate(t *testing.T) {
 			Plate:         plate,
 			WellAddresses: []string{"A1"},
 			Expected:      true,
+			idGen:         idGen,
 		},
 		{
 			Name:          "non-independent can't spread adaptors",
@@ -416,6 +458,7 @@ func TestHeadCanReachWeirdPlate(t *testing.T) {
 			Plate:         plate,
 			WellAddresses: []string{"A1", "B1"}, //the wells are 4 mm apart so you can't actually do this
 			Expected:      false,
+			idGen:         idGen,
 		},
 		{
 			Name:          "non-independent can't spread adaptors",
@@ -425,6 +468,7 @@ func TestHeadCanReachWeirdPlate(t *testing.T) {
 			Plate:         plate,
 			WellAddresses: []string{"A1", "C1"}, //the wells are 8 mm apart so you can't actually do this
 			Expected:      false,
+			idGen:         idGen,
 		},
 	}
 

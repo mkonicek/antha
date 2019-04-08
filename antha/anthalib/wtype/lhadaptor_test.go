@@ -1,6 +1,10 @@
 package wtype
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/antha-lang/antha/laboratory/effects/id"
+)
 
 func assertIDsEqual(t *testing.T, a, b *LHAdaptor) {
 	if a.ID != b.ID {
@@ -49,19 +53,21 @@ func assertAdaptorTipLengths(t *testing.T, a, b *LHAdaptor, msg string) {
 }
 
 func TestLHAdaptorDup(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
+
 	params := &LHChannelParameter{
 		Multi: 8,
 	}
 
-	adaptor := NewLHAdaptor("testName", "testMfr", params)
+	adaptor := NewLHAdaptor(idGen, "testName", "testMfr", params)
 
 	//add some tips
 	for i := 0; i < 8; i = i + 2 {
-		adaptor.AddTip(i, makeTipForTest())
+		adaptor.AddTip(i, makeTipForTest(idGen))
 	}
 
-	newIDs := adaptor.Dup()
-	oldIDs := adaptor.DupKeepIDs()
+	newIDs := adaptor.Dup(idGen)
+	oldIDs := adaptor.DupKeepIDs(idGen)
 
 	assertAdaptorTipLengths(t, adaptor, newIDs, "newIDs")
 	assertAdaptorTipLengths(t, adaptor, oldIDs, "oldIDs")

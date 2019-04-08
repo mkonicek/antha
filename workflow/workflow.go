@@ -1,10 +1,14 @@
 package workflow
 
 import (
+	crand "crypto/rand"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
+	"math"
+	"math/big"
 	"os"
 	"path"
 	"strings"
@@ -19,7 +23,13 @@ import (
 
 type Workflow struct {
 	SchemaVersion SchemaVersion `json:"SchemaVersion"`
-	JobId         JobId         `json:"JobId"`
+	// The WorkflowId is the unique Id of this workflow itself, and is
+	// not modified by the event of simulation.
+	WorkflowId BasicId `json:"WorkflowId,omitempty"`
+	// The SimulationId is an Id created by the act of simulation. Thus
+	// a workflow that is simulated twice will have the same WorkflowId
+	// but different SimulationIds.
+	SimulationId BasicId `json:"SimulationId,omitempty"`
 
 	Meta Meta `json:"Meta,omitempty"`
 
@@ -102,6 +112,17 @@ func EmptyWorkflow() *Workflow {
 	}
 }
 
+func (wf *Workflow) EnsureWorkflowId() error {
+	if wf.WorkflowId == "" {
+		if id, err := RandomBasicId(""); err != nil {
+			return err
+		} else {
+			wf.WorkflowId = id
+		}
+	}
+	return nil
+}
+
 func (wf *Workflow) WriteToFile(p string, pretty bool) error {
 	if p == "" || p == "-" {
 		return wf.ToWriter(os.Stdout, pretty)
@@ -124,6 +145,22 @@ func (wf *Workflow) ToWriter(w io.Writer, pretty bool) error {
 type Meta struct {
 	Name string                 `json:"Name,omitempty"`
 	Rest map[string]interface{} `json:"-"`
+}
+
+// See https://golang.org/ref/spec#identifier However, we allow the
+// first rune to be a digit, because currently the call sites all
+// ensure the result of this call is prefixed with some constant text.
+func (m *Meta) NameAsGoIdentifier() string {
+	res := []rune{}
+	for _, r := range m.Name {
+		switch {
+		case r == '_', unicode.IsLetter(r), unicode.IsDigit(r):
+			res = append(res, r)
+		case r == ' ', r == '-', r == '/':
+			res = append(res, '_')
+		}
+	}
+	return string(res)
 }
 
 func (m *Meta) UnmarshalJSON(bs []byte) error {
@@ -160,21 +197,17 @@ func (m *Meta) MarshalJSON() ([]byte, error) {
 	return json.Marshal(all)
 }
 
-type JobId string
+type BasicId string
 
-func (jid JobId) AsIdentifier() string {
-	res := make([]rune, 0, len(jid))
-	for _, r := range jid {
-		switch {
-		// see https://golang.org/ref/spec#identifier
-		// However, we allow the first rune to be a digit
-		case r == '_', unicode.IsLetter(r), unicode.IsDigit(r):
-			res = append(res, r)
-		case r == ' ', r == '-', r == '/':
-			res = append(res, '_')
-		}
+func RandomBasicId(prefix BasicId) (BasicId, error) {
+	max := big.NewInt(0).SetUint64(math.MaxUint64)
+	if suffix, err := crand.Int(crand.Reader, max); err != nil {
+		return "", err
+	} else if prefix == "" {
+		return BasicId(suffix.Text(62)), nil
+	} else {
+		return BasicId(fmt.Sprintf("%s-%s", prefix, suffix.Text(62))), nil
 	}
-	return string(res)
 }
 
 type RepositoryName string

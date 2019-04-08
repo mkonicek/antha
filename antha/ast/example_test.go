@@ -47,7 +47,7 @@ var X = f(3.14)*2 + c
 
 	// Create the AST by parsing src.
 	fset := token.NewFileSet() // positions are relative to fset
-	f, err := parser.ParseFile(fset, "src.go", src, 0)
+	f, err := parser.ParseFile(fset, "src.go", []byte(src), 0)
 	if err != nil {
 		panic(err)
 	}
@@ -90,7 +90,7 @@ func main() {
 
 	// Create the AST by parsing src.
 	fset := token.NewFileSet() // positions are relative to fset
-	f, err := parser.ParseFile(fset, "", src, 0)
+	f, err := parser.ParseFile(fset, "", []byte(src), 0)
 	if err != nil {
 		panic(err)
 	}
@@ -184,7 +184,7 @@ func main() {
 
 	// Create the AST by parsing src.
 	fset := token.NewFileSet() // positions are relative to fset
-	f, err := parser.ParseFile(fset, "src.go", src, parser.ParseComments)
+	f, err := parser.ParseFile(fset, "src.go", []byte(src), parser.ParseComments)
 	if err != nil {
 		panic(err)
 	}

@@ -110,9 +110,9 @@ func (dev *QPCRDevice) transform(inst *effects.QPCRInstruction) (*target.Run, er
 	}
 
 	return &target.Run{
-		Dev:   dev,
-		Label: "Perform qPCR Analysis",
-		Calls: []driver.Call{call},
+		DeviceMixin: effects.DeviceMixin{Dev: dev},
+		Label:       "Perform qPCR Analysis",
+		Calls:       []driver.Call{call},
 	}, nil
 }
 

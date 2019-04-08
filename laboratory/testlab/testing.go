@@ -23,6 +23,7 @@ import (
 
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/laboratory"
+	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/laboratory/effects/id"
 	"github.com/antha-lang/antha/workflow"
 )
@@ -62,8 +63,20 @@ func NewTestLabBuilder(t *testing.T, inDir string, fh io.ReadCloser) *laboratory
 }
 
 func WithTestLab(t *testing.T, inDir string, callbacks *TestElementCallbacks) {
+	// this wrapping is just a nicity to get the testing framework to
+	// use a nice name.
+	if callbacks.Name != "" {
+		t.Run(callbacks.Name, func(t *testing.T) {
+			withTestLab(t, inDir, callbacks)
+		})
+	} else {
+		withTestLab(t, inDir, callbacks)
+	}
+}
+
+func withTestLab(t *testing.T, inDir string, callbacks *TestElementCallbacks) {
 	wf := workflow.EmptyWorkflow()
-	wf.JobId = workflow.JobId("testing")
+	wf.WorkflowId = workflow.BasicId("TestLab")
 	wfBuf := new(bytes.Buffer)
 	if err := wf.ToWriter(wfBuf, false); err != nil {
 		t.Fatal(err)
@@ -87,9 +100,13 @@ func WithTestLab(t *testing.T, inDir string, callbacks *TestElementCallbacks) {
 	}
 }
 
+func NewTestLabEffects(fm *effects.FileManager, inv *inventory.Inventory) *effects.LaboratoryEffects {
+	return effects.NewLaboratoryEffects(workflow.JobId("testing"), fm, inv)
+}
+
 func EnsureSharedInventory() *inventory.Inventory {
 	sharedInventoryGuard.Do(func() {
-		id := id.NewIDGenerator("testing")
+		id := id.NewIDGenerator("TestLabInventory")
 		sharedInventory = inventory.NewInventory(id)
 		sharedInventory.LoadForWorkflow(nil)
 	})
@@ -102,7 +119,17 @@ type TestElement struct {
 }
 
 type TestElementCallbacks struct {
-	// If left blank, the name is extracted from the test that is currently being run.
+	// If left blank, the name is extracted from the test that is
+	// currently being run, and the callbacks are called as part of the
+	// current test. This means that an error, which will internally
+	// call t.Fatal, will abort the entire test.
+	//
+	// However, if Name is provided explicitly, then internally a call
+	// to t.Run will be made, passing in the given Name. This then
+	// means that any error which is returned from the callbacks,
+	// internally routed to t.Fatal, will only abort the current
+	// subtest and not the encompassing test. It will also improve the
+	// presentation of the test results.
 	Name       string
 	Setup      func(*laboratory.Laboratory) error
 	Steps      func(*laboratory.Laboratory) error

@@ -3,6 +3,8 @@ package wtype
 import (
 	"fmt"
 	"testing"
+
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 func TestComponentPolicy(t *testing.T) {
@@ -10,7 +12,7 @@ func TestComponentPolicy(t *testing.T) {
 	pol := MakeTestPolicy()
 	cnd := MakeTestCondition()
 	rs.AddRule(cnd, pol)
-	cmp := makeComponent()
+	cmp := makeComponent(id.NewIDGenerator("testing"))
 
 	err := cmp.SetPolicies(rs)
 

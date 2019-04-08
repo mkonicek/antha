@@ -107,16 +107,16 @@ func (hum *Human) generate(cmd interface{}) (effects.Insts, error) {
 
 	case *wtype.LHInstruction:
 		instrs[0] = &target.Manual{
-			Dev:     hum,
-			Label:   "mix",
-			Details: prettyMixDetails(cmd),
+			DeviceMixin: effects.DeviceMixin{Dev: hum},
+			Label:       "mix",
+			Details:     prettyMixDetails(cmd),
 		}
 
 	case *effects.IncubateInst:
 		instrs[0] = &target.Manual{
-			Dev:     hum,
-			Label:   "incubate",
-			Details: fmt.Sprintf("incubate at %s for %s", cmd.Temp.ToString(), cmd.Time.ToString()),
+			DeviceMixin: effects.DeviceMixin{Dev: hum},
+			Label:       "incubate",
+			Details:     fmt.Sprintf("incubate at %s for %s", cmd.Temp.ToString(), cmd.Time.ToString()),
 		}
 
 	case *effects.PromptInst:
@@ -126,16 +126,16 @@ func (hum *Human) generate(cmd interface{}) (effects.Insts, error) {
 
 	case *wtype.PRInstruction:
 		instrs[0] = &target.Manual{
-			Dev:     hum,
-			Label:   "plate-read",
-			Details: fmt.Sprintf("plate-read instruction. Options:'%s'", cmd.Options),
+			DeviceMixin: effects.DeviceMixin{Dev: hum},
+			Label:       "plate-read",
+			Details:     fmt.Sprintf("plate-read instruction. Options:'%s'", cmd.Options),
 		}
 
 	case *effects.QPCRInstruction:
 		instrs[0] = &target.Manual{
-			Dev:     hum,
-			Label:   "QPCR",
-			Details: fmt.Sprintf("QPCR request, definition %s, barcode %s", cmd.Definition, cmd.Barcode),
+			DeviceMixin: effects.DeviceMixin{Dev: hum},
+			Label:       "QPCR",
+			Details:     fmt.Sprintf("QPCR request, definition %s, barcode %s", cmd.Definition, cmd.Barcode),
 		}
 
 	default:

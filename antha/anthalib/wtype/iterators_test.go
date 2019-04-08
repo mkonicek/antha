@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 type testAddressable struct {
@@ -27,11 +29,11 @@ func (self *testAddressable) GetChildByAddress(WellCoords) LHObject {
 	return (LHObject)(nil)
 }
 
-func (self *testAddressable) CoordsToWellCoords(c Coordinates3D) (WellCoords, Coordinates3D) {
+func (self *testAddressable) CoordsToWellCoords(idGen *id.IDGenerator, c Coordinates3D) (WellCoords, Coordinates3D) {
 	return WellCoords{}, Coordinates3D{}
 }
 
-func (self *testAddressable) WellCoordsToCoords(wc WellCoords, r WellReference) (Coordinates3D, bool) {
+func (self *testAddressable) WellCoordsToCoords(idGen *id.IDGenerator, wc WellCoords, r WellReference) (Coordinates3D, bool) {
 	return Coordinates3D{}, true
 }
 

@@ -1,37 +1,40 @@
 package wtype
 
 import (
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"testing"
+
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 // tests on ID arithmetic
 
-func makeWell() *LHWell {
+func makeWell(idGen *id.IDGenerator) *LHWell {
 	swshp := NewShape(BoxShape, "mm", 8.2, 8.2, 41.3)
-	welltype := NewLHWell("ul", 1000, 100, swshp, VWellBottom, 8.2, 8.2, 41.3, 4.7, "mm")
+	welltype := NewLHWell(idGen, "ul", 1000, 100, swshp, VWellBottom, 8.2, 8.2, 41.3, 4.7, "mm")
 	welltype.WContents.Loc = "randomplate:A1"
 	return welltype
 }
 
-func makeComponent() *Liquid {
+func makeComponent(idGen *id.IDGenerator) *Liquid {
 	rand := wutil.GetRandom()
-	A := NewLHComponent()
-	A.Type = LTWater
-	A.Smax = 9999
-	A.Vol = rand.Float64() * 10.0
-	A.Vunit = "ul"
-	A.Loc = "anotherrandomplate:A2"
-	return A
+	liq := NewLHComponent(idGen)
+	liq.Type = LTWater
+	liq.Smax = 9999
+	liq.Vol = rand.Float64() * 10.0
+	liq.Vunit = "ul"
+	liq.Loc = "anotherrandomplate:A2"
+	return liq
 }
 
 // mix to empty well should result in component
 // in well with new ID
 // well component should have old component as parent
 func TestEmptyWellMix(t *testing.T) {
-	c := makeComponent()
-	w := makeWell()
-	err := w.AddComponent(c)
+	idGen := id.NewIDGenerator("testing")
+	c := makeComponent(idGen)
+	w := makeWell(idGen)
+	err := w.AddComponent(idGen, c)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -49,11 +52,12 @@ func TestEmptyWellMix(t *testing.T) {
 }
 
 func TestFullWellMix(t *testing.T) {
-	c := makeComponent()
-	w := makeWell()
+	idGen := id.NewIDGenerator("testing")
+	c := makeComponent(idGen)
+	w := makeWell(idGen)
 	idb4 := w.WContents.ID
 
-	err := w.AddComponent(c)
+	err := w.AddComponent(idGen, c)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -61,9 +65,9 @@ func TestFullWellMix(t *testing.T) {
 	if w.WContents.HasParent(w.WContents.ID) {
 		t.Fatal("Components should not have themselves as parents! It's just too metaphysical")
 	}
-	d := makeComponent()
+	d := makeComponent(idGen)
 
-	err = w.AddComponent(d)
+	err = w.AddComponent(idGen, d)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -84,30 +88,30 @@ func TestFullWellMix(t *testing.T) {
 		t.Fatal("Components should not have themselves as parents! It's just too metaphysical")
 	}
 
-	e := makeComponent()
+	e := makeComponent(idGen)
 
-	err = w.AddComponent(e)
+	err = w.AddComponent(idGen, e)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	f := makeComponent()
+	f := makeComponent(idGen)
 
-	err = w.AddComponent(f)
+	err = w.AddComponent(idGen, f)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	w2 := makeWell()
+	w2 := makeWell(idGen)
 
-	g := makeComponent()
+	g := makeComponent(idGen)
 
-	err = w2.AddComponent(w.WContents)
+	err = w2.AddComponent(idGen, w.WContents)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = w2.AddComponent(g)
+	err = w2.AddComponent(idGen, g)
 	if err != nil {
 		t.Fatal(err)
 	}

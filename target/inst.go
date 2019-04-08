@@ -33,32 +33,6 @@ type TipEstimator interface {
 	GetTipEstimates() []wtype.TipEstimate
 }
 
-type dependsMixin struct {
-	Depends []effects.Inst
-}
-
-// DependsOn implements an Inst
-func (a *dependsMixin) DependsOn() []effects.Inst {
-	return a.Depends
-}
-
-// SetDependsOn implements an Inst
-func (a *dependsMixin) SetDependsOn(x ...effects.Inst) {
-	a.Depends = x
-}
-
-// AppendDependsOn implements an Inst
-func (a *dependsMixin) AppendDependsOn(x ...effects.Inst) {
-	a.Depends = append(a.Depends, x...)
-}
-
-type noDeviceMixin struct{}
-
-// Device implements an Inst
-func (a noDeviceMixin) Device() effects.Device {
-	return nil
-}
-
 // An Order is a task to order physical components
 type Order struct {
 	Manual
@@ -92,21 +66,16 @@ var (
 
 // A Mix is a task that runs a mixer
 type Mix struct {
-	dependsMixin
-	idMixin
+	effects.DependsMixin
+	effects.IdMixin
+	effects.DeviceMixin
 
-	Dev             effects.Device
 	Request         *lh.LHRequest
 	Properties      *liquidhandling.LHProperties
 	FinalProperties *liquidhandling.LHProperties
 	Final           map[string]string // Map from ids in Properties to FinalProperties
 	Files           Files
 	Initializers    []effects.Inst
-}
-
-// Device implements an Inst
-func (a *Mix) Device() effects.Device {
-	return a.Dev
 }
 
 // GetTimeEstimate implements a TimeEstimator
@@ -159,17 +128,12 @@ func (a *Mix) SummarizeActions(idGen *id.IDGenerator) ([]byte, error) {
 
 // A Manual is human-aided interaction
 type Manual struct {
-	dependsMixin
-	idMixin
+	effects.DependsMixin
+	effects.IdMixin
+	effects.DeviceMixin
 
-	Dev     effects.Device
 	Label   string
 	Details string
-}
-
-// Device implements an Inst
-func (a *Manual) Device() effects.Device {
-	return a.Dev
 }
 
 var (
@@ -179,10 +143,10 @@ var (
 
 // Run calls on device
 type Run struct {
-	dependsMixin
-	idMixin
+	effects.DependsMixin
+	effects.IdMixin
+	effects.DeviceMixin
 
-	Dev     effects.Device
 	Label   string
 	Details string
 	Calls   []driver.Call
@@ -192,11 +156,6 @@ type Run struct {
 	// Additional instructions to add to end of instruction stream.
 	// Instructions are assumed to depend in LIFO order.
 	Finalizers []effects.Inst
-}
-
-// Device implements an Inst
-func (a *Run) Device() effects.Device {
-	return a.Dev
 }
 
 // GetInitializers implements an Initializer instruction
@@ -211,9 +170,9 @@ func (a *Run) GetFinalizers() []effects.Inst {
 
 // Prompt is manual prompt instruction
 type Prompt struct {
-	dependsMixin
-	idMixin
-	noDeviceMixin
+	effects.DependsMixin
+	effects.IdMixin
+	effects.NoDeviceMixin
 
 	Message string
 }
@@ -221,30 +180,16 @@ type Prompt struct {
 // Wait is a virtual instruction to hang dependencies on. A better name might
 // been no-op.
 type Wait struct {
-	dependsMixin
-	idMixin
-	noDeviceMixin
+	effects.DependsMixin
+	effects.IdMixin
+	effects.NoDeviceMixin
 }
 
 // TimedWait is a wait for a period of time.
 type TimedWait struct {
-	dependsMixin
-	idMixin
-	noDeviceMixin
+	effects.DependsMixin
+	effects.IdMixin
+	effects.NoDeviceMixin
 
 	Duration time.Duration
-}
-
-type idMixin struct {
-	id string
-}
-
-func (a idMixin) Id() string {
-	return a.id
-}
-
-func (a *idMixin) SetId(idGen *id.IDGenerator) {
-	if a.id == "" {
-		a.id = idGen.NextID()
-	}
 }

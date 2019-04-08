@@ -83,7 +83,7 @@ func TestParseExpr(t *testing.T) {
 }
 
 func TestColonEqualsScope(t *testing.T) {
-	f, err := ParseFile(fset, "", `package p; func f() { x, y, z := x, y, z }`, 0)
+	f, err := ParseFile(fset, "", []byte(`package p; func f() { x, y, z := x, y, z }`), 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -105,7 +105,7 @@ func TestColonEqualsScope(t *testing.T) {
 }
 
 func TestVarScope(t *testing.T) {
-	f, err := ParseFile(fset, "", `package p; func f() { var x, y, z = x, y, z }`, 0)
+	f, err := ParseFile(fset, "", []byte(`package p; func f() { var x, y, z = x, y, z }`), 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -135,7 +135,7 @@ var x int
 func f() { L: }
 `
 
-	f, err := ParseFile(fset, "", src, 0)
+	f, err := ParseFile(fset, "", []byte(src), 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -173,7 +173,7 @@ func f() { L: }
 }
 
 func TestUnresolved(t *testing.T) {
-	f, err := ParseFile(fset, "", `
+	f, err := ParseFile(fset, "", []byte(`
 package p
 //
 func f1a(int)
@@ -195,7 +195,7 @@ type s3a struct { a, b int; c float }
 type s1b struct { *int }
 type s2b struct { byte; int; *float }
 type s3b struct { a, b *s3b; c []float }
-`, 0)
+`), 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -268,7 +268,7 @@ var imports = map[string]bool{
 func TestImports(t *testing.T) {
 	for path, isValid := range imports {
 		src := fmt.Sprintf("package p; import %s", path)
-		_, err := ParseFile(fset, "", src, 0)
+		_, err := ParseFile(fset, "", []byte(src), 0)
 		switch {
 		case err != nil && isValid:
 			t.Errorf("ParseFile(%s): got %v; expected no error", src, err)
@@ -279,7 +279,7 @@ func TestImports(t *testing.T) {
 }
 
 func TestCommentGroups(t *testing.T) {
-	f, err := ParseFile(fset, "", `
+	f, err := ParseFile(fset, "", []byte(`
 package p /* 1a */ /* 1b */      /* 1c */ // 1d
 /* 2a
 */
@@ -296,7 +296,7 @@ func ExampleCount() {
 	// 3
 	// 5
 }
-`, ParseComments)
+`), ParseComments)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -373,7 +373,7 @@ func checkFieldComments(t *testing.T, file *ast.File, fieldname, lead, line stri
 }
 
 func TestLeadAndLineComments(t *testing.T) {
-	f, err := ParseFile(fset, "", `
+	f, err := ParseFile(fset, "", []byte(`
 package p
 type T struct {
 	/* F1 lead comment */
@@ -385,7 +385,7 @@ type T struct {
 	// f3 lead comment
 	f3 int  // f3 line comment
 }
-`, ParseComments)
+`), ParseComments)
 	if err != nil {
 		t.Fatal(err)
 	}

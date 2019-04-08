@@ -1,8 +1,19 @@
 package effects
 
 import (
+	"fmt"
+
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 )
+
+// Note: these are instructions at the level issued by intrinsics
+// (i.e. wrapped in CommandInst (see trace.go)), and are sometimes
+// called "high-level" instructions. These are ultimately the inputs
+// to calls to Device.Compile. Do confuse these with the Inst
+// interface in device.go - those are for the results of
+// Compilation... Yes, this is a dreadful situation and needs to be
+// addressed.
 
 // An IncubateInst is a high-level command to incubate a component
 type IncubateInst struct {
@@ -28,4 +39,19 @@ type IncubateInst struct {
 // A PromptInst is a high-level command to prompt a human
 type PromptInst struct {
 	Message string
+}
+
+// QPCRInstruction is a high-level instruction to perform a QPCR analysis.
+type QPCRInstruction struct {
+	ID           string
+	ComponentIn  []*wtype.Liquid
+	ComponentOut []*wtype.Liquid
+	Definition   string
+	Barcode      string
+	Command      string
+	TagAs        string
+}
+
+func (ins QPCRInstruction) String() string {
+	return fmt.Sprint("QPCRInstruction")
 }

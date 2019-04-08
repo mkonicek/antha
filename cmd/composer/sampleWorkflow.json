@@ -1,6 +1,6 @@
 {
     "SchemaVersion": "2.0",
-    "JobId": "abc",
+    "WorkflowId": "abc",
 
     "Repositories": {
         "repos.antha.com/antha-ninja/elements-westeros": {

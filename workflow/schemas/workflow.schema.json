@@ -51,7 +51,7 @@
                     "minProperties": 1,
                     "propertyNames": {
                         "$comment": "TODO: confirm this regex. This is the name of an element instance, e.g. 'my_aliquot'",
-                        "pattern": "^[a-zA-Z0-9_-]+$"
+                        "pattern": "^[a-zA-Z0-9_ -]+$"
                     },
                     "patternProperties": {
                         ".*": {
@@ -131,7 +131,9 @@
                         "y": {
                             "type": "number"
                         }
-                    }
+                    },
+                    "additionalProperties": true,
+                    "required": []
                 },
                 "Parameters": {
                     "type": "object"

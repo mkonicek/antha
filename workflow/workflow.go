@@ -3,7 +3,6 @@ package workflow
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -45,14 +44,10 @@ func WorkflowFromReaders(rs ...io.ReadCloser) (*Workflow, error) {
 		defer r.Close()
 		wf := &Workflow{} // we're never merging _into_ wf so it's safe to have nil maps here
 
-		schema, err := Asset("workflow.schema.json")
-		if err != nil {
-			return nil, err
-		}
-
+		schema := MustAsset("workflow.schema.json")
 		rs := &jsonschema.RootSchema{}
 		if err := json.Unmarshal(schema, rs); err != nil {
-			return nil, err
+			panic(err)
 		}
 
 		workflowJSON, err := ioutil.ReadAll(r)
@@ -61,8 +56,6 @@ func WorkflowFromReaders(rs ...io.ReadCloser) (*Workflow, error) {
 		}
 
 		if errors, _ := rs.ValidateBytes(workflowJSON); len(errors) > 0 {
-			fmt.Println(rs.Path())
-			fmt.Printf("%s\n", workflowJSON)
 			return nil, errors[0]
 		}
 

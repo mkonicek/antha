@@ -62,8 +62,18 @@ func WorkflowFromReaders(rs ...io.ReadCloser) (*Workflow, error) {
 		// `map[string]interface{}`). The jsonschema package doesn't (currently)
 		// know how to validate a struct type. So for now, we'll live with
 		// double-unmarshaling.
-		if errors, _ := rs.ValidateBytes(workflowJSON); len(errors) > 0 {
-			return nil, errors[0]
+		valErrs, err := rs.ValidateBytes(workflowJSON)
+		if err != nil {
+			// ValidateBytes got an unmarshalling error
+			return nil, err
+		}
+		if len(valErrs) > 0 {
+			// ValidateBytes got validation errors
+			errStrings := make([]string, len(valErrs))
+			for _, err := range valErrs {
+				errStrings = append(errStrings, err.Error())
+			}
+			return nil, errors.New(strings.Join(errStrings, "; "))
 		}
 
 		if err := json.Unmarshal(workflowJSON, wf); err != nil {

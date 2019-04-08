@@ -6,14 +6,16 @@ import (
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
-func makeTipForTest() *LHTip {
+func makeTipForTest(idGen *id.IDGenerator) *LHTip {
 	shp := NewShape(CylinderShape, "mm", 7.3, 7.3, 51.2)
-	return NewLHTip("me", "mytype", 0.5, 1000.0, "ul", false, shp, 44.7)
+	return NewLHTip(idGen, "me", "mytype", 0.5, 1000.0, "ul", false, shp, 44.7)
 }
 
 func TestTipSerialization(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 
 	tips := []*LHTip{
 		{
@@ -30,9 +32,9 @@ func TestTipSerialization(t *testing.T) {
 			},
 			EffectiveHeight: 42.0,
 			Filtered:        true,
-			contents:        makeComponent(),
+			contents:        makeComponent(idGen),
 		},
-		makeTipForTest(),
+		makeTipForTest(idGen),
 	}
 
 	for _, before := range tips {

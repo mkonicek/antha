@@ -3,10 +3,12 @@ package wtype
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 // platetype, mfr string, nrows, ncols int, height float64, hunit string, welltype *LHWell, wellXOffset, wellYOffset, wellXStart, wellYStart, wellZStart float64
@@ -48,10 +50,10 @@ func make6platefortest() *LHPlate {
 }
 */
 
-func maketroughfortest() *Plate {
+func maketroughfortest(idGen *id.IDGenerator) *Plate {
 	stshp := NewShape(BoxShape, "mm", 8.2, 72, 41.3)
-	trough12 := NewLHWell("ul", 15000, 5000, stshp, VWellBottom, 8.2, 72, 41.3, 4.7, "mm")
-	plate := NewLHPlate("DWST12", "Unknown", 1, 12, Coordinates3D{127.76, 85.48, 44.1}, trough12, 9, 9, 0, 30.0, 4.5)
+	trough12 := NewLHWell(idGen, "ul", 15000, 5000, stshp, VWellBottom, 8.2, 72, 41.3, 4.7, "mm")
+	plate := NewLHPlate(idGen, "DWST12", "Unknown", 1, 12, Coordinates3D{127.76, 85.48, 44.1}, trough12, 9, 9, 0, 30.0, 4.5)
 	return plate
 }
 

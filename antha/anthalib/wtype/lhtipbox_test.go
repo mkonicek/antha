@@ -4,13 +4,15 @@ import (
 	"encoding/json"
 	"reflect"
 	"testing"
+
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
-func makeTipboxForTest() *LHTipbox {
+func makeTipboxForTest(idGen *id.IDGenerator) *LHTipbox {
 	shp := NewShape(CylinderShape, "mm", 7.3, 7.3, 51.2)
-	w := NewLHWell("ul", 250.0, 10.0, shp, FlatWellBottom, 7.3, 7.3, 51.2, 0.0, "mm")
-	tiptype := makeTipForTest()
-	tb := NewLHTipbox(8, 12, Coordinates3D{127.76, 85.48, 120.0}, "me", "mytype", tiptype, w, 9.0, 9.0, 0.5, 0.5, 0.0)
+	w := NewLHWell(idGen, "ul", 250.0, 10.0, shp, FlatWellBottom, 7.3, 7.3, 51.2, 0.0, "mm")
+	tiptype := makeTipForTest(idGen)
+	tb := NewLHTipbox(idGen, 8, 12, Coordinates3D{127.76, 85.48, 120.0}, "me", "mytype", tiptype, w, 9.0, 9.0, 0.5, 0.5, 0.0)
 	return tb
 }
 
@@ -54,7 +56,9 @@ func TestMaskToWellCoords(t *testing.T) {
 
 // func NewLHTipbox(nrows, ncols int, height float64, manufacturer, boxtype string, tiptype *LHTip, well *LHWell, tipxoffset, tipyoffset, tipxstart, tipystart, tipzstart float64)
 func TestGetTipsMasked(t *testing.T) {
-	tb := makeTipboxForTest()
+	idGen := id.NewIDGenerator("testing")
+
+	tb := makeTipboxForTest(idGen)
 
 	mask := []bool{true}
 
@@ -72,7 +76,9 @@ func TestGetTipsMasked(t *testing.T) {
 }
 
 func TestGetTipsMasked2(t *testing.T) {
-	tb := makeTipboxForTest()
+	idGen := id.NewIDGenerator("testing")
+
+	tb := makeTipboxForTest(idGen)
 
 	mask := make([]bool, 8)
 	mask[2] = true
@@ -90,7 +96,9 @@ func TestGetTipsMasked2(t *testing.T) {
 }
 
 func TestHasCleanTips(t *testing.T) {
-	tb := makeTipboxForTest()
+	idGen := id.NewIDGenerator("testing")
+
+	tb := makeTipboxForTest(idGen)
 
 	m := make([]bool, 8)
 
@@ -126,10 +134,11 @@ func TestTrimToMask(t *testing.T) {
 }
 
 func TestTipboxWellCoordsToCoords(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 
-	tb := makeTipboxForTest()
+	tb := makeTipboxForTest(idGen)
 
-	pos, ok := tb.WellCoordsToCoords(MakeWellCoords("A1"), BottomReference)
+	pos, ok := tb.WellCoordsToCoords(idGen, MakeWellCoords("A1"), BottomReference)
 	if !ok {
 		t.Fatal("well A1 doesn't exist!")
 	}
@@ -144,15 +153,16 @@ func TestTipboxWellCoordsToCoords(t *testing.T) {
 }
 
 func TestTipboxCoordsToWellCoords(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 
-	tb := makeTipboxForTest()
+	tb := makeTipboxForTest(idGen)
 
 	pos := Coordinates3D{
 		X: tb.TipXStart + 0.75*tb.TipXOffset,
 		Y: tb.TipYStart + 0.75*tb.TipYOffset,
 	}
 
-	wc, delta := tb.CoordsToWellCoords(pos)
+	wc, delta := tb.CoordsToWellCoords(idGen, pos)
 
 	if e, g := "B2", wc.FormatA1(); e != g {
 		t.Errorf("Wrong well coordinates: expected %s, got %s", e, g)
@@ -166,8 +176,9 @@ func TestTipboxCoordsToWellCoords(t *testing.T) {
 }
 
 func TestTipboxGetWellBounds(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 
-	tb := makeTipboxForTest()
+	tb := makeTipboxForTest(idGen)
 
 	eStart := Coordinates3D{
 		X: 0.5 - 0.5*7.3,
@@ -188,8 +199,9 @@ func TestTipboxGetWellBounds(t *testing.T) {
 }
 
 func TestTipboxSerialization(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 
-	removed := makeTipboxForTest()
+	removed := makeTipboxForTest(idGen)
 	toRemove := MakeWellCoordsArray([]string{"A1", "B2", "H5"})
 	for _, wc := range toRemove {
 		removed.RemoveTip(wc)
@@ -200,7 +212,7 @@ func TestTipboxSerialization(t *testing.T) {
 	}
 
 	tipboxes := []*LHTipbox{
-		makeTipboxForTest(),
+		makeTipboxForTest(idGen),
 	}
 
 	for _, before := range tipboxes {

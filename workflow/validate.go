@@ -14,13 +14,18 @@ import (
 )
 
 const (
-	ValidJobId string = "^[a-zA-Z][0-9a-zA-Z_ -]*$"
+	ValidBasicId string = `^[0-9a-zA-Z_:-]*$`
+)
+
+var (
+	rxValidBasicId = regexp.MustCompile(ValidBasicId)
 )
 
 func (wf *Workflow) Validate() error {
 	return utils.ErrorSlice{
 		wf.SchemaVersion.Validate(),
-		wf.JobId.Validate(),
+		wf.WorkflowId.Validate(false),
+		wf.SimulationId.Validate(true),
 		wf.Repositories.validate(),
 		wf.Elements.validate(wf),
 		wf.Inventory.validate(),
@@ -37,17 +42,13 @@ func (sv SchemaVersion) Validate() error {
 	}
 }
 
-func (jobId JobId) Validate() error {
-	rxValidJobId := regexp.MustCompile(ValidJobId)
-
-	switch true {
-	case jobId == "":
-		return errors.New("Validation error: Workflow has empty JobId")
-	case !rxValidJobId.MatchString(string(jobId)):
-		return fmt.Errorf("Invalid jobId '%v': job IDs must match the pattern %v", jobId, ValidJobId)
-	default:
-		return nil
+func (basicId BasicId) Validate(permitEmpty bool) error {
+	if basicId == "" && !permitEmpty {
+		return errors.New("Invalid Id: may not be empty")
+	} else if !rxValidBasicId.MatchString(string(basicId)) {
+		return fmt.Errorf("Invalid Id '%v': Id must match the pattern %v", basicId, ValidBasicId)
 	}
+	return nil
 }
 
 func (rs Repositories) validate() error {

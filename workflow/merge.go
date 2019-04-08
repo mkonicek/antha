@@ -14,19 +14,26 @@ func (a *Workflow) Merge(b *Workflow) error {
 		return errors.New("Cannot merge into a nil Workflow")
 	case b == nil:
 		return nil
-	case a.JobId == "":
-		a.JobId = b.JobId
-	case a.JobId != b.JobId && b.JobId != "":
-		return fmt.Errorf("Cannot merge: different JobIds: %v vs %v", a.JobId, b.JobId)
 	}
 
 	return utils.ErrorSlice{
 		b.SchemaVersion.Validate(), // every snippet must have a valid SchemaVersion
+		a.WorkflowId.Merge(b.WorkflowId),
+		a.SimulationId.Merge(b.SimulationId),
 		a.Repositories.Merge(b.Repositories),
 		a.Elements.merge(b.Elements),
 		a.Inventory.merge(b.Inventory),
 		a.Config.merge(b.Config),
 	}.Pack()
+}
+
+func (a *BasicId) Merge(b BasicId) error {
+	if id, ok := tryMergeStrings(string(*a), string(b)); ok {
+		*a = BasicId(id)
+		return nil
+	} else {
+		return fmt.Errorf("Cannot merge: ids both not empty and not equal: %v vs %v", *a, b)
+	}
 }
 
 func (a Repositories) Merge(b Repositories) error {

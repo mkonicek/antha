@@ -43,7 +43,7 @@ func (bm *BaseMixer) maybeLinkedDriver(wf *workflow.Workflow, data []byte) error
 		} else {
 			bm.logger.Log("msg", "Using linked driver")
 			driver := fun()
-			if props, status := driver.Configure(wf.JobId, wf.Meta.Name, bm.id, data); !status.Ok() {
+			if props, status := driver.Configure(wf.SimulationId, wf.Meta.Name, bm.id, data); !status.Ok() {
 				return status.GetError()
 			} else {
 				props.Driver = driver

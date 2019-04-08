@@ -76,7 +76,7 @@ func WithTestLab(t *testing.T, inDir string, callbacks *TestElementCallbacks) {
 
 func withTestLab(t *testing.T, inDir string, callbacks *TestElementCallbacks) {
 	wf := workflow.EmptyWorkflow()
-	wf.JobId = workflow.JobId("testing")
+	wf.WorkflowId = workflow.BasicId("TestLab")
 	wfBuf := new(bytes.Buffer)
 	if err := wf.ToWriter(wfBuf, false); err != nil {
 		t.Fatal(err)
@@ -106,7 +106,7 @@ func NewTestLabEffects(fm *effects.FileManager, inv *inventory.Inventory) *effec
 
 func EnsureSharedInventory() *inventory.Inventory {
 	sharedInventoryGuard.Do(func() {
-		id := id.NewIDGenerator("testing")
+		id := id.NewIDGenerator("TestLabInventory")
 		sharedInventory = inventory.NewInventory(id)
 		sharedInventory.LoadForWorkflow(nil)
 	})

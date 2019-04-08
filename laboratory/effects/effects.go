@@ -9,8 +9,6 @@ import (
 )
 
 type LaboratoryEffects struct {
-	JobId workflow.JobId
-
 	FileManager   *FileManager
 	Trace         *Trace
 	Maker         *Maker
@@ -21,13 +19,12 @@ type LaboratoryEffects struct {
 	IDGenerator *id.IDGenerator
 }
 
-func NewLaboratoryEffects(jobId workflow.JobId, fm *FileManager, inv *inventory.Inventory) *LaboratoryEffects {
-	idGen := id.NewIDGenerator(string(jobId))
+func NewLaboratoryEffects(simId workflow.BasicId, fm *FileManager, inv *inventory.Inventory) *LaboratoryEffects {
+	idGen := id.NewIDGenerator(string(simId))
 	if inv == nil {
 		inv = inventory.NewInventory(idGen)
 	}
 	le := &LaboratoryEffects{
-		JobId:         jobId,
 		FileManager:   fm,
 		Trace:         NewTrace(),
 		Maker:         NewMaker(),

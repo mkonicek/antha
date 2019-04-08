@@ -1742,7 +1742,7 @@ func (self *VirtualLiquidHandler) SetPositionState(position string, state driver
 }
 
 //GetCapabilites - used
-func (self *VirtualLiquidHandler) Configure(workflow.JobId, string, workflow.DeviceInstanceID, []byte) (*liquidhandling.LHProperties, driver.CommandStatus) {
+func (self *VirtualLiquidHandler) Configure(workflow.BasicId, string, workflow.DeviceInstanceID, []byte) (*liquidhandling.LHProperties, driver.CommandStatus) {
 	self.AddWarning("not yet implemented")
 	return nil, driver.CommandOk()
 }

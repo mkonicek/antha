@@ -5,10 +5,12 @@ import (
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 func TestMatchComponent(t *testing.T) {
-	c := NewLHComponent()
+	idGen := id.NewIDGenerator("testing")
+	c := NewLHComponent(idGen)
 	c.CName = "water"
 	c.Vol = 200.0
 	CIDs := []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}
@@ -17,11 +19,11 @@ func TestMatchComponent(t *testing.T) {
 	got := make([]*Liquid, 8)
 
 	for i := 0; i < 8; i++ {
-		got[i] = c.Dup()
+		got[i] = c.Dup(idGen)
 		got[i].Loc = PIDs[i] + ":" + CIDs[i]
 	}
 
-	d := NewLHComponent()
+	d := NewLHComponent(idGen)
 	d.CName = "water"
 	d.Vol = 20.0
 
@@ -30,11 +32,11 @@ func TestMatchComponent(t *testing.T) {
 
 	want := make([]*Liquid, 8)
 	for i := 0; i < 8; i++ {
-		want[i] = d.Dup()
+		want[i] = d.Dup(idGen)
 		want[i].Loc = PID2s[i] + ":" + CID2s[i]
 	}
 
-	match, err := MatchComponents(want, got, false, false)
+	match, err := MatchComponents(idGen, want, got, false, false)
 
 	if err != nil {
 		t.Errorf(err.Error())
@@ -111,7 +113,8 @@ func dstsDone(ca []*Liquid) bool {
 // revise to permit multi
 
 func TestMatchComponentPickupVolumes(t *testing.T) {
-	c := NewLHComponent()
+	idGen := id.NewIDGenerator("testing")
+	c := NewLHComponent(idGen)
 	c.CName = "water"
 	vls := []float64{100.0, 100.0, 5.0, 5.0}
 	CIDs := []string{"A1", "B1", "C1", "D1"}
@@ -120,12 +123,12 @@ func TestMatchComponentPickupVolumes(t *testing.T) {
 	got := make([]*Liquid, 4)
 
 	for i := 0; i < 4; i++ {
-		got[i] = c.Dup()
+		got[i] = c.Dup(idGen)
 		got[i].Vol = vls[i]
 		got[i].Loc = PIDs[i] + ":" + CIDs[i]
 	}
 
-	d := NewLHComponent()
+	d := NewLHComponent(idGen)
 	d.CName = "water"
 
 	vls2 := []float64{100.0, 50.0, 30.0}
@@ -134,7 +137,7 @@ func TestMatchComponentPickupVolumes(t *testing.T) {
 
 	want := make([]*Liquid, 3)
 	for i := 0; i < 3; i++ {
-		want[i] = d.Dup()
+		want[i] = d.Dup(idGen)
 		want[i].Loc = PID2s[i] + ":" + CID2s[i]
 		want[i].Vol = vls2[i]
 	}
@@ -143,7 +146,7 @@ func TestMatchComponentPickupVolumes(t *testing.T) {
 		if dstsDone(want) {
 			t.Errorf("Done before iteration %d, should require 2 iterations", i+1)
 		}
-		m, err := MatchComponents(want, got, false, false)
+		m, err := MatchComponents(idGen, want, got, false, false)
 
 		if err != nil {
 			t.Errorf(err.Error())
@@ -159,7 +162,8 @@ func TestMatchComponentPickupVolumes(t *testing.T) {
 }
 
 func TestMatchComponentSrcSubset(t *testing.T) {
-	c := NewLHComponent()
+	idGen := id.NewIDGenerator("testing")
+	c := NewLHComponent(idGen)
 	c.CName = "water"
 	c.Vol = 200.0
 	CIDs := []string{"", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}
@@ -169,14 +173,14 @@ func TestMatchComponentSrcSubset(t *testing.T) {
 
 	for i := 0; i < 8; i++ {
 		if i == 0 {
-			got[i] = NewLHComponent()
+			got[i] = NewLHComponent(idGen)
 		} else {
-			got[i] = c.Dup()
+			got[i] = c.Dup(idGen)
 			got[i].Loc = PIDs[i] + ":" + CIDs[i]
 		}
 	}
 
-	d := NewLHComponent()
+	d := NewLHComponent(idGen)
 	d.CName = "water"
 	d.Vol = 20.0
 
@@ -185,7 +189,7 @@ func TestMatchComponentSrcSubset(t *testing.T) {
 
 	want := make([]*Liquid, 8)
 	for i := 0; i < 8; i++ {
-		want[i] = d.Dup()
+		want[i] = d.Dup(idGen)
 		want[i].Loc = PID2s[i] + ":" + CID2s[i]
 	}
 
@@ -193,7 +197,7 @@ func TestMatchComponentSrcSubset(t *testing.T) {
 		if dstsDone(want) {
 			t.Errorf("Done before iteration %d, should require 2 iterations", i+1)
 		}
-		m, err := MatchComponents(want, got, false, false)
+		m, err := MatchComponents(idGen, want, got, false, false)
 
 		if err != nil {
 			t.Errorf(err.Error())
@@ -209,6 +213,7 @@ func TestMatchComponentSrcSubset(t *testing.T) {
 }
 
 func TestMatchComponent2(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 	Nams := []string{"water", "", "", "", "", "", "", ""}
 	Vols := []float64{200.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 	CIDs := []string{"A1", "", "", "", "", "", "", ""}
@@ -217,13 +222,13 @@ func TestMatchComponent2(t *testing.T) {
 	got := make([]*Liquid, 8)
 
 	for i := 0; i < 8; i++ {
-		got[i] = NewLHComponent()
+		got[i] = NewLHComponent(idGen)
 		got[i].CName = Nams[i]
 		got[i].Vol = Vols[i]
 		got[i].Loc = PIDs[i] + ":" + CIDs[i]
 	}
 
-	d := NewLHComponent()
+	d := NewLHComponent(idGen)
 	d.CName = "water"
 	d.Vol = 20.0
 
@@ -232,7 +237,7 @@ func TestMatchComponent2(t *testing.T) {
 
 	want := make([]*Liquid, 8)
 	for i := 0; i < 8; i++ {
-		want[i] = d.Dup()
+		want[i] = d.Dup(idGen)
 		want[i].Loc = PID2s[i] + ":" + CID2s[i]
 	}
 
@@ -240,7 +245,7 @@ func TestMatchComponent2(t *testing.T) {
 		if dstsDone(want) {
 			t.Errorf("Done before iteration %d, should require 8 iterations", i+1)
 		}
-		m, err := MatchComponents(want, got, false, false)
+		m, err := MatchComponents(idGen, want, got, false, false)
 
 		if err != nil {
 			t.Errorf(err.Error())
@@ -256,6 +261,7 @@ func TestMatchComponent2(t *testing.T) {
 }
 
 func TestMatchComponent2b(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 	Nams := []string{"water", "", "", "", "", "", "", ""}
 	Vols := []float64{200.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 	CIDs := []string{"A1", "", "", "", "", "", "", ""}
@@ -264,13 +270,13 @@ func TestMatchComponent2b(t *testing.T) {
 	got := make([]*Liquid, 8)
 
 	for i := 0; i < 8; i++ {
-		got[i] = NewLHComponent()
+		got[i] = NewLHComponent(idGen)
 		got[i].CName = Nams[i]
 		got[i].Vol = Vols[i]
 		got[i].Loc = PIDs[i] + ":" + CIDs[i]
 	}
 
-	d := NewLHComponent()
+	d := NewLHComponent(idGen)
 	d.CName = "water"
 	d.Vol = 20.0
 
@@ -279,7 +285,7 @@ func TestMatchComponent2b(t *testing.T) {
 
 	want := make([]*Liquid, 8)
 	for i := 0; i < 8; i++ {
-		want[i] = d.Dup()
+		want[i] = d.Dup(idGen)
 		want[i].Loc = PID2s[i] + ":" + CID2s[i]
 	}
 
@@ -287,7 +293,7 @@ func TestMatchComponent2b(t *testing.T) {
 		if dstsDone(want) {
 			t.Errorf("Done before iteration %d, should require 8 iterations", i+1)
 		}
-		m, err := MatchComponents(want, got, true, false)
+		m, err := MatchComponents(idGen, want, got, true, false)
 
 		if err != nil {
 			t.Errorf(err.Error())
@@ -303,6 +309,7 @@ func TestMatchComponent2b(t *testing.T) {
 }
 
 func TestMatchComponent3(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 	Nams := []string{"water", "", "water", "", "", "", "", ""}
 	Vols := []float64{200.0, 0.0, 200.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 	CIDs := []string{"A1", "", "D1", "", "", "", "", ""}
@@ -311,13 +318,13 @@ func TestMatchComponent3(t *testing.T) {
 	got := make([]*Liquid, 8)
 
 	for i := 0; i < 8; i++ {
-		got[i] = NewLHComponent()
+		got[i] = NewLHComponent(idGen)
 		got[i].CName = Nams[i]
 		got[i].Vol = Vols[i]
 		got[i].Loc = PIDs[i] + ":" + CIDs[i]
 	}
 
-	d := NewLHComponent()
+	d := NewLHComponent(idGen)
 	d.CName = "water"
 	d.Vol = 20.0
 
@@ -326,7 +333,7 @@ func TestMatchComponent3(t *testing.T) {
 
 	want := make([]*Liquid, 8)
 	for i := 0; i < 8; i++ {
-		want[i] = d.Dup()
+		want[i] = d.Dup(idGen)
 		want[i].Loc = PID2s[i] + ":" + CID2s[i]
 	}
 
@@ -335,7 +342,7 @@ func TestMatchComponent3(t *testing.T) {
 			t.Errorf("Done before iteration %d, should require 8", i+1)
 		}
 
-		m, err := MatchComponents(want, got, false, false)
+		m, err := MatchComponents(idGen, want, got, false, false)
 
 		if err != nil {
 			t.Errorf(err.Error())
@@ -351,6 +358,7 @@ func TestMatchComponent3(t *testing.T) {
 }
 
 func TestMatchComponentIndependent(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 	Nams := []string{"water", "", "water", "", "", "", "", ""}
 	Vols := []float64{200.0, 0.0, 200.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 	CIDs := []string{"A1", "", "D1", "", "", "", "", ""}
@@ -359,13 +367,13 @@ func TestMatchComponentIndependent(t *testing.T) {
 	got := make([]*Liquid, 8)
 
 	for i := 0; i < 8; i++ {
-		got[i] = NewLHComponent()
+		got[i] = NewLHComponent(idGen)
 		got[i].CName = Nams[i]
 		got[i].Vol = Vols[i]
 		got[i].Loc = PIDs[i] + ":" + CIDs[i]
 	}
 
-	d := NewLHComponent()
+	d := NewLHComponent(idGen)
 	d.CName = "water"
 	d.Vol = 20.0
 
@@ -374,7 +382,7 @@ func TestMatchComponentIndependent(t *testing.T) {
 
 	want := make([]*Liquid, 8)
 	for i := 0; i < 8; i++ {
-		want[i] = d.Dup()
+		want[i] = d.Dup(idGen)
 		want[i].Loc = PID2s[i] + ":" + CID2s[i]
 	}
 
@@ -382,7 +390,7 @@ func TestMatchComponentIndependent(t *testing.T) {
 		if dstsDone(want) {
 			t.Errorf("Done before iteration %d, should require 4", i+1)
 		}
-		m, err := MatchComponents(want, got, true, false)
+		m, err := MatchComponents(idGen, want, got, true, false)
 
 		if err != nil {
 			t.Errorf(err.Error())
@@ -398,7 +406,8 @@ func TestMatchComponentIndependent(t *testing.T) {
 }
 
 func TestMatch7Subcomponents(t *testing.T) {
-	c := NewLHComponent()
+	idGen := id.NewIDGenerator("testing")
+	c := NewLHComponent(idGen)
 	c.CName = "water"
 	c.Vol = 200.0
 	CIDs := []string{"", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}
@@ -407,14 +416,14 @@ func TestMatch7Subcomponents(t *testing.T) {
 	got := make([]*Liquid, 8)
 
 	for i := 0; i < 8; i++ {
-		got[i] = c.Dup()
+		got[i] = c.Dup(idGen)
 		got[i].Loc = PIDs[i] + ":" + CIDs[i]
 		if i == 0 {
-			got[i] = NewLHComponent()
+			got[i] = NewLHComponent(idGen)
 		}
 	}
 
-	d := NewLHComponent()
+	d := NewLHComponent(idGen)
 	d.CName = "water"
 	d.Vol = 20.0
 
@@ -423,7 +432,7 @@ func TestMatch7Subcomponents(t *testing.T) {
 
 	want := make([]*Liquid, 8)
 	for i := 0; i < 8; i++ {
-		want[i] = d.Dup()
+		want[i] = d.Dup(idGen)
 		if i == 7 {
 			want[i].Vol = 0.0
 		}
@@ -434,7 +443,7 @@ func TestMatch7Subcomponents(t *testing.T) {
 		if dstsDone(want) {
 			t.Errorf("Done before iteration %d, should require 1", i+1)
 		}
-		m, err := MatchComponents(want, got, false, false)
+		m, err := MatchComponents(idGen, want, got, false, false)
 
 		if err != nil {
 			t.Errorf(err.Error())
@@ -450,7 +459,8 @@ func TestMatch7Subcomponents(t *testing.T) {
 }
 
 func TestMatch7Subcomponents8wanted(t *testing.T) {
-	c := NewLHComponent()
+	idGen := id.NewIDGenerator("testing")
+	c := NewLHComponent(idGen)
 	c.CName = "tartrazine"
 	c.Vol = 200.0
 	CIDs := []string{"", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}
@@ -459,14 +469,14 @@ func TestMatch7Subcomponents8wanted(t *testing.T) {
 	got := make([]*Liquid, 8)
 
 	for i := 0; i < 8; i++ {
-		got[i] = c.Dup()
+		got[i] = c.Dup(idGen)
 		got[i].Loc = PIDs[i] + ":" + CIDs[i]
 		if i == 0 {
-			got[i] = NewLHComponent()
+			got[i] = NewLHComponent(idGen)
 		}
 	}
 
-	d := NewLHComponent()
+	d := NewLHComponent(idGen)
 	d.CName = "tartrazine"
 	d.Vol = 24.0
 
@@ -475,7 +485,7 @@ func TestMatch7Subcomponents8wanted(t *testing.T) {
 
 	want := make([]*Liquid, 8)
 	for i := 0; i < 8; i++ {
-		want[i] = d.Dup()
+		want[i] = d.Dup(idGen)
 		want[i].Loc = PID2s[i] + ":" + CID2s[i]
 	}
 
@@ -483,7 +493,7 @@ func TestMatch7Subcomponents8wanted(t *testing.T) {
 		if dstsDone(want) {
 			t.Errorf("Done after %d iterations, should require 2", i+1)
 		}
-		m, err := MatchComponents(want, got, false, false)
+		m, err := MatchComponents(idGen, want, got, false, false)
 
 		if err != nil {
 			t.Errorf(err.Error())
@@ -496,7 +506,8 @@ func TestMatch7Subcomponents8wanted(t *testing.T) {
 }
 
 func TestNonMatchComponent(t *testing.T) {
-	c := NewLHComponent()
+	idGen := id.NewIDGenerator("testing")
+	c := NewLHComponent(idGen)
 	c.CName = "water"
 	c.Vol = 200.0
 	CIDs := []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}
@@ -505,11 +516,11 @@ func TestNonMatchComponent(t *testing.T) {
 	got := make([]*Liquid, 8)
 
 	for i := 0; i < 8; i++ {
-		got[i] = c.Dup()
+		got[i] = c.Dup(idGen)
 		got[i].Loc = PIDs[i] + ":" + CIDs[i]
 	}
 
-	d := NewLHComponent()
+	d := NewLHComponent(idGen)
 	d.CName = "fishjuice"
 	d.Vol = 20.0
 
@@ -518,11 +529,11 @@ func TestNonMatchComponent(t *testing.T) {
 
 	want := make([]*Liquid, 8)
 	for i := 0; i < 8; i++ {
-		want[i] = d.Dup()
+		want[i] = d.Dup(idGen)
 		want[i].Loc = PID2s[i] + ":" + CID2s[i]
 	}
 
-	m, err := MatchComponents(want, got, false, false)
+	m, err := MatchComponents(idGen, want, got, false, false)
 
 	if !IsNotFound(err) {
 		t.Errorf(err.Error())
@@ -536,7 +547,8 @@ func TestNonMatchComponent(t *testing.T) {
 	}
 }
 func TestMatchAllDifferentComponent(t *testing.T) {
-	c := NewLHComponent()
+	idGen := id.NewIDGenerator("testing")
+	c := NewLHComponent(idGen)
 	c.CName = "water"
 	c.Vol = 200.0
 
@@ -547,12 +559,12 @@ func TestMatchAllDifferentComponent(t *testing.T) {
 	got := make([]*Liquid, 8)
 
 	for i := 0; i < 8; i++ {
-		got[i] = c.Dup()
+		got[i] = c.Dup(idGen)
 		got[i].Loc = PIDs[i] + ":" + CIDs[i]
 		got[i].CName = CNames[i]
 	}
 
-	d := NewLHComponent()
+	d := NewLHComponent(idGen)
 	d.CName = "water"
 	d.Vol = 20.0
 
@@ -561,12 +573,12 @@ func TestMatchAllDifferentComponent(t *testing.T) {
 
 	want := make([]*Liquid, 8)
 	for i := 0; i < 8; i++ {
-		want[i] = d.Dup()
+		want[i] = d.Dup(idGen)
 		want[i].Loc = PID2s[i] + ":" + CID2s[i]
 		want[i].CName = CNames[i]
 	}
 
-	m, err := MatchComponents(want, got, false, false)
+	m, err := MatchComponents(idGen, want, got, false, false)
 
 	if err != nil {
 		t.Errorf(err.Error())
@@ -582,6 +594,7 @@ func TestMatchAllDifferentComponent(t *testing.T) {
 }
 
 func TestAlignIndependent(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 	w := make([]*Liquid, 3)
 	g := make([]*Liquid, 3)
 
@@ -597,8 +610,8 @@ func TestAlignIndependent(t *testing.T) {
 	// independent case
 
 	for i := 0; i < 3; i++ {
-		w[i] = NewLHComponent()
-		g[i] = NewLHComponent()
+		w[i] = NewLHComponent(idGen)
+		g[i] = NewLHComponent(idGen)
 
 		/*__*/
 		g[i].Loc = p1 + ":" + CIDs[i]
@@ -611,7 +624,7 @@ func TestAlignIndependent(t *testing.T) {
 			w[i].Vol = vW.RawValue()
 		}
 	}
-	m := align(w, g, true, false)
+	m := align(idGen, w, g, true, false)
 
 	if len(m.IDs) != 3 {
 		t.Errorf("Error: expected 3 IDs got %d", len(m.IDs))
@@ -631,6 +644,7 @@ func TestAlignIndependent(t *testing.T) {
 }
 
 func TestAlignIndependent2(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 	w := make([]*Liquid, 8)
 	g := make([]*Liquid, 8)
 
@@ -644,8 +658,8 @@ func TestAlignIndependent2(t *testing.T) {
 	cN := "water"
 
 	for i := 0; i < 8; i++ {
-		w[i] = NewLHComponent()
-		g[i] = NewLHComponent()
+		w[i] = NewLHComponent(idGen)
+		g[i] = NewLHComponent(idGen)
 
 		/*__*/
 		g[i].Loc = p1 + ":" + CIDs[i]
@@ -658,7 +672,7 @@ func TestAlignIndependent2(t *testing.T) {
 			w[i].Vol = vW.RawValue()
 		}
 	}
-	m := align(w, g, true, false)
+	m := align(idGen, w, g, true, false)
 
 	if len(m.IDs) != 8 {
 		t.Errorf("Error: expected 8 IDs got %d", len(m.IDs))
@@ -678,6 +692,7 @@ func TestAlignIndependent2(t *testing.T) {
 }
 
 func TestAlignIndependent3(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 	w := make([]*Liquid, 0, 8)
 	g := make([]*Liquid, 8)
 
@@ -691,12 +706,12 @@ func TestAlignIndependent3(t *testing.T) {
 	cN := "water"
 
 	for i := 0; i < 8; i++ {
-		wcmp := NewLHComponent()
+		wcmp := NewLHComponent(idGen)
 		wcmp.Loc = p2 + ":" + CIDs[i]
 		wcmp.CName = cN
 		wcmp.Vol = vW.RawValue()
 
-		g[i] = NewLHComponent()
+		g[i] = NewLHComponent(idGen)
 
 		/*__*/
 		g[i].Loc = p1 + ":" + CIDs[i]
@@ -706,11 +721,11 @@ func TestAlignIndependent3(t *testing.T) {
 		if i != 6 {
 			w = append(w, wcmp)
 		} else {
-			w = append(w, NewLHComponent())
+			w = append(w, NewLHComponent(idGen))
 		}
 	}
 
-	m := align(w, g, true, false)
+	m := align(idGen, w, g, true, false)
 
 	if len(m.IDs) != 8 {
 		t.Errorf("Error: expected 8 IDs got %d", len(m.IDs))

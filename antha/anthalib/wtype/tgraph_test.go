@@ -1,24 +1,27 @@
 package wtype
 
 import (
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"testing"
+
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
-func splitSample(l *Liquid, v wunit.Volume) (moving, remaining *Liquid) {
-	remaining = l.Dup()
+func splitSample(idGen *id.IDGenerator, l *Liquid, v wunit.Volume) (moving, remaining *Liquid) {
+	remaining = l.Dup(idGen)
 
 	moving = sample(remaining, v)
 
 	remaining.Vol -= v.ConvertToString(remaining.Vunit)
-	remaining.ID = GetUUID()
+	remaining.ID = idGen.NextID()
 
 	return
 }
 
 // sample takes a sample of volume v from this liquid
 func sample(l *Liquid, v wunit.Volume) *Liquid {
-	ret := NewLHComponent()
+	idGen := id.NewIDGenerator("testing")
+	ret := NewLHComponent(idGen)
 	//      ret.ID = l.ID
 	l.AddDaughterComponent(ret)
 	ret.ParentID = l.ID
@@ -40,13 +43,14 @@ func sample(l *Liquid, v wunit.Volume) *Liquid {
 }
 
 func TestTGraph(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 	tIns := make([]*LHInstruction, 0, 10)
 
-	cmpIn := NewLHComponent()
+	cmpIn := NewLHComponent(idGen)
 
 	for k := 0; k < 10; k++ {
-		ins := NewLHMixInstruction()
-		cmpOut := NewLHComponent()
+		ins := NewLHMixInstruction(idGen)
+		cmpOut := NewLHComponent(idGen)
 		ins.AddInput(cmpIn)
 		ins.AddOutput(cmpOut)
 		tIns = append(tIns, ins)
@@ -97,22 +101,23 @@ func TestTGraph(t *testing.T) {
 // before the use of their second - this is because they update the ID of their
 // input component
 func TestTGraphSplit(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 	tIns := make([]*LHInstruction, 0, 3)
 
-	cmpIn := NewLHComponent()
-	moving, remaining := splitSample(cmpIn, wunit.NewVolume(100.0, "ul"))
+	cmpIn := NewLHComponent(idGen)
+	moving, remaining := splitSample(idGen, cmpIn, wunit.NewVolume(100.0, "ul"))
 
-	cmpOut := NewLHComponent()
+	cmpOut := NewLHComponent(idGen)
 
 	// mix
-	ins := NewLHMixInstruction()
+	ins := NewLHMixInstruction(idGen)
 
 	ins.AddInput(moving)
 	ins.AddOutput(cmpOut)
 	tIns = append(tIns, ins)
 
 	// split
-	ins = NewLHSplitInstruction()
+	ins = NewLHSplitInstruction(idGen)
 	ins.AddInput(cmpOut)
 
 	ins.AddOutput(moving)
@@ -122,10 +127,10 @@ func TestTGraphSplit(t *testing.T) {
 
 	// mix again
 
-	ins = NewLHMixInstruction()
+	ins = NewLHMixInstruction(idGen)
 
 	ins.AddInput(remaining)
-	ins.AddOutput(NewLHComponent())
+	ins.AddOutput(NewLHComponent(idGen))
 	tIns = append(tIns, ins)
 
 	tgraph, err := MakeTGraph(tIns)

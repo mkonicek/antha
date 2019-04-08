@@ -13,10 +13,10 @@ import (
 
 // platetype, mfr string, nrows, ncols int, height float64, hunit string, welltype *LHWell, wellXOffset, wellYOffset, wellXStart, wellYStart, wellZStart float64
 
-func makeplatefortest() *Plate {
+func makeplatefortest(idGen *id.IDGenerator) *Plate {
 	swshp := NewShape(BoxShape, "mm", 8.2, 8.2, 41.3)
-	welltype := NewLHWell("ul", 200, 10, swshp, VWellBottom, 8.2, 8.2, 41.3, 4.7, "mm")
-	p := NewLHPlate("DSW96", "none", 8, 12, Coordinates3D{127.76, 85.48, 43.1}, welltype, 9.0, 9.0, 0.5, 0.5, 0.5)
+	welltype := NewLHWell(idGen, "ul", 200, 10, swshp, VWellBottom, 8.2, 8.2, 41.3, 4.7, "mm")
+	p := NewLHPlate(idGen, "DSW96", "none", 8, 12, Coordinates3D{127.76, 85.48, 43.1}, welltype, 9.0, 9.0, 0.5, 0.5, 0.5)
 	return p
 }
 
@@ -58,13 +58,15 @@ func maketroughfortest(idGen *id.IDGenerator) *Plate {
 }
 
 func TestPlateCreation(t *testing.T) {
-	p := makeplatefortest()
+	idGen := id.NewIDGenerator("testing")
+	p := makeplatefortest(idGen)
 	validatePlate(t, p)
 }
 
 func TestPlateDup(t *testing.T) {
-	p := makeplatefortest()
-	d := p.Dup()
+	idGen := id.NewIDGenerator("testing")
+	p := makeplatefortest(idGen)
+	d := p.Dup(idGen)
 	validatePlate(t, d)
 	for crds, w := range p.Wellcoords {
 		w2 := d.Wellcoords[crds]
@@ -80,8 +82,9 @@ func TestPlateDup(t *testing.T) {
 }
 
 func TestPlateDupKeepIDs(t *testing.T) {
-	p := makeplatefortest()
-	d := p.DupKeepIDs()
+	idGen := id.NewIDGenerator("testing")
+	p := makeplatefortest(idGen)
+	d := p.DupKeepIDs(idGen)
 
 	for crds, w := range p.Wellcoords {
 		w2 := d.Wellcoords[crds]
@@ -175,7 +178,8 @@ func validatePlate(t *testing.T, plate *Plate) {
 }
 
 func TestIsUserAllocated(t *testing.T) {
-	p := makeplatefortest()
+	idGen := id.NewIDGenerator("testing")
+	p := makeplatefortest(idGen)
 
 	if p.IsUserAllocated() {
 		t.Fatal("Error: Plates must not start out user allocated")
@@ -186,7 +190,7 @@ func TestIsUserAllocated(t *testing.T) {
 		t.Fatal("Error: Plates with at least one user allocated well must return true to IsUserAllocated()")
 	}
 
-	d := p.Dup()
+	d := p.Dup(idGen)
 
 	if !d.IsUserAllocated() {
 		t.Fatal("Error: user allocation mark must survive Dup()lication")
@@ -204,25 +208,26 @@ func TestIsUserAllocated(t *testing.T) {
 }
 
 func TestMergeWith(t *testing.T) {
-	p1 := makeplatefortest()
-	p2 := makeplatefortest()
+	idGen := id.NewIDGenerator("testing")
+	p1 := makeplatefortest(idGen)
+	p2 := makeplatefortest(idGen)
 
-	c := NewLHComponent()
+	c := NewLHComponent(idGen)
 
 	c.CName = "Water1"
 	c.Vol = 50.0
 	c.Vunit = "ul"
-	err := p1.Wellcoords["A1"].AddComponent(c)
+	err := p1.Wellcoords["A1"].AddComponent(idGen, c)
 	if err != nil {
 		t.Fatal(err)
 	}
 	p1.Wellcoords["A1"].SetUserAllocated()
 
-	c = NewLHComponent()
+	c = NewLHComponent(idGen)
 	c.CName = "Butter"
 	c.Vol = 80.0
 	c.Vunit = "ul"
-	err = p2.Wellcoords["A2"].AddComponent(c)
+	err = p2.Wellcoords["A2"].AddComponent(idGen, c)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -239,13 +244,14 @@ func TestMergeWith(t *testing.T) {
 }
 
 func TestLHPlateSerialize(t *testing.T) {
-	p := makeplatefortest()
-	c := NewLHComponent()
+	idGen := id.NewIDGenerator("testing")
+	p := makeplatefortest(idGen)
+	c := NewLHComponent(idGen)
 	c.CName = "Cthulhu"
 	c.Type = LTWater
 	c.Vol = 100.0
 
-	_, err := p.AddComponent(c, false)
+	_, err := p.AddComponent(idGen, c, false)
 	if err != nil {
 		t.Errorf(err.Error())
 	}
@@ -347,8 +353,9 @@ func TestLHPlateSerialize(t *testing.T) {
 func TestAddGetClearData(t *testing.T) {
 	dat := []byte("3.5")
 
+	idGen := id.NewIDGenerator("testing")
 	t.Run("basic", func(t *testing.T) {
-		p := makeplatefortest()
+		p := makeplatefortest(idGen)
 
 		if err := p.SetData("OD", dat); err != nil {
 			t.Errorf(err.Error())
@@ -363,7 +370,7 @@ func TestAddGetClearData(t *testing.T) {
 	})
 
 	t.Run("clear", func(t *testing.T) {
-		p := makeplatefortest()
+		p := makeplatefortest(idGen)
 
 		if err := p.SetData("OD", dat); err != nil {
 			t.Errorf(err.Error())
@@ -379,7 +386,7 @@ func TestAddGetClearData(t *testing.T) {
 	})
 
 	t.Run("cannot update special", func(t *testing.T) {
-		p := makeplatefortest()
+		p := makeplatefortest(idGen)
 		if err := p.SetData("IMSPECIAL", dat); err == nil {
 			t.Errorf("Adding data with a reserved key should fail but does not")
 		}
@@ -388,7 +395,8 @@ func TestAddGetClearData(t *testing.T) {
 }
 
 func TestGetAllComponents(t *testing.T) {
-	p := makeplatefortest()
+	idGen := id.NewIDGenerator("testing")
+	p := makeplatefortest(idGen)
 
 	cmps := p.AllContents()
 
@@ -398,29 +406,31 @@ func TestGetAllComponents(t *testing.T) {
 }
 
 func TestLHPlateValidateVolumesOK(t *testing.T) {
-	p := makeplatefortest()
-	c := NewLHComponent()
+	idGen := id.NewIDGenerator("testing")
+	p := makeplatefortest(idGen)
+	c := NewLHComponent(idGen)
 	c.CName = "Cthulhu"
 	c.Type = LTWater
 	c.Vol = 100.0
 
-	if _, err := p.AddComponent(c, false); err != nil {
+	if _, err := p.AddComponent(idGen, c, false); err != nil {
 		t.Errorf(err.Error())
 	}
 
-	if err := p.ValidateVolumes(); err != nil {
+	if err := p.ValidateVolumes(idGen); err != nil {
 		t.Error(err)
 	}
 }
 
 func TestLHPlateValidateVolumesOneOverfilled(t *testing.T) {
-	p := makeplatefortest()
-	c := NewLHComponent()
+	idGen := id.NewIDGenerator("testing")
+	p := makeplatefortest(idGen)
+	c := NewLHComponent(idGen)
 	c.CName = "Cthulhu"
 	c.Type = LTWater
 	c.Vol = 100.0
 
-	if _, err := p.AddComponent(c, false); err != nil {
+	if _, err := p.AddComponent(idGen, c, false); err != nil {
 		t.Errorf(err.Error())
 	}
 
@@ -429,19 +439,20 @@ func TestLHPlateValidateVolumesOneOverfilled(t *testing.T) {
 	w := p.Rows[0][0]
 	w.WContents = c
 
-	if err := p.ValidateVolumes(); err == nil {
+	if err := p.ValidateVolumes(idGen); err == nil {
 		t.Error("Got no error when one well overfilled")
 	}
 }
 
 func TestLHPlateValidateVolumesSeveralOverfilled(t *testing.T) {
-	p := makeplatefortest()
-	c := NewLHComponent()
+	idGen := id.NewIDGenerator("testing")
+	p := makeplatefortest(idGen)
+	c := NewLHComponent(idGen)
 	c.CName = "Cthulhu"
 	c.Type = LTWater
 	c.Vol = 100.0
 
-	if _, err := p.AddComponent(c, false); err != nil {
+	if _, err := p.AddComponent(idGen, c, false); err != nil {
 		t.Errorf(err.Error())
 	}
 
@@ -452,18 +463,19 @@ func TestLHPlateValidateVolumesSeveralOverfilled(t *testing.T) {
 		w.WContents = c
 	}
 
-	if err := p.ValidateVolumes(); err == nil {
+	if err := p.ValidateVolumes(idGen); err == nil {
 		t.Error("Got no error when several wells overfilled")
 	}
 }
 
 func TestSpecialRetention(t *testing.T) {
-	p := makeplatefortest()
+	idGen := id.NewIDGenerator("testing")
+	p := makeplatefortest(idGen)
 
 	p.DeclareSpecial()
 
 	// dup must do this
-	d := p.Dup()
+	d := p.Dup(idGen)
 
 	if !d.IsSpecial() {
 		t.Error("Duplicated plates must retain specialness")
@@ -500,12 +512,13 @@ func TestSpecialRetention(t *testing.T) {
 }
 
 func TestWellCoordsToCoords(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 
-	plate := makeplatefortest()
-	c := NewLHComponent()
+	plate := makeplatefortest(idGen)
+	c := NewLHComponent(idGen)
 	c.Vol = 100.0
 	c.Vunit = "ul"
-	if err := plate.GetChildByAddress(MakeWellCoords("A1")).(*LHWell).AddComponent(c); err != nil {
+	if err := plate.GetChildByAddress(MakeWellCoords("A1")).(*LHWell).AddComponent(idGen, c); err != nil {
 		t.Fatal(err)
 	}
 	plate.Welltype.SetLiquidLevelModel(wutil.Quadratic{A: 0.402, B: 7.069, C: 0.0})
@@ -542,7 +555,7 @@ func TestWellCoordsToCoords(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("%s_%v", test.Address, test.Reference), func(t *testing.T) {
-			pos, ok := plate.WellCoordsToCoords(MakeWellCoords(test.Address), test.Reference)
+			pos, ok := plate.WellCoordsToCoords(idGen, MakeWellCoords(test.Address), test.Reference)
 			if !ok != test.ExpectingError {
 				t.Fatalf("expecting error: %t, got error: %t", test.ExpectingError, !ok)
 			}
@@ -556,15 +569,16 @@ func TestWellCoordsToCoords(t *testing.T) {
 }
 
 func TestCoordsToWellCoords(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 
-	plate := makeplatefortest()
+	plate := makeplatefortest(idGen)
 
 	pos := Coordinates3D{
 		X: plate.WellXStart + 0.75*plate.WellXOffset,
 		Y: plate.WellYStart + 0.75*plate.WellYOffset,
 	}
 
-	wc, delta := plate.CoordsToWellCoords(pos)
+	wc, delta := plate.CoordsToWellCoords(idGen, pos)
 
 	if e, g := "B2", wc.FormatA1(); e != g {
 		t.Errorf("Wrong well coordinates: expected %s, got %s", e, g)
@@ -578,8 +592,9 @@ func TestCoordsToWellCoords(t *testing.T) {
 }
 
 func TestGetWellBounds(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 
-	plate := makeplatefortest()
+	plate := makeplatefortest(idGen)
 
 	eStart := Coordinates3D{
 		X: 0.5 - 0.5*8.2,

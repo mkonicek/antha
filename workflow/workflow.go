@@ -14,6 +14,8 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/antha-lang/antha/utils"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/qri-io/jsonschema"
 	git "gopkg.in/src-d/go-git.v4"
@@ -79,11 +81,11 @@ func WorkflowFromReaders(rs ...io.ReadCloser) (*Workflow, error) {
 		}
 		if len(valErrs) > 0 {
 			// ValidateBytes got validation errors
-			errStrings := make([]string, len(valErrs))
-			for _, err := range valErrs {
-				errStrings = append(errStrings, err.Error())
+			errs := make(utils.ErrorSlice, len(valErrs))
+			for i, err := range valErrs {
+				errs[i] = err
 			}
-			return nil, errors.New(strings.Join(errStrings, "; "))
+			return nil, errs.Pack()
 		}
 
 		if err := json.Unmarshal(workflowJSON, wf); err != nil {

@@ -14,6 +14,8 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/antha-lang/antha/utils"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/utils"
 	"github.com/qri-io/jsonschema"
@@ -73,7 +75,6 @@ func WorkflowFromReaders(rs ...io.ReadCloser) (*Workflow, error) {
 		// `map[string]interface{}`). The jsonschema package doesn't (currently)
 		// know how to validate a struct type. So for now, we'll live with
 		// double-unmarshaling.
-
 		valErrs, err := rs.ValidateBytes(workflowJSON)
 		if err != nil {
 			// ValidateBytes got an unmarshalling error
@@ -81,9 +82,6 @@ func WorkflowFromReaders(rs ...io.ReadCloser) (*Workflow, error) {
 		}
 
 		if len(valErrs) > 0 {
-			tmpf, _ := ioutil.TempFile("/Users/matthewgregg/scratch/tmp/", "jsonerr_")
-			defer tmpf.Close()
-			tmpf.Write(workflowJSON)
 			// ValidateBytes got validation errors
 			errs := make(utils.ErrorSlice, len(valErrs))
 			for i, err := range valErrs {

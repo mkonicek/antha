@@ -23,6 +23,13 @@ import (
 	"github.com/antha-lang/antha/workflow"
 )
 
+type elementWithMeta struct {
+	repoName      workflow.RepositoryName
+	anthaFilePath string
+	element       []byte
+	meta          []byte
+}
+
 func describe(l *logger.Logger, args []string) error {
 	flagSet := flag.NewFlagSet(flag.CommandLine.Name()+" describe", flag.ContinueOnError)
 	flagSet.Usage = workflow.NewFlagUsage(flagSet, "Show descriptions of elements")
@@ -43,12 +50,6 @@ func describe(l *logger.Logger, args []string) error {
 	} else if regex, err := regexp.Compile(regexStr); err != nil {
 		return err
 	} else {
-		type elementWithMeta struct {
-			repoName      workflow.RepositoryName
-			anthaFilePath string
-			element       []byte
-			meta          []byte
-		}
 		// the map keys are the dir paths of the element so that it's the same for the antha file and the metadata
 		elements := make(map[string]*elementWithMeta)
 		elementNames := []string{}
@@ -118,7 +119,7 @@ func describe(l *logger.Logger, args []string) error {
 				}
 			case "protobuf":
 				{
-					if err := printProtobuf(w, antha, et); err != nil {
+					if err := printProtobuf(w, antha, et, ewm); err != nil {
 						return err
 					}
 				}
@@ -132,18 +133,47 @@ func describe(l *logger.Logger, args []string) error {
 	}
 }
 
-func printProtobuf(w *bufio.Writer, antha *compile.Antha, et *workflow.ElementType) error {
+func protobufPorts(fields []*compile.Field) ([]*protobuf.Port, error) {
+	result := make([]*protobuf.Port, 0, len(fields))
+	for _, field := range fields {
+		typeString, err := field.TypeString()
+		if err != nil {
+			return nil, err
+		}
+		port := &protobuf.Port{
+			Name:        field.Name,
+			Type:        typeString,
+			Description: field.Meta.Description,
+			Kind:        "???", // FIXME
+		}
+		result = append(result, port)
+	}
+	return result, nil
+}
+
+func printProtobuf(w *bufio.Writer, antha *compile.Antha, et *workflow.ElementType, ewm *elementWithMeta) error {
 	e := &protobuf.Element{
 		Name:        string(et.Name()),
 		Package:     string(et.ElementPath), // FIXME: no idea if this is correct
 		Description: antha.Meta.Description,
 		Tags:        antha.Meta.Tags,
 	}
-	// TODO: set these (maybe not all required?)
-	// e.InPorts =
-	// e.OutPorts =
-	// e.Body =
-	// e.BuildOutput =
+	inPorts, err := protobufPorts(antha.Meta.Ports[token.INPUTS])
+	if err != nil {
+		return err
+	}
+	e.InPorts = inPorts
+
+	outPorts, err := protobufPorts(antha.Meta.Ports[token.OUTPUTS])
+	if err != nil {
+		return err
+	}
+	e.OutPorts = outPorts
+
+	e.Body = &protobuf.Output{
+		Body:     ewm.element,
+		Complete: true,
+	}
 
 	bs, err := proto.Marshal(e)
 	if err != nil {

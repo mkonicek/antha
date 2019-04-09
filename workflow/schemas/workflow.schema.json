@@ -72,7 +72,7 @@
         "Config": {
             "type": "object",
             "propertyNames": {
-                "$comment": "TODO: check this regex. This is the name of a device class, e.g. 'GilsonPipetMax'.",
+                "$comment": "TODO: check this regex. This is the name of a device class, e.g. 'GilsonPipetMax'",
                 "pattern": "^[a-zA-Z0-9_-]+$"
             },
             "patternProperties": {

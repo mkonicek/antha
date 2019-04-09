@@ -33,6 +33,8 @@ func makeWorkflow(l *logger.Logger, flagSet *flag.FlagSet, inDir, regexStr strin
 		return nil, err
 	} else if acc, err := workflow.WorkflowFromReaders(rs...); err != nil {
 		return nil, err
+	} else if err := acc.EnsureWorkflowId(); err != nil {
+		return nil, err
 	} else if regex, err := regexp.Compile(regexStr); err != nil {
 		return nil, err
 	} else {

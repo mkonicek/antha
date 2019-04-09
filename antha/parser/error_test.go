@@ -168,14 +168,17 @@ func compareErrors(t *testing.T, expected map[token.Pos]string, found scanner.Er
 	}
 }
 
-func checkErrors(t *testing.T, filename string, input interface{}) {
-	src, err := readSource(filename, input)
-	if err != nil {
-		t.Error(err)
-		return
+func checkErrors(t *testing.T, filename string, src []byte) {
+	if src == nil {
+		var err error
+		src, err = ioutil.ReadFile(filename)
+		if err != nil {
+			t.Error(err)
+			return
+		}
 	}
 
-	_, err = ParseFile(fsetErrs, filename, src, DeclarationErrors|AllErrors)
+	_, err := ParseFile(fsetErrs, filename, src, DeclarationErrors|AllErrors)
 	found, ok := err.(scanner.ErrorList)
 	if err != nil && !ok {
 		t.Error(err)
@@ -192,7 +195,6 @@ func checkErrors(t *testing.T, filename string, input interface{}) {
 }
 
 func TestErrors(t *testing.T) {
-	t.Skip("external files")
 	fsetErrs = token.NewFileSet()
 	list, err := ioutil.ReadDir(testdata)
 	if err != nil {

@@ -1,21 +1,36 @@
 package workflow
 
 import (
+	crand "crypto/rand"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
+	"io/ioutil"
+	"math"
+	"math/big"
 	"os"
 	"path"
 	"strings"
 	"unicode"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/utils"
+	"github.com/qri-io/jsonschema"
 	git "gopkg.in/src-d/go-git.v4"
 )
 
+//go:generate go-bindata -o ./schemas.go -pkg workflow -prefix schemas/ ./schemas/
+
 type Workflow struct {
 	SchemaVersion SchemaVersion `json:"SchemaVersion"`
-	JobId         JobId         `json:"JobId"`
+	// The WorkflowId is the unique Id of this workflow itself, and is
+	// not modified by the event of simulation.
+	WorkflowId BasicId `json:"WorkflowId,omitempty"`
+	// The SimulationId is an Id created by the act of simulation. Thus
+	// a workflow that is simulated twice will have the same WorkflowId
+	// but different SimulationIds.
+	SimulationId BasicId `json:"SimulationId,omitempty"`
 
 	Meta Meta `json:"Meta,omitempty"`
 
@@ -39,8 +54,45 @@ func WorkflowFromReaders(rs ...io.ReadCloser) (*Workflow, error) {
 	for _, r := range rs {
 		defer r.Close()
 		wf := &Workflow{} // we're never merging _into_ wf so it's safe to have nil maps here
-		dec := json.NewDecoder(r)
-		if err := dec.Decode(wf); err != nil {
+
+		schema := MustAsset("workflow.schema.json")
+		rs := &jsonschema.RootSchema{}
+		if err := json.Unmarshal(schema, rs); err != nil {
+			panic(err)
+		}
+
+		workflowJSON, err := ioutil.ReadAll(r)
+		if err != nil {
+			return nil, err
+		}
+
+		// Note: ValidateBytes unmarshals the JSON data we send it. Then we
+		// unmarshal it ourselves a few lines later. It would be nice to only
+		// unmarshal once, but we unmarshal into a struct, and ValidateBytes
+		// unmarshals into an interface{} (which renders a value of type
+		// `map[string]interface{}`). The jsonschema package doesn't (currently)
+		// know how to validate a struct type. So for now, we'll live with
+		// double-unmarshaling.
+
+		valErrs, err := rs.ValidateBytes(workflowJSON)
+		if err != nil {
+			// ValidateBytes got an unmarshalling error
+			return nil, err
+		}
+
+		if len(valErrs) > 0 {
+			tmpf, _ := ioutil.TempFile("/Users/matthewgregg/scratch/tmp/", "jsonerr_")
+			defer tmpf.Close()
+			tmpf.Write(workflowJSON)
+			// ValidateBytes got validation errors
+			errs := make(utils.ErrorSlice, len(valErrs))
+			for i, err := range valErrs {
+				errs[i] = err
+			}
+			return nil, errs.Pack()
+		}
+
+		if err := json.Unmarshal(workflowJSON, wf); err != nil {
 			return nil, err
 		} else if err := acc.Merge(wf); err != nil {
 			return nil, err
@@ -66,6 +118,17 @@ func EmptyWorkflow() *Workflow {
 	}
 }
 
+func (wf *Workflow) EnsureWorkflowId() error {
+	if wf.WorkflowId == "" {
+		if id, err := RandomBasicId(""); err != nil {
+			return err
+		} else {
+			wf.WorkflowId = id
+		}
+	}
+	return nil
+}
+
 func (wf *Workflow) WriteToFile(p string, pretty bool) error {
 	if p == "" || p == "-" {
 		return wf.ToWriter(os.Stdout, pretty)
@@ -88,6 +151,22 @@ func (wf *Workflow) ToWriter(w io.Writer, pretty bool) error {
 type Meta struct {
 	Name string                 `json:"Name,omitempty"`
 	Rest map[string]interface{} `json:"-"`
+}
+
+// See https://golang.org/ref/spec#identifier However, we allow the
+// first rune to be a digit, because currently the call sites all
+// ensure the result of this call is prefixed with some constant text.
+func (m *Meta) NameAsGoIdentifier() string {
+	res := []rune{}
+	for _, r := range m.Name {
+		switch {
+		case r == '_', unicode.IsLetter(r), unicode.IsDigit(r):
+			res = append(res, r)
+		case r == ' ', r == '-', r == '/':
+			res = append(res, '_')
+		}
+	}
+	return string(res)
 }
 
 func (m *Meta) UnmarshalJSON(bs []byte) error {
@@ -124,21 +203,17 @@ func (m *Meta) MarshalJSON() ([]byte, error) {
 	return json.Marshal(all)
 }
 
-type JobId string
+type BasicId string
 
-func (jid JobId) AsIdentifier() string {
-	res := make([]rune, 0, len(jid))
-	for _, r := range jid {
-		switch {
-		// see https://golang.org/ref/spec#identifier
-		// However, we allow the first rune to be a digit
-		case r == '_', unicode.IsLetter(r), unicode.IsDigit(r):
-			res = append(res, r)
-		case r == ' ', r == '-', r == '/':
-			res = append(res, '_')
-		}
+func RandomBasicId(prefix BasicId) (BasicId, error) {
+	max := big.NewInt(0).SetUint64(math.MaxUint64)
+	if suffix, err := crand.Int(crand.Reader, max); err != nil {
+		return "", err
+	} else if prefix == "" {
+		return BasicId(suffix.Text(62)), nil
+	} else {
+		return BasicId(fmt.Sprintf("%s-%s", prefix, suffix.Text(62))), nil
 	}
-	return string(res)
 }
 
 type RepositoryName string

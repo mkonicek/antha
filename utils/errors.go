@@ -38,6 +38,9 @@ type ErrorFunc func() error
 
 type ErrorFuncs []ErrorFunc
 
+// Run the ErrorFuncs in the supplied order until a non-nil error is
+// encountered and return that error. Returns nil iff all funcs return
+// nil errors.
 func (efs ErrorFuncs) Run() error {
 	for _, ef := range efs {
 		if err := ef(); err != nil {

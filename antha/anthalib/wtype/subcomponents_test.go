@@ -4,9 +4,11 @@ import (
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 func TestAddandGetComponent(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 	newTestComponent := func(
 		name string,
 		typ LiquidType,
@@ -15,7 +17,7 @@ func TestAddandGetComponent(t *testing.T) {
 		vol wunit.Volume,
 		componentList ComponentList,
 	) *Liquid {
-		c := NewLHComponent()
+		c := NewLHComponent(idGen)
 		c.SetName(name)
 		c.Type = typ
 		c.Smax = smax

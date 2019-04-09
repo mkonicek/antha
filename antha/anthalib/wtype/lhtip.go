@@ -47,13 +47,13 @@ type LHTip struct {
 }
 
 //@implement Named
-func (self *LHTip) GetName(idGen *id.IDGenerator) string {
+func (self *LHTip) GetName() string {
 	if self == nil {
 		return "<nil>"
 	}
 	if addr, ok := self.parent.(Addressable); ok {
 		pos := self.GetPosition().Add(self.GetSize().Multiply(0.5))
-		wc, _ := addr.CoordsToWellCoords(idGen, pos)
+		wc, _ := addr.CoordsToWellCoords(nil, pos)
 		return fmt.Sprintf("%s@%s", wc.FormatA1(), NameOf(self.parent))
 	}
 	return fmt.Sprintf("%s_%s", self.Mnfr, self.Type)
@@ -225,7 +225,7 @@ func (self *LHTip) DimensionsString(idGen *id.IDGenerator) string {
 	if self == nil {
 		return "no tip"
 	}
-	return fmt.Sprintf("Tip %s at %v+%v", self.GetName(idGen), self.GetPosition(), self.GetSize())
+	return fmt.Sprintf("Tip %s at %v+%v", self.GetName(), self.GetPosition(), self.GetSize())
 }
 
 //@implement LHContainer
@@ -268,10 +268,10 @@ func (self *LHTip) AddComponent(idGen *id.IDGenerator, v *Liquid) error {
 	self.contents.Mix(idGen, v)
 
 	if fv.GreaterThan(self.MaxVol) {
-		return fmt.Errorf("Tip %s overfull, contains %v and maximum is %v", self.GetName(idGen), fv, self.MaxVol)
+		return fmt.Errorf("Tip %s overfull, contains %v and maximum is %v", self.GetName(), fv, self.MaxVol)
 	}
 	if fv.LessThan(self.MinVol) {
-		return fmt.Errorf("Added less than minimum volume to %s, contains %v and minimum working volume is %v", self.GetName(idGen), fv, self.MinVol)
+		return fmt.Errorf("Added less than minimum volume to %s, contains %v and minimum working volume is %v", self.GetName(), fv, self.MinVol)
 	}
 	return nil
 }
@@ -279,10 +279,10 @@ func (self *LHTip) AddComponent(idGen *id.IDGenerator, v *Liquid) error {
 //SetContents set the contents of the tip, returns an error if the tip is overfilled
 func (self *LHTip) SetContents(idGen *id.IDGenerator, v *Liquid) error {
 	if v.Volume().GreaterThan(self.MaxVol) {
-		return fmt.Errorf("Tip %s overfull, contains %v and maximum is %v", self.GetName(idGen), v.Volume(), self.MaxVol)
+		return fmt.Errorf("Tip %s overfull, contains %v and maximum is %v", self.GetName(), v.Volume(), self.MaxVol)
 	}
 	if v.Volume().LessThan(self.MinVol) {
-		return fmt.Errorf("Added less than minimum volume to %s, contains %v and minimum working volume is %v", self.GetName(idGen), v.Volume(), self.MinVol)
+		return fmt.Errorf("Added less than minimum volume to %s, contains %v and minimum working volume is %v", self.GetName(), v.Volume(), self.MinVol)
 	}
 
 	self.contents = v
@@ -292,7 +292,7 @@ func (self *LHTip) SetContents(idGen *id.IDGenerator, v *Liquid) error {
 //@implement LHContainer
 func (self *LHTip) RemoveVolume(idGen *id.IDGenerator, v wunit.Volume) (*Liquid, error) {
 	if v.GreaterThan(self.CurrentWorkingVolume(idGen)) {
-		return nil, fmt.Errorf("Requested removal of %v from tip %s which only has %v working volume", v, self.GetName(idGen), self.CurrentWorkingVolume(idGen))
+		return nil, fmt.Errorf("Requested removal of %v from tip %s which only has %v working volume", v, self.GetName(), self.CurrentWorkingVolume(idGen))
 	}
 	ret := self.contents.Dup(idGen)
 	ret.Vol = v.ConvertToString("ul")

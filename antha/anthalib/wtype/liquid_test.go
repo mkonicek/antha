@@ -6,13 +6,15 @@ import (
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 func TestSampleBehaviour(t *testing.T) {
-	c := NewLHComponent()
+	idGen := id.NewIDGenerator("testing")
+	c := NewLHComponent(idGen)
 	c.CName = "water"
 
-	c2 := NewLHComponent()
+	c2 := NewLHComponent(idGen)
 	c.CName = "cider"
 
 	c.SetSample(true)
@@ -26,7 +28,7 @@ func TestSampleBehaviour(t *testing.T) {
 		t.Errorf("SetSample(true) must cause components to return true to IsSample()")
 	}
 
-	c.Mix(c2)
+	c.Mix(idGen, c2)
 
 	if c.IsSample() {
 		t.Errorf("Results of mixes must not be samples")
@@ -38,7 +40,7 @@ func TestSampleBehaviour(t *testing.T) {
 		t.Errorf("SetSample(false) must cause components to return false to IsSample()")
 	}
 
-	c3 := c2.Dup()
+	c3 := c2.Dup(idGen)
 
 	if c3.IsSample() {
 		t.Errorf("Dup()ing a non-sample must produce a non-sample")
@@ -56,6 +58,7 @@ func TestSampleBehaviour(t *testing.T) {
 }
 
 func TestDup(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 	newTestComponent := func(
 		name string,
 		typ LiquidType,
@@ -64,7 +67,7 @@ func TestDup(t *testing.T) {
 		vol wunit.Volume,
 		componentList ComponentList,
 	) *Liquid {
-		c := NewLHComponent()
+		c := NewLHComponent(idGen)
 		c.SetName(name)
 		c.Type = typ
 		c.Smax = smax
@@ -96,7 +99,7 @@ func TestDup(t *testing.T) {
 		wunit.NewVolume(2000.0, "ul"),
 		ComponentList{})
 
-	duplicated := mediaMixture.Dup()
+	duplicated := mediaMixture.Dup(idGen)
 
 	if err := EqualLists(mediaMixture.SubComponents, duplicated.SubComponents); err != nil {
 		t.Error(err.Error())
@@ -112,7 +115,8 @@ func TestDup(t *testing.T) {
 }
 
 func TestComponentSerialize(t *testing.T) {
-	c := NewLHComponent()
+	idGen := id.NewIDGenerator("testing")
+	c := NewLHComponent(idGen)
 	c.CName = "water"
 
 	b, err := json.Marshal(c)
@@ -121,7 +125,7 @@ func TestComponentSerialize(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 
-	c2 := NewLHComponent()
+	c2 := NewLHComponent(idGen)
 
 	err = json.Unmarshal(b, &c2)
 
@@ -135,15 +139,16 @@ func TestComponentSerialize(t *testing.T) {
 }
 
 func TestDeepCopySubComponents(t *testing.T) {
-	l := NewLHComponent()
+	idGen := id.NewIDGenerator("testing")
+	l := NewLHComponent(idGen)
 	l.CName = "water"
-	sc := NewLHComponent()
+	sc := NewLHComponent(idGen)
 	sc.CName = "mush"
 	if err := l.AddSubComponent(sc, wunit.NewConcentration(50.0, "g/l")); err != nil {
 		t.Fatal(err)
 	}
 
-	l2 := l.Dup()
+	l2 := l.Dup(idGen)
 
 	scMapEqual := func(m1, m2 map[string]wunit.Concentration) bool {
 		if len(m1) != len(m2) {
@@ -174,6 +179,7 @@ func TestDeepCopySubComponents(t *testing.T) {
 }
 
 func TestEqualTypeVolume(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 	l := &Liquid{}
 
 	if !l.EqualTypeVolume(l) {
@@ -203,7 +209,7 @@ func TestEqualTypeVolume(t *testing.T) {
 		Vunit: "ul",
 	}
 
-	l5 := l4.Dup()
+	l5 := l4.Dup(idGen)
 
 	if !l5.EqualTypeVolume(l4) {
 		t.Errorf("Liquids must be of equal type and volume after Dup()")
@@ -216,13 +222,13 @@ func TestEqualTypeVolume(t *testing.T) {
 		ID:    "thisismyID",
 	}
 
-	l7 := l6.Dup()
+	l7 := l6.Dup(idGen)
 
 	if !l7.EqualTypeVolumeID(l6) {
 		t.Errorf("Liquids must preserve IDs after Dup()")
 	}
 
-	l8 := l7.Cp()
+	l8 := l7.Cp(idGen)
 
 	if l8.EqualTypeVolumeID(l7) {
 		t.Errorf("Liquids must not preserve IDs after Cp()")

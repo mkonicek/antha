@@ -168,9 +168,9 @@ func (a *WOPlateReader) mergePRInsts(prInsts []*wtype.PRInstruction, wellLocs ma
 			Message: "Please put plate(s) into plate reader and click ok to start plate reader",
 		},
 		&target.Run{
-			Dev:   a,
-			Label: "use plate reader",
-			Calls: calls,
+			DeviceMixin: effects.DeviceMixin{Dev: a},
+			Label:       "use plate reader",
+			Calls:       calls,
 		},
 	}
 	insts.SequentialOrder()

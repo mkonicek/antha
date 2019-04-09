@@ -14,7 +14,7 @@ import (
 // Compare compares output generated with any supplied test data in the workflow
 func (labBuild *LaboratoryBuilder) Compare() error {
 
-	if labBuild.workflow.Testing.MixTaskChecks == nil || len(labBuild.workflow.Testing.MixTaskChecks) == 0 {
+	if labBuild.Workflow.Testing.MixTaskChecks == nil || len(labBuild.Workflow.Testing.MixTaskChecks) == 0 {
 		return nil
 	}
 
@@ -25,7 +25,7 @@ func (labBuild *LaboratoryBuilder) Compare() error {
 		if t, ok := instr.(*target.Mix); ok {
 			labBuild.Logger.Log("msg", fmt.Sprintf("[%d] Checking mix instruction.", i))
 
-			if expected, err := expectedMix(labBuild.workflow, mixIdx); err != nil {
+			if expected, err := expectedMix(labBuild.Workflow, mixIdx); err != nil {
 				errs = append(errs, err)
 			} else {
 				errs = append(errs, labBuild.compareTimings(t, expected))

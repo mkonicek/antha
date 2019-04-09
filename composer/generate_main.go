@@ -62,7 +62,7 @@ func renderMain(w io.Writer, mc *mainComposer) error {
 		"varName":      mr.varName,
 		"token":        mr.token,
 		"id":           func() string { return "" },
-		"jobName":      func() string { return "" },
+		"name":         func() string { return "" },
 		"inDir":        func() string { return "" },
 	}
 	if t, err := template.New("generate").Funcs(funcs).Parse(tpl); err != nil {
@@ -97,7 +97,7 @@ func renderTest(w io.Writer, twf *testWorkflow) error {
 		"varName":      tr.varName,
 		"token":        tr.token,
 		"id":           func() string { return fmt.Sprintf("%d", tr.testWorkflow.index) },
-		"jobName":      func() string { return strings.Title(tr.testWorkflow.workflow.JobId.AsIdentifier()) },
+		"name":         func() string { return strings.Title(tr.testWorkflow.workflow.Meta.NameAsGoIdentifier()) },
 		"inDir":        func() string { return tr.testWorkflow.inDir },
 	}
 	if t, err := template.New("generate").Funcs(funcs).Parse(tpl); err != nil {
@@ -162,7 +162,7 @@ package main
 }
 {{end}}
 
-{{define "test-test"}}func TestWorkflow{{jobName}}(t *testing.T) {
+{{define "test-test"}}func TestWorkflow{{id}}{{name}}(t *testing.T) {
 	t.Parallel()
 	labBuild := testlab.NewTestLabBuilder(t, {{printf "%q" inDir}}, ioutil.NopCloser(bytes.NewBuffer(MustAsset("data/workflow{{id}}.json"))))
 	defer labBuild.Decommission()

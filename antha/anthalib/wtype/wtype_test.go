@@ -28,6 +28,7 @@ import (
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 /*
@@ -79,6 +80,7 @@ func TestWellCoords(*testing.T) {
 */
 
 func TestLHComponentSampleStuff(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 	var c Liquid
 
 	faux := c.IsSample()
@@ -105,7 +107,7 @@ func TestLHComponentSampleStuff(t *testing.T) {
 
 	// now the same from NewLHComponent
 
-	c2 := NewLHComponent()
+	c2 := NewLHComponent(idGen)
 
 	faux = c2.IsSample()
 

@@ -24,7 +24,7 @@ package compile
 
 import (
 	"bytes"
-	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/ast"
@@ -32,68 +32,42 @@ import (
 	"github.com/antha-lang/antha/antha/token"
 )
 
-func TestTypeSugaring(t *testing.T) {
-	nodeSizes := make(map[ast.Node]int)
-	cfg := &Config{}
-	compiler := &compiler{}
-	fset := token.NewFileSet()
-	compiler.init(cfg, fset, nodeSizes)
-
-	root := NewAnthaRoot("")
-	antha := NewAntha(root)
-	expr, err := parser.ParseExpr("func(x Volume) Concentration { x := Volume }")
+func processExpr(antha *Antha, expr string) (string, error) {
+	parsed, err := parser.ParseExpr(expr)
 	if err != nil {
-		t.Fatal(err)
+		return "", err
 	}
-	desired, err := parser.ParseExpr("func(x wunit.Volume) wunit.Concentration { x := Volume }")
-	if err != nil {
-		t.Fatal(err)
+	ast.Inspect(parsed, antha.inspectTypes)
+	buf := new(bytes.Buffer)
+	if _, err := (&Config{}).Fprint(buf, antha.fileSet, parsed); err != nil {
+		return "", err
 	}
-
-	ast.Inspect(expr, antha.inspectTypes)
-	var buf1, buf2 bytes.Buffer
-	if _, err := compiler.Fprint(&buf1, fset, expr); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := compiler.Fprint(&buf2, fset, desired); err != nil {
-		t.Fatal(err)
-	}
-	if !bytes.Equal(buf1.Bytes(), buf2.Bytes()) {
-		t.Errorf("wanted\n'''%s'''\ngot\n'''%s'''\n", buf2.String(), buf1.String())
-	}
+	s := strings.Replace(buf.String(), "\t", " ", -1)
+	return strings.Replace(s, "\n", " ", -1), nil
 }
 
-func TestRelativeToGoPath(t *testing.T) {
-	type TestCase struct {
-		GoPath   []string
-		Name     string
-		Expected string
-		HasError bool
+func TestTypeSugaring(t *testing.T) {
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "testProtocol/element.an", []byte("protocol testProtocol"), parser.ParseComments)
+	if err != nil {
+		t.Fatal(err)
+	}
+	antha, err := NewAntha(fset, file, nil)
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	cases := []TestCase{
-		{GoPath: []string{"/xx"}, Name: "/xx/file", Expected: "file"},
-		{GoPath: []string{"/xx"}, Name: "file", Expected: "file"},
-		{GoPath: []string{"/noxx"}, Name: "/xx/file", Expected: "/xx/file"},
-		{GoPath: []string{"/xx", "/xx/deeper"}, Name: "/xx/file", Expected: "file"},
-		{GoPath: []string{"/xx", "/xx/deeper"}, Name: "/xx/deeper/file", Expected: "file"},
+	got, err := processExpr(antha, "func (x Volume) Concentration { x := Volume }")
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	for idx, c := range cases {
-		var goPath []string
-		for _, v := range c.GoPath {
-			goPath = append(goPath, filepath.FromSlash(v))
-		}
-		name := filepath.FromSlash(c.Name)
-		expected := filepath.FromSlash(c.Expected)
+	wanted, err := processExpr(antha, "func (x wunit.Volume) wunit.Concentration { x := Volume }")
+	if err != nil {
+		t.Fatal(err)
+	}
 
-		f, err := relativeTo(goPath, name)
-		if c.HasError && err == nil {
-			t.Errorf("%d: %+v: expected error but found success", idx, c)
-		} else if err != nil {
-			t.Errorf("%d: %+v: %s", idx, c, err)
-		} else if expected != f {
-			t.Errorf("%d: %+v: expected %q found %q", idx, c, expected, f)
-		}
+	if got != wanted {
+		t.Errorf("wanted\n%s\ngot\n%s\n", wanted, got)
 	}
 }

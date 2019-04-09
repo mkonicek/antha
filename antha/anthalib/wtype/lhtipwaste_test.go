@@ -4,20 +4,23 @@ import (
 	"encoding/json"
 	"reflect"
 	"testing"
+
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
-func makeTipwasteForTest() *LHTipwaste {
+func makeTipwasteForTest(idGen *id.IDGenerator) *LHTipwaste {
 	shp := NewShape(BoxShape, "mm", 123.0, 80.0, 92.0)
-	w := NewLHWell("ul", 800000.0, 800000.0, shp, 0, 123.0, 80.0, 92.0, 0.0, "mm")
-	lht := NewLHTipwaste(6000, "TipwasteForTest", "ACME Corp.", Coordinates3D{X: 127.76, Y: 85.48, Z: 92.0}, w, 49.5, 31.5, 0.0)
+	w := NewLHWell(idGen, "ul", 800000.0, 800000.0, shp, 0, 123.0, 80.0, 92.0, 0.0, "mm")
+	lht := NewLHTipwaste(idGen, 6000, "TipwasteForTest", "ACME Corp.", Coordinates3D{X: 127.76, Y: 85.48, Z: 92.0}, w, 49.5, 31.5, 0.0)
 	return lht
 }
 
 func TestTipwasteWellCoordsToCoords(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 
-	tw := makeTipwasteForTest()
+	tw := makeTipwasteForTest(idGen)
 
-	pos, ok := tw.WellCoordsToCoords(MakeWellCoords("A1"), TopReference)
+	pos, ok := tw.WellCoordsToCoords(idGen, MakeWellCoords("A1"), TopReference)
 	if !ok {
 		t.Fatal("well A1 doesn't exist!")
 	}
@@ -32,8 +35,9 @@ func TestTipwasteWellCoordsToCoords(t *testing.T) {
 }
 
 func TestTipwasteCoordsToWellCoords(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 
-	tw := makeTipwasteForTest()
+	tw := makeTipwasteForTest(idGen)
 
 	eDelta := Coordinates3D{X: -0.2 * tw.AsWell.GetSize().X, Y: -0.3 * tw.AsWell.GetSize().Y}
 
@@ -42,7 +46,7 @@ func TestTipwasteCoordsToWellCoords(t *testing.T) {
 		Y: tw.WellYStart + eDelta.Y,
 	}
 
-	wc, delta := tw.CoordsToWellCoords(pos)
+	wc, delta := tw.CoordsToWellCoords(idGen, pos)
 
 	if e, g := "A1", wc.FormatA1(); e != g {
 		t.Errorf("Wrong well coordinates: expected %s, got %s", e, g)
@@ -55,14 +59,15 @@ func TestTipwasteCoordsToWellCoords(t *testing.T) {
 }
 
 func TestTipwasteSerialisation(t *testing.T) {
-	partFull := makeTipwasteForTest()
+	idGen := id.NewIDGenerator("testing")
+	partFull := makeTipwasteForTest(idGen)
 	if err := partFull.SetOffset(Coordinates3D{X: 1.0, Y: 2.0, Z: 3.0}); err != nil {
 		t.Fatal(err)
 	}
 	partFull.Contents = 300
 
 	tipwastes := []*LHTipwaste{
-		makeTipwasteForTest(),
+		makeTipwasteForTest(idGen),
 		partFull,
 	}
 

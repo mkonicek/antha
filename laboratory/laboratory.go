@@ -38,7 +38,7 @@ type Element interface {
 type LaboratoryBuilder struct {
 	inDir    string
 	outDir   string
-	workflow *workflow.Workflow
+	Workflow *workflow.Workflow
 
 	elemLock      sync.Mutex
 	elemsUnrun    int64
@@ -96,7 +96,7 @@ func NewLaboratoryBuilder(fh io.ReadCloser) *LaboratoryBuilder {
 	if err := labBuild.Setup(fh, inDir, outDir, nil); err != nil {
 		labBuild.Fatal(err)
 	}
-	labBuild.effects.Inventory.LoadForWorkflow(labBuild.workflow)
+	labBuild.effects.Inventory.LoadForWorkflow(labBuild.Workflow)
 	return labBuild
 }
 
@@ -105,18 +105,21 @@ func (labBuild *LaboratoryBuilder) Setup(fh io.ReadCloser, inDir, outDir string,
 		func() error { return labBuild.SetupWorkflow(fh) },
 		func() error { return labBuild.SetupPaths(inDir, outDir) },
 		func() error { return labBuild.SetupEffects(inv) },
+		func() error { return labBuild.SaveWorkflow() },
 	}.Run()
 }
 
 func (labBuild *LaboratoryBuilder) SetupWorkflow(fh io.ReadCloser) error {
-	// Got to load in the workflow first so we gain access to the JobId.
 	if wf, err := workflow.WorkflowFromReaders(fh); err != nil {
 		return err
 	} else if err := wf.Validate(); err != nil {
 		return err
+	} else if simId, err := workflow.RandomBasicId(wf.WorkflowId); err != nil {
+		return err
 	} else {
-		labBuild.workflow = wf
-		labBuild.Logger = labBuild.Logger.With("jobId", wf.JobId)
+		wf.SimulationId = simId
+		labBuild.Workflow = wf
+		labBuild.Logger = labBuild.Logger.With("simulationId", simId)
 		return nil
 	}
 }
@@ -135,7 +138,7 @@ func (labBuild *LaboratoryBuilder) SetupPaths(inDir, outDir string) error {
 	labBuild.Logger.Log("outdir", labBuild.outDir)
 
 	// Create subdirs within it:
-	for _, leaf := range []string{"elements", "data", "devices"} {
+	for _, leaf := range []string{"elements", "data", "devices", "workflow"} {
 		if err := os.MkdirAll(filepath.Join(labBuild.outDir, leaf), 0700); err != nil {
 			return err
 		}
@@ -168,9 +171,13 @@ func (labBuild *LaboratoryBuilder) SetupEffects(inv *inventory.Inventory) error 
 	if fm, err := effects.NewFileManager(filepath.Join(labBuild.inDir, "data"), filepath.Join(labBuild.outDir, "data")); err != nil {
 		return err
 	} else {
-		labBuild.effects = effects.NewLaboratoryEffects(labBuild.workflow.JobId, fm, inv)
+		labBuild.effects = effects.NewLaboratoryEffects(labBuild.Workflow.SimulationId, fm, inv)
 		return nil
 	}
+}
+
+func (labBuild *LaboratoryBuilder) SaveWorkflow() error {
+	return labBuild.Workflow.WriteToFile(filepath.Join(labBuild.outDir, "workflow", "workflow.json"), false)
 }
 
 func (labBuild *LaboratoryBuilder) SaveErrors() error {
@@ -225,23 +232,25 @@ func (labBuild *LaboratoryBuilder) Compile() {
 }
 
 func (labBuild *LaboratoryBuilder) connectDevices() (*target.Target, error) {
+	cfg := &labBuild.Workflow.Config
+	inv := labBuild.effects.Inventory
 	tgt := target.New()
-	if global, err := mixer.NewGlobalMixerConfig(labBuild.effects.Inventory, &labBuild.workflow.Config.GlobalMixer); err != nil {
+	if global, err := mixer.NewGlobalMixerConfig(inv, &cfg.GlobalMixer); err != nil {
 		return nil, err
 	} else {
 		err := utils.ErrorSlice{
-			mixer.NewGilsonPipetMaxInstances(labBuild.Logger, tgt, labBuild.effects.Inventory, global, labBuild.workflow.Config.GilsonPipetMax),
-			mixer.NewTecanInstances(labBuild.Logger, tgt, labBuild.effects.Inventory, global, labBuild.workflow.Config.Tecan),
-			mixer.NewCyBioInstances(labBuild.Logger, tgt, labBuild.effects.Inventory, global, labBuild.workflow.Config.CyBio),
-			mixer.NewLabcyteInstances(labBuild.Logger, tgt, labBuild.effects.Inventory, global, labBuild.workflow.Config.Labcyte),
-			mixer.NewHamiltonInstances(labBuild.Logger, tgt, labBuild.effects.Inventory, global, labBuild.workflow.Config.Hamilton),
-			qpcrdevice.NewQPCRInstances(tgt, labBuild.workflow.Config.QPCR),
-			shakerincubator.NewShakerIncubatorsInstances(tgt, labBuild.workflow.Config.ShakerIncubator),
-			woplatereader.NewWOPlateReaderInstances(tgt, labBuild.workflow.Config.PlateReader),
+			mixer.NewGilsonPipetMaxInstances(labBuild.Logger, tgt, inv, global, cfg.GilsonPipetMax),
+			mixer.NewTecanInstances(labBuild.Logger, tgt, inv, global, cfg.Tecan),
+			mixer.NewCyBioInstances(labBuild.Logger, tgt, inv, global, cfg.CyBio),
+			mixer.NewLabcyteInstances(labBuild.Logger, tgt, inv, global, cfg.Labcyte),
+			mixer.NewHamiltonInstances(labBuild.Logger, tgt, inv, global, cfg.Hamilton),
+			qpcrdevice.NewQPCRInstances(tgt, cfg.QPCR),
+			shakerincubator.NewShakerIncubatorsInstances(tgt, cfg.ShakerIncubator),
+			woplatereader.NewWOPlateReaderInstances(tgt, cfg.PlateReader),
 		}.Pack()
 		if err != nil {
 			return nil, err
-		} else if err := tgt.Connect(labBuild.workflow); err != nil {
+		} else if err := tgt.Connect(labBuild.Workflow); err != nil {
 			tgt.Close()
 			return nil, err
 		} else {
@@ -343,7 +352,8 @@ type Laboratory struct {
 	labBuild *LaboratoryBuilder
 	element  Element
 
-	Logger *logger.Logger
+	Logger   *logger.Logger
+	Workflow *workflow.Workflow
 	*effects.LaboratoryEffects
 }
 
@@ -353,6 +363,7 @@ func (labBuild *LaboratoryBuilder) makeLab(eb *ElementBase, logger *logger.Logge
 		labBuild:          labBuild,
 		element:           e,
 		Logger:            logger.With("id", eb.id, "name", e.Name(), "type", e.TypeName()),
+		Workflow:          labBuild.Workflow,
 		LaboratoryEffects: labBuild.effects,
 	}
 }

@@ -189,7 +189,7 @@ func (bm *BaseMixer) maybeConfigureConn(wf *workflow.Workflow, data []byte) erro
 			return fmt.Errorf("Unable to find connection function for mixer subtype %v", bm.expectedSubType)
 		} else {
 			driver := fun(bm.conn)
-			if props, status := driver.Configure(wf.JobId, wf.Meta.Name, bm.id, data); !status.Ok() {
+			if props, status := driver.Configure(wf.SimulationId, wf.Meta.Name, bm.id, data); !status.Ok() {
 				return status.GetError()
 			} else {
 				props.Driver = driver
@@ -355,7 +355,7 @@ func (mo mixOpts) mix() (*target.Mix, error) {
 		mimetype = "application/" + strings.ToLower(handler.Properties.Mnfr)
 	}
 	mix := &target.Mix{
-		Dev:             mo.Device,
+		DeviceMixin:     effects.DeviceMixin{Dev: mo.Device},
 		Request:         req,
 		Properties:      handler.Properties,
 		FinalProperties: handler.FinalProperties,

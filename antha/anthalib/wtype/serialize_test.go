@@ -29,15 +29,17 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/antha-lang/antha/laboratory/effects/id"
 	"github.com/go-test/deep"
 )
 
 func TestMarshalDeckObject(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 	objects := []LHObject{
-		makeplatefortest(),
-		maketroughfortest(),
-		makeTipboxForTest(),
-		makeTipwasteForTest(),
+		makeplatefortest(idGen),
+		maketroughfortest(idGen),
+		makeTipboxForTest(idGen),
+		makeTipwasteForTest(idGen),
 	}
 
 	for _, obj := range objects {
@@ -93,6 +95,7 @@ func TestDeserializeGenericMatter(t *testing.T) {
 }
 */
 func TestLHWellSerialize(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 
 	wellExtra := make(map[string]interface{})
 	lhwell := LHWell{
@@ -100,7 +103,7 @@ func TestLHWellSerialize(t *testing.T) {
 		Inst:      "",
 		Crds:      MakeWellCoords("A1"),
 		MaxVol:    20,
-		WContents: NewLHComponent(),
+		WContents: NewLHComponent(idGen),
 		Rvol:      1.0,
 		WShape: &Shape{
 			Type:       CylinderShape,

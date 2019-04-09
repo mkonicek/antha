@@ -14,16 +14,12 @@ func (a *Workflow) Merge(b *Workflow) error {
 		return errors.New("Cannot merge into a nil Workflow")
 	case b == nil:
 		return nil
-	case a.JobId == "":
-		a.JobId = b.JobId
-	case b.JobId == "":
-		// Don't overwrite with blank value.
-	case a.JobId != b.JobId:
-		a.JobId = b.JobId
 	}
 
 	return utils.ErrorSlice{
 		b.SchemaVersion.Validate(), // every snippet must have a valid SchemaVersion
+		a.WorkflowId.Merge(b.WorkflowId),
+		a.SimulationId.Merge(b.SimulationId),
 		a.Repositories.Merge(b.Repositories),
 		a.Elements.merge(b.Elements),
 		a.Inventory.merge(b.Inventory),
@@ -53,26 +49,68 @@ func (a *Testing) merge(b *Testing) error {
 	return nil
 }
 
+func (a *BasicId) Merge(b BasicId) error {
+	if id, ok := tryMergeStrings(string(*a), string(b)); ok {
+		*a = BasicId(id)
+		return nil
+	} else {
+		return fmt.Errorf("Cannot merge: ids both not empty and not equal: %v vs %v", *a, b)
+	}
+}
+
 func (a Repositories) Merge(b Repositories) error {
 	for repoName, repoB := range b {
 		if repoA, found := a[repoName]; found {
-			if repoA.Branch != repoB.Branch || repoA.Commit != repoB.Commit {
-				return fmt.Errorf("Cannot merge: repository with name '%v' redefined illegally.", repoName)
-			}
 			// We're ok if:
 			// .Directory in both are equal (includes both being "")
 			// repoA.Directory is "" (we just copy in from repoB.Directory)
 			// If both != "" and repoA.Directory != repoB.Directory then error
-			if repoA.Directory == "" {
-				repoA.Directory = repoB.Directory
-			} else if repoB.Directory != "" && repoA.Directory != repoB.Directory {
-				return fmt.Errorf("Cannot merge: repository with name '%v' redefined illegally (Directory fields not empty and not equal).", repoName)
+			if dir, ok := tryMergeStrings(repoA.Directory, repoB.Directory); !ok {
+				return fmt.Errorf("Cannot merge: repository with name '%v' redefined illegally (Directory fields not empty and not equal: %s vs %s).",
+					repoName, repoA.Directory, repoB.Directory)
+			} else {
+				repoA.Directory = dir
 			}
+
+			// Merge needs to work even in the absence of the Directory
+			// field, which means we really can't start using git at this
+			// point.  Consequently, all we can do safely here is basic
+			// string equality and allow empty fields to be set. This is
+			// slightly more restrictive than we might want, for example,
+			// it could be valid to have two different branch names that
+			// happen to resolve to the same commit, but we can't test
+			// for that here so we play it safe and enforce strict
+			// equality.
+
+			if commit, ok := tryMergeStrings(repoA.Commit, repoB.Commit); !ok {
+				return fmt.Errorf("Cannot merge: repository with name '%v' redefined illegally (Commit fields not empty and not equal; %s vs %s).",
+					repoName, repoA.Commit, repoB.Commit)
+			} else {
+				repoA.Commit = commit
+			}
+
+			if branch, ok := tryMergeStrings(repoA.Branch, repoB.Branch); !ok {
+				return fmt.Errorf("Cannot merge: repository with name '%v' redefined illegally (Branch fields not empty and not equal; %s vs %s).",
+					repoName, repoA.Branch, repoB.Branch)
+			} else {
+				repoA.Branch = branch
+			}
+
 		} else if !found {
 			a[repoName] = repoB
 		}
 	}
 	return nil
+}
+
+func tryMergeStrings(a, b string) (string, bool) {
+	if a != "" && b != "" && a != b {
+		return "", false
+	} else if a == "" {
+		return b, true
+	} else {
+		return a, true
+	}
 }
 
 func (a *Elements) merge(b Elements) error {

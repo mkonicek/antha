@@ -30,11 +30,12 @@ package ast_test
 
 import (
 	"bytes"
+	"testing"
+
 	"github.com/antha-lang/antha/antha/ast"
 	"github.com/antha-lang/antha/antha/format"
 	"github.com/antha-lang/antha/antha/parser"
 	"github.com/antha-lang/antha/antha/token"
-	"testing"
 )
 
 const input = `package p
@@ -80,7 +81,7 @@ func (x *t2) f2() {}
 func TestFilterDuplicates(t *testing.T) {
 	// parse input
 	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, "", input, 0)
+	file, err := parser.ParseFile(fset, "", []byte(input), 0)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -133,7 +133,7 @@ func describe(l *logger.Logger, args []string) error {
 	}
 }
 
-func protobufPorts(fields []*compile.Field) ([]*protobuf.Port, error) {
+func protobufPorts(fields []*compile.Field, kind string) ([]*protobuf.Port, error) {
 	result := make([]*protobuf.Port, 0, len(fields))
 	for _, field := range fields {
 		typeString, err := field.TypeString()
@@ -144,7 +144,7 @@ func protobufPorts(fields []*compile.Field) ([]*protobuf.Port, error) {
 			Name:        field.Name,
 			Type:        typeString,
 			Description: field.Meta.Description,
-			Kind:        "???", // FIXME
+			Kind:        kind,
 		}
 		result = append(result, port)
 	}
@@ -158,17 +158,27 @@ func printProtobuf(w *bufio.Writer, antha *compile.Antha, et *workflow.ElementTy
 		Description: antha.Meta.Description,
 		Tags:        antha.Meta.Tags,
 	}
-	inPorts, err := protobufPorts(antha.Meta.Ports[token.INPUTS])
+	// Build in ports
+	inputs, err := protobufPorts(antha.Meta.Ports[token.INPUTS], "Inputs")
 	if err != nil {
 		return err
 	}
-	e.InPorts = inPorts
+	parameters, err := protobufPorts(antha.Meta.Ports[token.PARAMETERS], "Parameters")
+	if err != nil {
+		return err
+	}
+	e.InPorts = append(inputs, parameters...)
 
-	outPorts, err := protobufPorts(antha.Meta.Ports[token.OUTPUTS])
+	// Build out ports
+	outputs, err := protobufPorts(antha.Meta.Ports[token.OUTPUTS], "Outputs")
 	if err != nil {
 		return err
 	}
-	e.OutPorts = outPorts
+	data, err := protobufPorts(antha.Meta.Ports[token.DATA], "Data")
+	if err != nil {
+		return err
+	}
+	e.OutPorts = append(outputs, data...)
 
 	e.Body = &protobuf.Output{
 		Body:     ewm.element,

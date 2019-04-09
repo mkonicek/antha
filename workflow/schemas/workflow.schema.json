@@ -140,7 +140,7 @@
                 }
             },
             "additionalProperties": false,
-            "required": ["ElementTypeName", "Parameters"]
+            "required": ["ElementTypeName"]
         },
         "elementInstanceConnection": {
             "type": "object",

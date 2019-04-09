@@ -37,7 +37,7 @@ func describe(l *logger.Logger, args []string) error {
 	var regexStr, inDir, outputFormat string
 	flagSet.StringVar(&regexStr, "regex", "", "Regular expression to match against element type path (optional)")
 	flagSet.StringVar(&inDir, "indir", "", "Directory from which to read files (optional)")
-	flagSet.StringVar(&outputFormat, "format", "human", "Format to output data in. One of [human, protobuf]")
+	flagSet.StringVar(&outputFormat, "format", "human", "Format to output data in. One of [human, json, protobuf]")
 
 	if err := flagSet.Parse(args); err != nil {
 		return err
@@ -92,9 +92,19 @@ func describe(l *logger.Logger, args []string) error {
 
 		sort.Strings(elementNames)
 		w := bufio.NewWriter(os.Stdout)
-		defer w.Flush()
 
-		for _, name := range elementNames {
+		if outputFormat == "json" {
+			w.WriteString("[")
+		}
+
+		defer func() {
+			if outputFormat == "json" {
+				w.WriteString("]")
+			}
+			w.Flush()
+		}()
+
+		for i, name := range elementNames {
 			ewm := elements[name]
 			if ewm.element == nil { // we cope with meta being nil
 				continue
@@ -117,9 +127,22 @@ func describe(l *logger.Logger, args []string) error {
 					}
 
 				}
+			case "json":
+				{
+					if i > 0 {
+						w.WriteString(",")
+					}
+					if err := printMachineReadable(w, antha, et, ewm, func(e *protobuf.Element) ([]byte, error) {
+						return json.Marshal(e)
+					}); err != nil {
+						return err
+					}
+				}
 			case "protobuf":
 				{
-					if err := printProtobuf(w, antha, et, ewm); err != nil {
+					if err := printMachineReadable(w, antha, et, ewm, func(e *protobuf.Element) ([]byte, error) {
+						return proto.Marshal(e)
+					}); err != nil {
 						return err
 					}
 				}
@@ -151,7 +174,7 @@ func protobufPorts(fields []*compile.Field, kind string) ([]*protobuf.Port, erro
 	return result, nil
 }
 
-func printProtobuf(w *bufio.Writer, antha *compile.Antha, et *workflow.ElementType, ewm *elementWithMeta) error {
+func printMachineReadable(w *bufio.Writer, antha *compile.Antha, et *workflow.ElementType, ewm *elementWithMeta, formatter func(*protobuf.Element) ([]byte, error)) error {
 	e := &protobuf.Element{
 		Name:        string(et.Name()),
 		Package:     string(et.ElementPath), // FIXME: no idea if this is correct
@@ -185,7 +208,7 @@ func printProtobuf(w *bufio.Writer, antha *compile.Antha, et *workflow.ElementTy
 		Complete: true,
 	}
 
-	bs, err := proto.Marshal(e)
+	bs, err := formatter(e)
 	if err != nil {
 		return err
 	}

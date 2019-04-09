@@ -10,7 +10,7 @@
     "properties": {
         "WorkflowId": {
             "type": "string",
-            "pattern": "^[a-zA-Z][a-zA-Z0-9_ -]*$"
+            "pattern": "^[a-zA-Z0-9_ -]*$"
         },
         "Meta": {
             "type": "null",
@@ -72,7 +72,7 @@
         "Config": {
             "type": "object",
             "propertyNames": {
-                "$comment": "TODO: check this regex. This is the name of a device class, e.g. 'GilsonPipetMax'",
+                "$comment": "TODO: check this regex. This is the name of a device class, e.g. 'GilsonPipetMax'. It may be the case that an enum is preferable.",
                 "pattern": "^[a-zA-Z0-9_-]+$"
             },
             "patternProperties": {

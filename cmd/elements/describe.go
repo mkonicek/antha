@@ -1,15 +1,20 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
+
+	"github.com/Synthace/microservice/cmd/element/protobuf"
+	"github.com/golang/protobuf/proto"
 
 	"github.com/antha-lang/antha/antha/compile"
 	"github.com/antha-lang/antha/antha/token"
@@ -85,6 +90,9 @@ func describe(l *logger.Logger, args []string) error {
 		}
 
 		sort.Strings(elementNames)
+		w := bufio.NewWriter(os.Stdout)
+		defer w.Flush()
+
 		for _, name := range elementNames {
 			ewm := elements[name]
 			if ewm.element == nil { // we cope with meta being nil
@@ -103,14 +111,14 @@ func describe(l *logger.Logger, args []string) error {
 			switch outputFormat {
 			case "human":
 				{
-					if err := printHumanReadable(antha, et); err != nil {
+					if err := printHumanReadable(w, antha, et); err != nil {
 						return err
 					}
 
 				}
 			case "protobuf":
 				{
-					if err := printProtobuf(antha, et); err != nil {
+					if err := printProtobuf(w, antha, et); err != nil {
 						return err
 					}
 				}
@@ -124,12 +132,30 @@ func describe(l *logger.Logger, args []string) error {
 	}
 }
 
-func printProtobuf(antha *compile.Antha, et *workflow.ElementType) error {
-	fmt.Println(et.Name())
+func printProtobuf(w *bufio.Writer, antha *compile.Antha, et *workflow.ElementType) error {
+	e := &protobuf.Element{
+		Name:        string(et.Name()),
+		Package:     string(et.ElementPath), // FIXME: no idea if this is correct
+		Description: antha.Meta.Description,
+		Tags:        antha.Meta.Tags,
+	}
+	// TODO: set these (maybe not all required?)
+	// e.InPorts =
+	// e.OutPorts =
+	// e.Body =
+	// e.BuildOutput =
+
+	bs, err := proto.Marshal(e)
+	if err != nil {
+		return err
+	}
+	if _, err := w.Write(bs); err != nil {
+		return err
+	}
 	return nil
 }
 
-func printHumanReadable(antha *compile.Antha, et *workflow.ElementType) error {
+func printHumanReadable(w *bufio.Writer, antha *compile.Antha, et *workflow.ElementType) error {
 	const (
 		indent  = "\t"
 		indent2 = "\t\t"
@@ -163,7 +189,7 @@ func printHumanReadable(antha *compile.Antha, et *workflow.ElementType) error {
 	} else if data, err := formatFields(meta.Defaults, meta.Ports[token.DATA], indent3, indent); err != nil {
 		return err
 	} else {
-		fmt.Printf(fmtStr,
+		s := fmt.Sprintf(fmtStr,
 			et.Name(),
 			indent, et.RepositoryName,
 			indent, et.ElementPath,
@@ -175,6 +201,9 @@ func printHumanReadable(antha *compile.Antha, et *workflow.ElementType) error {
 			indent2, params,
 			indent2, data,
 		)
+		if _, err := w.WriteString(s); err != nil {
+			return err
+		}
 	}
 	return nil
 }

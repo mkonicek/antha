@@ -28,19 +28,26 @@ func (a *Workflow) Merge(b *Workflow) error {
 		a.Elements.merge(b.Elements),
 		a.Inventory.merge(b.Inventory),
 		a.Config.merge(b.Config),
-		a.mergeTesting(b),
+		a.Testing.merge(&b.Testing),
 	}.Pack()
 }
 
-func (a *Workflow) mergeTesting(b *Workflow) error {
+func (a *Testing) merge(b *Testing) error {
+	if a == nil || b == nil {
+		return nil
+	}
+
 	switch {
-	case b == nil:
+	case b.MixTaskChecks == nil || len(b.MixTaskChecks) == 0:
 		return nil
-	case a.Testing == nil:
-		a.Testing = b.Testing
+	case (a.MixTaskChecks == nil || len(a.MixTaskChecks) == 0) && b.MixTaskChecks != nil:
+		a.MixTaskChecks = make([]MixTaskCheck, len(b.MixTaskChecks))
+		for i, v := range b.MixTaskChecks {
+			a.MixTaskChecks[i] = v
+		}
 		return nil
-	case a.Testing != nil && b.Testing != nil:
-		return errors.New("Cannot merge two sets of testing data")
+	default:
+		return errors.New("Cannot merge two sets of non-empty testing data")
 	}
 
 	return nil

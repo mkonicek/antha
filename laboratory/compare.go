@@ -13,7 +13,8 @@ import (
 
 // Compare compares output generated with any supplied test data in the workflow
 func (labBuild *LaboratoryBuilder) Compare() error {
-	if labBuild.workflow.Testing == nil {
+
+	if labBuild.workflow.Testing.MixTaskChecks == nil || len(labBuild.workflow.Testing.MixTaskChecks) == 0 {
 		return nil
 	}
 

@@ -146,13 +146,7 @@ func (t *Table) ToRows() Rows {
 // (exclusive).  Unlike go slices, if the end index is out of range then fewer
 // records are returned rather than receiving an error.
 func (t *Table) Slice(start, end Index) *Table {
-	newTable := newFromTable(t, t.sortKey...)
-	group := &iterGroup{func() interface{} { return newSeriesIterCache() }}
-	for i, ser := range t.series {
-		m := &seriesSlice{start: start, end: end, wrapped: ser, group: group}
-		newTable.series[i] = &Series{typ: ser.typ, col: ser.col, read: m.read, meta: m}
-	}
-	return newTable
+	return sliceTable(t, start, end)
 }
 
 // Head is a lazy subset of the first count records (but may return fewer).

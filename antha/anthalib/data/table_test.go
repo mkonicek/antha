@@ -764,6 +764,23 @@ func TestForeach(t *testing.T) {
 	})
 }
 
+func TestComposition(t *testing.T) {
+	runSubTests(t, func(t *testing.T, makeSeries makeSeriesType) {
+		// Compound operations tests can be added below.
+
+		// Extend + Project + Head: checking that an extension output column can be used in further operations
+		// even without extension source columns.
+		table := NewTable([]*Series{
+			makeSeries("a", []int64{1, 2, 3}, nil),
+		})
+		extendedProjectedTop := table.Must().Extend("e").On("a").Int64(func(v ...int64) (int64, bool) {
+			return v[0], true
+		}).Must().Project("e").Head(3)
+
+		assertEqual(t, table, extendedProjectedTop.Rename("e", "a"), "Extend + Project + Head")
+	})
+}
+
 type makeSeriesType func(col ColumnName, values interface{}, notNull []bool) *Series
 
 func runSubTests(t *testing.T, testFn func(t *testing.T, makeSeries makeSeriesType)) {

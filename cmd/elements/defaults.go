@@ -35,7 +35,10 @@ func defaults(l *logger.Logger, args []string) error {
 	} else if regex, err := regexp.Compile(regexStr); err != nil {
 		return err
 	} else {
-		// the map keys are the dir paths of the element so that it's the same for the antha file and the metadata
+		// The defaults service expects a JSON document where the keys are
+		// element names, and the values are the defaults dictionaries for those
+		// elements. We can get these from the metadata.json files throughout
+		// the Elements repo.
 		defaults := make(map[string]interface{})
 
 		for _, repo := range wf.Repositories {

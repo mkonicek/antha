@@ -60,12 +60,52 @@ func (i *extendRowSeries) Value() interface{} {
 	return v
 }
 
-// On chooses input columns of homogeneous static type. If duplicate columns
+// On selects a subset of columns to use as an extension source. If duplicate columns
 // exist, the first so named is used.  Note this does not panic yet, even if the
 // columns do not exist.  (However subsequent calls to the returned object will
 // error.)
 func (e *Extension) On(cols ...ColumnName) *ExtendOn {
 	return &ExtendOn{extension: e, meta: newExtendSeriesMeta(e.t.series, false), inputCols: cols}
+}
+
+// Interface adds a column of an arbitrary type using inputs of arbitrary types.
+func (e *ExtendOn) Interface(f func(v ...interface{}) interface{}, newType reflect.Type) (*Table, error) {
+	inputs, err := e.inputs(newType)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: either reflectively infer newType, or assert/verify the f return type
+	series := append(append([]*Series(nil), e.extension.t.series...), &Series{
+		col:  e.extension.newCol,
+		typ:  newType,
+		meta: e.meta,
+		read: func(cache *seriesIterCache) iterator {
+			colReader := make([]iterator, len(inputs))
+			for i, inputCol := range inputs {
+				colReader[i] = cache.Ensure(inputCol)
+			}
+			return &extendInterface{f: f, source: colReader}
+		}},
+	)
+
+	newT := newFromSeries(series, e.extension.t.sortKey...)
+	return newT, nil
+}
+
+type extendInterface struct {
+	f      func(v ...interface{}) interface{}
+	source []iterator
+}
+
+func (ei *extendInterface) Next() bool { return true }
+
+func (ei *extendInterface) Value() interface{} {
+	args := make([]interface{}, len(ei.source))
+	for i, s := range ei.source {
+		args[i] = s.Value()
+	}
+	return ei.f(args...)
 }
 
 // Constant adds a constant column with the given value to the table.  This
@@ -164,8 +204,10 @@ func (e *ExtendOn) inputs(asType reflect.Type) ([]*Series, error) {
 			return nil, errors.Wrapf(err, "extending new column %q", e.extension.newCol)
 		}
 		ser := e.extension.t.series[colIndex]
-		if err := ser.assignableTo(asType); err != nil {
-			return nil, errors.Wrapf(err, "when extending new column %q", e.extension.newCol)
+		if asType != nil {
+			if err := ser.assignableTo(asType); err != nil {
+				return nil, errors.Wrapf(err, "when extending new column %q", e.extension.newCol)
+			}
 		}
 		inputs[i] = ser
 	}

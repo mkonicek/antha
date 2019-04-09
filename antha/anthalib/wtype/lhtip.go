@@ -262,16 +262,16 @@ func (self *LHTip) CurrentWorkingVolume(*id.IDGenerator) wunit.Volume {
 
 //@implement LHContainer
 func (self *LHTip) AddComponent(idGen *id.IDGenerator, v *Liquid) error {
-	fv := self.CurrentVolume(idGen)
-	fv.Add(v.Volume())
+	newVolume := self.CurrentVolume(idGen)
+	newVolume.Add(v.Volume())
 
 	self.contents.Mix(idGen, v)
 
-	if fv.GreaterThan(self.MaxVol) {
-		return fmt.Errorf("Tip %s overfull, contains %v and maximum is %v", self.GetName(), fv, self.MaxVol)
+	if newVolume.GreaterThan(self.MaxVol.PlusEpsilon()) {
+		return fmt.Errorf("Tip %s overfull, contains %v and maximum is %v", self.GetName(), newVolume, self.MaxVol)
 	}
-	if fv.LessThan(self.MinVol) {
-		return fmt.Errorf("Added less than minimum volume to %s, contains %v and minimum working volume is %v", self.GetName(), fv, self.MinVol)
+	if newVolume.LessThan(self.MinVol.MinusEpsilon()) {
+		return fmt.Errorf("Added less than minimum volume to %s, contains %v and minimum working volume is %v", self.GetName(), newVolume, self.MinVol)
 	}
 	return nil
 }

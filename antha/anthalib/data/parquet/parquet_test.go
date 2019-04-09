@@ -2,6 +2,7 @@ package parquet
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"math"
 	"os"
@@ -15,62 +16,75 @@ func TestParquet(t *testing.T) {
 	table := data.NewTable([]*data.Series{
 		data.Must().NewSeriesFromSlice("bool_column", []bool{true, true, false, false, true}, nil),
 		data.Must().NewSeriesFromSlice("int64_column", []int64{10, 10, 30, -1, 5}, []bool{true, true, true, false, true}),
+		// TODO: int and other named aliases for primitive types are not supported yet; they should be supported by adding some kind of type info into Parquet metadata
 		data.Must().NewSeriesFromSlice("float32_column", []float64{1.5, 2.5, 3.5, math.NaN(), 5.5}, []bool{true, true, true, false, true}),
 		data.Must().NewSeriesFromSlice("string_column", []string{"", "aa", "xx", "aa", ""}, nil),
 		data.Must().NewSeriesFromSlice("timestamp_millis_column", []data.TimestampMillis{1, 2, 3, 4, 5}, nil),
 		data.Must().NewSeriesFromSlice("timestamp_micros_column", []data.TimestampMicros{1000, 2000, 3000, 4000, 5000}, nil),
 	})
+	// some columns subset
+	columns := []data.ColumnName{"int64_column", "string_column"}
 
 	// file: write + read
-	fileName := parquetFileName(t)
-	defer os.Remove(fileName)
+	parquetTest(t, "File", table, columns, func(src *data.Table, columns ...data.ColumnName) (*data.Table, error) {
+		fileName, err := parquetFileName()
+		if err != nil {
+			return nil, err
+		}
+		defer os.Remove(fileName)
 
-	if err := TableToFile(table, fileName); err != nil {
-		t.Errorf("TableToFile: %s", err)
-	}
+		if err := TableToFile(src, fileName); err != nil {
+			return nil, err
+		}
 
-	readTable, err := TableFromFile(fileName)
-	if err != nil {
-		t.Errorf("TableFromFile: %s", err)
-	}
-
-	assertEqual(t, table, readTable, "tables are different after serialization to a file")
+		return TableFromFile(fileName, columns...)
+	})
 
 	// bytes: write + read
-	blob, err := TableToBytes(table)
-	if err != nil {
-		t.Errorf("TableToBytes: %s", err)
-	}
+	parquetTest(t, "Bytes", table, columns, func(src *data.Table, columns ...data.ColumnName) (*data.Table, error) {
+		blob, err := TableToBytes(src)
+		if err != nil {
+			return nil, err
+		}
 
-	readTable, err = TableFromBytes(blob)
-	if err != nil {
-		t.Errorf("TableFromBytes: %s", err)
-	}
-
-	assertEqual(t, table, readTable, "tables are different after serialization to a memory buffer")
+		return TableFromBytes(blob, columns...)
+	})
 
 	// write to io.Writer + read from io.Reader
-	buffer := bytes.NewBuffer(nil)
+	parquetTest(t, "io.Writer + io.Reader", table, columns, func(src *data.Table, columns ...data.ColumnName) (*data.Table, error) {
+		buffer := bytes.NewBuffer(nil)
 
-	if err := TableToWriter(table, buffer); err != nil {
-		t.Errorf("TableToWriter: %s", err)
-	}
+		if err := TableToWriter(src, buffer); err != nil {
+			return nil, err
+		}
 
-	readTable, err = TableFromReader(buffer)
-	if err != nil {
-		t.Errorf("TableFromReader: %s", err)
-	}
-
-	assertEqual(t, table, readTable, "tables are different after serialization to io.Writer")
+		return TableFromReader(buffer, columns...)
+	})
 }
 
-func parquetFileName(t *testing.T) string {
+func parquetTest(t *testing.T, caption string, src *data.Table, columns []data.ColumnName, writeAndRead func(*data.Table, ...data.ColumnName) (*data.Table, error)) {
+	// write and read full table
+	dst, err := writeAndRead(src)
+	if err != nil {
+		t.Errorf("%s: %s", caption, err)
+	}
+	assertEqual(t, src, dst, fmt.Sprintf("%s: %s", caption, "tables are different after serialization"))
+
+	// write and read a subset of columns
+	dst, err = writeAndRead(src, columns...)
+	if err != nil {
+		t.Errorf("%s: %s", caption, err)
+	}
+	assertEqual(t, src.Must().Project(columns...), dst, fmt.Sprintf("%s: %s", caption, "tables are different after serialization"))
+}
+
+func parquetFileName() (string, error) {
 	f, err := ioutil.TempFile("", "table*.parquet")
 	if err != nil {
-		t.Errorf("create temp file: %s", err)
+		return "", err
 	}
 	defer f.Close() //nolint
-	return f.Name()
+	return f.Name(), nil
 }
 
 func assertEqual(t *testing.T, expected, actual *data.Table, msg string) {

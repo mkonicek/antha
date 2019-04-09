@@ -6,19 +6,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strings"
 
 	"github.com/antha-lang/antha/utils"
-)
-
-const (
-	ValidBasicId string = `^[0-9a-zA-Z_:-]*$`
-)
-
-var (
-	rxValidBasicId = regexp.MustCompile(ValidBasicId)
 )
 
 func (wf *Workflow) Validate() error {
@@ -45,9 +36,10 @@ func (sv SchemaVersion) Validate() error {
 func (basicId BasicId) Validate(permitEmpty bool) error {
 	if basicId == "" && !permitEmpty {
 		return errors.New("Invalid Id: may not be empty")
-	} else if !rxValidBasicId.MatchString(string(basicId)) {
-		return fmt.Errorf("Invalid Id '%v': Id must match the pattern %v", basicId, ValidBasicId)
 	}
+	// We rely on the json schema to enforce further value restrictions
+	// (i.e. there's a pattern in there - see
+	// workflow/schemas/workflow.schema.json)
 	return nil
 }
 

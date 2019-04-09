@@ -22,6 +22,8 @@ func newArrowSeriesFromSlice(col ColumnName, values interface{}, notNull []bool)
 		return newArrowSeriesFromSliceFloat64(col, typedValues, notNull), nil
 	case []int64:
 		return newArrowSeriesFromSliceInt64(col, typedValues, notNull), nil
+	case []int:
+		return newArrowSeriesFromSliceInt(col, typedValues, notNull), nil
 	case []string:
 		return newArrowSeriesFromSliceString(col, typedValues, notNull), nil
 	case []bool:
@@ -230,6 +232,104 @@ func (i *arrowSeriesIterInt64) Value() interface{} {
 
 var _ iterator = (*arrowSeriesIterInt64)(nil)
 var _ iterInt64 = (*arrowSeriesIterInt64)(nil)
+
+// int
+
+type arrowSeriesBuilderInt struct {
+	builder *array.Int64Builder
+	column  Column
+}
+
+func newArrowSeriesBuilderInt(col ColumnName) *arrowSeriesBuilderInt {
+	return &arrowSeriesBuilderInt{
+		builder: array.NewInt64Builder(memory.DefaultAllocator),
+		column: Column{
+			Name: col,
+			Type: typeInt,
+		},
+	}
+}
+
+func (b *arrowSeriesBuilderInt) Column() Column       { return b.column }
+func (b *arrowSeriesBuilderInt) Reserve(capacity int) { b.builder.Reserve(capacity) }
+func (b *arrowSeriesBuilderInt) Size() int            { return b.builder.Len() }
+
+func (b *arrowSeriesBuilderInt) Append(value interface{}) {
+	if value == nil {
+		b.builder.AppendNull()
+		return
+	}
+
+	typedValue := value.(int)
+	b.builder.Append(int64(typedValue))
+}
+
+func (b *arrowSeriesBuilderInt) AppendInt(value int, notNull bool) {
+	if !notNull {
+		b.builder.AppendNull()
+		return
+	}
+	b.builder.Append(int64(value))
+}
+
+func (b *arrowSeriesBuilderInt) Build() *Series {
+	metadata := &arrowSeriesMeta{values: b.builder.NewInt64Array()}
+	return &Series{
+		typ:  typeInt,
+		col:  b.column.Name,
+		read: metadata.readInt,
+		meta: metadata,
+	}
+}
+
+var _ seriesBuilderInt = (*arrowSeriesBuilderInt)(nil)
+
+func newArrowSeriesFromSliceInt(col ColumnName, values []int, mask []bool) *Series {
+	builder := newArrowSeriesBuilderInt(col)
+	builder.Reserve(len(values))
+
+	for i := range values {
+		builder.AppendInt(values[i], mask == nil || mask[i])
+	}
+
+	return builder.Build()
+}
+
+func (m *arrowSeriesMeta) readInt(_ *seriesIterCache) iterator {
+	return &arrowSeriesIterInt{
+		values: m.values.(*array.Int64),
+		pos:    -1,
+	}
+}
+
+type arrowSeriesIterInt struct {
+	values *array.Int64
+	pos    int
+}
+
+func (i *arrowSeriesIterInt) Next() bool {
+	i.pos++
+	return i.pos < i.values.Len()
+}
+
+func (i *arrowSeriesIterInt) Int() (int, bool) {
+	if !i.values.IsNull(i.pos) {
+		return int(i.values.Value(i.pos)), true
+	} else {
+		return 0, false
+	}
+}
+
+func (i *arrowSeriesIterInt) Value() interface{} {
+	if val, ok := i.Int(); ok {
+		return val
+	} else {
+		return nil
+	}
+}
+
+var _ iterator = (*arrowSeriesIterInt)(nil)
+var _ iterInt = (*arrowSeriesIterInt)(nil)
 
 // string
 

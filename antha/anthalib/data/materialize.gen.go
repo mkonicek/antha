@@ -14,6 +14,8 @@ func newSeriesBuilder(col ColumnName, typ reflect.Type, mode materializedType) (
 		return newSeriesBuilderFloat64(col, mode), nil
 	case typeInt64:
 		return newSeriesBuilderInt64(col, mode), nil
+	case typeInt:
+		return newSeriesBuilderInt(col, mode), nil
 	case typeString:
 		return newSeriesBuilderString(col, mode), nil
 	case typeBool:
@@ -33,6 +35,8 @@ func newSeriesCopier(s *Series, iter iterator, mode materializedType) (seriesCop
 		return newSeriesCopierFloat64(s, iter, mode), nil
 	case typeInt64:
 		return newSeriesCopierInt64(s, iter, mode), nil
+	case typeInt:
+		return newSeriesCopierInt(s, iter, mode), nil
 	case typeString:
 		return newSeriesCopierString(s, iter, mode), nil
 	case typeBool:
@@ -131,6 +135,49 @@ func newSeriesCopierInt64(s *Series, iter iterator, mode materializedType) *seri
 }
 
 func (c *seriesCopierInt64) CopyValue() { c.AppendInt64(c.iter.Int64()) }
+
+// int
+
+// seriesBuilderInt is a typed series builder for int
+type seriesBuilderInt interface {
+	seriesBuilder
+	AppendInt(value int, notNull bool)
+}
+
+func newSeriesBuilderInt(col ColumnName, mode materializedType) seriesBuilderInt {
+	switch mode {
+	case nativeSeries:
+		return newNativeSeriesBuilderInt(col)
+	case arrowSeries:
+		return newArrowSeriesBuilderInt(col)
+	default:
+		panic(errors.Errorf("unknown materialized series type %v", mode))
+	}
+}
+
+// copies a series: reads values from a source column iterator and writes them to a target column builder
+type seriesCopierInt struct {
+	seriesBuilderInt
+	iter iterInt
+}
+
+func newSeriesCopierInt(s *Series, iter iterator, mode materializedType) *seriesCopierInt {
+	// typed source series iterator
+	typedIter, err := s.iterateInt(iter)
+	if err != nil {
+		panic(errors.Wrapf(err, "SHOULD NOT HAPPEN: column %s is not Int", s.col))
+	}
+
+	// typed destination series builder
+	builder := newSeriesBuilderInt(s.col, mode)
+
+	return &seriesCopierInt{
+		seriesBuilderInt: builder,
+		iter:             typedIter,
+	}
+}
+
+func (c *seriesCopierInt) CopyValue() { c.AppendInt(c.iter.Int()) }
 
 // string
 

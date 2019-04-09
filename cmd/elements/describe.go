@@ -19,35 +19,13 @@ import (
 )
 
 func describe(l *logger.Logger, args []string) error {
-	const (
-		indent  = "\t"
-		indent2 = "\t\t"
-		indent3 = "\t\t\t"
-
-		fmtStr = `%v
-%sRepositoryName: %v
-%sElementPath: %v
-%sTags: %v
-%sDescription:
-%v
-%sPorts:
-%sInputs:
-%v
-%sParameters:
-%v
-%sOutputs:
-%v
-%sData:
-%v
-`
-	)
-
 	flagSet := flag.NewFlagSet(flag.CommandLine.Name()+" describe", flag.ContinueOnError)
 	flagSet.Usage = workflow.NewFlagUsage(flagSet, "Show descriptions of elements")
 
-	var regexStr, inDir string
+	var regexStr, inDir, outputFormat string
 	flagSet.StringVar(&regexStr, "regex", "", "Regular expression to match against element type path (optional)")
 	flagSet.StringVar(&inDir, "indir", "", "Directory from which to read files (optional)")
+	flagSet.StringVar(&outputFormat, "format", "human", "Format to output data in. One of [human, protobuf]")
 
 	if err := flagSet.Parse(args); err != nil {
 		return err
@@ -118,37 +96,87 @@ func describe(l *logger.Logger, args []string) error {
 				RepositoryName: ewm.repoName,
 			}
 			tet := composer.NewTranspilableElementType(et)
-			if antha, err := tet.EnsureTranspiler(ewm.anthaFilePath, ewm.element, ewm.meta); err != nil {
+			antha, err := tet.EnsureTranspiler(ewm.anthaFilePath, ewm.element, ewm.meta)
+			if err != nil {
 				return err
-			} else {
-				meta := antha.Meta
-				desc := indent2 + strings.Replace(strings.Trim(meta.Description, "\n"), "\n", "\n"+indent2, -1)
-				if inputs, err := formatFields(meta.Defaults, meta.Ports[token.INPUTS], indent3, indent); err != nil {
-					return err
-				} else if outputs, err := formatFields(meta.Defaults, meta.Ports[token.OUTPUTS], indent3, indent); err != nil {
-					return err
-				} else if params, err := formatFields(meta.Defaults, meta.Ports[token.PARAMETERS], indent3, indent); err != nil {
-					return err
-				} else if data, err := formatFields(meta.Defaults, meta.Ports[token.DATA], indent3, indent); err != nil {
-					return err
-				} else {
-					fmt.Printf(fmtStr,
-						et.Name(),
-						indent, et.RepositoryName,
-						indent, et.ElementPath,
-						indent, strings.Join(meta.Tags, ", "),
-						indent, desc,
-						indent,
-						indent2, inputs,
-						indent2, outputs,
-						indent2, params,
-						indent2, data,
-					)
+			}
+			switch outputFormat {
+			case "human":
+				{
+					if err := printHumanReadable(antha, et); err != nil {
+						return err
+					}
+
+				}
+			case "protobuf":
+				{
+					if err := printProtobuf(antha, et); err != nil {
+						return err
+					}
+				}
+			default:
+				{
+					return fmt.Errorf("Unknown format: '%v'", outputFormat)
 				}
 			}
 		}
 		return nil
 	}
+}
+
+func printProtobuf(antha *compile.Antha, et *workflow.ElementType) error {
+	fmt.Println(et.Name())
+	return nil
+}
+
+func printHumanReadable(antha *compile.Antha, et *workflow.ElementType) error {
+	const (
+		indent  = "\t"
+		indent2 = "\t\t"
+		indent3 = "\t\t\t"
+
+		fmtStr = `%v
+%sRepositoryName: %v
+%sElementPath: %v
+%sTags: %v
+%sDescription:
+%v
+%sPorts:
+%sInputs:
+%v
+%sParameters:
+%v
+%sOutputs:
+%v
+%sData:
+%v
+`
+	)
+	meta := antha.Meta
+	desc := indent2 + strings.Replace(strings.Trim(meta.Description, "\n"), "\n", "\n"+indent2, -1)
+	if inputs, err := formatFields(meta.Defaults, meta.Ports[token.INPUTS], indent3, indent); err != nil {
+		return err
+	} else if outputs, err := formatFields(meta.Defaults, meta.Ports[token.OUTPUTS], indent3, indent); err != nil {
+		return err
+	} else if params, err := formatFields(meta.Defaults, meta.Ports[token.PARAMETERS], indent3, indent); err != nil {
+		return err
+	} else if data, err := formatFields(meta.Defaults, meta.Ports[token.DATA], indent3, indent); err != nil {
+		return err
+	} else {
+		fmt.Printf(fmtStr,
+			et.Name(),
+			indent, et.RepositoryName,
+			indent, et.ElementPath,
+			indent, strings.Join(meta.Tags, ", "),
+			indent, desc,
+			indent,
+			indent2, inputs,
+			indent2, outputs,
+			indent2, params,
+			indent2, data,
+		)
+	}
+	return nil
 }
 
 func formatFields(defaults map[string]json.RawMessage, fields []*compile.Field, prefix, indent string) (string, error) {

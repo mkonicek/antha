@@ -20,10 +20,9 @@ func defaults(l *logger.Logger, args []string) error {
 	flagSet := flag.NewFlagSet(flag.CommandLine.Name()+" defaults", flag.ContinueOnError)
 	flagSet.Usage = workflow.NewFlagUsage(flagSet, "Gather defaults for an element set from metadata.json files in the repo")
 
-	var regexStr, inDir, outputFormat string
+	var regexStr, inDir string
 	flagSet.StringVar(&regexStr, "regex", "", "Regular expression to match against element type path (optional)")
 	flagSet.StringVar(&inDir, "indir", "", "Directory from which to read files (optional)")
-	flagSet.StringVar(&outputFormat, "format", "human", "Format to output data in. One of [human, json, protobuf]")
 
 	if err := flagSet.Parse(args); err != nil {
 		return err
@@ -59,7 +58,7 @@ func defaults(l *logger.Logger, args []string) error {
 
 				name, ok := doc["name"].(string)
 				if !ok {
-					return fmt.Errorf("Got unexpected data in name field: expected string, got %v", reflect.TypeOf(doc["name"]))
+					return fmt.Errorf("Got unexpected data in name field of %v: expected string, got %v", f.Name, reflect.TypeOf(doc["name"]))
 				}
 				defaults[name] = doc["defaults"]
 

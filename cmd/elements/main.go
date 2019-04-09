@@ -15,6 +15,7 @@ func main() {
 		"list":         list,
 		"makeworkflow": makeWorkflowCmd,
 		"describe":     describe,
+		"defaults":     defaults,
 	}
 
 	args := os.Args

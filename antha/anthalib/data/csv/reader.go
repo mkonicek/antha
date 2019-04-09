@@ -2,6 +2,7 @@ package csv
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/csv"
 	"io"
 	"os"
@@ -21,11 +22,23 @@ func TableFromFile(filePath string) (*data.Table, error) {
 	}
 	defer file.Close() //nolint
 
+	// reading a table from an io.Reader on the top of the CSV file
+	return TableFromReader(bufio.NewReader(file))
+}
+
+// TableFromBytes reads a data.Table eagerly from a memory buffer
+func TableFromBytes(buffer []byte) (*data.Table, error) {
+	// reading a table from an io.Reader on the top of a memory buffer
+	return TableFromReader(bytes.NewReader(buffer))
+}
+
+// TableFromReader reads a data.Table eagerly from io.Reader
+func TableFromReader(reader io.Reader) (*data.Table, error) {
 	// CSV reader
-	reader := csv.NewReader(bufio.NewReader(file))
+	csvReader := csv.NewReader(reader)
 
 	// reading schema
-	schema, err := readSchema(reader)
+	schema, err := readSchema(csvReader)
 	if err != nil {
 		return nil, errors.Wrapf(err, "reading CSV file schema")
 	}
@@ -39,7 +52,7 @@ func TableFromFile(filePath string) (*data.Table, error) {
 	// reading data
 	for line := 1; ; line++ {
 		// reading a record
-		record, err := reader.Read()
+		record, err := csvReader.Read()
 		if err == io.EOF {
 			break
 		}

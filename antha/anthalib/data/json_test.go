@@ -11,7 +11,8 @@ import (
 func TestTableJSON(t *testing.T) {
 	// Antha parameter values must currently roundtrip via json.
 	tab := NewTable([]*Series{
-		makeArrowSeries("measure", []float64{0, 2, 1000}, nil),
+		makeArrowSeries("float_measure", []float64{0, 2, 1000}, nil),
+		makeArrowSeries("int_measure", []int{1, 3, 100}, nil),
 		makeArrowSeries("time", []TimestampMillis{TimestampMillis(0), TimestampMillis(0), TimestampMillis(1)}, nil),
 		makeArrowSeries("label", []string{"", "abcdef", "abcd"}, []bool{false, true, true}),
 	})

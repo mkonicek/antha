@@ -19,6 +19,7 @@ type csvType struct {
 var csvTypes = [...]csvType{
 	{name: "bool", typ: reflect.TypeOf(false), parse: parseBool},
 	{name: "int64", typ: reflect.TypeOf(int64(0)), parse: parseInt64},
+	{name: "int", typ: reflect.TypeOf(0), parse: parseInt},
 	{name: "float64", typ: reflect.TypeOf(float64(0)), parse: parseFloat64},
 	{name: "string", typ: reflect.TypeOf(""), parse: parseString},
 	{name: "TimestampMillis", typ: reflect.TypeOf(data.TimestampMillis(0)), parse: parseTimestampMillis},
@@ -65,6 +66,14 @@ func parseInt64(s string) (interface{}, error) {
 		return nil, err
 	}
 	return value, nil
+}
+
+func parseInt(s string) (interface{}, error) {
+	value, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	return int(value), nil
 }
 
 func parseTimestampMillis(s string) (interface{}, error) {

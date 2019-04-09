@@ -146,13 +146,7 @@ func (t *Table) ToRows() Rows {
 // (exclusive).  Unlike go slices, if the end index is out of range then fewer
 // records are returned rather than receiving an error.
 func (t *Table) Slice(start, end Index) *Table {
-	newTable := newFromTable(t, t.sortKey...)
-	group := &iterGroup{func() interface{} { return newSeriesIterCache() }}
-	for i, ser := range t.series {
-		m := &seriesSlice{start: start, end: end, wrapped: ser, group: group}
-		newTable.series[i] = &Series{typ: ser.typ, col: ser.col, read: m.read, meta: m}
-	}
-	return newTable
+	return sliceTable(t, start, end)
 }
 
 // Head is a lazy subset of the first count records (but may return fewer).
@@ -389,6 +383,12 @@ func (t *Table) Extend(newCol ColumnName) *Extension {
 	return &Extension{newCol: newCol, t: t}
 }
 
+// Update replaces the values in the column 'col'.  Use the returned
+// object to construct a derived table.
+func (t *Table) Update(col ColumnName) *UpdateSelection {
+	return &UpdateSelection{t: t, col: col}
+}
+
 // Pivot takes a "narrow" table containing "column names" and "column values", for instance:
 //
 //  | |    Key|    Pivot|    Value|
@@ -443,4 +443,16 @@ func (t *Table) Pivot() *PivotSelection {
 //  |4|         key3| someLeftValue4|          key3| someRightValue2|
 func (t *Table) Join() *JoinSelection {
 	return &JoinSelection{t: t}
+}
+
+// Foreach iterates over a subset of columns of a table using a user-defined function.
+// May be useful for:
+//
+// - reading table contents into some user-defined data struct (e.g. a map)
+//
+// - computing some scalar aggregate (e.g. MIN(column))
+//
+// Use the returned object to specify the columns and the function.
+func (t *Table) Foreach() *ForeachSelection {
+	return &ForeachSelection{t: t}
 }

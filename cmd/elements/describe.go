@@ -38,10 +38,12 @@ func describe(l *logger.Logger, args []string) error {
 	flagSet := flag.NewFlagSet(flag.CommandLine.Name()+" describe", flag.ContinueOnError)
 	flagSet.Usage = workflow.NewFlagUsage(flagSet, "Show descriptions of elements")
 
-	var regexStr, inDir, outputFormat string
+	var regexStr, inDir, outputFormat, gitSHA, gitRepoURL string
 	flagSet.StringVar(&regexStr, "regex", "", "Regular expression to match against element type path (optional)")
 	flagSet.StringVar(&inDir, "indir", "", "Directory from which to read files (optional)")
 	flagSet.StringVar(&outputFormat, "format", "human", "Format to output data in. One of [human, json, protobuf]")
+	flagSet.StringVar(&gitSHA, "git-sha", "", "Git SHA to show in element version info")
+	flagSet.StringVar(&gitRepoURL, "git-repo-url", "", "Git repo URL to show in element version info")
 
 	if err := flagSet.Parse(args); err != nil {
 		return err
@@ -94,6 +96,16 @@ func describe(l *logger.Logger, args []string) error {
 			}
 		}
 
+		var gitVersion *elementpb.Element_GitVersion
+		if len(gitSHA) > 0 {
+			gitVersion = &elementpb.Element_GitVersion{
+				GitVersion: &elementpb.GitVersion{
+					Sha:     gitSHA,
+					RepoUrl: gitRepoURL,
+				},
+			}
+		}
+
 		sort.Strings(elementNames)
 
 		// To stay compatible with the previous code that generated the
@@ -132,7 +144,7 @@ func describe(l *logger.Logger, args []string) error {
 				}
 			case "json", "protobuf":
 				{
-					elem, err := getProtobufElement(antha, et, ewm)
+					elem, err := getProtobufElement(antha, et, ewm, gitVersion)
 					if err != nil {
 						return err
 					}
@@ -198,12 +210,13 @@ func protobufPorts(fields []*compile.Field, kind string) ([]*elementpb.Port, err
 	return result, nil
 }
 
-func getProtobufElement(antha *compile.Antha, et *workflow.ElementType, ewm *elementWithMeta) (*elementpb.Element, error) {
+func getProtobufElement(antha *compile.Antha, et *workflow.ElementType, ewm *elementWithMeta, gitVersion *elementpb.Element_GitVersion) (*elementpb.Element, error) {
 	e := &elementpb.Element{
 		Name:        string(et.Name()),
 		Package:     string(ewm.repoName) + "/" + path.Dir(ewm.anthaFilePath),
 		Description: antha.Meta.Description,
 		Tags:        antha.Meta.Tags,
+		Version:     gitVersion,
 	}
 	// Build in ports
 	inputs, err := protobufPorts(antha.Meta.Ports[token.INPUTS], "Inputs")
@@ -233,7 +246,6 @@ func getProtobufElement(antha *compile.Antha, et *workflow.ElementType, ewm *ele
 	}
 
 	// TODO: set these?
-	// e.Version =
 	// e.BuildOutput =
 	// e.CreatedBy =
 

@@ -14,7 +14,7 @@ import (
 // Compare compares output generated with any supplied test data in the workflow
 func (labBuild *LaboratoryBuilder) Compare() error {
 
-	if labBuild.Workflow.Testing.MixTaskChecks == nil || len(labBuild.Workflow.Testing.MixTaskChecks) == 0 {
+	if len(labBuild.Workflow.Testing.MixTaskChecks) == 0 {
 		return nil
 	}
 
@@ -35,7 +35,7 @@ func (labBuild *LaboratoryBuilder) Compare() error {
 		}
 	}
 
-	filename := filepath.Join(labBuild.outDir, "comparisons.txt")
+	filename := filepath.Join(labBuild.outDir, "comparisons.json")
 	if err := errs.WriteToFile(filename); err != nil {
 		return fmt.Errorf("errors writing comparison results to file, %v", err)
 	} else if errs.Pack() != nil {

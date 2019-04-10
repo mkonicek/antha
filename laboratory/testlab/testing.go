@@ -101,7 +101,7 @@ func withTestLab(t *testing.T, inDir string, callbacks *TestElementCallbacks) {
 }
 
 func NewTestLabEffects(fm *effects.FileManager, inv *inventory.Inventory) *effects.LaboratoryEffects {
-	return effects.NewLaboratoryEffects(workflow.JobId("testing"), fm, inv)
+	return effects.NewLaboratoryEffects(workflow.BasicId("testing"), fm, inv)
 }
 
 func EnsureSharedInventory() *inventory.Inventory {

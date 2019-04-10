@@ -8,10 +8,6 @@ import (
 	"github.com/antha-lang/antha/inventory/plates"
 )
 
-const (
-	batchSize = 8
-)
-
 type PlateCache struct {
 	lock sync.Mutex
 
@@ -34,7 +30,7 @@ func (pc *PlateCache) NewPlate(typ wtype.PlateTypeName) (*wtype.Plate, error) {
 
 	plates, found := pc.platesByType[typ]
 	if !found {
-		plates = make([]*wtype.Plate, 0, batchSize)
+		plates = make([]*wtype.Plate, 0, 1)
 	}
 
 	if len(plates) == 0 {

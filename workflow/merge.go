@@ -24,7 +24,22 @@ func (a *Workflow) Merge(b *Workflow) error {
 		a.Elements.merge(b.Elements),
 		a.Inventory.merge(b.Inventory),
 		a.Config.merge(b.Config),
+		a.Testing.merge(b.Testing),
 	}.Pack()
+}
+
+func (a *Testing) merge(b Testing) error {
+	if a == nil {
+		return nil
+	}
+
+	if len(a.MixTaskChecks) == 0 {
+		a.MixTaskChecks = b.MixTaskChecks
+	} else if len(b.MixTaskChecks) != 0 {
+		return errors.New("Cannot merge two sets of non-empty testing data")
+	}
+
+	return nil
 }
 
 func (a *BasicId) Merge(b BasicId) error {

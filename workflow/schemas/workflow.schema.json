@@ -81,6 +81,17 @@
                 "$ref": "#/definitions/deviceClass"
             },
             "required": []
+        },
+        "Testing": {
+            "type": "object",
+            "propertyies" : {
+                "MixTaskChecks" : {
+                    "type" : "array",
+                    "items" : {
+                        "$ref": "#/definitions/mixTaskCheck"
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -184,6 +195,20 @@
             },
             "additionalProperties": false,
             "required": []
+        },
+        "mixTaskCheck": {
+            "type": "object",
+            "properties": {
+                "Instructions": { 
+                    "type": "array"
+                },
+                "Outputs" : {
+                    "type": "array"
+                },
+                "TimeEstimate": {
+                    "type": "array"
+                }
+            }
         }
     }
 }

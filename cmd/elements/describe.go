@@ -35,18 +35,43 @@ type elementWithMeta struct {
 	meta          []byte
 }
 
+const (
+	outputFormatHuman    = "human"
+	outputFormatJSON     = "json"
+	outputFormatProtobuf = "protobuf"
+)
+
 func describe(l *logger.Logger, args []string) error {
 	flagSet := flag.NewFlagSet(flag.CommandLine.Name()+" describe", flag.ContinueOnError)
 	flagSet.Usage = workflow.NewFlagUsage(flagSet, "Show descriptions of elements")
 
+	validOutputFormats := []string{
+		outputFormatHuman,
+		outputFormatJSON,
+		outputFormatProtobuf,
+	}
+
 	var regexStr, inDir, outputFormat string
 	flagSet.StringVar(&regexStr, "regex", "", "Regular expression to match against element type path (optional)")
 	flagSet.StringVar(&inDir, "indir", "", "Directory from which to read files (optional)")
-	flagSet.StringVar(&outputFormat, "format", "human", "Format to output data in. One of [human, json, protobuf]")
+	flagSet.StringVar(&outputFormat, "format", "human", fmt.Sprintf("Format to output data in. One of %v", validOutputFormats))
 
 	if err := flagSet.Parse(args); err != nil {
 		return err
-	} else if wfPaths, err := workflow.GatherPaths(flagSet, inDir); err != nil {
+	}
+
+	isValidOutputFormat := false
+	for _, f := range validOutputFormats {
+		if outputFormat == f {
+			isValidOutputFormat = true
+			break
+		}
+	}
+	if !isValidOutputFormat {
+		return fmt.Errorf("'%v' is not a valid output format. Use one of %v", outputFormat, validOutputFormats)
+	}
+
+	if wfPaths, err := workflow.GatherPaths(flagSet, inDir); err != nil {
 		return err
 	} else if rs, err := workflow.ReadersFromPaths(wfPaths); err != nil {
 		return err
@@ -125,24 +150,20 @@ func describe(l *logger.Logger, args []string) error {
 				return err
 			}
 			switch outputFormat {
-			case "human":
+			case outputFormatHuman:
 				{
 					if err := printHumanReadable(antha, et); err != nil {
 						return err
 					}
 
 				}
-			case "json", "protobuf":
+			case outputFormatJSON, outputFormatProtobuf:
 				{
 					elem, err := getProtobufElement(antha, et, ewm)
 					if err != nil {
 						return err
 					}
 					pbElements = append(pbElements, elem)
-				}
-			default:
-				{
-					return fmt.Errorf("Unknown format: '%v'", outputFormat)
 				}
 			}
 		}
@@ -151,7 +172,7 @@ func describe(l *logger.Logger, args []string) error {
 		defer w.Flush()
 
 		switch outputFormat {
-		case "protobuf":
+		case outputFormatProtobuf:
 			{
 				elements := &protobuf.Elements{
 					Elements: pbElements,
@@ -165,7 +186,7 @@ func describe(l *logger.Logger, args []string) error {
 					return err
 				}
 			}
-		case "json":
+		case outputFormatJSON:
 			{
 				bs, err := json.Marshal(pbElements)
 				if err != nil {

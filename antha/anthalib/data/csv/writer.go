@@ -2,8 +2,10 @@ package csv
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/csv"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/antha-lang/antha/antha/anthalib/data"
@@ -19,12 +21,30 @@ func TableToFile(table *data.Table, filePath string) error {
 	}
 	defer file.Close() //nolint
 
+	// writing the table
+	return TableToWriter(table, bufio.NewWriter(file))
+}
+
+// TableToBytes writes a data.Table to a memory buffer
+func TableToBytes(table *data.Table) ([]byte, error) {
+	// a memory buffer writer
+	buffer := bytes.NewBuffer(nil)
+
+	// writing the table
+	if err := TableToWriter(table, buffer); err != nil {
+		return nil, err
+	}
+	return buffer.Bytes(), nil
+}
+
+// TableToWriter writes a data.Table to io.Writer
+func TableToWriter(table *data.Table, writer io.Writer) error {
 	// CSV writer
-	writer := csv.NewWriter(bufio.NewWriter(file))
+	csvWriter := csv.NewWriter(writer)
 
 	// writing CSV header
 	schema := table.Schema()
-	err = writeHeader(&schema, writer)
+	err := writeHeader(&schema, csvWriter)
 	if err != nil {
 		return errors.Wrap(err, "writing a CSV header")
 	}
@@ -44,12 +64,12 @@ func TableToFile(table *data.Table, filePath string) error {
 		record := rowToCsvRecord(row, &schema)
 
 		// writing to buffer
-		if err := writer.Write(record); err != nil {
+		if err := csvWriter.Write(record); err != nil {
 			return errors.Wrapf(err, "writing a CSV header at line %d", line)
 		}
 	}
 
-	writer.Flush()
+	csvWriter.Flush()
 	return nil
 }
 

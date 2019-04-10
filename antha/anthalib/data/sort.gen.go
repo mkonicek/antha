@@ -17,6 +17,8 @@ func newNativeCompareFunc(nativeSeries *Series, asc bool) (compareFunc, error) {
 		return newNativeCompareFuncFloat64(meta, asc), nil
 	case typeInt64:
 		return newNativeCompareFuncInt64(meta, asc), nil
+	case typeInt:
+		return newNativeCompareFuncInt(meta, asc), nil
 	case typeString:
 		return newNativeCompareFuncString(meta, asc), nil
 	case typeBool:
@@ -44,6 +46,8 @@ func newNativeSwapFunc(nativeSeries *Series) swapFunc {
 		return newNativeSwapFuncFloat64(meta)
 	case typeInt64:
 		return newNativeSwapFuncInt64(meta)
+	case typeInt:
+		return newNativeSwapFuncInt(meta)
 	case typeString:
 		return newNativeSwapFuncString(meta)
 	case typeBool:
@@ -129,6 +133,45 @@ func rawCompareInt64(val1, val2 int64) int {
 
 func newNativeSwapFuncInt64(nativeMeta *nativeSeriesMeta) swapFunc {
 	data := nativeMeta.rValue.Interface().([]int64)
+	notNull := nativeMeta.notNull
+	return func(i, j int) {
+		data[i], data[j] = data[j], data[i]
+		notNull.Swap(i, j)
+	}
+}
+
+// int
+
+func newNativeCompareFuncInt(nativeMeta *nativeSeriesMeta, asc bool) compareFunc {
+	data := nativeMeta.rValue.Interface().([]int)
+	notNull := nativeMeta.notNull
+
+	return func(i, j int) int {
+		return compareInt(data[i], notNull.Test(i), data[j], notNull.Test(j), asc)
+	}
+}
+
+func compareInt(val1 int, notNull1 bool, val2 int, notNull2 bool, asc bool) int {
+	result, ok := compareNulls(notNull1, notNull2)
+	if !ok {
+		result = rawCompareInt(val1, val2)
+	}
+	return applyAsc(result, asc)
+}
+
+func rawCompareInt(val1, val2 int) int {
+	switch {
+	case val1 < val2:
+		return -1
+	case val1 > val2:
+		return 1
+	default:
+		return 0
+	}
+}
+
+func newNativeSwapFuncInt(nativeMeta *nativeSeriesMeta) swapFunc {
+	data := nativeMeta.rValue.Interface().([]int)
 	notNull := nativeMeta.notNull
 	return func(i, j int) {
 		data[i], data[j] = data[j], data[i]

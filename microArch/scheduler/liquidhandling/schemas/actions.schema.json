@@ -337,13 +337,23 @@
         "promptAction": {
             "description": "describes an on-screen prompt which waits for user input",
             "type": "object",
-            "required": [ "kind", "message" ],
+            "required": [ "kind", "message", "time_estimate", "cumulative_time_estimate" ],
             "properties": {
                 "kind": { "const": "prompt" },
                 "message": {
                     "description": "the message that is shown to the user",
                     "type": "string"
-                }
+                },
+				"time_estimate" : {
+				    "description": "estimate of time taken for this instruction, in seconds",
+                    "type": "number",
+                    "minimum": 0.0
+				},
+				"cumulative_time_estimate" : {
+				    "description": "estimate of total time taken for the run so far after this instruction has completed, in seconds",
+                    "type": "number",
+                    "minimum": 0.0
+				}
             },
             "additionalProperties": false
         },

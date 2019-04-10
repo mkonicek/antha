@@ -78,6 +78,43 @@ func (o *MustFilterOn) Int64(m MatchInt64, assertions ...SchemaAssertion) *Table
 	return t
 }
 
+// MatchInt implements a filter on int columns.
+type MatchInt func(...int) bool
+
+// Int matches the named column values as int arguments.
+// If any column is nil the filter is automatically false.
+// If given any SchemaAssertions, they are called now and may have side effects.
+func (o *FilterOn) Int(fn MatchInt, assertions ...SchemaAssertion) (*Table, error) {
+	if err := o.checkSchema(typeInt, assertions...); err != nil {
+		return nil, errors.Wrapf(err, "can't filter %+v with %+v", o.t, fn)
+	}
+
+	projection := mustNewProjection(o.t.schema, o.cols...)
+
+	matchGen := func() rawMatch {
+		return func(r raw) bool {
+			matchVals := make([]int, len(o.cols))
+			for new, old := range projection.newToOld {
+				val := r[old]
+				if val == nil {
+					return false
+				}
+				matchVals[new] = val.(int)
+			}
+			return fn(matchVals...)
+		}
+	}
+
+	return filterTable(matchGen, o.t), nil
+}
+
+// Int matches the named column values as int arguments.
+func (o *MustFilterOn) Int(m MatchInt, assertions ...SchemaAssertion) *Table {
+	t, err := o.FilterOn.Int(m, assertions...)
+	handle(err)
+	return t
+}
+
 // MatchString implements a filter on string columns.
 type MatchString func(...string) bool
 

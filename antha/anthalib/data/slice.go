@@ -1,29 +1,95 @@
 package data
 
-type slicer struct {
-	*seriesSlice
-	iterator
-	pos         Index
-	commonState *seriesIterCache
-}
-
-func (iter *slicer) Next() bool {
-	for iter.pos+1 < iter.start {
-		if !iter.iterator.Next() {
-			return false
+// Table.Slice implementation.
+func sliceTable(t *Table, start, end Index) *Table {
+	newTable := newFromTable(t, t.sortKey...)
+	// the common state generator func
+	group := &iterGroup{func() interface{} {
+		return &sliceState{
+			start:     start,
+			end:       end,
+			source:    newTableIterator(t.series),
+			sourcePos: -1,
 		}
-		iter.pos++
+	}}
+	for i, ser := range t.series {
+		// metadata
+		m := &seriesSlice{
+			start:    start,
+			end:      end,
+			colIndex: i,
+			wrapped:  ser,
+			group:    group,
+		}
+		// slice series
+		newTable.series[i] = &Series{
+			typ:  ser.typ,
+			col:  ser.col,
+			read: m.read,
+			meta: m,
+		}
 	}
-	iter.pos++
-	if iter.pos == iter.end {
-		return false
-	}
-	// see if we exhausted the underlying series
-	return iter.iterator.Next()
+	return newTable
 }
 
+// Common state of several slice series. They share the source table iterator (including series iterators cache).
+type sliceState struct {
+	start, end Index
+	source     *tableIterator
+	sourceNext bool
+	sourcePos  Index
+}
+
+func (st *sliceState) advance() {
+	for st.sourcePos+1 < st.start {
+		if !st.source.Next() {
+			st.sourceNext = false
+			return
+		}
+		st.sourcePos++
+	}
+	if st.sourcePos+1 == st.end || !st.source.Next() {
+		st.sourceNext = false
+		return
+	}
+	st.sourcePos++
+	st.sourceNext = true
+}
+
+func (st *sliceState) pos() Index {
+	if st.sourcePos == -1 {
+		return -1
+	}
+	return st.sourcePos - st.start
+}
+
+// Slice series iterator.
+type sliceIter struct {
+	commonState *sliceState
+	pos         Index
+	colIndex    int
+}
+
+// Next advances the common state provided that iter.pos is already up to date.
+func (iter *sliceIter) Next() bool {
+	// see if we need to discard the current shared state
+	retain := iter.pos != iter.commonState.pos()
+	if !retain {
+		iter.commonState.advance()
+		iter.pos = iter.commonState.pos()
+	}
+	return iter.commonState.sourceNext
+}
+
+// Value reads the cached column value.
+func (iter *sliceIter) Value() interface{} {
+	return iter.commonState.source.colReader[iter.colIndex].Value()
+}
+
+// Slice series metadata.
 type seriesSlice struct {
 	start, end Index
+	colIndex   int
 	group      *iterGroup
 	// this is the wrapped, underlying series
 	wrapped *Series
@@ -34,14 +100,11 @@ func (ss *seriesSlice) length() int {
 }
 
 func (ss *seriesSlice) read(cache *seriesIterCache) iterator {
-	sl := &slicer{
-		seriesSlice: ss,
+	return &sliceIter{
+		commonState: cache.EnsureGroup(ss.group).(*sliceState),
 		pos:         -1,
-		commonState: cache.EnsureGroup(ss.group).(*seriesIterCache),
+		colIndex:    ss.colIndex,
 	}
-	// the wrapped iterator is placed in nested cache
-	sl.iterator = sl.commonState.Ensure(ss.wrapped)
-	return sl
 }
 
 func (ss *seriesSlice) IsMaterialized() bool { return false }

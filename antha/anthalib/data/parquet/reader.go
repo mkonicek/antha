@@ -13,8 +13,9 @@ import (
 	"github.com/xitongsys/parquet-go/parquet"
 )
 
-// TableFromReader reads a data.Table eagerly from io.Reader
-func TableFromReader(reader io.Reader) (*data.Table, error) {
+// TableFromReader reads a data.Table eagerly from io.Reader.
+// If at least one column name is specified, reads a subset of the columns from the source. Otherwise, reads all the columns.
+func TableFromReader(reader io.Reader, columnNames ...data.ColumnName) (*data.Table, error) {
 	// reading into a memory buffer
 	buffer, err := ioutil.ReadAll(reader)
 	if err != nil {
@@ -22,20 +23,25 @@ func TableFromReader(reader io.Reader) (*data.Table, error) {
 	}
 
 	// reading the table
-	return TableFromBytes(buffer)
+	return TableFromBytes(buffer, columnNames...)
 }
 
 // TableFromBytes reads a data.Table eagerly from a memory buffer
-func TableFromBytes(buffer []byte) (*data.Table, error) {
+// If at least one column name is specified, reads a subset of the columns from the source. Otherwise, reads all the columns.
+func TableFromBytes(buffer []byte, columnNames ...data.ColumnName) (*data.Table, error) {
 	// wrap a byte buffer into a ParquetFile object
-	file := newReadOnlyMemoryParquetFile(buffer)
+	file, err := ParquetFile.NewBufferFile(buffer)
+	if err != nil {
+		panic(errors.Wrap(err, "SHOULD NOT HAPPEN: creating in-memory ParquetFile"))
+	}
 
 	// reading the table
-	return readTable(file)
+	return readTable(file, columnNames)
 }
 
 // TableFromFile reads a data.Table eagerly from a Parquet file
-func TableFromFile(filePath string) (*data.Table, error) {
+// If at least one column name is specified, reads a subset of the columns from the source. Otherwise, reads all the columns.
+func TableFromFile(filePath string, columnNames ...data.ColumnName) (*data.Table, error) {
 	// opening the file on disk via ParquetFile object
 	file, err := ParquetFile.NewLocalFileReader(filePath)
 	if err != nil {
@@ -44,11 +50,11 @@ func TableFromFile(filePath string) (*data.Table, error) {
 	defer file.Close() //nolint
 
 	// reading the table
-	return readTable(file)
+	return readTable(file, columnNames)
 }
 
 // reads a table from an arbitrary source (in the form of ParquetFile)
-func readTable(file ParquetFile.ParquetFile) (*data.Table, error) {
+func readTable(file ParquetFile.ParquetFile, columnNames []data.ColumnName) (*data.Table, error) {
 	// reading Parquet file metadata
 	metadata, err := readMetadata(file)
 	if err != nil {
@@ -56,7 +62,7 @@ func readTable(file ParquetFile.ParquetFile) (*data.Table, error) {
 	}
 
 	// transforming Parquet file metadata into parquetSchema
-	schema, err := schemaFromParquetMetadata(metadata)
+	schema, err := schemaFromParquetMetadata(metadata, columnNames)
 	if err != nil {
 		return nil, err
 	}
@@ -93,17 +99,16 @@ func readTable(file ParquetFile.ParquetFile) (*data.Table, error) {
 
 // reads Parquet file metadata
 func readMetadata(file ParquetFile.ParquetFile) (*parquet.FileMetaData, error) {
-	// opening the file copy
-	file, err := file.Open("")
-	if err != nil {
-		return nil, errors.Wrapf(err, "open Parquet file")
-	}
-	defer file.Close() //nolint
-
 	// reading parquet file footer
 	parquetReader, err := ParquetReader.NewParquetReader(file, nil, 1)
 	if err != nil {
 		return nil, errors.Wrap(err, "create Parquet reader")
+	}
+
+	// seeking to the beginning of the file again
+	_, err = file.Seek(0, io.SeekStart)
+	if err != nil {
+		return nil, errors.Wrap(err, "ParquetFile.Seek")
 	}
 
 	return parquetReader.Footer, nil
@@ -115,13 +120,6 @@ func readFromParquet(file ParquetFile.ParquetFile, jsonSchema string, rowType re
 	// TODO: which parameters to use for really large datasets?
 	np := 1
 	batchSize := 100
-
-	// opening the file copy
-	file, err := file.Open("")
-	if err != nil {
-		return errors.Wrapf(err, "open Parquet file")
-	}
-	defer file.Close() //nolint
 
 	// parquet reader
 	parquetReader, err := ParquetReader.NewParquetReader(file, nil, int64(np))

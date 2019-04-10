@@ -18,7 +18,7 @@ import (
 
 	"github.com/antha-lang/antha/protobuf"
 
-	elementpb "github.com/Synthace/microservice/cmd/element/protobuf"
+	element "github.com/Synthace/microservice/cmd/element/protobuf"
 
 	"github.com/antha-lang/antha/antha/compile"
 	"github.com/antha-lang/antha/antha/token"
@@ -96,10 +96,10 @@ func describe(l *logger.Logger, args []string) error {
 			}
 		}
 
-		var gitVersion *elementpb.Element_GitVersion
+		var gitVersion *element.Element_GitVersion
 		if len(gitSHA) > 0 {
-			gitVersion = &elementpb.Element_GitVersion{
-				GitVersion: &elementpb.GitVersion{
+			gitVersion = &element.Element_GitVersion{
+				GitVersion: &element.GitVersion{
 					Sha:     gitSHA,
 					RepoUrl: gitRepoURL,
 				},
@@ -110,14 +110,14 @@ func describe(l *logger.Logger, args []string) error {
 
 		// To stay compatible with the previous code that generated the
 		// elements.pb file, we need to serialise everything in one go, as an
-		// array of elementpb.Element instances inside a protobuf.Elements
+		// array of element.Element instances inside a protobuf.Elements
 		// wrapper, which means we have to store all elements in memory until
 		// we're done. Urgh. Since we're doing that for the protobuf code, we
 		// may as well do the same thing for JSON. But ideally we'll switch the
 		// elements microservice to accept a JSON payload, kill the
 		// outputFormat=protobuf code paths here, then we can write the JSON to
 		// STDOUT one element at a time.
-		var pbElements []*elementpb.Element
+		var pbElements []*element.Element
 
 		for _, name := range elementNames {
 			ewm := elements[name]
@@ -192,14 +192,14 @@ func describe(l *logger.Logger, args []string) error {
 	}
 }
 
-func protobufPorts(fields []*compile.Field, kind string) ([]*elementpb.Port, error) {
-	var result []*elementpb.Port
+func protobufPorts(fields []*compile.Field, kind string) ([]*element.Port, error) {
+	var result []*element.Port
 	for _, field := range fields {
 		typeString, err := field.TypeString()
 		if err != nil {
 			return nil, err
 		}
-		port := &elementpb.Port{
+		port := &element.Port{
 			Name:        field.Name,
 			Type:        typeString,
 			Description: field.Meta.Description,
@@ -210,8 +210,8 @@ func protobufPorts(fields []*compile.Field, kind string) ([]*elementpb.Port, err
 	return result, nil
 }
 
-func getProtobufElement(antha *compile.Antha, et *workflow.ElementType, ewm *elementWithMeta, gitVersion *elementpb.Element_GitVersion) (*elementpb.Element, error) {
-	e := &elementpb.Element{
+func getProtobufElement(antha *compile.Antha, et *workflow.ElementType, ewm *elementWithMeta, gitVersion *element.Element_GitVersion) (*element.Element, error) {
+	e := &element.Element{
 		Name:        string(et.Name()),
 		Package:     string(ewm.repoName) + "/" + path.Dir(ewm.anthaFilePath),
 		Description: antha.Meta.Description,
@@ -240,7 +240,7 @@ func getProtobufElement(antha *compile.Antha, et *workflow.ElementType, ewm *ele
 	}
 	e.OutPorts = append(outputs, data...)
 
-	e.Body = &elementpb.Output{
+	e.Body = &element.Output{
 		Body:     ewm.element,
 		Complete: true,
 	}

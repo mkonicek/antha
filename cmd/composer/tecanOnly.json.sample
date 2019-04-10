@@ -1,0 +1,18 @@
+{
+    "SchemaVersion": "2.0",
+    "Config": {
+        "GlobalMixer": {
+            "PrintInstructions": false,
+            "UseDriverTipTracking": true
+        },
+
+        "Tecan": {
+            "Devices": {
+                "Trevor": {
+                    "Model": "Evo",
+                    "InputPlateTypes": ["pcrplate_skirted"]
+                }
+            }
+        }
+    }
+}

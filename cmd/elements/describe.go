@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -200,7 +201,7 @@ func protobufPorts(fields []*compile.Field, kind string) ([]*elementpb.Port, err
 func getProtobufElement(antha *compile.Antha, et *workflow.ElementType, ewm *elementWithMeta) (*elementpb.Element, error) {
 	e := &elementpb.Element{
 		Name:        string(et.Name()),
-		Package:     string(et.ElementPath), // FIXME: no idea if this is correct
+		Package:     string(ewm.repoName) + "/" + path.Dir(ewm.anthaFilePath),
 		Description: antha.Meta.Description,
 		Tags:        antha.Meta.Tags,
 	}

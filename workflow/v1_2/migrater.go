@@ -99,7 +99,7 @@ func (m *Migrater) migrateTesting() error {
 		})
 	}
 
-	m.Cur.Testing = &workflow.Testing{
+	m.Cur.Testing = workflow.Testing{
 		MixTaskChecks: mixChecks,
 	}
 

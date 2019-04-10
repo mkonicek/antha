@@ -64,22 +64,19 @@ type LaboratoryBuilder struct {
 	instrs effects.Insts
 }
 
-func EmptyLaboratoryBuilder(fatalFunc func(error)) *LaboratoryBuilder {
+func EmptyLaboratoryBuilder() *LaboratoryBuilder {
 	labBuild := &LaboratoryBuilder{
 		elements:  make(map[Element]*ElementBase),
 		Errored:   make(chan struct{}),
 		Completed: make(chan struct{}),
-		Fatal:     fatalFunc,
 
 		lineMapManager: NewLineMapManager(),
 		Logger:         logger.NewLogger(),
 	}
-	if fatalFunc == nil {
-		// we wrap in a func here because we may change the value of
-		// Logger (see SetupWorkflow) and so don't want to capture an
-		// old value here.
-		labBuild.Fatal = func(err error) { labBuild.Logger.Fatal(err) }
-	}
+	// we wrap in a func here because we may change the value of
+	// Logger (see SetupWorkflow) and so don't want to capture an
+	// old value here.
+	labBuild.Fatal = func(err error) { labBuild.Logger.Fatal(err) }
 	return labBuild
 }
 
@@ -91,7 +88,7 @@ func parseFlags() (inDir, outDir string) {
 }
 
 func NewLaboratoryBuilder(fh io.ReadCloser) *LaboratoryBuilder {
-	labBuild := EmptyLaboratoryBuilder(nil)
+	labBuild := EmptyLaboratoryBuilder()
 	inDir, outDir := parseFlags()
 	if err := labBuild.Setup(fh, inDir, outDir, nil); err != nil {
 		labBuild.Fatal(err)

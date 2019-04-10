@@ -54,7 +54,9 @@ func NewTestLabBuilder(t *testing.T, inDir string, fh io.ReadCloser) *laboratory
 		outDir = d
 	}
 
-	labBuild := laboratory.EmptyLaboratoryBuilder(func(err error) { t.Fatal(err) })
+	labBuild := laboratory.EmptyLaboratoryBuilder()
+	labBuild.Logger = labBuild.Logger.With("testName", t.Name())
+	labBuild.Fatal = func(err error) { t.Fatal(err) }
 	if err := labBuild.Setup(fh, inDir, outDir, inv); err != nil {
 		labBuild.Fatal(err)
 	}
@@ -84,7 +86,9 @@ func withTestLab(t *testing.T, inDir string, callbacks *TestElementCallbacks) {
 
 	inv := EnsureSharedInventory()
 
-	labBuild := laboratory.EmptyLaboratoryBuilder(func(err error) { t.Fatal(err) })
+	labBuild := laboratory.EmptyLaboratoryBuilder()
+	labBuild.Logger = labBuild.Logger.With("testName", t.Name())
+	labBuild.Fatal = func(err error) { t.Fatal(err) }
 	if err := labBuild.Setup(ioutil.NopCloser(wfBuf), inDir, "", inv); err != nil {
 		labBuild.Fatal(err)
 	}

@@ -169,7 +169,7 @@ package main
 	if err := runWorkflow{{id}}(labBuild); err != nil {
 		labBuild.Fatal(err)
 	}
-	
+
 	if err := labBuild.Compare(); err != nil {
 		labBuild.Fatal(err)
 	}

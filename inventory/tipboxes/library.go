@@ -26,6 +26,13 @@ import (
 	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
+const (
+	XOffset = 14.28
+	YOffset = 11.24
+	SbsX    = 127.76
+	SbsY    = 85.48
+)
+
 func getTipboxSize() wtype.Coordinates3D {
 	return wtype.Coordinates3D{X: SbsX, Y: SbsY, Z: 60.13}
 }

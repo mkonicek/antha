@@ -26,7 +26,6 @@
         },
         "Repositories": {
             "type": "object",
-            "minProperties": 1,
             "propertyNames": {
                 "pattern": "^(repos.antha.com|github.com)/"
             },
@@ -41,14 +40,12 @@
             "properties": {
                 "Types": {
                     "type": "array",
-                    "minItems": 1,
                     "items": {
                         "$ref": "#/definitions/elementType"
                     }
                 },
                 "Instances": {
                     "type": "object",
-                    "minProperties": 1,
                     "propertyNames": {
                         "$comment": "TODO: confirm this regex. This is the name of an element instance, e.g. 'my_aliquot'",
                         "pattern": "^[a-zA-Z0-9_ -]+$"
@@ -67,7 +64,7 @@
                 }
             },
             "additionalProperties": false,
-            "required": ["Types", "Instances"]
+            "required": []
         },
         "Config": {
             "type": "object",

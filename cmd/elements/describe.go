@@ -13,8 +13,11 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/Synthace/microservice/cmd/element/protobuf"
 	"github.com/golang/protobuf/proto"
+
+	"github.com/antha-lang/antha/protobuf"
+
+	elementpb "github.com/Synthace/microservice/cmd/element/protobuf"
 
 	"github.com/antha-lang/antha/antha/compile"
 	"github.com/antha-lang/antha/antha/token"
@@ -91,20 +94,19 @@ func describe(l *logger.Logger, args []string) error {
 		}
 
 		sort.Strings(elementNames)
-		w := bufio.NewWriter(os.Stdout)
 
-		if outputFormat == "json" {
-			w.WriteString("[")
-		}
+		// To stay compatible with the previous code that generated the
+		// elements.pb file, we need to serialise everything in one go, as an
+		// array of elementpb.Element instances inside a protobuf.Elements
+		// wrapper, which means we have to store all elements in memory until
+		// we're done. Urgh. Since we're doing that for the protobuf code, we
+		// may as well do the same thing for JSON. But ideally we'll switch the
+		// elements microservice to accept a JSON payload, kill the
+		// outputFormat=protobuf code paths here, then we can write the JSON to
+		// STDOUT one element at a time.
+		var pbElements []*elementpb.Element
 
-		defer func() {
-			if outputFormat == "json" {
-				w.WriteString("]")
-			}
-			w.Flush()
-		}()
-
-		for i, name := range elementNames {
+		for _, name := range elementNames {
 			ewm := elements[name]
 			if ewm.element == nil { // we cope with meta being nil
 				continue
@@ -122,29 +124,18 @@ func describe(l *logger.Logger, args []string) error {
 			switch outputFormat {
 			case "human":
 				{
-					if err := printHumanReadable(w, antha, et); err != nil {
+					if err := printHumanReadable(antha, et); err != nil {
 						return err
 					}
 
 				}
-			case "json":
+			case "json", "protobuf":
 				{
-					if i > 0 {
-						w.WriteString(",")
-					}
-					if err := printMachineReadable(w, antha, et, ewm, func(e *protobuf.Element) ([]byte, error) {
-						return json.Marshal(e)
-					}); err != nil {
+					elem, err := getProtobufElement(antha, et, ewm)
+					if err != nil {
 						return err
 					}
-				}
-			case "protobuf":
-				{
-					if err := printMachineReadable(w, antha, et, ewm, func(e *protobuf.Element) ([]byte, error) {
-						return proto.Marshal(e)
-					}); err != nil {
-						return err
-					}
+					pbElements = append(pbElements, elem)
 				}
 			default:
 				{
@@ -152,18 +143,50 @@ func describe(l *logger.Logger, args []string) error {
 				}
 			}
 		}
+
+		w := bufio.NewWriter(os.Stdout)
+		defer w.Flush()
+
+		switch outputFormat {
+		case "protobuf":
+			{
+				elements := &protobuf.Elements{
+					Elements: pbElements,
+				}
+				bs, err := proto.Marshal(elements)
+				if err != nil {
+					return err
+				}
+				_, err = w.Write(bs)
+				if err != nil {
+					return err
+				}
+			}
+		case "json":
+			{
+				bs, err := json.Marshal(pbElements)
+				if err != nil {
+					return err
+				}
+				_, err = w.Write(bs)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
 		return nil
 	}
 }
 
-func protobufPorts(fields []*compile.Field, kind string) ([]*protobuf.Port, error) {
-	result := make([]*protobuf.Port, 0, len(fields))
+func protobufPorts(fields []*compile.Field, kind string) ([]*elementpb.Port, error) {
+	var result []*elementpb.Port
 	for _, field := range fields {
 		typeString, err := field.TypeString()
 		if err != nil {
 			return nil, err
 		}
-		port := &protobuf.Port{
+		port := &elementpb.Port{
 			Name:        field.Name,
 			Type:        typeString,
 			Description: field.Meta.Description,
@@ -174,8 +197,8 @@ func protobufPorts(fields []*compile.Field, kind string) ([]*protobuf.Port, erro
 	return result, nil
 }
 
-func printMachineReadable(w *bufio.Writer, antha *compile.Antha, et *workflow.ElementType, ewm *elementWithMeta, formatter func(*protobuf.Element) ([]byte, error)) error {
-	e := &protobuf.Element{
+func getProtobufElement(antha *compile.Antha, et *workflow.ElementType, ewm *elementWithMeta) (*elementpb.Element, error) {
+	e := &elementpb.Element{
 		Name:        string(et.Name()),
 		Package:     string(et.ElementPath), // FIXME: no idea if this is correct
 		Description: antha.Meta.Description,
@@ -184,41 +207,39 @@ func printMachineReadable(w *bufio.Writer, antha *compile.Antha, et *workflow.El
 	// Build in ports
 	inputs, err := protobufPorts(antha.Meta.Ports[token.INPUTS], "Inputs")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	parameters, err := protobufPorts(antha.Meta.Ports[token.PARAMETERS], "Parameters")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	e.InPorts = append(inputs, parameters...)
 
 	// Build out ports
 	outputs, err := protobufPorts(antha.Meta.Ports[token.OUTPUTS], "Outputs")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	data, err := protobufPorts(antha.Meta.Ports[token.DATA], "Data")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	e.OutPorts = append(outputs, data...)
 
-	e.Body = &protobuf.Output{
+	e.Body = &elementpb.Output{
 		Body:     ewm.element,
 		Complete: true,
 	}
 
-	bs, err := formatter(e)
-	if err != nil {
-		return err
-	}
-	if _, err := w.Write(bs); err != nil {
-		return err
-	}
-	return nil
+	// TODO: set these?
+	// e.Version =
+	// e.BuildOutput =
+	// e.CreatedBy =
+
+	return e, nil
 }
 
-func printHumanReadable(w *bufio.Writer, antha *compile.Antha, et *workflow.ElementType) error {
+func printHumanReadable(antha *compile.Antha, et *workflow.ElementType) error {
 	const (
 		indent  = "\t"
 		indent2 = "\t\t"
@@ -252,7 +273,7 @@ func printHumanReadable(w *bufio.Writer, antha *compile.Antha, et *workflow.Elem
 	} else if data, err := formatFields(meta.Defaults, meta.Ports[token.DATA], indent3, indent); err != nil {
 		return err
 	} else {
-		s := fmt.Sprintf(fmtStr,
+		fmt.Printf(fmtStr,
 			et.Name(),
 			indent, et.RepositoryName,
 			indent, et.ElementPath,
@@ -264,9 +285,6 @@ func printHumanReadable(w *bufio.Writer, antha *compile.Antha, et *workflow.Elem
 			indent2, params,
 			indent2, data,
 		)
-		if _, err := w.WriteString(s); err != nil {
-			return err
-		}
 	}
 	return nil
 }

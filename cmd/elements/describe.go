@@ -29,6 +29,7 @@ import (
 
 type elementWithMeta struct {
 	repoName      workflow.RepositoryName
+	repo          *workflow.Repository
 	anthaFilePath string
 	element       []byte
 	meta          []byte
@@ -38,12 +39,10 @@ func describe(l *logger.Logger, args []string) error {
 	flagSet := flag.NewFlagSet(flag.CommandLine.Name()+" describe", flag.ContinueOnError)
 	flagSet.Usage = workflow.NewFlagUsage(flagSet, "Show descriptions of elements")
 
-	var regexStr, inDir, outputFormat, gitSHA, gitRepoURL string
+	var regexStr, inDir, outputFormat string
 	flagSet.StringVar(&regexStr, "regex", "", "Regular expression to match against element type path (optional)")
 	flagSet.StringVar(&inDir, "indir", "", "Directory from which to read files (optional)")
 	flagSet.StringVar(&outputFormat, "format", "human", "Format to output data in. One of [human, json, protobuf]")
-	flagSet.StringVar(&gitSHA, "git-sha", "", "Git SHA to show in element version info")
-	flagSet.StringVar(&gitRepoURL, "git-repo-url", "", "Git repo URL to show in element version info")
 
 	if err := flagSet.Parse(args); err != nil {
 		return err
@@ -71,6 +70,7 @@ func describe(l *logger.Logger, args []string) error {
 				if !found {
 					ewm = &elementWithMeta{
 						repoName: repoName,
+						repo:     repo,
 					}
 					elements[dir] = ewm
 					elementNames = append(elementNames, dir)
@@ -93,16 +93,6 @@ func describe(l *logger.Logger, args []string) error {
 			})
 			if err != nil {
 				return err
-			}
-		}
-
-		var gitVersion *element.Element_GitVersion
-		if len(gitSHA) > 0 {
-			gitVersion = &element.Element_GitVersion{
-				GitVersion: &element.GitVersion{
-					Sha:     gitSHA,
-					RepoUrl: gitRepoURL,
-				},
 			}
 		}
 
@@ -144,7 +134,7 @@ func describe(l *logger.Logger, args []string) error {
 				}
 			case "json", "protobuf":
 				{
-					elem, err := getProtobufElement(antha, et, ewm, gitVersion)
+					elem, err := getProtobufElement(antha, et, ewm)
 					if err != nil {
 						return err
 					}
@@ -210,14 +200,23 @@ func protobufPorts(fields []*compile.Field, kind string) ([]*element.Port, error
 	return result, nil
 }
 
-func getProtobufElement(antha *compile.Antha, et *workflow.ElementType, ewm *elementWithMeta, gitVersion *element.Element_GitVersion) (*element.Element, error) {
+func getProtobufElement(antha *compile.Antha, et *workflow.ElementType, ewm *elementWithMeta) (*element.Element, error) {
 	e := &element.Element{
 		Name:        string(et.Name()),
 		Package:     string(ewm.repoName) + "/" + path.Dir(ewm.anthaFilePath),
 		Description: antha.Meta.Description,
 		Tags:        antha.Meta.Tags,
-		Version:     gitVersion,
+		Version: &element.Element_GitVersion{
+			GitVersion: &element.GitVersion{
+				// The repoName field should always be the full URL of the repo
+				// minus its scheme. See discussion here:
+				// https://synthace.slack.com/archives/CGP8FDL9Z/p1554902911103300
+				RepoUrl: "https://" + string(ewm.repoName),
+				Sha:     ewm.repo.Commit,
+			},
+		},
 	}
+
 	// Build in ports
 	inputs, err := protobufPorts(antha.Meta.Ports[token.INPUTS], "Inputs")
 	if err != nil {

@@ -1,6 +1,10 @@
 package utils
 
 import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"os"
 	"strings"
 )
 
@@ -44,4 +48,36 @@ func (efs ErrorFuncs) Run() error {
 		}
 	}
 	return nil
+}
+
+// MarshalJSON marshals an error slice into a JSON list of error messages.
+func (es ErrorSlice) MarshalJSON() ([]byte, error) {
+	messages := make([]string, 0, len(es))
+	for _, e := range es {
+		if e != nil {
+			messages = append(messages, e.Error())
+		}
+	}
+
+	return json.Marshal(messages)
+}
+
+// WriteToFile writes the contents of an error slice to file as json.
+func (es ErrorSlice) WriteToFile(filename string) error {
+	if f, err := os.OpenFile(filename, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0400); err != nil {
+		return err
+	} else {
+		defer f.Close()
+		return es.Write(f)
+	}
+}
+
+// Write writes the contents of an error slice as json.
+func (es ErrorSlice) Write(w io.Writer) error {
+	if js, err := json.MarshalIndent(es, "", "  "); err != nil {
+		return err
+	} else {
+		_, err := fmt.Fprintf(w, "%v\n", string(js))
+		return err
+	}
 }

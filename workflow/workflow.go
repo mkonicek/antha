@@ -42,7 +42,7 @@ type Workflow struct {
 
 	Config Config `json:"Config"`
 
-	Testing *Testing `json:"Testing,omitempty"`
+	Testing Testing `json:"Testing,omitempty"`
 
 	typeNames map[ElementTypeName]*ElementType
 }

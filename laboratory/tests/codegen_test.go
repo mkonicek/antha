@@ -59,7 +59,7 @@ func (a *testDriver) Id() workflow.DeviceInstanceID {
 }
 
 func TestWellFormed(t *testing.T) {
-	labEffects := testlab.NewTestLabEffects(nil, nil)
+	labEffects := testlab.NewTestLabEffects(nil)
 
 	nodes := make([]effects.Node, 4)
 	for idx := 0; idx < len(nodes); idx++ {

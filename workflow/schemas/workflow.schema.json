@@ -13,7 +13,10 @@
             "pattern": "^[a-zA-Z0-9_ -]*$"
         },
         "Meta": {
-            "type": "null",
+            "oneOf": [
+                {"type": "null"},
+                {"type": "object"}
+            ],
             "$comment": "TODO: implement schema. Haven't seen one of these in the wild yet"
         },
         "Inventory": {
@@ -81,6 +84,17 @@
                 "$ref": "#/definitions/deviceClass"
             },
             "required": []
+        },
+        "Testing": {
+            "type": "object",
+            "propertyies" : {
+                "MixTaskChecks" : {
+                    "type" : "array",
+                    "items" : {
+                        "$ref": "#/definitions/mixTaskCheck"
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -184,6 +198,20 @@
             },
             "additionalProperties": false,
             "required": []
+        },
+        "mixTaskCheck": {
+            "type": "object",
+            "properties": {
+                "Instructions": { 
+                    "type": "array"
+                },
+                "Outputs" : {
+                    "type": "array"
+                },
+                "TimeEstimate": {
+                    "type": "array"
+                }
+            }
         }
     }
 }

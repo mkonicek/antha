@@ -11,5 +11,6 @@
 .build/
 cmd/antha/antha
 cmd/composer/composer
+cmd/composer/*.json
 cmd/elements/elements
 cmd/migrate/migrate

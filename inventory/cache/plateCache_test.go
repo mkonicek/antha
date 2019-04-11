@@ -14,7 +14,7 @@ const plateType = "pcrplate"
 
 func TestPlateReuse(t *testing.T) {
 	idGen := id.NewIDGenerator(t.Name())
-	inv := testlab.EnsureSharedInventory()
+	inv := testlab.InventoryWithSharedPlates()
 	cache := plateCache.NewPlateCache(inv.PlateTypes)
 
 	firstPlate, err := cache.NewPlate(plateType)

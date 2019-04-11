@@ -9,7 +9,7 @@ import (
 
 // Testing contains data and configuration for testing.
 type Testing struct {
-	MixTaskChecks []MixTaskCheck
+	MixTaskChecks []MixTaskCheck `json:",omitempty"`
 }
 
 // MixStepCheck contains check data for a single mix step.

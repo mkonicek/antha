@@ -700,7 +700,7 @@ func (this *Liquidhandler) GetPlates(labEffects *effects.LaboratoryEffects, plat
 		// assign new plates
 		for i := 0; i < len(major_layouts); i++ {
 			//newplate := wtype.New_Plate(ptype)
-			newplate, err := labEffects.Inventory.PlateTypes.NewPlate(ptype.Type)
+			newplate, err := labEffects.Inventory.Plates.NewPlate(ptype.Type)
 			if err != nil {
 				return nil, err
 			}

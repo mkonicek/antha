@@ -29,7 +29,7 @@ func NewLaboratoryEffects(wf *workflow.Workflow, simId workflow.BasicId, fm *Fil
 		Inventory:     inventory.NewInventory(idGen),
 		IDGenerator:   idGen,
 	}
-	le.PlateCache = plateCache.NewPlateCache(le.Inventory.PlateTypes)
+	le.PlateCache = plateCache.NewPlateCache(le.Inventory.Plates)
 	le.Inventory.LoadForWorkflow(wf)
 
 	return le

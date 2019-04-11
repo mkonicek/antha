@@ -214,7 +214,7 @@ func parsePlateCSVWithValidationConfig(lab *laboratory.Laboratory, inData io.Rea
 		}
 	}
 
-	plate, err := lab.Inventory.PlateTypes.NewPlate(plateType)
+	plate, err := lab.Inventory.Plates.NewPlate(plateType)
 	if err != nil {
 		return nil, fmt.Errorf("cannot make plate %s: %s", plateType, err)
 	}

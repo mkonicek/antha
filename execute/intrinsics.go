@@ -248,7 +248,7 @@ func NewComponent(lab *laboratory.Laboratory, typ string) *wtype.Liquid {
 
 // NewPlate returns a new plate given a plate type
 func NewPlate(lab *laboratory.Laboratory, typ wtype.PlateTypeName) *wtype.Plate {
-	p, err := lab.Inventory.PlateTypes.NewPlate(typ)
+	p, err := lab.Inventory.Plates.NewPlate(typ)
 	if err != nil {
 		panic(fmt.Sprintf("cannot make plate %s: %s", typ, err))
 	}

@@ -517,7 +517,7 @@ func choose_plates(labEffects *effects.LaboratoryEffects, request *LHRequest, pc
 	pc2 := make([]PlateChoice, 0, len(pc))
 
 	for _, v := range pc {
-		plate, err := labEffects.Inventory.PlateTypes.NewPlate(v.Platetype)
+		plate, err := labEffects.Inventory.Plates.NewPlate(v.Platetype)
 		if err != nil {
 			return nil, err
 		}
@@ -651,7 +651,7 @@ func make_plates(labEffects *effects.LaboratoryEffects, request *LHRequest, orde
 
 		// need to assign a new plate
 		if !(ok || ok2) {
-			plate, err := labEffects.Inventory.PlateTypes.NewPlate(v.Platetype)
+			plate, err := labEffects.Inventory.Plates.NewPlate(v.Platetype)
 			if err != nil {
 				return nil, fmt.Errorf("cannot make plate %s: %s", v.Platetype, err)
 			}
@@ -675,7 +675,7 @@ func make_layouts(labEffects *effects.LaboratoryEffects, request *LHRequest, pc 
 	for _, c := range pc {
 		// make a temporary plate to hold info
 
-		plat, err := labEffects.Inventory.PlateTypes.NewPlate(c.Platetype)
+		plat, err := labEffects.Inventory.Plates.NewPlate(c.Platetype)
 		if err != nil {
 			return err
 		}

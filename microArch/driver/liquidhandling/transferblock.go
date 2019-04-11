@@ -250,7 +250,7 @@ func get_parallel_sets_head(labEffects *effects.LaboratoryEffects, head *wtype.L
 
 			// gerrabirrovinfo on the plate type
 			// is this always set??
-			pt, err := labEffects.Inventory.PlateTypes.NewPlate(i.Platetype)
+			pt, err := labEffects.Inventory.Plates.NewPlate(i.Platetype)
 
 			if err != nil {
 				return ret, wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprintf("No plate type exists for ID %s - requested was %s", i.PlateID, i.Platetype))

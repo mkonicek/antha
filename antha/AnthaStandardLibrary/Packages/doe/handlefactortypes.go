@@ -234,7 +234,7 @@ func HandleLHPlateFactor(lab *laboratory.Laboratory, header string, value interf
 	if str, ok := value.(string); !ok {
 		return nil, fmt.Errorf("value %T is not a string", value)
 	} else {
-		return lab.Inventory.PlateTypes.NewPlate(wtype.PlateTypeName(str))
+		return lab.Inventory.Plates.NewPlate(wtype.PlateTypeName(str))
 	}
 }
 

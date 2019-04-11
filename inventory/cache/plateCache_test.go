@@ -70,7 +70,7 @@ func TestPlateReuse(t *testing.T) {
 		t.Error("thirdPlate came from cache, but cache.IsFromPlate returned false")
 	}
 
-	fourthPlate, err := inv.PlateTypes.NewPlate(plateType)
+	fourthPlate, err := inv.Plates.NewPlate(plateType)
 	if err != nil {
 		t.Fatal(err)
 	}

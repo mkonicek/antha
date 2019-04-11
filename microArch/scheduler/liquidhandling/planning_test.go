@@ -490,12 +490,15 @@ func Mixes(outputPlateType string, components TestMixComponents) InstructionBuil
 		ret := make([]*wtype.LHInstruction, 0, len(samplesByWell))
 
 		for well, samples := range samplesByWell {
-			ret = append(ret, mixer.GenericMix(mixer.MixOptions{
+			ins := mixer.GenericMix(mixer.MixOptions{
 				Inputs:    samples,
 				PlateType: outputPlateType,
 				Address:   well,
 				PlateName: "outputplate",
-			}))
+			})
+			// set the name of the output liquid
+			ins.Outputs[0].SetName(fmt.Sprintf("testoutput_%s", well))
+			ret = append(ret, ins)
 		}
 
 		return ret

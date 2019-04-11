@@ -104,8 +104,8 @@ func SummarizeActions(initialState *driver.LHProperties, itree *driver.ITree) ([
 		return nil, err
 	}
 
-	// we care about recording transfer and message instructions
-	acts := itree.Refine(driver.TFR, driver.MSG)
+	// we care about recording transfer block and message instructions
+	acts := itree.Refine(driver.TFB, driver.MSG)
 
 	actions := make(actionsSummary, 0, len(acts))
 	for _, act := range acts {
@@ -126,8 +126,8 @@ func SummarizeActions(initialState *driver.LHProperties, itree *driver.ITree) ([
 				cumulativeTime = time.Duration(action.CumulativeTimeEstimate * 1e9)
 				actions = append(actions, action)
 			}
-		case driver.TFR:
-			// record transfer instructions as transfer actions
+		case driver.TFB:
+			// record transfer block instructions as transfer actions
 			if action, err := newTransferAction(vlh, act, timer, cumulativeTime); err != nil {
 				return nil, err
 			} else {
@@ -385,7 +385,7 @@ type liquidSummary struct {
 // newLiquidSummary create a liquid summary
 func newLiquidSummary(l *wtype.Liquid) *liquidSummary {
 	return &liquidSummary{
-		Name:        l.CName,
+		Name:        l.MeaningfulName(),
 		TotalVolume: &measurementSummary{Value: l.Vol, Unit: l.Vunit},
 		Components:  newSubComponents(l.SubComponents),
 	}
@@ -719,6 +719,9 @@ func newTransferAction(vlh *simulator.VirtualLiquidHandler, act *driver.ITree, t
 
 	children := make([]transferChild, 0, len(act.Children()))
 
+	// keep track of the last time each location was updated so we can update the final name later
+	lastUpdate := make(map[wellLocation]*liquidSummary)
+
 	for _, ins := range instructions {
 		var timeEstimate time.Duration
 
@@ -733,6 +736,11 @@ func newTransferAction(vlh *simulator.VirtualLiquidHandler, act *driver.ITree, t
 			if pt, err := newParallelTransfer(vlh, ins, timeEstimate, cumulativeTimeEstimate); err != nil {
 				return nil, err
 			} else {
+				for _, ch := range pt.Channels {
+					for _, cUpdate := range ch.To {
+						lastUpdate[cUpdate.Location] = cUpdate.NewContent
+					}
+				}
 				children = append(children, pt)
 			}
 		case driver.LOD:
@@ -754,6 +762,19 @@ func newTransferAction(vlh *simulator.VirtualLiquidHandler, act *driver.ITree, t
 		default:
 			if err := vlh.Simulate(ins.Leaves()); err != nil {
 				return nil, err
+			}
+		}
+	}
+
+	// the transferBlockInstruction includes the original mix instructions and their outputs with user defined names set,
+	// here we use those to set the final names of the liquids
+	tfb := act.Instruction().(*driver.TransferBlockInstruction)
+
+	for _, ins := range tfb.Inss {
+		for _, output := range ins.Outputs {
+			pl := output.PlateLocation()
+			if content, ok := lastUpdate[wellLocation{DeckItemID: pl.ID, Row: pl.Coords.Y, Column: pl.Coords.X}]; ok {
+				content.Name = output.MeaningfulName()
 			}
 		}
 	}

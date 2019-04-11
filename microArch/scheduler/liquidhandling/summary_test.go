@@ -3,7 +3,6 @@ package liquidhandling
 import (
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"strings"
 
 	"github.com/go-test/deep"
@@ -24,15 +23,9 @@ func AssertLayoutsEquivalent(got, expected []byte) error {
 	e.NormalizeIDs()
 	g.NormalizeIDs()
 
-	if !reflect.DeepEqual(e, g) {
-		// serialize to make tracking down the actual differeces easier
-		if eJSON, err := json.Marshal(e); err != nil {
-			panic(err)
-		} else if gJSON, err := json.Marshal(g); err != nil {
-			panic(err)
-		} else {
-			return errors.Errorf("generated layout differs from expected:\n\te: %s\n\tg: %s", string(eJSON), string(gJSON))
-		}
+	if diffs := deep.Equal(e, g); len(diffs) > 0 {
+		return errors.Errorf("generated layout summary doesn't match expected: \n%s", strings.Join(diffs, "\n"))
+
 	}
 	return nil
 }
@@ -97,7 +90,7 @@ func AssertActionsEquivalent(got, expected []byte) error {
 	g.NormalizeIDs()
 
 	if diffs := deep.Equal(e, g); len(diffs) > 0 {
-		return errors.Errorf("generated action summary differs from expected: %s", strings.Join(diffs, "; "))
+		return errors.Errorf("generated action summary differs from expected: \n%s", strings.Join(diffs, "\n"))
 	}
 	return nil
 }

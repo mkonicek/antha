@@ -18,25 +18,18 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"sync"
 	"testing"
 
-	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/laboratory"
 	"github.com/antha-lang/antha/laboratory/effects"
-	"github.com/antha-lang/antha/laboratory/effects/id"
 	"github.com/antha-lang/antha/workflow"
 )
 
 var (
 	outDirPtr = flag.String("outdir", "", "Directory to write to (default: a temporary directory will be created)")
-
-	sharedInventoryGuard sync.Once
-	sharedInventory      *inventory.Inventory
 )
 
 func NewTestLabBuilder(t *testing.T, inDir string, fh io.ReadCloser) *laboratory.LaboratoryBuilder {
-	inv := EnsureSharedInventory()
 	outDir := ""
 	if outDirPtr != nil {
 		outDir = *outDirPtr
@@ -57,7 +50,7 @@ func NewTestLabBuilder(t *testing.T, inDir string, fh io.ReadCloser) *laboratory
 	labBuild := laboratory.EmptyLaboratoryBuilder()
 	labBuild.Logger = labBuild.Logger.With("testName", t.Name())
 	labBuild.Fatal = func(err error) { t.Fatal(err) }
-	if err := labBuild.Setup(fh, inDir, outDir, inv); err != nil {
+	if err := labBuild.Setup(fh, inDir, outDir); err != nil {
 		labBuild.Fatal(err)
 	}
 
@@ -84,12 +77,10 @@ func withTestLab(t *testing.T, inDir string, callbacks *TestElementCallbacks) {
 		t.Fatal(err)
 	}
 
-	inv := EnsureSharedInventory()
-
 	labBuild := laboratory.EmptyLaboratoryBuilder()
 	labBuild.Logger = labBuild.Logger.With("testName", t.Name())
 	labBuild.Fatal = func(err error) { t.Fatal(err) }
-	if err := labBuild.Setup(ioutil.NopCloser(wfBuf), inDir, "", inv); err != nil {
+	if err := labBuild.Setup(ioutil.NopCloser(wfBuf), inDir, ""); err != nil {
 		labBuild.Fatal(err)
 	}
 	NewTestElement(t, labBuild, callbacks)
@@ -104,17 +95,8 @@ func withTestLab(t *testing.T, inDir string, callbacks *TestElementCallbacks) {
 	}
 }
 
-func NewTestLabEffects(fm *effects.FileManager, inv *inventory.Inventory) *effects.LaboratoryEffects {
-	return effects.NewLaboratoryEffects(workflow.BasicId("testing"), fm, inv)
-}
-
-func EnsureSharedInventory() *inventory.Inventory {
-	sharedInventoryGuard.Do(func() {
-		id := id.NewIDGenerator("TestLabInventory")
-		sharedInventory = inventory.NewInventory(id)
-		sharedInventory.LoadForWorkflow(nil)
-	})
-	return sharedInventory
+func NewTestLabEffects(fm *effects.FileManager) *effects.LaboratoryEffects {
+	return effects.NewLaboratoryEffects(nil, workflow.BasicId("testing"), fm)
 }
 
 type TestElement struct {

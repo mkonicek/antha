@@ -12,7 +12,6 @@ import (
 	"sync/atomic"
 
 	"github.com/antha-lang/antha/codegen"
-	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/logger"
 	"github.com/antha-lang/antha/target"
@@ -40,6 +39,7 @@ type LaboratoryBuilder struct {
 	outDir   string
 	Workflow *workflow.Workflow
 
+	// elemLock must be taken to access/mutate elemsUnrun and elements fields
 	elemLock      sync.Mutex
 	elemsUnrun    int64
 	elements      map[Element]*ElementBase
@@ -90,18 +90,17 @@ func parseFlags() (inDir, outDir string) {
 func NewLaboratoryBuilder(fh io.ReadCloser) *LaboratoryBuilder {
 	labBuild := EmptyLaboratoryBuilder()
 	inDir, outDir := parseFlags()
-	if err := labBuild.Setup(fh, inDir, outDir, nil); err != nil {
+	if err := labBuild.Setup(fh, inDir, outDir); err != nil {
 		labBuild.Fatal(err)
 	}
-	labBuild.effects.Inventory.LoadForWorkflow(labBuild.Workflow)
 	return labBuild
 }
 
-func (labBuild *LaboratoryBuilder) Setup(fh io.ReadCloser, inDir, outDir string, inv *inventory.Inventory) error {
+func (labBuild *LaboratoryBuilder) Setup(fh io.ReadCloser, inDir, outDir string) error {
 	return utils.ErrorFuncs{
 		func() error { return labBuild.SetupWorkflow(fh) },
 		func() error { return labBuild.SetupPaths(inDir, outDir) },
-		func() error { return labBuild.SetupEffects(inv) },
+		func() error { return labBuild.SetupEffects() },
 		func() error { return labBuild.SaveWorkflow() },
 	}.Run()
 }
@@ -164,11 +163,11 @@ func (labBuild *LaboratoryBuilder) SetupPaths(inDir, outDir string) error {
 	return nil
 }
 
-func (labBuild *LaboratoryBuilder) SetupEffects(inv *inventory.Inventory) error {
+func (labBuild *LaboratoryBuilder) SetupEffects() error {
 	if fm, err := effects.NewFileManager(filepath.Join(labBuild.inDir, "data"), filepath.Join(labBuild.outDir, "data")); err != nil {
 		return err
 	} else {
-		labBuild.effects = effects.NewLaboratoryEffects(labBuild.Workflow.SimulationId, fm, inv)
+		labBuild.effects = effects.NewLaboratoryEffects(labBuild.Workflow, labBuild.Workflow.SimulationId, fm)
 		return nil
 	}
 }
@@ -278,6 +277,8 @@ func (labBuild *LaboratoryBuilder) InstallElement(e Element) {
 }
 
 func (labBuild *LaboratoryBuilder) AddConnection(src, dst Element, fun func()) error {
+	labBuild.elemLock.Lock()
+	defer labBuild.elemLock.Unlock()
 	if ebSrc, found := labBuild.elements[src]; !found {
 		return fmt.Errorf("Unknown src element: %v", src)
 	} else if ebDst, found := labBuild.elements[dst]; !found {
@@ -374,14 +375,17 @@ func (lab *Laboratory) CallSteps(e Element) error {
 	// it should already be in the map because the element constructor
 	// will have called through to InstallElement which would have
 	// added it.
+	lab.labBuild.elemLock.Lock()
 	eb, found := lab.labBuild.elements[e]
 	if !found {
+		lab.labBuild.elemLock.Unlock()
 		return fmt.Errorf("CallSteps called on unknown element '%s'", e.Name())
 	}
 
 	finished := make(chan struct{})
 	eb.AddOnExit(func() { close(finished) })
 	eb.AddOnExit(lab.labBuild.elementCompleted)
+	lab.labBuild.elemLock.Unlock()
 
 	// take the root logger (from labBuild) and build up from there.
 	logger := lab.labBuild.Logger.With("parentName", lab.element.Name(), "parentType", lab.element.TypeName())
@@ -429,7 +433,6 @@ func (labBuild *LaboratoryBuilder) NewElementBase(e Element) *ElementBase {
 }
 
 func (eb *ElementBase) Run(lab *Laboratory, funs ...func(*Laboratory) error) {
-	defer eb.Completed(lab)
 	eb.InputReady()
 
 	if len(funs) == 0 {
@@ -440,6 +443,8 @@ func (eb *ElementBase) Run(lab *Laboratory, funs ...func(*Laboratory) error) {
 			eb.element.Validation,
 		}
 	}
+
+	defer eb.Exited()
 
 	defer func() {
 		if res := recover(); res != nil {
@@ -452,6 +457,10 @@ func (eb *ElementBase) Run(lab *Laboratory, funs ...func(*Laboratory) error) {
 	select {
 	case <-eb.InputsReady:
 		lab.Logger.Log("progress", "starting")
+		// this defer comes here because this defer will read all our
+		// inputs and parameters as part of the Save() call. This is
+		// only safe (concurrency) once we know our inputs are ready.
+		defer eb.Save(lab)
 		for _, fun := range funs {
 			select {
 			case <-lab.labBuild.Errored:
@@ -468,11 +477,7 @@ func (eb *ElementBase) Run(lab *Laboratory, funs ...func(*Laboratory) error) {
 	}
 }
 
-func (eb *ElementBase) Completed(lab *Laboratory) {
-	if err := eb.Save(lab); err != nil {
-		lab.error(err)
-	}
-	lab.Logger.Log("progress", "completed")
+func (eb *ElementBase) Exited() {
 	funs := eb.onExit
 	eb.onExit = nil
 	for _, fun := range funs {
@@ -480,13 +485,16 @@ func (eb *ElementBase) Completed(lab *Laboratory) {
 	}
 }
 
-func (eb *ElementBase) Save(lab *Laboratory) error {
+func (eb *ElementBase) Save(lab *Laboratory) {
+	lab.Logger.Log("progress", "completed")
 	p := filepath.Join(lab.labBuild.outDir, "elements", fmt.Sprintf("%d_%s.json", eb.id, eb.element.Name()))
 	if fh, err := os.OpenFile(p, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0400); err != nil {
-		return err
+		lab.error(err)
 	} else {
 		defer fh.Close()
-		return json.NewEncoder(fh).Encode(eb.element)
+		if err := json.NewEncoder(fh).Encode(eb.element); err != nil {
+			lab.error(err)
+		}
 	}
 }
 

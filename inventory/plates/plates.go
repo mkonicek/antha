@@ -8,6 +8,11 @@ import (
 	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
+var (
+	sharedPlateTypesGuard     sync.Once
+	sharedPlateTypesInventory *Inventory
+)
+
 type Inventory struct {
 	lock  sync.Mutex
 	idGen *id.IDGenerator
@@ -23,7 +28,10 @@ func NewInventory(idGen *id.IDGenerator) *Inventory {
 }
 
 func (inv *Inventory) LoadLibrary() {
-	inv.SetPlateTypes(makePlateTypes(inv.idGen))
+	sharedInv := EnsureSharedPlateTypesInventory()
+	sharedInv.lock.Lock()
+	inv.SetPlateTypes(sharedInv.plateTypeByType)
+	sharedInv.lock.Unlock()
 }
 
 func (inv *Inventory) SetPlateTypes(pts wtype.PlateTypes) {
@@ -49,4 +57,14 @@ func (inv *Inventory) NewPlateType(typ wtype.PlateTypeName) (*wtype.PlateType, e
 	} else {
 		return pt, nil
 	}
+}
+
+func EnsureSharedPlateTypesInventory() *Inventory {
+	sharedPlateTypesGuard.Do(func() {
+		idGen := id.NewIDGenerator("SharedPlateTypesInventory")
+		inv := NewInventory(idGen)
+		inv.SetPlateTypes(makePlateTypes(idGen))
+		sharedPlateTypesInventory = inv
+	})
+	return sharedPlateTypesInventory
 }

@@ -171,32 +171,32 @@ func describe(l *logger.Logger, args []string) error {
 		w := bufio.NewWriter(os.Stdout)
 		defer w.Flush()
 
+		var bs []byte
+		var err error
+
 		switch outputFormat {
 		case outputFormatProtobuf:
 			{
-				elements := &protobuf.Elements{
+				bs, err = proto.Marshal(&protobuf.Elements{
 					Elements: pbElements,
-				}
-				bs, err := proto.Marshal(elements)
-				if err != nil {
-					return err
-				}
-				_, err = w.Write(bs)
-				if err != nil {
-					return err
-				}
+				})
 			}
 		case outputFormatJSON:
 			{
-				bs, err := json.Marshal(pbElements)
-				if err != nil {
-					return err
-				}
-				_, err = w.Write(bs)
-				if err != nil {
-					return err
-				}
+				bs, err = json.Marshal(pbElements)
 			}
+		default:
+			{
+				return nil
+			}
+		}
+
+		if err != nil {
+			return err
+		}
+		_, err = w.Write(bs)
+		if err != nil {
+			return err
 		}
 
 		return nil

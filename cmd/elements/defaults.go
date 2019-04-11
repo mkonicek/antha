@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -52,14 +51,8 @@ func defaults(l *logger.Logger, args []string) error {
 					return err
 				}
 
-				bs, err := ioutil.ReadAll(r)
-				if err != nil {
-					return err
-				}
-
 				var doc map[string]interface{}
-				err = json.Unmarshal(bs, &doc)
-				if err != nil {
+				if err = json.NewDecoder(r).Decode(&doc); err != nil {
 					return err
 				}
 

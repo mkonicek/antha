@@ -96,28 +96,38 @@ func Incubate(ctx context.Context, in *wtype.Liquid, opt IncubateOpt) *wtype.Liq
 // in future this should generate handles as side-effects
 
 type mixerPromptOpts struct {
-	Component   *wtype.Liquid
-	ComponentIn *wtype.Liquid
-	Message     string
+	Components   []*wtype.Liquid
+	ComponentsIn []*wtype.Liquid
+	Message      string
+}
+
+func newCompsFromComps(ctx context.Context, in []*wtype.Liquid) []*wtype.Liquid {
+	r := []*wtype.Liquid{}
+
+	for _, c := range in {
+		r = append(r, newCompFromComp(ctx, c))
+	}
+
+	return r
 }
 
 // MixerPrompt prompts user with a message during mixer execution
-func MixerPrompt(ctx context.Context, in *wtype.Liquid, message string) *wtype.Liquid {
+func MixerPrompt(ctx context.Context, message string, in ...*wtype.Liquid) []*wtype.Liquid {
 	inst := mixerPrompt(ctx,
 		mixerPromptOpts{
-			Component:   newCompFromComp(ctx, in),
-			ComponentIn: in,
-			Message:     message,
+			Components:   newCompsFromComps(ctx, in),
+			ComponentsIn: in,
+			Message:      message,
 		},
 	)
 	Issue(ctx, inst)
-	return inst.result[0]
+	return inst.result
 }
 
 // ExecuteMixes will ensure that all mix activities
 // in a workflow prior to this point must be completed before Mix instructions after this point.
-func ExecuteMixes(ctx context.Context, liquid *wtype.LHComponent) *wtype.LHComponent {
-	return MixerPrompt(ctx, liquid, wtype.MAGICBARRIERPROMPTSTRING)
+func ExecuteMixes(ctx context.Context, liquids ...*wtype.LHComponent) []*wtype.Liquid {
+	return MixerPrompt(ctx, wtype.MAGICBARRIERPROMPTSTRING, liquids...)
 }
 
 // Prompt prompts user with a message
@@ -143,15 +153,17 @@ func Prompt(ctx context.Context, in *wtype.Liquid, message string) *wtype.Liquid
 
 func mixerPrompt(ctx context.Context, opts mixerPromptOpts) *commandInst {
 	inst := wtype.NewLHPromptInstruction()
-	inst.SetGeneration(opts.ComponentIn.Generation())
+	inst.SetGeneration(opts.ComponentsIn[0].Generation())
 	inst.Message = opts.Message
-	inst.AddOutput(opts.Component)
-	inst.AddInput(opts.ComponentIn)
-	inst.PassThrough[opts.ComponentIn.ID] = opts.Component
+	for i := 0; i < len(opts.Components); i++ {
+		inst.AddOutput(opts.Components[i])
+		inst.AddInput(opts.ComponentsIn[i])
+		inst.PassThrough[opts.ComponentsIn[i].ID] = opts.Components[i]
+	}
 
 	return &commandInst{
-		Args:   []*wtype.Liquid{opts.ComponentIn},
-		result: []*wtype.Liquid{opts.Component},
+		Args:   opts.ComponentsIn,
+		result: opts.Components,
 		Command: &ast.Command{
 			Inst: inst,
 			Request: ast.Request{

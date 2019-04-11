@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 	"reflect"
 	"regexp"
@@ -48,7 +47,12 @@ func defaults(l *logger.Logger, args []string) error {
 					return nil
 				}
 
-				bs, err := ioutil.ReadFile(path.Join(repo.Directory, f.Name))
+				r, err := f.Contents()
+				if err != nil {
+					return err
+				}
+
+				bs, err := ioutil.ReadAll(r)
 				if err != nil {
 					return err
 				}
@@ -77,7 +81,6 @@ func defaults(l *logger.Logger, args []string) error {
 			return err
 		}
 		w := bufio.NewWriter(os.Stdout)
-		defer w.Flush()
 		_, err = w.Write(bs)
 		if err != nil {
 			return err

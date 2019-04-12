@@ -3,7 +3,6 @@ package v1_2
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -79,26 +78,24 @@ type bakedInFile struct {
 	} `json:"bytes"`
 }
 
+// maybeMigrateFileParam returns either the original json representations, or a json representation as serialized files, if possible.
 func maybeMigrateFileParam(fm *effects.FileManager, param json.RawMessage) (json.RawMessage, error) {
 	if success, js, err := maybeMigrateFileFlat(fm, param); err != nil {
 		return nil, err
 	} else if success {
 		return js, nil
-	} else if success, js, err := maybeMigrateFileArray(fm, param); err != nil {
-		return nil, err
-	} else if success {
+	} else if success, js, _ := maybeMigrateFileArray(fm, param); success {
 		return js, nil
-	} else if success, js, err := maybeMigrateFileMap(fm, param); err != nil {
-		return nil, err
-	} else if success {
+	} else if success, js, _ := maybeMigrateFileMap(fm, param); success {
 		return js, nil
 	} else {
 		return param, nil
 	}
 }
 
+// maybeMigrateFileMap returns bool indicating whether this could be serialised as a map of file references, then either the original json or transformed json if successful.
 func maybeMigrateFileMap(fm *effects.FileManager, param json.RawMessage) (bool, json.RawMessage, error) {
-	bifMap := make(map[string]bakedInFile, 0)
+	bifMap := make(map[string]*bakedInFile, 0)
 	if err := json.Unmarshal([]byte(param), &bifMap); err != nil {
 		return false, nil, nil
 	}
@@ -107,6 +104,8 @@ func maybeMigrateFileMap(fm *effects.FileManager, param json.RawMessage) (bool, 
 	for k, bif := range bifMap {
 		if msg, err := moveDataToFile(fm, bif); err != nil {
 			return false, nil, err
+		} else if msg == nil {
+			return false, nil, nil
 		} else {
 			js[k] = *msg
 		}
@@ -119,18 +118,20 @@ func maybeMigrateFileMap(fm *effects.FileManager, param json.RawMessage) (bool, 
 	}
 }
 
+// maybeMigrateFileArray returns bool indicating whether this could be serialised as an array of file references, then either the original json or transformed json if successful.
 func maybeMigrateFileArray(fm *effects.FileManager, param json.RawMessage) (bool, json.RawMessage, error) {
-	bifArr := make([]bakedInFile, 0)
+	bifArr := make([]*bakedInFile, 0)
 
 	if err := json.Unmarshal([]byte(param), &bifArr); err != nil {
 		return false, nil, nil
 	}
 
-	fmt.Printf("This is an array! %v\n", bifArr)
 	js := make([]wtype.File, len(bifArr))
 	for i, bif := range bifArr {
 		if msg, err := moveDataToFile(fm, bif); err != nil {
 			return false, nil, err
+		} else if msg == nil {
+			return false, nil, nil
 		} else {
 			js[i] = *msg
 		}
@@ -143,11 +144,10 @@ func maybeMigrateFileArray(fm *effects.FileManager, param json.RawMessage) (bool
 	}
 }
 
+// maybeMigrateFileFlat returns bool indicating whether this could be serialised as a file reference, then either the original json or transformed json if successful.
 func maybeMigrateFileFlat(fm *effects.FileManager, param json.RawMessage) (bool, json.RawMessage, error) {
-	bif := bakedInFile{}
+	bif := &bakedInFile{}
 	if err := json.Unmarshal([]byte(param), &bif); err != nil {
-		return false, param, nil
-	} else if bif.Name == "" && len(bif.Bytes.Bytes) == 0 {
 		return false, param, nil
 	} else if f, err := moveDataToFile(fm, bif); err != nil {
 		return false, nil, err
@@ -158,8 +158,12 @@ func maybeMigrateFileFlat(fm *effects.FileManager, param json.RawMessage) (bool,
 	}
 }
 
-func moveDataToFile(fm *effects.FileManager, bif bakedInFile) (*wtype.File, error) {
-	if f, err := fm.WriteAll(bif.Bytes.Bytes, bif.Name); err != nil {
+func moveDataToFile(fm *effects.FileManager, bif *bakedInFile) (*wtype.File, error) {
+	if bif == nil {
+		return nil, nil
+	} else if bif.Name == "" && len(bif.Bytes.Bytes) == 0 {
+		return nil, nil
+	} else if f, err := fm.WriteAll(bif.Bytes.Bytes, bif.Name); err != nil {
 		return nil, err
 	} else {
 		return f.AsInput(), nil

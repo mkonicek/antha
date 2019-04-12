@@ -80,14 +80,14 @@ type bakedInFile struct {
 
 // maybeMigrateFileParam returns either the original json representations, or a json representation as serialized files, if possible.
 func maybeMigrateFileParam(fm *effects.FileManager, param json.RawMessage) (json.RawMessage, error) {
-	if success, js, err := maybeMigrateFileFlat(fm, param); err != nil {
-		return nil, err
-	} else if success {
+
+	if success, js, _ := maybeMigrateFileFlat(fm, param); success {
 		return js, nil
-	} else if success, js, _ := maybeMigrateFileArray(fm, param); success {
-		return js, nil
-	} else if success, js, _ := maybeMigrateFileMap(fm, param); success {
-		return js, nil
+		/*} else if success, js, _ := maybeMigrateFileArray(fm, param); success {
+			return js, nil
+		} else if success, js, _ := maybeMigrateFileMap(fm, param); success {
+			return js, nil
+		*/
 	} else {
 		return param, nil
 	}
@@ -102,12 +102,12 @@ func maybeMigrateFileMap(fm *effects.FileManager, param json.RawMessage) (bool, 
 
 	js := make(map[string]wtype.File, len(bifMap))
 	for k, bif := range bifMap {
-		if msg, err := moveDataToFile(fm, bif); err != nil {
+		if f, err := moveDataToFile(fm, bif); err != nil {
 			return false, nil, err
-		} else if msg == nil {
+		} else if f == nil {
 			return false, nil, nil
 		} else {
-			js[k] = *msg
+			js[k] = *f
 		}
 	}
 
@@ -128,12 +128,12 @@ func maybeMigrateFileArray(fm *effects.FileManager, param json.RawMessage) (bool
 
 	js := make([]wtype.File, len(bifArr))
 	for i, bif := range bifArr {
-		if msg, err := moveDataToFile(fm, bif); err != nil {
+		if f, err := moveDataToFile(fm, bif); err != nil {
 			return false, nil, err
-		} else if msg == nil {
+		} else if f == nil {
 			return false, nil, nil
 		} else {
-			js[i] = *msg
+			js[i] = *f
 		}
 	}
 
@@ -151,6 +151,8 @@ func maybeMigrateFileFlat(fm *effects.FileManager, param json.RawMessage) (bool,
 		return false, param, nil
 	} else if f, err := moveDataToFile(fm, bif); err != nil {
 		return false, nil, err
+	} else if f == nil {
+		return false, nil, nil
 	} else if msg, err := json.Marshal(f); err != nil {
 		return false, nil, err
 	} else {
@@ -161,10 +163,12 @@ func maybeMigrateFileFlat(fm *effects.FileManager, param json.RawMessage) (bool,
 func moveDataToFile(fm *effects.FileManager, bif *bakedInFile) (*wtype.File, error) {
 	if bif == nil {
 		return nil, nil
-	} else if bif.Name == "" && len(bif.Bytes.Bytes) == 0 {
+	} else if bif.Name == "" || len(bif.Bytes.Bytes) == 0 {
 		return nil, nil
 	} else if f, err := fm.WriteAll(bif.Bytes.Bytes, bif.Name); err != nil {
 		return nil, err
+	} else if f == nil {
+		return nil, nil
 	} else {
 		return f.AsInput(), nil
 	}

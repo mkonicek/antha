@@ -128,10 +128,6 @@ func (m *Migrater) migrateGilsonConfigs() {
 }
 
 func (m *Migrater) migrateGlobalMixerConfig() {
-	if m.Old.Config == nil {
-		return
-	}
-
 	m.Cur.Config.GlobalMixer = workflow.GlobalMixerConfig{
 		CustomPolicyRuleSet:      m.Old.Config.CustomPolicyRuleSet,
 		IgnorePhysicalSimulation: m.Old.Config.IgnorePhysicalSimulation,
@@ -142,9 +138,6 @@ func (m *Migrater) migrateGlobalMixerConfig() {
 }
 
 func (m *Migrater) migrateLayoutPreferences() *workflow.LayoutOpt {
-	if m.Old.Config == nil {
-		return &workflow.LayoutOpt{}
-	}
 	return &workflow.LayoutOpt{
 		Inputs:    m.Old.Config.DriverSpecificInputPreferences,
 		Outputs:   m.Old.Config.DriverSpecificOutputPreferences,
@@ -164,16 +157,13 @@ func updatePlateTypes(names []string) []wtype.PlateTypeName {
 
 func (m *Migrater) migrateGilsonConfig() *workflow.GilsonPipetMaxInstanceConfig {
 	config := workflow.GilsonPipetMaxInstanceConfig{}
-
-	if m.Old.Config != nil {
-		config.InputPlateTypes = updatePlateTypes(m.Old.Config.InputPlateTypes)
-		config.MaxPlates = m.Old.Config.MaxPlates
-		config.MaxWells = m.Old.Config.MaxWells
-		config.OutputPlateTypes = updatePlateTypes(m.Old.Config.OutputPlateTypes)
-		config.ResidualVolumeWeight = m.Old.Config.ResidualVolumeWeight
-		config.TipTypes = m.Old.Config.TipTypes
-		config.LayoutPreferences = m.migrateLayoutPreferences()
-	}
+	config.InputPlateTypes = updatePlateTypes(m.Old.Config.InputPlateTypes)
+	config.MaxPlates = m.Old.Config.MaxPlates
+	config.MaxWells = m.Old.Config.MaxWells
+	config.OutputPlateTypes = updatePlateTypes(m.Old.Config.OutputPlateTypes)
+	config.ResidualVolumeWeight = m.Old.Config.ResidualVolumeWeight
+	config.TipTypes = m.Old.Config.TipTypes
+	config.LayoutPreferences = m.migrateLayoutPreferences()
 	return &config
 }
 

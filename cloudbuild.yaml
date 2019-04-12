@@ -16,6 +16,12 @@ steps:
 - name: 'gcr.io/cloud-builders/docker'
   args: ['build', '--force-rm', '-t', 'eu.gcr.io/antha-images/antha-core:$COMMIT_SHA',  '.']
 
+- name: 'gcr.io/cloud-builders/gsutil'
+  args: ['cp', 'gs://cloud-build-antha-images/write-gitlab-antha-root-passwd.enc', '/docker-config/.']
+  volumes:
+  - name: 'docker'
+    path: '/docker-config'
+
 - name: 'gcr.io/cloud-builders/gcloud'
   args:
   - kms

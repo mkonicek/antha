@@ -14,7 +14,11 @@ steps:
   - --key=read-github
 
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '--force-rm', '-t', 'eu.gcr.io/antha-images/antha-core:$COMMIT_SHA', '.']
-
-- name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'eu.gcr.io/antha-images/antha-core:$COMMIT_SHA']
+  args:
+  - '-c'
+  - |
+    set -x -o nounset -o errexit -o pipefail
+    docker build --force-rm -t eu.gcr.io/antha-images/antha-core:$COMMIT_SHA .
+    docker tag eu.gcr.io/antha-images/antha-core:$COMMIT_SHA eu.gcr.io/antha-images/antha-core:latest
+    docker push eu.gcr.io/antha-images/antha-core:$COMMIT_SHA
+    docker push eu.gcr.io/antha-images/antha-core:latest

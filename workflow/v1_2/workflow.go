@@ -83,11 +83,10 @@ func maybeMigrateFileParam(fm *effects.FileManager, param json.RawMessage) (json
 
 	if success, js, _ := maybeMigrateFileFlat(fm, param); success {
 		return js, nil
-		/*} else if success, js, _ := maybeMigrateFileArray(fm, param); success {
-			return js, nil
-		} else if success, js, _ := maybeMigrateFileMap(fm, param); success {
-			return js, nil
-		*/
+	} else if success, js, _ := maybeMigrateFileArray(fm, param); success {
+		return js, nil
+	} else if success, js, _ := maybeMigrateFileMap(fm, param); success {
+		return js, nil
 	} else {
 		return param, nil
 	}

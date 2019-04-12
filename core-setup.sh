@@ -8,5 +8,5 @@ for r in $repos; do
 done
 
 for r in $repos; do
-    go get ${r}...
+    go get ${r}/...
 done

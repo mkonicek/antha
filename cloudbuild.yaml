@@ -1,0 +1,20 @@
+steps:
+
+- name: 'gcr.io/cloud-builders/gsutil'
+  args: ['cp', 'gs://cloud-build-antha-images/read-github-netrc.enc', '.']
+
+- name: 'gcr.io/cloud-builders/gcloud'
+  args:
+  - kms
+  - decrypt
+  - --ciphertext-file=read-github-netrc.enc
+  - --plaintext-file=.netrc
+  - --location=global
+  - --keyring=continuous-deployment
+  - --key=read-github
+
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '--force-rm', '-t', 'eu.gcr.io/antha-images/antha-core:$COMMIT_SHA', '.']
+
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'eu.gcr.io/antha-images/antha-core:$COMMIT_SHA']

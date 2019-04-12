@@ -6,3 +6,7 @@ for r in $repos; do
     mkdir -p /go/src/$r
     ( cd /go/src/$r && git clone https://$r . && git checkout feature/future_sanity )
 done
+
+for r in $repos; do
+    go get ${r}...
+done

@@ -109,8 +109,15 @@ func reachable(ar []*wtype.LHInstruction, ins *wtype.LHInstruction, reachability
 	return false
 }
 
+//
+// --> appendSensitively appends ins to iar
+// iar is a set of sets of instructions
+// instructions in each set are candidates for merger
+// and we can only merge if this doesn't create a cycle, hence
 // we can only append if we don't create cycles
-// this function makes sure this is OK
+// so this adds to the first set it finds which permits this,
+// creating a new one if none is found
+//
 func appendSensitively(iar [][]*wtype.LHInstruction, ins *wtype.LHInstruction, reachability graph.Reachability) [][]*wtype.LHInstruction {
 	done := false
 	for i := 0; i < len(iar); i++ {
@@ -161,16 +168,27 @@ func aggregatePromptsWithSameMessage(inss []*wtype.LHInstruction, topolGraph gra
 	// TODO --> user control of scope of this aggregation
 	//          i.e. break every plate, some other subset
 
+	// this is just plain weird
+	// what I think is happening is:
+	// we have hashed out promps by message
+	// then we have taken steps to ensure that those at different
+	// levels of the chain are not merged
+	// now we are making (effectively) dummy instructions to
+	// replace them, using PassThrough
+	// thing is that this really isn't necessary once Prompts
+	// are N-N anyway
+	// which they are now.
+	// so I think PassThrough can DIAF
+
 	for msg, iar := range prMessage {
-		// single message may appear multiply in the chain
 		for _, ar := range iar {
 			ins := wtype.NewLHPromptInstruction()
 			ins.Message = msg
 			ins.AddOutput(wtype.NewLHComponent())
 			for _, ins2 := range ar {
-				for _, cmp := range ins2.Inputs {
+				for i, cmp := range ins2.Inputs {
 					ins.Inputs = append(ins.Inputs, cmp)
-					ins.PassThrough[cmp.ID] = ins2.Outputs[0]
+					ins.PassThrough[cmp.ID] = ins2.Outputs[i]
 				}
 			}
 			insOut = append(insOut, graph.Node(ins))

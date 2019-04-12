@@ -13,7 +13,7 @@ type Inventory struct {
 	Components *components.Inventory
 	TipWastes  *tipwastes.Inventory
 	TipBoxes   *tipboxes.Inventory
-	PlateTypes *plates.Inventory
+	Plates     *plates.Inventory
 }
 
 func NewInventory(idGen *id.IDGenerator) *Inventory {
@@ -21,19 +21,21 @@ func NewInventory(idGen *id.IDGenerator) *Inventory {
 		Components: components.NewInventory(idGen),
 		TipWastes:  tipwastes.NewInventory(idGen),
 		TipBoxes:   tipboxes.NewInventory(idGen),
-		PlateTypes: plates.NewInventory(idGen),
+		Plates:     plates.NewInventory(idGen),
 	}
 }
 
 func (inv *Inventory) LoadForWorkflow(wf *workflow.Workflow) {
-	// TODO: discuss this: not sure if we want to do this based off
-	// zero plate types defined, or if we want an explicit flag or
-	// something?
+	// In the cloud we should always be supplied with a real inventory
+	// of PlateTypes. Thus this is a convenience for working locally
+	// from the command line.
 	if wf == nil || len(wf.Inventory.PlateTypes) == 0 {
-		inv.PlateTypes.LoadLibrary()
+		inv.Plates.LoadLibrary()
 	} else {
-		inv.PlateTypes.SetPlateTypes(wf.Inventory.PlateTypes)
+		inv.Plates.SetPlateTypes(wf.Inventory.PlateTypes)
 	}
 
+	// Similarly, the long-term intention is that these should come in
+	// with the workflow too...
 	inv.TipBoxes.LoadLibrary()
 }

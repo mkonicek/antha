@@ -82,7 +82,7 @@ func (inst *LabcyteInstance) Validate(inv *inventory.Inventory) error {
 	// TODO: add extra validation here!
 	for _, ptns := range [][]wtype.PlateTypeName{inst.InputPlateTypes, inst.OutputPlateTypes} {
 		for _, ptn := range ptns {
-			if _, err := inv.PlateTypes.NewPlateType(ptn); err != nil {
+			if _, err := inv.Plates.NewPlateType(ptn); err != nil {
 				return err
 			}
 		}

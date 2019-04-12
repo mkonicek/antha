@@ -53,7 +53,7 @@ func (mc *mainComposer) goBuild() error {
 }
 
 func (tc *testComposer) goTest() error {
-	cmd := exec.Command("go", "test", "-v")
+	cmd := exec.Command("go", "test", "-v") // , "-race", "-timeout", "1h")
 	if tc.LinkedDrivers {
 		cmd.Args = append(cmd.Args, "-tags", "linkedDrivers", "-args", "-outdir", filepath.Join(tc.OutDir, "test"))
 	}

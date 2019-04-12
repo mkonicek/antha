@@ -276,7 +276,7 @@ func (mo mixOpts) mix() (*target.Mix, error) {
 	}
 
 	for _, ptn := range mo.InputPlateTypes {
-		if pt, err := mo.LabEffects.Inventory.PlateTypes.NewPlate(ptn); err != nil {
+		if pt, err := mo.LabEffects.Inventory.Plates.NewPlate(ptn); err != nil {
 			return nil, err
 		} else {
 			req.InputPlatetypes = append(req.InputPlatetypes, pt)
@@ -284,7 +284,7 @@ func (mo mixOpts) mix() (*target.Mix, error) {
 	}
 
 	for _, ptn := range mo.OutputPlateTypes {
-		if pt, err := mo.LabEffects.Inventory.PlateTypes.NewPlate(ptn); err != nil {
+		if pt, err := mo.LabEffects.Inventory.Plates.NewPlate(ptn); err != nil {
 			return nil, err
 		} else {
 			req.OutputPlatetypes = append(req.OutputPlatetypes, pt)
@@ -330,7 +330,7 @@ func (mo mixOpts) mix() (*target.Mix, error) {
 		}
 
 		if len(instr.Platetype) != 0 && !hasOutputPlate(instr.Platetype, instr.PlateID) {
-			if pt, err := mo.LabEffects.Inventory.PlateTypes.NewPlate(instr.Platetype); err != nil {
+			if pt, err := mo.LabEffects.Inventory.Plates.NewPlate(instr.Platetype); err != nil {
 				return nil, err
 			} else {
 				pt.ID = instr.PlateID

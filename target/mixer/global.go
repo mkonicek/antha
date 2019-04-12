@@ -23,7 +23,7 @@ func NewGlobalMixerConfig(inv *inventory.Inventory, cfg *workflow.GlobalMixerCon
 
 func (cfg *GlobalMixerConfig) Validate(inv *inventory.Inventory) error {
 	for _, plate := range cfg.InputPlates {
-		if _, err := inv.PlateTypes.NewPlateType(plate.Type); err != nil {
+		if _, err := inv.Plates.NewPlateType(plate.Type); err != nil {
 			return err
 		}
 	}

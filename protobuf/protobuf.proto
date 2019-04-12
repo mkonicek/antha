@@ -1,0 +1,10 @@
+syntax = "proto3";
+package com.antha_lang.antha;
+
+option go_package = "protobuf";
+
+import "github.com/Synthace/microservice/cmd/element/protobuf/protobuf.proto";
+
+message Elements {
+  repeated com.synthace.element.Element elements = 1;
+}

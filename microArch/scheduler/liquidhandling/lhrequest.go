@@ -374,7 +374,7 @@ func (rq *LHRequest) assertWellNotOverfilled(labEffects *effects.LaboratoryEffec
 				plate = p
 			}
 		} else if ins.Platetype != "" {
-			if p, err := labEffects.Inventory.PlateTypes.NewPlate(ins.Platetype); err != nil {
+			if p, err := labEffects.Inventory.Plates.NewPlate(ins.Platetype); err != nil {
 				continue
 			} else {
 				plate = p

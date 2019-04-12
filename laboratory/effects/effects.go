@@ -19,20 +19,18 @@ type LaboratoryEffects struct {
 	IDGenerator *id.IDGenerator
 }
 
-func NewLaboratoryEffects(simId workflow.BasicId, fm *FileManager, inv *inventory.Inventory) *LaboratoryEffects {
+func NewLaboratoryEffects(wf *workflow.Workflow, simId workflow.BasicId, fm *FileManager) *LaboratoryEffects {
 	idGen := id.NewIDGenerator(string(simId))
-	if inv == nil {
-		inv = inventory.NewInventory(idGen)
-	}
 	le := &LaboratoryEffects{
 		FileManager:   fm,
 		Trace:         NewTrace(),
 		Maker:         NewMaker(),
 		SampleTracker: sampletracker.NewSampleTracker(),
-		Inventory:     inv,
+		Inventory:     inventory.NewInventory(idGen),
 		IDGenerator:   idGen,
 	}
-	le.PlateCache = plateCache.NewPlateCache(le.Inventory.PlateTypes)
+	le.PlateCache = plateCache.NewPlateCache(le.Inventory.Plates)
+	le.Inventory.LoadForWorkflow(wf)
 
 	return le
 }

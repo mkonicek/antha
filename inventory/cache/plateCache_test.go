@@ -14,7 +14,7 @@ const plateType = "pcrplate"
 
 func TestPlateReuse(t *testing.T) {
 	idGen := id.NewIDGenerator(t.Name())
-	inv := testlab.EnsureSharedInventory()
+	inv := testlab.InventoryWithSharedPlates()
 	cache := plateCache.NewPlateCache(inv.PlateTypes)
 
 	firstPlate, err := cache.NewPlate(plateType)
@@ -70,7 +70,7 @@ func TestPlateReuse(t *testing.T) {
 		t.Error("thirdPlate came from cache, but cache.IsFromPlate returned false")
 	}
 
-	fourthPlate, err := inv.PlateTypes.NewPlate(plateType)
+	fourthPlate, err := inv.Plates.NewPlate(plateType)
 	if err != nil {
 		t.Fatal(err)
 	}

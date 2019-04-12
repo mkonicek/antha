@@ -42,7 +42,7 @@ steps:
   - |
     set -x -o nounset -o errexit -o pipefail
     cat /docker-config/antha-root-passwd | docker login -u antha-root --password-stdin repos.antha.com:5005
-    REPOS="eu.gcr.io/antha-images/antha-core:latest repos.antha.com:5005/synthace/antha-core:latest repos.antha.com:5005/synthace/antha-core:$COMMIT_SHA"
+    REPOS="eu.gcr.io/antha-images/antha-core:latest repos.antha.com:5005/antha-ninja/antha-core:latest repos.antha.com:5005/antha-ninja/antha-core:$COMMIT_SHA"
     for repo in $$REPOS; do
       docker tag eu.gcr.io/antha-images/antha-core:$COMMIT_SHA $repo
       docker push $repo

@@ -1,4 +1,4 @@
-FROM eu.gcr.io/antha-images/golang:1.11-build
+FROM eu.gcr.io/antha-images/golang:1.12-build
 
 ARG COMMIT_SHA
 ADD .netrc /

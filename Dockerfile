@@ -1,6 +1,6 @@
 FROM eu.gcr.io/antha-images/golang:1.11-build
 
-ARG GIT_COMMIT_SHA
+ARG COMMIT_SHA
 ADD .netrc /
 RUN mv /.netrc $HOME/.netrc || true
 RUN mkdir /tmp/antha-core-build

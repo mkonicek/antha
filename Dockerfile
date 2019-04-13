@@ -7,6 +7,7 @@ RUN mkdir /tmp/antha-core-build
 WORKDIR /tmp/antha-core-build
 RUN set -ex && go mod init antha-core-build && go get github.com/antha-lang/antha@$GIT_COMMIT_SHA
 RUN set -ex && go install github.com/antha-lang/antha/cmd/...
+ADD scripts/elements-test.sh /usr/local/bin/
 WORKDIR /app
 
 # These are for the gitlab CI for elements:

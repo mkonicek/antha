@@ -65,8 +65,9 @@ func (mc *mainComposer) goBuild() error {
 func (tc *testComposer) goTest() error {
 	cmd := exec.Command("go", "test", "-v", "-mod", "readonly") // , "-race", "-timeout", "1h")
 	if tc.LinkedDrivers {
-		cmd.Args = append(cmd.Args, "-tags", "linkedDrivers", "-args", "-outdir", filepath.Join(tc.OutDir, "test"))
+		cmd.Args = append(cmd.Args, "-tags", "linkedDrivers")
 	}
+	cmd.Args = append(cmd.Args, "-args", "-outdir", filepath.Join(tc.OutDir, "test"))
 	cmd.Dir = filepath.Join(tc.OutDir, "workflow")
 
 	if err := RunAndLogCommand(cmd, RawLogger); err != nil {

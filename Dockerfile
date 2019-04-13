@@ -1,11 +1,12 @@
 FROM eu.gcr.io/antha-images/golang:1.11-build
 
-ADD . /go/src/github.com/antha-lang/antha
-WORKDIR /go/src/github.com/antha-lang/antha
-RUN mv .netrc $HOME/.netrc || true
-RUN ./core-setup.sh
-RUN set -ex && go get ./cmd/composer/ ./cmd/migrate/ ./cmd/elements/ ./laboratory/... ./workflow/... ./antha/...
-RUN set -ex && go install ./cmd/composer/ ./cmd/migrate/ ./cmd/elements/
+ARG GIT_COMMIT_SHA
+ADD .netrc /
+RUN mv /.netrc $HOME/.netrc || true
+RUN mkdir /tmp/antha-core-build
+WORKDIR /tmp/antha-core-build
+RUN set -ex && go mod init antha-core-build && go get github.com/antha-lang/antha@$GIT_COMMIT_SHA
+RUN set -ex && go install github.com/antha-lang/antha/cmd/...
 WORKDIR /app
 
 # These are for the gitlab CI for elements:

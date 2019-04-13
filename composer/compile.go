@@ -42,7 +42,6 @@ func (mc *mainComposer) goBuild() error {
 		cmd.Args = append(cmd.Args, "-tags", "linkedDrivers protobuf")
 	}
 	cmd.Dir = filepath.Join(mc.OutDir, "workflow")
-	cmd.Env = SetEnvGoPath(os.Environ(), mc.OutDir)
 
 	if err := RunAndLogCommand(cmd, mc.Logger.With("cmd", "build").Log); err != nil {
 		return err
@@ -58,7 +57,6 @@ func (tc *testComposer) goTest() error {
 		cmd.Args = append(cmd.Args, "-tags", "linkedDrivers", "-args", "-outdir", filepath.Join(tc.OutDir, "test"))
 	}
 	cmd.Dir = filepath.Join(tc.OutDir, "workflow")
-	cmd.Env = SetEnvGoPath(os.Environ(), tc.OutDir)
 
 	if err := RunAndLogCommand(cmd, RawLogger); err != nil {
 		return err
@@ -66,17 +64,6 @@ func (tc *testComposer) goTest() error {
 		tc.Logger.Log("testing", "successful")
 		return nil
 	}
-}
-
-// NB: this may well need revising when we move to go mod
-func SetEnvGoPath(env []string, outDir string) []string {
-	for idx, s := range env {
-		if len(s) >= 7 && "GOPATH=" == s[:7] {
-			env[idx] = fmt.Sprintf("GOPATH=%s:%s", outDir, s[7:])
-			break
-		}
-	}
-	return env
 }
 
 func (mc *mainComposer) cleanOutDir() error {
@@ -145,7 +132,7 @@ func (cb *ComposerBase) prepareDrivers(cfg *workflow.Config) error {
 		} else if cfg.CompileAndRun != "" {
 			cb.Logger.Log("instructionPlugin", string(id), "building", cfg.CompileAndRun)
 			cmd := exec.Command("go", "build", "-o", outBin, cfg.CompileAndRun)
-			cmd.Dir = filepath.Dir(outBin)
+			cmd.Dir = filepath.Join(cb.OutDir, "workflow") // we need to rely on the go.mod file being there
 			if err := RunAndLogCommand(cmd, cb.Logger.With("cmd", "build", "instructionPlugin", string(id)).Log); err != nil {
 				return err
 			}

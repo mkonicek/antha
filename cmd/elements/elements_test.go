@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"testing"
 
@@ -51,7 +52,7 @@ func TestElements(t *testing.T) {
 			// go test relies on the checkout of the elements so it makes
 			// some sense for that to depend on the
 			// checkout/transpilation/compilation of the elements.
-			goTest(t, l, buildDir)
+			goTest(t, l, buildDir, wf)
 			if keepPtr == nil || !*keepPtr {
 				os.RemoveAll(buildDir)
 			}
@@ -79,13 +80,14 @@ func compileElements(t *testing.T, l *logger.Logger, inDir, outDir string, wf *w
 	}
 }
 
-func goTest(t *testing.T, l *logger.Logger, outDir string) {
-	cmd := exec.Command("go", "test", "-v", "./...")
-	cmd.Dir = filepath.Join(outDir, "src")
-	cmd.Env = composer.SetEnvGoPath(os.Environ(), outDir)
+func goTest(t *testing.T, l *logger.Logger, outDir string, wf *workflow.Workflow) {
+	for repoName := range wf.Repositories {
+		cmd := exec.Command("go", "test", "-v", path.Join(string(repoName), "..."))
+		cmd.Dir = filepath.Join(outDir, "workflow")
 
-	if err := composer.RunAndLogCommand(cmd, composer.RawLogger); err != nil {
-		t.Fatal(err)
+		if err := composer.RunAndLogCommand(cmd, composer.RawLogger); err != nil {
+			t.Fatal(err)
+		}
 	}
 }
 
@@ -94,7 +96,7 @@ func workflows(t *testing.T, l *logger.Logger, inDir, outDir string, wf *workflo
 		t.Fatal(err)
 	} else {
 		defer cb.CloseLogs()
-		tc := cb.NewTestsComposer(true, true, true)
+		tc := cb.NewTestsComposer(true, true, true) // keep, run, linked
 
 		wfPaths, err := workflow.GatherPaths(nil, inDir)
 		if err != nil {

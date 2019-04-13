@@ -94,6 +94,41 @@ func (cb *ComposerBase) cloneRepositories(wf *workflow.Workflow) error {
 	}
 }
 
+func (cb *ComposerBase) generateRepositoryGoMods() error {
+	for repoName := range cb.clonedRepositories {
+		path := filepath.Join(cb.OutDir, "src", filepath.FromSlash(string(repoName)), "go.mod")
+		if fh, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0400); err != nil {
+			return err
+		} else {
+			defer fh.Close()
+			if err := renderRepositoryMod(fh, repoName); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (cb *ComposerBase) generateWorkflowGoMod() error {
+	path := filepath.Join(cb.OutDir, "workflow", "go.mod")
+	if fh, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0400); err != nil {
+		return err
+	} else {
+		defer fh.Close()
+		return renderWorkflowMod(fh, cb.clonedRepositories)
+	}
+}
+
+func (cb *ComposerBase) generateGoGenerate() error {
+	path := filepath.Join(cb.OutDir, "workflow", "generate_assets.go")
+	if fh, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0400); err != nil {
+		return err
+	} else {
+		defer fh.Close()
+		return renderGoGenerate(fh)
+	}
+}
+
 func (cb *ComposerBase) ensureElementType(et *TranspilableElementType) {
 	if _, found := cb.elementTypes[et.Name()]; !found {
 		cb.elementTypes[et.Name()] = et
@@ -155,6 +190,7 @@ func (cb *ComposerBase) ComposeMainAndRun(keep, run, linkedDrivers bool, wf *wor
 
 	return utils.ErrorFuncs{
 		func() error { return mc.cloneRepositories(wf) },
+		func() error { return mc.generateRepositoryGoMods() },
 		func() error { return mc.transpile(wf) },
 		func() error { return mc.generateMain() },
 		func() error { return mc.prepareDrivers(&wf.Config) }, // Must do this before SaveWorkflow!
@@ -164,20 +200,12 @@ func (cb *ComposerBase) ComposeMainAndRun(keep, run, linkedDrivers bool, wf *wor
 	}.Run()
 }
 
-func (cb *ComposerBase) generateGoGenerate() error {
-	path := filepath.Join(cb.OutDir, "workflow", "generate_assets.go")
-	if fh, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0400); err != nil {
-		return err
-	} else {
-		defer fh.Close()
-		return renderGoGenerate(fh)
-	}
-}
-
 func (mc *mainComposer) generateMain() error {
 	path := filepath.Join(mc.OutDir, "workflow", "main.go")
 	mc.Logger.Log("progress", "generating workflow main", "path", path)
 	if err := mc.generateGoGenerate(); err != nil {
+		return err
+	} else if err := mc.generateWorkflowGoMod(); err != nil {
 		return err
 	} else if fh, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0400); err != nil {
 		return err
@@ -238,15 +266,33 @@ func (tc *testComposer) ComposeTestsAndRun() error {
 	if len(tc.Workflows) == 0 {
 		return nil
 	}
+	// Need to do this in several steps because things like prepareDrivers
+	// we can't do until after workflow go mod
 	for _, twf := range tc.Workflows {
-		efs := utils.ErrorFuncs{
+		err := utils.ErrorFuncs{
 			func() error { return tc.cloneRepositories(twf.workflow) },
 			func() error { return tc.transpile(twf.workflow) },
 			func() error { return twf.generateTest() },
+		}.Run()
+		if err != nil {
+			return err
+		}
+	}
+
+	err := utils.ErrorFuncs{
+		tc.generateRepositoryGoMods,
+		tc.generateWorkflowGoMod,
+	}.Run()
+	if err != nil {
+		return err
+	}
+
+	for _, twf := range tc.Workflows {
+		err := utils.ErrorFuncs{
 			func() error { return tc.prepareDrivers(&twf.workflow.Config) },
 			func() error { return twf.saveWorkflow() },
-		}
-		if err := efs.Run(); err != nil {
+		}.Run()
+		if err != nil {
 			return err
 		}
 	}

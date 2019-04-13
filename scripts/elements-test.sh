@@ -21,4 +21,4 @@ repo='
 
 printf "$repo" > /tmp/repo.json
 cat /tmp/repo.json
-exec go test github.com/antha-lang/antha/cmd/elements -v -args /tmp/repo.json
+exec ./elements.test -test.v /tmp/repo.json

@@ -1,7 +1,5 @@
 module github.com/antha-lang/antha
 
-go 1.12
-
 require (
 	github.com/Synthace/antha-runner v0.0.0-20190411151439-5acaf3b30320
 	github.com/Synthace/instruction-plugins v0.0.0-20190409101917-f2439f6bee7c

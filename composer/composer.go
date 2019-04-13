@@ -299,7 +299,6 @@ func (tc *testComposer) ComposeTestsAndRun() error {
 
 	return utils.ErrorFuncs{
 		tc.generateGoGenerate,
-		tc.goModTidy,
 		tc.goGenerate,
 		tc.goTest,
 	}.Run()

@@ -9,6 +9,7 @@ RUN set -ex && go mod init antha-core-build && go get github.com/antha-lang/anth
 RUN set -ex && go install github.com/antha-lang/antha/cmd/...
 ADD scripts/elements-test.sh /usr/local/bin/
 WORKDIR /app
+RUN rm -rf /tmp/antha-core-build $HOME/.netrc
 
 # These are for the gitlab CI for elements:
 ONBUILD ADD . /elements

@@ -31,23 +31,22 @@ import (
 var modtpl = `
 {{define "repository"}}module {{.Name}}
 
-require {{.AnthaPath}} {{.AnthaVersion}}
+require github.com/antha-lang/antha {{.AnthaVersion}}
 {{end}}
 
 {{define "workflow"}}module workflow
 
 require (
-	{{.AnthaPath}} {{.AnthaVersion}}
+	github.com/antha-lang/antha {{.AnthaVersion}}
 {{range $repoName, $repo := .Repositories}}	{{$repoName}} v0.0.0
 {{end}})
-{{if .ReplaceAntha}}replace {{.AnthaPath}} => {{.AnthaDir}}{{end}}
+{{if .ReplaceAntha}}replace github.com/antha-lang/antha => {{.AnthaDir}}{{end}}
 {{range $repoName, $repo := .Repositories}}replace {{$repoName}} => {{repopath $repoName}}
 {{end}}{{end}}
 `
 
 type repositoryMod struct {
 	Name         string
-	AnthaPath    string
 	AnthaVersion string
 }
 
@@ -57,14 +56,38 @@ func newRepositoryMod(name string) *repositoryMod {
 		AnthaVersion: "v0.0.0",
 	}
 
-	if info, ok := debug.ReadBuildInfo(); ok {
-		rm.AnthaPath = info.Main.Path
-		if v := info.Main.Version; len(v) > 0 && v[0] == 'v' {
-			rm.AnthaVersion = info.Main.Version
+	if anthaMod := AnthaModule(); anthaMod != nil {
+		if v := anthaMod.Version; len(v) > 0 && v[0] == 'v' {
+			rm.AnthaVersion = v
 		}
 	}
 
 	return rm
+}
+
+func AnthaModule() *debug.Module {
+	if info, ok := debug.ReadBuildInfo(); ok {
+		var anthaMod *debug.Module
+		if info.Main.Path == "github.com/antha-lang/antha" {
+			anthaMod = &info.Main
+		} else {
+			for _, mod := range info.Deps {
+				if mod.Path == "github.com/antha-lang/antha" {
+					anthaMod = mod
+					break
+				}
+			}
+		}
+		if anthaMod == nil {
+			return nil
+		} else if anthaMod.Replace != nil {
+			return anthaMod.Replace
+		} else {
+			return anthaMod
+		}
+	} else {
+		return nil
+	}
 }
 
 func repopath(repoName workflow.RepositoryName) string {

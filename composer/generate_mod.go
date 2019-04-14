@@ -1,7 +1,6 @@
 package composer
 
 import (
-	"fmt"
 	"io"
 	"path"
 	"path/filepath"
@@ -80,13 +79,10 @@ func AnthaModule() *debug.Module {
 			}
 		}
 		if anthaMod == nil {
-			fmt.Println("anthaMod not found")
 			return nil
 		} else if anthaMod.Replace != nil {
-			fmt.Println("anthaMod with replace found:", anthaMod, anthaMod.Replace)
 			return anthaMod.Replace
 		} else {
-			fmt.Println("anthaMod found:", anthaMod)
 			return anthaMod
 		}
 	} else {

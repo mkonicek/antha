@@ -74,7 +74,7 @@ func (es ErrorSlice) WriteToFile(filename string) error {
 
 // Write writes the contents of an error slice as json.
 func (es ErrorSlice) Write(w io.Writer) error {
-	if js, err := json.MarshalIndent(es, "", "  "); err != nil {
+	if js, err := json.MarshalIndent(es, "", "\t"); err != nil {
 		return err
 	} else {
 		_, err := fmt.Fprintf(w, "%v\n", string(js))

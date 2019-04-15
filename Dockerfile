@@ -8,7 +8,7 @@ WORKDIR /antha
 RUN set -ex && go mod init antha && go get github.com/antha-lang/antha@$COMMIT_SHA && go mod download
 RUN set -ex && go install github.com/antha-lang/antha/cmd/...
 RUN set -ex && go test -c github.com/antha-lang/antha/cmd/elements
-ADD scripts/elements-test.sh /antha/elements-test.sh
+COPY scripts/. /antha/.
 RUN rm $HOME/.netrc
 
 # These are for the gitlab CI for elements:

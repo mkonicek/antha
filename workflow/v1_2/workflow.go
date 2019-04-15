@@ -94,7 +94,7 @@ func maybeMigrateFileParam(fm *effects.FileManager, param json.RawMessage) (json
 	}
 }
 
-// maybeMigrateFileArray returns bool indicating whether this could be serialised as an array of file references, then either the original json or transformed json if successful.
+// maybeMigrateFileArray returns a json representation of serialized file references, if the element could be interpreted as an array of baked-in files.
 func maybeMigrateFileArray(fm *effects.FileManager, param json.RawMessage) (json.RawMessage, error) {
 	var bifArr []*bakedInFile
 	if err := json.Unmarshal([]byte(param), &bifArr); err != nil || bifArr == nil {
@@ -115,7 +115,7 @@ func maybeMigrateFileArray(fm *effects.FileManager, param json.RawMessage) (json
 	return json.Marshal(js)
 }
 
-// maybeMigrateFileFlat returns bool indicating whether this could be serialised as a file reference, then either the original json or transformed json if successful.
+// maybeMigrateFileFlat returns a json representation of a serialized file reference, if the data could be interpreted as a baked-in file.
 func maybeMigrateFileFlat(fm *effects.FileManager, param json.RawMessage) (json.RawMessage, error) {
 	var bif *bakedInFile
 	if err := json.Unmarshal([]byte(param), &bif); err != nil || !bif.hasData() {

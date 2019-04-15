@@ -41,7 +41,7 @@ func NewFileManager(inDir, outDir string) (*FileManager, error) {
 }
 
 func (fm *FileManager) ReadAll(f *wtype.File) ([]byte, error) {
-	if f == nil {
+	if f == nil || f.Path() == "" {
 		return nil, errors.New("Cannot read nil file")
 	}
 	fm.lock.Lock()

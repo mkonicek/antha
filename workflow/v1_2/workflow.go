@@ -81,93 +81,60 @@ type bakedInFile struct {
 // maybeMigrateFileParam returns either the original json representations, or a json representation as serialized files, if possible.
 func maybeMigrateFileParam(fm *effects.FileManager, param json.RawMessage) (json.RawMessage, error) {
 
-	if success, js, _ := maybeMigrateFileFlat(fm, param); success {
+	if js, err := maybeMigrateFileFlat(fm, param); js != nil {
 		return js, nil
-	} else if success, js, _ := maybeMigrateFileArray(fm, param); success {
+	} else if err != nil {
+		return nil, err
+	} else if js, err := maybeMigrateFileArray(fm, param); js != nil {
 		return js, nil
-	} else if success, js, _ := maybeMigrateFileMap(fm, param); success {
-		return js, nil
+	} else if err != nil {
+		return nil, err
 	} else {
 		return param, nil
 	}
 }
 
-// maybeMigrateFileMap returns bool indicating whether this could be serialised as a map of file references, then either the original json or transformed json if successful.
-func maybeMigrateFileMap(fm *effects.FileManager, param json.RawMessage) (bool, json.RawMessage, error) {
-	bifMap := make(map[string]*bakedInFile, 0)
-	if err := json.Unmarshal([]byte(param), &bifMap); err != nil {
-		return false, nil, nil
-	}
-
-	js := make(map[string]wtype.File, len(bifMap))
-	for k, bif := range bifMap {
-		if f, err := moveDataToFile(fm, bif); err != nil {
-			return false, nil, err
-		} else if f == nil {
-			return false, nil, nil
-		} else {
-			js[k] = *f
-		}
-	}
-
-	if msg, err := json.Marshal(js); err != nil {
-		return false, nil, err
-	} else {
-		return true, msg, nil
-	}
-}
-
 // maybeMigrateFileArray returns bool indicating whether this could be serialised as an array of file references, then either the original json or transformed json if successful.
-func maybeMigrateFileArray(fm *effects.FileManager, param json.RawMessage) (bool, json.RawMessage, error) {
-	bifArr := make([]*bakedInFile, 0)
-
-	if err := json.Unmarshal([]byte(param), &bifArr); err != nil {
-		return false, nil, nil
+func maybeMigrateFileArray(fm *effects.FileManager, param json.RawMessage) (json.RawMessage, error) {
+	var bifArr []*bakedInFile
+	if err := json.Unmarshal([]byte(param), &bifArr); err != nil || bifArr == nil {
+		return nil, nil
 	}
 
-	js := make([]wtype.File, len(bifArr))
+	js := make([]*wtype.File, len(bifArr))
 	for i, bif := range bifArr {
-		if f, err := moveDataToFile(fm, bif); err != nil {
-			return false, nil, err
-		} else if f == nil {
-			return false, nil, nil
+		if !bif.hasData() {
+			return nil, nil
+		} else if f, err := bif.moveDataToFile(fm); err != nil {
+			return nil, err
 		} else {
-			js[i] = *f
+			js[i] = f
 		}
 	}
 
-	if msg, err := json.Marshal(js); err != nil {
-		return false, nil, err
-	} else {
-		return true, msg, nil
-	}
+	return json.Marshal(js)
 }
 
 // maybeMigrateFileFlat returns bool indicating whether this could be serialised as a file reference, then either the original json or transformed json if successful.
-func maybeMigrateFileFlat(fm *effects.FileManager, param json.RawMessage) (bool, json.RawMessage, error) {
-	bif := &bakedInFile{}
-	if err := json.Unmarshal([]byte(param), &bif); err != nil {
-		return false, param, nil
-	} else if f, err := moveDataToFile(fm, bif); err != nil {
-		return false, nil, err
-	} else if f == nil {
-		return false, nil, nil
-	} else if msg, err := json.Marshal(f); err != nil {
-		return false, nil, err
+func maybeMigrateFileFlat(fm *effects.FileManager, param json.RawMessage) (json.RawMessage, error) {
+	var bif *bakedInFile
+	if err := json.Unmarshal([]byte(param), &bif); err != nil || !bif.hasData() {
+		return nil, nil
+	} else if f, err := bif.moveDataToFile(fm); err != nil {
+		return nil, err
 	} else {
-		return true, msg, nil
+		return json.Marshal(f)
 	}
 }
 
-func moveDataToFile(fm *effects.FileManager, bif *bakedInFile) (*wtype.File, error) {
-	if bif == nil {
-		return nil, nil
-	} else if bif.Name == "" || len(bif.Bytes.Bytes) == 0 {
-		return nil, nil
-	} else if f, err := fm.WriteAll(bif.Bytes.Bytes, bif.Name); err != nil {
+// hasData checks that structure is a valid bakedInFile (rather than an empty struct)
+func (bif *bakedInFile) hasData() bool {
+	return bif != nil && bif.Name != "" && len(bif.Bytes.Bytes) > 0
+}
+
+func (bif *bakedInFile) moveDataToFile(fm *effects.FileManager) (*wtype.File, error) {
+	if f, err := fm.WriteAll(bif.Bytes.Bytes, bif.Name); err != nil {
 		return nil, err
-	} else if f == nil {
-		return nil, nil
 	} else {
 		return f.AsInput(), nil
 	}

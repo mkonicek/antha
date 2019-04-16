@@ -1,14 +1,17 @@
-FROM eu.gcr.io/antha-images/golang:1.11-build
+FROM eu.gcr.io/antha-images/golang:1.12.4-build
 
-ADD . /go/src/github.com/antha-lang/antha
-WORKDIR /go/src/github.com/antha-lang/antha
-RUN mv .netrc $HOME/.netrc || true
-RUN ./core-setup.sh
-RUN set -ex && go get ./cmd/composer/ ./cmd/migrate/ ./cmd/elements/ ./laboratory/... ./workflow/... ./antha/...
-RUN set -ex && go install ./cmd/composer/ ./cmd/migrate/ ./cmd/elements/
-WORKDIR /app
+ARG COMMIT_SHA
+ADD .netrc /
+RUN mv /.netrc $HOME/.netrc || true
+RUN mkdir /antha
+WORKDIR /antha
+RUN set -ex && go mod init antha && go get github.com/antha-lang/antha@$COMMIT_SHA && go mod download
+RUN set -ex && go install github.com/antha-lang/antha/cmd/...
+RUN set -ex && go test -c github.com/antha-lang/antha/cmd/elements
+COPY scripts/. /antha/.
+RUN rm $HOME/.netrc
 
 # These are for the gitlab CI for elements:
 ONBUILD ADD . /elements
-ONBUILD ARG GIT_COMMIT_SHA
-ONBUILD ENTRYPOINT /go/src/github.com/antha-lang/antha/cmd/elements/test.sh "$GIT_COMMIT_SHA"
+ONBUILD ARG COMMIT_SHA
+ONBUILD ENTRYPOINT /antha/elements-test.sh "$COMMIT_SHA"

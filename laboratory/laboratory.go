@@ -12,6 +12,7 @@ import (
 	"sync/atomic"
 
 	"github.com/antha-lang/antha/codegen"
+	"github.com/antha-lang/antha/composer"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/logger"
 	"github.com/antha-lang/antha/target"
@@ -114,8 +115,16 @@ func (labBuild *LaboratoryBuilder) SetupWorkflow(fh io.ReadCloser) error {
 		return err
 	} else {
 		wf.SimulationId = simId
-		labBuild.Workflow = wf
 		labBuild.Logger = labBuild.Logger.With("simulationId", simId)
+		if anthaMod := composer.AnthaModule(); anthaMod != nil && len(anthaMod.Version) != 0 {
+			wf.Meta.Rest["SimulatorVersion"] = anthaMod.Version
+			labBuild.Logger.Log("simulatorVersion", anthaMod.Version)
+		} else {
+			wf.Meta.Rest["SimulatorVersion"] = "unknown"
+			labBuild.Logger.Log("simulatorVersion", "unknown")
+		}
+
+		labBuild.Workflow = wf
 		return nil
 	}
 }

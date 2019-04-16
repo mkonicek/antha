@@ -38,8 +38,8 @@ func (rs Repositories) LongestMatching(importPath string) (RepositoryName, *Repo
 }
 
 func (rs Repositories) Clone(dir string) error {
-	for prefix, repo := range rs {
-		if err := repo.Clone(filepath.Join(dir, string(prefix))); err != nil {
+	for repoName, repo := range rs {
+		if err := repo.Clone(filepath.Join(dir, filepath.FromSlash(string(repoName)))); err != nil {
 			return err
 		}
 	}

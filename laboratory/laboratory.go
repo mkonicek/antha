@@ -117,10 +117,14 @@ func (labBuild *LaboratoryBuilder) SetupWorkflow(fh io.ReadCloser) error {
 		wf.SimulationId = simId
 		labBuild.Logger = labBuild.Logger.With("simulationId", simId)
 		if anthaMod := composer.AnthaModule(); anthaMod != nil && len(anthaMod.Version) != 0 {
-			wf.Meta.Rest["SimulatorVersion"] = anthaMod.Version
+			if err := wf.Meta.Set("SimulatorVersion", anthaMod.Version); err != nil {
+				return err
+			}
 			labBuild.Logger.Log("simulatorVersion", anthaMod.Version)
 		} else {
-			wf.Meta.Rest["SimulatorVersion"] = "unknown"
+			if err := wf.Meta.Set("SimulatorVersion", "unknown"); err != nil {
+				return err
+			}
 			labBuild.Logger.Log("simulatorVersion", "unknown")
 		}
 

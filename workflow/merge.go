@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"sort"
@@ -20,6 +21,7 @@ func (a *Workflow) Merge(b *Workflow) error {
 		b.SchemaVersion.Validate(), // every snippet must have a valid SchemaVersion
 		a.WorkflowId.Merge(b.WorkflowId),
 		a.SimulationId.Merge(b.SimulationId),
+		a.Meta.merge(b.Meta),
 		a.Repositories.Merge(b.Repositories),
 		a.Elements.merge(b.Elements),
 		a.Inventory.merge(b.Inventory),
@@ -49,6 +51,23 @@ func (a *BasicId) Merge(b BasicId) error {
 	} else {
 		return fmt.Errorf("Cannot merge: ids both not empty and not equal: %v vs %v", *a, b)
 	}
+}
+
+func (a *Meta) merge(b Meta) error {
+	if name, ok := tryMergeStrings(a.Name, b.Name); !ok {
+		return fmt.Errorf("Cannot merge: multiple distinct non-empty Meta.Name values provided: %v vs %v", a.Name, b.Name)
+	} else {
+		a.Name = name
+	}
+	for k, bVal := range b.Rest {
+		aVal := a.Rest[k]
+		if len(aVal) == 0 {
+			a.Rest[k] = bVal
+		} else if len(bVal) != 0 && !bytes.Equal(aVal, bVal) {
+			return fmt.Errorf("Cannot merge: multiple distinct non-empty Meta.%v values provided: %v vs %v", k, aVal, bVal)
+		}
+	}
+	return nil
 }
 
 func (a Repositories) Merge(b Repositories) error {

@@ -104,7 +104,7 @@ func EmptyWorkflow() *Workflow {
 	return &Workflow{
 		SchemaVersion: CurrentSchemaVersion,
 		Meta: Meta{
-			Rest: make(map[string]interface{}),
+			Rest: make(map[string]json.RawMessage),
 		},
 		Repositories: make(Repositories),
 		Elements: Elements{
@@ -145,8 +145,8 @@ func (wf *Workflow) ToWriter(w io.Writer, pretty bool) error {
 }
 
 type Meta struct {
-	Name string                 `json:"Name,omitempty"`
-	Rest map[string]interface{} `json:"-"`
+	Name string                     `json:"Name,omitempty"`
+	Rest map[string]json.RawMessage `json:"-"`
 }
 
 // See https://golang.org/ref/spec#identifier However, we allow the
@@ -166,15 +166,15 @@ func (m *Meta) NameAsGoIdentifier() string {
 }
 
 func (m *Meta) UnmarshalJSON(bs []byte) error {
-	all := make(map[string]interface{})
+	all := make(map[string]json.RawMessage)
 	if err := json.Unmarshal(bs, &all); err != nil {
 		return err
 	}
 	// belt and braces due to Go's json support being case insensitive
 	for key, val := range all {
 		if strings.ToLower(key) == "name" {
-			if valStr, ok := val.(string); ok {
-				m.Name = valStr
+			if err := json.Unmarshal(val, &m.Name); err != nil {
+				return err
 			}
 			delete(all, key)
 		}
@@ -197,6 +197,15 @@ func (m *Meta) MarshalJSON() ([]byte, error) {
 		all = nil
 	}
 	return json.Marshal(all)
+}
+
+func (m *Meta) Set(key string, val interface{}) error {
+	if bs, err := json.Marshal(val); err != nil {
+		return err
+	} else {
+		m.Rest[key] = json.RawMessage(bs)
+		return nil
+	}
 }
 
 type BasicId string

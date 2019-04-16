@@ -25,6 +25,7 @@ package wunit
 import (
 	"fmt"
 	"math"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -264,7 +265,14 @@ func (t Time) Seconds() float64 {
 
 func (t Time) AsDuration() time.Duration {
 	// simply use the parser
-	if d, err := time.ParseDuration(t.ToString()); err != nil {
+	// make string output compatible with time.ParseDuration:
+	// 1. avoid printing value in scientific notation (which time.Duration does not support)
+	// 2. replace min with m (time.ParseDuration does not support min)
+	str := strings.Replace(fmt.Sprint(t.RawValue(), t.Unit().PrefixedSymbol()), "min", "m", -1)
+	// 2. remove white space (time.ParseDuration does not support white space)
+	str = strings.Replace(str, " ", "", -1)
+
+	if d, err := time.ParseDuration(str); err != nil {
 		panic(err)
 	} else {
 		return d

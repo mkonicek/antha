@@ -169,6 +169,7 @@ const (
 	WELLVOLUME      InstructionParameter = "WELLVOLUME"
 	WHAT            InstructionParameter = "WHAT"
 	WHICH           InstructionParameter = "WHICH" // WHICH returns the Component IDs, i.e. representing the specific instance of an LHComponent not currently implemented.
+	WAIT            InstructionParameter = "WAIT"
 )
 
 func InsToString(ins RobotInstruction) string {

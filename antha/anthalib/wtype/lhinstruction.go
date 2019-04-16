@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"time"
+
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/utils"
 )
@@ -48,6 +50,7 @@ type LHInstruction struct {
 	PlateName        string
 	OutPlate         *Plate
 	Message          string
+	WaitTime         time.Duration
 	PassThrough      map[string]*Liquid // 1:1 pass through, only applies to prompts
 }
 

@@ -2,6 +2,7 @@ package execute
 
 import (
 	"context"
+	"time"
 
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -99,6 +100,7 @@ type mixerPromptOpts struct {
 	Component   *wtype.Liquid
 	ComponentIn *wtype.Liquid
 	Message     string
+	WaitTime    wunit.Time
 }
 
 // MixerPrompt prompts user with a message during mixer execution
@@ -110,6 +112,21 @@ func MixerPrompt(ctx context.Context, in *wtype.Liquid, message string) *wtype.L
 			Message:     message,
 		},
 	)
+	Issue(ctx, inst)
+	return inst.result[0]
+}
+
+// MixerWait prompts user with a message during mixer execution and waits for the specifed time before resuming.
+func MixerWait(ctx context.Context, in *wtype.Liquid, time wunit.Time, message string) *wtype.Liquid {
+	inst := mixerPrompt(ctx,
+		mixerPromptOpts{
+			Component:   newCompFromComp(ctx, in),
+			ComponentIn: in,
+			Message:     message,
+			WaitTime:    time,
+		},
+	)
+
 	Issue(ctx, inst)
 	return inst.result[0]
 }
@@ -145,6 +162,8 @@ func mixerPrompt(ctx context.Context, opts mixerPromptOpts) *commandInst {
 	inst := wtype.NewLHPromptInstruction()
 	inst.SetGeneration(opts.ComponentIn.Generation())
 	inst.Message = opts.Message
+	// precision will be cut to the nearest second
+	inst.WaitTime = opts.WaitTime.AsDuration().Round(time.Second)
 	inst.AddOutput(opts.Component)
 	inst.AddInput(opts.ComponentIn)
 	inst.PassThrough[opts.ComponentIn.ID] = opts.Component

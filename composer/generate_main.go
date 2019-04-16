@@ -162,7 +162,7 @@ package main
 }
 {{end}}
 
-{{define "test-test"}}func TestWorkflow{{id}}{{name}}(t *testing.T) {
+{{define "test-test"}}func TestWorkflow_{{id}}_{{name}}(t *testing.T) {
 	t.Parallel()
 	labBuild := testlab.NewTestLabBuilder(t, {{printf "%q" inDir}}, ioutil.NopCloser(bytes.NewBuffer(MustAsset("data/workflow{{id}}.json"))))
 	defer labBuild.Decommission()

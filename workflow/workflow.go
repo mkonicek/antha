@@ -154,12 +154,17 @@ type Meta struct {
 // ensure the result of this call is prefixed with some constant text.
 func (m *Meta) NameAsGoIdentifier() string {
 	res := []rune{}
+	lastWasUnderscore := false
 	for _, r := range m.Name {
 		switch {
-		case r == '_', unicode.IsLetter(r), unicode.IsDigit(r):
+		case unicode.IsLetter(r), unicode.IsDigit(r):
 			res = append(res, r)
-		case r == ' ', r == '-', r == '/':
-			res = append(res, '_')
+			lastWasUnderscore = false
+		default:
+			if !lastWasUnderscore {
+				res = append(res, '_')
+				lastWasUnderscore = true
+			}
 		}
 	}
 	return string(res)

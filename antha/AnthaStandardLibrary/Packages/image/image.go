@@ -102,7 +102,7 @@ const (
 func ImageFormatFromPath(name string) (ImageFormat, error) {
 	ext := strings.ToLower(path.Ext(name))
 	switch ext {
-	case ".png":
+	case ".png", "": // png is the default
 		return PNG, nil
 	case ".jpg", ".jpeg":
 		return JPEG, nil

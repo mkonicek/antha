@@ -2,7 +2,7 @@ package execute
 
 import (
 	"context"
-
+	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -159,6 +159,8 @@ func mixerPrompt(ctx context.Context, opts mixerPromptOpts) *commandInst {
 		inst.AddOutput(opts.Components[i])
 		inst.AddInput(opts.ComponentsIn[i])
 		inst.PassThrough[opts.ComponentsIn[i].ID] = opts.Components[i]
+
+		fmt.Println("IN: ", opts.ComponentsIn[i], " OUT: ", opts.Components[i], " SAME? ", opts.ComponentsIn[i].ID == opts.Components[i].ID)
 	}
 
 	return &commandInst{

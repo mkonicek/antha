@@ -8,8 +8,6 @@ import (
 type maker struct {
 	// Map from old LHComponent id to new id after instruction (typically 1)
 	afterInst map[string][]string
-	// Map from old LHComponent id to new id after sample
-	afterSample map[string][]string
 	// Map from from wtype world to ast world
 	byComp map[*wtype.Liquid]*ast.UseComp
 	byID   map[string][]*ast.UseComp
@@ -17,10 +15,9 @@ type maker struct {
 
 func newMaker() *maker {
 	return &maker{
-		afterInst:   make(map[string][]string),
-		afterSample: make(map[string][]string),
-		byComp:      make(map[*wtype.Liquid]*ast.UseComp),
-		byID:        make(map[string][]*ast.UseComp),
+		afterInst: make(map[string][]string),
+		byComp:    make(map[*wtype.Liquid]*ast.UseComp),
+		byID:      make(map[string][]*ast.UseComp),
 	}
 }
 
@@ -119,18 +116,8 @@ func (a *maker) MakeNodes(insts []*commandInst) ([]ast.Node, error) {
 		nodes = append(nodes, a.makeCommand(inst))
 	}
 
-	for comp := range a.byComp {
-		// Contains all descendents rather then direct ones
-		for kid := range comp.DaughtersID {
-			if comp.ID != kid {
-				a.afterSample[comp.ID] = append(a.afterSample[comp.ID], kid)
-			}
-		}
-	}
-
 	a.resolveReuses()
 	a.resolveUpdates(a.afterInst)
-	a.resolveUpdates(a.afterSample)
 	a.removeMultiEdges()
 
 	return nodes, nil

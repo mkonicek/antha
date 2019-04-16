@@ -1,0 +1,324 @@
+syntax = "proto3";
+package com.synthace.antha_runner;
+
+option go_package = "protobuf";
+
+import "github.com/Synthace/microservice/cmd/inventory/protobuf/protobuf.proto";
+import "github.com/Synthace/microservice/cmd/element/protobuf/protobuf.proto";
+
+// TODO(ddn): unify with github.com/antha-lang/antha/api/v1. Right now keeping
+// a strict separation because no one uses api/v1 yet and antha-runner is the
+// defacto authority on message definitions.
+
+message HealthCheckMessage {
+  string status = 1;
+}
+
+message Metadata {
+  repeated com.synthace.element.Element elements = 1;
+}
+
+message Empty {
+}
+
+// Expose well known device classes. Stringified versions in Device.class.
+enum DeviceClass {
+  NO_DEVICE = 0;
+  CYBIO_GENETHEATRE = 1;
+  CYBIO_FELIX = 2;
+  GILSON_PIPETMAX = 3;
+  QINSTRUMENTS_BIOSHAKE = 4;
+  TECAN_LIQUIDHANDLER = 5;
+  GENERIC_DATASOURCE = 6;
+  WRITEONLY_PLATEREADER = 7;
+  QPCR_DEVICE = 8;
+  LABCYTE_ECHO_520 = 9;
+  LABCYTE_ECHO_525 = 10;
+  LABCYTE_ECHO_550 = 11;
+  LABCYTE_ECHO_555 = 12;
+  HAMILTON_MICROLAB_STAR = 13;
+}
+
+// Stages for execution
+enum ComponentStage {
+  STEPS = 0;
+  ANALYSIS = 1;
+}
+
+message SimulateRequest {
+  // Devices to consider when planning this request.
+  repeated Device available = 1;
+  // Processes in this request.
+  repeated Process processes = 2;
+  // Connections between processes.
+  repeated Connection connections = 3;
+  // Mixer configuration for this request.
+  MixerConfig mixer_config = 4;
+  // A string that will be used to decorate files.
+  string pretty_file_prefix = 5;
+  // Plate types to initialize inventory with for this run.
+  repeated com.synthace.inventory.PlateType plate_types = 6;
+}
+
+message SimulateResponse {
+  oneof response {
+    Report report = 1;
+    bytes stdout = 2;
+    bytes stderr = 3;
+    string error = 4;
+  }
+}
+
+// SimulateCommandResponse is to communicate between subprocesses like
+// antha-simulator and the antha-runner server
+message SimulateCommandResponse {
+  oneof response {
+    Report report = 1;
+    string error = 2;
+  }
+}
+
+// Output of simulation.
+message Report {
+  // Tasks in this report.
+  repeated Task tasks = 1;
+  // Processes in this report.
+  repeated Process processes = 2;
+  // Connection between processes.
+  repeated Connection connections = 3;
+}
+
+// Representation of a device.
+message Device {
+  string id = 1;
+  // Device class. Should be one of DeviceClass.
+  string class = 2;
+}
+
+// PlateIds a list of plate ids
+message PlateIds {
+  repeated string plate_ids = 1;
+}
+
+// Plates a list of plates
+message Plates {
+  repeated com.synthace.inventory.Plate plates = 1;
+}
+
+// Configuration of a mixer.
+message MixerConfig {
+  // Input plates to add to planning configuration and consider when
+  // planning.
+  reserved 1, 2, 9, 19;
+  reserved "input_plates", "output_plates";
+
+  oneof input_plates {
+    Plates input_plate_vals = 21;
+    PlateIds input_plate_ids = 22;
+  }
+  // Output plates to add to planning configuration and consider when
+  // planning.
+  oneof output_plates {
+    Plates output_plate_vals = 23;
+    PlateIds output_plate_ids = 24;
+  }
+  // Deprecated. Replace with input_plates.
+  repeated string input_plate_types = 3;
+  // Deprecated. Replace with output_plates.
+  repeated string output_plate_types = 4;
+  // Deprecated. TODO create tips field.
+  repeated string tip_types = 5;
+  // Maximum number of plates.
+  double max_plates = 6;
+  // Maximum number of wells.
+  double max_wells = 7;
+  double residual_volume_weight = 8;
+  bool model_evaporation = 10;
+  bool output_sort = 11;
+
+  // Driver specific options. Semantics are not stable. Will need to be
+  // revised when multi device execution is supported.
+  repeated string driver_specific_input_preferences = 12;
+  repeated string driver_specific_output_preferences = 13;
+  repeated string driver_specific_tip_preferences = 14;
+  repeated string driver_specific_tip_waste_preferences = 15;
+  repeated string driver_specific_wash_preferences = 16;
+  // which version of the planner should be used
+  string planning_version = 17;
+  // request use of driver tip tracking if available
+  bool use_driver_tip_tracking = 18;
+  // Devices that should be considered when planning this request.
+  repeated string device_ids = 20;
+  bytes liquid_handling_policy_xlsx_jmp_file = 25;
+  // ignore errors from physical simulation of the workflow as a workaround
+  bool ignore_physical_simulation = 26;
+}
+
+// A task that may interact with the physical world.
+message Task {
+  string id = 1;
+  // Short description.
+  string label = 2;
+  // Long description.
+  string details = 3;
+  // Device id from request that this task should be assigned to.
+  string device_id = 4;
+  // Time estimate in seconds, 0 if no estimate available.
+  double time_estimate = 5;
+  // Tasks that this task must happen before.
+  repeated string happens_before = 6;
+  // Initial physical state of this task.
+  repeated Item initial_items = 7;
+  // Final physical state of this task.
+  repeated Item final_items = 8;
+  // Mapping if possible of items from the initial state to the final state.
+  repeated ItemMapping item_mappings = 9;
+  // Files attached to this task.
+  repeated Param files = 10;
+  // Calls attaced to this task.
+  repeated Param calls = 11;
+  // Placement of this task on an idealized timeline [0, 1]
+  double time_coord = 13;
+  // Specific task configuration
+  oneof kind {
+    MixTask mix_task = 14;
+    PlatePrepTask plate_prep_task = 15;
+    OrderTask order_task = 16;
+    DeckLayoutTask deck_layout_task = 17;
+    PromptTask prompt_task = 18;
+    SetupIncubatorTask setup_incubator_task = 19;
+    AwaitTask await_task = 20;
+    RunTask run_task = 21;
+  }
+  // how many tips are used by this task
+  repeated TipInfo tip_estimate = 22;
+}
+
+// How many tips of a particular type were used
+message TipInfo {
+  // the full name of the tip
+  string name = 1;
+  // the number of boxes of this tip type used or started
+  uint32 boxes = 2;
+  // the number of tips of this type used
+  uint32 tips = 3;
+}
+
+message MixTask {
+  // Raw generated instructions (JSON-encoded).
+  bytes raw_instructions = 1;
+}
+
+message PlatePrepTask {
+  // Mix task that this plate prep corresponds to.
+  repeated string mix_task_ids = 1;
+}
+
+message OrderTask {
+  // Task ids that this order task corresponds to.
+  repeated string for_task_ids = 1;
+}
+
+message DeckLayoutTask {
+  repeated string mix_task_ids = 1;
+}
+
+message PromptTask {
+  string text = 1;
+}
+
+message SetupIncubatorTask {
+  repeated string mix_task_ids = 1;
+  repeated string plate_ids = 2;
+}
+
+message AwaitTask {
+  repeated string device_tags = 1;
+  repeated Param current_outputs = 2;
+  repeated Param next_inputs = 3;
+  repeated Promise promises = 4;
+  string next_component = 5;
+}
+
+message RunTask {
+  string Command = 1;
+}
+
+message Promise {
+  string await_id = 1;
+  Param value = 2;
+}
+
+message ItemMapping {
+  string initial_id = 1;
+  string final_id = 2;
+}
+
+// A physical item.
+message Item {
+  string lid = 1;
+  Coord coord = 2;
+
+  oneof inventory {
+    com.synthace.inventory.Component component = 4;
+    com.synthace.inventory.Plate plate = 5;
+    com.synthace.inventory.Tipbox tipbox = 6;
+    com.synthace.inventory.Tipwaste tipwaste = 7;
+  }
+}
+
+// Physical normalized component coordinate. Origin (0, 0, 0) is
+// lower-left-front (i.e., right-handed).
+message Coord {
+  string parent = 1;
+  string label = 2;
+  double x = 3;
+  double y = 4;
+  double z = 5;
+}
+
+// An edge between processes.
+message Connection {
+  Endpoint source = 1;
+  Endpoint target = 2;
+}
+
+// An input or output of a process in a workflow.
+message Endpoint {
+  // Process id.
+  string process = 1;
+  // Parameter name.
+  string port = 2;
+}
+
+// A process in a workflow.
+message Process {
+  string id = 1;
+  // Antha component for this process.
+  string component = 2;
+  // Digital inputs for this process.
+  repeated Param parameters = 3;
+  // Digital outputs for this process.
+  repeated Param outputs = 4;
+  ComponentStage stage = 5;
+}
+
+message Param {
+  string name = 1;
+  oneof data {
+    // Raw data.
+    bytes raw = 2;
+    // Opaque reference to where data could be retrieved.
+    string reference = 3;
+  }
+}
+
+message CreateReportResponse {
+  string id = 1;
+}
+
+service Service {
+  // Simulate a workflow.
+  rpc Simulate(SimulateRequest) returns (stream SimulateResponse);
+  rpc HealthCheck(Empty) returns (HealthCheckMessage);
+}

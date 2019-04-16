@@ -252,7 +252,7 @@ func (m *Migrater) migrateMeta() error {
 		m.Cur.Meta.Name = m.Old.Properties.Name
 	}
 	if desc := m.Old.Properties.Description; desc != "" {
-		m.Cur.Meta.Rest["Description"] = desc
+		m.Cur.Meta.Set("Description", desc)
 	}
 	return nil
 }

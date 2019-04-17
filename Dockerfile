@@ -13,5 +13,3 @@ RUN rm $HOME/.netrc
 
 # These are for the gitlab CI for elements:
 ONBUILD ADD . /elements
-ONBUILD ARG COMMIT_SHA
-ONBUILD ENTRYPOINT /antha/elements-test.sh "$COMMIT_SHA"

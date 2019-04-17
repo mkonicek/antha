@@ -3,7 +3,7 @@ module github.com/antha-lang/antha
 require (
 	github.com/Synthace/antha-runner v0.0.0-20190411151439-5acaf3b30320
 	github.com/Synthace/instruction-plugins v0.0.0-20190409101917-f2439f6bee7c
-	github.com/Synthace/microservice v0.0.0-20190415093322-349930236575
+	github.com/Synthace/microservice v0.0.0-20190417094708-f359560b3148
 	github.com/antha-lang/toolbox v0.0.0-20180417132942-6ea11e22448c
 	github.com/apache/arrow/go/arrow v0.0.0-20190412182029-853742021ce1
 	github.com/biogo/biogo v1.0.1

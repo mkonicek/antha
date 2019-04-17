@@ -23,4 +23,4 @@ repo='
 
 printf "$repo" > /tmp/repo.json
 cat /tmp/repo.json
-exec ./elements.test -test.v /tmp/repo.json
+exec ./elements.test -test.timeout 1h -test.v /tmp/repo.json

@@ -52,7 +52,8 @@ func (mc *mainComposer) goBuild() error {
 }
 
 func (tc *testComposer) goTest() error {
-	cmd := exec.Command("go", "test", "-v") // , "-race", "-timeout", "1h")
+	// We disable the timeout completely and rely on the wrapper to control any timeouts.
+	cmd := exec.Command("go", "test", "-v", "-timeout", "0") // , "-race")
 	if tc.LinkedDrivers {
 		cmd.Args = append(cmd.Args, "-tags", "linkedDrivers")
 	}

@@ -24,6 +24,8 @@ github.com/Synthace/instruction-plugins v0.0.0-20190409101917-f2439f6bee7c h1:BU
 github.com/Synthace/instruction-plugins v0.0.0-20190409101917-f2439f6bee7c/go.mod h1:PeBzUoAoFtTgqmFst9DN7EAJl3xgZyP/CtmKPkZqtL8=
 github.com/Synthace/microservice v0.0.0-20190417094708-f359560b3148 h1:F2X3/s719FIQ10YWgs3Jeorq8/KZ7G01WL5h7B98mb8=
 github.com/Synthace/microservice v0.0.0-20190417094708-f359560b3148/go.mod h1:zN1o2acYTdHiFNkBYDrLpRRxJtmKUFBcl4lkZ6qDyUc=
+github.com/Synthace/microservice v0.0.0-20190417110004-cd24b4b975f2 h1:mU9eBY3kWG6QisI9Be/5m761LAVYstLz+7Nex3gNHrw=
+github.com/Synthace/microservice v0.0.0-20190417110004-cd24b4b975f2/go.mod h1:zN1o2acYTdHiFNkBYDrLpRRxJtmKUFBcl4lkZ6qDyUc=
 github.com/Synthace/osin v0.0.0-20170825171613-73081ebcbc8b/go.mod h1:bnj4oIKTQTA2NCBAwot7usDI9jPRikgA7TUM1k5M25A=
 github.com/Synthace/protoc-gen-syngo v0.0.0-20181121160813-bf6baa3c29b1/go.mod h1:W8G7RCJZQNUmFOwW9+AFGu6tIcJYkAJU9wCMyGdFRlk=
 github.com/Synthace/swagger-ui v0.0.0-20181015133633-e4c5ba756f23/go.mod h1:j0VmKUYSjwmUaSn9vBheE/gjC/8DStu/2klI5kxUcmA=

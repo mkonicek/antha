@@ -100,6 +100,7 @@ func run() error {
 		}
 
 		req.SetName = elementSet
+		req.RequiresAnthaCore = true
 
 		call := &HTTPCall{
 			Endpoint: endpoint,

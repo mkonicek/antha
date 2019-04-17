@@ -22,12 +22,6 @@ github.com/Synthace/grpc-gateway v0.0.0-20180917171637-0cd4b6347062 h1:08n99m2II
 github.com/Synthace/grpc-gateway v0.0.0-20180917171637-0cd4b6347062/go.mod h1:qXz/YWQdr+sSNJUnWDwHJT4FKPOu0hUUnXpCR7FszDY=
 github.com/Synthace/instruction-plugins v0.0.0-20190409101917-f2439f6bee7c h1:BUBvZAFHPEbGGYg62lgQz3NCQaqs0ftfAoamYfG+DT4=
 github.com/Synthace/instruction-plugins v0.0.0-20190409101917-f2439f6bee7c/go.mod h1:PeBzUoAoFtTgqmFst9DN7EAJl3xgZyP/CtmKPkZqtL8=
-github.com/Synthace/instruction-plugins v0.0.0-20190412145549-a7a5289b58dd h1:KvBDOsWtu6YbQgo0WlORpbAGXSCUJiJMdoQg5AZ2mY0=
-github.com/Synthace/instruction-plugins v0.0.0-20190412145549-a7a5289b58dd/go.mod h1:PeBzUoAoFtTgqmFst9DN7EAJl3xgZyP/CtmKPkZqtL8=
-github.com/Synthace/microservice v0.0.0-20190413121319-138e74400b7e h1:xRiQ/GnVvJ4A3meTPtmU6133xWuUumU2XTl6XhkTi6Y=
-github.com/Synthace/microservice v0.0.0-20190413121319-138e74400b7e/go.mod h1:zN1o2acYTdHiFNkBYDrLpRRxJtmKUFBcl4lkZ6qDyUc=
-github.com/Synthace/microservice v0.0.0-20190415093322-349930236575 h1:fMOtJjzRqeApUjCaGtN0QbO4ehb3KIkRUObdjcMSM4s=
-github.com/Synthace/microservice v0.0.0-20190415093322-349930236575/go.mod h1:zN1o2acYTdHiFNkBYDrLpRRxJtmKUFBcl4lkZ6qDyUc=
 github.com/Synthace/microservice v0.0.0-20190417094708-f359560b3148 h1:F2X3/s719FIQ10YWgs3Jeorq8/KZ7G01WL5h7B98mb8=
 github.com/Synthace/microservice v0.0.0-20190417094708-f359560b3148/go.mod h1:zN1o2acYTdHiFNkBYDrLpRRxJtmKUFBcl4lkZ6qDyUc=
 github.com/Synthace/osin v0.0.0-20170825171613-73081ebcbc8b/go.mod h1:bnj4oIKTQTA2NCBAwot7usDI9jPRikgA7TUM1k5M25A=

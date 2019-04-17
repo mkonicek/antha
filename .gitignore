@@ -14,3 +14,4 @@ cmd/composer/composer
 cmd/composer/*.json
 cmd/elements/elements
 cmd/migrate/migrate
+cmd/upload-metadata/upload-metadata

@@ -36,9 +36,9 @@ func (r Rows) String() string {
 	}
 
 	for rownum, rr := range r.Data {
-		add(rownum+hdrSize, 0, rr.Index)
-		for c, o := range rr.Values {
-			add(rownum+hdrSize, c+1, o.value)
+		add(rownum+hdrSize, 0, rr.Index())
+		for c, v := range rr.Values() {
+			add(rownum+hdrSize, c+1, v.Interface())
 		}
 	}
 	fmtStrBuilder := strings.Builder{}

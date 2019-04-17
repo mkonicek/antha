@@ -157,8 +157,8 @@ func NewSchema(columns []Column) *Schema {
 	return schema
 }
 
-func newSchema(series []*Series) Schema {
-	schema := Schema{byName: map[ColumnName][]int{}}
+func newSchema(series []*Series) *Schema {
+	schema := &Schema{byName: map[ColumnName][]int{}}
 	for c, s := range series {
 		schema.Columns = append(schema.Columns, Column{Type: s.typ, Name: s.col})
 		schema.byName[s.col] = append(schema.byName[s.col], c)

@@ -563,17 +563,17 @@ package data
 
 // {{ t['Raw'] }}
 
-// Must{{ t['Type'] }} extracts a value of type {{ t['Raw'] }} from an observation. Panics on error.
-func (o Observation) Must{{ t['Type'] }}() {{ t['Raw'] }} {
-	return o.value.({{ t['Raw'] }})
+// Must{{ t['Type'] }} extracts a value of type {{ t['Raw'] }} from a Value. Panics if the value is null or the types mismatch.
+func (v Value) Must{{ t['Type'] }}() {{ t['Raw'] }} {
+	return v.value.({{ t['Raw'] }})
 }
 
-// {{ t['Type'] }} extracts a value of type {{ t['Raw'] }} from an observation. Returns false on error.
-func (o Observation) {{ t['Type'] }}() ({{ t['Raw'] }}, bool) {
-	if o.IsNull() {
+// {{ t['Type'] }} extracts a value of type {{ t['Raw'] }} from a Value. Returns false if the value is null. Panics if the types mismatch.
+func (v Value) {{ t['Type'] }}() ({{ t['Raw'] }}, bool) {
+	if v.IsNull() {
 		return {{ t['Zero'] }}, false
 	} else {
-		return o.Must{{ t['Type'] }}(), true
+		return v.Must{{ t['Type'] }}(), true
 	}
 }
 

@@ -76,7 +76,7 @@ func TestExtend(t *testing.T) {
 			makeSeries("a", []int64{1, 2, 3}, nil),
 		})
 		extended := a.Must().Extend("e").By(func(r Row) interface{} {
-			a, _ := r.Observation("a")
+			a, _ := r.Value("a")
 			return float64(a.MustInt64()) / 2.0
 		},
 			reflect.TypeOf(float64(0)))
@@ -177,8 +177,8 @@ func TestUpdate(t *testing.T) {
 		})
 
 		updated := table.Must().Update("a").By(func(r Row) interface{} {
-			a, _ := r.Observation("a")
-			b, _ := r.Observation("b")
+			a, _ := r.Value("a")
+			b, _ := r.Value("b")
 			if a.IsNull() || b.IsNull() {
 				return nil
 			}
@@ -391,7 +391,7 @@ func TestFilter(t *testing.T) {
 		assertEqual(t, a.Slice(2, 3), filtered2Col, "filter multi")
 
 		filteredRow := a.Must().Filter().By(func(r Row) bool {
-			a, _ := r.Observation("a")
+			a, _ := r.Value("a")
 			return a.MustInt64() == 1
 		})
 		assertEqual(t, a.Head(1), filteredRow, "filter by")
@@ -549,7 +549,7 @@ func TestSortByFunc(t *testing.T) {
 
 		// a table sorted by id
 		sorted := table.Must().SortByFunc(func(r1 Row, r2 Row) bool {
-			return r1.Values[0].MustInt64() < r2.Values[0].MustInt64()
+			return r1.ValueAt(0).MustInt64() < r2.ValueAt(0).MustInt64()
 		})
 
 		// sorted table reference value
@@ -757,7 +757,7 @@ func TestForeach(t *testing.T) {
 		// whole row Foreach
 		copyBuilder = Must().NewTableBuilder(table.Schema().Columns)
 		table.Must().Foreach().By(func(r Row) {
-			copyBuilder.Append(r.raw())
+			copyBuilder.Append(r.Interface())
 		})
 
 		assertEqual(t, table, copyBuilder.Build(), "whole row Foreach")

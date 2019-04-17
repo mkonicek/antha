@@ -1,25 +1,25 @@
 package data
 
 type readRow struct {
-	cols          []*ColumnName
+	schema        *Schema
 	colReader     []iterator
 	index         Index
 	iteratorCache *seriesIterCache
 }
 
 func (rr *readRow) fill(series []*Series) {
+	rr.schema = newSchema(series)
 	for _, ser := range series {
-		rr.cols = append(rr.cols, &ser.col)
 		rr.colReader = append(rr.colReader, rr.iteratorCache.Ensure(ser))
 	}
 }
 
 func (rr *readRow) Value() Row {
-	r := Row{Index: rr.index}
-	for c, sRead := range rr.colReader {
-		r.Values = append(r.Values, Observation{col: rr.cols[c], value: sRead.Value()})
+	return Row{
+		index:  rr.index,
+		schema: rr.schema,
+		values: rr.rawValue(),
 	}
-	return r
 }
 
 // rawValue gets a row in the raw form (just values without metadata)

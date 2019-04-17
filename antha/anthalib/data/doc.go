@@ -118,7 +118,7 @@ Iteration
 
 If necessary the whole table can be processed by a callback:
 	for record := range table.IterAll() {
-		m, _ := record.Observation("Quantity")
+		m, _ := record.Value("Quantity")
 		if m.IsNull() {
 			fmt.Println("quantity=null at index", record.Index)
 		} else {

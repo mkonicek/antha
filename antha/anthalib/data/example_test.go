@@ -90,7 +90,7 @@ func ExampleTable_Sort() {
 func ExampleTable_SortByFunc() {
 	// in ascending order of length of Name.
 	byNameLenAsc, _ := pirateBooty.SortByFunc(func(r1 Row, r2 Row) bool {
-		return len(r1.Values[0].MustString()) < len(r2.Values[0].MustString())
+		return len(r1.ValueAt(0).MustString()) < len(r2.ValueAt(0).MustString())
 	})
 	fmt.Println(byNameLenAsc.ToRows())
 	// Output: 4 Row(s):
@@ -189,7 +189,7 @@ func ExampleTable_Filter_dynamicType() {
 	// any column value can be filtered on.
 	startsWithC := pirateBooty.Filter().
 		By(func(r Row) bool {
-			name := r.Values[0]
+			name := r.ValueAt(0)
 			return !name.IsNull() && strings.HasPrefix(name.MustString(), "c")
 		})
 	fmt.Println(startsWithC.ToRows())
@@ -260,8 +260,8 @@ func ExampleTable_Extend_dynamicTypes() {
 	// calculate new column value on the whole row using dynamic types.
 	totals := pirateBooty.Extend("Total").
 		By(func(r Row) interface{} {
-			q, _ := r.Observation("Quantity")
-			p, _ := r.Observation("Price")
+			q, _ := r.Value("Quantity")
+			p, _ := r.Value("Price")
 			if p.IsNull() {
 				return nil
 			}
@@ -357,8 +357,8 @@ func ExampleTable_Update_dynamicTypes() {
 	// calculate updated column value on the whole row using dynamic types.
 	totals, _ := pirateBooty.Update("Quantity").
 		By(func(r Row) interface{} {
-			q, _ := r.Observation("Quantity")
-			p, _ := r.Observation("Price")
+			q, _ := r.Value("Quantity")
+			p, _ := r.Value("Price")
 			if p.IsNull() {
 				return 0
 			}
@@ -493,7 +493,7 @@ func ExampleTable_Join_inner() {
 func ExampleTable_Foreach_wholerow() {
 	nonNullCount := 0
 	pirateBooty.Foreach().By(func(r Row) {
-		for _, v := range r.Values {
+		for _, v := range r.Values() {
 			if !v.IsNull() {
 				nonNullCount++
 			}

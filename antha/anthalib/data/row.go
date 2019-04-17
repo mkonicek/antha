@@ -1,13 +1,10 @@
 package data
 
-import (
-	"github.com/pkg/errors"
-)
-
 // Row represents a materialized record.
 type Row struct {
-	Index  Index
-	Values []Observation
+	index  Index
+	schema *Schema
+	values []interface{}
 }
 
 // Rows are materialized table data, suitable for printing for example.
@@ -16,50 +13,84 @@ type Rows struct {
 	Schema Schema
 }
 
-// Observation accesses a column value by name instead of column index.
-func (r Row) Observation(c ColumnName) (Observation, error) {
-	_, o, err := r.get(c)
-	return o, err
+// Index returns a row index.
+func (r Row) Index() Index {
+	return r.index
 }
 
-func (r Row) get(c ColumnName) (int, Observation, error) {
-	// TODO more efficiently access schema
-	for i, o := range r.Values {
-		if o.ColumnName() == c {
-			return i, o, nil
-		}
+// Schema returns a schema of the table which contains the Row.
+func (r Row) Schema() Schema {
+	return *r.schema
+}
+
+// Interface returns the row values in the form of []interface{}.
+func (r Row) Interface() []interface{} {
+	return r.values
+}
+
+// Value accesses a column value by column name.
+func (r Row) Value(c ColumnName) (Value, error) {
+	colIndex, err := r.schema.ColIndex(c)
+	if err != nil {
+		return Value{}, err
 	}
-	return 0, Observation{}, errors.New("no column " + string(c))
+	return Value{
+		colIndex: colIndex,
+		schema:   r.schema,
+		value:    r.values[colIndex],
+	}, nil
 }
 
-// raw returns the row in the raw form (just values without metadata)
-func (r Row) raw() raw {
-	raw := newRaw(len(r.Values))
-	for i, obs := range r.Values {
-		raw[i] = obs.Interface()
+// MustValue accesses a column value by column name. Panics on errors
+func (r Row) MustValue(c ColumnName) Value {
+	v, err := r.Value(c)
+	handle(err)
+	return v
+}
+
+// ValueAt accesses a column value by column index.
+func (r Row) ValueAt(colIndex int) Value {
+	return Value{
+		colIndex: colIndex,
+		schema:   r.schema,
+		value:    r.values[colIndex],
 	}
-	return raw
 }
 
-// Observation holds an arbitrary, nullable column value.
-type Observation struct {
-	col   *ColumnName
-	value interface{}
+// Values retreivies all the columns values from a Row.
+func (r Row) Values() []Value {
+	values := make([]Value, len(r.values))
+	for i := range values {
+		values[i] = r.ValueAt(i)
+	}
+	return values
 }
 
-// ColumnName returns the column name for the value.
-func (o Observation) ColumnName() ColumnName {
-	return *o.col
+// Value holds an arbitrary, nullable column value.
+type Value struct {
+	colIndex int
+	schema   *Schema
+	value    interface{}
+}
+
+// Column returns the column of the value.
+func (v Value) ColIndex() int {
+	return v.colIndex
+}
+
+// Column returns the column of the value.
+func (v Value) Column() Column {
+	return v.schema.Columns[v.colIndex]
 }
 
 // IsNull returns true if the value is null.
-func (o Observation) IsNull() bool {
-	return o.value == nil
+func (v Value) IsNull() bool {
+	return v.value == nil
 }
 
 // Interface returns the underlying representation of the value.
-func (o Observation) Interface() interface{} {
-	return o.value
+func (v Value) Interface() interface{} {
+	return v.value
 }
 
 // raw is a compact internal representation of Row (just values without metadata)
@@ -69,12 +100,12 @@ func newRaw(size int) raw {
 	return make([]interface{}, size)
 }
 
-func (r raw) row(index Index, schema Schema) Row {
-	obs := make([]Observation, len(r))
-	for i, value := range r {
-		obs[i] = Observation{&schema.Columns[i].Name, value}
+func (r raw) row(index Index, schema *Schema) Row {
+	return Row{
+		index:  index,
+		schema: schema,
+		values: r,
 	}
-	return Row{Index: index, Values: obs}
 }
 
 // project projects a row according to p

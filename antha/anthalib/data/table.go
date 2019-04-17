@@ -49,7 +49,7 @@ func newFromTable(t *Table, key ...ColumnKey) *Table {
 func newFromSeries(series []*Series, key ...ColumnKey) *Table {
 	return &Table{
 		series:  series,
-		schema:  newSchema(series),
+		schema:  *newSchema(series),
 		sortKey: key,
 		read:    newTableIterator,
 	}
@@ -80,7 +80,7 @@ func newFromRows(rows Rows, key ...ColumnKey) (*Table, error) {
 		return nil, err
 	}
 	for _, row := range rows.Data {
-		builder.Append(row.raw())
+		builder.Append(row.Interface())
 	}
 	t := builder.Build()
 	return newFromSeries(t.series, key...), nil
@@ -191,7 +191,7 @@ func (t *Table) Equal(other *Table) bool {
 	for {
 		r1, more1 := <-iter1
 		r2, more2 := <-iter2
-		if more1 != more2 || !reflect.DeepEqual(r1.Values, r2.Values) {
+		if more1 != more2 || !reflect.DeepEqual(r1.Values(), r2.Values()) {
 			return false
 		}
 		if !more1 {
@@ -361,7 +361,7 @@ func (t *Table) Convert(col ColumnName, typ reflect.Type) (*Table, error) {
 		return t, nil
 	}
 	// types but not sort key are different.  TODO: unless natural order is different for the converted type?
-	newT.schema = newSchema(newT.series)
+	newT.schema = *newSchema(newT.series)
 	return newT, nil
 }
 

@@ -4,112 +4,112 @@ package data
 
 // float64
 
-// MustFloat64 extracts a value of type float64 from an observation. Panics on error.
-func (o Observation) MustFloat64() float64 {
-	return o.value.(float64)
+// MustFloat64 extracts a value of type float64 from a Value. Panics if the value is null or the types mismatch.
+func (v Value) MustFloat64() float64 {
+	return v.value.(float64)
 }
 
-// Float64 extracts a value of type float64 from an observation. Returns false on error.
-func (o Observation) Float64() (float64, bool) {
-	if o.IsNull() {
+// Float64 extracts a value of type float64 from a Value. Returns false if the value is null. Panics if the types mismatch.
+func (v Value) Float64() (float64, bool) {
+	if v.IsNull() {
 		return float64(0), false
 	} else {
-		return o.MustFloat64(), true
+		return v.MustFloat64(), true
 	}
 }
 
 // int64
 
-// MustInt64 extracts a value of type int64 from an observation. Panics on error.
-func (o Observation) MustInt64() int64 {
-	return o.value.(int64)
+// MustInt64 extracts a value of type int64 from a Value. Panics if the value is null or the types mismatch.
+func (v Value) MustInt64() int64 {
+	return v.value.(int64)
 }
 
-// Int64 extracts a value of type int64 from an observation. Returns false on error.
-func (o Observation) Int64() (int64, bool) {
-	if o.IsNull() {
+// Int64 extracts a value of type int64 from a Value. Returns false if the value is null. Panics if the types mismatch.
+func (v Value) Int64() (int64, bool) {
+	if v.IsNull() {
 		return int64(0), false
 	} else {
-		return o.MustInt64(), true
+		return v.MustInt64(), true
 	}
 }
 
 // int
 
-// MustInt extracts a value of type int from an observation. Panics on error.
-func (o Observation) MustInt() int {
-	return o.value.(int)
+// MustInt extracts a value of type int from a Value. Panics if the value is null or the types mismatch.
+func (v Value) MustInt() int {
+	return v.value.(int)
 }
 
-// Int extracts a value of type int from an observation. Returns false on error.
-func (o Observation) Int() (int, bool) {
-	if o.IsNull() {
+// Int extracts a value of type int from a Value. Returns false if the value is null. Panics if the types mismatch.
+func (v Value) Int() (int, bool) {
+	if v.IsNull() {
 		return 0, false
 	} else {
-		return o.MustInt(), true
+		return v.MustInt(), true
 	}
 }
 
 // string
 
-// MustString extracts a value of type string from an observation. Panics on error.
-func (o Observation) MustString() string {
-	return o.value.(string)
+// MustString extracts a value of type string from a Value. Panics if the value is null or the types mismatch.
+func (v Value) MustString() string {
+	return v.value.(string)
 }
 
-// String extracts a value of type string from an observation. Returns false on error.
-func (o Observation) String() (string, bool) {
-	if o.IsNull() {
+// String extracts a value of type string from a Value. Returns false if the value is null. Panics if the types mismatch.
+func (v Value) String() (string, bool) {
+	if v.IsNull() {
 		return "", false
 	} else {
-		return o.MustString(), true
+		return v.MustString(), true
 	}
 }
 
 // bool
 
-// MustBool extracts a value of type bool from an observation. Panics on error.
-func (o Observation) MustBool() bool {
-	return o.value.(bool)
+// MustBool extracts a value of type bool from a Value. Panics if the value is null or the types mismatch.
+func (v Value) MustBool() bool {
+	return v.value.(bool)
 }
 
-// Bool extracts a value of type bool from an observation. Returns false on error.
-func (o Observation) Bool() (bool, bool) {
-	if o.IsNull() {
+// Bool extracts a value of type bool from a Value. Returns false if the value is null. Panics if the types mismatch.
+func (v Value) Bool() (bool, bool) {
+	if v.IsNull() {
 		return false, false
 	} else {
-		return o.MustBool(), true
+		return v.MustBool(), true
 	}
 }
 
 // TimestampMillis
 
-// MustTimestampMillis extracts a value of type TimestampMillis from an observation. Panics on error.
-func (o Observation) MustTimestampMillis() TimestampMillis {
-	return o.value.(TimestampMillis)
+// MustTimestampMillis extracts a value of type TimestampMillis from a Value. Panics if the value is null or the types mismatch.
+func (v Value) MustTimestampMillis() TimestampMillis {
+	return v.value.(TimestampMillis)
 }
 
-// TimestampMillis extracts a value of type TimestampMillis from an observation. Returns false on error.
-func (o Observation) TimestampMillis() (TimestampMillis, bool) {
-	if o.IsNull() {
+// TimestampMillis extracts a value of type TimestampMillis from a Value. Returns false if the value is null. Panics if the types mismatch.
+func (v Value) TimestampMillis() (TimestampMillis, bool) {
+	if v.IsNull() {
 		return TimestampMillis(0), false
 	} else {
-		return o.MustTimestampMillis(), true
+		return v.MustTimestampMillis(), true
 	}
 }
 
 // TimestampMicros
 
-// MustTimestampMicros extracts a value of type TimestampMicros from an observation. Panics on error.
-func (o Observation) MustTimestampMicros() TimestampMicros {
-	return o.value.(TimestampMicros)
+// MustTimestampMicros extracts a value of type TimestampMicros from a Value. Panics if the value is null or the types mismatch.
+func (v Value) MustTimestampMicros() TimestampMicros {
+	return v.value.(TimestampMicros)
 }
 
-// TimestampMicros extracts a value of type TimestampMicros from an observation. Returns false on error.
-func (o Observation) TimestampMicros() (TimestampMicros, bool) {
-	if o.IsNull() {
+// TimestampMicros extracts a value of type TimestampMicros from a Value. Returns false if the value is null. Panics if the types mismatch.
+func (v Value) TimestampMicros() (TimestampMicros, bool) {
+	if v.IsNull() {
 		return TimestampMicros(0), false
 	} else {
-		return o.MustTimestampMicros(), true
+		return v.MustTimestampMicros(), true
 	}
 }

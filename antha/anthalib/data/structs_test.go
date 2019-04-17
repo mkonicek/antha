@@ -123,7 +123,7 @@ func TestRow_ToStruct(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if s.A != row.Values[0].MustInt64() {
+		if s.A != row.ValueAt(0).MustInt64() {
 			t.Errorf("at row %+v, %+v", row, s)
 		}
 	}

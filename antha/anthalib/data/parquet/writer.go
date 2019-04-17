@@ -115,7 +115,7 @@ func writeToParquet(file ParquetFile.ParquetFile, jsonSchema string, rowType ref
 func makeRowValue(row data.Row, rowType reflect.Type) interface{} {
 	rowValue := reflect.New(rowType)
 	// filling fields
-	for i, obs := range row.Values {
+	for i, obs := range row.Values() {
 		field := rowValue.Elem().Field(i)
 		if obs.Interface() != nil {
 			// creating a pointer (all values are optional, so they are stored in pointer felds)

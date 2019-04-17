@@ -20,7 +20,8 @@ type Extension struct {
 	t *Table
 }
 
-// By allows dynamic access to observations
+// By performs extension using the whole table row as input.
+// For wide tables this might be inefficient, consider using On(...) instead.
 func (e *Extension) By(f func(r Row) interface{}, newType reflect.Type) *Table {
 	// TODO: either reflectively infer newType, or assert/verify the f return type
 	series := append(append([]*Series(nil), e.t.series...), &Series{

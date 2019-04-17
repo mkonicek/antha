@@ -236,7 +236,6 @@ func getProtobufElement(antha *compile.Antha, et *workflow.ElementType, ewm *ele
 				Sha:     ewm.repo.Commit,
 			},
 		},
-		RequiresAnthaCore: true,
 	}
 
 	// Build in ports

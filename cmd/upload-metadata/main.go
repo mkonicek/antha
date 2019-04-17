@@ -94,7 +94,7 @@ func run() error {
 			return err
 		}
 
-		var req element.CreateElementsRequest
+		var req element.CreateElementsPubRequest
 		if err := proto.Unmarshal(bs, &req); err != nil {
 			return err
 		}

@@ -21,17 +21,12 @@ type Table struct {
 // NewTable constructs a Table from the given Series.  If at least one of the
 // given Series is bounded, then the returned Table is bounded at that size.
 // If multiple different-sized bounded series are provided, we panic.
-func NewTable(series []*Series) *Table {
+func NewTable(series ...*Series) *Table {
 	exact, _, sizeErr := seriesSize(series)
 	if sizeErr != nil {
 		panic(errors.Wrapf(sizeErr, "cannot construct a table from different-sized series (should all have size %d or be unbounded)", exact))
 	}
 	return newFromSeries(series)
-}
-
-// EmptyTable returns a Table with no columns, of zero size.
-func EmptyTable() *Table {
-	return newFromSeries([]*Series{})
 }
 
 // newFromTable creates a new table pointing to the same series and read fn, and sets the
@@ -303,7 +298,7 @@ func (t *Table) Project(columns ...ColumnName) (*Table, error) {
 		s[i] = series
 	}
 	// TODO rearrange key
-	return NewTable(s), nil
+	return NewTable(s...), nil
 }
 
 // ProjectAllBut discards the named columns, which may not exist in the schema.
@@ -318,7 +313,7 @@ func (t *Table) ProjectAllBut(columns ...ColumnName) *Table {
 			s = append(s, ser)
 		}
 	}
-	return NewTable(s) // TODO set key to subkey
+	return NewTable(s...) // TODO set key to subkey
 }
 
 // Rename updates all columns of the old name to the new name.
@@ -337,7 +332,7 @@ func (t *Table) Rename(old, new ColumnName) *Table {
 		s[i] = ser
 	}
 	// TODO rename key column
-	return NewTable(s)
+	return NewTable(s...)
 }
 
 // Convert lazily converts all columns of the given name to the assigned type.

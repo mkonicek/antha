@@ -191,7 +191,7 @@ row:
 		}
 		series[i] = serResult[0].Interface().(*Series)
 	}
-	return NewTable(series), nil
+	return NewTable(series...), nil
 }
 
 // ToStruct copies to the exported struct fields by name, ignoring unmapped

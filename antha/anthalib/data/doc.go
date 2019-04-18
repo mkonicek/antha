@@ -49,7 +49,7 @@ In addition to reading tables from Parquet files (see above), there are several 
 It is possible to construct a table "column-wise" by creating Series instances from a Go slice and a nullability mask, like this:
 	column1 := data.Must().NewSeriesFromSlice("quantity", []float64{11.0, 12.0, 10.5, 0, 5.5}, []bool{true, true, true, false, true})
 	column2 := data.Must().NewSeriesFromSlice("label", []string{"A", "B", "A", "C", "C"}, nil)
-	table := data.NewTable([]*data.Series{column1, column2})
+	table := data.NewTable(column1, column2)
 
 If it is needeed to create a table "row-wise" rather than "column-wise", the easiest way is to read it from a slice of structs:
 	type myType struct {

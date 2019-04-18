@@ -11,11 +11,11 @@ var pirateBooty *Table
 
 func ExampleTable() {
 	// create a table
-	pirateBooty = NewTable([]*Series{
+	pirateBooty = NewTable(
 		Must().NewSeriesFromSlice("Name", []string{"doubloon", "grog", "cutlass", "chest"}, nil),
 		Must().NewSeriesFromSlice("Price", []float64{1.0, 0, 5.5, 600.0}, []bool{true, false, true, true}),
 		Must().NewSeriesFromSlice("Quantity", []int64{1200, 44, 30, 2}, []bool{true, true, true, true}),
-	})
+	)
 
 	fmt.Println(pirateBooty.ToRows())
 	// Output: 4 Row(s):
@@ -30,11 +30,11 @@ func ExampleTable() {
 
 func ExampleNewTable() {
 	// create a table
-	pirateBooty = NewTable([]*Series{
+	pirateBooty = NewTable(
 		Must().NewSeriesFromSlice("Name", []string{"doubloon", "grog", "cutlass", "chest"}, nil),
 		Must().NewSeriesFromSlice("Price", []float64{1.0, 0, 5.5, 600.0}, []bool{true, false, true, true}),
 		Must().NewSeriesFromSlice("Quantity", []int64{1200, 44, 30, 2}, []bool{true, true, true, true}),
-	})
+	)
 
 	fmt.Println(pirateBooty.ToRows())
 	// Output: 4 Row(s):
@@ -437,11 +437,11 @@ func ExampleTable_Update_onSelectedColsStaticType() {
 
 func ExampleTable_Pivot() {
 	// create a table
-	pirateBootyNarrow := NewTable([]*Series{
+	pirateBootyNarrow := NewTable(
 		Must().NewSeriesFromSlice("Name", []string{"doubloon", "doubloon", "grog", "cutlass", "cutlass", "chest", "chest"}, nil),
 		Must().NewSeriesFromSlice("PropertyName", []string{"Price", "Quantity", "Quantity", "Price", "Quantity", "Price", "Quantity"}, nil),
 		Must().NewSeriesFromSlice("PropertyValue", []float64{1.0, 1200, 44, 5.5, 30, 600.0, 2}, nil),
-	})
+	)
 
 	// make a wide table from pirateBootyNarrow.
 	pirateBootyWide, _ := pirateBootyNarrow.Pivot().Key("Name").Columns("PropertyName", "PropertyValue")
@@ -458,10 +458,10 @@ func ExampleTable_Pivot() {
 
 func ExampleTable_Join_naturalInner() {
 	// create another table to join
-	currency := NewTable([]*Series{
+	currency := NewTable(
 		Must().NewSeriesFromSlice("Name", []string{"doubloon", "piastre"}, nil),
 		Must().NewSeriesFromSlice("ExchangeRate", []float64{0.5, 2.3}, nil),
-	})
+	)
 
 	// natural inner join
 	currencyBooty, _ := pirateBooty.Join().NaturalInner(currency)
@@ -475,10 +475,10 @@ func ExampleTable_Join_naturalInner() {
 
 func ExampleTable_Join_inner() {
 	// create another table to join
-	currency := NewTable([]*Series{
+	currency := NewTable(
 		Must().NewSeriesFromSlice("CurrencyName", []string{"doubloon", "piastre"}, nil),
 		Must().NewSeriesFromSlice("CurrencyExchangeRate", []float64{0.5, 2.3}, nil),
-	})
+	)
 
 	// inner join
 	currencyBooty, _ := pirateBooty.Join().On("Name").Inner(currency, "CurrencyName")

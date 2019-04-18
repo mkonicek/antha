@@ -143,7 +143,7 @@ func (e *Extension) ConstantType(value interface{}, typ reflect.Type) (*Table, e
 		},
 	}
 
-	return NewTable(append(e.t.series, ser)), nil
+	return NewTable(append(e.t.series, ser)...), nil
 }
 
 // NewConstantSeries returns an unbounded repetition of the same value, using

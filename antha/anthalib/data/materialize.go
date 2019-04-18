@@ -51,7 +51,7 @@ func (b *TableBuilder) Build() *Table {
 	}
 
 	// constructing a Table
-	return NewTable(series)
+	return NewTable(series...)
 }
 
 // materializedType denotes types of materialized series
@@ -153,7 +153,7 @@ func cacheTable(t *Table, mode materializedType, forceMode bool, forceCopy bool)
 			indexesToCopy = append(indexesToCopy, i)
 		}
 	}
-	tableToCopy := NewTable(seriesToCopy)
+	tableToCopy := NewTable(seriesToCopy...)
 
 	// copying selected series
 	copiedTable, err := copyTable(tableToCopy, mode, forceMode)

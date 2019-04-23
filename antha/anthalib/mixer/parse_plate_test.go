@@ -2,7 +2,6 @@ package mixer
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"io/ioutil"
 	"strings"
@@ -10,7 +9,10 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/inventory/testinventory"
+	"github.com/antha-lang/antha/laboratory"
+	"github.com/antha-lang/antha/laboratory/effects/id"
+	"github.com/antha-lang/antha/laboratory/testlab"
+	"github.com/antha-lang/antha/target/mixer"
 	"github.com/pkg/errors"
 )
 
@@ -25,14 +27,14 @@ func nonEmpty(m map[string]*wtype.LHWell) map[string]*wtype.Liquid {
 	return r
 }
 
-func getComponentsFromPlate(plate *wtype.Plate) []*wtype.Liquid {
+func getComponentsFromPlate(idGen *id.IDGenerator, plate *wtype.Plate) []*wtype.Liquid {
 
 	var components []*wtype.Liquid
 	allWellPositions := plate.AllWellPositions(false)
 
 	for _, wellcontents := range allWellPositions {
 
-		if !plate.WellMap()[wellcontents].IsEmpty() {
+		if !plate.WellMap()[wellcontents].IsEmpty(idGen) {
 
 			component := plate.WellMap()[wellcontents].WContents
 			components = append(components, component)
@@ -42,8 +44,8 @@ func getComponentsFromPlate(plate *wtype.Plate) []*wtype.Liquid {
 	return components
 }
 
-func allComponentsHaveWellLocation(plate *wtype.Plate) error {
-	components := getComponentsFromPlate(plate)
+func allComponentsHaveWellLocation(idGen *id.IDGenerator, plate *wtype.Plate) error {
+	components := getComponentsFromPlate(idGen, plate)
 	var errs []string
 	for _, component := range components {
 		if len(component.WellLocation()) == 0 {
@@ -110,32 +112,33 @@ func containsInvalidCharWarning(warnings []string) bool {
 }
 
 func TestParsePlateWithValidation(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
-
-	file := []byte(
-		`
+	testlab.WithTestLab(t, "", &testlab.TestElementCallbacks{
+		Steps: func(lab *laboratory.Laboratory) error {
+			file := []byte(`
 pcrplate_with_cooler,
 A1,water+soil,water,50.0,ul,0,g/l,
 A4,tea,water,50.0,ul,0,g/l,
 A5,milk,water,100.0,ul,0,g/l,
 `)
-	r, err := parsePlateCSVWithValidationConfig(ctx, bytes.NewBuffer(file), DefaultValidationConfig())
+			r, err := parsePlateCSVWithValidationConfig(lab, bytes.NewBuffer(file), DefaultValidationConfig())
+			if err != nil {
+				return err
+			}
+			if !containsInvalidCharWarning(r.Warnings) {
+				return errors.New("Default validation config must forbid + signs in component names")
+			}
+			r, err = parsePlateCSVWithValidationConfig(lab, bytes.NewBuffer(file), PermissiveValidationConfig())
 
-	if err != nil {
-		t.Errorf("Failed to parse plate: %s ", err.Error())
-	}
-	if !containsInvalidCharWarning(r.Warnings) {
-		t.Errorf("Default validation config must forbid + signs in component names")
-	}
-	r, err = parsePlateCSVWithValidationConfig(ctx, bytes.NewBuffer(file), PermissiveValidationConfig())
+			if err != nil {
+				return err
+			}
 
-	if err != nil {
-		t.Errorf("Failed to parse plate: %s ", err.Error())
-	}
-
-	if containsInvalidCharWarning(r.Warnings) {
-		t.Errorf("Permissive validation config must allow + signs in component names")
-	}
+			if containsInvalidCharWarning(r.Warnings) {
+				return errors.New("Permissive validation config must allow + signs in component names")
+			}
+			return nil
+		},
+	})
 }
 
 func TestParsePlate(t *testing.T) {
@@ -146,10 +149,8 @@ func TestParsePlate(t *testing.T) {
 		ReplacementConfig ValidationConfig
 	}
 
-	ctx := testinventory.NewContext(context.Background())
-
 	// Read external file with carriage returns for that specific test.
-	fileCarriage, err := ioutil.ReadFile("test_carriage.csv")
+	fileCarriage, err := ioutil.ReadFile("testdata/test_carriage.csv")
 	if err != nil {
 		t.Errorf("Failed to read test_carriage.csv: %s ", err.Error())
 	}
@@ -501,38 +502,48 @@ C1,neb5compcells,culture,20.5,ul,0,ng/ul
 	}
 
 	for i, tc := range suite {
-		p, err := ParsePlateCSV(ctx, bytes.NewBuffer(tc.File), tc.ReplacementConfig)
-		if err != nil {
-			t.Error(err)
-		}
-		if err := samePlate(tc.Expected, p.Plate); err != nil {
-			t.Error(fmt.Sprintf("error in test %d: %s", i, err))
-		}
-		if tc.NoWarnings && len(p.Warnings) != 0 {
-			t.Errorf("found warnings: %s", p.Warnings)
-		}
+		testlab.WithTestLab(t, "", &testlab.TestElementCallbacks{
+			Name: fmt.Sprint(i),
+			Steps: func(lab *laboratory.Laboratory) error {
 
-		if err := allComponentsHaveWellLocation(p.Plate); err != nil {
-			t.Error(err.Error())
-		}
+				p, err := ParsePlateCSV(lab, bytes.NewBuffer(tc.File), tc.ReplacementConfig)
+				if err != nil {
+					return err
+				}
+				if err := samePlate(tc.Expected, p.Plate); err != nil {
+					return err
+				}
+				if tc.NoWarnings && len(p.Warnings) != 0 {
+					return fmt.Errorf("found warnings: %s", p.Warnings)
+				}
+
+				if err := allComponentsHaveWellLocation(lab.IDGenerator, p.Plate); err != nil {
+					return err
+				}
+				return nil
+			},
+		})
 	}
 }
 
 func TestParsePlateOverfilled(t *testing.T) {
-	ctx := testinventory.NewContext(context.Background())
+	testlab.WithTestLab(t, "", &testlab.TestElementCallbacks{
+		Steps: func(lab *laboratory.Laboratory) error {
 
-	file := []byte(
-		`
+			file := []byte(`
 pcrplate_with_cooler,
 A1,water,water,50.0,ul,0,g/l,
 A4,tea,water,50.0,ul,0,g/l,
 A5,milk,water,500.0,ul,0,g/l,
 `)
-	_, err := parsePlateCSVWithValidationConfig(ctx, bytes.NewBuffer(file), DefaultValidationConfig())
+			_, err := parsePlateCSVWithValidationConfig(lab, bytes.NewBuffer(file), DefaultValidationConfig())
 
-	if err == nil {
-		t.Error("Overfull well A5 failed to generate error")
-	}
+			if err == nil {
+				return errors.New("Overfull well A5 failed to generate error")
+			}
+			return nil
+		},
+	})
 }
 
 func TestUnModifyTypeName(t *testing.T) {
@@ -561,7 +572,7 @@ func TestUnModifyTypeName(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := unModifyTypeName(test.Original)
+		result := mixer.UnModifyTypeName(test.Original)
 		if result != test.ExpectedProduct {
 			t.Error(
 				"Error removing modified suffix from policy: \n",

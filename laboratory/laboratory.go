@@ -469,7 +469,7 @@ func (eb *ElementBase) Completed(lab *Laboratory) {
 }
 
 func (eb *ElementBase) Save(lab *Laboratory) error {
-	p := filepath.Join(lab.labBuild.outDir, "elements", fmt.Sprintf("%d_%s.json", eb.id, eb.element.Name()))
+	p := filepath.Join(lab.labBuild.outDir, "elements", fmt.Sprintf("%02d_%s.json", eb.id, eb.element.Name()))
 	if fh, err := os.OpenFile(p, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0400); err != nil {
 		return err
 	} else {

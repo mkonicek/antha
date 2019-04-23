@@ -93,7 +93,9 @@ func (inst *TecanInstance) Validate(inv *inventory.Inventory) error {
 
 func (inst *TecanInstance) Connect(wf *workflow.Workflow) error {
 	if inst.properties == nil {
-		if data, err := json.Marshal(inst.Model); err != nil {
+		// AVDB --  we need a json serialization here because we go to the BaseMixer config --
+		// this is a bit odd indeed and suggests further need of streamlining the code
+		if data, err := json.Marshal(inst.TecanInstanceConfig); err != nil {
 			return err
 		} else if err := inst.connect(wf, data); err != nil {
 			return err

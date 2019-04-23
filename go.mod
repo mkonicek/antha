@@ -1,8 +1,8 @@
 module github.com/antha-lang/antha
 
 require (
-	github.com/Synthace/antha-runner v0.0.0-20190423132642-549289b40aba
-	github.com/Synthace/instruction-plugins v0.0.0-20190409101917-f2439f6bee7c
+	github.com/Synthace/antha-runner v0.0.0-20190423133811-6b62c9bf3805
+	github.com/Synthace/instruction-plugins v0.0.0-20190423134354-cd8eba7cdbdc
 	github.com/Synthace/microservice v0.0.0-20190417123801-c7ca6bc971ec
 	github.com/antha-lang/toolbox v0.0.0-20180417132942-6ea11e22448c
 	github.com/apache/arrow/go/arrow v0.0.0-20190412182029-853742021ce1
@@ -33,3 +33,5 @@ require (
 )
 
 replace github.com/Synthace/antha-runner => ../antha-runner
+
+replace github.com/Synthace/instruction-plugions => ../instruction-plugins

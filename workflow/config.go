@@ -90,17 +90,23 @@ type TecanConfig struct {
 }
 
 type TecanInstanceConfig struct {
-	modelOnly
+	ModelOnly
 	commonMixerInstanceConfig
 	tipsOnly
+	GeneralConfig
 }
 
 func (cfg *TecanInstanceConfig) MarshalJSON() ([]byte, error) {
-	return MergeToMapAndMarshal(&cfg.commonMixerInstanceConfig, &cfg.modelOnly, &cfg.tipsOnly)
+	//return MergeToMapAndMarshal(&cfg.commonMixerInstanceConfig, &cfg.ModelOnly, &cfg.tipsOnly)
+	return MergeToMapAndMarshal(&cfg.GeneralConfig, &cfg.commonMixerInstanceConfig, &cfg.ModelOnly, &cfg.tipsOnly)
 }
 
 func (cfg *TecanInstanceConfig) UnmarshalJSON(bs []byte) error {
-	return UnmarshalMapsMerged(bs, &cfg.commonMixerInstanceConfig, &cfg.modelOnly, &cfg.tipsOnly)
+	//	err := UnmarshalMapsMerged(bs, &cfg.commonMixerInstanceConfig, &cfg.ModelOnly, &cfg.tipsOnly)
+	//fmt.Println(string(bs))
+	//err := UnmarshalMapsMerged(bs, &cfg.ModelOnly)
+	//return err
+	return UnmarshalMapsMerged(bs, &cfg.GeneralConfig, &cfg.commonMixerInstanceConfig, &cfg.ModelOnly, &cfg.tipsOnly)
 }
 
 // CyBio
@@ -110,17 +116,17 @@ type CyBioConfig struct {
 }
 
 type CyBioInstanceConfig struct {
-	modelOnly
+	ModelOnly
 	commonMixerInstanceConfig
 	tipsOnly
 }
 
 func (cfg *CyBioInstanceConfig) MarshalJSON() ([]byte, error) {
-	return MergeToMapAndMarshal(&cfg.commonMixerInstanceConfig, &cfg.modelOnly, &cfg.tipsOnly)
+	return MergeToMapAndMarshal(&cfg.commonMixerInstanceConfig, &cfg.ModelOnly, &cfg.tipsOnly)
 }
 
 func (cfg *CyBioInstanceConfig) UnmarshalJSON(bs []byte) error {
-	return UnmarshalMapsMerged(bs, &cfg.commonMixerInstanceConfig, &cfg.modelOnly, &cfg.tipsOnly)
+	return UnmarshalMapsMerged(bs, &cfg.commonMixerInstanceConfig, &cfg.ModelOnly, &cfg.tipsOnly)
 }
 
 // Labcyte
@@ -130,16 +136,16 @@ type LabcyteConfig struct {
 }
 
 type LabcyteInstanceConfig struct {
-	modelOnly
+	ModelOnly
 	commonMixerInstanceConfig
 }
 
 func (cfg *LabcyteInstanceConfig) MarshalJSON() ([]byte, error) {
-	return MergeToMapAndMarshal(&cfg.commonMixerInstanceConfig, &cfg.modelOnly)
+	return MergeToMapAndMarshal(&cfg.commonMixerInstanceConfig, &cfg.ModelOnly)
 }
 
 func (cfg *LabcyteInstanceConfig) UnmarshalJSON(bs []byte) error {
-	return UnmarshalMapsMerged(bs, &cfg.commonMixerInstanceConfig, &cfg.modelOnly)
+	return UnmarshalMapsMerged(bs, &cfg.commonMixerInstanceConfig, &cfg.ModelOnly)
 }
 
 // HamiltonConfig
@@ -184,8 +190,12 @@ type tipsOnly struct {
 	TipTypes []string `json:"tipTypes,omitempty"`
 }
 
-type modelOnly struct {
+type ModelOnly struct {
 	Model string `json:"Model"`
+}
+
+type GeneralConfig struct {
+	Config string `json:"Config"`
 }
 
 // type aliases do not inherit methods, so this is a cheap way to

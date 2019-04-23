@@ -24,14 +24,14 @@ package parser
 
 import (
 	"fmt"
-	"io/ioutil"
 	"strings"
 
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/enzymes"
+	"github.com/antha-lang/antha/laboratory"
+	"github.com/antha-lang/antha/laboratory/testlab"
 
 	"testing"
 
-	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/export"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
@@ -361,35 +361,30 @@ var tests = []parseXLSXTest{
 }
 
 func TestParseExcel(t *testing.T) {
-
 	for _, test := range tests {
+		testlab.WithTestLab(t, "testdata", &testlab.TestElementCallbacks{
+			Name: test.designFileName,
+			Steps: func(lab *laboratory.Laboratory) error {
+				testFile := wtype.NewFile(test.designFileName).AsInput()
 
-		assemblies, err := ParseExcel(test.designFileName)
-
-		fmt.Println("filename", test.designFileName)
-
-		if err != nil {
-
-			if test.expectedErrMessage != nil {
-				if strings.TrimSpace(err.Error()) != strings.TrimSpace(test.expectedErrMessage.Error()) {
-					fmt.Printf("len error 1 %d len error 2 %d", len(strings.TrimSpace(err.Error())), len(strings.TrimSpace(test.expectedErrMessage.Error())))
-					t.Error(
-						"Got error: ", err.Error(), "\n",
-						"Expected: ", test.expectedErrMessage, "\n",
-					)
+				assemblies, err := ParseExcel(lab, testFile)
+				if err != nil {
+					if test.expectedErrMessage != nil {
+						if strings.TrimSpace(err.Error()) != strings.TrimSpace(test.expectedErrMessage.Error()) {
+							return fmt.Errorf("Got error: %v\n\tExpected: %v", err, test.expectedErrMessage)
+						}
+					}
 				}
-			}
-		}
 
-		for i, s := range assemblies {
-			if s.Constructname != test.expectedAssemblies[i].Constructname {
-				t.Error(
-					"for test", test.designFileName, "\n",
-					"expected: ", test.expectedAssemblies[i].Constructname, "\n",
-					"got", fmt.Sprintf("%+v", s.Constructname), "\n",
-				)
-			}
-		}
+				for i, s := range assemblies {
+					if s.Constructname != test.expectedAssemblies[i].Constructname {
+						return fmt.Errorf("For test: %v\n\tExpected: %v\n\tGot: %+v",
+							test.designFileName, test.expectedAssemblies[i].Constructname, s.Constructname)
+					}
+				}
+				return nil
+			},
+		})
 	}
 }
 
@@ -413,48 +408,27 @@ var pcrTests = []parsePCRDesignXLSXTest{
 	},
 }
 
-func fileNameToAnthaFile(name string) (*wtype.File, error) {
-	bytes, err := ioutil.ReadFile(name)
-	if err != nil {
-		return nil, err
-	}
-	return export.Binary(bytes, name)
-}
-
 func TestParsePCRExcel(t *testing.T) {
-
 	for _, test := range pcrTests {
+		testlab.WithTestLab(t, "testdata", &testlab.TestElementCallbacks{
+			Name: test.designFileName,
+			Steps: func(lab *laboratory.Laboratory) error {
+				testFile := wtype.NewFile(test.designFileName).AsInput()
+				testFile.Name = test.designFileName
 
-		testFile, err := fileNameToAnthaFile(test.designFileName)
-
-		if err != nil {
-			t.Error(err.Error())
-			break
-		}
-
-		_, err = ParsePCRExcel(testFile)
-
-		if err != nil {
-			if test.expectedErrMessage != "" {
-				if strings.TrimSpace(err.Error()) != strings.TrimSpace(test.expectedErrMessage) {
-					fmt.Printf("len error 1 %d len error 2 %d", len(strings.TrimSpace(err.Error())), len(strings.TrimSpace(test.expectedErrMessage)))
-					t.Error(
-						"Got error: ", err.Error(), "\n",
-						"Expected: ", test.expectedErrMessage, "\n",
-					)
+				if _, err := ParsePCRExcel(lab, testFile); err != nil {
+					if test.expectedErrMessage != "" {
+						if strings.TrimSpace(err.Error()) != strings.TrimSpace(test.expectedErrMessage) {
+							return fmt.Errorf("Got error: %v\n\tExpected: %v", err, test.expectedErrMessage)
+						}
+					} else if test.expectedErrMessage == "" {
+						return fmt.Errorf("Got error: %v\n\tExpected nil", err)
+					}
+				} else if test.expectedErrMessage != "" {
+					return fmt.Errorf("Got nil\n\tExpected: %v", test.expectedErrMessage)
 				}
-			} else if test.expectedErrMessage == "" {
-				t.Error(
-					"Got error: ", err.Error(), "\n",
-					"Expected: ", "nil", "\n",
-				)
-			}
-		} else if test.expectedErrMessage != "" {
-			t.Error(
-				"Got error: ", "nil", "\n",
-				"Expected: ", test.expectedErrMessage, "\n",
-			)
-		}
-
+				return nil
+			},
+		})
 	}
 }

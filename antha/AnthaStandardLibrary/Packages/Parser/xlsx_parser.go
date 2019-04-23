@@ -109,14 +109,15 @@ func Xlsxparser(filename string, sheetIndex int, outputprefix string) (f *os.Fil
 	return
 }
 
-func ParseExcel(filename string) ([]enzymes.Assemblyparameters, error) {
-	if pl, err := Xlsxparser(filename, 0, "partslist"); err != nil {
+func ParseExcel(lab *laboratory.Laboratory, file *wtype.File) ([]enzymes.Assemblyparameters, error) {
+	if data, err := lab.FileManager.ReadAll(file); err != nil {
 		return nil, err
-	} else if dl, err := Xlsxparser(filename, 1, "designlist"); err != nil {
+	} else if pl, err := xlsxparserBinary(data, 0, "partslist"); err != nil {
+		return nil, err
+	} else if dl, err := xlsxparserBinary(data, 1, "designlist"); err != nil {
 		return nil, err
 	} else {
-		ap, err := AssemblyFromCsv(dl.Name(), pl.Name())
-		return ap, err
+		return AssemblyFromCsv(dl.Name(), pl.Name())
 	}
 }
 

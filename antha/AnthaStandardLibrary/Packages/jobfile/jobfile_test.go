@@ -2,7 +2,6 @@ package jobfile
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -12,10 +11,10 @@ import (
 )
 
 // Spin waiting for file to appear
-func spinUntil(ctx context.Context, c *Client, filename string, seconds int) error {
+func spinUntil(c *Client, filename string, seconds int) error {
 	for i := 0; i < seconds; i++ {
 		<-time.After(1 * time.Second)
-		files, err := c.ListFiles(ctx, "")
+		files, err := c.ListFiles("")
 		if err != nil {
 			return err
 		}
@@ -44,9 +43,7 @@ func TestLargeFiles(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ctx := context.Background()
-
-	w := c.NewWriter(ctx, filename)
+	w := c.NewWriter(filename)
 	defer w.Close() // nolint
 
 	inR, inW := io.Pipe()
@@ -70,11 +67,11 @@ func TestLargeFiles(t *testing.T) {
 		t.Error(err)
 	}
 
-	if err := spinUntil(ctx, c, filename, 5); err != nil {
+	if err := spinUntil(c, filename, 5); err != nil {
 		t.Fatal(err)
 	}
 
-	r := c.NewReader(ctx, "", filename)
+	r := c.NewReader("", filename)
 	defer r.Close() // nolint
 
 	n, err := io.Copy(ioutil.Discard, r)
@@ -102,9 +99,7 @@ func TestDefaultClient(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ctx := context.Background()
-
-	files, err := c.ListFiles(ctx, "")
+	files, err := c.ListFiles("")
 	if err != nil {
 		t.Error(err)
 	}
@@ -120,7 +115,7 @@ func TestDefaultClient(t *testing.T) {
 		}
 	}
 
-	w := c.NewWriter(ctx, filename)
+	w := c.NewWriter(filename)
 	defer w.Close() // nolint
 
 	if _, err := io.Copy(w, bytes.NewReader([]byte(golden))); err != nil {
@@ -131,11 +126,11 @@ func TestDefaultClient(t *testing.T) {
 		t.Error(err)
 	}
 
-	if err := spinUntil(ctx, c, filename, 5); err != nil {
+	if err := spinUntil(c, filename, 5); err != nil {
 		t.Fatal(err)
 	}
 
-	r := c.NewReader(ctx, "", filename)
+	r := c.NewReader("", filename)
 	defer r.Close() // nolint
 
 	var out bytes.Buffer

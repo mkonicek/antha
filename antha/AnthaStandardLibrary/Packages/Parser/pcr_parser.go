@@ -2,6 +2,7 @@ package parser
 
 import (
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -15,16 +16,14 @@ import (
 // ParsePCRExc3el takes in a pcr design file (.xlsx or .csv) and converts this
 // into an array of type PCRReactions.
 func ParsePCRExcel(lab *laboratory.Laboratory, designfile *wtype.File) ([]pcr.Reaction, error) {
+	if data, err := lab.FileManager.ReadAll(designfile); err != nil {
+		return nil, err
 
-	data, err := lab.FileManager.ReadAll(designfile)
-	var pcrreaction []pcr.Reaction
-
-	if err != nil {
-		err = fmt.Errorf(err.Error())
 	} else {
+		var pcrreaction []pcr.Reaction
 
-		switch {
-		case filepath.Ext(designfile.Name) == ".xlsx":
+		switch filepath.Ext(designfile.Name) {
+		case ".xlsx":
 			csvfile1, err := xlsxparserBinary(data, 0, "Sheet2")
 			if err != nil {
 				return nil, err
@@ -41,13 +40,10 @@ func ParsePCRExcel(lab *laboratory.Laboratory, designfile *wtype.File) ([]pcr.Re
 		//	pcrreaction = pcrReactionfromcsv(designfile.Name)
 		//	return pcrreaction, err
 
-		case filepath.Ext(designfile.Name) != ".xlsx": //".csv" && filepath.Ext(designfile.Name) != ".xlsx":
-			err = fmt.Errorf("File format not supported please use .xlsx file. ")
-			return nil, err
+		default: //".csv" && filepath.Ext(designfile.Name) != ".xlsx":
+			return nil, errors.New("File format not supported please use .xlsx file.")
 		}
-		return pcrreaction, err
 	}
-	return pcrreaction, err
 }
 
 func pcrReactionfromcsv(designFile string, sequenceFile string) (pcrReactions []pcr.Reaction, err error) {

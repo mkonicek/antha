@@ -28,22 +28,17 @@
 package search
 
 import (
-	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/inventory"
-	"github.com/antha-lang/antha/inventory/testinventory"
+	"github.com/antha-lang/antha/laboratory"
+	"github.com/antha-lang/antha/laboratory/testlab"
 )
 
-func defaultContext() context.Context {
-	return testinventory.NewContext(context.Background())
-}
-
 func TestNextFreeWell(t *testing.T) {
-
 	type nextWellTest struct {
 		avoidWells     []string
 		preferredWells []string
@@ -54,163 +49,158 @@ func TestNextFreeWell(t *testing.T) {
 		options        []Option
 	}
 
-	// create a test plate
-	falconAgarPlate, err := inventory.NewPlate(defaultContext(), "falcon6wellAgar")
-
-	if err != nil {
-		t.Error(err.Error())
-	}
-
-	falconAgarPlate.SetName("Agar plate")
-
-	falconAgarPlateWithSomethingIn, err := inventory.NewPlate(defaultContext(), "falcon6wellAgar")
-
-	if err != nil {
-		t.Error(err.Error())
-	}
-
-	// second test plate which we'll add a sample to.
-	falconAgarPlateWithSomethingIn.SetName("Agar plate with sample")
-
-	component, err := inventory.NewComponent(defaultContext(), "water")
-
-	if err != nil {
-		t.Error(err.Error())
-	}
-
-	component.SetName("test_sample")
-
-	component.SetVolume(wunit.NewVolume(100.0, "ul"))
-
-	// this will add the component to the plate
-	_, err = falconAgarPlateWithSomethingIn.AddComponent(component, false)
-
-	if err != nil {
-		t.Error(
-			err.Error(),
-		)
-	}
-
-	// create a 384 well test plate
-	griener384, err := inventory.NewPlate(defaultContext(), "greiner384_riser18")
-
-	if err != nil {
-		t.Error(err.Error())
-	}
-
-	griener384.SetName("384 well plate")
-
-	var nextwellTests = []nextWellTest{
-		{
-			avoidWells:     []string{},
-			preferredWells: []string{},
-			plateType:      falconAgarPlate,
-			byRow:          false,
-			expectedResult: "A1",
-			expectedError:  nil,
-		},
-		{
-			avoidWells:     []string{},
-			preferredWells: []string{},
-			plateType:      falconAgarPlateWithSomethingIn,
-			byRow:          false,
-			expectedResult: "B1",
-			expectedError:  nil,
-		},
-		{
-			avoidWells:     []string{"A1"},
-			preferredWells: []string{},
-			plateType:      falconAgarPlate,
-			byRow:          false,
-			expectedResult: "B1",
-			expectedError:  nil,
-		},
-		{
-			avoidWells:     []string{"A1"},
-			preferredWells: []string{},
-			plateType:      falconAgarPlate,
-			byRow:          true,
-			expectedResult: "A2",
-			expectedError:  nil,
-		},
-		{
-			avoidWells:     []string{"A1"},
-			preferredWells: []string{"A3"},
-			plateType:      falconAgarPlate,
-			byRow:          false,
-			expectedResult: "A3",
-			expectedError:  nil,
-		},
-		{
-			avoidWells:     []string{"A1"},
-			preferredWells: []string{"A1"},
-			plateType:      falconAgarPlate,
-			byRow:          false,
-			expectedResult: "B1",
-			expectedError:  nil,
-		},
-		{
-			avoidWells:     []string{"A1"},
-			preferredWells: []string{"A13"},
-			plateType:      falconAgarPlate,
-			byRow:          false,
-			expectedResult: "",
-			expectedError:  errors.New("well (A13) specified is out of range of available wells for plate type falcon6wellAgar"),
-		},
-		{
-			avoidWells:     []string{"A1", "B1", "A2", "B2", "A3", "B3"},
-			preferredWells: []string{"A1"},
-			plateType:      falconAgarPlate,
-			byRow:          false,
-			expectedResult: "",
-			expectedError:  errors.New("no empty wells on plate Agar plate of type falcon6wellAgar"),
-		},
-		{
-			avoidWells:     []string{"A1"},
-			preferredWells: []string{},
-			plateType:      griener384,
-			byRow:          false,
-			expectedResult: "C1",
-			expectedError:  nil,
-			options:        []Option{SkipAlternateWells},
-		},
-		{
-			avoidWells:     []string{},
-			preferredWells: []string{},
-			plateType:      nil,
-			byRow:          false,
-			expectedResult: "",
-			expectedError:  errors.New("no plate specified as argument to NextFreeWell function"),
-		},
-	}
-
-	for _, test := range nextwellTests {
-		well, err := NextFreeWell(test.plateType, test.avoidWells, test.preferredWells, test.byRow, test.options...)
-
-		if well != test.expectedResult {
-			t.Error(
-				"For", test.plateType, test.avoidWells, test.preferredWells, test.byRow, "\n",
-				"expected:", test.expectedResult, "\n",
-				"got", well, "\n",
-			)
-		}
-
-		if err != test.expectedError {
-			if test.expectedError != nil && err != nil {
-				if test.expectedError.Error() != err.Error() {
-					t.Error(
-						"For", test.plateType, test.avoidWells, test.preferredWells, test.byRow, "\n",
-						"expected:", test.expectedError, "\n",
-						"got", err, "\n",
-					)
-				}
-			} else {
-				t.Error(
-					"For", test.plateType, test.avoidWells, test.preferredWells, test.byRow, "\n",
-					"expected:", test.expectedError, "\n",
-					"got", err, "\n",
-				)
+	testlab.WithTestLab(t, "", &testlab.TestElementCallbacks{
+		Steps: func(lab *laboratory.Laboratory) error {
+			// create a test plate
+			falconAgarPlate, err := lab.Inventory.Plates.NewPlate("falcon6wellAgar")
+			if err != nil {
+				return err
 			}
-		}
-	}
+
+			falconAgarPlate.SetName("Agar plate")
+
+			falconAgarPlateWithSomethingIn, err := lab.Inventory.Plates.NewPlate("falcon6wellAgar")
+			if err != nil {
+				return err
+			}
+
+			// second test plate which we'll add a sample to.
+			falconAgarPlateWithSomethingIn.SetName("Agar plate with sample")
+
+			component, err := lab.Inventory.Components.NewComponent("water")
+			if err != nil {
+				return err
+			}
+
+			component.SetName("test_sample")
+
+			component.SetVolume(wunit.NewVolume(100.0, "ul"))
+
+			// this will add the component to the plate
+			_, err = falconAgarPlateWithSomethingIn.AddComponent(lab.IDGenerator, component, false)
+			if err != nil {
+				return err
+			}
+
+			// create a 384 well test plate
+			griener384, err := lab.Inventory.Plates.NewPlate("greiner384_riser18")
+			if err != nil {
+				return err
+			}
+
+			griener384.SetName("384 well plate")
+
+			var nextwellTests = []nextWellTest{
+				{
+					avoidWells:     []string{},
+					preferredWells: []string{},
+					plateType:      falconAgarPlate,
+					byRow:          false,
+					expectedResult: "A1",
+					expectedError:  nil,
+				},
+				{
+					avoidWells:     []string{},
+					preferredWells: []string{},
+					plateType:      falconAgarPlateWithSomethingIn,
+					byRow:          false,
+					expectedResult: "B1",
+					expectedError:  nil,
+				},
+				{
+					avoidWells:     []string{"A1"},
+					preferredWells: []string{},
+					plateType:      falconAgarPlate,
+					byRow:          false,
+					expectedResult: "B1",
+					expectedError:  nil,
+				},
+				{
+					avoidWells:     []string{"A1"},
+					preferredWells: []string{},
+					plateType:      falconAgarPlate,
+					byRow:          true,
+					expectedResult: "A2",
+					expectedError:  nil,
+				},
+				{
+					avoidWells:     []string{"A1"},
+					preferredWells: []string{"A3"},
+					plateType:      falconAgarPlate,
+					byRow:          false,
+					expectedResult: "A3",
+					expectedError:  nil,
+				},
+				{
+					avoidWells:     []string{"A1"},
+					preferredWells: []string{"A1"},
+					plateType:      falconAgarPlate,
+					byRow:          false,
+					expectedResult: "B1",
+					expectedError:  nil,
+				},
+				{
+					avoidWells:     []string{"A1"},
+					preferredWells: []string{"A13"},
+					plateType:      falconAgarPlate,
+					byRow:          false,
+					expectedResult: "",
+					expectedError:  errors.New("well (A13) specified is out of range of available wells for plate type falcon6wellAgar"),
+				},
+				{
+					avoidWells:     []string{"A1", "B1", "A2", "B2", "A3", "B3"},
+					preferredWells: []string{"A1"},
+					plateType:      falconAgarPlate,
+					byRow:          false,
+					expectedResult: "",
+					expectedError:  errors.New("no empty wells on plate Agar plate of type falcon6wellAgar"),
+				},
+				{
+					avoidWells:     []string{"A1"},
+					preferredWells: []string{},
+					plateType:      griener384,
+					byRow:          false,
+					expectedResult: "C1",
+					expectedError:  nil,
+					options:        []Option{SkipAlternateWells},
+				},
+				{
+					avoidWells:     []string{},
+					preferredWells: []string{},
+					plateType:      nil,
+					byRow:          false,
+					expectedResult: "",
+					expectedError:  errors.New("no plate specified as argument to NextFreeWell function"),
+				},
+			}
+
+			for idx, test := range nextwellTests {
+				testlab.WithTestLab(t, "", &testlab.TestElementCallbacks{
+					Name: fmt.Sprint(idx),
+					Steps: func(lab *laboratory.Laboratory) error {
+						well, err := NextFreeWell(lab, test.plateType, test.avoidWells, test.preferredWells, test.byRow, test.options...)
+
+						if well != test.expectedResult {
+							return fmt.Errorf("For: %v (avoid: %v, preferred: %v, byRow: %v)\n\texpected: %v\n\tgot: %v",
+								test.plateType, test.avoidWells, test.preferredWells, test.byRow, test.expectedResult, well)
+						}
+
+						if err != test.expectedError {
+							if test.expectedError != nil && err != nil {
+								if test.expectedError.Error() != err.Error() {
+									return fmt.Errorf("For: %v (avoid: %v, preferred: %v, byRow: %v)\n\texpected: %v\n\tgot: %v",
+										test.plateType, test.avoidWells, test.preferredWells, test.byRow, test.expectedError, err)
+								}
+							} else {
+								return fmt.Errorf("For: %v (avoid: %v, preferred: %v, byRow: %v)\n\texpected: %v\n\tgot: %v",
+									test.plateType, test.avoidWells, test.preferredWells, test.byRow, test.expectedError, err)
+							}
+						}
+						return nil
+					},
+				})
+			}
+			return nil
+		},
+	})
 }

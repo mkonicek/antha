@@ -37,7 +37,7 @@ func TestParquet(t *testing.T) {
 			return nil, err
 		}
 
-		return TableFromFile(fileName, columns...)
+		return TableFromFile(fileName, Columns(columns...))
 	})
 
 	// bytes: write + read
@@ -47,7 +47,7 @@ func TestParquet(t *testing.T) {
 			return nil, err
 		}
 
-		return TableFromBytes(blob, columns...)
+		return TableFromBytes(blob, Columns(columns...))
 	})
 
 	// write to io.Writer + read from io.Reader
@@ -58,8 +58,21 @@ func TestParquet(t *testing.T) {
 			return nil, err
 		}
 
-		return TableFromReader(buffer, columns...)
+		return TableFromReader(buffer, Columns(columns...))
 	})
+
+	// // bytes: write + read, also setting arbitrary keyvalue metadata
+	// parquetTest(t, "Bytes + kv meta", table, []data.ColumnName{}, func(src *data.Table, columns ...data.ColumnName) (*data.Table, error) {
+	// 	blob, err := TableToBytes(src, &FileKeyValueMetadata{"meta-key": "meta-value"})
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	// check metadata round trip
+	// 	readMeta := &FileKeyValueMetadata{}
+
+	// 	r := TableFromBytes(blob, columns...)
+	// 	return r
+	// })
 }
 
 func parquetTest(t *testing.T, caption string, src *data.Table, columns []data.ColumnName, writeAndRead func(*data.Table, ...data.ColumnName) (*data.Table, error)) {

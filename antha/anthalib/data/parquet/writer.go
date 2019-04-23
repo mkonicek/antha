@@ -12,8 +12,19 @@ import (
 	"github.com/xitongsys/parquet-go/parquet"
 )
 
+// WriteOpt sets an optional behavior when creating parquet files.
+type WriteOpt interface {
+}
+
+// FileKeyValueMetadata is a WriteOpt that sets keys in file-level Parquet
+// metadata, as defined in:
+// https://github.com/apache/parquet-format/blob/master/src/main/thrift/parquet.thrift#L924
+type FileKeyValueMetadata map[string]string
+
+var _ WriteOpt = (*FileKeyValueMetadata)(nil)
+
 // TableToWriter writes a data.Table to io.Writer
-func TableToWriter(table *data.Table, writer io.Writer) error {
+func TableToWriter(table *data.Table, writer io.Writer, opts ...WriteOpt) error {
 	// wrapping io.Writer in a ParquetFile.ParquetFile
 	file := ParquetFile.NewWriterFile(writer)
 
@@ -22,7 +33,7 @@ func TableToWriter(table *data.Table, writer io.Writer) error {
 }
 
 // TableToBytes writes a data.Table to a memory buffer
-func TableToBytes(table *data.Table) ([]byte, error) {
+func TableToBytes(table *data.Table, opts ...WriteOpt) ([]byte, error) {
 	// a memory buffer writer
 	buffer := bytes.NewBuffer(nil)
 
@@ -37,7 +48,7 @@ func TableToBytes(table *data.Table) ([]byte, error) {
 }
 
 // TableToFile writes a data.Table to a file on disk
-func TableToFile(table *data.Table, filePath string) error {
+func TableToFile(table *data.Table, filePath string, opts ...WriteOpt) error {
 	// opening the file
 	file, err := ParquetFile.NewLocalFileWriter(filePath)
 	if err != nil {

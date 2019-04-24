@@ -1,16 +1,19 @@
 package align
 
 import (
+	"errors"
 	"fmt"
+	"testing"
+
 	"github.com/antha-lang/antha/antha/AnthaStandardLibrary/Packages/sequences/parse/fasta"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"io/ioutil"
-	"testing"
+	"github.com/antha-lang/antha/laboratory"
+	"github.com/antha-lang/antha/laboratory/testlab"
 )
 
 func TestDNASet(t *testing.T) {
 
-	fastaText := `
+	const fastaText = `
 >CCE57619 cdna plasmid:HUSEC2011CHR1:pHUSEC2011-2:1219:1338:-1 gene:HUS2011_pII0002 gene_biotype:protein_coding transcript_biotype:protein_coding description:hypothetical protein
 ATGTTTTATGAAGGGAGCAATGCCTCAGCATCAGGTTACGGGGTGACTCACGTAAGGGAC
 AGGCAGATGGCAGCTCAGCCACAGGCAGCACTGCAGGAAACTGAATATAAACTGCAGTGA
@@ -51,93 +54,86 @@ CTGGACGATGTGACATCCGGACAGGTTATCGACCATCAGGCTGTACAGGCCTGGTCGGAC
 AGCCTCAGTACTGACAATCCGTTACCGGTGCCACGCTGA
 `
 
-	fastaFile := wtype.File{Name: "ecoli-cdna"}
+	testlab.WithTestLab(t, "", &testlab.TestElementCallbacks{
+		Steps: func(lab *laboratory.Laboratory) error {
+			fastaFile, err := lab.FileManager.WriteAll([]byte(fastaText), "ecoli-cdna")
+			if err != nil {
+				return err
+			}
+			database, err := fasta.FastaToDNASequences(lab, fastaFile)
+			if err != nil {
+				return err
+			}
 
-	err := fastaFile.WriteAll([]byte(fastaText))
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
+			primer := wtype.DNASequence{Seq: "ATGGAACTGAAGTGG"}
 
-	database, err := fasta.FastaToDNASequences(fastaFile)
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
+			algorithm, found := Algorithms["SWAffine"]
+			if !found {
+				return errors.New("algorithm not found")
+			}
 
-	primer := wtype.DNASequence{Seq: "ATGGAACTGAAGTGG"}
+			testLimit := 4
 
-	algorithm, found := Algorithms["SWAffine"]
-	if !found {
-		t.Fatalf("algorithm not found")
-	}
+			results, err := DNASet(primer, database, algorithm, testLimit)
+			if err != nil {
+				return err
+			}
 
-	testLimit := 4
+			if len(results) != testLimit {
+				return fmt.Errorf("Number of results: got %d, want %d\n", len(results), testLimit)
+			}
 
-	results, err := DNASet(primer, database, algorithm, testLimit)
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
+			if results[0].Template.Name() != "CCE57623" {
+				return fmt.Errorf("Unexpected top scoring result: got %s, want %s\n", results[0].Template.Name(), "CCE57623")
+			}
 
-	if len(results) != testLimit {
-		t.Errorf("Error, number of results: got %d, want %d\n", len(results), testLimit)
-	}
-
-	if results[0].Template.Name() != "CCE57623" {
-		t.Errorf("Error, unexpected top scoring result: got %s, want %s\n", results[0].Template.Name(), "CCE57623")
-	}
-
-	if results[0].Score() != 15 {
-		t.Errorf("Error, unexpected top score: got %d, want %d\n", results[0].Score(), 15)
-	}
-
+			if results[0].Score() != 15 {
+				return fmt.Errorf("Unexpected top score: got %d, want %d\n", results[0].Score(), 15)
+			}
+			return nil
+		},
+	})
 }
 
 func TestDNASetBenchmark(t *testing.T) {
-
-	t.Skip("requires data file")
 
 	// All ecoli CDNA
 	// URI ftp://ftp.ensemblgenomes.org/pub/bacteria/release-42/fasta/bacteria_91_collection/escherichia_coli/cdna/Escherichia_coli.HUSEC2011CHR1.cdna.all.fa.gz
 	// ... a few seconds
 
-	dat, err := ioutil.ReadFile("Escherichia_coli.HUSEC2011CHR1.cdna.all.fa")
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
+	testlab.WithTestLab(t, "testdata", &testlab.TestElementCallbacks{
+		Steps: func(lab *laboratory.Laboratory) error {
 
-	fastaFile := wtype.File{Name: "ecoli-cdna"}
+			fastaFile := wtype.NewFile("Escherichia_coli.HUSEC2011CHR1.cdna.all.fa").AsInput()
+			database, err := fasta.FastaToDNASequences(lab, fastaFile)
+			if err != nil {
+				return err
+			}
+			lab.Logger.Log("readSequences", len(database))
 
-	err = fastaFile.WriteAll(dat)
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
+			primer := wtype.DNASequence{Seq: "ATGGAACTGAAGTGG"}
 
-	database, err := fasta.FastaToDNASequences(fastaFile)
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
+			algorithm, found := Algorithms["SWAffine"]
+			if !found {
+				return errors.New("algorithm not found")
+			}
 
-	fmt.Printf("Read %d sequences", len(database))
+			testLimit := 4
 
-	primer := wtype.DNASequence{Seq: "ATGGAACTGAAGTGG"}
+			results, err := DNASet(primer, database, algorithm, testLimit)
+			if err != nil {
+				return err
+			}
 
-	algorithm, found := Algorithms["SWAffine"]
-	if !found {
-		t.Fatalf("algorithm not found")
-	}
+			for _, result := range results {
+				lab.Logger.Log("found", result.Template.Name(), "score", result.Score())
+			}
 
-	testLimit := 4
-
-	results, err := DNASet(primer, database, algorithm, testLimit)
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
-
-	for _, result := range results {
-		fmt.Printf("Found %s, score %d\n", result.Template.Name(), result.Score())
-	}
-
-	if len(results) != testLimit {
-		t.Errorf("Error, number of results: got %d, want %d\n", len(results), testLimit)
-	}
+			if len(results) != testLimit {
+				return fmt.Errorf("Number of results: got %d, want %d\n", len(results), testLimit)
+			}
+			return nil
+		},
+	})
 
 }

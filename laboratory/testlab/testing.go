@@ -29,6 +29,7 @@ var (
 	outDirPtr = flag.String("outdir", "", "Directory to write to (default: a temporary directory will be created)")
 )
 
+// Used by generated code build by the composer machinery when processing element test workflows.
 func NewTestLabBuilder(t *testing.T, inDir string, fh io.ReadCloser) *laboratory.LaboratoryBuilder {
 	outDir := ""
 	if outDirPtr != nil {
@@ -57,6 +58,9 @@ func NewTestLabBuilder(t *testing.T, inDir string, fh io.ReadCloser) *laboratory
 	return labBuild
 }
 
+// WithTestLab is the "normal" way to construct a laboratory for the
+// purposes of testing. The lab is fully created and initialised; the
+// inventory will be populated with the build-in assets.
 func WithTestLab(t *testing.T, inDir string, callbacks *TestElementCallbacks) {
 	// this wrapping is just a nicity to get the testing framework to
 	// use a nice name.
@@ -95,6 +99,11 @@ func withTestLab(t *testing.T, inDir string, callbacks *TestElementCallbacks) {
 	}
 }
 
+// Useful for tests where you just need the effects without a complete
+// lab; or you are testing code paths that happen before or after the
+// lab/elements stages. The inventory will be populated with the
+// build-in assets. It is legal to pass in a nil FileManager, in which
+// case no FileManager will be available.
 func NewTestLabEffects(fm *effects.FileManager) *effects.LaboratoryEffects {
 	return effects.NewLaboratoryEffects(nil, workflow.BasicId("testing"), fm)
 }
@@ -107,15 +116,17 @@ type TestElement struct {
 type TestElementCallbacks struct {
 	// If left blank, the name is extracted from the test that is
 	// currently being run, and the callbacks are called as part of the
-	// current test. This means that an error, which will internally
-	// call t.Fatal, will abort the entire test.
+	// current test. This means that returning an error from any
+	// callback, which will internally call t.Fatal, will abort the
+	// entire test.
 	//
-	// However, if Name is provided explicitly, then internally a call
-	// to t.Run will be made, passing in the given Name. This then
-	// means that any error which is returned from the callbacks,
-	// internally routed to t.Fatal, will only abort the current
-	// subtest and not the encompassing test. It will also improve the
-	// presentation of the test results.
+	// If Name is provided explicitly (i.e. non empty), then internally
+	// a call to t.Run will be made, passing in the given Name, and
+	// thus the test element is run as a sub-test. This means that any
+	// error which is returned from the callbacks, internally routed to
+	// t.Fatal, will only abort the current sub-test and not the
+	// encompassing test. It will also improve the presentation of the
+	// test results.
 	Name       string
 	Setup      func(*laboratory.Laboratory) error
 	Steps      func(*laboratory.Laboratory) error

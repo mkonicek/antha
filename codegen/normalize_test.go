@@ -44,9 +44,9 @@ func TestReachingUsesChain(t *testing.T) {
 		t.Fatal(err)
 	}
 	if es, fs := []*effects.UseComp{u3}, ir.reachingUses[i3]; !equals(es, fs) {
-		t.Errorf("expected %q found %q", es, fs)
+		t.Errorf("expected %v found %v", es, fs)
 	} else if es, fs := []*effects.UseComp{u1}, ir.reachingUses[i1]; !equals(es, fs) {
-		t.Errorf("expected %q found %q", es, fs)
+		t.Errorf("expected %v found %v", es, fs)
 	}
 }
 
@@ -70,6 +70,6 @@ func TestReachingUsesMultiple(t *testing.T) {
 		t.Fatal(err)
 	}
 	if es, fs := []*effects.UseComp{u2a, u2b, u2c}, ir.reachingUses[i2]; !equals(es, fs) {
-		t.Errorf("expected %q found %q", es, fs)
+		t.Errorf("expected %v found %v", es, fs)
 	}
 }

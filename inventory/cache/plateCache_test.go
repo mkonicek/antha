@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/inventory/cache/plateCache"
 	"github.com/antha-lang/antha/laboratory/effects/id"
 	"github.com/antha-lang/antha/laboratory/testlab"
 )
@@ -14,8 +13,8 @@ const plateType = "pcrplate"
 
 func TestPlateReuse(t *testing.T) {
 	idGen := id.NewIDGenerator(t.Name())
-	inv := testlab.InventoryWithSharedPlates()
-	cache := plateCache.NewPlateCache(inv.PlateTypes)
+	labEffects := testlab.NewTestLabEffects(nil)
+	cache := labEffects.PlateCache
 
 	firstPlate, err := cache.NewPlate(plateType)
 	if err != nil {
@@ -70,7 +69,7 @@ func TestPlateReuse(t *testing.T) {
 		t.Error("thirdPlate came from cache, but cache.IsFromPlate returned false")
 	}
 
-	fourthPlate, err := inv.Plates.NewPlate(plateType)
+	fourthPlate, err := labEffects.Inventory.Plates.NewPlate(plateType)
 	if err != nil {
 		t.Fatal(err)
 	}

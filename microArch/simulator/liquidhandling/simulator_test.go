@@ -27,17 +27,18 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
 func TestUnknownLocations(t *testing.T) {
 	assertPropsInvalid := func(t *testing.T, props *liquidhandling.LHProperties, message string) {
-		if _, err := NewVirtualLiquidHandler(props, nil); err == nil {
+		if _, err := NewVirtualLiquidHandler(id.NewIDGenerator("testing"), props, nil); err == nil {
 			t.Errorf("missing error in %s", message)
 		}
 	}
 
-	lhp := defaultLHProperties()
+	lhp := defaultLHProperties(id.NewIDGenerator("testing"))
 	lhp.Preferences.Tipboxes = append(lhp.Preferences.Tipboxes, "undefined_pref")
 	assertPropsInvalid(t, lhp, "tipboxes")
 }
@@ -47,8 +48,9 @@ func TestNewVirtualLiquidHandler_ValidProps(t *testing.T) {
 }
 
 func TestVLH_AddPlateTo(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 	// create a wide deckposition and enable input plates to go there
-	propsWithWideSlot := defaultLHProperties()
+	propsWithWideSlot := defaultLHProperties(idGen)
 	propsWithWideSlot.Positions["widePosition"] = wtype.NewLHPosition("widePosition", wtype.Coordinates3D{X: -300}, wtype.Coordinates2D{X: 300.0, Y: 85.48})
 	propsWithWideSlot.Preferences.Inputs = append(propsWithWideSlot.Preferences.Inputs, "widePosition")
 
@@ -57,13 +59,13 @@ func TestVLH_AddPlateTo(t *testing.T) {
 			Name: "OK",
 			Instructions: []TestRobotInstruction{
 				&Initialize{},
-				&AddPlateTo{"tipbox_1", defaultLHTipbox("tipbox1"), "tipbox1"},
-				&AddPlateTo{"tipbox_2", defaultLHTipbox("tipbox2"), "tipbox2"},
-				&AddPlateTo{"input_1", defaultLHPlate("input1"), "input1"},
-				&AddPlateTo{"input_2", defaultLHPlate("input2"), "input2"},
-				&AddPlateTo{"output_1", defaultLHPlate("output1"), "output1"},
-				&AddPlateTo{"output_2", defaultLHPlate("output2"), "output2"},
-				&AddPlateTo{"tipwaste", defaultLHTipwaste("tipwaste"), "tipwaste"},
+				&AddPlateTo{"tipbox_1", defaultLHTipbox(idGen, "tipbox1"), "tipbox1"},
+				&AddPlateTo{"tipbox_2", defaultLHTipbox(idGen, "tipbox2"), "tipbox2"},
+				&AddPlateTo{"input_1", defaultLHPlate(idGen, "input1"), "input1"},
+				&AddPlateTo{"input_2", defaultLHPlate(idGen, "input2"), "input2"},
+				&AddPlateTo{"output_1", defaultLHPlate(idGen, "output1"), "output1"},
+				&AddPlateTo{"output_2", defaultLHPlate(idGen, "output2"), "output2"},
+				&AddPlateTo{"tipwaste", defaultLHTipwaste(idGen, "tipwaste"), "tipwaste"},
 			},
 		},
 		{
@@ -78,8 +80,8 @@ func TestVLH_AddPlateTo(t *testing.T) {
 			Name: "location full",
 			Instructions: []TestRobotInstruction{
 				&Initialize{},
-				&AddPlateTo{"tipbox_1", defaultLHTipbox("p0"), "p0"},
-				&AddPlateTo{"tipbox_1", defaultLHTipbox("p1"), "p1"},
+				&AddPlateTo{"tipbox_1", defaultLHTipbox(idGen, "p0"), "p0"},
+				&AddPlateTo{"tipbox_1", defaultLHTipbox(idGen, "p1"), "p1"},
 			},
 			ExpectedErrors: []string{"(err) AddPlateTo[2]: Couldn't add tipbox \"p1\" to location \"tipbox_1\" which already contains tipbox \"p0\""},
 		},
@@ -87,7 +89,7 @@ func TestVLH_AddPlateTo(t *testing.T) {
 			Name: "tipbox on tipwaste location",
 			Instructions: []TestRobotInstruction{
 				&Initialize{},
-				&AddPlateTo{"tipwaste", defaultLHTipbox("tipbox"), "tipbox"},
+				&AddPlateTo{"tipwaste", defaultLHTipbox(idGen, "tipbox"), "tipbox"},
 			},
 			ExpectedErrors: []string{"(err) AddPlateTo[1]: Slot \"tipwaste\" can't accept tipbox \"tipbox\", only tipwaste allowed"},
 		},
@@ -95,7 +97,7 @@ func TestVLH_AddPlateTo(t *testing.T) {
 			Name: "tipwaste on tipbox location",
 			Instructions: []TestRobotInstruction{
 				&Initialize{},
-				&AddPlateTo{"tipbox_1", defaultLHTipwaste("tipwaste"), "tipwaste"},
+				&AddPlateTo{"tipbox_1", defaultLHTipwaste(idGen, "tipwaste"), "tipwaste"},
 			},
 			ExpectedErrors: []string{"(err) AddPlateTo[1]: Slot \"tipbox_1\" can't accept tipwaste \"tipwaste\", only tipbox allowed"},
 		},
@@ -103,7 +105,7 @@ func TestVLH_AddPlateTo(t *testing.T) {
 			Name: "unknown location",
 			Instructions: []TestRobotInstruction{
 				&Initialize{},
-				&AddPlateTo{"ruritania", defaultLHTipbox("aTipbox"), "aTipbox"},
+				&AddPlateTo{"ruritania", defaultLHTipbox(idGen, "aTipbox"), "aTipbox"},
 			},
 			ExpectedErrors: []string{"(err) AddPlateTo[1]: Cannot put tipbox \"aTipbox\" at unknown slot \"ruritania\""},
 		},
@@ -111,7 +113,7 @@ func TestVLH_AddPlateTo(t *testing.T) {
 			Name: "too big",
 			Instructions: []TestRobotInstruction{
 				&Initialize{},
-				&AddPlateTo{"output_1", wideLHPlate("plate1"), "plate1"},
+				&AddPlateTo{"output_1", wideLHPlate(idGen, "plate1"), "plate1"},
 			},
 			ExpectedErrors: []string{
 				"(err) AddPlateTo[1]: Footprint of plate \"plate1\"[300mm x 85.48mm] doesn't fit slot \"output_1\"[127.76mm x 85.48mm]",
@@ -122,7 +124,7 @@ func TestVLH_AddPlateTo(t *testing.T) {
 			Props: propsWithWideSlot,
 			Instructions: []TestRobotInstruction{
 				&Initialize{},
-				&AddPlateTo{"widePosition", wideLHPlate("plate1"), "plate1"},
+				&AddPlateTo{"widePosition", wideLHPlate(idGen, "plate1"), "plate1"},
 			},
 		},
 	}.Run(t)
@@ -171,7 +173,8 @@ func Test_SetPippetteSpeed(t *testing.T) {
 }
 
 func TestSetDriveSpeed(t *testing.T) {
-	props := defaultLHProperties()
+	idGen := id.NewIDGenerator("testing")
+	props := defaultLHProperties(idGen)
 
 	//set max and minimum drive speeds
 	props.HeadAssemblies[0].VelocityLimits = &wtype.VelocityRange{
@@ -247,66 +250,63 @@ func TestSetDriveSpeed(t *testing.T) {
 // ########################################################################################################################
 // ########################################################## Move
 // ########################################################################################################################
-func testLayout() *SetupFn {
-	var ret SetupFn = func(vlh *VirtualLiquidHandler) {
+func testLayout(idGen *id.IDGenerator) SetupFn {
+	return func(vlh *VirtualLiquidHandler) {
 		vlh.Initialize()
-		vlh.AddPlateTo("tipbox_1", defaultLHTipbox("tipbox1"), "tipbox1")
-		vlh.AddPlateTo("tipbox_2", defaultLHTipbox("tipbox2"), "tipbox2")
-		vlh.AddPlateTo("input_1", defaultLHPlate("plate1"), "plate1")
-		vlh.AddPlateTo("input_2", defaultLHPlate("plate2"), "plate2")
-		vlh.AddPlateTo("output_1", defaultLHPlate("plate3"), "plate3")
-		vlh.AddPlateTo("waste", defaultLHPlate("wasteplate"), "wasteplate")
-		vlh.AddPlateTo("tipwaste", defaultLHTipwaste("tipwaste"), "tipwaste")
+		vlh.AddPlateTo("tipbox_1", defaultLHTipbox(idGen, "tipbox1"), "tipbox1")
+		vlh.AddPlateTo("tipbox_2", defaultLHTipbox(idGen, "tipbox2"), "tipbox2")
+		vlh.AddPlateTo("input_1", defaultLHPlate(idGen, "plate1"), "plate1")
+		vlh.AddPlateTo("input_2", defaultLHPlate(idGen, "plate2"), "plate2")
+		vlh.AddPlateTo("output_1", defaultLHPlate(idGen, "plate3"), "plate3")
+		vlh.AddPlateTo("waste", defaultLHPlate(idGen, "wasteplate"), "wasteplate")
+		vlh.AddPlateTo("tipwaste", defaultLHTipwaste(idGen, "tipwaste"), "tipwaste")
 	}
-	return &ret
 }
 
-func testLayoutLLF() *SetupFn {
-	var ret SetupFn = func(vlh *VirtualLiquidHandler) {
+func testLayoutLLF(idGen *id.IDGenerator) SetupFn {
+	return func(vlh *VirtualLiquidHandler) {
 		vlh.Initialize()
-		vlh.AddPlateTo("tipbox_1", defaultLHTipbox("tipbox1"), "tipbox1")
-		vlh.AddPlateTo("tipbox_2", defaultLHTipbox("tipbox2"), "tipbox2")
-		vlh.AddPlateTo("input_1", llfLHPlate("plate1"), "plate1")
-		vlh.AddPlateTo("input_2", llfLHPlate("plate2"), "plate2")
-		vlh.AddPlateTo("output_1", llfLHPlate("plate3"), "plate3")
-		vlh.AddPlateTo("waste", llfLHPlate("wasteplate"), "wasteplate")
-		vlh.AddPlateTo("tipwaste", defaultLHTipwaste("tipwaste"), "tipwaste")
+		vlh.AddPlateTo("tipbox_1", defaultLHTipbox(idGen, "tipbox1"), "tipbox1")
+		vlh.AddPlateTo("tipbox_2", defaultLHTipbox(idGen, "tipbox2"), "tipbox2")
+		vlh.AddPlateTo("input_1", llfLHPlate(idGen, "plate1"), "plate1")
+		vlh.AddPlateTo("input_2", llfLHPlate(idGen, "plate2"), "plate2")
+		vlh.AddPlateTo("output_1", llfLHPlate(idGen, "plate3"), "plate3")
+		vlh.AddPlateTo("waste", llfLHPlate(idGen, "wasteplate"), "wasteplate")
+		vlh.AddPlateTo("tipwaste", defaultLHTipwaste(idGen, "tipwaste"), "tipwaste")
 	}
-	return &ret
 }
 
-func testLayoutTransposed() *SetupFn {
-	var ret SetupFn = func(vlh *VirtualLiquidHandler) {
+func testLayoutTransposed(idGen *id.IDGenerator) SetupFn {
+	return func(vlh *VirtualLiquidHandler) {
 		vlh.Initialize()
-		vlh.AddPlateTo("tipbox_1", defaultLHTipbox("tipbox1"), "tipbox1")
-		vlh.AddPlateTo("input_2", defaultLHTipbox("tipbox2"), "tipbox2")
-		vlh.AddPlateTo("tipwaste", defaultLHPlate("plate1"), "plate1")
-		vlh.AddPlateTo("tipbox_2", defaultLHPlate("plate2"), "plate2")
-		vlh.AddPlateTo("output_1", defaultLHPlate("plate3"), "plate3")
-		vlh.AddPlateTo("input_1", defaultLHTipwaste("tipwaste"), "tipwaste")
+		vlh.AddPlateTo("tipbox_1", defaultLHTipbox(idGen, "tipbox1"), "tipbox1")
+		vlh.AddPlateTo("input_2", defaultLHTipbox(idGen, "tipbox2"), "tipbox2")
+		vlh.AddPlateTo("tipwaste", defaultLHPlate(idGen, "plate1"), "plate1")
+		vlh.AddPlateTo("tipbox_2", defaultLHPlate(idGen, "plate2"), "plate2")
+		vlh.AddPlateTo("output_1", defaultLHPlate(idGen, "plate3"), "plate3")
+		vlh.AddPlateTo("input_1", defaultLHTipwaste(idGen, "tipwaste"), "tipwaste")
 	}
-	return &ret
 }
 
-func testTroughLayout() *SetupFn {
-	var ret SetupFn = func(vlh *VirtualLiquidHandler) {
+func testTroughLayout(idGen *id.IDGenerator) SetupFn {
+	return func(vlh *VirtualLiquidHandler) {
 		vlh.Initialize()
-		vlh.AddPlateTo("tipbox_1", defaultLHTipbox("tipbox1"), "tipbox1")
-		vlh.AddPlateTo("tipbox_2", defaultLHTipbox("tipbox2"), "tipbox2")
-		vlh.AddPlateTo("input_1", troughLHPlate("trough1"), "trough1")
-		vlh.AddPlateTo("input_2", defaultLHPlate("plate2"), "plate2")
-		vlh.AddPlateTo("output_1", defaultLHPlate("plate3"), "plate3")
-		vlh.AddPlateTo("tipwaste", defaultLHTipwaste("tipwaste"), "tipwaste")
+		vlh.AddPlateTo("tipbox_1", defaultLHTipbox(idGen, "tipbox1"), "tipbox1")
+		vlh.AddPlateTo("tipbox_2", defaultLHTipbox(idGen, "tipbox2"), "tipbox2")
+		vlh.AddPlateTo("input_1", troughLHPlate(idGen, "trough1"), "trough1")
+		vlh.AddPlateTo("input_2", defaultLHPlate(idGen, "plate2"), "plate2")
+		vlh.AddPlateTo("output_1", defaultLHPlate(idGen, "plate3"), "plate3")
+		vlh.AddPlateTo("tipwaste", defaultLHTipwaste(idGen, "tipwaste"), "tipwaste")
 	}
-	return &ret
 }
 
 func Test_Move(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 	SimulatorTests{
 		{
 			Name: "OK_1",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -320,14 +320,14 @@ func Test_Move(t *testing.T) {
 					head:         0,
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				positionAssertion(0, wtype.Coordinates3D{X: 200.0, Y: 0.0, Z: 62.2}),
 			},
 		},
 		{
 			Name: "OK_2",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -341,14 +341,14 @@ func Test_Move(t *testing.T) {
 					head:         0,
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				positionAssertion(0, wtype.Coordinates3D{X: 49.5, Y: 400., Z: 93.}),
 			},
 		},
 		{
 			Name: "OK_2.5",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -362,14 +362,14 @@ func Test_Move(t *testing.T) {
 					head:         0,
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				positionAssertion(0, wtype.Coordinates3D{X: 49.5, Y: 400., Z: 93}),
 			},
 		},
 		{
 			Name: "OK_3",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -383,14 +383,14 @@ func Test_Move(t *testing.T) {
 					head:         0,
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				positionAssertion(0, wtype.Coordinates3D{X: 0.0, Y: -27.0, Z: 62.2}),
 			},
 		},
 		{
 			Name: "OK_4",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -404,14 +404,14 @@ func Test_Move(t *testing.T) {
 					head:         0,
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				positionAssertion(0, wtype.Coordinates3D{X: 400.0, Y: 63.0, Z: 25.7}),
 			},
 		},
 		{
 			Name: "OK_5",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -425,14 +425,14 @@ func Test_Move(t *testing.T) {
 					head:         0,
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				positionAssertion(0, wtype.Coordinates3D{X: 400.0, Y: 27.0, Z: 25.7}),
 			},
 		},
 		{
 			Name: "OK_trough",
-			Setup: []*SetupFn{
-				testTroughLayout(),
+			Setup: []SetupFn{
+				testTroughLayout(idGen),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -446,14 +446,14 @@ func Test_Move(t *testing.T) {
 					head:         0,
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				positionAssertion(0, wtype.Coordinates3D{X: 400.0, Y: -31.5, Z: 46.8}),
 			},
 		},
 		{
 			Name: "OK allow cones in trough",
-			Setup: []*SetupFn{
-				testTroughLayout(),
+			Setup: []SetupFn{
+				testTroughLayout(idGen),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -467,14 +467,14 @@ func Test_Move(t *testing.T) {
 					head:         0,
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				positionAssertion(0, wtype.Coordinates3D{X: 400.0, Y: -31.5, Z: 44.8}),
 			},
 		},
 		{
 			Name: "cones collide with plate",
-			Setup: []*SetupFn{
-				testTroughLayout(),
+			Setup: []SetupFn{
+				testTroughLayout(idGen),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -491,14 +491,14 @@ func Test_Move(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) Move[0]: head 0 channels 0-7 to 1 mm below well_top of A1,A1,A1,A1,A1,A1,A1,A1@trough1 at position input_1: collision detected: head 0 channel 7 and plate \"trough1\" of type trough at position input_1",
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				positionAssertion(0, wtype.Coordinates3D{X: 400.0, Y: -27.5, Z: 44.8}),
 			},
 		},
 		{
 			Name: "unknown location",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -536,8 +536,8 @@ func Test_Move(t *testing.T) {
 		},
 		{
 			Name: "unknown head",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -568,8 +568,8 @@ func Test_Move(t *testing.T) {
 		},
 		{
 			Name: "invalid wellcoords",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -600,8 +600,8 @@ func Test_Move(t *testing.T) {
 		},
 		{
 			Name: "Invalid reference",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -632,8 +632,8 @@ func Test_Move(t *testing.T) {
 		},
 		{
 			Name: "Inconsistent references",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -653,8 +653,8 @@ func Test_Move(t *testing.T) {
 		},
 		{
 			Name: "offsets differ",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -674,8 +674,8 @@ func Test_Move(t *testing.T) {
 		},
 		{
 			Name: "layout mismatch",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -697,12 +697,13 @@ func Test_Move(t *testing.T) {
 }
 
 func TestCrashes(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 	SimulatorTests{
 		{
 			Name:  "crash into tipbox",
-			Props: multiheadLHProperties(),
-			Setup: []*SetupFn{
-				testLayout(),
+			Props: multiheadLHProperties(idGen),
+			Setup: []SetupFn{
+				testLayout(idGen),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -719,15 +720,15 @@ func TestCrashes(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) Move[0]: head 0 channels 0-7 to 1 mm below well_top of A1-H1@tipbox2 at position tipbox_2: collision detected: head 0 channels 0-7 and head 1 channels 0-7 and tips A1-H1,A3-H3@tipbox2 at position tipbox_2",
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				positionAssertion(0, wtype.Coordinates3D{X: 128.0, Y: 0.0, Z: 60.2}),
 			},
 		},
 		{
 			Name:  "collides with tipbox in front",
-			Props: multiheadLHProperties(),
-			Setup: []*SetupFn{
-				testLayoutTransposed(),
+			Props: multiheadLHProperties(idGen),
+			Setup: []SetupFn{
+				testLayoutTransposed(idGen),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -752,12 +753,12 @@ func TestCrashes(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) LoadTips[1]: from E12-H12@tipbox1 at position \"tipbox_1\" to head 0 channels 0-3: collision detected: head 0 channels 5-7 and tips A12-C12@tipbox2 at position input_2",
 			},
-			Assertions: []*AssertionFn{},
+			Assertions: []AssertionFn{},
 		},
 		{
 			Name: "trying to move channel cones into a well",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 				//preloadFilledTips(0, "tipbox_1", []int{0}, "water", 100.),
 			},
 			Instructions: []TestRobotInstruction{
@@ -780,12 +781,13 @@ func TestCrashes(t *testing.T) {
 }
 
 func Test_Multihead(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 	SimulatorTests{
 		{
 			Name:  "constrained heads",
-			Props: multiheadLHProperties(),
-			Setup: []*SetupFn{
-				testLayout(),
+			Props: multiheadLHProperties(idGen),
+			Setup: []SetupFn{
+				testLayout(idGen),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -799,17 +801,17 @@ func Test_Multihead(t *testing.T) {
 					head:         0,
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				positionAssertion(0, wtype.Coordinates3D{X: 128.0, Y: 0.0, Z: 62.2}),
 				positionAssertion(1, wtype.Coordinates3D{X: 146.0, Y: 0.0, Z: 62.2}),
 			},
 		},
 		{
 			Name:  "can't move while a tip is loaded on another head in the same assembly",
-			Props: multiheadLHProperties(),
-			Setup: []*SetupFn{
-				testLayout(),
-				preloadAdaptorTips(1, "tipbox_1", []int{0}),
+			Props: multiheadLHProperties(idGen),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				preloadAdaptorTips(idGen, 1, "tipbox_1", []int{0}),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -826,18 +828,19 @@ func Test_Multihead(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) Move[0]: head 0 channels 0-7 to 1 mm above well_top of A12-H12@tipbox1 at position tipbox_1: cannot move head 0 while tip loaded on head 1 channel 0",
 			},
-			Assertions: []*AssertionFn{},
+			Assertions: []AssertionFn{},
 		},
 	}.Run(t)
 }
 
 func TestMotionLimits(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 	SimulatorTests{
 		{
 			Name:  "outside limits left",
-			Props: multiheadLHProperties(),
-			Setup: []*SetupFn{
-				testLayout(),
+			Props: multiheadLHProperties(idGen),
+			Setup: []SetupFn{
+				testLayout(idGen),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -854,16 +857,16 @@ func TestMotionLimits(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) Move[0]: head 1 channels 0-7 to 1 mm above well_top of A1-H1@tipbox1 at position tipbox_1: head cannot reach position: position is 9mm too far left, please try rearranging the deck",
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				positionAssertion(0, wtype.Coordinates3D{X: -18.0, Y: 0.0, Z: 62.2}),
 				positionAssertion(1, wtype.Coordinates3D{X: 0.0, Y: 0.0, Z: 62.2}),
 			},
 		},
 		{
 			Name:  "outside limits right",
-			Props: multiheadLHProperties(),
-			Setup: []*SetupFn{
-				testLayout(),
+			Props: multiheadLHProperties(idGen),
+			Setup: []SetupFn{
+				testLayout(idGen),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -880,16 +883,16 @@ func TestMotionLimits(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) Move[0]: head 0 channels 0-7 to 1 mm above well_top of A12-H12@plate1 at position input_1: head cannot reach position: position is 30mm too far right, please try rearranging the deck",
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				positionAssertion(0, wtype.Coordinates3D{X: 405.0, Y: 0.0, Z: 26.7}),
 				positionAssertion(1, wtype.Coordinates3D{X: 423.0, Y: 0.0, Z: 26.7}),
 			},
 		},
 		{
 			Name:  "outside limits forward",
-			Props: multiheadLHProperties(),
-			Setup: []*SetupFn{
-				testLayout(),
+			Props: multiheadLHProperties(idGen),
+			Setup: []SetupFn{
+				testLayout(idGen),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -906,16 +909,16 @@ func TestMotionLimits(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) Move[0]: head 0 channel 0 to 1 mm above well_top of H12@wasteplate at position waste: head cannot reach position: position is 7mm too far forwards, please try rearranging the deck",
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				positionAssertion(0, wtype.Coordinates3D{X: 355.0, Y: 265.0, Z: 26.7}),
 				positionAssertion(1, wtype.Coordinates3D{X: 373.0, Y: 265.0, Z: 26.7}),
 			},
 		},
 		{
 			Name:  "outside limits backwards",
-			Props: multiheadLHProperties(),
-			Setup: []*SetupFn{
-				testLayout(),
+			Props: multiheadLHProperties(idGen),
+			Setup: []SetupFn{
+				testLayout(idGen),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -932,16 +935,16 @@ func TestMotionLimits(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) Move[0]: head 0 channel 7 to 1 mm above well_top of A12@plate1 at position input_1: head cannot reach position: position is 63mm too far backwards, please try rearranging the deck",
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				positionAssertion(0, wtype.Coordinates3D{X: 355.0, Y: -63.0, Z: 26.7}),
 				positionAssertion(1, wtype.Coordinates3D{X: 373.0, Y: -63.0, Z: 26.7}),
 			},
 		},
 		{
 			Name:  "outside limits too high",
-			Props: multiheadLHProperties(),
-			Setup: []*SetupFn{
-				testLayout(),
+			Props: multiheadLHProperties(idGen),
+			Setup: []SetupFn{
+				testLayout(idGen),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -958,17 +961,17 @@ func TestMotionLimits(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) Move[0]: head 0 channel 0 to 600 mm above well_top of A1@plate1 at position input_1: head cannot reach position: position is 25.7mm too high, please try lowering the object on the deck",
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				positionAssertion(0, wtype.Coordinates3D{X: 256.0, Y: 0.0, Z: 625.7}),
 				positionAssertion(1, wtype.Coordinates3D{X: 274.0, Y: 0.0, Z: 625.7}),
 			},
 		},
 		{
 			Name:  "outside limits too low",
-			Props: multiheadConstrainedLHProperties(),
-			Setup: []*SetupFn{
-				testLayout(),
-				preloadAdaptorTips(0, "tipbox_1", []int{0}),
+			Props: multiheadConstrainedLHProperties(idGen),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				preloadAdaptorTips(idGen, 0, "tipbox_1", []int{0}),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -985,17 +988,17 @@ func TestMotionLimits(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) Move[0]: head 0 channel 0 to 0.5 mm above well_bottom of A4@plate1 at position input_1: head cannot reach position: position is 8.1mm too low, please try adding a riser to the object on the deck",
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				positionAssertion(0, wtype.Coordinates3D{X: 283.0, Y: 0.0, Z: 51.9}),
 				positionAssertion(1, wtype.Coordinates3D{X: 301.0, Y: 0.0, Z: 51.9}),
 			},
 		},
 		{
 			Name:  "outside limits too low and far back",
-			Props: multiheadConstrainedLHProperties(),
-			Setup: []*SetupFn{
-				testLayout(),
-				preloadAdaptorTips(0, "tipbox_1", []int{7}),
+			Props: multiheadConstrainedLHProperties(idGen),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				preloadAdaptorTips(idGen, 0, "tipbox_1", []int{7}),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -1012,7 +1015,7 @@ func TestMotionLimits(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) Move[0]: head 0 channel 7 to 0.5 mm above well_bottom of A4@plate1 at position input_1: head cannot reach position: position is 63mm too far backwards and 8.1mm too low, please try rearranging the deck and adding a riser to the object on the deck",
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				positionAssertion(0, wtype.Coordinates3D{X: 283.0, Y: -63.0, Z: 51.9}),
 				positionAssertion(1, wtype.Coordinates3D{X: 301.0, Y: -63.0, Z: 51.9}),
 			},
@@ -1047,11 +1050,12 @@ func TestLoadTipsNoOverride(t *testing.T) {
 		Rows:         8,
 	}
 
+	idGen := id.NewIDGenerator("testing")
 	SimulatorTests{
 		{
 			Name: "OK - single tip",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 				moveTo(7, 11, mtp),
 			},
 			Instructions: []TestRobotInstruction{
@@ -1064,17 +1068,17 @@ func TestLoadTipsNoOverride(t *testing.T) {
 					well:      []string{"H12", "", "", "", "", "", "", ""},
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"H12"}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{{0, "", 0}}),
+				adaptorAssertion(idGen, 0, []tipDesc{{0, "", 0}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
 		{
 			Name: "OK - single tip (alt)",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 				moveTo(-7, 0, mtp),
 			},
 			Instructions: []TestRobotInstruction{
@@ -1087,17 +1091,17 @@ func TestLoadTipsNoOverride(t *testing.T) {
 					well:      []string{"", "", "", "", "", "", "", "A1"},
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"A1"}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{{7, "", 0}}),
+				adaptorAssertion(idGen, 0, []tipDesc{{7, "", 0}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
 		{
 			Name: "OK - single tip above space",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 				removeTipboxTips("tipbox_1", []string{"H12"}),
 				moveTo(6, 11, mtp),
 			},
@@ -1111,17 +1115,17 @@ func TestLoadTipsNoOverride(t *testing.T) {
 					well:      []string{"G12", "", "", "", "", "", "", ""},
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"H12", "G12"}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{{0, "", 0}}),
+				adaptorAssertion(idGen, 0, []tipDesc{{0, "", 0}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
 		{
 			Name: "OK - single tip below space (alt)",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 				removeTipboxTips("tipbox_1", []string{"A1"}),
 				moveTo(-6, 0, mtp),
 			},
@@ -1135,17 +1139,17 @@ func TestLoadTipsNoOverride(t *testing.T) {
 					well:      []string{"", "", "", "", "", "", "", "B1"},
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"A1", "B1"}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{{7, "", 0}}),
+				adaptorAssertion(idGen, 0, []tipDesc{{7, "", 0}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
 		{
 			Name: "OK - 3 tips at once",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 				moveTo(5, 11, mtp),
 			},
 			Instructions: []TestRobotInstruction{
@@ -1158,10 +1162,10 @@ func TestLoadTipsNoOverride(t *testing.T) {
 					well:      []string{"F12", "G12", "H12", "", "", "", "", ""},
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"F12", "G12", "H12"}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{
+				adaptorAssertion(idGen, 0, []tipDesc{
 					{0, "", 0},
 					{1, "", 0},
 					{2, "", 0},
@@ -1171,8 +1175,8 @@ func TestLoadTipsNoOverride(t *testing.T) {
 		},
 		{
 			Name: "OK - 3 tips at once (alt)",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 				moveTo(-5, 0, mtp),
 			},
 			Instructions: []TestRobotInstruction{
@@ -1185,10 +1189,10 @@ func TestLoadTipsNoOverride(t *testing.T) {
 					well:      []string{"", "", "", "", "", "A1", "B1", "C1"},
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"A1", "B1", "C1"}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{
+				adaptorAssertion(idGen, 0, []tipDesc{
 					{5, "", 0},
 					{6, "", 0},
 					{7, "", 0},
@@ -1198,9 +1202,9 @@ func TestLoadTipsNoOverride(t *testing.T) {
 		},
 		{
 			Name:  "OK - 3 tips (independent)",
-			Props: IndependentLHProperties(),
-			Setup: []*SetupFn{
-				testLayout(),
+			Props: IndependentLHProperties(idGen),
+			Setup: []SetupFn{
+				testLayout(idGen),
 				moveTo(0, 0, mtp),
 			},
 			Instructions: []TestRobotInstruction{
@@ -1213,10 +1217,10 @@ func TestLoadTipsNoOverride(t *testing.T) {
 					well:      []string{"A1", "", "", "", "E1", "", "", "H1"},
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"A1", "E1", "H1"}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{
+				adaptorAssertion(idGen, 0, []tipDesc{
 					{0, "", 0},
 					{4, "", 0},
 					{7, "", 0},
@@ -1226,8 +1230,8 @@ func TestLoadTipsNoOverride(t *testing.T) {
 		},
 		{
 			Name: "OK - 8 tips at once",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 				moveTo(0, 11, mtp),
 			},
 			Instructions: []TestRobotInstruction{
@@ -1240,10 +1244,10 @@ func TestLoadTipsNoOverride(t *testing.T) {
 					well:      []string{"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12"},
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12"}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{
+				adaptorAssertion(idGen, 0, []tipDesc{
 					{0, "", 0},
 					{1, "", 0},
 					{2, "", 0},
@@ -1258,8 +1262,8 @@ func TestLoadTipsNoOverride(t *testing.T) {
 		},
 		{
 			Name: "OK - 2 groups of 4",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 				moveTo(4, 0, mtp),
 			},
 			Instructions: []TestRobotInstruction{
@@ -1290,10 +1294,10 @@ func TestLoadTipsNoOverride(t *testing.T) {
 					well:      []string{"", "", "", "", "A1", "B1", "C1", "D1"},
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{
+				adaptorAssertion(idGen, 0, []tipDesc{
 					{0, "", 0},
 					{1, "", 0},
 					{2, "", 0},
@@ -1308,8 +1312,8 @@ func TestLoadTipsNoOverride(t *testing.T) {
 		},
 		{
 			Name: "unknown channel 8",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 				moveTo(0, 0, mtp),
 			},
 			Instructions: []TestRobotInstruction{
@@ -1328,8 +1332,8 @@ func TestLoadTipsNoOverride(t *testing.T) {
 		},
 		{
 			Name: "unknown channel -1",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 				moveTo(0, 0, mtp),
 			},
 			Instructions: []TestRobotInstruction{
@@ -1348,8 +1352,8 @@ func TestLoadTipsNoOverride(t *testing.T) {
 		},
 		{
 			Name: "duplicate channels",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 				moveTo(0, 11, mtp),
 			},
 			Instructions: []TestRobotInstruction{
@@ -1368,8 +1372,8 @@ func TestLoadTipsNoOverride(t *testing.T) {
 		},
 		{
 			Name: "unknown head",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 				moveTo(7, 11, mtp),
 			},
 			Instructions: []TestRobotInstruction{
@@ -1388,8 +1392,8 @@ func TestLoadTipsNoOverride(t *testing.T) {
 		},
 		{
 			Name: "unknown head -1",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 				moveTo(7, 11, mtp),
 			},
 			Instructions: []TestRobotInstruction{
@@ -1408,8 +1412,8 @@ func TestLoadTipsNoOverride(t *testing.T) {
 		},
 		{
 			Name: "OK - argument expansion",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 				moveTo(7, 11, mtp),
 			},
 			Instructions: []TestRobotInstruction{
@@ -1422,17 +1426,17 @@ func TestLoadTipsNoOverride(t *testing.T) {
 					well:      []string{"H12"},
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"H12"}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{{0, "", 0}}),
+				adaptorAssertion(idGen, 0, []tipDesc{{0, "", 0}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
 		{
 			Name: "mismatching multi",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 				moveTo(7, 11, mtp),
 			},
 			Instructions: []TestRobotInstruction{
@@ -1451,8 +1455,8 @@ func TestLoadTipsNoOverride(t *testing.T) {
 		},
 		{
 			Name: "tip missing",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 				removeTipboxTips("tipbox_1", []string{"H12"}),
 				moveTo(7, 11, mtp),
 			},
@@ -1472,8 +1476,8 @@ func TestLoadTipsNoOverride(t *testing.T) {
 		},
 		{
 			Name: "8 tips missing",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 				removeTipboxTips("tipbox_1", []string{"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12"}),
 				moveTo(0, 0, mtp),
 			},
@@ -1493,9 +1497,9 @@ func TestLoadTipsNoOverride(t *testing.T) {
 		},
 		{
 			Name: "tip already loaded",
-			Setup: []*SetupFn{
-				testLayout(),
-				preloadAdaptorTips(0, "tipbox_1", []int{0}),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				preloadAdaptorTips(idGen, 0, "tipbox_1", []int{0}),
 				moveTo(7, 11, mtp),
 			},
 			Instructions: []TestRobotInstruction{
@@ -1514,9 +1518,9 @@ func TestLoadTipsNoOverride(t *testing.T) {
 		},
 		{
 			Name: "tips already loaded",
-			Setup: []*SetupFn{
-				testLayout(),
-				preloadAdaptorTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				preloadAdaptorTips(idGen, 0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
 				moveTo(0, 11, mtp),
 			},
 			Instructions: []TestRobotInstruction{
@@ -1535,8 +1539,8 @@ func TestLoadTipsNoOverride(t *testing.T) {
 		},
 		{
 			Name: "extra tip in the way",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 				moveTo(6, 11, mtp),
 			},
 			Instructions: []TestRobotInstruction{
@@ -1555,8 +1559,8 @@ func TestLoadTipsNoOverride(t *testing.T) {
 		},
 		{
 			Name: "not aligned to move",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 				moveTo(5, 11, mtp),
 			},
 			Instructions: []TestRobotInstruction{
@@ -1575,8 +1579,8 @@ func TestLoadTipsNoOverride(t *testing.T) {
 		},
 		{
 			Name: "multiple not aligned to move",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 				moveTo(5, 11, mtp),
 			},
 			Instructions: []TestRobotInstruction{
@@ -1595,8 +1599,8 @@ func TestLoadTipsNoOverride(t *testing.T) {
 		},
 		{
 			Name: "misalignment single",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 				moveTo(7, 11, misaligned_mtp),
 			},
 			Instructions: []TestRobotInstruction{
@@ -1615,8 +1619,8 @@ func TestLoadTipsNoOverride(t *testing.T) {
 		},
 		{
 			Name: "misalignment multi",
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 				moveTo(5, 11, misaligned_mtp),
 			},
 			Instructions: []TestRobotInstruction{
@@ -1649,7 +1653,9 @@ func TestLoadTipsOverride(t *testing.T) {
 		Rows:         8,
 	}
 
-	propsLTR := defaultLHProperties()
+	idGen := id.NewIDGenerator("testing")
+
+	propsLTR := defaultLHProperties(idGen)
 	propsLTR.Heads[0].TipLoading = wtype.TipLoadingBehaviour{
 		OverrideLoadTipsCommand:    true,
 		AutoRefillTipboxes:         true,
@@ -1659,7 +1665,7 @@ func TestLoadTipsOverride(t *testing.T) {
 		ChunkingBehaviour:          wtype.ReverseSequentialTipLoading,
 	}
 
-	propsRTL := defaultLHProperties()
+	propsRTL := defaultLHProperties(idGen)
 	propsRTL.Heads[0].TipLoading = wtype.TipLoadingBehaviour{
 		OverrideLoadTipsCommand:    true,
 		AutoRefillTipboxes:         true,
@@ -1673,8 +1679,8 @@ func TestLoadTipsOverride(t *testing.T) {
 		{
 			Name:  "OK - single tip LTR override (A1 -> H1)",
 			Props: propsLTR,
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 				moveTo(0, 0, mtp),
 			},
 			Instructions: []TestRobotInstruction{
@@ -1687,18 +1693,18 @@ func TestLoadTipsOverride(t *testing.T) {
 					well:      []string{"A1", "", "", "", "", "", "", ""},
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"H1"}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{{0, "", 0}}),
+				adaptorAssertion(idGen, 0, []tipDesc{{0, "", 0}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
 		{
 			Name:  "OK - single tip RTL override (A12 -> H12)",
 			Props: propsRTL,
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 				moveTo(0, 11, mtp),
 			},
 			Instructions: []TestRobotInstruction{
@@ -1711,18 +1717,18 @@ func TestLoadTipsOverride(t *testing.T) {
 					well:      []string{"A12", "", "", "", "", "", "", ""},
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"H12"}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{{0, "", 0}}),
+				adaptorAssertion(idGen, 0, []tipDesc{{0, "", 0}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
 		{
 			Name:  "OK - single tip LTR override (A1 -> D1)",
 			Props: propsLTR,
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 				removeTipboxTips("tipbox_1", []string{"E1", "F1", "G1", "H1"}),
 				moveTo(0, 0, mtp),
 			},
@@ -1736,18 +1742,18 @@ func TestLoadTipsOverride(t *testing.T) {
 					well:      []string{"A1", "", "", "", "", "", "", ""},
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"D1", "E1", "F1", "G1", "H1"}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{{0, "", 0}}),
+				adaptorAssertion(idGen, 0, []tipDesc{{0, "", 0}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
 		{
 			Name:  "OK - single tip RTL override (A12 -> D12)",
 			Props: propsRTL,
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 				removeTipboxTips("tipbox_1", []string{"E12", "F12", "G12", "H12"}),
 				moveTo(0, 11, mtp),
 			},
@@ -1761,18 +1767,18 @@ func TestLoadTipsOverride(t *testing.T) {
 					well:      []string{"A12", "", "", "", "", "", "", ""},
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"D12", "E12", "F12", "G12", "H12"}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{{0, "", 0}}),
+				adaptorAssertion(idGen, 0, []tipDesc{{0, "", 0}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
 		{
 			Name:  "8 tips LTR",
 			Props: propsLTR,
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 				moveTo(0, 11, mtp),
 			},
 			Instructions: []TestRobotInstruction{
@@ -1785,18 +1791,18 @@ func TestLoadTipsOverride(t *testing.T) {
 					well:      []string{"A11", "B11", "C11", "D11", "E11", "F11", "G11", "H11"},
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{{0, "", 0}, {1, "", 0}, {2, "", 0}, {3, "", 0}, {4, "", 0}, {5, "", 0}, {6, "", 0}, {7, "", 0}}),
+				adaptorAssertion(idGen, 0, []tipDesc{{0, "", 0}, {1, "", 0}, {2, "", 0}, {3, "", 0}, {4, "", 0}, {5, "", 0}, {6, "", 0}, {7, "", 0}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
 		{
 			Name:  "8 tips RTL",
 			Props: propsRTL,
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 				moveTo(0, 11, mtp),
 			},
 			Instructions: []TestRobotInstruction{
@@ -1809,18 +1815,18 @@ func TestLoadTipsOverride(t *testing.T) {
 					well:      []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"},
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12"}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{{0, "", 0}, {1, "", 0}, {2, "", 0}, {3, "", 0}, {4, "", 0}, {5, "", 0}, {6, "", 0}, {7, "", 0}}),
+				adaptorAssertion(idGen, 0, []tipDesc{{0, "", 0}, {1, "", 0}, {2, "", 0}, {3, "", 0}, {4, "", 0}, {5, "", 0}, {6, "", 0}, {7, "", 0}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
 		{
 			Name:  "8 tips LTR override with split",
 			Props: propsLTR,
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 				removeTipboxTips("tipbox_1", []string{"E1", "F1", "G1", "H1"}),
 				moveTo(0, 11, mtp),
 			},
@@ -1834,18 +1840,18 @@ func TestLoadTipsOverride(t *testing.T) {
 					well:      []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"},
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"A1", "B1", "C1", "D1", "E2", "F2", "G2", "H2", "E1", "F1", "G1", "H1"}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{{0, "", 0}, {1, "", 0}, {2, "", 0}, {3, "", 0}, {4, "", 0}, {5, "", 0}, {6, "", 0}, {7, "", 0}}),
+				adaptorAssertion(idGen, 0, []tipDesc{{0, "", 0}, {1, "", 0}, {2, "", 0}, {3, "", 0}, {4, "", 0}, {5, "", 0}, {6, "", 0}, {7, "", 0}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
 		{
 			Name:  "8 tips RTL override with split",
 			Props: propsRTL,
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 				removeTipboxTips("tipbox_1", []string{"E12", "F12", "G12", "H12"}),
 				moveTo(0, 0, mtp),
 			},
@@ -1859,18 +1865,18 @@ func TestLoadTipsOverride(t *testing.T) {
 					well:      []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"},
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"A12", "B12", "C12", "D12", "E11", "F11", "G11", "H11", "E12", "F12", "G12", "H12"}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{{0, "", 0}, {1, "", 0}, {2, "", 0}, {3, "", 0}, {4, "", 0}, {5, "", 0}, {6, "", 0}, {7, "", 0}}),
+				adaptorAssertion(idGen, 0, []tipDesc{{0, "", 0}, {1, "", 0}, {2, "", 0}, {3, "", 0}, {4, "", 0}, {5, "", 0}, {6, "", 0}, {7, "", 0}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
 		{
 			Name:  "8 tips LTR override with boxchange",
 			Props: propsLTR,
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 				removeTipboxTips("tipbox_1", []string{
 					"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1",
 					"A2", "B2", "C2", "D2", "E2", "F2", "G2", "H2",
@@ -1897,18 +1903,18 @@ func TestLoadTipsOverride(t *testing.T) {
 					well:      []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"},
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{{0, "", 0}, {1, "", 0}, {2, "", 0}, {3, "", 0}, {4, "", 0}, {5, "", 0}, {6, "", 0}, {7, "", 0}}),
+				adaptorAssertion(idGen, 0, []tipDesc{{0, "", 0}, {1, "", 0}, {2, "", 0}, {3, "", 0}, {4, "", 0}, {5, "", 0}, {6, "", 0}, {7, "", 0}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
 		{
 			Name:  "8 tips LTR override without boxchange",
 			Props: propsLTR,
-			Setup: []*SetupFn{
-				testLayout(),
+			Setup: []SetupFn{
+				testLayout(idGen),
 				removeTipboxTips("tipbox_1", []string{
 					"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1",
 					"A2", "B2", "C2", "D2", "E2", "F2", "G2", "H2",
@@ -1935,7 +1941,7 @@ func TestLoadTipsOverride(t *testing.T) {
 					well:      []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"},
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{
 					"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1",
 					"A2", "B2", "C2", "D2", "E2", "F2", "G2", "H2",
@@ -1951,7 +1957,7 @@ func TestLoadTipsOverride(t *testing.T) {
 					"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12",
 				}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{{0, "", 0}, {1, "", 0}, {2, "", 0}, {3, "", 0}, {4, "", 0}, {5, "", 0}, {6, "", 0}, {7, "", 0}}),
+				adaptorAssertion(idGen, 0, []tipDesc{{0, "", 0}, {1, "", 0}, {2, "", 0}, {3, "", 0}, {4, "", 0}, {5, "", 0}, {6, "", 0}, {7, "", 0}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
@@ -1959,12 +1965,13 @@ func TestLoadTipsOverride(t *testing.T) {
 }
 
 func Test_UnloadTips(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 	SimulatorTests{
 		{
 			Name: "OK - single tip",
-			Setup: []*SetupFn{
-				testLayout(),
-				preloadAdaptorTips(0, "tipbox_1", []int{0}),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				preloadAdaptorTips(idGen, 0, "tipbox_1", []int{0}),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -1986,18 +1993,18 @@ func Test_UnloadTips(t *testing.T) {
 					well:      []string{"A1", "", "", "", "", "", "", ""},
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{}),
+				adaptorAssertion(idGen, 0, []tipDesc{}),
 				tipwasteAssertion("tipwaste", 1),
 			},
 		},
 		{
 			Name: "OK - 8 tips",
-			Setup: []*SetupFn{
-				testLayout(),
-				preloadAdaptorTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				preloadAdaptorTips(idGen, 0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -2019,10 +2026,10 @@ func Test_UnloadTips(t *testing.T) {
 					well:      []string{"A1", "A1", "A1", "A1", "A1", "A1", "A1", "A1"},
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{}),
+				adaptorAssertion(idGen, 0, []tipDesc{}),
 				tipwasteAssertion("tipwaste", 8),
 			},
 		},
@@ -2030,10 +2037,10 @@ func Test_UnloadTips(t *testing.T) {
 		/*		{
 					Name:  "OK - 8 tips back to a tipbox",
 					Props: nil,
-					Setup: []*SetupFn{
-						testLayout(),
+					Setup: []SetupFn{
+						testLayout(idGen),
 						removeTipboxTips("tipbox_1", []string{"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12"}),
-						preloadAdaptorTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
+						preloadAdaptorTips(idGen, 0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
 					},
 					Instructions: []TestRobotInstruction{
 						&Move{
@@ -2055,20 +2062,20 @@ func Test_UnloadTips(t *testing.T) {
 							well:      []string{"A12", "B12", "C12", "D12", "E12", "F12", "G12", "H12"},
 						},
 					},
-					Assertions: []*AssertionFn{
+					Assertions: []AssertionFn{
 						tipboxAssertion("tipbox_1", []string{}),
 						tipboxAssertion("tipbox_2", []string{}),
-						adaptorAssertion(0, []tipDesc{}),
+						adaptorAssertion(idGen, 0, []tipDesc{}),
 						tipwasteAssertion("tipwaste", 0),
 					},
 				},
 		*/
 		{
 			Name:  "OK - independent tips",
-			Props: IndependentLHProperties(),
-			Setup: []*SetupFn{
-				testLayout(),
-				preloadAdaptorTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
+			Props: IndependentLHProperties(idGen),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				preloadAdaptorTips(idGen, 0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
 			},
 			Instructions: []TestRobotInstruction{
 				&UnloadTips{
@@ -2080,10 +2087,10 @@ func Test_UnloadTips(t *testing.T) {
 					well:      []string{"A1", "", "A1", "", "A1", "", "A1", ""},
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{
+				adaptorAssertion(idGen, 0, []tipDesc{
 					{1, "", 0},
 					{3, "", 0},
 					{5, "", 0},
@@ -2094,9 +2101,9 @@ func Test_UnloadTips(t *testing.T) {
 		},
 		{
 			Name: "can only unload all tips",
-			Setup: []*SetupFn{
-				testLayout(),
-				preloadAdaptorTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				preloadAdaptorTips(idGen, 0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -2124,9 +2131,9 @@ func Test_UnloadTips(t *testing.T) {
 		},
 		{
 			Name: "can't unload to a plate",
-			Setup: []*SetupFn{
-				testLayout(),
-				preloadAdaptorTips(0, "tipbox_1", []int{0}),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				preloadAdaptorTips(idGen, 0, "tipbox_1", []int{0}),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -2154,9 +2161,9 @@ func Test_UnloadTips(t *testing.T) {
 		},
 		{
 			Name: "wrong well",
-			Setup: []*SetupFn{
-				testLayout(),
-				preloadAdaptorTips(0, "tipbox_1", []int{0}),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				preloadAdaptorTips(idGen, 0, "tipbox_1", []int{0}),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -2186,13 +2193,14 @@ func Test_UnloadTips(t *testing.T) {
 }
 
 func Test_Aspirate(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 	SimulatorTests{
 		{
 			Name: "OK - single channel",
-			Setup: []*SetupFn{
-				testLayout(),
-				prefillWells("input_1", []string{"A1"}, "water", 200.),
-				preloadAdaptorTips(0, "tipbox_1", []int{0}),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				prefillWells(idGen, "input_1", []string{"A1"}, "water", 200.),
+				preloadAdaptorTips(idGen, 0, "tipbox_1", []int{0}),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -2215,19 +2223,19 @@ func Test_Aspirate(t *testing.T) {
 					llf:        []bool{false, false, false, false, false, false, false, false},
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{{0, "water", 100}}),
+				adaptorAssertion(idGen, 0, []tipDesc{{0, "water", 100}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
 		{
 			Name: "OK - 8 channel",
-			Setup: []*SetupFn{
-				testLayout(),
-				prefillWells("input_1", []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}, "water", 200.),
-				preloadAdaptorTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				prefillWells(idGen, "input_1", []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}, "water", 200.),
+				preloadAdaptorTips(idGen, 0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -2250,10 +2258,10 @@ func Test_Aspirate(t *testing.T) {
 					llf:        []bool{false, false, false, false, false, false, false, false},
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{
+				adaptorAssertion(idGen, 0, []tipDesc{
 					{0, "water", 100},
 					{1, "water", 100},
 					{2, "water", 100},
@@ -2268,10 +2276,10 @@ func Test_Aspirate(t *testing.T) {
 		},
 		{
 			Name: "OK - 8 channel trough",
-			Setup: []*SetupFn{
-				testTroughLayout(),
-				prefillWells("input_1", []string{"A1"}, "water", 10000.),
-				preloadAdaptorTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
+			Setup: []SetupFn{
+				testTroughLayout(idGen),
+				prefillWells(idGen, "input_1", []string{"A1"}, "water", 10000.),
+				preloadAdaptorTips(idGen, 0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -2294,10 +2302,10 @@ func Test_Aspirate(t *testing.T) {
 					llf:        []bool{false, false, false, false, false, false, false, false},
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{
+				adaptorAssertion(idGen, 0, []tipDesc{
 					{0, "water", 100},
 					{1, "water", 100},
 					{2, "water", 100},
@@ -2312,10 +2320,10 @@ func Test_Aspirate(t *testing.T) {
 		},
 		{
 			Name: "Fail - take too much from trough",
-			Setup: []*SetupFn{
-				testTroughLayout(),
-				prefillWells("input_1", []string{"A1"}, "water", 5400.),
-				preloadAdaptorTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
+			Setup: []SetupFn{
+				testTroughLayout(idGen),
+				prefillWells(idGen, "input_1", []string{"A1"}, "water", 5400.),
+				preloadAdaptorTips(idGen, 0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -2341,10 +2349,10 @@ func Test_Aspirate(t *testing.T) {
 			ExpectedErrors: []string{
 				"(warn) Aspirate[1]: 100 ul of water to head 0 channels 0-7: taking 800 ul from A1@trough1 which contains only 400 ul working volume, possible aspiration of residual (see ANTHA-2704)",
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{
+				adaptorAssertion(idGen, 0, []tipDesc{
 					{0, "water", 100.0},
 					{1, "water", 100.0},
 					{2, "water", 100.0},
@@ -2359,10 +2367,10 @@ func Test_Aspirate(t *testing.T) {
 		},
 		{
 			Name: "Fail - Aspirate with no tip",
-			Setup: []*SetupFn{
-				testLayout(),
-				prefillWells("input_1", []string{"A1", "B1"}, "water", 200.),
-				preloadAdaptorTips(0, "tipbox_1", []int{0}),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				prefillWells(idGen, "input_1", []string{"A1", "B1"}, "water", 200.),
+				preloadAdaptorTips(idGen, 0, "tipbox_1", []int{0}),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -2391,10 +2399,10 @@ func Test_Aspirate(t *testing.T) {
 		},
 		{
 			Name: "Fail - Underfull tip",
-			Setup: []*SetupFn{
-				testLayout(),
-				prefillWells("input_1", []string{"A1"}, "water", 200.),
-				preloadAdaptorTips(0, "tipbox_1", []int{0}),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				prefillWells(idGen, "input_1", []string{"A1"}, "water", 200.),
+				preloadAdaptorTips(idGen, 0, "tipbox_1", []int{0}),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -2423,10 +2431,10 @@ func Test_Aspirate(t *testing.T) {
 		},
 		{
 			Name: "Fail - Overfull tip",
-			Setup: []*SetupFn{
-				testLayout(),
-				prefillWells("input_1", []string{"A1", "B1", "C1", "D1", "E1", "F1"}, "water", 200.),
-				preloadAdaptorTips(0, "tipbox_1", []int{0}),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				prefillWells(idGen, "input_1", []string{"A1", "B1", "C1", "D1", "E1", "F1"}, "water", 200.),
+				preloadAdaptorTips(idGen, 0, "tipbox_1", []int{0}),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -2550,10 +2558,10 @@ func Test_Aspirate(t *testing.T) {
 		},
 		{
 			Name: "Fail - non-independent head can only aspirate equal volumes",
-			Setup: []*SetupFn{
-				testLayout(),
-				prefillWells("input_1", []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}, "water", 200.),
-				preloadAdaptorTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				prefillWells(idGen, "input_1", []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}, "water", 200.),
+				preloadAdaptorTips(idGen, 0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -2582,10 +2590,10 @@ func Test_Aspirate(t *testing.T) {
 		},
 		{
 			Name: "Fail - tip not in well",
-			Setup: []*SetupFn{
-				testLayout(),
-				prefillWells("input_1", []string{"A1"}, "water", 200.),
-				preloadAdaptorTips(0, "tipbox_1", []int{0}),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				prefillWells(idGen, "input_1", []string{"A1"}, "water", 200.),
+				preloadAdaptorTips(idGen, 0, "tipbox_1", []int{0}),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -2614,10 +2622,10 @@ func Test_Aspirate(t *testing.T) {
 		},
 		{
 			Name: "Fail - Well doesn't contain enough",
-			Setup: []*SetupFn{
-				testLayout(),
-				prefillWells("input_1", []string{"A1"}, "water", 200.),
-				preloadAdaptorTips(0, "tipbox_1", []int{0}),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				prefillWells(idGen, "input_1", []string{"A1"}, "water", 200.),
+				preloadAdaptorTips(idGen, 0, "tipbox_1", []int{0}),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -2643,22 +2651,22 @@ func Test_Aspirate(t *testing.T) {
 			ExpectedErrors: []string{
 				"(err) Aspirate[1]: 535 ul of water to head 0 channel 0: taking 535 ul from A1@plate1 which contains only 200 ul working plus 5 ul residual volume (possibly a side effect of ANTHA-2704, try using a plate with a larger residual volume)",
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{
+				adaptorAssertion(idGen, 0, []tipDesc{
 					{0, "water", 535.0},
 				}),
-				plateAssertion("input_1", []wellDesc{{"A1", "water", 0.0}}),
+				plateAssertion(idGen, "input_1", []wellDesc{{"A1", "water", 0.0}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
 		{
 			Name: "Fail - inadvertant aspiration",
-			Setup: []*SetupFn{
-				testLayout(),
-				prefillWells("input_1", []string{"A1", "B1"}, "water", 200.),
-				preloadAdaptorTips(0, "tipbox_1", []int{0, 1}),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				prefillWells(idGen, "input_1", []string{"A1", "B1"}, "water", 200.),
+				preloadAdaptorTips(idGen, 0, "tipbox_1", []int{0, 1}),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -2689,12 +2697,13 @@ func Test_Aspirate(t *testing.T) {
 }
 
 func Test_Dispense(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 	SimulatorTests{
 		{
 			Name: "OK - single channel",
-			Setup: []*SetupFn{
-				testLayout(),
-				preloadFilledTips(0, "tipbox_1", []int{0}, "water", 100.),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				preloadFilledTips(idGen, 0, "tipbox_1", []int{0}, "water", 100.),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -2717,20 +2726,20 @@ func Test_Dispense(t *testing.T) {
 					llf:       []bool{false, false, false, false, false, false, false, false},
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
-				plateAssertion("input_1", []wellDesc{{"A1", "water", 50.}}),
-				adaptorAssertion(0, []tipDesc{{0, "water", 50.}}),
+				plateAssertion(idGen, "input_1", []wellDesc{{"A1", "water", 50.}}),
+				adaptorAssertion(idGen, 0, []tipDesc{{0, "water", 50.}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
 		{
 			Name: "OK - mixing",
-			Setup: []*SetupFn{
-				testLayout(),
-				preloadFilledTips(0, "tipbox_1", []int{0}, "water", 100.),
-				prefillWells("input_1", []string{"A1"}, "green", 50.),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				preloadFilledTips(idGen, 0, "tipbox_1", []int{0}, "water", 100.),
+				prefillWells(idGen, "input_1", []string{"A1"}, "green", 50.),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -2753,19 +2762,19 @@ func Test_Dispense(t *testing.T) {
 					llf:       []bool{false, false, false, false, false, false, false, false},
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
-				plateAssertion("input_1", []wellDesc{{"A1", "0.5 v/v green+0.5 v/v water", 100.}}),
-				adaptorAssertion(0, []tipDesc{{0, "water", 50.}}),
+				plateAssertion(idGen, "input_1", []wellDesc{{"A1", "0.5 v/v green+0.5 v/v water", 100.}}),
+				adaptorAssertion(idGen, 0, []tipDesc{{0, "water", 50.}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
 		{
 			Name: "OK - single channel slightly above well",
-			Setup: []*SetupFn{
-				testLayout(),
-				preloadFilledTips(0, "tipbox_1", []int{0}, "water", 100.),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				preloadFilledTips(idGen, 0, "tipbox_1", []int{0}, "water", 100.),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -2788,19 +2797,19 @@ func Test_Dispense(t *testing.T) {
 					llf:       []bool{false, false, false, false, false, false, false, false},
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
-				plateAssertion("input_1", []wellDesc{{"A1", "water", 50.}}),
-				adaptorAssertion(0, []tipDesc{{0, "water", 50.}}),
+				plateAssertion(idGen, "input_1", []wellDesc{{"A1", "water", 50.}}),
+				adaptorAssertion(idGen, 0, []tipDesc{{0, "water", 50.}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
 		{
 			Name: "OK - 8 channel",
-			Setup: []*SetupFn{
-				testLayout(),
-				preloadFilledTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}, "water", 100.),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				preloadFilledTips(idGen, 0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}, "water", 100.),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -2823,10 +2832,10 @@ func Test_Dispense(t *testing.T) {
 					llf:       []bool{false, false, false, false, false, false, false, false},
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{
+				adaptorAssertion(idGen, 0, []tipDesc{
 					{0, "water", 50.},
 					{1, "water", 50.},
 					{2, "water", 50.},
@@ -2836,7 +2845,7 @@ func Test_Dispense(t *testing.T) {
 					{6, "water", 50.},
 					{7, "water", 50.},
 				}),
-				plateAssertion("input_1", []wellDesc{
+				plateAssertion(idGen, "input_1", []wellDesc{
 					{"A1", "water", 50.},
 					{"B1", "water", 50.},
 					{"C1", "water", 50.},
@@ -2851,9 +2860,9 @@ func Test_Dispense(t *testing.T) {
 		},
 		{
 			Name: "Fail - no tips",
-			Setup: []*SetupFn{
-				testLayout(),
-				//preloadFilledTips(0, "tipbox_1", []int{0}, "water", 100.),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				//preloadFilledTips(idGen, 0, "tipbox_1", []int{0}, "water", 100.),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -2882,9 +2891,9 @@ func Test_Dispense(t *testing.T) {
 		},
 		{
 			Name: "Fail - not enough in tip",
-			Setup: []*SetupFn{
-				testLayout(),
-				preloadFilledTips(0, "tipbox_1", []int{0}, "water", 100.),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				preloadFilledTips(idGen, 0, "tipbox_1", []int{0}, "water", 100.),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -2913,9 +2922,9 @@ func Test_Dispense(t *testing.T) {
 		},
 		{
 			Name: "Fail - well over-full",
-			Setup: []*SetupFn{
-				testLayout(),
-				preloadFilledTips(0, "tipbox_1", []int{0}, "water", 1000.),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				preloadFilledTips(idGen, 0, "tipbox_1", []int{0}, "water", 1000.),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -2944,9 +2953,9 @@ func Test_Dispense(t *testing.T) {
 		},
 		{
 			Name: "Fail - not in a well",
-			Setup: []*SetupFn{
-				testLayout(),
-				preloadFilledTips(0, "tipbox_1", []int{0}, "water", 100.),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				preloadFilledTips(idGen, 0, "tipbox_1", []int{0}, "water", 100.),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -2975,9 +2984,9 @@ func Test_Dispense(t *testing.T) {
 		},
 		{
 			Name: "Fail - dispensing to tipwaste",
-			Setup: []*SetupFn{
-				testLayout(),
-				preloadFilledTips(0, "tipbox_1", []int{0}, "water", 100.),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				preloadFilledTips(idGen, 0, "tipbox_1", []int{0}, "water", 100.),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -3006,9 +3015,9 @@ func Test_Dispense(t *testing.T) {
 		},
 		{
 			Name: "fail - independence other tips in wells",
-			Setup: []*SetupFn{
-				testLayout(),
-				preloadFilledTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}, "water", 100.),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				preloadFilledTips(idGen, 0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}, "water", 100.),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -3037,9 +3046,9 @@ func Test_Dispense(t *testing.T) {
 		},
 		{
 			Name: "fail - independence other tip not in a well",
-			Setup: []*SetupFn{
-				testLayout(),
-				preloadFilledTips(0, "tipbox_1", []int{0, 1}, "water", 100.),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				preloadFilledTips(idGen, 0, "tipbox_1", []int{0, 1}, "water", 100.),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -3068,9 +3077,9 @@ func Test_Dispense(t *testing.T) {
 		},
 		{
 			Name: "Fail - independence, different volumes",
-			Setup: []*SetupFn{
-				testLayout(),
-				preloadFilledTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}, "water", 100.),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				preloadFilledTips(idGen, 0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}, "water", 100.),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -3101,13 +3110,14 @@ func Test_Dispense(t *testing.T) {
 }
 
 func Test_Mix(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 	SimulatorTests{
 		{
 			Name: "OK - single channel",
-			Setup: []*SetupFn{
-				testLayout(),
-				preloadAdaptorTips(0, "tipbox_1", []int{0}),
-				prefillWells("input_1", []string{"A1"}, "water", 200.),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				preloadAdaptorTips(idGen, 0, "tipbox_1", []int{0}),
+				prefillWells(idGen, "input_1", []string{"A1"}, "water", 200.),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -3130,20 +3140,20 @@ func Test_Mix(t *testing.T) {
 					blowout:   []bool{false, false, false, false, false, false, false, false},
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
-				plateAssertion("input_1", []wellDesc{{"A1", "water", 200.}}),
-				adaptorAssertion(0, []tipDesc{{0, "", 0.}}),
+				plateAssertion(idGen, "input_1", []wellDesc{{"A1", "water", 200.}}),
+				adaptorAssertion(idGen, 0, []tipDesc{{0, "", 0.}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
 		{
 			Name: "OK - 8 channel",
-			Setup: []*SetupFn{
-				testLayout(),
-				preloadAdaptorTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
-				prefillWells("input_1", []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}, "water", 200.),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				preloadAdaptorTips(idGen, 0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
+				prefillWells(idGen, "input_1", []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}, "water", 200.),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -3166,10 +3176,10 @@ func Test_Mix(t *testing.T) {
 					blowout:   []bool{false, false, false, false, false, false, false, false},
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
-				plateAssertion("input_1", []wellDesc{
+				plateAssertion(idGen, "input_1", []wellDesc{
 					{"A1", "water", 200.},
 					{"B1", "water", 200.},
 					{"C1", "water", 200.},
@@ -3179,7 +3189,7 @@ func Test_Mix(t *testing.T) {
 					{"G1", "water", 200.},
 					{"H1", "water", 200.},
 				}),
-				adaptorAssertion(0, []tipDesc{
+				adaptorAssertion(idGen, 0, []tipDesc{
 					{0, "", 0.},
 					{1, "", 0.},
 					{2, "", 0.},
@@ -3194,10 +3204,10 @@ func Test_Mix(t *testing.T) {
 		},
 		{
 			Name: "Fail - independece problems",
-			Setup: []*SetupFn{
-				testLayout(),
-				preloadAdaptorTips(0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
-				prefillWells("input_1", []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}, "water", 200.),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				preloadAdaptorTips(idGen, 0, "tipbox_1", []int{0, 1, 2, 3, 4, 5, 6, 7}),
+				prefillWells(idGen, "input_1", []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}, "water", 200.),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -3227,10 +3237,10 @@ func Test_Mix(t *testing.T) {
 		},
 		{
 			Name: "Fail - wrong platetype",
-			Setup: []*SetupFn{
-				testLayout(),
-				preloadAdaptorTips(0, "tipbox_1", []int{0}),
-				prefillWells("input_1", []string{"A1"}, "water", 200.),
+			Setup: []SetupFn{
+				testLayout(idGen),
+				preloadAdaptorTips(idGen, 0, "tipbox_1", []int{0}),
+				prefillWells(idGen, "input_1", []string{"A1"}, "water", 200.),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -3256,11 +3266,11 @@ func Test_Mix(t *testing.T) {
 			ExpectedErrors: []string{
 				"(warn) Mix[1]: 50 ul 5 times in well A1 of plate \"plate1\": plate \"plate1\" is of type \"plate\", not \"notaplate\"",
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
-				plateAssertion("input_1", []wellDesc{{"A1", "water", 200.}}),
-				adaptorAssertion(0, []tipDesc{{0, "", 0.}}),
+				plateAssertion(idGen, "input_1", []wellDesc{{"A1", "water", 200.}}),
+				adaptorAssertion(idGen, 0, []tipDesc{{0, "", 0.}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
@@ -3268,13 +3278,14 @@ func Test_Mix(t *testing.T) {
 }
 
 func Test_LiquidLevelFollow(t *testing.T) {
+	idGen := id.NewIDGenerator("testing")
 	SimulatorTests{
 		{
 			Name: "OK - single channel",
-			Setup: []*SetupFn{
-				testLayoutLLF(),
-				prefillWells("input_1", []string{"A1"}, "water", 200.),
-				preloadAdaptorTips(0, "tipbox_1", []int{0}),
+			Setup: []SetupFn{
+				testLayoutLLF(idGen),
+				prefillWells(idGen, "input_1", []string{"A1"}, "water", 200.),
+				preloadAdaptorTips(idGen, 0, "tipbox_1", []int{0}),
 			},
 			Instructions: []TestRobotInstruction{
 				&Move{
@@ -3316,19 +3327,19 @@ func Test_LiquidLevelFollow(t *testing.T) {
 					llf:       []bool{true, true, true, true, true, true, true, true},
 				},
 			},
-			Assertions: []*AssertionFn{
+			Assertions: []AssertionFn{
 				tipboxAssertion("tipbox_1", []string{}),
 				tipboxAssertion("tipbox_2", []string{}),
-				adaptorAssertion(0, []tipDesc{{0, "water", 0}}),
-				plateAssertion("input_1", []wellDesc{{"A1", "water", 99.5}, {"A2", "water", 100}}),
+				adaptorAssertion(idGen, 0, []tipDesc{{0, "water", 0}}),
+				plateAssertion(idGen, "input_1", []wellDesc{{"A1", "water", 99.5}, {"A2", "water", 100}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
 	}.Run(t)
 }
 
-func component(name string) *wtype.Liquid {
-	A := wtype.NewLHComponent()
+func component(idGen *id.IDGenerator, name string) *wtype.Liquid {
+	A := wtype.NewLHComponent(idGen)
 	A.CName = name
 	A.Type = wtype.LTWater
 	A.Smax = 9999
@@ -3491,23 +3502,24 @@ func Test_Workflow(t *testing.T) {
 		}
 	}
 
+	idGen := id.NewIDGenerator("testing")
 	//plates
-	input_plate := defaultLHPlate("input")
-	output_plate := defaultLHPlate("output")
+	input_plate := defaultLHPlate(idGen, "input")
+	output_plate := defaultLHPlate(idGen, "output")
 
 	//tips - using small tipbox so I don't have to worry about using different tips
-	tipbox := smallLHTipbox("tipbox")
+	tipbox := smallLHTipbox(idGen, "tipbox")
 
 	//tipwaste
-	tipwaste := defaultLHTipwaste("tipwaste")
+	tipwaste := defaultLHTipwaste(idGen, "tipwaste")
 
 	//setup the input plate
 	wc := wtype.MakeWellCoords("A1")
 	comp := []*wtype.Liquid{
-		component("water"),
-		component("red"),
-		component("green"),
-		component("water"),
+		component(idGen, "water"),
+		component(idGen, "red"),
+		component(idGen, "green"),
+		component(idGen, "water"),
 	}
 	for x := 0; x < len(comp); x++ {
 		wc.X = x
@@ -3515,7 +3527,7 @@ func Test_Workflow(t *testing.T) {
 		for y := 0; y < 8; y++ {
 			wc.Y = y
 			well := input_plate.GetChildByAddress(wc).(*wtype.LHWell)
-			err := well.AddComponent(comp[x].Dup())
+			err := well.AddComponent(idGen, comp[x].Dup(idGen))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -3667,16 +3679,16 @@ func Test_Workflow(t *testing.T) {
 
 	(&SimulatorTest{
 		Name:         "Run Workflow",
-		Setup:        []*SetupFn{},
+		Setup:        []SetupFn{},
 		Instructions: inst,
-		Assertions: []*AssertionFn{
+		Assertions: []AssertionFn{
 			tipboxAssertion("tipbox_1", []string{
 				"H12", "G12",
 				"A11", "B11", "C11", "D11", "E11", "F11", "G11", "H11",
 				"A10", "B10", "C10", "D10", "E10", "F10", "G10", "H10",
 				"A9", "B9", "C9", "D9", "E9", "F9", "G9", "H9",
 			}),
-			plateAssertion("input_1", []wellDesc{
+			plateAssertion(idGen, "input_1", []wellDesc{
 				{"A1", "water", 50.0 - 12.0*0.5},
 				{"B1", "water", 50.0 - 12.0*0.5},
 				{"C1", "water", 50.0 - 12.0*0.5},
@@ -3718,7 +3730,7 @@ func Test_Workflow(t *testing.T) {
 				{"G5", "0.143 v/v green+0.857 v/v water", 135.0 - 12.0*0.5},
 				{"H5", "water", 135.0 - 12.0*0.5},
 			}),
-			plateAssertion("output_1", []wellDesc{
+			plateAssertion(idGen, "output_1", []wellDesc{
 				{"A1", "0.25 v/v green+0.25 v/v red+0.5 v/v water", 20.},
 				{"B1", "0.214 v/v green+0.25 v/v red+0.536 v/v water", 20.},
 				{"C1", "0.179 v/v green+0.25 v/v red+0.571 v/v water", 20.},
@@ -3816,7 +3828,7 @@ func Test_Workflow(t *testing.T) {
 				{"G12", "0.0357 v/v green+0.964 v/v water", 20.},
 				{"H12", "1 v/v water", 20.},
 			}),
-			adaptorAssertion(0, []tipDesc{}),
+			adaptorAssertion(idGen, 0, []tipDesc{}),
 			tipwasteAssertion("tipwaste", 26),
 		},
 	}).Run(t)

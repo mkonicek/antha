@@ -30,8 +30,10 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/simulator"
+	"github.com/antha-lang/antha/workflow"
 )
 
 //
@@ -63,8 +65,9 @@ type ChannelParams struct {
 	Head        int
 }
 
-func makeLHChannelParameter(cp ChannelParams) *wtype.LHChannelParameter {
-	return wtype.NewLHChannelParameter(cp.Name,
+func makeLHChannelParameter(idGen *id.IDGenerator, cp ChannelParams) *wtype.LHChannelParameter {
+	return wtype.NewLHChannelParameter(idGen,
+		cp.Name,
 		cp.Platform,
 		wunit.NewVolume(cp.Minvol.Value, cp.Minvol.Unit),
 		wunit.NewVolume(cp.Maxvol.Value, cp.Maxvol.Unit),
@@ -82,10 +85,11 @@ type AdaptorParams struct {
 	Channel ChannelParams
 }
 
-func makeLHAdaptor(ap AdaptorParams) *wtype.LHAdaptor {
-	return wtype.NewLHAdaptor(ap.Name,
+func makeLHAdaptor(idGen *id.IDGenerator, ap AdaptorParams) *wtype.LHAdaptor {
+	return wtype.NewLHAdaptor(idGen,
+		ap.Name,
 		ap.Mfg,
-		makeLHChannelParameter(ap.Channel))
+		makeLHChannelParameter(idGen, ap.Channel))
 }
 
 type HeadParams struct {
@@ -96,9 +100,9 @@ type HeadParams struct {
 	TipBehaviour wtype.TipLoadingBehaviour
 }
 
-func makeLHHead(hp HeadParams) *wtype.LHHead {
-	ret := wtype.NewLHHead(hp.Name, hp.Mfg, makeLHChannelParameter(hp.Channel))
-	ret.Adaptor = makeLHAdaptor(hp.Adaptor)
+func makeLHHead(idGen *id.IDGenerator, hp HeadParams) *wtype.LHHead {
+	ret := wtype.NewLHHead(idGen, hp.Name, hp.Mfg, makeLHChannelParameter(idGen, hp.Channel))
+	ret.Adaptor = makeLHAdaptor(idGen, hp.Adaptor)
 	ret.TipLoading = hp.TipBehaviour
 	return ret
 }
@@ -110,13 +114,13 @@ type HeadAssemblyParams struct {
 	VelocityLimits  *wtype.VelocityRange
 }
 
-func makeLHHeadAssembly(ha HeadAssemblyParams) *wtype.LHHeadAssembly {
+func makeLHHeadAssembly(idGen *id.IDGenerator, ha HeadAssemblyParams) *wtype.LHHeadAssembly {
 	ret := wtype.NewLHHeadAssembly(ha.MotionLimits)
 	for _, pos := range ha.PositionOffsets {
 		ret.AddPosition(pos)
 	}
 	for _, h := range ha.Heads {
-		if err := ret.LoadHead(makeLHHead(h)); err != nil {
+		if err := ret.LoadHead(makeLHHead(idGen, h)); err != nil {
 			panic(err)
 		}
 	}
@@ -137,22 +141,22 @@ type LHPropertiesParams struct {
 	WastePreferences    []string
 }
 
-func makeLHProperties(p *LHPropertiesParams) *liquidhandling.LHProperties {
+func makeLHProperties(idGen *id.IDGenerator, p *LHPropertiesParams) *liquidhandling.LHProperties {
 
 	layout := make(map[string]*wtype.LHPosition)
 	for _, lp := range p.Layouts {
 		layout[lp.Name] = wtype.NewLHPosition(lp.Name, wtype.Coordinates3D{X: lp.Xpos, Y: lp.Ypos, Z: lp.Zpos}, wtype.SBSFootprint)
 	}
 
-	lhp := liquidhandling.NewLHProperties(p.Name, p.Mfg, liquidhandling.LLLiquidHandler, liquidhandling.DisposableTips, layout)
+	lhp := liquidhandling.NewLHProperties(idGen, p.Name, p.Mfg, liquidhandling.LLLiquidHandler, liquidhandling.DisposableTips, layout)
 
 	lhp.HeadAssemblies = make([]*wtype.LHHeadAssembly, 0, len(p.HeadAssemblies))
 	for _, ha := range p.HeadAssemblies {
-		lhp.HeadAssemblies = append(lhp.HeadAssemblies, makeLHHeadAssembly(ha))
+		lhp.HeadAssemblies = append(lhp.HeadAssemblies, makeLHHeadAssembly(idGen, ha))
 	}
 	lhp.Heads = lhp.GetLoadedHeads()
 
-	lhp.Preferences = &liquidhandling.LayoutOpt{
+	lhp.Preferences = &workflow.LayoutOpt{
 		Tipboxes:  p.TipPreferences,
 		Inputs:    p.InputPreferences,
 		Outputs:   p.OutputPreferences,
@@ -179,8 +183,8 @@ type LHWellParams struct {
 	liquidLevelModel *wutil.Quadratic
 }
 
-func makeLHWell(p *LHWellParams) *wtype.LHWell {
-	w := wtype.NewLHWell(
+func makeLHWell(idGen *id.IDGenerator, p *LHWellParams) *wtype.LHWell {
+	w := wtype.NewLHWell(idGen,
 		p.vunit,
 		p.vol,
 		p.rvol,
@@ -197,7 +201,7 @@ func makeLHWell(p *LHWellParams) *wtype.LHWell {
 }
 
 type LHPlateParams struct {
-	platetype   string
+	platetype   wtype.PlateTypeName
 	mfr         string
 	nrows       int
 	ncols       int
@@ -210,13 +214,14 @@ type LHPlateParams struct {
 	wellZStart  float64
 }
 
-func makeLHPlate(p *LHPlateParams, name string) *wtype.Plate {
-	r := wtype.NewLHPlate(p.platetype,
+func makeLHPlate(idGen *id.IDGenerator, p *LHPlateParams, name string) *wtype.Plate {
+	r := wtype.NewLHPlate(idGen,
+		p.platetype,
 		p.mfr,
 		p.nrows,
 		p.ncols,
 		p.size,
-		makeLHWell(&p.welltype),
+		makeLHWell(idGen, &p.welltype),
 		p.wellXOffset,
 		p.wellYOffset,
 		p.wellXStart,
@@ -237,8 +242,9 @@ type LHTipParams struct {
 	effectiveHeight float64
 }
 
-func makeLHTip(p *LHTipParams) *wtype.LHTip {
-	return wtype.NewLHTip(p.mfr,
+func makeLHTip(idGen *id.IDGenerator, p *LHTipParams) *wtype.LHTip {
+	return wtype.NewLHTip(idGen,
+		p.mfr,
 		p.ttype,
 		p.minvol,
 		p.maxvol,
@@ -263,14 +269,15 @@ type LHTipboxParams struct {
 	tipzstart    float64
 }
 
-func makeLHTipbox(p *LHTipboxParams, name string) *wtype.LHTipbox {
-	r := wtype.NewLHTipbox(p.nrows,
+func makeLHTipbox(idGen *id.IDGenerator, p *LHTipboxParams, name string) *wtype.LHTipbox {
+	r := wtype.NewLHTipbox(idGen,
+		p.nrows,
 		p.ncols,
 		p.size,
 		p.manufacturer,
 		p.boxtype,
-		makeLHTip(&p.tiptype),
-		makeLHWell(&p.well),
+		makeLHTip(idGen, &p.tiptype),
+		makeLHWell(idGen, &p.well),
 		p.tipxoffset,
 		p.tipyoffset,
 		p.tipystart,
@@ -291,12 +298,13 @@ type LHTipwasteParams struct {
 	wellzstart float64
 }
 
-func makeLHTipWaste(p *LHTipwasteParams, name string) *wtype.LHTipwaste {
-	r := wtype.NewLHTipwaste(p.capacity,
+func makeLHTipWaste(idGen *id.IDGenerator, p *LHTipwasteParams, name string) *wtype.LHTipwaste {
+	r := wtype.NewLHTipwaste(idGen,
+		p.capacity,
 		p.typ,
 		p.mfr,
 		p.size,
-		makeLHWell(&p.w),
+		makeLHWell(idGen, &p.w),
 		p.wellxstart,
 		p.wellystart,
 		p.wellzstart)
@@ -374,22 +382,22 @@ func defaultLHPlateProps() *LHPlateParams {
 	return &params
 }
 
-func defaultLHPlate(name string) *wtype.Plate {
+func defaultLHPlate(idGen *id.IDGenerator, name string) *wtype.Plate {
 	params := defaultLHPlateProps()
-	return makeLHPlate(params, name)
+	return makeLHPlate(idGen, params, name)
 }
 
-func llfLHPlate(name string) *wtype.Plate {
+func llfLHPlate(idGen *id.IDGenerator, name string) *wtype.Plate {
 	params := defaultLHPlateProps()
 	params.welltype.liquidLevelModel = &wutil.Quadratic{A: 0.402, B: 7.069, C: 0.0}
-	return makeLHPlate(params, name)
+	return makeLHPlate(idGen, params, name)
 }
 
 //This plate will fill into the next door position on the robot
-func wideLHPlate(name string) *wtype.Plate {
+func wideLHPlate(idGen *id.IDGenerator, name string) *wtype.Plate {
 	params := defaultLHPlateProps()
 	params.size.X = 300.
-	return makeLHPlate(params, name)
+	return makeLHPlate(idGen, params, name)
 }
 
 func troughLHPlateProps() *LHPlateParams {
@@ -422,9 +430,9 @@ func troughLHPlateProps() *LHPlateParams {
 	return &params
 }
 
-func troughLHPlate(name string) *wtype.Plate {
+func troughLHPlate(idGen *id.IDGenerator, name string) *wtype.Plate {
 	params := troughLHPlateProps()
-	plate := makeLHPlate(params, name)
+	plate := makeLHPlate(idGen, params, name)
 	targets := []wtype.Coordinates3D{
 		{X: 0.0, Y: -31.5, Z: 0.0},
 		{X: 0.0, Y: -22.5, Z: 0.0},
@@ -439,7 +447,7 @@ func troughLHPlate(name string) *wtype.Plate {
 	return plate
 }
 
-func defaultLHTipbox(name string) *wtype.LHTipbox {
+func defaultLHTipbox(idGen *id.IDGenerator, name string) *wtype.LHTipbox {
 	params := LHTipboxParams{
 		nrows:        8,
 		ncols:        12,
@@ -476,10 +484,10 @@ func defaultLHTipbox(name string) *wtype.LHTipbox {
 		tipzstart:  10.,
 	}
 
-	return makeLHTipbox(&params, name)
+	return makeLHTipbox(idGen, &params, name)
 }
 
-func smallLHTipbox(name string) *wtype.LHTipbox {
+func smallLHTipbox(idGen *id.IDGenerator, name string) *wtype.LHTipbox {
 	params := LHTipboxParams{
 		nrows:        8,
 		ncols:        12,
@@ -516,10 +524,10 @@ func smallLHTipbox(name string) *wtype.LHTipbox {
 		tipzstart:  10.,
 	}
 
-	return makeLHTipbox(&params, name)
+	return makeLHTipbox(idGen, &params, name)
 }
 
-func defaultLHTipwaste(name string) *wtype.LHTipwaste {
+func defaultLHTipwaste(idGen *id.IDGenerator, name string) *wtype.LHTipwaste {
 	params := LHTipwasteParams{
 		capacity: 700,
 		typ:      "tipwaste",
@@ -542,10 +550,10 @@ func defaultLHTipwaste(name string) *wtype.LHTipwaste {
 		wellystart: 31.5,
 		wellzstart: 0.0,
 	}
-	return makeLHTipWaste(&params, name)
+	return makeLHTipWaste(idGen, &params, name)
 }
 
-func defaultLHProperties() *liquidhandling.LHProperties {
+func defaultLHProperties(idGen *id.IDGenerator) *liquidhandling.LHProperties {
 	validProps := LHPropertiesParams{
 		Name: "Device Name",
 		Mfg:  "Device Manufaturer",
@@ -608,7 +616,7 @@ func defaultLHProperties() *liquidhandling.LHProperties {
 		WastePreferences:    []string{"waste"},
 	}
 
-	return makeLHProperties(&validProps)
+	return makeLHProperties(idGen, &validProps)
 }
 
 func multiheadLHPropertiesProps() *LHPropertiesParams {
@@ -727,18 +735,18 @@ func multiheadLHPropertiesProps() *LHPropertiesParams {
 	return &validProps
 }
 
-func multiheadLHProperties() *liquidhandling.LHProperties {
-	return makeLHProperties(multiheadLHPropertiesProps())
+func multiheadLHProperties(idGen *id.IDGenerator) *liquidhandling.LHProperties {
+	return makeLHProperties(idGen, multiheadLHPropertiesProps())
 }
 
-func multiheadConstrainedLHProperties() *liquidhandling.LHProperties {
+func multiheadConstrainedLHProperties(idGen *id.IDGenerator) *liquidhandling.LHProperties {
 	lhp := multiheadLHPropertiesProps()
 	lhp.HeadAssemblies[0].MotionLimits.Position.Z = 60
-	return makeLHProperties(lhp)
+	return makeLHProperties(idGen, lhp)
 }
 
-func IndependentLHProperties() *liquidhandling.LHProperties {
-	ret := defaultLHProperties()
+func IndependentLHProperties(idGen *id.IDGenerator) *liquidhandling.LHProperties {
+	ret := defaultLHProperties(idGen)
 
 	for _, head := range ret.Heads {
 		head.Params.Independent = true
@@ -969,19 +977,18 @@ func (self *Mix) Convert() liquidhandling.TerminalRobotInstruction {
 
 type SetupFn func(*VirtualLiquidHandler)
 
-func removeTipboxTips(tipbox_loc string, wells []string) *SetupFn {
-	var ret SetupFn = func(vlh *VirtualLiquidHandler) {
+func removeTipboxTips(tipbox_loc string, wells []string) SetupFn {
+	return func(vlh *VirtualLiquidHandler) {
 		tipbox := vlh.GetObjectAt(tipbox_loc).(*wtype.LHTipbox)
 		for _, well := range wells {
 			wc := wtype.MakeWellCoords(well)
 			tipbox.RemoveTip(wc)
 		}
 	}
-	return &ret
 }
 
-func preloadAdaptorTips(head int, tipbox_loc string, channels []int) *SetupFn {
-	var ret SetupFn = func(vlh *VirtualLiquidHandler) {
+func preloadAdaptorTips(idGen *id.IDGenerator, head int, tipbox_loc string, channels []int) SetupFn {
+	return func(vlh *VirtualLiquidHandler) {
 		adaptor, err := vlh.GetAdaptorState(head)
 		if err != nil {
 			panic(err)
@@ -989,14 +996,13 @@ func preloadAdaptorTips(head int, tipbox_loc string, channels []int) *SetupFn {
 		tipbox := vlh.GetObjectAt(tipbox_loc).(*wtype.LHTipbox)
 
 		for _, ch := range channels {
-			adaptor.GetChannel(ch).LoadTip(tipbox.Tiptype.Dup())
+			adaptor.GetChannel(ch).LoadTip(tipbox.Tiptype.Dup(idGen))
 		}
 	}
-	return &ret
 }
 
-func getLHComponent(what string, vol_ul float64) *wtype.Liquid {
-	c := wtype.NewLHComponent()
+func getLHComponent(idGen *id.IDGenerator, what string, vol_ul float64) *wtype.Liquid {
+	c := wtype.NewLHComponent(idGen)
 	c.CName = what
 	//madness?
 	lt, _ := wtype.LiquidTypeFromString(wtype.PolicyName(what))
@@ -1007,50 +1013,47 @@ func getLHComponent(what string, vol_ul float64) *wtype.Liquid {
 	return c
 }
 
-func preloadFilledTips(head int, tipbox_loc string, channels []int, what string, volume float64) *SetupFn {
-	var ret SetupFn = func(vlh *VirtualLiquidHandler) {
+func preloadFilledTips(idGen *id.IDGenerator, head int, tipbox_loc string, channels []int, what string, volume float64) SetupFn {
+	return func(vlh *VirtualLiquidHandler) {
 		adaptor, err := vlh.GetAdaptorState(head)
 		if err != nil {
 			panic(err)
 		}
 		tipbox := vlh.GetObjectAt(tipbox_loc).(*wtype.LHTipbox)
-		tip := tipbox.Tiptype.Dup()
-		c := getLHComponent(what, volume)
-		if err := tip.AddComponent(c); err != nil {
+		tip := tipbox.Tiptype.Dup(idGen)
+		c := getLHComponent(idGen, what, volume)
+		if err := tip.AddComponent(idGen, c); err != nil {
 			panic(err)
 		}
 
 		for _, ch := range channels {
-			adaptor.GetChannel(ch).LoadTip(tip.Dup())
+			adaptor.GetChannel(ch).LoadTip(tip.Dup(idGen))
 		}
 	}
-	return &ret
 }
 
 /* -- remove for linting
-func fillTipwaste(tipwaste_loc string, count int) *SetupFn {
-	var ret SetupFn = func(vlh *VirtualLiquidHandler) {
+func fillTipwaste(tipwaste_loc string, count int) SetupFn {
+	return func(vlh *VirtualLiquidHandler) {
 		tipwaste := vlh.GetObjectAt(tipwaste_loc).(*wtype.LHTipwaste)
 		tipwaste.Contents += count
 	}
-	return &ret
 }
 */
 
-func prefillWells(plate_loc string, wells_to_fill []string, liquid_name string, volume float64) *SetupFn {
-	var ret SetupFn = func(vlh *VirtualLiquidHandler) {
+func prefillWells(idGen *id.IDGenerator, plate_loc string, wells_to_fill []string, liquid_name string, volume float64) SetupFn {
+	return func(vlh *VirtualLiquidHandler) {
 		plate := vlh.GetObjectAt(plate_loc).(*wtype.Plate)
 		for _, well_name := range wells_to_fill {
 			wc := wtype.MakeWellCoords(well_name)
 			well := plate.GetChildByAddress(wc).(*wtype.LHWell)
-			comp := getLHComponent(liquid_name, volume)
-			err := well.AddComponent(comp)
+			comp := getLHComponent(idGen, liquid_name, volume)
+			err := well.AddComponent(idGen, comp)
 			if err != nil {
 				panic(err)
 			}
 		}
 	}
-	return &ret
 }
 
 type moveToParams struct {
@@ -1066,7 +1069,7 @@ type moveToParams struct {
 
 //moveTo Simplify generating Move commands when running tests by avoiding
 //repeating stuff that doesn't change
-func moveTo(row, col int, p moveToParams) *SetupFn {
+func moveTo(row, col int, p moveToParams) SetupFn {
 	s_dp := make([]string, p.Multi)
 	s_wc := make([]string, p.Multi)
 	s_rf := make([]int, p.Multi)
@@ -1088,11 +1091,9 @@ func moveTo(row, col int, p moveToParams) *SetupFn {
 		}
 	}
 
-	var ret SetupFn = func(vlh *VirtualLiquidHandler) {
+	return func(vlh *VirtualLiquidHandler) {
 		vlh.Move(s_dp, s_wc, s_rf, s_ox, s_oy, s_oz, s_pt, p.Head)
 	}
-
-	return &ret
 }
 
 /*
@@ -1102,8 +1103,8 @@ func moveTo(row, col int, p moveToParams) *SetupFn {
 type AssertionFn func(*testing.T, *VirtualLiquidHandler)
 
 //tipboxAssertion assert that the tipbox has tips missing in the given locations only
-func tipboxAssertion(tipbox_loc string, missing_tips []string) *AssertionFn {
-	var ret AssertionFn = func(t *testing.T, vlh *VirtualLiquidHandler) {
+func tipboxAssertion(tipbox_loc string, missing_tips []string) AssertionFn {
+	return func(t *testing.T, vlh *VirtualLiquidHandler) {
 		mmissing_tips := make(map[string]bool)
 		for _, tl := range missing_tips {
 			mmissing_tips[tl] = true
@@ -1129,7 +1130,6 @@ func tipboxAssertion(tipbox_loc string, missing_tips []string) *AssertionFn {
 			}
 		}
 	}
-	return &ret
 }
 
 type tipDesc struct {
@@ -1139,8 +1139,8 @@ type tipDesc struct {
 }
 
 //adaptorAssertion assert that the adaptor has tips in the given positions
-func adaptorAssertion(head int, tips []tipDesc) *AssertionFn {
-	var ret AssertionFn = func(t *testing.T, vlh *VirtualLiquidHandler) {
+func adaptorAssertion(idGen *id.IDGenerator, head int, tips []tipDesc) AssertionFn {
+	return func(t *testing.T, vlh *VirtualLiquidHandler) {
 		mtips := make(map[int]bool)
 		for _, td := range tips {
 			mtips[td.channel] = true
@@ -1164,7 +1164,7 @@ func adaptorAssertion(head int, tips []tipDesc) *AssertionFn {
 				continue //already reported this error
 			}
 			tip := adaptor.GetChannel(td.channel).GetTip()
-			c := tip.Contents()
+			c := tip.Contents(idGen)
 			if c.Volume().ConvertToString("ul") != td.volume || c.Name() != td.liquid_type {
 				errors = append(errors, fmt.Sprintf("Channel %d: Expected tip with %.2f ul of \"%s\", got tip with %s of \"%s\"",
 					td.channel, td.volume, td.liquid_type, c.Volume(), c.Name()))
@@ -1174,12 +1174,11 @@ func adaptorAssertion(head int, tips []tipDesc) *AssertionFn {
 			t.Errorf("AdaptorAssertion failed: Head%v:\n%s", head, strings.Join(errors, "\n"))
 		}
 	}
-	return &ret
 }
 
 //adaptorPositionAssertion assert that the adaptor has tips in the given positions
-func positionAssertion(head int, origin wtype.Coordinates3D) *AssertionFn {
-	var ret AssertionFn = func(t *testing.T, vlh *VirtualLiquidHandler) {
+func positionAssertion(head int, origin wtype.Coordinates3D) AssertionFn {
+	return func(t *testing.T, vlh *VirtualLiquidHandler) {
 		adaptor, err := vlh.GetAdaptorState(head)
 		if err != nil {
 			panic(err)
@@ -1190,12 +1189,11 @@ func positionAssertion(head int, origin wtype.Coordinates3D) *AssertionFn {
 			t.Errorf("PositionAssertion failed: head %d should be at %s, was actually at %s", head, e, g)
 		}
 	}
-	return &ret
 }
 
 //tipwasteAssertion assert the number of tips which should be in the tipwaste
-func tipwasteAssertion(tipwaste_loc string, expected_contents int) *AssertionFn {
-	var ret AssertionFn = func(t *testing.T, vlh *VirtualLiquidHandler) {
+func tipwasteAssertion(tipwaste_loc string, expected_contents int) AssertionFn {
+	return func(t *testing.T, vlh *VirtualLiquidHandler) {
 		if tipwaste, ok := vlh.GetObjectAt(tipwaste_loc).(*wtype.LHTipwaste); !ok {
 			t.Errorf("TipWasteAssertion failed: no Tipwaste found at %s", tipwaste_loc)
 		} else {
@@ -1205,7 +1203,6 @@ func tipwasteAssertion(tipwaste_loc string, expected_contents int) *AssertionFn 
 			}
 		}
 	}
-	return &ret
 }
 
 type wellDesc struct {
@@ -1214,8 +1211,8 @@ type wellDesc struct {
 	volume      float64
 }
 
-func plateAssertion(plate_loc string, wells []wellDesc) *AssertionFn {
-	var ret AssertionFn = func(t *testing.T, vlh *VirtualLiquidHandler) {
+func plateAssertion(idGen *id.IDGenerator, plate_loc string, wells []wellDesc) AssertionFn {
+	return func(t *testing.T, vlh *VirtualLiquidHandler) {
 		m := map[string]bool{}
 		plate := vlh.GetObjectAt(plate_loc).(*wtype.Plate)
 		errs := []string{}
@@ -1223,7 +1220,7 @@ func plateAssertion(plate_loc string, wells []wellDesc) *AssertionFn {
 			m[wd.position] = true
 			wc := wtype.MakeWellCoords(wd.position)
 			well := plate.GetChildByAddress(wc).(*wtype.LHWell)
-			c := well.Contents()
+			c := well.Contents(idGen)
 			if fmt.Sprintf("%.2f", c.Vol) != fmt.Sprintf("%.2f", wd.volume) || wd.liquid_type != c.Name() {
 				errs = append(errs, fmt.Sprintf("Expected %.2ful of %s in well %s, found %.2ful of %s",
 					wd.volume, wd.liquid_type, wd.position, c.Vol, c.Name()))
@@ -1232,7 +1229,7 @@ func plateAssertion(plate_loc string, wells []wellDesc) *AssertionFn {
 		//now check that all the other wells are empty
 		for _, row := range plate.Rows {
 			for _, well := range row {
-				if c := well.Contents(); !m[well.Crds.FormatA1()] && !c.IsZero() {
+				if c := well.Contents(idGen); !m[well.Crds.FormatA1()] && !c.IsZero() {
 					errs = append(errs, fmt.Sprintf("Expected empty well at %s, instead %s of %s",
 						well.Crds.FormatA1(), c.Volume(), c.Name()))
 				}
@@ -1243,7 +1240,6 @@ func plateAssertion(plate_loc string, wells []wellDesc) *AssertionFn {
 			t.Errorf("plateAssertion failed: errors were:\n%s", strings.Join(errs, "\n"))
 		}
 	}
-	return &ret
 }
 
 /*
@@ -1253,10 +1249,10 @@ func plateAssertion(plate_loc string, wells []wellDesc) *AssertionFn {
 type SimulatorTest struct {
 	Name           string
 	Props          *liquidhandling.LHProperties
-	Setup          []*SetupFn
+	Setup          []SetupFn
 	Instructions   []TestRobotInstruction
 	ExpectedErrors []string
-	Assertions     []*AssertionFn
+	Assertions     []AssertionFn
 }
 
 func (self *SimulatorTest) compareErrors(t *testing.T, actual []simulator.SimulationError) {
@@ -1282,11 +1278,12 @@ func (self *SimulatorTest) compareErrors(t *testing.T, actual []simulator.Simula
 }
 
 func (self *SimulatorTest) Run(t *testing.T) {
-
+	// Don't use "testing" because of possibility of namespace collision
+	idGen := id.NewIDGenerator("SimulatorTest")
 	if self.Props == nil {
-		self.Props = defaultLHProperties()
+		self.Props = defaultLHProperties(idGen)
 	}
-	vlh, err := NewVirtualLiquidHandler(self.Props, nil)
+	vlh, err := NewVirtualLiquidHandler(idGen, self.Props, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1294,7 +1291,7 @@ func (self *SimulatorTest) Run(t *testing.T) {
 	//do setup
 	if self.Setup != nil {
 		for _, setup_fn := range self.Setup {
-			(*setup_fn)(vlh)
+			setup_fn(vlh)
 		}
 	}
 
@@ -1315,7 +1312,7 @@ func (self *SimulatorTest) Run(t *testing.T) {
 	//check assertions
 	if self.Assertions != nil {
 		for _, a := range self.Assertions {
-			(*a)(t, vlh)
+			a(t, vlh)
 		}
 	}
 }

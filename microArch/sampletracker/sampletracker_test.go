@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 func assertLocation(t *testing.T, st *SampleTracker, id string, eloc string, eok bool) {
@@ -12,14 +13,14 @@ func assertLocation(t *testing.T, st *SampleTracker, id string, eloc string, eok
 	}
 }
 
-func getPlateForTest() *wtype.Plate {
+func getPlateForTest(idGen *id.IDGenerator) *wtype.Plate {
 	cone := wtype.NewShape(wtype.CylinderShape, "mm", 5.5, 5.5, 20.4)
-	welltype := wtype.NewLHWell("ul", 200, 5, cone, wtype.UWellBottom, 5.5, 5.5, 20.4, 1.4, "mm")
-	return wtype.NewLHPlate("pcrplate_skirted_riser", "Unknown", 8, 12, wtype.Coordinates3D{X: 127.76, Y: 85.48, Z: 25.7}, welltype, 9, 9, 0.0, 0.0, 38.5)
+	welltype := wtype.NewLHWell(idGen, "ul", 200, 5, cone, wtype.UWellBottom, 5.5, 5.5, 20.4, 1.4, "mm")
+	return wtype.NewLHPlate(idGen, "pcrplate_skirted_riser", "Unknown", 8, 12, wtype.Coordinates3D{X: 127.76, Y: 85.48, Z: 25.7}, welltype, 9, 9, 0.0, 0.0, 38.5)
 }
 
-func getLiquidForTest(name string, volume float64) *wtype.Liquid {
-	ret := wtype.NewLHComponent()
+func getLiquidForTest(idGen *id.IDGenerator, name string, volume float64) *wtype.Liquid {
+	ret := wtype.NewLHComponent(idGen)
 	ret.CName = name
 	ret.Vol = volume
 
@@ -73,14 +74,15 @@ func TestUpdateIDOfAfterLocation(t *testing.T) {
 }
 
 func TestInputPlates(t *testing.T) {
-	p := getPlateForTest()
+	idGen := id.NewIDGenerator("testing")
+	p := getPlateForTest(idGen)
 
 	for it := wtype.NewAddressIterator(p, wtype.ColumnWise, wtype.TopToBottom, wtype.LeftToRight, false); it.Valid(); it.Next() {
 		well := p.GetChildByAddress(it.Curr()).(*wtype.LHWell)
-		cmp := getLiquidForTest("water", 100.0)
+		cmp := getLiquidForTest(idGen, "water", 100.0)
 		cmp.ID = it.Curr().FormatA1()
 
-		if err := well.SetContents(cmp); err != nil {
+		if err := well.SetContents(idGen, cmp); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -91,7 +93,7 @@ func TestInputPlates(t *testing.T) {
 		t.Errorf("new sample tracker had %d input plates", got)
 	}
 
-	st.SetInputPlate(p)
+	st.SetInputPlate(idGen, p)
 
 	if inputs := st.GetInputPlates(); len(inputs) != 1 {
 		t.Errorf("expected one input plate, got %d", len(inputs))
@@ -104,7 +106,7 @@ func TestInputPlates(t *testing.T) {
 				t.Errorf("Well %s wasn't marked as user allocated", well)
 			}
 
-			cmp := well.Contents()
+			cmp := well.Contents(idGen)
 			assertLocation(t, st, cmp.ID, cmp.Loc, true)
 		}
 	}

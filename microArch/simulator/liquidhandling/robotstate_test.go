@@ -1,9 +1,11 @@
 package liquidhandling
 
 import (
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"strings"
 	"testing"
+
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 type tipCoordsTest struct {
@@ -38,14 +40,15 @@ func RTLTipBehaviour() wtype.TipLoadingBehaviour {
 }
 
 func (self *tipCoordsTest) run(t *testing.T) {
-	tb := defaultLHTipbox("testbox")
+	idGen := id.NewIDGenerator("testing")
+	tb := defaultLHTipbox(idGen, "testbox")
 
 	for _, tipAddrS := range self.tipsMissing {
 		wc := wtype.MakeWellCoords(tipAddrS)
 		tb.RemoveTip(wc)
 	}
 
-	adaptor := NewAdaptorState("", false, 8, wtype.Coordinates3D{}, 0.0, &wtype.LHChannelParameter{Orientation: self.orientation}, self.tipBehaviour)
+	adaptor := NewAdaptorState(idGen, "", false, 8, wtype.Coordinates3D{}, 0.0, &wtype.LHChannelParameter{Orientation: self.orientation}, self.tipBehaviour)
 
 	out, err := adaptor.GetTipCoordsToLoad(tb, self.num)
 	if err != nil {

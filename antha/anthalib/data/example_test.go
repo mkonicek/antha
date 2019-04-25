@@ -490,6 +490,47 @@ func ExampleTable_Join_inner() {
 	// |0|doubloon|      1|    1200|    doubloon|                 0.5|
 }
 
+func ExampleTable_Append() {
+	morePirateBooty, _ := pirateBooty.Append(NewTable(
+		Must().NewSeriesFromSlice("Name", []string{"piastre"}, nil),
+		Must().NewSeriesFromSlice("Price", []float64{1.5}, nil),
+		Must().NewSeriesFromSlice("Quantity", []int64{1000}, nil),
+	))
+	fmt.Println(morePirateBooty.ToRows())
+	// Output: 5 Row(s):
+	// | |    Name|  Price|Quantity|
+	// | |  string|float64|   int64|
+	// -----------------------------
+	// |0|doubloon|      1|    1200|
+	// |1|    grog|  <nil>|      44|
+	// |2| cutlass|    5.5|      30|
+	// |3|   chest|    600|       2|
+	// |4| piastre|    1.5|    1000|
+}
+
+func ExampleAppendMany() {
+	morePirateBooty, _ := AppendMany(pirateBooty, NewTable(
+		Must().NewSeriesFromSlice("Name", []string{"piastre"}, nil),
+		Must().NewSeriesFromSlice("Price", []float64{1.5}, nil),
+		Must().NewSeriesFromSlice("Quantity", []int64{1000}, nil),
+	), NewTable(
+		Must().NewSeriesFromSlice("Name", []string{"guinea"}, nil),
+		Must().NewSeriesFromSlice("Price", []float64{0.5}, nil),
+		Must().NewSeriesFromSlice("Quantity", []int64{100}, nil),
+	))
+	fmt.Println(morePirateBooty.ToRows())
+	// Output: 6 Row(s):
+	// | |    Name|  Price|Quantity|
+	// | |  string|float64|   int64|
+	// -----------------------------
+	// |0|doubloon|      1|    1200|
+	// |1|    grog|  <nil>|      44|
+	// |2| cutlass|    5.5|      30|
+	// |3|   chest|    600|       2|
+	// |4| piastre|    1.5|    1000|
+	// |5|  guinea|    0.5|     100|
+}
+
 func ExampleTable_Foreach_wholerow() {
 	nonNullCount := 0
 	pirateBooty.Foreach().By(func(r Row) {

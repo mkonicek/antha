@@ -440,6 +440,12 @@ func (t *Table) Join() *JoinSelection {
 	return &JoinSelection{t: t}
 }
 
+// Append concatenates two tables vertically.
+// The tables schemas must be identical (except columns names; the output table inherits columns names from the first input table).
+func (t *Table) Append(other *Table) (*Table, error) {
+	return AppendMany(t, other)
+}
+
 // Foreach iterates over a subset of columns of a table using a user-defined function.
 // May be useful for:
 //

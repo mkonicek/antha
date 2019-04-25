@@ -710,6 +710,81 @@ func TestJoin(t *testing.T) {
 	})
 }
 
+func TestAppend(t *testing.T) {
+	runSubTests(t, func(t *testing.T, makeSeries makeSeriesType) {
+		// Append
+		t1 := NewTable(
+			makeSeries("a", []int64{1, 2}, nil),
+			makeSeries("b", []float64{3, 4}, nil),
+		)
+		t2 := NewTable(
+			makeSeries("c", []int64{10}, nil),
+			makeSeries("d", []float64{20}, nil),
+		)
+		appended := t1.Must().Append(t2)
+		appendedRef := NewTable(
+			makeSeries("a", []int64{1, 2, 10}, nil),
+			makeSeries("b", []float64{3, 4, 20}, nil),
+		)
+		assertEqual(t, appendedRef, appended, "Append")
+
+		// AppendMany
+		t3 := NewTable(
+			makeSeries("e", []int64{100}, nil),
+			makeSeries("f", []float64{200}, nil),
+		)
+		appended = t1.Must().Append(t2).Must().Append(t3)
+		appendedRef = NewTable(
+			makeSeries("a", []int64{1, 2, 10, 100}, nil),
+			makeSeries("b", []float64{3, 4, 20, 200}, nil),
+		)
+		assertEqual(t, appendedRef, appended, "AppendMany")
+
+		// t1.Append(t2).Append(t3) == AppendMany(t1, t2, t3)
+		appended = t1.Must().Append(t2).Must().Append(t3)
+		assertEqual(t, appendedRef, appended, "Append*Append differs from AppendMany internally")
+
+		// the result of t1.Append(t2).Append(t3) should be similar to AppendMany(t1, t2, t3) internally as well
+		// (i.e. it should create a single node instead of multiple ones)
+		if len(appended.series[0].meta.(*appendSeriesMeta).appendTableMeta.sourceTables) != 3 {
+			t.Error("t1.Append(t2).Append(t3) optimization doesn't work")
+		}
+
+		// append an empty table
+		appended = t1.Must().Append(NewTable(
+			makeSeries("a", []int64{}, nil),
+			makeSeries("b", []float64{}, nil),
+		))
+		assertEqual(t, t1, appended, "Append an empty table")
+
+		// error cases
+
+		_, err := AppendMany()
+		if err == nil {
+			t.Error("no err, AppendMany empty tables list")
+		}
+
+		_, err = NewTable(
+			makeSeries("a", []float64{1}, nil),
+		).Append(NewTable(
+			makeSeries("a", []int64{1}, nil),
+		))
+		if err == nil {
+			t.Error("no err, Append tables with different columns types")
+		}
+
+		_, err = NewTable(
+			makeSeries("a", []float64{1}, nil),
+		).Append(NewTable(
+			makeSeries("a", []float64{1}, nil),
+			makeSeries("b", []int64{1}, nil),
+		))
+		if err == nil {
+			t.Error("no err, Append tables with different number of columns")
+		}
+	})
+}
+
 func TestForeach(t *testing.T) {
 	runSubTests(t, func(t *testing.T, makeSeries makeSeriesType) {
 		table := NewTable(

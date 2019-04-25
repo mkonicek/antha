@@ -746,7 +746,7 @@ func TestAppend(t *testing.T) {
 
 		// the result of t1.Append(t2).Append(t3) should be similar to AppendMany(t1, t2, t3) internally as well
 		// (i.e. it should create a single node instead of multiple ones)
-		if len(appended.series[0].meta.(*appendSeriesMeta).appendTableMeta.sourceTables) != 3 {
+		if len(appended.series[0].meta.(*appendSeriesMeta).sources) != 3 {
 			t.Error("t1.Append(t2).Append(t3) optimization doesn't work")
 		}
 

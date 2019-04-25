@@ -92,10 +92,7 @@ func readTable(r *readState, err error) (*data.Table, error) {
 	}
 
 	// reading Parquet file metadata
-	metadata, err := r.readMetadata()
-	if err != nil {
-		return nil, err
-	}
+	metadata := r.reader.Footer
 
 	// transforming Parquet file metadata into parquetSchema
 	schema, err := schemaFromParquetMetadata(metadata, r.columnNames)
@@ -131,17 +128,6 @@ func readTable(r *readState, err error) (*data.Table, error) {
 
 	// building a Table
 	return builder.Build(), nil
-}
-
-// reads Parquet file metadata
-func (r *readState) readMetadata() (*parquet.FileMetaData, error) {
-	// seeking to the beginning of the file again
-	// _, err := r.reader.PFile.Seek(0, io.SeekStart)
-	// if err != nil {
-	// 	return nil, errors.Wrap(err, "ParquetFile.Seek")
-	// }
-
-	return r.reader.Footer, nil
 }
 
 // Reads rows from Parquet file

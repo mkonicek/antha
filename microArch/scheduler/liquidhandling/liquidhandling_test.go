@@ -1105,6 +1105,7 @@ func TestExecutionPlanning(t *testing.T) {
 						wc := wtype.WellCoords{X: x, Y: y}
 						mix := getTestMix([]*wtype.Liquid{split.Outputs[0], diluentSample}, wc.FormatA1())
 
+						mix.Outputs[0].SetName(fmt.Sprintf("theDilutionAt%s", wc.FormatA1()))
 						lastStock = mix.Outputs[0]
 
 						instructions = append(instructions, mix, split)
@@ -1117,6 +1118,8 @@ func TestExecutionPlanning(t *testing.T) {
 			Assertions: Assertions{
 				NumberOfAssertion(liquidhandling.ASP, 4), //full multichanneling - 2 ops per dilution row
 				NumberOfAssertion(liquidhandling.DSP, 4), //full multichanneling
+				LayoutSummaryAssertion("test/dilution.layout.json"),
+				ActionsSummaryAssertion("test/dilution.actions.json"),
 			},
 		},
 		{

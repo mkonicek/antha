@@ -775,6 +775,10 @@ func newTransferAction(vlh *simulator.VirtualLiquidHandler, act *driver.ITree, t
 			pl := output.PlateLocation()
 			if content, ok := lastUpdate[wellLocation{DeckItemID: pl.ID, Row: pl.Coords.Y, Column: pl.Coords.X}]; ok {
 				content.Name = output.MeaningfulName()
+				// update the name within the virtual liquidhandler so that it persists if the component is aspirated from later
+				if well := vlh.GetWellAt(pl); well != nil {
+					well.Contents().SetName(output.MeaningfulName())
+				}
 			}
 		}
 	}

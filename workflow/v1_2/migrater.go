@@ -136,16 +136,20 @@ func (m *Migrater) migrateGlobalMixerConfig() error {
 	}
 
 	customPolicyRuleSet := m.Old.Config.CustomPolicyRuleSet
-	if customPolicyRuleSet == nil {
-		customPolicyRuleSet = wtype.NewLHPolicyRuleSet()
-	}
 	if m.Old.Config.LiquidHandlingPolicyXlsxJmpFile != nil {
 		policyMap, err := liquidtype.PolicyMakerFromBytes(m.Old.Config.LiquidHandlingPolicyXlsxJmpFile, wtype.PolicyName(liquidtype.BASEPolicy))
 		if err != nil {
 			return err
 		}
-		for name, policy := range policyMap {
-			customPolicyRuleSet.Policies[name] = policy
+		lhpr := wtype.NewLHPolicyRuleSet()
+		lhpr, err = wtype.AddUniversalRules(lhpr, policyMap)
+		if err != nil {
+			return err
+		}
+		if customPolicyRuleSet == nil {
+			customPolicyRuleSet = lhpr
+		} else {
+			customPolicyRuleSet.MergeWith(lhpr)
 		}
 	}
 

@@ -4,7 +4,6 @@ import (
 	"reflect"
 
 	"github.com/pkg/errors"
-	"github.com/willf/bitset"
 )
 
 // Data sets using go native types.
@@ -19,15 +18,14 @@ func newNativeSeriesFromSlice(col ColumnName, values interface{}, notNull []bool
 		return nil, errors.Errorf("can't use input of type %v, expecting slice", rValue.Kind())
 	}
 
-	notNullBits, err := newNotNullMask(rValue.Len(), notNull)
+	notNull, err := makeNotNullMask(rValue.Len(), notNull)
 	if err != nil {
 		return nil, err
 	}
 
 	m := &nativeSeriesMeta{
 		rValue:  rValue,
-		len:     rValue.Len(),
-		notNull: notNullBits,
+		notNull: notNull,
 	}
 
 	return &Series{
@@ -47,13 +45,17 @@ func mustNewNativeSeriesFromSlice(col ColumnName, values interface{}, notNull []
 // native series metadata (used for both typed and generic native series)
 type nativeSeriesMeta struct {
 	rValue  reflect.Value
-	len     int
-	notNull notNullMask
+	notNull []bool
 }
 
 func (m *nativeSeriesMeta) IsMaterialized() bool { return true }
-func (m *nativeSeriesMeta) ExactSize() int       { return m.len }
-func (m *nativeSeriesMeta) MaxSize() int         { return m.len }
+func (m *nativeSeriesMeta) ExactSize() int       { return m.len() }
+func (m *nativeSeriesMeta) MaxSize() int         { return m.len() }
+
+// return the slice length
+func (m *nativeSeriesMeta) len() int {
+	return len(m.notNull)
+}
 
 // a generic (but slow) native series iterator generator
 func (m *nativeSeriesMeta) fallbackRead(_ *seriesIterCache) iterator {
@@ -73,57 +75,32 @@ type nativeSliceSerIter struct {
 
 func (i *nativeSliceSerIter) Next() bool {
 	i.pos++
-	return i.pos < i.len
+	return i.pos < i.len()
 }
 
 // index into the slice reflectively (slow)
 func (i *nativeSliceSerIter) Value() interface{} {
-	if !i.notNull.Test(i.pos) {
+	if !i.notNull[i.pos] {
 		return nil
 	}
 	return i.rValue.Index(i.pos).Interface()
 }
 
-// notNullMask is a bitset exposing non-null values of a slice series
-type notNullMask struct {
-	bitset.BitSet
-}
-
-func newNotNullMask(length int, notNull []bool) (notNullMask, error) {
-	if notNull == nil {
-		// nil mask is considered a full mask
-		return notNullMask{*bitset.New(uint(length)).Complement()}, nil
+// makes a correct nullability mask from the one supplied by user
+func makeNotNullMask(length int, notNull []bool) ([]bool, error) {
+	if notNull != nil {
+		// if the mask we are given is not null, then just checking if its size is correct
+		if len(notNull) != length {
+			return nil, errors.Errorf("unexpected nulls mask length: expecting %d, given %d", length, len(notNull))
+		}
+	} else {
+		// if the mask we are given is null, then creating a full mask
+		notNull = make([]bool, length)
+		for i := range notNull {
+			notNull[i] = true
+		}
 	}
-	if len(notNull) != length {
-		return notNullMask{}, errors.Errorf("unexpected nulls mask length: expecting %d, given %d", length, len(notNull))
-	}
-	mask := notNullMask{*bitset.New(uint(length))}
-	for i, bit := range notNull {
-		mask.SetTo(i, bit)
-	}
-	return mask, nil
-}
-
-func (m *notNullMask) Set(index int) {
-	m.BitSet.Set(uint(index))
-}
-
-func (m *notNullMask) Clear(index int) {
-	m.BitSet.Clear(uint(index))
-}
-
-func (m *notNullMask) SetTo(index int, bit bool) {
-	m.BitSet.SetTo(uint(index), bit)
-}
-
-func (m *notNullMask) Test(index int) bool {
-	return m.BitSet.Test(uint(index))
-}
-
-func (m *notNullMask) Swap(i, j int) {
-	tmp := m.Test(i)
-	m.SetTo(i, m.Test(j))
-	m.SetTo(j, tmp)
+	return notNull, nil
 }
 
 // fallbackNativeSeriesBuilder implements a generic (but slow) series builder using a reflected slice

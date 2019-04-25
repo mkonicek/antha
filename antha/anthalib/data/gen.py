@@ -389,7 +389,7 @@ func (m *nativeSeriesMeta) read{{ t['Type'] }}(_ *seriesIterCache) iterator {
 
 type nativeSeriesIter{{ t['Type'] }} struct {
 	data    []{{ t['Raw'] }}
-	notNull notNullMask
+	notNull []bool
 	pos     int
 }
 
@@ -399,7 +399,7 @@ func (i *nativeSeriesIter{{ t['Type'] }}) Next() bool {
 }
 
 func (i *nativeSeriesIter{{ t['Type'] }}) {{ t['Type'] }}() ({{ t['Raw'] }}, bool) {
-	return i.data[i.pos], i.notNull.Test(i.pos)
+	return i.data[i.pos], i.notNull[i.pos]
 }
 
 func (i *nativeSeriesIter{{ t['Type'] }}) Value() interface{} {
@@ -657,7 +657,7 @@ func newNativeCompareFunc{{ t['Type'] }}(nativeMeta *nativeSeriesMeta, asc bool)
 	notNull := nativeMeta.notNull
 
 	return func(i, j int) int {
-		return compare{{ t['Type'] }}(data[i], notNull.Test(i), data[j], notNull.Test(j), asc)
+		return compare{{ t['Type'] }}(data[i], notNull[i], data[j], notNull[j], asc)
 	}
 }
 
@@ -688,7 +688,7 @@ func newNativeSwapFunc{{ t['Type'] }}(nativeMeta *nativeSeriesMeta) swapFunc {
 	notNull := nativeMeta.notNull
 	return func(i, j int) {
 		data[i], data[j] = data[j], data[i]
-		notNull.Swap(i, j)
+		notNull[i], notNull[j] = notNull[j], notNull[i]
 	}
 }
 {% endfor %}

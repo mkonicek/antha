@@ -62,6 +62,14 @@ func (r Rows) String() string {
 	return fmt.Sprintf("%d Row(s):\n%s", len(cellVals)-hdrSize, builder.String())
 }
 
+// String formats the Row as the Rows containing a single row
+func (r Row) String() string {
+	return Rows{
+		Data:   []Row{r},
+		Schema: r.Schema(),
+	}.String()
+}
+
 // String formats the schema as a list of columns names and types (each from a new line).
 func (s Schema) String() string {
 	builder := strings.Builder{}

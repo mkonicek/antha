@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// ForeachSelection encapsulates the table to iterate with Apply.
+// ForeachSelection encapsulates the table to iterate with Foreach.
 type ForeachSelection struct {
 	t *Table
 }

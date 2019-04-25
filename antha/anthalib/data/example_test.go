@@ -565,6 +565,60 @@ func ExampleTable_Foreach_specialized() {
 	// Output: Total quantity: 1276
 }
 
+func ExampleTable_ForeachKey() {
+	_ = pirateBooty.ForeachKey("Name").By(func(key Row, partition *Table) {
+		fmt.Printf("Key: %v\n", key)
+		fmt.Printf("Partition: %v\n", partition.ToRows())
+	})
+	// Output: Key: 1 Row(s):
+	// | |  Name|
+	// | |string|
+	// ----------
+	// |0|  grog|
+	//
+	// Partition: 1 Row(s):
+	// | |  Price|Quantity|
+	// | |float64|   int64|
+	// --------------------
+	// |0|  <nil>|      44|
+	//
+	// Key: 1 Row(s):
+	// | |    Name|
+	// | |  string|
+	// ------------
+	// |1|doubloon|
+	//
+	// Partition: 1 Row(s):
+	// | |  Price|Quantity|
+	// | |float64|   int64|
+	// --------------------
+	// |0|      1|    1200|
+	//
+	// Key: 1 Row(s):
+	// | |   Name|
+	// | | string|
+	// -----------
+	// |2|cutlass|
+	//
+	// Partition: 1 Row(s):
+	// | |  Price|Quantity|
+	// | |float64|   int64|
+	// --------------------
+	// |0|    5.5|      30|
+	//
+	// Key: 1 Row(s):
+	// | |  Name|
+	// | |string|
+	// ----------
+	// |3| chest|
+	//
+	// Partition: 1 Row(s):
+	// | |  Price|Quantity|
+	// | |float64|   int64|
+	// --------------------
+	// |0|    600|       2|
+}
+
 func ExampleTable_ToStructs() {
 	type price struct {
 		Price float64

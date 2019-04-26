@@ -10,8 +10,12 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/driver/liquidhandling/client"
 	"github.com/antha-lang/antha/driver/liquidhandling/server"
+	"github.com/antha-lang/antha/laboratory"
+	"github.com/antha-lang/antha/laboratory/effects/id"
+	"github.com/antha-lang/antha/laboratory/testlab"
 	"github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
+	"github.com/antha-lang/antha/workflow"
 )
 
 func assertOutputsEqual(t *testing.T, expected, got []string) {
@@ -74,8 +78,8 @@ func (td *testDriver) GetOutputFile() ([]byte, driver.CommandStatus) {
 	return []byte(strings.Join(td.callList, "\n")), r
 }
 
-func (td *testDriver) GetCapabilities() (liquidhandling.LHProperties, driver.CommandStatus) {
-	return liquidhandling.LHProperties{}, td.call("GetCapabilities()")
+func (td *testDriver) Configure(simId workflow.BasicId, wfName string, devId workflow.DeviceInstanceID, data []byte) (*liquidhandling.LHProperties, driver.CommandStatus) {
+	return &liquidhandling.LHProperties{}, td.call(fmt.Sprintf("Configure(%v, %v, %v, %v)", simId, wfName, devId, data))
 }
 
 type HighLevelTestDriver struct {
@@ -188,13 +192,14 @@ func (tests HighLevelConnectionTests) Run(t *testing.T) {
 }
 
 func TestHighLevelConnection(t *testing.T) {
-	plates := []wtype.LHObject{makePlateForTest(), makePlateForTest()}
+	idGen := id.NewIDGenerator(t.Name())
+	plates := []wtype.LHObject{makePlateForTest(idGen), makePlateForTest(idGen)}
 	HighLevelConnectionTests{
 		{
 			Name: "simple",
 			Calls: func(drv liquidhandling.HighLevelLiquidhandlingDriver) {
 				drv.Initialize()
-				drv.GetCapabilities()
+				drv.Configure(workflow.BasicId("simId"), "myWorkflowName", workflow.DeviceInstanceID("myDeviceId"), nil)
 				drv.AddPlateTo("position_1", plates[0], "firstPlate")
 				drv.AddPlateTo("position_2", plates[1], "secondPlate")
 				drv.Transfer([]string{"the crown jewels"}, []string{"london"}, []string{"tower of"}, []string{"me"}, []string{"head"}, []float64{100.0})
@@ -202,14 +207,14 @@ func TestHighLevelConnection(t *testing.T) {
 				drv.Finalize()
 			},
 			ExpectedCalls: []string{
-				"Initialize()",
-				"GetCapabilities()",
-				"AddPlateTo(\"position_1\", *wtype.Plate, \"firstPlate\")",
-				"AddPlateTo(\"position_2\", *wtype.Plate, \"secondPlate\")",
-				"Transfer([the crown jewels], [london], [tower of], [me], [head], [100])",
-				"Message(100, \"all your joules\", \"are belong to me\", false)",
-				"Finalize()",
-				"GetOutputFile()",
+				`Initialize()`,
+				`Configure(simId, myWorkflowName, myDeviceId, [])`,
+				`AddPlateTo("position_1", *wtype.Plate, "firstPlate")`,
+				`AddPlateTo("position_2", *wtype.Plate, "secondPlate")`,
+				`Transfer([the crown jewels], [london], [tower of], [me], [head], [100])`,
+				`Message(100, "all your joules", "are belong to me", false)`,
+				`Finalize()`,
+				`GetOutputFile()`,
 			},
 			ExpectedPlates: plates,
 		},
@@ -263,18 +268,19 @@ func (tests LowLevelConnectionTests) Run(t *testing.T) {
 }
 
 func TestLowLevelConnection(t *testing.T) {
+	idGen := id.NewIDGenerator(t.Name())
 	plates := []wtype.LHObject{
-		makeTipwasteForTest(),
-		makeTipboxForTest(),
-		makePlateForTest(),
-		makePlateForTest(),
+		makeTipwasteForTest(idGen),
+		makeTipboxForTest(idGen),
+		makePlateForTest(idGen),
+		makePlateForTest(idGen),
 	}
 	LowLevelConnectionTests{
 		{
 			Name: "simple",
 			Calls: func(drv liquidhandling.LowLevelLiquidhandlingDriver) {
 				drv.Initialize()
-				drv.GetCapabilities()
+				drv.Configure(workflow.BasicId("simId"), "myWorkflowName", workflow.DeviceInstanceID("myDeviceId"), nil)
 				drv.AddPlateTo("position_1", plates[0], "tipwaste")
 				drv.AddPlateTo("position_2", plates[1], "tipbox")
 				drv.AddPlateTo("position_3", plates[2], "firstPlate")
@@ -291,63 +297,68 @@ func TestLowLevelConnection(t *testing.T) {
 				drv.Finalize()
 			},
 			ExpectedCalls: []string{
-				"Initialize()",
-				"GetCapabilities()",
-				"AddPlateTo(\"position_1\", *wtype.LHTipwaste, \"tipwaste\")",
-				"AddPlateTo(\"position_2\", *wtype.LHTipbox, \"tipbox\")",
-				"AddPlateTo(\"position_3\", *wtype.Plate, \"firstPlate\")",
-				"AddPlateTo(\"position_4\", *wtype.Plate, \"secondPlate\")",
-				"Move([position_2], [A1], [1], [0], [0], [5], [tipbox], 0)",
-				"LoadTips([0], 0, 1, [tipbox], [position_2], [A1])",
-				"Move([position_3], [A1], [1], [0], [0], [5], [tipbox], 0)",
-				"Aspirate([100], [false], 0, 1, [plate], [water], [false])",
-				"Move([position_4], [A1], [1], [0], [0], [5], [tipbox], 0)",
-				"Dispense([100], [false], 0, 1, [plate], [wine], [false])",
-				"Move([position_1], [A1], [1], [0], [0], [5], [tipbox], 0)",
-				"UnloadTips([0], 0, 1, [tipbox], [position_2], [A1])",
-				"Message(100, \"from water\", \"into wine\", false)",
-				"Finalize()",
-				"GetOutputFile()",
+				`Initialize()`,
+				`Configure(simId, myWorkflowName, myDeviceId, [])`,
+				`AddPlateTo("position_1", *wtype.LHTipwaste, "tipwaste")`,
+				`AddPlateTo("position_2", *wtype.LHTipbox, "tipbox")`,
+				`AddPlateTo("position_3", *wtype.Plate, "firstPlate")`,
+				`AddPlateTo("position_4", *wtype.Plate, "secondPlate")`,
+				`Move([position_2], [A1], [1], [0], [0], [5], [tipbox], 0)`,
+				`LoadTips([0], 0, 1, [tipbox], [position_2], [A1])`,
+				`Move([position_3], [A1], [1], [0], [0], [5], [tipbox], 0)`,
+				`Aspirate([100], [false], 0, 1, [plate], [water], [false])`,
+				`Move([position_4], [A1], [1], [0], [0], [5], [tipbox], 0)`,
+				`Dispense([100], [false], 0, 1, [plate], [wine], [false])`,
+				`Move([position_1], [A1], [1], [0], [0], [5], [tipbox], 0)`,
+				`UnloadTips([0], 0, 1, [tipbox], [position_2], [A1])`,
+				`Message(100, "from water", "into wine", false)`,
+				`Finalize()`,
+				`GetOutputFile()`,
 			},
 			ExpectedPlates: plates,
 		},
 	}.Run(t)
 }
 
-type LLGetCapabilities struct {
+type LLConfigure struct {
 	LowLevelTestDriver
 	Props *liquidhandling.LHProperties
 }
 
-func (gc *LLGetCapabilities) GetCapabilities() (liquidhandling.LHProperties, driver.CommandStatus) {
-	return *gc.Props, driver.CommandOk()
+func (gc *LLConfigure) Configure(simId workflow.BasicId, wfName string, devId workflow.DeviceInstanceID, data []byte) (*liquidhandling.LHProperties, driver.CommandStatus) {
+	return gc.Props, driver.CommandOk()
 }
 
 func TestGetCapabilities(t *testing.T) {
-	expected := MakeGilsonWithPlatesAndTipboxesForTest("")
-	for _, tip := range expected.Tips { //tip parents not preserved
-		tip.ClearParent()
-	}
+	testlab.WithTestLab(t, "", &testlab.TestElementCallbacks{
+		Steps: func(lab *laboratory.Laboratory) error {
+			expected := MakeGilsonWithPlatesAndTipboxesForTest(lab, "")
+			for _, tip := range expected.Tips { //tip parents not preserved
+				tip.ClearParent()
+			}
 
-	go func() {
-		if srv, err := server.NewLowLevelServer(&LLGetCapabilities{Props: expected}); err != nil {
-			t.Error(err)
-		} else if err := srv.Listen(3002); err != nil {
-			t.Error(err)
-		}
-	}()
+			go func() {
+				if srv, err := server.NewLowLevelServer(&LLConfigure{Props: expected}); err != nil {
+					t.Error(err)
+				} else if err := srv.Listen(3002); err != nil {
+					t.Error(err)
+				}
+			}()
 
-	// give the server a moment to get set up in the thread
-	time.Sleep(500 * time.Millisecond)
+			// give the server a moment to get set up in the thread
+			time.Sleep(500 * time.Millisecond)
 
-	c, err := client.NewLowLevelClient(":3002")
-	if err != nil {
-		t.Error(err)
-	}
+			c, err := client.NewLowLevelClient(":3002")
+			if err != nil {
+				return err
+			}
 
-	if got, status := c.GetCapabilities(); !status.Ok() {
-		t.Errorf("got bad status: %v", status)
-	} else if !reflect.DeepEqual(expected, &got) {
-		t.Errorf("Proerties changed:\ne: %+v\ng:%+v", expected, got)
-	}
+			if got, status := c.Configure(workflow.BasicId("simId"), "myWorkflowName", workflow.DeviceInstanceID("myDeviceId"), nil); !status.Ok() {
+				return fmt.Errorf("got bad status: %v", status)
+			} else if !reflect.DeepEqual(expected, got) {
+				return fmt.Errorf("Proerties changed:\ne: %+v\ng:%+v", expected, got)
+			}
+			return nil
+		},
+	})
 }

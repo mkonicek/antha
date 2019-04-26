@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/antha-lang/antha/graph"
+	"github.com/antha-lang/antha/instructions"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/laboratory/effects/id"
 	"github.com/antha-lang/antha/target"
@@ -17,15 +18,15 @@ import (
 
 // Intermediate representation.
 type ir struct {
-	Root         effects.Node
-	Graph        *effects.Graph                      // Graph of effects.Nodes
-	Commands     graph.Graph                         // DAG of effects.Commands (and potentially BundleExpr root)
-	DeviceDeps   graph.QGraph                        // Dependencies of druns
-	reachingUses map[effects.Node][]*effects.UseComp // Reaching comps
-	assignment   map[effects.Node]*drun              // From Commands/Root to device runs
-	output       map[*drun][]effects.Inst            // Output of device-specific planners
-	initializers []effects.Inst                      // Intializers
-	finalizers   []effects.Inst                      // Finalizers in reverse order
+	Root         instructions.Node
+	Graph        *instructions.Graph                           // Graph of instructions.Nodes
+	Commands     graph.Graph                                   // DAG of instructions.Commands (and potentially BundleExpr root)
+	DeviceDeps   graph.QGraph                                  // Dependencies of druns
+	reachingUses map[instructions.Node][]*instructions.UseComp // Reaching comps
+	assignment   map[instructions.Node]*drun                   // From Commands/Root to device runs
+	output       map[*drun][]instructions.Inst                 // Output of device-specific planners
+	initializers []instructions.Inst                           // Intializers
+	finalizers   []instructions.Inst                           // Finalizers in reverse order
 }
 
 // Print out IR for debugging
@@ -39,14 +40,14 @@ func (a *ir) Print(g graph.Graph, out io.Writer) error {
 
 	labelers := []func(interface{}) string{
 		func(x interface{}) string {
-			c, ok := x.(*effects.Command)
+			c, ok := x.(*instructions.Command)
 			if !ok {
 				return ""
 			}
 			return fmt.Sprintf("%T", c.Inst)
 		},
 		func(x interface{}) string {
-			n, ok := x.(effects.Node)
+			n, ok := x.(instructions.Node)
 			if !ok {
 				return ""
 			}
@@ -57,12 +58,12 @@ func (a *ir) Print(g graph.Graph, out io.Writer) error {
 			return ""
 		},
 		func(x interface{}) string {
-			n, ok := x.(effects.Node)
+			n, ok := x.(instructions.Node)
 			if !ok {
 				return ""
 			}
 
-			u, ok := n.(*effects.UseComp)
+			u, ok := n.(*instructions.UseComp)
 			if !ok {
 				return ""
 			}
@@ -127,8 +128,8 @@ func (a partitionByHuman) Swap(i, j int) {
 }
 
 func (a partitionByHuman) Less(i, j int) bool {
-	req := effects.Request{
-		Selector: []effects.NameValue{
+	req := instructions.Request{
+		Selector: []instructions.NameValue{
 			target.DriverSelectorV1Human,
 		},
 	}
@@ -152,23 +153,23 @@ func (a partitionByHuman) Less(i, j int) bool {
 // device run.
 func (a *ir) assignDevices(t *target.Target) error {
 	// A bundle's requests is the sum of its children
-	bundleReqs := func(n *effects.Bundle) (reqs []effects.Request) {
+	bundleReqs := func(n *instructions.Bundle) (reqs []instructions.Request) {
 		for i, inum := 0, a.Commands.NumOuts(n); i < inum; i++ {
 			kid := a.Commands.Out(n, i)
-			if c, ok := kid.(*effects.Command); ok {
+			if c, ok := kid.(*instructions.Command); ok {
 				reqs = append(reqs, c.Request)
 			}
 		}
 		return
 	}
 
-	colors := make(map[effects.Node][]effects.Device)
+	colors := make(map[instructions.Node][]effects.Device)
 	for i, inum := 0, a.Commands.NumNodes(); i < inum; i++ {
-		n := a.Commands.Node(i).(effects.Node)
-		var reqs []effects.Request
-		if c, ok := n.(*effects.Command); ok {
+		n := a.Commands.Node(i).(instructions.Node)
+		var reqs []instructions.Request
+		if c, ok := n.(*instructions.Command); ok {
 			reqs = append(reqs, c.Request)
-		} else if b, ok := n.(*effects.Bundle); ok {
+		} else if b, ok := n.(*instructions.Bundle); ok {
 			// Try to find device that can do everything
 			reqs = bundleReqs(b)
 		} else {
@@ -177,7 +178,7 @@ func (a *ir) assignDevices(t *target.Target) error {
 		devices := t.CanCompile(reqs...)
 
 		if len(devices) == 0 {
-			return fmt.Errorf("no device can handle constraints %v", effects.Meet(reqs...))
+			return fmt.Errorf("no device can handle constraints %v", instructions.Meet(reqs...))
 		}
 		sort.Stable(partitionByHuman(devices))
 		colors[n] = devices
@@ -198,7 +199,7 @@ func (a *ir) assignDevices(t *target.Target) error {
 		Tree: a.Commands,
 		Root: a.Root,
 		Colors: func(n graph.Node) (r []int) {
-			for _, d := range colors[n.(effects.Node)] {
+			for _, d := range colors[n.(instructions.Node)] {
 				r = append(r, d2c[d])
 			}
 			return
@@ -211,9 +212,9 @@ func (a *ir) assignDevices(t *target.Target) error {
 		return err
 	}
 
-	ret := make(map[effects.Node]effects.Device)
+	ret := make(map[instructions.Node]effects.Device)
 	for n, idx := range r.Parts {
-		ret[n.(effects.Node)] = devices[idx]
+		ret[n.(instructions.Node)] = devices[idx]
 	}
 
 	a.coalesceDevices(ret)
@@ -222,13 +223,13 @@ func (a *ir) assignDevices(t *target.Target) error {
 }
 
 // Coalesce adjacent devices into the same run of a device
-func (a *ir) coalesceDevices(device map[effects.Node]effects.Device) {
-	run := make(map[effects.Node]*drun)
+func (a *ir) coalesceDevices(device map[instructions.Node]effects.Device) {
+	run := make(map[instructions.Node]*drun)
 
-	kidRun := func(n effects.Node) *drun {
+	kidRun := func(n instructions.Node) *drun {
 		m := make(map[*drun]bool)
 		for i, inum := 0, a.Commands.NumOuts(n); i < inum; i++ {
-			kid := a.Commands.Out(n, i).(effects.Node)
+			kid := a.Commands.Out(n, i).(instructions.Node)
 			m[run[kid]] = true
 			if device[kid] != device[n] {
 				return nil
@@ -249,7 +250,7 @@ func (a *ir) coalesceDevices(device map[effects.Node]effects.Device) {
 		var next []graph.Node
 		newRuns := make(map[effects.Device]*drun)
 		for _, n := range dag.Roots {
-			n := n.(effects.Node)
+			n := n.(instructions.Node)
 
 			myRun := kidRun(n)
 			if myRun == nil {
@@ -277,7 +278,7 @@ func (a *ir) tryPlan(labEffects *effects.LaboratoryEffects, dir string) error {
 	dg := graph.MakeQuotient(graph.MakeQuotientOpt{
 		Graph: a.Commands,
 		Colorer: func(n graph.Node) interface{} {
-			return a.assignment[n.(effects.Node)]
+			return a.assignment[n.(instructions.Node)]
 		},
 	})
 
@@ -287,9 +288,9 @@ func (a *ir) tryPlan(labEffects *effects.LaboratoryEffects, dir string) error {
 	// TODO: When splitting a mix sequence, adjust LHInstructions to place
 	// output samples on the same plate
 
-	cmds := make(map[*drun][]effects.Node)
+	cmds := make(map[*drun][]instructions.Node)
 	for n, d := range a.assignment {
-		c, ok := n.(*effects.Command)
+		c, ok := n.(*instructions.Command)
 		if !ok {
 			continue
 		}
@@ -305,12 +306,12 @@ func (a *ir) tryPlan(labEffects *effects.LaboratoryEffects, dir string) error {
 	}
 	var runs []*drun
 	for _, n := range order {
-		n := dg.Orig(n, 0).(effects.Node)
+		n := dg.Orig(n, 0).(instructions.Node)
 		run := a.assignment[n]
 		runs = append(runs, run)
 	}
 
-	a.output = make(map[*drun][]effects.Inst)
+	a.output = make(map[*drun][]instructions.Inst)
 	for _, d := range runs {
 		insts, err := d.Device.Compile(labEffects, dir, cmds[d])
 		if err != nil {
@@ -318,7 +319,7 @@ func (a *ir) tryPlan(labEffects *effects.LaboratoryEffects, dir string) error {
 		}
 
 		for _, n := range cmds[d] {
-			c := n.(*effects.Command)
+			c := n.(*instructions.Command)
 			c.Output = insts
 		}
 
@@ -332,7 +333,7 @@ func (a *ir) sortDevices(labEffects *effects.LaboratoryEffects, t *target.Target
 	a.DeviceDeps = graph.MakeQuotient(graph.MakeQuotientOpt{
 		Graph: a.Commands,
 		Colorer: func(n graph.Node) interface{} {
-			return a.assignment[n.(effects.Node)]
+			return a.assignment[n.(instructions.Node)]
 		},
 	})
 
@@ -342,7 +343,7 @@ func (a *ir) sortDevices(labEffects *effects.LaboratoryEffects, t *target.Target
 	return err
 }
 
-func reverseInsts(insts []effects.Inst) (ret []effects.Inst) {
+func reverseInsts(insts []instructions.Inst) (ret []instructions.Inst) {
 	for idx := len(insts) - 1; idx >= 0; idx-- {
 		ret = append(ret, insts[idx])
 	}
@@ -350,13 +351,13 @@ func reverseInsts(insts []effects.Inst) (ret []effects.Inst) {
 }
 
 // Lower plan to instructions
-func (a *ir) genInsts(idGen *id.IDGenerator) (effects.Insts, error) {
+func (a *ir) genInsts(idGen *id.IDGenerator) (instructions.Insts, error) {
 	ig := newInstGraph()
 
 	// Insert instructions
 	for i, inum := 0, a.DeviceDeps.NumNodes(); i < inum; i++ {
 		n := a.DeviceDeps.Node(i)
-		someNode := a.DeviceDeps.Orig(n, 0).(effects.Node)
+		someNode := a.DeviceDeps.Orig(n, 0).(instructions.Node)
 		run := a.assignment[someNode]
 		insts := a.output[run]
 		ig.addRootedInsts(n, insts)
@@ -393,12 +394,12 @@ func (a *ir) genInsts(idGen *id.IDGenerator) (effects.Insts, error) {
 		return nil, err
 	}
 
-	var insts effects.Insts
+	var insts instructions.Insts
 	for _, n := range order {
-		in := n.(effects.Inst)
+		in := n.(instructions.Inst)
 		in.SetDependsOn() // reset to empty first
 		for j, jnum := 0, sg.NumOuts(n); j < jnum; j++ {
-			in.AppendDependsOn(sg.Out(n, j).(effects.Inst))
+			in.AppendDependsOn(sg.Out(n, j).(instructions.Inst))
 		}
 		in.SetId(idGen)
 		insts = append(insts, in)
@@ -411,7 +412,7 @@ func (a *ir) genInsts(idGen *id.IDGenerator) (effects.Insts, error) {
 // configuration. This supports incremental compilation, so roots may refer to
 // nodes that have already been compiled, in which case, the result may refer
 // to previously generated instructions.
-func Compile(labEffects *effects.LaboratoryEffects, dir string, t *target.Target, roots []effects.Node) (effects.Insts, error) {
+func Compile(labEffects *effects.LaboratoryEffects, dir string, t *target.Target, roots []instructions.Node) (instructions.Insts, error) {
 	if len(roots) == 0 {
 		return nil, nil
 	}

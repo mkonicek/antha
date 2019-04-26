@@ -342,8 +342,8 @@ func (self *LHRequest) GetOrderedLHInstructions() ([]*wtype.LHInstruction, error
 	return ret, nil
 }
 
-//updateWithNewLHInstructions make sure the request contains the new instructions if aggregation has occurred
-func (rq *LHRequest) updateWithNewLHInstructions(sorted []*wtype.LHInstruction) {
+//UpdateWithNewLHInstructions make sure the request contains the new instructions if aggregation has occurred
+func (rq *LHRequest) UpdateWithNewLHInstructions(sorted []*wtype.LHInstruction) {
 	for _, ins := range sorted {
 		_, ok := rq.LHInstructions[ins.ID]
 		if !ok {
@@ -456,7 +456,7 @@ func addToMap(m, a map[string]*wtype.Plate) {
 	}
 }
 
-func (rq *LHRequest) fixDuplicatePlateNames() {
+func (rq *LHRequest) FixDuplicatePlateNames() {
 	seen := make(map[string]int, 1)
 	fixNames := func(sa []string, pm map[string]*wtype.Plate) {
 		for _, id := range sa {

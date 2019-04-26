@@ -120,7 +120,7 @@ func (rq *LHRequest) inputPlateSetup(labEffects *effects.LaboratoryEffects, carr
 			return fmt.Errorf("no input plate set: \n  - Please upload plate file or select at least one input plate type in Configuration > Preferences > inputPlateTypes. \n - Important: Please add a riser to the plate choice for low profile plates such as PCR plates, 96 and 384 well plates. ")
 		}
 		var err error
-		well_count_assignments, err = choosePlateAssignments(labEffects.IDGenerator, input_volumes, input_platetypes, weights_constraints)
+		well_count_assignments, err = ChoosePlateAssignments(labEffects.IDGenerator, input_volumes, input_platetypes, weights_constraints)
 
 		if err != nil {
 			return err
@@ -180,7 +180,7 @@ func (rq *LHRequest) inputPlateSetup(labEffects *effects.LaboratoryEffects, carr
 
 					plates_in_play[platetype.Type] = p
 					curr_plate = plates_in_play[platetype.Type]
-					platename := rq.getSafeInputPlateName(curplaten)
+					platename := rq.GetSafeInputPlateName(curplaten)
 					curr_plate.PlateName = platename
 					curplaten += 1
 					//curr_plate.DeclareAutoallocated()
@@ -265,7 +265,7 @@ func isInstance(s string) bool {
 }
 
 // returns a unique plate name
-func (rq *LHRequest) getSafeInputPlateName(curplaten int) string {
+func (rq *LHRequest) GetSafeInputPlateName(curplaten int) string {
 	return rq.getSafePlateName("auto_input_plate", "_", curplaten)
 }
 

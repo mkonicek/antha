@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/antha-lang/antha/graph"
+	"github.com/antha-lang/antha/instructions"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/workflow"
@@ -18,14 +19,14 @@ var (
 
 // A GenericHandler is a configurable version of a Handler suitable for mixins
 type GenericHandler struct {
-	Labels             []effects.NameValue
-	GenFunc            func(cmd interface{}) (effects.Insts, error)
+	Labels             []instructions.NameValue
+	GenFunc            func(cmd interface{}) (instructions.Insts, error)
 	FilterFieldsForKey func(interface{}) (interface{}, error)
 }
 
 // CanCompile implements a Device
-func (a *GenericHandler) CanCompile(req effects.Request) bool {
-	can := effects.Request{
+func (a *GenericHandler) CanCompile(req instructions.Request) bool {
+	can := instructions.Request{
 		Selector: a.Labels,
 	}
 
@@ -64,12 +65,12 @@ func (a GenericHandler) serialize(obj interface{}) (string, error) {
 	return out.String(), nil
 }
 
-func (a GenericHandler) merge(nodes []effects.Node) (*effects.Command, error) {
+func (a GenericHandler) merge(nodes []instructions.Node) (*instructions.Command, error) {
 	if len(nodes) == 0 {
 		return nil, nil
 	}
 
-	cmd, ok := nodes[0].(*effects.Command)
+	cmd, ok := nodes[0].(*instructions.Command)
 	if !ok {
 		return nil, fmt.Errorf("expecting %T but found %T instead", cmd, nodes[0])
 	}
@@ -80,7 +81,7 @@ func (a GenericHandler) merge(nodes []effects.Node) (*effects.Command, error) {
 	}
 
 	for _, n := range nodes[1:] {
-		cmd, ok := n.(*effects.Command)
+		cmd, ok := n.(*instructions.Command)
 		if !ok {
 			return nil, fmt.Errorf("expecting %T but found %T instead", cmd, nodes[0])
 		}
@@ -99,13 +100,13 @@ func (a GenericHandler) merge(nodes []effects.Node) (*effects.Command, error) {
 }
 
 // Compile implements a Device
-func (a *GenericHandler) Compile(labEffects *effects.LaboratoryEffects, dir string, nodes []effects.Node) (effects.Insts, error) {
-	g := effects.Deps(nodes)
+func (a *GenericHandler) Compile(labEffects *effects.LaboratoryEffects, dir string, nodes []instructions.Node) (instructions.Insts, error) {
+	g := instructions.Deps(nodes)
 
 	entry := &target.Wait{}
 	exit := &target.Wait{}
-	var insts []effects.Inst
-	inst := make(map[effects.Node][]effects.Inst)
+	var insts []instructions.Inst
+	inst := make(map[instructions.Node][]instructions.Inst)
 
 	insts = append(insts, entry)
 
@@ -115,9 +116,9 @@ func (a *GenericHandler) Compile(labEffects *effects.LaboratoryEffects, dir stri
 	for len(dag.Roots) > 0 {
 		var next []graph.Node
 		// Gather
-		same := make(map[interface{}][]effects.Node)
+		same := make(map[interface{}][]instructions.Node)
 		for _, r := range dag.Roots {
-			cmd, ok := r.(*effects.Command)
+			cmd, ok := r.(*instructions.Command)
 			if !ok {
 				return nil, fmt.Errorf("expecting %T but found %T instead", cmd, r)
 			}
@@ -127,7 +128,7 @@ func (a *GenericHandler) Compile(labEffects *effects.LaboratoryEffects, dir stri
 				return nil, err
 			}
 
-			same[key] = append(same[key], r.(effects.Node))
+			same[key] = append(same[key], r.(instructions.Node))
 			next = append(next, dag.Visit(r)...)
 		}
 		// Apply
@@ -158,14 +159,14 @@ func (a *GenericHandler) Compile(labEffects *effects.LaboratoryEffects, dir stri
 	insts = append(insts, exit)
 
 	for i, inum := 0, g.NumNodes(); i < inum; i++ {
-		n := g.Node(i).(effects.Node)
+		n := g.Node(i).(instructions.Node)
 		ins := inst[n]
 		if len(ins) == 0 {
 			continue
 		}
 
 		for j, jnum := 0, g.NumOuts(n); j < jnum; j++ {
-			kid := g.Out(n, j).(effects.Node)
+			kid := g.Out(n, j).(instructions.Node)
 			kidIns := inst[kid]
 			if len(kidIns) == 0 {
 				continue

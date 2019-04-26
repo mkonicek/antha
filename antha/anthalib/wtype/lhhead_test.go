@@ -17,7 +17,7 @@ func makeTestPlate(idGen *id.IDGenerator, wellsX, wellsY int, offsetX, offsetY f
 }
 
 func TestHeadDup(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	head := &LHHead{
 		Name:         "headName",
 		Manufacturer: "headMfg",
@@ -89,7 +89,7 @@ func (self *headCanReachTest) run(t *testing.T) {
 }
 
 func TestHeadCanReachVChannel96Plate(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 
 	plate := makeTestPlate(idGen, 8, 12, 9.0, 9.0)
 
@@ -192,7 +192,7 @@ func TestHeadCanReachVChannel96Plate(t *testing.T) {
 }
 
 func TestHeadCanReachHChannelPCRPlate(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 
 	plate := makeTestPlate(idGen, 8, 12, 9.0, 9.0)
 
@@ -285,7 +285,7 @@ func TestHeadCanReachHChannelPCRPlate(t *testing.T) {
 }
 
 func TestHeadCanReach384Plate(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 
 	plate := makeTestPlate(idGen, 16, 24, 4.5, 4.5)
 
@@ -348,7 +348,7 @@ func TestHeadCanReach384Plate(t *testing.T) {
 }
 
 func TestHeadCanReachTrough(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 
 	troughY := makeTestPlate(idGen, 8, 1, 9.0, 0.0)
 	troughX := makeTestPlate(idGen, 1, 12, 0.0, 9.0)
@@ -402,7 +402,7 @@ func TestHeadCanReachTrough(t *testing.T) {
 }
 
 func TestHeadCanReachTwoRowTrough(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 
 	trough := makeTestPlate(idGen, 2, 12, 36.0, 9.0)
 
@@ -435,7 +435,7 @@ func TestHeadCanReachTwoRowTrough(t *testing.T) {
 }
 
 func TestHeadCanReachWeirdPlate(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 
 	plate := makeTestPlate(idGen, 16, 24, 4, 4)
 

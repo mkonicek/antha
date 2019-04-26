@@ -9,7 +9,7 @@ import (
 )
 
 func TestMatchComponent(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	c := NewLHComponent(idGen)
 	c.CName = "water"
 	c.Vol = 200.0
@@ -113,7 +113,7 @@ func dstsDone(ca []*Liquid) bool {
 // revise to permit multi
 
 func TestMatchComponentPickupVolumes(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	c := NewLHComponent(idGen)
 	c.CName = "water"
 	vls := []float64{100.0, 100.0, 5.0, 5.0}
@@ -162,7 +162,7 @@ func TestMatchComponentPickupVolumes(t *testing.T) {
 }
 
 func TestMatchComponentSrcSubset(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	c := NewLHComponent(idGen)
 	c.CName = "water"
 	c.Vol = 200.0
@@ -213,7 +213,7 @@ func TestMatchComponentSrcSubset(t *testing.T) {
 }
 
 func TestMatchComponent2(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	Nams := []string{"water", "", "", "", "", "", "", ""}
 	Vols := []float64{200.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 	CIDs := []string{"A1", "", "", "", "", "", "", ""}
@@ -261,7 +261,7 @@ func TestMatchComponent2(t *testing.T) {
 }
 
 func TestMatchComponent2b(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	Nams := []string{"water", "", "", "", "", "", "", ""}
 	Vols := []float64{200.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 	CIDs := []string{"A1", "", "", "", "", "", "", ""}
@@ -309,7 +309,7 @@ func TestMatchComponent2b(t *testing.T) {
 }
 
 func TestMatchComponent3(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	Nams := []string{"water", "", "water", "", "", "", "", ""}
 	Vols := []float64{200.0, 0.0, 200.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 	CIDs := []string{"A1", "", "D1", "", "", "", "", ""}
@@ -358,7 +358,7 @@ func TestMatchComponent3(t *testing.T) {
 }
 
 func TestMatchComponentIndependent(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	Nams := []string{"water", "", "water", "", "", "", "", ""}
 	Vols := []float64{200.0, 0.0, 200.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 	CIDs := []string{"A1", "", "D1", "", "", "", "", ""}
@@ -406,7 +406,7 @@ func TestMatchComponentIndependent(t *testing.T) {
 }
 
 func TestMatch7Subcomponents(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	c := NewLHComponent(idGen)
 	c.CName = "water"
 	c.Vol = 200.0
@@ -459,7 +459,7 @@ func TestMatch7Subcomponents(t *testing.T) {
 }
 
 func TestMatch7Subcomponents8wanted(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	c := NewLHComponent(idGen)
 	c.CName = "tartrazine"
 	c.Vol = 200.0
@@ -506,7 +506,7 @@ func TestMatch7Subcomponents8wanted(t *testing.T) {
 }
 
 func TestNonMatchComponent(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	c := NewLHComponent(idGen)
 	c.CName = "water"
 	c.Vol = 200.0
@@ -547,7 +547,7 @@ func TestNonMatchComponent(t *testing.T) {
 	}
 }
 func TestMatchAllDifferentComponent(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	c := NewLHComponent(idGen)
 	c.CName = "water"
 	c.Vol = 200.0
@@ -594,7 +594,7 @@ func TestMatchAllDifferentComponent(t *testing.T) {
 }
 
 func TestAlignIndependent(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	w := make([]*Liquid, 3)
 	g := make([]*Liquid, 3)
 
@@ -644,7 +644,7 @@ func TestAlignIndependent(t *testing.T) {
 }
 
 func TestAlignIndependent2(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	w := make([]*Liquid, 8)
 	g := make([]*Liquid, 8)
 
@@ -692,7 +692,7 @@ func TestAlignIndependent2(t *testing.T) {
 }
 
 func TestAlignIndependent3(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	w := make([]*Liquid, 0, 8)
 	g := make([]*Liquid, 8)
 

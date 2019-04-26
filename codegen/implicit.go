@@ -6,6 +6,7 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/graph"
+	"github.com/antha-lang/antha/instructions"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/target"
@@ -25,14 +26,14 @@ func (a *ir) getMixes() (ret []*target.Mix) {
 }
 
 func isIncubator(dev effects.Device) bool {
-	incubates := dev.CanCompile(effects.Request{
-		Selector: []effects.NameValue{
+	incubates := dev.CanCompile(instructions.Request{
+		Selector: []instructions.NameValue{
 			target.DriverSelectorV1ShakerIncubator,
 		},
 	})
 
-	human := dev.CanCompile(effects.Request{
-		Selector: []effects.NameValue{
+	human := dev.CanCompile(instructions.Request{
+		Selector: []instructions.NameValue{
 			target.DriverSelectorV1Human,
 		},
 	})
@@ -134,7 +135,7 @@ func (a *ir) addIzers(deviceOrder []*drun) error {
 		}
 
 		for _, node := range order {
-			inst := node.(effects.Inst)
+			inst := node.(instructions.Inst)
 			init, ok := inst.(target.Initializer)
 			if ok {
 				a.initializers = append(a.initializers, init.GetInitializers()...)

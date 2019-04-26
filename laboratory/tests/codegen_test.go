@@ -6,6 +6,7 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/codegen"
+	"github.com/antha-lang/antha/instructions"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/laboratory/testlab"
 	"github.com/antha-lang/antha/target"
@@ -14,38 +15,37 @@ import (
 )
 
 type lowLevelTestInst struct {
-	effects.DependsMixin
-	effects.IdMixin
-	effects.NoDeviceMixin
+	instructions.DependsMixin
+	instructions.IdMixin
 }
 
 type highLevelTestInst struct{}
 
 type testDriver struct{}
 
-var testDriverSelector = effects.NameValue{
+var testDriverSelector = instructions.NameValue{
 	Name:  target.DriverSelectorV1Name,
 	Value: "antha.test.v0",
 }
 
-func (a *testDriver) CanCompile(req effects.Request) bool {
-	can := effects.Request{
-		Selector: []effects.NameValue{
+func (a *testDriver) CanCompile(req instructions.Request) bool {
+	can := instructions.Request{
+		Selector: []instructions.NameValue{
 			testDriverSelector,
 		},
 	}
 	return can.Contains(req)
 }
 
-func (a *testDriver) Compile(labEffects *effects.LaboratoryEffects, dir string, cmds []effects.Node) (effects.Insts, error) {
+func (a *testDriver) Compile(labEffects *effects.LaboratoryEffects, dir string, cmds []instructions.Node) (instructions.Insts, error) {
 	for _, n := range cmds {
-		if c, ok := n.(*effects.Command); !ok {
+		if c, ok := n.(*instructions.Command); !ok {
 			return nil, fmt.Errorf("unexpected node %T", n)
 		} else if _, ok := c.Inst.(*highLevelTestInst); !ok {
 			return nil, fmt.Errorf("unexpected inst %T", c.Inst)
 		}
 	}
-	return effects.Insts{&lowLevelTestInst{}}, nil
+	return instructions.Insts{&lowLevelTestInst{}}, nil
 }
 
 func (a *testDriver) Connect(wf *workflow.Workflow) error {
@@ -61,33 +61,33 @@ func (a *testDriver) Id() workflow.DeviceInstanceID {
 func TestWellFormed(t *testing.T) {
 	labEffects := testlab.NewTestLabEffects(nil)
 
-	nodes := make([]effects.Node, 4)
+	nodes := make([]instructions.Node, 4)
 	for idx := 0; idx < len(nodes); idx++ {
-		m := &effects.Command{
-			Request: effects.Request{
-				Selector: []effects.NameValue{
+		m := &instructions.Command{
+			Request: instructions.Request{
+				Selector: []instructions.NameValue{
 					target.DriverSelectorV1Mixer,
 				},
 			},
 			Inst: &wtype.LHInstruction{},
-			From: []effects.Node{
-				&effects.UseComp{},
-				&effects.UseComp{},
-				&effects.UseComp{},
+			From: []instructions.Node{
+				&instructions.UseComp{},
+				&instructions.UseComp{},
+				&instructions.UseComp{},
 			},
 		}
-		u := &effects.UseComp{
-			From: []effects.Node{m},
+		u := &instructions.UseComp{
+			From: []instructions.Node{m},
 		}
 
-		t := &effects.Command{
-			Request: effects.Request{
-				Selector: []effects.NameValue{
+		t := &instructions.Command{
+			Request: instructions.Request{
+				Selector: []instructions.NameValue{
 					testDriverSelector,
 				},
 			},
 			Inst: &highLevelTestInst{},
-			From: []effects.Node{u},
+			From: []instructions.Node{u},
 		}
 
 		nodes[idx] = t

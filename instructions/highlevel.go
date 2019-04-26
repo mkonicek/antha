@@ -1,4 +1,4 @@
-package effects
+package instructions
 
 import (
 	"fmt"

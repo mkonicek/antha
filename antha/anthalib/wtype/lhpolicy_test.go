@@ -12,7 +12,7 @@ func TestComponentPolicy(t *testing.T) {
 	pol := MakeTestPolicy()
 	cnd := MakeTestCondition()
 	rs.AddRule(cnd, pol)
-	cmp := makeComponent(id.NewIDGenerator("testing"))
+	cmp := makeComponent(id.NewIDGenerator(t.Name()))
 
 	err := cmp.SetPolicies(rs)
 

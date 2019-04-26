@@ -8,6 +8,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/driver"
 	platereader "github.com/antha-lang/antha/driver/antha_platereader_v1"
+	"github.com/antha-lang/antha/instructions"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/workflow"
@@ -44,9 +45,9 @@ func (a *WOPlateReader) Id() workflow.DeviceInstanceID {
 }
 
 // CanCompile implements a Device
-func (a *WOPlateReader) CanCompile(req effects.Request) bool {
-	can := effects.Request{
-		Selector: []effects.NameValue{
+func (a *WOPlateReader) CanCompile(req instructions.Request) bool {
+	can := instructions.Request{
+		Selector: []instructions.NameValue{
 			target.DriverSelectorV1WriteOnlyPlateReader,
 		},
 	}
@@ -54,13 +55,13 @@ func (a *WOPlateReader) CanCompile(req effects.Request) bool {
 }
 
 // Compile implements a Device
-func (a *WOPlateReader) Compile(labEffects *effects.LaboratoryEffects, dir string, nodes []effects.Node) (effects.Insts, error) {
+func (a *WOPlateReader) Compile(labEffects *effects.LaboratoryEffects, dir string, nodes []instructions.Node) (instructions.Insts, error) {
 	// Find the LHComponentID for the samples to measure. We'll then search
 	// for these later.
 	prInsts := make([]*wtype.PRInstruction, 0, len(nodes))
 	lhCmpIDs := make(map[string]bool)
 	for _, node := range nodes {
-		if cmd, ok := node.(*effects.Command); !ok {
+		if cmd, ok := node.(*instructions.Command); !ok {
 			return nil, fmt.Errorf("cannot compile %T", node)
 		} else if inst, ok := cmd.Inst.(*wtype.PRInstruction); !ok {
 			return nil, fmt.Errorf("cannot compile %T", cmd.Inst)
@@ -87,7 +88,7 @@ func (a *WOPlateReader) Compile(labEffects *effects.LaboratoryEffects, dir strin
 	}
 
 	// Look for the sample locations
-	for _, cmd := range effects.FindReachingCommands(nodes) {
+	for _, cmd := range instructions.FindReachingCommands(nodes) {
 		insts := cmd.Output
 		for _, inst := range insts {
 			mix, ok := inst.(*target.Mix)
@@ -113,11 +114,11 @@ func prKey(inst *wtype.PRInstruction) (string, error) {
 }
 
 // Merge PRInstructions
-func (a *WOPlateReader) mergePRInsts(prInsts []*wtype.PRInstruction, wellLocs map[string]string, plateLocs map[string]string) ([]effects.Inst, error) {
+func (a *WOPlateReader) mergePRInsts(prInsts []*wtype.PRInstruction, wellLocs map[string]string, plateLocs map[string]string) ([]instructions.Inst, error) {
 
 	// Simple case
 	if len(prInsts) == 0 {
-		return []effects.Inst{}, nil
+		return []instructions.Inst{}, nil
 	}
 
 	// Check for only 1 plate (for now)
@@ -126,7 +127,7 @@ func (a *WOPlateReader) mergePRInsts(prInsts []*wtype.PRInstruction, wellLocs ma
 		plateLocUnique[plateID] = true
 	}
 	if len(plateLocUnique) > 1 {
-		return []effects.Inst{}, errors.New("current only supports single plate")
+		return []instructions.Inst{}, errors.New("current only supports single plate")
 	}
 
 	// Group instructions by PRInstruction
@@ -163,14 +164,14 @@ func (a *WOPlateReader) mergePRInsts(prInsts []*wtype.PRInstruction, wellLocs ma
 		calls = append(calls, call)
 	}
 
-	insts := effects.Insts{
+	insts := instructions.Insts{
 		&target.Prompt{
 			Message: "Please put plate(s) into plate reader and click ok to start plate reader",
 		},
 		&target.Run{
-			DeviceMixin: effects.DeviceMixin{Dev: a},
-			Label:       "use plate reader",
-			Calls:       calls,
+			Device: a,
+			Label:  "use plate reader",
+			Calls:  calls,
 		},
 	}
 	insts.SequentialOrder()

@@ -33,7 +33,7 @@ import (
 	"gonum.org/v1/gonum/optimize/convex/lp"
 )
 
-func choosePlateAssignments(idGen *id.IDGenerator, component_volumes map[string]wunit.Volume, plate_types []*wtype.Plate, weight_constraint map[string]float64) (map[string]map[*wtype.Plate]int, error) {
+func ChoosePlateAssignments(idGen *id.IDGenerator, component_volumes map[string]wunit.Volume, plate_types []*wtype.Plate, weight_constraint map[string]float64) (map[string]map[*wtype.Plate]int, error) {
 
 	// 	v2.0: modified to use gonum/optimize/convex/lp
 	//

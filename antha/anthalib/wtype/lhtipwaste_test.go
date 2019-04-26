@@ -16,7 +16,7 @@ func makeTipwasteForTest(idGen *id.IDGenerator) *LHTipwaste {
 }
 
 func TestTipwasteWellCoordsToCoords(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 
 	tw := makeTipwasteForTest(idGen)
 
@@ -35,7 +35,7 @@ func TestTipwasteWellCoordsToCoords(t *testing.T) {
 }
 
 func TestTipwasteCoordsToWellCoords(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 
 	tw := makeTipwasteForTest(idGen)
 
@@ -59,7 +59,7 @@ func TestTipwasteCoordsToWellCoords(t *testing.T) {
 }
 
 func TestTipwasteSerialisation(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	partFull := makeTipwasteForTest(idGen)
 	if err := partFull.SetOffset(Coordinates3D{X: 1.0, Y: 2.0, Z: 3.0}); err != nil {
 		t.Fatal(err)

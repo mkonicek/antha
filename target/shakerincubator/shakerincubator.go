@@ -7,6 +7,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/driver"
 	shakerincubator "github.com/antha-lang/antha/driver/antha_shakerincubator_v1"
+	"github.com/antha-lang/antha/instructions"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/handler"
@@ -38,7 +39,7 @@ func New(id workflow.DeviceInstanceID) *ShakerIncubator {
 		id: id,
 	}
 	si.GenericHandler = handler.GenericHandler{
-		Labels: []effects.NameValue{
+		Labels: []instructions.NameValue{
 			target.DriverSelectorV1ShakerIncubator,
 		},
 		GenFunc: si.generate,
@@ -110,16 +111,16 @@ func (a *ShakerIncubator) shakeStart(rate wunit.Rate, length wunit.Length) drive
 	}
 }
 
-func (a *ShakerIncubator) generate(cmd interface{}) (effects.Insts, error) {
-	inc, ok := cmd.(*effects.IncubateInst)
+func (a *ShakerIncubator) generate(cmd interface{}) (instructions.Insts, error) {
+	inc, ok := cmd.(*instructions.IncubateInst)
 	if !ok {
 		return nil, fmt.Errorf("expecting %T found %T instead", inc, cmd)
 	}
 
-	initializers := effects.Insts{
+	initializers := instructions.Insts{
 		&target.Run{
-			DeviceMixin: effects.DeviceMixin{Dev: a},
-			Label:       "open incubator carrier",
+			Device: a,
+			Label:  "open incubator carrier",
 			Calls: []driver.Call{
 				a.carrierOpen(),
 			},
@@ -130,23 +131,23 @@ func (a *ShakerIncubator) generate(cmd interface{}) (effects.Insts, error) {
 		},
 
 		&target.Run{
-			DeviceMixin: effects.DeviceMixin{Dev: a},
-			Label:       "close incubator carrier",
+			Device: a,
+			Label:  "close incubator carrier",
 			Calls: []driver.Call{
 				a.carrierClose(),
 			},
 		},
 	}
 
-	finalizers := effects.Insts{
+	finalizers := instructions.Insts{
 		&target.Run{
-			DeviceMixin: effects.DeviceMixin{Dev: a},
-			Label:       "turn off incubator",
-			Calls:       a.reset(),
+			Device: a,
+			Label:  "turn off incubator",
+			Calls:  a.reset(),
 		},
 	}
 
-	var insts effects.Insts
+	var insts instructions.Insts
 	if !inc.PreTime.IsNil() {
 		var calls []driver.Call
 		if !inc.PreTemp.IsNil() {
@@ -158,9 +159,9 @@ func (a *ShakerIncubator) generate(cmd interface{}) (effects.Insts, error) {
 
 		insts = append(insts,
 			&target.Run{
-				DeviceMixin: effects.DeviceMixin{Dev: a},
-				Label:       "pre incubate",
-				Calls:       calls,
+				Device: a,
+				Label:  "pre incubate",
+				Calls:  calls,
 			},
 			&target.TimedWait{
 				Duration: time.Duration(inc.PreTime.Seconds() * float64(time.Second)),
@@ -177,7 +178,7 @@ func (a *ShakerIncubator) generate(cmd interface{}) (effects.Insts, error) {
 	}
 
 	insts = append(insts, &target.Run{
-		DeviceMixin:  effects.DeviceMixin{Dev: a},
+		Device:       a,
 		Label:        "start incubator",
 		Calls:        calls,
 		Initializers: initializers,

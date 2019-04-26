@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/antha-lang/antha/instructions"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/workflow"
 )
@@ -22,31 +23,31 @@ const (
 
 // Well known device plugins (drivers) selectors
 var (
-	DriverSelectorV1Human = effects.NameValue{
+	DriverSelectorV1Human = instructions.NameValue{
 		Name:  DriverSelectorV1Name,
 		Value: "antha.human.v1.Human",
 	}
-	DriverSelectorV1ShakerIncubator = effects.NameValue{
+	DriverSelectorV1ShakerIncubator = instructions.NameValue{
 		Name:  DriverSelectorV1Name,
 		Value: "antha.shakerincubator.v1.ShakerIncubator",
 	}
-	DriverSelectorV1Mixer = effects.NameValue{
+	DriverSelectorV1Mixer = instructions.NameValue{
 		Name:  DriverSelectorV1Name,
 		Value: "antha.mixer.v1.Mixer",
 	}
-	DriverSelectorV1Prompter = effects.NameValue{
+	DriverSelectorV1Prompter = instructions.NameValue{
 		Name:  DriverSelectorV1Name,
 		Value: "antha.prompter.v1.Prompter",
 	}
-	DriverSelectorV1DataSource = effects.NameValue{
+	DriverSelectorV1DataSource = instructions.NameValue{
 		Name:  DriverSelectorV1Name,
 		Value: "antha.datasource.v1.DataSource",
 	}
-	DriverSelectorV1WriteOnlyPlateReader = effects.NameValue{
+	DriverSelectorV1WriteOnlyPlateReader = instructions.NameValue{
 		Name:  DriverSelectorV1Name,
 		Value: "antha.platereader.v1.PlateReader",
 	}
-	DriverSelectorV1QPCRDevice = effects.NameValue{
+	DriverSelectorV1QPCRDevice = instructions.NameValue{
 		Name:  DriverSelectorV1Name,
 		Value: "antha.quantstudio.v1.QuantStudioService",
 	}
@@ -68,7 +69,7 @@ func New() *Target {
 	}
 }
 
-func (a *Target) canCompile(d effects.Device, reqs ...effects.Request) bool {
+func (a *Target) canCompile(d effects.Device, reqs ...instructions.Request) bool {
 	for _, req := range reqs {
 		if !d.CanCompile(req) {
 			return false
@@ -78,7 +79,7 @@ func (a *Target) canCompile(d effects.Device, reqs ...effects.Request) bool {
 }
 
 // CanCompile returns the devices that can compile the given set of requests
-func (a *Target) CanCompile(reqs ...effects.Request) (r []effects.Device) {
+func (a *Target) CanCompile(reqs ...instructions.Request) (r []effects.Device) {
 	for _, d := range a.Devices {
 		if a.canCompile(d, reqs...) {
 			r = append(r, d)

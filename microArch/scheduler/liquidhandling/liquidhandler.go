@@ -297,7 +297,7 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 
 // shrinkVolumes reduce autoallocated volumes to the amount we actually need, removing
 // any unused wells or plates
-func (this *Liquidhandler) shrinkVolumes(idGen *id.IDGenerator, rq *LHRequest) error {
+func (this *Liquidhandler) ShrinkVolumes(idGen *id.IDGenerator, rq *LHRequest) error {
 
 	// first, iterate through the generated instructions and count up how much
 	// of each autoallocated liquid was actually used
@@ -515,13 +515,13 @@ func (this *Liquidhandler) update_metadata() error {
 
 func (this *Liquidhandler) Plan(labEffects *effects.LaboratoryEffects, request *LHRequest) error {
 	// figure out the ordering for the high level instructions
-	if ichain, err := buildInstructionChain(labEffects.IDGenerator, request.LHInstructions); err != nil {
+	if ichain, err := BuildInstructionChain(labEffects.IDGenerator, request.LHInstructions); err != nil {
 		return err
 	} else {
 		//sort the instructions within each link of the instruction chain
 		ichain.SortInstructions(request.Options.OutputSort)
 		request.InstructionChain = ichain
-		request.updateWithNewLHInstructions(ichain.GetOrderedLHInstructions())
+		request.UpdateWithNewLHInstructions(ichain.GetOrderedLHInstructions())
 		request.OutputOrder = ichain.FlattenInstructionIDs()
 	}
 
@@ -629,13 +629,13 @@ func (this *Liquidhandler) Plan(labEffects *effects.LaboratoryEffects, request *
 	}
 
 	// final insurance that plate names will be safe
-	request.fixDuplicatePlateNames()
+	request.FixDuplicatePlateNames()
 
 	// remove dummy mix-in-place instructions
 	request.removeDummyInstructions()
 
 	//set the well targets
-	if err := this.addWellTargets(); err != nil {
+	if err := this.AddWellTargets(); err != nil {
 		return err
 	}
 
@@ -659,7 +659,7 @@ func (this *Liquidhandler) Plan(labEffects *effects.LaboratoryEffects, request *
 	}
 
 	// revise the volumes - this makes sure the volumes requested are correct
-	if err := this.shrinkVolumes(labEffects.IDGenerator, request); err != nil {
+	if err := this.ShrinkVolumes(labEffects.IDGenerator, request); err != nil {
 		return err
 	}
 
@@ -805,8 +805,8 @@ func (lh *Liquidhandler) updateComponentNames(idGen *id.IDGenerator, rq *LHReque
 	return nil
 }
 
-//addWellTargets for all the adaptors and plates available
-func (lh *Liquidhandler) addWellTargets() error {
+//AddWellTargets for all the adaptors and plates available
+func (lh *Liquidhandler) AddWellTargets() error {
 	for _, head := range lh.Properties.Heads {
 		for _, plate := range lh.Properties.Plates {
 			addWellTargetsPlate(head.Adaptor, plate)

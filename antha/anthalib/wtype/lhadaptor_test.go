@@ -53,7 +53,7 @@ func assertAdaptorTipLengths(t *testing.T, a, b *LHAdaptor, msg string) {
 }
 
 func TestLHAdaptorDup(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 
 	params := &LHChannelParameter{
 		Multi: 8,

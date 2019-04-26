@@ -58,13 +58,13 @@ func maketroughfortest(idGen *id.IDGenerator) *Plate {
 }
 
 func TestPlateCreation(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	p := makeplatefortest(idGen)
 	validatePlate(t, p)
 }
 
 func TestPlateDup(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	p := makeplatefortest(idGen)
 	d := p.Dup(idGen)
 	validatePlate(t, d)
@@ -82,7 +82,7 @@ func TestPlateDup(t *testing.T) {
 }
 
 func TestPlateDupKeepIDs(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	p := makeplatefortest(idGen)
 	d := p.DupKeepIDs(idGen)
 
@@ -178,7 +178,7 @@ func validatePlate(t *testing.T, plate *Plate) {
 }
 
 func TestIsUserAllocated(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	p := makeplatefortest(idGen)
 
 	if p.IsUserAllocated() {
@@ -208,7 +208,7 @@ func TestIsUserAllocated(t *testing.T) {
 }
 
 func TestMergeWith(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	p1 := makeplatefortest(idGen)
 	p2 := makeplatefortest(idGen)
 
@@ -244,7 +244,7 @@ func TestMergeWith(t *testing.T) {
 }
 
 func TestLHPlateSerialize(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	p := makeplatefortest(idGen)
 	c := NewLHComponent(idGen)
 	c.CName = "Cthulhu"
@@ -353,7 +353,7 @@ func TestLHPlateSerialize(t *testing.T) {
 func TestAddGetClearData(t *testing.T) {
 	dat := []byte("3.5")
 
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	t.Run("basic", func(t *testing.T) {
 		p := makeplatefortest(idGen)
 
@@ -395,7 +395,7 @@ func TestAddGetClearData(t *testing.T) {
 }
 
 func TestGetAllComponents(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	p := makeplatefortest(idGen)
 
 	cmps := p.AllContents()
@@ -406,7 +406,7 @@ func TestGetAllComponents(t *testing.T) {
 }
 
 func TestLHPlateValidateVolumesOK(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	p := makeplatefortest(idGen)
 	c := NewLHComponent(idGen)
 	c.CName = "Cthulhu"
@@ -423,7 +423,7 @@ func TestLHPlateValidateVolumesOK(t *testing.T) {
 }
 
 func TestLHPlateValidateVolumesOneOverfilled(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	p := makeplatefortest(idGen)
 	c := NewLHComponent(idGen)
 	c.CName = "Cthulhu"
@@ -445,7 +445,7 @@ func TestLHPlateValidateVolumesOneOverfilled(t *testing.T) {
 }
 
 func TestLHPlateValidateVolumesSeveralOverfilled(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	p := makeplatefortest(idGen)
 	c := NewLHComponent(idGen)
 	c.CName = "Cthulhu"
@@ -469,7 +469,7 @@ func TestLHPlateValidateVolumesSeveralOverfilled(t *testing.T) {
 }
 
 func TestSpecialRetention(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	p := makeplatefortest(idGen)
 
 	p.DeclareSpecial()
@@ -512,7 +512,7 @@ func TestSpecialRetention(t *testing.T) {
 }
 
 func TestWellCoordsToCoords(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 
 	plate := makeplatefortest(idGen)
 	c := NewLHComponent(idGen)
@@ -569,7 +569,7 @@ func TestWellCoordsToCoords(t *testing.T) {
 }
 
 func TestCoordsToWellCoords(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 
 	plate := makeplatefortest(idGen)
 
@@ -592,7 +592,7 @@ func TestCoordsToWellCoords(t *testing.T) {
 }
 
 func TestGetWellBounds(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 
 	plate := makeplatefortest(idGen)
 

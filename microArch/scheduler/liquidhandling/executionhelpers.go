@@ -184,7 +184,7 @@ func aggregatePromptsWithSameMessage(idGen *id.IDGenerator, inss []*wtype.LHInst
 
 //buildInstructionChain guarantee all nodes are dependency-ordered
 //in order to aggregate without introducing cycles
-func buildInstructionChain(idGen *id.IDGenerator, unsorted map[string]*wtype.LHInstruction) (*wtype.IChain, error) {
+func BuildInstructionChain(idGen *id.IDGenerator, unsorted map[string]*wtype.LHInstruction) (*wtype.IChain, error) {
 
 	unsortedSlice := make([]*wtype.LHInstruction, 0, len(unsorted))
 	for _, instruction := range unsorted {

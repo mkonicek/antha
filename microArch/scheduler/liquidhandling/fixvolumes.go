@@ -28,7 +28,7 @@ func FixVolumes(request *LHRequest, carryVolume wunit.Volume) error {
 
 		switch chainEnd.Values[0].Type {
 		case wtype.LHIMIX:
-			stageVolumes, err := findUpdateInstructionVolumes(chainEnd, wantedVolumes, request.MergedInputOutputPlates(), carryVolume)
+			stageVolumes, err := FindUpdateInstructionVolumes(chainEnd, wantedVolumes, request.MergedInputOutputPlates(), carryVolume)
 
 			if err != nil {
 				return err
@@ -133,7 +133,7 @@ func updateIDAfterSplit(ins *wtype.LHInstruction, in, out map[string]wunit.Volum
 
 }
 
-func findUpdateInstructionVolumes(ch *wtype.IChain, wanted map[string]wunit.Volume, plates map[string]*wtype.Plate, carryVol wunit.Volume) (map[string]wunit.Volume, error) {
+func FindUpdateInstructionVolumes(ch *wtype.IChain, wanted map[string]wunit.Volume, plates map[string]*wtype.Plate, carryVol wunit.Volume) (map[string]wunit.Volume, error) {
 
 	newWanted := make(map[string]wunit.Volume)
 	for _, ins := range ch.Values {

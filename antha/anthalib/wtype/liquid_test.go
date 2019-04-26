@@ -10,7 +10,7 @@ import (
 )
 
 func TestSampleBehaviour(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	c := NewLHComponent(idGen)
 	c.CName = "water"
 
@@ -58,7 +58,7 @@ func TestSampleBehaviour(t *testing.T) {
 }
 
 func TestDup(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	newTestComponent := func(
 		name string,
 		typ LiquidType,
@@ -115,7 +115,7 @@ func TestDup(t *testing.T) {
 }
 
 func TestComponentSerialize(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	c := NewLHComponent(idGen)
 	c.CName = "water"
 
@@ -139,7 +139,7 @@ func TestComponentSerialize(t *testing.T) {
 }
 
 func TestDeepCopySubComponents(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	l := NewLHComponent(idGen)
 	l.CName = "water"
 	sc := NewLHComponent(idGen)
@@ -179,7 +179,7 @@ func TestDeepCopySubComponents(t *testing.T) {
 }
 
 func TestEqualTypeVolume(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	l := &Liquid{}
 
 	if !l.EqualTypeVolume(l) {

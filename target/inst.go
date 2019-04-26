@@ -5,6 +5,7 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/driver"
+	"github.com/antha-lang/antha/instructions"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/laboratory/effects/id"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
@@ -13,12 +14,12 @@ import (
 
 // An Initializer is an instruction with initialization instructions
 type Initializer interface {
-	GetInitializers() []effects.Inst
+	GetInitializers() []instructions.Inst
 }
 
 // A Finalizer is an instruction with finalization instructions
 type Finalizer interface {
-	GetFinalizers() []effects.Inst
+	GetFinalizers() []instructions.Inst
 }
 
 // A TimeEstimator is an instruction that can estimate its own execution time
@@ -31,6 +32,12 @@ type TimeEstimator interface {
 type TipEstimator interface {
 	// GetTipEstimates returns an estimate of how many tips this instruction will use
 	GetTipEstimates() []wtype.TipEstimate
+}
+
+// Files are binary data encoded in tar.gz bytes
+type Files struct {
+	Type    string // Pseudo MIME-type describing contents of tarball
+	Tarball []byte // Tar'ed and gzip'ed files
 }
 
 // An Order is a task to order physical components
@@ -66,16 +73,16 @@ var (
 
 // A Mix is a task that runs a mixer
 type Mix struct {
-	effects.DependsMixin
-	effects.IdMixin
-	effects.DeviceMixin
+	instructions.DependsMixin
+	instructions.IdMixin
 
+	Device          effects.Device
 	Request         *lh.LHRequest
 	Properties      *liquidhandling.LHProperties
 	FinalProperties *liquidhandling.LHProperties
 	Final           map[string]string // Map from ids in Properties to FinalProperties
 	Files           Files
-	Initializers    []effects.Inst
+	Initializers    []instructions.Inst
 }
 
 // GetTimeEstimate implements a TimeEstimator
@@ -102,7 +109,7 @@ func (a *Mix) GetTipEstimates() []wtype.TipEstimate {
 }
 
 // GetInitializers implements an Initializer
-func (a *Mix) GetInitializers() []effects.Inst {
+func (a *Mix) GetInitializers() []instructions.Inst {
 	return a.Initializers
 }
 
@@ -128,9 +135,8 @@ func (a *Mix) SummarizeActions(idGen *id.IDGenerator) ([]byte, error) {
 
 // A Manual is human-aided interaction
 type Manual struct {
-	effects.DependsMixin
-	effects.IdMixin
-	effects.DeviceMixin
+	instructions.DependsMixin
+	instructions.IdMixin
 
 	Label   string
 	Details string
@@ -143,36 +149,35 @@ var (
 
 // Run calls on device
 type Run struct {
-	effects.DependsMixin
-	effects.IdMixin
-	effects.DeviceMixin
+	instructions.DependsMixin
+	instructions.IdMixin
 
+	Device  effects.Device
 	Label   string
 	Details string
 	Calls   []driver.Call
 	// Additional instructions to add to beginning of instruction stream.
 	// Instructions are assumed to depend in FIFO order.
-	Initializers []effects.Inst
+	Initializers []instructions.Inst
 	// Additional instructions to add to end of instruction stream.
 	// Instructions are assumed to depend in LIFO order.
-	Finalizers []effects.Inst
+	Finalizers []instructions.Inst
 }
 
 // GetInitializers implements an Initializer instruction
-func (a *Run) GetInitializers() []effects.Inst {
+func (a *Run) GetInitializers() []instructions.Inst {
 	return a.Initializers
 }
 
 // GetFinalizers implements a Finalizer instruction
-func (a *Run) GetFinalizers() []effects.Inst {
+func (a *Run) GetFinalizers() []instructions.Inst {
 	return a.Finalizers
 }
 
 // Prompt is manual prompt instruction
 type Prompt struct {
-	effects.DependsMixin
-	effects.IdMixin
-	effects.NoDeviceMixin
+	instructions.DependsMixin
+	instructions.IdMixin
 
 	Message string
 }
@@ -180,16 +185,14 @@ type Prompt struct {
 // Wait is a virtual instruction to hang dependencies on. A better name might
 // been no-op.
 type Wait struct {
-	effects.DependsMixin
-	effects.IdMixin
-	effects.NoDeviceMixin
+	instructions.DependsMixin
+	instructions.IdMixin
 }
 
 // TimedWait is a wait for a period of time.
 type TimedWait struct {
-	effects.DependsMixin
-	effects.IdMixin
-	effects.NoDeviceMixin
+	instructions.DependsMixin
+	instructions.IdMixin
 
 	Duration time.Duration
 }

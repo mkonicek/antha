@@ -33,12 +33,12 @@ import (
 
 func TestUnknownLocations(t *testing.T) {
 	assertPropsInvalid := func(t *testing.T, props *liquidhandling.LHProperties, message string) {
-		if _, err := NewVirtualLiquidHandler(id.NewIDGenerator("testing"), props, nil); err == nil {
+		if _, err := NewVirtualLiquidHandler(id.NewIDGenerator(t.Name()), props, nil); err == nil {
 			t.Errorf("missing error in %s", message)
 		}
 	}
 
-	lhp := defaultLHProperties(id.NewIDGenerator("testing"))
+	lhp := defaultLHProperties(id.NewIDGenerator(t.Name()))
 	lhp.Preferences.Tipboxes = append(lhp.Preferences.Tipboxes, "undefined_pref")
 	assertPropsInvalid(t, lhp, "tipboxes")
 }
@@ -48,7 +48,7 @@ func TestNewVirtualLiquidHandler_ValidProps(t *testing.T) {
 }
 
 func TestVLH_AddPlateTo(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	// create a wide deckposition and enable input plates to go there
 	propsWithWideSlot := defaultLHProperties(idGen)
 	propsWithWideSlot.Positions["widePosition"] = wtype.NewLHPosition("widePosition", wtype.Coordinates3D{X: -300}, wtype.Coordinates2D{X: 300.0, Y: 85.48})
@@ -173,7 +173,7 @@ func Test_SetPippetteSpeed(t *testing.T) {
 }
 
 func TestSetDriveSpeed(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	props := defaultLHProperties(idGen)
 
 	//set max and minimum drive speeds
@@ -301,7 +301,7 @@ func testTroughLayout(idGen *id.IDGenerator) SetupFn {
 }
 
 func Test_Move(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	SimulatorTests{
 		{
 			Name: "OK_1",
@@ -697,7 +697,7 @@ func Test_Move(t *testing.T) {
 }
 
 func TestCrashes(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	SimulatorTests{
 		{
 			Name:  "crash into tipbox",
@@ -781,7 +781,7 @@ func TestCrashes(t *testing.T) {
 }
 
 func Test_Multihead(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	SimulatorTests{
 		{
 			Name:  "constrained heads",
@@ -834,7 +834,7 @@ func Test_Multihead(t *testing.T) {
 }
 
 func TestMotionLimits(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	SimulatorTests{
 		{
 			Name:  "outside limits left",
@@ -1050,7 +1050,7 @@ func TestLoadTipsNoOverride(t *testing.T) {
 		Rows:         8,
 	}
 
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	SimulatorTests{
 		{
 			Name: "OK - single tip",
@@ -1653,7 +1653,7 @@ func TestLoadTipsOverride(t *testing.T) {
 		Rows:         8,
 	}
 
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 
 	propsLTR := defaultLHProperties(idGen)
 	propsLTR.Heads[0].TipLoading = wtype.TipLoadingBehaviour{
@@ -1965,7 +1965,7 @@ func TestLoadTipsOverride(t *testing.T) {
 }
 
 func Test_UnloadTips(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	SimulatorTests{
 		{
 			Name: "OK - single tip",
@@ -2193,7 +2193,7 @@ func Test_UnloadTips(t *testing.T) {
 }
 
 func Test_Aspirate(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	SimulatorTests{
 		{
 			Name: "OK - single channel",
@@ -2697,7 +2697,7 @@ func Test_Aspirate(t *testing.T) {
 }
 
 func Test_Dispense(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	SimulatorTests{
 		{
 			Name: "OK - single channel",
@@ -3110,7 +3110,7 @@ func Test_Dispense(t *testing.T) {
 }
 
 func Test_Mix(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	SimulatorTests{
 		{
 			Name: "OK - single channel",
@@ -3278,7 +3278,7 @@ func Test_Mix(t *testing.T) {
 }
 
 func Test_LiquidLevelFollow(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	SimulatorTests{
 		{
 			Name: "OK - single channel",
@@ -3502,7 +3502,7 @@ func Test_Workflow(t *testing.T) {
 		}
 	}
 
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	//plates
 	input_plate := defaultLHPlate(idGen, "input")
 	output_plate := defaultLHPlate(idGen, "output")

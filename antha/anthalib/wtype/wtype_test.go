@@ -80,7 +80,7 @@ func TestWellCoords(*testing.T) {
 */
 
 func TestLHComponentSampleStuff(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	var c Liquid
 
 	faux := c.IsSample()

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/instructions"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/logger"
@@ -108,7 +109,7 @@ func (inst *GilsonPipetMaxInstance) Connect(wf *workflow.Workflow) error {
 	return nil
 }
 
-func (inst *GilsonPipetMaxInstance) Compile(labEffects *effects.LaboratoryEffects, dir string, nodes []effects.Node) (effects.Insts, error) {
+func (inst *GilsonPipetMaxInstance) Compile(labEffects *effects.LaboratoryEffects, dir string, nodes []instructions.Node) (instructions.Insts, error) {
 	instrs, err := checkInstructions(nodes)
 	if err != nil {
 		return nil, err
@@ -136,5 +137,5 @@ func (inst *GilsonPipetMaxInstance) Compile(labEffects *effects.LaboratoryEffect
 		return nil, err
 	}
 
-	return []effects.Inst{mix}, nil
+	return []instructions.Inst{mix}, nil
 }

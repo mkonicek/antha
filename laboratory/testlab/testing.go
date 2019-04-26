@@ -76,6 +76,7 @@ func WithTestLab(t *testing.T, inDir string, callbacks *TestElementCallbacks) {
 func withTestLab(t *testing.T, inDir string, callbacks *TestElementCallbacks) {
 	wf := workflow.EmptyWorkflow()
 	wf.WorkflowId = workflow.BasicId("TestLab")
+	wf.Meta.Name = t.Name()
 	wfBuf := new(bytes.Buffer)
 	if err := wf.ToWriter(wfBuf, false); err != nil {
 		t.Fatal(err)
@@ -95,6 +96,11 @@ func withTestLab(t *testing.T, inDir string, callbacks *TestElementCallbacks) {
 	if !t.Failed() {
 		if err := labBuild.RemoveOutDir(); err != nil {
 			t.Fatal(err)
+		}
+		if inDir == "" {
+			if err := labBuild.RemoveInDir(); err != nil {
+				t.Fatal(err)
+			}
 		}
 	}
 }

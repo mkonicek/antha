@@ -22,6 +22,7 @@ import (
 	"github.com/antha-lang/antha/composer"
 	driver "github.com/antha-lang/antha/driver/antha_driver_v1"
 	"github.com/antha-lang/antha/driver/liquidhandling/client"
+	"github.com/antha-lang/antha/instructions"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/logger"
 	lhdriver "github.com/antha-lang/antha/microArch/driver/liquidhandling"
@@ -232,12 +233,12 @@ func (bm *BaseMixer) Close() {
 	}
 }
 
-func (bm *BaseMixer) CanCompile(req effects.Request) bool {
+func (bm *BaseMixer) CanCompile(req instructions.Request) bool {
 	if bm.properties == nil {
 		panic("CanCompile called without an active connection to instructionPlugin")
 	}
-	can := effects.Request{
-		Selector: []effects.NameValue{
+	can := instructions.Request{
+		Selector: []instructions.NameValue{
 			target.DriverSelectorV1Mixer,
 		},
 	}
@@ -355,7 +356,7 @@ func (mo mixOpts) mix() (*target.Mix, error) {
 		mimetype = "application/" + strings.ToLower(handler.Properties.Mnfr)
 	}
 	mix := &target.Mix{
-		DeviceMixin:     effects.DeviceMixin{Dev: mo.Device},
+		Device:          mo.Device,
 		Request:         req,
 		Properties:      handler.Properties,
 		FinalProperties: handler.FinalProperties,
@@ -501,10 +502,10 @@ func floatValue(a, b *float64) float64 {
 	}
 }
 
-func checkInstructions(nodes []effects.Node) ([]*wtype.LHInstruction, error) {
+func checkInstructions(nodes []instructions.Node) ([]*wtype.LHInstruction, error) {
 	instrs := make([]*wtype.LHInstruction, 0, len(nodes))
 	for _, node := range nodes {
-		if cmd, ok := node.(*effects.Command); !ok {
+		if cmd, ok := node.(*instructions.Command); !ok {
 			return nil, fmt.Errorf("cannot compile %T", node)
 		} else if instr, ok := cmd.Inst.(*wtype.LHInstruction); !ok {
 			return nil, fmt.Errorf("cannot compile %T", cmd.Inst)

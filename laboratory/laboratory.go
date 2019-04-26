@@ -13,6 +13,7 @@ import (
 
 	"github.com/antha-lang/antha/codegen"
 	"github.com/antha-lang/antha/composer"
+	"github.com/antha-lang/antha/instructions"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/logger"
 	"github.com/antha-lang/antha/target"
@@ -62,7 +63,7 @@ type LaboratoryBuilder struct {
 
 	effects *effects.LaboratoryEffects
 
-	instrs effects.Insts
+	instrs instructions.Insts
 }
 
 func EmptyLaboratoryBuilder() *LaboratoryBuilder {
@@ -212,6 +213,10 @@ func (labBuild *LaboratoryBuilder) Decommission() {
 
 func (labBuild *LaboratoryBuilder) RemoveOutDir() error {
 	return os.RemoveAll(labBuild.outDir)
+}
+
+func (labBuild *LaboratoryBuilder) RemoveInDir() error {
+	return os.RemoveAll(labBuild.inDir)
 }
 
 func (labBuild *LaboratoryBuilder) Compile() {

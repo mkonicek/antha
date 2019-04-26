@@ -15,7 +15,7 @@ func makeTipForTest(idGen *id.IDGenerator) *LHTip {
 }
 
 func TestTipSerialization(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 
 	tips := []*LHTip{
 		{

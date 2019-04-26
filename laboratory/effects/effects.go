@@ -1,6 +1,7 @@
 package effects
 
 import (
+	"github.com/antha-lang/antha/instructions"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/cache/plateCache"
 	"github.com/antha-lang/antha/laboratory/effects/id"
@@ -10,8 +11,8 @@ import (
 
 type LaboratoryEffects struct {
 	FileManager   *FileManager
-	Trace         *Trace
-	Maker         *Maker
+	Trace         *instructions.Trace
+	Maker         *instructions.Maker
 	SampleTracker *sampletracker.SampleTracker
 	Inventory     *inventory.Inventory
 	// TODO the plate cache should go away and the use sites should be rewritten around plate types.
@@ -23,8 +24,8 @@ func NewLaboratoryEffects(wf *workflow.Workflow, simId workflow.BasicId, fm *Fil
 	idGen := id.NewIDGenerator(string(simId))
 	le := &LaboratoryEffects{
 		FileManager:   fm,
-		Trace:         NewTrace(),
-		Maker:         NewMaker(),
+		Trace:         instructions.NewTrace(),
+		Maker:         instructions.NewMaker(),
 		SampleTracker: sampletracker.NewSampleTracker(),
 		Inventory:     inventory.NewInventory(idGen),
 		IDGenerator:   idGen,

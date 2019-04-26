@@ -34,7 +34,7 @@ import (
 )
 
 func TestMarshalDeckObject(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	objects := []LHObject{
 		makeplatefortest(idGen),
 		maketroughfortest(idGen),
@@ -95,7 +95,7 @@ func TestDeserializeGenericMatter(t *testing.T) {
 }
 */
 func TestLHWellSerialize(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 
 	wellExtra := make(map[string]interface{})
 	lhwell := LHWell{

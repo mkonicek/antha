@@ -1278,8 +1278,7 @@ func (self *SimulatorTest) compareErrors(t *testing.T, actual []simulator.Simula
 }
 
 func (self *SimulatorTest) Run(t *testing.T) {
-	// Don't use "testing" because of possibility of namespace collision
-	idGen := id.NewIDGenerator("SimulatorTest")
+	idGen := id.NewIDGenerator(t.Name())
 	if self.Props == nil {
 		self.Props = defaultLHProperties(idGen)
 	}

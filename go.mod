@@ -8,6 +8,7 @@ require (
 	github.com/apache/arrow/go/arrow v0.0.0-20190412182029-853742021ce1
 	github.com/biogo/biogo v1.0.1
 	github.com/biogo/ncbi v1.0.2
+	github.com/colinmarc/hdfs v1.1.3 // indirect
 	github.com/disintegration/imaging v1.6.0
 	github.com/dustinkirkland/golang-petname v0.0.0-20170921220637-d3c2ba80e75e
 	github.com/go-kit/kit v0.8.0

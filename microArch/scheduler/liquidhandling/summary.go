@@ -53,7 +53,7 @@ func validateJSON(schemaName string, jsonToValidate []byte) error {
 // initialToFinalIDs maps object ids in the inisial state to the final state
 // errors are returned if the json cannot be constructed or the result fails to validate
 func SummarizeLayout(idGen *id.IDGenerator, initialState, finalState *driver.LHProperties, initialToFinalIDs map[string]string) ([]byte, error) {
-	ls := &layoutSummary{
+	ls := &LayoutSummary{
 		Before: newDeckSummary(idGen, initialState),
 		After:  newDeckSummary(idGen, finalState),
 		IDMap:  initialToFinalIDs,
@@ -108,7 +108,7 @@ func SummarizeActions(idGen *id.IDGenerator, initialState *driver.LHProperties, 
 	// we care about recording transfer and message instructions
 	acts := itree.Refine(driver.TFR, driver.MSG)
 
-	actions := make(actionsSummary, 0, len(acts))
+	actions := make(ActionsSummary, 0, len(acts))
 	for _, act := range acts {
 		var timeForAct time.Duration
 		if timer != nil {
@@ -155,15 +155,15 @@ func SummarizeActions(idGen *id.IDGenerator, initialState *driver.LHProperties, 
 	}
 }
 
-// layoutSummary summarize the layout of the deck before and after the liquidhandling step
-type layoutSummary struct {
+// LayoutSummary summarize the layout of the deck before and after the liquidhandling step
+type LayoutSummary struct {
 	Before *deckSummary      `json:"before"`  // the layout before the liquidhandling takes place
 	After  *deckSummary      `json:"after"`   // the layout after the liquidhandling takes place
 	IDMap  map[string]string `json:"new_ids"` // maps from ids in "before" to ids in "after"
 }
 
-func (ls *layoutSummary) MarshalJSON() ([]byte, error) {
-	type LayoutSummaryAlias layoutSummary
+func (ls *LayoutSummary) MarshalJSON() ([]byte, error) {
+	type LayoutSummaryAlias LayoutSummary
 	return json.Marshal(struct {
 		*LayoutSummaryAlias
 		Version string `json:"version"`
@@ -171,6 +171,24 @@ func (ls *layoutSummary) MarshalJSON() ([]byte, error) {
 		LayoutSummaryAlias: (*LayoutSummaryAlias)(ls),
 		Version:            LayoutSummaryVersion,
 	})
+}
+
+func (ls *LayoutSummary) UnmarshalJSON(bs []byte) error {
+	type LayoutSummaryAlias LayoutSummary
+	var a struct {
+		LayoutSummaryAlias
+		Version string `json:"version"`
+	}
+	if err := json.Unmarshal(bs, &a); err != nil {
+		return err
+	}
+
+	if a.Version != LayoutSummaryVersion {
+		return errors.Errorf("layout version mismatch: expected %s, got %s", LayoutSummaryVersion, a.Version)
+	}
+
+	*ls = LayoutSummary(a.LayoutSummaryAlias)
+	return nil
 }
 
 // deckSummary summarize the layout of the deck
@@ -437,10 +455,10 @@ type wellLocation struct {
 	Column     int    `json:"col"`
 }
 
-type actionsSummary []action
+type ActionsSummary []action
 
-func (as actionsSummary) MarshalJSON() ([]byte, error) {
-	type ActionsSummaryAlias actionsSummary
+func (as ActionsSummary) MarshalJSON() ([]byte, error) {
+	type ActionsSummaryAlias ActionsSummary
 	return json.Marshal(struct {
 		Actions ActionsSummaryAlias `json:"actions"`
 		Version string              `json:"version"`
@@ -448,6 +466,113 @@ func (as actionsSummary) MarshalJSON() ([]byte, error) {
 		Actions: ActionsSummaryAlias(as),
 		Version: ActionsSummaryVersion,
 	})
+}
+
+func (as *ActionsSummary) UnmarshalJSON(bs []byte) error {
+	type partialAction struct {
+		Kind string `json:"kind"`
+	}
+
+	var actions struct {
+		Actions []json.RawMessage `json:"actions"`
+		Version string            `json:"version"`
+	}
+	if err := json.Unmarshal(bs, &actions); err != nil {
+		return err
+	}
+
+	if actions.Version != ActionsSummaryVersion {
+		return errors.Errorf("actions version mismatch: expected %s, got %s", ActionsSummaryVersion, actions.Version)
+	}
+
+	newActions := make(ActionsSummary, 0, len(actions.Actions))
+	for _, rawAction := range actions.Actions {
+		var pa partialAction
+		if err := json.Unmarshal(rawAction, &pa); err != nil {
+			return err
+		}
+
+		var a action
+		switch pa.Kind {
+		case "prompt":
+			a = &PromptAction{}
+		case "transfer":
+			a = &TransferAction{}
+		default:
+			panic(fmt.Sprintf("unknown action type '%s'", pa.Kind))
+		}
+		if err := json.Unmarshal(rawAction, a); err != nil {
+			return err
+		}
+		newActions = append(newActions, a)
+	}
+
+	*as = newActions
+	return nil
+}
+
+func (ta *TransferAction) UnmarshalJSON(bs []byte) error {
+	type partialChild struct {
+		Kind string `json:"kind"`
+	}
+
+	type partialTA struct {
+		Children []json.RawMessage `json:"children"`
+	}
+	var pta partialTA
+	if err := json.Unmarshal(bs, &pta); err != nil {
+		return err
+	}
+
+	newChildren := make([]transferChild, 0, len(pta.Children))
+	for _, rawChild := range pta.Children {
+		var pc partialChild
+		if err := json.Unmarshal(rawChild, &pc); err != nil {
+			return err
+		}
+
+		var tc transferChild
+		switch pc.Kind {
+		case string(loadTipAction):
+			tc = &TipAction{}
+		case string(unloadTipAction):
+			tc = &TipAction{}
+		case "parallel_transfer":
+			tc = &ParallelTransfer{}
+		default:
+			panic(fmt.Sprintf("unknown child kind '%s'", pc.Kind))
+		}
+		if err := json.Unmarshal(rawChild, tc); err != nil {
+			return err
+		}
+		newChildren = append(newChildren, tc)
+	}
+
+	ta.Children = newChildren
+	return nil
+}
+
+func (h height) UnmarshalJSON(bs []byte) error {
+
+	type partialHeight struct {
+		measurementSummary
+		Reference string `json:"reference"`
+	}
+
+	var ph partialHeight
+	if err := json.Unmarshal(bs, &ph); err != nil {
+		return err
+	}
+
+	h.measurementSummary = ph.measurementSummary
+
+	if ref, err := wtype.NewWellReference(ph.Reference); err != nil {
+		return err
+	} else {
+		h.Reference = ref
+	}
+
+	return nil
 }
 
 // contentUpdate
@@ -503,16 +628,16 @@ type transferSummary struct {
 	Head              int                 `json:"head"`
 }
 
-// parallelTransfer a slice of one or more Transfers which happen simultaneously
-type parallelTransfer struct {
+// ParallelTransfer a slice of one or more Transfers which happen simultaneously
+type ParallelTransfer struct {
 	Channels               map[int]*transferSummary `json:"channels"`
 	TimeEstimate           float64                  `json:"time_estimate"`
 	CumulativeTimeEstimate float64                  `json:"cumulative_time_estimate"`
 }
 
-// newParallelTransfer create a parallelTransfer from the ChannelTransferInstruction held by the ITree node
+// newParallelTransfer create a ParallelTransfer from the ChannelTransferInstruction held by the ITree node
 // inspects the lower level instructions generated by the CTI to determine the precise details
-func newParallelTransfer(idGen *id.IDGenerator, vlh *simulator.VirtualLiquidHandler, tree *driver.ITree, timeEstimate, cumulativeTimeEstimate time.Duration) (*parallelTransfer, error) {
+func newParallelTransfer(idGen *id.IDGenerator, vlh *simulator.VirtualLiquidHandler, tree *driver.ITree, timeEstimate, cumulativeTimeEstimate time.Duration) (*ParallelTransfer, error) {
 	cti := tree.Instruction().(*driver.ChannelTransferInstruction)
 
 	// fetch a well from the virtual liquidhandler
@@ -678,16 +803,16 @@ func newParallelTransfer(idGen *id.IDGenerator, vlh *simulator.VirtualLiquidHand
 		transfers[i] = tfs
 	}
 
-	return &parallelTransfer{
+	return &ParallelTransfer{
 		Channels:               transfers,
 		TimeEstimate:           timeEstimate.Seconds(),
 		CumulativeTimeEstimate: cumulativeTimeEstimate.Seconds(),
 	}, nil
 }
 
-func (pt *parallelTransfer) MarshalJSON() ([]byte, error) {
+func (pt *ParallelTransfer) MarshalJSON() ([]byte, error) {
 	// alias the type so as not to invoke this function in a loop
-	type Alias parallelTransfer
+	type Alias ParallelTransfer
 	return json.Marshal(struct {
 		Kind string `json:"kind"`
 		*Alias
@@ -697,16 +822,16 @@ func (pt *parallelTransfer) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (*parallelTransfer) isTransferChild() {}
+func (*ParallelTransfer) isTransferChild() {}
 
 type transferChild interface {
 	isTransferChild()
 }
 
-// transferAction represents all the transfers carried out by a TransferInstruction as a slice of parallelTransfers which occur in serial.
+// TransferAction represents all the transfers carried out by a TransferInstruction as a slice of ParallelTransfers which occur in serial.
 // Ultimately, this represents all the instructions which were sorted to a single link in the IChain, i.e. the results of high level LHInstructions
 // which _could_ all be executed together given a sufficiently flexible device
-type transferAction struct {
+type TransferAction struct {
 	Children               []transferChild `json:"children"`
 	TimeEstimate           float64         `json:"time_estimate"`
 	CumulativeTimeEstimate float64         `json:"cumulative_time_estimate"`
@@ -714,7 +839,7 @@ type transferAction struct {
 
 // newTransferAction create a new transfer action from the act, which is assumed to have generated ChannelTransferInstructions
 // and outputs all leaves of the act to the simulator
-func newTransferAction(idGen *id.IDGenerator, vlh *simulator.VirtualLiquidHandler, act *driver.ITree, timer driver.LHTimer, cumulativeTimeEstimate time.Duration) (*transferAction, error) {
+func newTransferAction(idGen *id.IDGenerator, vlh *simulator.VirtualLiquidHandler, act *driver.ITree, timer driver.LHTimer, cumulativeTimeEstimate time.Duration) (*TransferAction, error) {
 
 	instructions := act.Refine(driver.CTI)
 
@@ -759,14 +884,14 @@ func newTransferAction(idGen *id.IDGenerator, vlh *simulator.VirtualLiquidHandle
 		}
 	}
 
-	return &transferAction{Children: children, CumulativeTimeEstimate: cumulativeTimeEstimate.Seconds()}, nil
+	return &TransferAction{Children: children, CumulativeTimeEstimate: cumulativeTimeEstimate.Seconds()}, nil
 }
 
-func (*transferAction) isAction() {}
+func (*TransferAction) isAction() {}
 
-func (ta *transferAction) MarshalJSON() ([]byte, error) {
+func (ta *TransferAction) MarshalJSON() ([]byte, error) {
 	// alias the type so as not to invoke this function in a loop
-	type Alias transferAction
+	type Alias TransferAction
 	return json.Marshal(struct {
 		Kind string `json:"kind"`
 		*Alias
@@ -776,23 +901,23 @@ func (ta *transferAction) MarshalJSON() ([]byte, error) {
 	})
 }
 
-type tipActionType string
+type TipActionType string
 
 const (
-	loadTipAction   tipActionType = "load"
-	unloadTipAction tipActionType = "unload"
+	loadTipAction   TipActionType = "load"
+	unloadTipAction TipActionType = "unload"
 )
 
-// tipAction a load or unload tips action
-type tipAction struct {
-	Kind                   tipActionType         `json:"kind"`
+// TipAction a load or unload tips action
+type TipAction struct {
+	Kind                   TipActionType         `json:"kind"`
 	Head                   int                   `json:"head"`
 	Channels               map[int]*wellLocation `json:"channels"`
 	TimeEstimate           float64               `json:"time_estimate"`
 	CumulativeTimeEstimate float64               `json:"cumulative_time_estimate"`
 }
 
-func newTipAction(vlh *simulator.VirtualLiquidHandler, kind tipActionType, multi, head int, positions, wellcoords []string, timeEstimate, cumulativeTimeEstimate time.Duration) *tipAction {
+func newTipAction(vlh *simulator.VirtualLiquidHandler, kind TipActionType, multi, head int, positions, wellcoords []string, timeEstimate, cumulativeTimeEstimate time.Duration) *TipAction {
 	tipSources := make(map[int]*wellLocation, multi)
 	for i := 0; i < multi; i++ {
 		wc := wtype.MakeWellCoords(wellcoords[i])
@@ -807,7 +932,7 @@ func newTipAction(vlh *simulator.VirtualLiquidHandler, kind tipActionType, multi
 		}
 	}
 
-	return &tipAction{
+	return &TipAction{
 		Kind:                   kind,
 		Head:                   head,
 		Channels:               tipSources,
@@ -816,32 +941,32 @@ func newTipAction(vlh *simulator.VirtualLiquidHandler, kind tipActionType, multi
 	}
 }
 
-func (*tipAction) isTransferChild() {}
+func (*TipAction) isTransferChild() {}
 
-type promptAction struct {
+type PromptAction struct {
 	DurationSeconds        float64 `json:"duration_seconds,omitempty"`
 	CumulativeTimeEstimate float64 `json:"cumulative_time_estimate"`
 	TimeEstimate           float64 `json:"time_estimate"`
 	Message                string  `json:"message"`
 }
 
-func newPromptAction(vlh *simulator.VirtualLiquidHandler, act *driver.ITree, cumulativeTime time.Duration) (*promptAction, error) {
+func newPromptAction(vlh *simulator.VirtualLiquidHandler, act *driver.ITree, cumulativeTime time.Duration) (*PromptAction, error) {
 	msg := act.Instruction().(*driver.MessageInstruction)
 
 	if err := msg.OutputTo(vlh); err != nil {
 		return nil, err
 	}
-	return &promptAction{
+	return &PromptAction{
 		Message:                msg.Message,
 		CumulativeTimeEstimate: cumulativeTime.Seconds(),
 	}, nil
 }
 
-func (*promptAction) isAction() {}
+func (*PromptAction) isAction() {}
 
-func (ma *promptAction) MarshalJSON() ([]byte, error) {
+func (ma *PromptAction) MarshalJSON() ([]byte, error) {
 	// alias the type so as not to invoke this function in a loop
-	type Alias promptAction
+	type Alias PromptAction
 	return json.Marshal(struct {
 		Kind string `json:"kind"`
 		*Alias

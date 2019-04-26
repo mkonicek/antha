@@ -74,7 +74,7 @@ func TestUpdateIDOfAfterLocation(t *testing.T) {
 }
 
 func TestInputPlates(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	p := getPlateForTest(idGen)
 
 	for it := wtype.NewAddressIterator(p, wtype.ColumnWise, wtype.TopToBottom, wtype.LeftToRight, false); it.Valid(); it.Next() {

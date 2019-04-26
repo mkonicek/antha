@@ -40,7 +40,7 @@ func RTLTipBehaviour() wtype.TipLoadingBehaviour {
 }
 
 func (self *tipCoordsTest) run(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	tb := defaultLHTipbox(idGen, "testbox")
 
 	for _, tipAddrS := range self.tipsMissing {

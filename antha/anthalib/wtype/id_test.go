@@ -31,7 +31,7 @@ func makeComponent(idGen *id.IDGenerator) *Liquid {
 // in well with new ID
 // well component should have old component as parent
 func TestEmptyWellMix(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	c := makeComponent(idGen)
 	w := makeWell(idGen)
 	err := w.AddComponent(idGen, c)
@@ -52,7 +52,7 @@ func TestEmptyWellMix(t *testing.T) {
 }
 
 func TestFullWellMix(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	c := makeComponent(idGen)
 	w := makeWell(idGen)
 	idb4 := w.WContents.ID

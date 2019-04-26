@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/instructions"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/laboratory/effects/id"
 	"github.com/antha-lang/antha/target"
@@ -40,9 +41,9 @@ func (hum *Human) Id() workflow.DeviceInstanceID {
 	return hum.id
 }
 
-func (hum *Human) CanCompile(req effects.Request) bool {
-	can := effects.Request{
-		Selector: []effects.NameValue{
+func (hum *Human) CanCompile(req instructions.Request) bool {
+	can := instructions.Request{
+		Selector: []instructions.NameValue{
 			target.DriverSelectorV1Human,
 		},
 	}
@@ -58,19 +59,19 @@ func (hum *Human) CanCompile(req effects.Request) bool {
 }
 
 // Compile implements target.device Compile
-func (hum *Human) Compile(labEffects *effects.LaboratoryEffects, dir string, nodes []effects.Node) (effects.Insts, error) {
+func (hum *Human) Compile(labEffects *effects.LaboratoryEffects, dir string, nodes []instructions.Node) (instructions.Insts, error) {
 	return hum.impl.Compile(labEffects, dir, nodes)
 }
 
 func (hum *Human) DetermineRole(tgt *target.Target) {
-	mixReq := effects.Request{
-		Selector: []effects.NameValue{
+	mixReq := instructions.Request{
+		Selector: []instructions.NameValue{
 			target.DriverSelectorV1Mixer,
 		},
 	}
 
-	incubateReq := effects.Request{
-		Selector: []effects.NameValue{
+	incubateReq := instructions.Request{
+		Selector: []instructions.NameValue{
 			target.DriverSelectorV1ShakerIncubator,
 		},
 	}
@@ -100,42 +101,38 @@ func (hum *Human) Connect(*workflow.Workflow) error {
 
 func (hum *Human) Close() {}
 
-func (hum *Human) generate(cmd interface{}) (effects.Insts, error) {
-	instrs := make([]effects.Inst, 1)
+func (hum *Human) generate(cmd interface{}) (instructions.Insts, error) {
+	instrs := make([]instructions.Inst, 1)
 
 	switch cmd := cmd.(type) {
 
 	case *wtype.LHInstruction:
 		instrs[0] = &target.Manual{
-			DeviceMixin: effects.DeviceMixin{Dev: hum},
-			Label:       "mix",
-			Details:     prettyMixDetails(cmd),
+			Label:   "mix",
+			Details: prettyMixDetails(cmd),
 		}
 
-	case *effects.IncubateInst:
+	case *instructions.IncubateInst:
 		instrs[0] = &target.Manual{
-			DeviceMixin: effects.DeviceMixin{Dev: hum},
-			Label:       "incubate",
-			Details:     fmt.Sprintf("incubate at %s for %s", cmd.Temp.ToString(), cmd.Time.ToString()),
+			Label:   "incubate",
+			Details: fmt.Sprintf("incubate at %s for %s", cmd.Temp.ToString(), cmd.Time.ToString()),
 		}
 
-	case *effects.PromptInst:
+	case *instructions.PromptInst:
 		instrs[0] = &target.Prompt{
 			Message: cmd.Message,
 		}
 
 	case *wtype.PRInstruction:
 		instrs[0] = &target.Manual{
-			DeviceMixin: effects.DeviceMixin{Dev: hum},
-			Label:       "plate-read",
-			Details:     fmt.Sprintf("plate-read instruction. Options:'%s'", cmd.Options),
+			Label:   "plate-read",
+			Details: fmt.Sprintf("plate-read instruction. Options:'%s'", cmd.Options),
 		}
 
-	case *effects.QPCRInstruction:
+	case *instructions.QPCRInstruction:
 		instrs[0] = &target.Manual{
-			DeviceMixin: effects.DeviceMixin{Dev: hum},
-			Label:       "QPCR",
-			Details:     fmt.Sprintf("QPCR request, definition %s, barcode %s", cmd.Definition, cmd.Barcode),
+			Label:   "QPCR",
+			Details: fmt.Sprintf("QPCR request, definition %s, barcode %s", cmd.Definition, cmd.Barcode),
 		}
 
 	default:

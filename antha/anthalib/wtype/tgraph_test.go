@@ -10,7 +10,7 @@ import (
 func splitSample(idGen *id.IDGenerator, l *Liquid, v wunit.Volume) (moving, remaining *Liquid) {
 	remaining = l.Dup(idGen)
 
-	moving = sample(remaining, v)
+	moving = sample(idGen, remaining, v)
 
 	remaining.Vol -= v.ConvertToString(remaining.Vunit)
 	remaining.ID = idGen.NextID()
@@ -19,8 +19,7 @@ func splitSample(idGen *id.IDGenerator, l *Liquid, v wunit.Volume) (moving, rema
 }
 
 // sample takes a sample of volume v from this liquid
-func sample(l *Liquid, v wunit.Volume) *Liquid {
-	idGen := id.NewIDGenerator("testing")
+func sample(idGen *id.IDGenerator, l *Liquid, v wunit.Volume) *Liquid {
 	ret := NewLHComponent(idGen)
 	//      ret.ID = l.ID
 	l.AddDaughterComponent(ret)
@@ -43,7 +42,7 @@ func sample(l *Liquid, v wunit.Volume) *Liquid {
 }
 
 func TestTGraph(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	tIns := make([]*LHInstruction, 0, 10)
 
 	cmpIn := NewLHComponent(idGen)
@@ -101,7 +100,7 @@ func TestTGraph(t *testing.T) {
 // before the use of their second - this is because they update the ID of their
 // input component
 func TestTGraphSplit(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	tIns := make([]*LHInstruction, 0, 3)
 
 	cmpIn := NewLHComponent(idGen)

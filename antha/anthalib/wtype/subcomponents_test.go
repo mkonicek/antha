@@ -8,7 +8,7 @@ import (
 )
 
 func TestAddandGetComponent(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	newTestComponent := func(
 		name string,
 		typ LiquidType,

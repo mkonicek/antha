@@ -1,13 +1,15 @@
-package liquidhandling
+package tests
 
 import (
+	"testing"
+
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"testing"
+	"github.com/antha-lang/antha/laboratory/effects/id"
 )
 
 func TestTipCounting(t *testing.T) {
-	ctx := GetContextForTest()
+	idGen := id.NewIDGenerator(t.Name())
 	PlanningTests{
 		{
 			Name: "single channel",
@@ -31,8 +33,8 @@ func TestTipCounting(t *testing.T) {
 					Sampler:       mixer.Sample,
 				},
 			}),
-			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
-			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
+			InputPlates:  []*wtype.LHPlate{GetTroughForTest(idGen)},
+			OutputPlates: []*wtype.LHPlate{GetPlateForTest(idGen)},
 			Assertions: Assertions{
 				TipsUsedAssertion([]wtype.TipEstimate{{TipType: "DFL10 Tip Rack (PIPETMAX 8x20)", NTips: 8 * 3, NTipBoxes: 1}}),
 			},
@@ -59,11 +61,11 @@ func TestTipCounting(t *testing.T) {
 					Sampler:       mixer.Sample,
 				},
 			}),
-			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
-			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
+			InputPlates:  []*wtype.LHPlate{GetTroughForTest(idGen)},
+			OutputPlates: []*wtype.LHPlate{GetPlateForTest(idGen)},
 			Assertions: Assertions{
 				TipsUsedAssertion([]wtype.TipEstimate{{TipType: "DFL10 Tip Rack (PIPETMAX 8x20)", NTips: 8 * 3, NTipBoxes: 1}}),
 			},
 		},
-	}.Run(ctx, t)
+	}.Run(t)
 }

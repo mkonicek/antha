@@ -20,7 +20,7 @@ func getTestComponent(idGen *id.IDGenerator, volUL float64) *Liquid {
 }
 
 func TestWellVolumes(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	well := getTestWell(idGen, 100.0, 1.0)
 
 	if e, g := 100.0, well.MaxVolume().ConvertToString("ul"); e != g {
@@ -82,7 +82,7 @@ func TestWellVolumes(t *testing.T) {
 }
 
 func TestAddComponentOK(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	well := getTestWell(idGen, 100.0, 1.0)
 	cmp := getTestComponent(idGen, 5.0)
 
@@ -95,7 +95,7 @@ func TestAddComponentOverfilled(t *testing.T) {
 	//Skipping because AddComponent doesn't raise errors at the moment
 	//due to CarryVolume issues.
 	t.Skip()
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 
 	well := getTestWell(idGen, 100.0, 1.0)
 	cmp := getTestComponent(idGen, 100.5)
@@ -106,7 +106,7 @@ func TestAddComponentOverfilled(t *testing.T) {
 }
 
 func TestRemoveVolume(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	well := getTestWell(idGen, 100.0, 1.0)
 	cmp := getTestComponent(idGen, 50.0)
 
@@ -139,7 +139,7 @@ func TestRemoveVolume(t *testing.T) {
 }
 
 func TestWellValidation(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	cmp := getTestComponent(idGen, 50.0)
 
 	well := &LHWell{
@@ -171,7 +171,7 @@ func TestWellValidation(t *testing.T) {
 }
 
 func TestGetNextWellOk(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 	trough := maketroughfortest(idGen)
 	var well *LHWell
 

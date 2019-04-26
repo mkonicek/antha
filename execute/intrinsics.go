@@ -6,8 +6,8 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/instructions"
 	"github.com/antha-lang/antha/laboratory"
-	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/target"
 )
 
@@ -53,7 +53,7 @@ func newCompFromComp(lab *laboratory.Laboratory, in *wtype.Liquid) *wtype.Liquid
 // Incubate incubates a component
 func Incubate(lab *laboratory.Laboratory, in *wtype.Liquid, opt IncubateOpt) *wtype.Liquid {
 	// nolint: gosimple
-	innerInst := &effects.IncubateInst{
+	innerInst := &instructions.IncubateInst{
 		Time:           opt.Time,
 		Temp:           opt.Temp,
 		ShakeRate:      opt.ShakeRate,
@@ -64,13 +64,13 @@ func Incubate(lab *laboratory.Laboratory, in *wtype.Liquid, opt IncubateOpt) *wt
 		PreShakeRadius: opt.PreShakeRadius,
 	}
 
-	inst := &effects.CommandInst{
+	inst := &instructions.CommandInst{
 		Args:   []*wtype.Liquid{in},
 		Result: []*wtype.Liquid{newCompFromComp(lab, in)},
-		Command: &effects.Command{
+		Command: &instructions.Command{
 			Inst: innerInst,
-			Request: effects.Request{
-				Selector: []effects.NameValue{
+			Request: instructions.Request{
+				Selector: []instructions.NameValue{
 					target.DriverSelectorV1ShakerIncubator,
 				},
 			},
@@ -112,15 +112,15 @@ func ExecuteMixes(lab *laboratory.Laboratory, liquid *wtype.LHComponent) *wtype.
 
 // Prompt prompts user with a message
 func Prompt(lab *laboratory.Laboratory, in *wtype.Liquid, message string) *wtype.Liquid {
-	inst := &effects.CommandInst{
+	inst := &instructions.CommandInst{
 		Args:   []*wtype.Liquid{in},
 		Result: []*wtype.Liquid{newCompFromComp(lab, in)},
-		Command: &effects.Command{
-			Inst: &effects.PromptInst{
+		Command: &instructions.Command{
+			Inst: &instructions.PromptInst{
 				Message: message,
 			},
-			Request: effects.Request{
-				Selector: []effects.NameValue{
+			Request: instructions.Request{
+				Selector: []instructions.NameValue{
 					target.DriverSelectorV1Human,
 				},
 			},
@@ -131,7 +131,7 @@ func Prompt(lab *laboratory.Laboratory, in *wtype.Liquid, message string) *wtype
 	return inst.Result[0]
 }
 
-func mixerPrompt(lab *laboratory.Laboratory, opts mixerPromptOpts) *effects.CommandInst {
+func mixerPrompt(lab *laboratory.Laboratory, opts mixerPromptOpts) *instructions.CommandInst {
 	inst := wtype.NewLHPromptInstruction(lab.IDGenerator)
 	inst.SetGeneration(opts.ComponentIn.Generation())
 	inst.Message = opts.Message
@@ -139,13 +139,13 @@ func mixerPrompt(lab *laboratory.Laboratory, opts mixerPromptOpts) *effects.Comm
 	inst.AddInput(opts.ComponentIn)
 	inst.PassThrough[opts.ComponentIn.ID] = opts.Component
 
-	return &effects.CommandInst{
+	return &instructions.CommandInst{
 		Args:   []*wtype.Liquid{opts.ComponentIn},
 		Result: []*wtype.Liquid{opts.Component},
-		Command: &effects.Command{
+		Command: &instructions.Command{
 			Inst: inst,
-			Request: effects.Request{
-				Selector: []effects.NameValue{
+			Request: instructions.Request{
+				Selector: []instructions.NameValue{
 					target.DriverSelectorV1Prompter,
 				},
 			},
@@ -159,7 +159,7 @@ type PlateReadOpts struct {
 	Options string
 }
 
-func readPlate(lab *laboratory.Laboratory, opts PlateReadOpts) *effects.CommandInst {
+func readPlate(lab *laboratory.Laboratory, opts PlateReadOpts) *instructions.CommandInst {
 	inst := wtype.NewPRInstruction(lab.IDGenerator)
 	inst.ComponentIn = opts.Sample
 
@@ -167,13 +167,13 @@ func readPlate(lab *laboratory.Laboratory, opts PlateReadOpts) *effects.CommandI
 	inst.ComponentOut = newCompFromComp(lab, opts.Sample)
 	inst.Options = opts.Options
 
-	return &effects.CommandInst{
+	return &instructions.CommandInst{
 		Args:   []*wtype.Liquid{opts.Sample},
 		Result: []*wtype.Liquid{inst.ComponentOut},
-		Command: &effects.Command{
+		Command: &instructions.Command{
 			Inst: inst,
-			Request: effects.Request{
-				Selector: []effects.NameValue{
+			Request: instructions.Request{
+				Selector: []instructions.NameValue{
 					target.DriverSelectorV1WriteOnlyPlateReader,
 				},
 			},
@@ -196,8 +196,8 @@ type QPCROptions struct {
 	TagAs      string
 }
 
-func runQPCR(lab *laboratory.Laboratory, opts QPCROptions, command string) *effects.CommandInst {
-	inst := &effects.QPCRInstruction{ID: lab.IDGenerator.NextID()}
+func runQPCR(lab *laboratory.Laboratory, opts QPCROptions, command string) *instructions.CommandInst {
+	inst := &instructions.QPCRInstruction{ID: lab.IDGenerator.NextID()}
 	inst.Command = command
 	inst.ComponentIn = opts.Reactions
 	inst.Definition = opts.Definition
@@ -209,13 +209,13 @@ func runQPCR(lab *laboratory.Laboratory, opts QPCROptions, command string) *effe
 		inst.ComponentOut = append(inst.ComponentOut, newCompFromComp(lab, r))
 	}
 
-	return &effects.CommandInst{
+	return &instructions.CommandInst{
 		Args:   opts.Reactions,
 		Result: inst.ComponentOut,
-		Command: &effects.Command{
+		Command: &instructions.Command{
 			Inst: inst,
-			Request: effects.Request{
-				Selector: []effects.NameValue{
+			Request: instructions.Request{
+				Selector: []instructions.NameValue{
 					target.DriverSelectorV1QPCRDevice,
 				},
 			},
@@ -255,7 +255,7 @@ func NewPlate(lab *laboratory.Laboratory, typ wtype.PlateTypeName) *wtype.Plate 
 	return p
 }
 
-func mix(lab *laboratory.Laboratory, inst *wtype.LHInstruction) *effects.CommandInst {
+func mix(lab *laboratory.Laboratory, inst *wtype.LHInstruction) *instructions.CommandInst {
 	inst.BlockID = wtype.NewBlockID(string(lab.Workflow.SimulationId))
 	inst.Outputs[0].BlockID = inst.BlockID
 	result := inst.Outputs[0]
@@ -280,12 +280,12 @@ func mix(lab *laboratory.Laboratory, inst *wtype.LHInstruction) *effects.Command
 	result.SetGeneration(mx + 1)
 	result.DeclareInstance()
 
-	return &effects.CommandInst{
+	return &instructions.CommandInst{
 		Args: inst.Inputs,
-		Command: &effects.Command{
+		Command: &instructions.Command{
 			Inst: inst,
-			Request: effects.Request{
-				Selector: []effects.NameValue{
+			Request: instructions.Request{
+				Selector: []instructions.NameValue{
 					target.DriverSelectorV1Mixer,
 				},
 			},
@@ -364,7 +364,7 @@ func Sample(lab *laboratory.Laboratory, liquid *wtype.Liquid, v wunit.Volume) *w
 	return mixer.Sample(lab, liquid, v)
 }
 
-func splitSample(lab *laboratory.Laboratory, component *wtype.Liquid, volume wunit.Volume) *effects.CommandInst {
+func splitSample(lab *laboratory.Laboratory, component *wtype.Liquid, volume wunit.Volume) *instructions.CommandInst {
 
 	split := wtype.NewLHSplitInstruction(lab.IDGenerator)
 
@@ -380,12 +380,12 @@ func splitSample(lab *laboratory.Laboratory, component *wtype.Liquid, volume wun
 	split.AddOutput(cmpStaying)
 
 	// Create Instruction
-	inst := &effects.CommandInst{
+	inst := &instructions.CommandInst{
 		Args: []*wtype.Liquid{component},
-		Command: &effects.Command{
+		Command: &instructions.Command{
 			Inst: split,
-			Request: effects.Request{
-				Selector: []effects.NameValue{
+			Request: instructions.Request{
+				Selector: []instructions.NameValue{
 					target.DriverSelectorV1Mixer,
 				},
 			},

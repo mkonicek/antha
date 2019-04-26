@@ -56,7 +56,7 @@ func TestMaskToWellCoords(t *testing.T) {
 
 // func NewLHTipbox(nrows, ncols int, height float64, manufacturer, boxtype string, tiptype *LHTip, well *LHWell, tipxoffset, tipyoffset, tipxstart, tipystart, tipzstart float64)
 func TestGetTipsMasked(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 
 	tb := makeTipboxForTest(idGen)
 
@@ -76,7 +76,7 @@ func TestGetTipsMasked(t *testing.T) {
 }
 
 func TestGetTipsMasked2(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 
 	tb := makeTipboxForTest(idGen)
 
@@ -96,7 +96,7 @@ func TestGetTipsMasked2(t *testing.T) {
 }
 
 func TestHasCleanTips(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 
 	tb := makeTipboxForTest(idGen)
 
@@ -134,7 +134,7 @@ func TestTrimToMask(t *testing.T) {
 }
 
 func TestTipboxWellCoordsToCoords(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 
 	tb := makeTipboxForTest(idGen)
 
@@ -153,7 +153,7 @@ func TestTipboxWellCoordsToCoords(t *testing.T) {
 }
 
 func TestTipboxCoordsToWellCoords(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 
 	tb := makeTipboxForTest(idGen)
 
@@ -176,7 +176,7 @@ func TestTipboxCoordsToWellCoords(t *testing.T) {
 }
 
 func TestTipboxGetWellBounds(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 
 	tb := makeTipboxForTest(idGen)
 
@@ -199,7 +199,7 @@ func TestTipboxGetWellBounds(t *testing.T) {
 }
 
 func TestTipboxSerialization(t *testing.T) {
-	idGen := id.NewIDGenerator("testing")
+	idGen := id.NewIDGenerator(t.Name())
 
 	removed := makeTipboxForTest(idGen)
 	toRemove := MakeWellCoordsArray([]string{"A1", "B2", "H5"})

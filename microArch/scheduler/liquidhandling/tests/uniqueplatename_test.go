@@ -1,11 +1,16 @@
-package liquidhandling
+package tests
 
 import (
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"testing"
+
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/laboratory/effects/id"
+	lh "github.com/antha-lang/antha/microArch/scheduler/liquidhandling"
 )
 
 func TestUniquePlateName(t *testing.T) {
+	idGen := id.NewIDGenerator(t.Name())
+
 	mswl := func(s string) map[string]*wtype.Plate {
 		return map[string]*wtype.Plate{s: {}}
 	}
@@ -26,18 +31,18 @@ func TestUniquePlateName(t *testing.T) {
 		dat := tests[i]
 
 		doTheTest := func(t *testing.T) {
-			rq := NewLHRequest()
+			rq := lh.NewLHRequest(idGen)
 			rq.InputPlates = dat.InputPlates
 			rq.OutputPlates = dat.OutputPlates
 
 			for v := 0; v < 100; v++ {
-				nom := rq.getSafeInputPlateName(1)
+				nom := rq.GetSafeInputPlateName(1)
 
 				if rq.HasPlateNamed(nom) {
 					t.Errorf("Plate named %s returned by getSafePlateName - already defined by request", nom)
 				}
 
-				rq.AddUserPlate(&wtype.Plate{PlateName: nom})
+				rq.AddUserPlate(idGen, &wtype.Plate{PlateName: nom, ID: idGen.NextID()})
 
 				if !rq.HasPlateNamed(nom) {
 					t.Errorf("Plate named %s not recognised by request after addition", nom)

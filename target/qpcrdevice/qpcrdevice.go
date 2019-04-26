@@ -8,6 +8,7 @@ import (
 	"github.com/antha-lang/antha/driver"
 	framework "github.com/antha-lang/antha/driver/antha_framework_v1"
 	quantstudio "github.com/antha-lang/antha/driver/antha_quantstudio_v1"
+	"github.com/antha-lang/antha/instructions"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/workflow"
@@ -45,9 +46,9 @@ func (a *QPCRDevice) Id() workflow.DeviceInstanceID {
 }
 
 // CanCompile implements a Device
-func (a *QPCRDevice) CanCompile(req effects.Request) bool {
-	can := effects.Request{
-		Selector: []effects.NameValue{target.DriverSelectorV1QPCRDevice},
+func (a *QPCRDevice) CanCompile(req instructions.Request) bool {
+	can := instructions.Request{
+		Selector: []instructions.NameValue{target.DriverSelectorV1QPCRDevice},
 	}
 	return can.Contains(req)
 }
@@ -58,7 +59,7 @@ func (a *QPCRDevice) Connect(*workflow.Workflow) error {
 
 func (a *QPCRDevice) Close() {}
 
-func (dev *QPCRDevice) transform(inst *effects.QPCRInstruction) (*target.Run, error) {
+func (dev *QPCRDevice) transform(inst *instructions.QPCRInstruction) (*target.Run, error) {
 	if inst.Definition == "" {
 		return nil, errors.New("Blank experiment file for qPCR instruction.")
 	}
@@ -110,13 +111,13 @@ func (dev *QPCRDevice) transform(inst *effects.QPCRInstruction) (*target.Run, er
 	}
 
 	return &target.Run{
-		DeviceMixin: effects.DeviceMixin{Dev: dev},
-		Label:       "Perform qPCR Analysis",
-		Calls:       []driver.Call{call},
+		Device: dev,
+		Label:  "Perform qPCR Analysis",
+		Calls:  []driver.Call{call},
 	}, nil
 }
 
-func (dev *QPCRDevice) makePrompt(inst *effects.QPCRInstruction) effects.Inst {
+func (dev *QPCRDevice) makePrompt(inst *instructions.QPCRInstruction) instructions.Inst {
 	bc := inst.Barcode
 	if bc != "" {
 		bc = " (" + bc + ")" // deliberate leading space
@@ -128,16 +129,16 @@ func (dev *QPCRDevice) makePrompt(inst *effects.QPCRInstruction) effects.Inst {
 }
 
 // Compile implements a qPCR device.
-func (dev *QPCRDevice) Compile(labEffects *effects.LaboratoryEffects, dir string, nodes []effects.Node) (effects.Insts, error) {
+func (dev *QPCRDevice) Compile(labEffects *effects.LaboratoryEffects, dir string, nodes []instructions.Node) (instructions.Insts, error) {
 	if len(nodes) > 1 {
 		return nil, fmt.Errorf("Currently only permit a single qPCR instruction per workflow. Received %d", len(nodes))
 	}
 
-	insts := make(effects.Insts, 0, 2*len(nodes))
+	insts := make(instructions.Insts, 0, 2*len(nodes))
 	for _, node := range nodes {
-		if cmd, ok := node.(*effects.Command); !ok {
+		if cmd, ok := node.(*instructions.Command); !ok {
 			return nil, fmt.Errorf("cannot compile %T", node)
-		} else if inst, ok := cmd.Inst.(*effects.QPCRInstruction); !ok {
+		} else if inst, ok := cmd.Inst.(*instructions.QPCRInstruction); !ok {
 			return nil, fmt.Errorf("cannot compile %T", cmd.Inst)
 		} else if call, err := dev.transform(inst); err != nil {
 			return nil, err

@@ -4,11 +4,11 @@ import (
 	"fmt"
 
 	"github.com/antha-lang/antha/graph"
-	"github.com/antha-lang/antha/laboratory/effects"
+	"github.com/antha-lang/antha/instructions"
 )
 
 // Build rooted graph
-func makeRoot(nodes []effects.Node) (effects.Node, error) {
+func makeRoot(nodes []instructions.Node) (instructions.Node, error) {
 	someNode := func(g graph.Graph, m map[graph.Node]bool) graph.Node {
 		for i, inum := 0, g.NumNodes(); i < inum; i++ {
 			n := g.Node(i)
@@ -19,7 +19,7 @@ func makeRoot(nodes []effects.Node) (effects.Node, error) {
 		return nil
 	}
 
-	g := effects.ToGraph(effects.ToGraphOpt{
+	g := instructions.ToGraph(instructions.ToGraphOpt{
 		Roots: nodes,
 	})
 
@@ -46,15 +46,15 @@ func makeRoot(nodes []effects.Node) (effects.Node, error) {
 		return nil, fmt.Errorf("cycle containing %T", someNode(g, seen))
 	}
 
-	ret := &effects.Bundle{}
+	ret := &instructions.Bundle{}
 	for _, r := range roots {
-		ret.From = append(ret.From, r.(effects.Node))
+		ret.From = append(ret.From, r.(instructions.Node))
 	}
 	return ret, nil
 }
 
 // What is the set of UseComps that reach each command
-func buildReachingUses(g graph.Graph) map[effects.Node][]*effects.UseComp {
+func buildReachingUses(g graph.Graph) map[instructions.Node][]*instructions.UseComp {
 	// Simple fixpoint:
 	//   Value: set of use comps,
 	//   Merge: union
@@ -62,16 +62,16 @@ func buildReachingUses(g graph.Graph) map[effects.Node][]*effects.UseComp {
 	//     - Command c -> { }
 	//     - UseComp u -> {u}
 
-	values := make(map[effects.Node][]*effects.UseComp)
+	values := make(map[instructions.Node][]*instructions.UseComp)
 
-	merge := func(n effects.Node) []*effects.UseComp {
-		var vs []*effects.UseComp
+	merge := func(n instructions.Node) []*instructions.UseComp {
+		var vs []*instructions.UseComp
 		for i, inum := 0, g.NumOuts(n); i < inum; i++ {
-			pred := g.Out(n, i).(effects.Node)
+			pred := g.Out(n, i).(instructions.Node)
 			switch pred := pred.(type) {
-			case *effects.Command:
+			case *instructions.Command:
 				// Kill
-			case *effects.UseComp:
+			case *instructions.UseComp:
 				vs = append(vs, values[pred]...)
 				vs = append(vs, pred)
 			default:
@@ -86,8 +86,8 @@ func buildReachingUses(g graph.Graph) map[effects.Node][]*effects.UseComp {
 	for len(dag.Roots) > 0 {
 		var next []graph.Node
 		for _, n := range dag.Roots {
-			n := n.(effects.Node)
-			seen := make(map[*effects.UseComp]bool)
+			n := n.(instructions.Node)
+			seen := make(map[*instructions.UseComp]bool)
 
 			for _, v := range merge(n) {
 				if seen[v] {
@@ -125,14 +125,14 @@ func simplifyWithDeps(g graph.Graph, in func(n graph.Node) bool) (graph.Graph, e
 }
 
 // Build IR
-func build(root effects.Node) (*ir, error) {
-	g := effects.ToGraph(effects.ToGraphOpt{
-		Roots: []effects.Node{root},
+func build(root instructions.Node) (*ir, error) {
+	g := instructions.ToGraph(instructions.ToGraphOpt{
+		Roots: []instructions.Node{root},
 	})
 
 	// Remove UseComps primarily. They may be locally cyclic.
 	ct, err := simplifyWithDeps(g, func(n graph.Node) bool {
-		c, ok := n.(*effects.Command)
+		c, ok := n.(*instructions.Command)
 		return (ok && c.Output == nil) || n == root
 	})
 

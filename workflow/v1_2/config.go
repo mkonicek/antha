@@ -28,6 +28,7 @@ type opt struct {
 	DriverSpecificTipPreferences      []string `json:"driverSpecificTipPreferences,omitempty"` // Driver specific position names (e.g., position_1 or A2)
 	DriverSpecificTipWastePreferences []string `json:"driverSpecificTipWastePreferences,omitempty"`
 	DriverSpecificWashPreferences     []string `json:"driverSpecificWashPreferences,omitempty"`
+	LiquidHandlingPolicyXlsxJmpFile   []byte   `json:"liquidHandlingPolicyXlsxJmpFile,omitempty"`
 
 	ModelEvaporation         bool `json:"modelEvaporation"`
 	OutputSort               bool `json:"outputSort"`

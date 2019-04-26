@@ -37,7 +37,7 @@ func TestParquet(t *testing.T) {
 			return nil, err
 		}
 
-		return TableFromFile(fileName, columns...)
+		return TableFromFile(fileName, Columns(columns...))
 	})
 
 	// bytes: write + read
@@ -47,7 +47,7 @@ func TestParquet(t *testing.T) {
 			return nil, err
 		}
 
-		return TableFromBytes(blob, columns...)
+		return TableFromBytes(blob, Columns(columns...))
 	})
 
 	// write to io.Writer + read from io.Reader
@@ -58,7 +58,23 @@ func TestParquet(t *testing.T) {
 			return nil, err
 		}
 
-		return TableFromReader(buffer, columns...)
+		return TableFromReader(buffer, Columns(columns...))
+	})
+
+	// bytes: write + read, also setting arbitrary keyvalue metadata
+	parquetTest(t, "Bytes + kv meta", table, []data.ColumnName{}, func(src *data.Table, columns ...data.ColumnName) (*data.Table, error) {
+		blob, err := TableToBytes(src, FileKeyValueMetadata{"meta-key": "meta-value", "meta-key2": "foo"}.Write())
+		if err != nil {
+			return nil, err
+		}
+		// check metadata round trip
+		readMeta := FileKeyValueMetadata{}
+
+		r, err := TableFromBytes(blob, Columns(columns...), readMeta.Read())
+		if "meta-value" != (readMeta)["meta-key"] {
+			t.Errorf("meta roundtrip %v", (readMeta)["meta-key"])
+		}
+		return r, err
 	})
 }
 
@@ -75,7 +91,10 @@ func parquetTest(t *testing.T, caption string, src *data.Table, columns []data.C
 	if err != nil {
 		t.Errorf("%s: %s", caption, err)
 	}
-	assertEqual(t, src.Must().Project(columns...), dst, fmt.Sprintf("%s: %s", caption, "tables are different after serialization"))
+	if len(columns) > 0 {
+		src = src.Must().Project(columns...)
+	}
+	assertEqual(t, src, dst, fmt.Sprintf("%s: %s", caption, "tables are different after serialization"))
 }
 
 func parquetFileName() (string, error) {

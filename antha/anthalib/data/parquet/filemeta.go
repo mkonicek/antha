@@ -7,7 +7,7 @@ import (
 // FileKeyValueMetadata represents keys in file-level Parquet
 // metadata, as defined in:
 // https://github.com/apache/parquet-format/blob/master/src/main/thrift/parquet.thrift#L924 .
-// In the presence of duplicate keys ion the file, behavior is undefined.
+// In the presence of duplicate keys in the file, behavior is undefined.
 type FileKeyValueMetadata map[string]string
 
 // Write gives a WriteOpt that writes all the given keyvalues into file metadata.
@@ -15,10 +15,10 @@ func (m FileKeyValueMetadata) Write() WriteOpt {
 	return func(w *writeState) error {
 
 		for k, v := range m {
-			kv := parquet.NewKeyValue()
-			kv.Key = k
 			// we need a copy, not &v
 			metaValue := v
+			kv := parquet.NewKeyValue()
+			kv.Key = k
 			kv.Value = &metaValue
 			w.writer.Footer.KeyValueMetadata = append(w.writer.Footer.KeyValueMetadata, kv)
 		}
@@ -30,9 +30,9 @@ func (m FileKeyValueMetadata) Write() WriteOpt {
 // Read gives a ReadOpt that populates this map as a side effect, when the file is read.
 func (m FileKeyValueMetadata) Read() ReadOpt {
 	return func(r *readState) error {
-		kv := r.reader.Footer.GetKeyValueMetadata()
-		for _, v := range kv {
-			m[v.GetKey()] = v.GetValue()
+		kvs := r.reader.Footer.GetKeyValueMetadata()
+		for _, kv := range kvs {
+			m[kv.GetKey()] = kv.GetValue()
 		}
 
 		return nil

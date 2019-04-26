@@ -12,6 +12,10 @@
             "type": "string",
             "pattern": "^[a-zA-Z0-9_ -]*$"
         },
+        "SimulationId": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_ -]*$"
+        },
         "Meta": {
             "oneOf": [
                 {"type": "null"},

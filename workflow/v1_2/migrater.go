@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/wtype/liquidtype"
 	"github.com/antha-lang/antha/laboratory/effects"
 
 	"github.com/antha-lang/antha/logger"
@@ -107,7 +108,9 @@ func (m *Migrater) migrateTesting() error {
 }
 
 func (m *Migrater) migrateConfig() error {
-	m.migrateGlobalMixerConfig()
+	if err := m.migrateGlobalMixerConfig(); err != nil {
+		return err
+	}
 	m.migrateGilsonConfigs()
 	return nil
 }
@@ -127,17 +130,37 @@ func (m *Migrater) migrateGilsonConfigs() {
 	m.Cur.Config.GilsonPipetMax.Devices[devId] = m.migrateGilsonConfig()
 }
 
-func (m *Migrater) migrateGlobalMixerConfig() {
+func (m *Migrater) migrateGlobalMixerConfig() error {
 	if m.Old.Config == nil {
-		return
+		return nil
 	}
+
+	customPolicyRuleSet := m.Old.Config.CustomPolicyRuleSet
+	if m.Old.Config.LiquidHandlingPolicyXlsxJmpFile != nil {
+		policyMap, err := liquidtype.PolicyMakerFromBytes(m.Old.Config.LiquidHandlingPolicyXlsxJmpFile, wtype.PolicyName(liquidtype.BASEPolicy))
+		if err != nil {
+			return err
+		}
+		lhpr := wtype.NewLHPolicyRuleSet()
+		lhpr, err = wtype.AddUniversalRules(lhpr, policyMap)
+		if err != nil {
+			return err
+		}
+		if customPolicyRuleSet == nil {
+			customPolicyRuleSet = lhpr
+		} else {
+			customPolicyRuleSet.MergeWith(lhpr)
+		}
+	}
+
 	m.Cur.Config.GlobalMixer = workflow.GlobalMixerConfig{
-		CustomPolicyRuleSet:      m.Old.Config.CustomPolicyRuleSet,
+		CustomPolicyRuleSet:      customPolicyRuleSet,
 		IgnorePhysicalSimulation: m.Old.Config.IgnorePhysicalSimulation,
 		InputPlates:              m.Old.Config.InputPlates,
 		PrintInstructions:        m.Old.Config.PrintInstructions,
 		UseDriverTipTracking:     m.Old.Config.UseDriverTipTracking,
 	}
+	return nil
 }
 
 func (m *Migrater) migrateLayoutPreferences() *workflow.LayoutOpt {

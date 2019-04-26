@@ -27,11 +27,11 @@ func AddAnthaInfo(meta parquet.FileKeyValueMetadata, dataInfo schemas.DataInfo) 
 	return err
 }
 
-// GetAnthaInfo reads the JSON DataIfo representation from the footer.
-// Use it together with data tableslike:
+// GetAnthaInfo reads the JSON DataInfo representation from the footer.
+// Use it together with data tables like:
 //      meta := parquet.FileKeyValueMetadata{}
 //		table, err = parquet.TableFromReader(reader, meta.Read())
-//		dataInfo := GetAnthaInfo(meta)
+//		dataInfo, err := GetAnthaInfo(meta)
 func GetAnthaInfo(meta parquet.FileKeyValueMetadata) (schemas.DataInfo, error) {
 	inf := schemas.DataInfo{}
 	if meta == nil {

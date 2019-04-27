@@ -40,6 +40,10 @@ func TestElements(t *testing.T) {
 		inDir = *inDirPtr
 	}
 
+	if inDir == "" && len(flag.Args()) == 0 {
+		t.Skip("No workflow provided.")
+	}
+
 	if wf, err := makeWorkflow(l, nil, inDir, ""); err != nil {
 		t.Fatal(err)
 	} else if err := wf.Validate(); err != nil {

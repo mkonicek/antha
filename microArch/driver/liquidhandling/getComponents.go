@@ -333,7 +333,7 @@ func (lhp *LHProperties) GetComponents(labEffects *effects.LaboratoryEffects, cm
 		// update sources
 		srcs[bestSrcIdx] = updateSources(srcs[bestSrcIdx], bestMatch, lhp.CarryVolume()).Map(volumeMap)
 		lastCmps = currCmps.Dup(labEffects.IDGenerator)
-		updateDests(currCmps, bestMatch)
+		UpdateDests(currCmps, bestMatch)
 		ret = append(ret, matchToParallelTransfer(bestMatch))
 	}
 
@@ -373,7 +373,7 @@ func makeMatchSafe(dst wtype.ComponentVector, match wtype.Match, mpv wunit.Volum
 	return match
 }
 
-func updateDests(dst wtype.ComponentVector, match wtype.Match) wtype.ComponentVector {
+func UpdateDests(dst wtype.ComponentVector, match wtype.Match) wtype.ComponentVector {
 	for i := 0; i < len(match.M); i++ {
 		if match.M[i] != -1 {
 			dst[i].Vol -= match.Vols[i].ConvertToString(dst[i].Vunit)

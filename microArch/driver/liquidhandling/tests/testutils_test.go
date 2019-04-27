@@ -1,4 +1,4 @@
-package main
+package tests
 
 import (
 	"fmt"
@@ -11,33 +11,6 @@ import (
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/workflow"
 )
-
-func makePlateForTest(idGen *id.IDGenerator) *wtype.Plate {
-	swshp := wtype.NewShape(wtype.BoxShape, "mm", 8.2, 8.2, 41.3)
-	welltype := wtype.NewLHWell(idGen, "ul", 200, 10, swshp, wtype.VWellBottom, 8.2, 8.2, 41.3, 4.7, "mm")
-	p := wtype.NewLHPlate(idGen, "DSW96", "none", 8, 12, wtype.Coordinates3D{X: 127.76, Y: 85.48, Z: 43.1}, welltype, 9.0, 9.0, 0.5, 0.5, 0.5)
-	return p
-}
-
-func makeTipForTest(idGen *id.IDGenerator) *wtype.LHTip {
-	shp := wtype.NewShape(wtype.CylinderShape, "mm", 7.3, 7.3, 51.2)
-	return wtype.NewLHTip(idGen, "me", "mytype", 0.5, 1000.0, "ul", false, shp, 44.7)
-}
-
-func makeTipboxForTest(idGen *id.IDGenerator) *wtype.LHTipbox {
-	shp := wtype.NewShape(wtype.CylinderShape, "mm", 7.3, 7.3, 51.2)
-	w := wtype.NewLHWell(idGen, "ul", 250.0, 10.0, shp, wtype.FlatWellBottom, 7.3, 7.3, 51.2, 0.0, "mm")
-	tiptype := makeTipForTest(idGen)
-	tb := wtype.NewLHTipbox(idGen, 8, 12, wtype.Coordinates3D{X: 127.76, Y: 85.48, Z: 120.0}, "me", "mytype", tiptype, w, 9.0, 9.0, 0.5, 0.5, 0.0)
-	return tb
-}
-
-func makeTipwasteForTest(idGen *id.IDGenerator) *wtype.LHTipwaste {
-	shp := wtype.NewShape(wtype.BoxShape, "mm", 123.0, 80.0, 92.0)
-	w := wtype.NewLHWell(idGen, "ul", 800000.0, 800000.0, shp, 0, 123.0, 80.0, 92.0, 0.0, "mm")
-	lht := wtype.NewLHTipwaste(idGen, 6000, "TipwasteForTest", "ACME Corp.", wtype.Coordinates3D{X: 127.76, Y: 85.48, Z: 92.0}, w, 49.5, 31.5, 0.0)
-	return lht
-}
 
 const (
 	HVMinRate = 0.225
@@ -96,24 +69,25 @@ func MakeGilsonForTest(lab *laboratory.Laboratory, tipList []string) *liquidhand
 	for y := 0; y < 3; y++ {
 		xp = x0
 		for x := 0; x < 3; x++ {
-			posname := fmt.Sprintf("position_%d", i+1)
-			layout[posname] = wtype.NewLHPosition(posname, wtype.Coordinates3D{X: xp, Y: yp, Z: zp}, wtype.SBSFootprint)
+			pos := wtype.NewLHPosition(fmt.Sprintf("position_%d", i+1), wtype.Coordinates3D{X: xp, Y: yp, Z: zp}, wtype.SBSFootprint)
+			layout[pos.Name] = pos
 			i += 1
 			xp += xi
 		}
 		yp += yi
 	}
-	lhp := liquidhandling.NewLHProperties(lab.IDGenerator, "Pipetmax", "Gilson", liquidhandling.LLLiquidHandler, liquidhandling.DisposableTips, layout)
+	lhp := liquidhandling.NewLHProperties(lab.IDGenerator, "Pipetmax", "Gilson",
+		liquidhandling.LLLiquidHandler, liquidhandling.DisposableTips, layout)
 	// get tips permissible from the factory
 	SetUpTipsFor(lab, lhp, tipList)
 
 	lhp.Preferences = &workflow.LayoutOpt{
-		Tipboxes:  []string{"position_2", "position_3", "position_6", "position_9", "position_8", "position_5", "position_4", "position_7"},
-		Inputs:    []string{"position_4", "position_5", "position_6", "position_9", "position_8", "position_3"},
-		Outputs:   []string{"position_8", "position_9", "position_6", "position_5", "position_3", "position_1"},
-		Washes:    []string{"position_8"},
-		Tipwastes: []string{"position_1", "position_7"},
-		Wastes:    []string{"position_9"},
+		Tipboxes:  workflow.Addresses{"position_2", "position_3", "position_6", "position_9", "position_8", "position_5", "position_4", "position_7"},
+		Inputs:    workflow.Addresses{"position_4", "position_5", "position_6", "position_9", "position_8", "position_3"},
+		Outputs:   workflow.Addresses{"position_8", "position_9", "position_6", "position_5", "position_3", "position_1"},
+		Washes:    workflow.Addresses{"position_8"},
+		Tipwastes: workflow.Addresses{"position_1", "position_7"},
+		Wastes:    workflow.Addresses{"position_9"},
 	}
 
 	hvconfig := getHVConfig(lab.IDGenerator)
@@ -181,7 +155,7 @@ func SetUpTipsFor(lab *laboratory.Laboratory, lhp *liquidhandling.LHProperties, 
 }
 
 func makeGilsonWithTipboxesForTest(lab *laboratory.Laboratory) (*liquidhandling.LHProperties, error) {
-	params := MakeGilsonForTest(lab, []string{"Gilson20", "Gilson200"})
+	params := MakeGilsonForTest(lab, defaultTipList())
 
 	if tw, err := lab.Inventory.TipWastes.NewTipwaste("Gilsontipwaste"); err != nil {
 		return nil, err

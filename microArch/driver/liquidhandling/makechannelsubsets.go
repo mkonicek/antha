@@ -2,6 +2,7 @@ package liquidhandling
 
 import (
 	"fmt"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 )
 
@@ -24,7 +25,7 @@ func dupCHA(cha []*wtype.LHChannelParameter) []*wtype.LHChannelParameter {
 
 	return r
 }
-func makeChannelSubsets(tiptypes []string, channels []*wtype.LHChannelParameter) ([]TipSubset, error) {
+func MakeChannelSubsets(tiptypes []string, channels []*wtype.LHChannelParameter) ([]TipSubset, error) {
 	finished := false
 
 	ret := make([]TipSubset, 0, 1)

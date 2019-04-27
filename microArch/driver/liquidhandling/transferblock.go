@@ -162,7 +162,7 @@ func get_parallel_sets_robot(labEffects *effects.LaboratoryEffects, ins []*wtype
 		}
 
 		// also TODO here -- allow adaptor changes
-		sids, err := get_parallel_sets_head(labEffects, head, ins)
+		sids, err := GetParallelSetsHead(labEffects, head, ins)
 
 		if err != nil {
 			return SetOfIDSets{}, &wtype.LHChannelParameter{}, err
@@ -211,7 +211,7 @@ func (ibc InsByCol) Less(i, j int) bool {
 }
 
 // limited to SBS format plates for now
-func get_parallel_sets_head(labEffects *effects.LaboratoryEffects, head *wtype.LHHead, ins []*wtype.LHInstruction) (SetOfIDSets, error) {
+func GetParallelSetsHead(labEffects *effects.LaboratoryEffects, head *wtype.LHHead, ins []*wtype.LHInstruction) (SetOfIDSets, error) {
 	// surely not
 
 	if len(ins) == 0 {

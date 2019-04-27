@@ -1,13 +1,15 @@
-package liquidhandling
+package tests
 
 import (
 	"fmt"
 	"testing"
+
+	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
 func TestIsValidLiquidHandlerType(t *testing.T) {
 
-	validTypes := []LiquidHandlerLevel{LLLiquidHandler, HLLiquidHandler}
+	validTypes := []liquidhandling.LiquidHandlerLevel{liquidhandling.LLLiquidHandler, liquidhandling.HLLiquidHandler}
 
 	for _, c := range validTypes {
 		if !c.IsValid() {
@@ -15,7 +17,7 @@ func TestIsValidLiquidHandlerType(t *testing.T) {
 		}
 	}
 
-	invalidTypes := []LiquidHandlerLevel{157, -65}
+	invalidTypes := []liquidhandling.LiquidHandlerLevel{157, 65}
 
 	for _, c := range invalidTypes {
 		if c.IsValid() {
@@ -27,7 +29,12 @@ func TestIsValidLiquidHandlerType(t *testing.T) {
 }
 
 func TestIsValidTipType(t *testing.T) {
-	validTypes := []TipType{FixedTips, DisposableTips, MixedDisposableAndFixedTips, NoTips}
+	validTypes := []liquidhandling.TipType{
+		liquidhandling.FixedTips,
+		liquidhandling.DisposableTips,
+		liquidhandling.MixedDisposableAndFixedTips,
+		liquidhandling.NoTips,
+	}
 
 	for _, c := range validTypes {
 		if !c.IsValid() {
@@ -35,7 +42,7 @@ func TestIsValidTipType(t *testing.T) {
 		}
 	}
 
-	invalidTypes := []TipType{-2, 78}
+	invalidTypes := []liquidhandling.TipType{12, 78}
 
 	for _, c := range invalidTypes {
 		if c.IsValid() {

@@ -1,11 +1,13 @@
-package liquidhandling
+package tests
 
 import (
-	"context"
 	"reflect"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/laboratory/effects"
+	"github.com/antha-lang/antha/laboratory/testlab"
+	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
 type TestInstruction struct {
@@ -13,25 +15,25 @@ type TestInstruction struct {
 	Children []*TestInstruction
 }
 
-var _ TerminalRobotInstruction = (*TestInstruction)(nil)
+var _ liquidhandling.TerminalRobotInstruction = (*TestInstruction)(nil)
 
-func (ti *TestInstruction) Type() *InstructionType {
-	return NewInstructionType(ti.Name, "LeafInstruction")
+func (ti *TestInstruction) Type() *liquidhandling.InstructionType {
+	return liquidhandling.NewInstructionType(ti.Name, "LeafInstruction")
 }
 
-func (ti *TestInstruction) GetParameter(name InstructionParameter) interface{} {
+func (ti *TestInstruction) GetParameter(name liquidhandling.InstructionParameter) interface{} {
 	return nil
 }
 
-func (ti *TestInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
-	ret := make([]RobotInstruction, 0, len(ti.Children))
+func (ti *TestInstruction) Generate(labEffects *effects.LaboratoryEffects, policy *wtype.LHPolicyRuleSet, prms *liquidhandling.LHProperties) ([]liquidhandling.RobotInstruction, error) {
+	ret := make([]liquidhandling.RobotInstruction, 0, len(ti.Children))
 	for _, ins := range ti.Children {
 		ret = append(ret, ins)
 	}
 	return ret, nil
 }
 
-func (ti *TestInstruction) MaybeMerge(next RobotInstruction) RobotInstruction {
+func (ti *TestInstruction) MaybeMerge(next liquidhandling.RobotInstruction) liquidhandling.RobotInstruction {
 	return nil
 }
 
@@ -39,9 +41,9 @@ func (ti *TestInstruction) Check(lhpr wtype.LHPolicyRule) bool {
 	return false
 }
 
-func (ti *TestInstruction) Visit(RobotInstructionVisitor) {}
+func (ti *TestInstruction) Visit(liquidhandling.RobotInstructionVisitor) {}
 
-func (ti *TestInstruction) OutputTo(driver LiquidhandlingDriver) error {
+func (ti *TestInstruction) OutputTo(driver liquidhandling.LiquidhandlingDriver) error {
 	return nil
 }
 
@@ -53,12 +55,12 @@ type ITreeTest struct {
 
 func (test *ITreeTest) Run(t *testing.T) {
 
-	root := NewITree(nil)
+	root := liquidhandling.NewITree(nil)
 	for _, ins := range test.Instructions {
 		root.AddChild(ins)
 	}
-
-	if _, err := root.Build(context.Background(), nil, nil); err != nil {
+	labEffects := testlab.NewTestLabEffects(nil)
+	if _, err := root.Build(labEffects, nil, nil); err != nil {
 		t.Fatal(err)
 	}
 

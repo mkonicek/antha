@@ -1,14 +1,16 @@
-package liquidhandling
+package tests
 
 import (
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/laboratory"
+	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
-func getTestBlow(ch *wtype.LHChannelParameter, multi int, tipType string) RobotInstruction {
-	bi := NewBlowInstruction()
+func getTestBlow(ch *wtype.LHChannelParameter, multi int, tipType string) liquidhandling.RobotInstruction {
+	bi := liquidhandling.NewBlowInstruction()
 	bi.Multi = multi
 	bi.TipType = tipType
 	for i := 0; i < multi; i++ {
@@ -24,8 +26,8 @@ func getTestBlow(ch *wtype.LHChannelParameter, multi int, tipType string) RobotI
 	return bi
 }
 
-func getTestSuck(ch *wtype.LHChannelParameter, multi int, tipType string) RobotInstruction {
-	ret := NewSuckInstruction()
+func getTestSuck(ch *wtype.LHChannelParameter, multi int, tipType string) liquidhandling.RobotInstruction {
+	ret := liquidhandling.NewSuckInstruction()
 	ret.Multi = multi
 	ret.TipType = tipType
 	for i := 0; i < multi; i++ {
@@ -41,8 +43,8 @@ func getTestSuck(ch *wtype.LHChannelParameter, multi int, tipType string) RobotI
 	return ret
 }
 
-func getLLFTestSuck(ch *wtype.LHChannelParameter, multi int, tipType string) RobotInstruction {
-	ret := NewSuckInstruction()
+func getLLFTestSuck(ch *wtype.LHChannelParameter, multi int, tipType string) liquidhandling.RobotInstruction {
+	ret := liquidhandling.NewSuckInstruction()
 	ret.Multi = multi
 	ret.TipType = tipType
 	wc := wtype.MakeWellCoords("A1")
@@ -61,10 +63,10 @@ func getLLFTestSuck(ch *wtype.LHChannelParameter, multi int, tipType string) Rob
 }
 
 // what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype []string, volume, fvolume, tvolume []wunit.Volume, FPlateWX, FPlateWY, TPlateWX, TPlateWY []int, Components []string, policies []wtype.LHPolicy
-func getTestTransfer(vol wunit.Volume) RobotInstruction {
+func getTestTransfer(vol wunit.Volume) liquidhandling.RobotInstruction {
 	v2 := wunit.NewVolume(5000.0, "ul")
 	v3 := wunit.NewVolume(0.0, "ul")
-	return NewTransferInstruction(
+	return liquidhandling.NewTransferInstruction(
 		[]string{"water"},
 		[]string{"position_4"},
 		[]string{"position_8"},
@@ -85,9 +87,7 @@ func getTestTransfer(vol wunit.Volume) RobotInstruction {
 }
 
 func TestBlowMixing(t *testing.T) {
-
 	tenUl := wunit.NewVolume(10.0, "ul")
-
 	tests := []*PolicyTest{
 		{
 			Name: "single channel",
@@ -100,19 +100,21 @@ func TestBlowMixing(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"POST_MIX":        5,
 						"POST_MIX_VOLUME": 10.0,
 					},
 				},
 			},
-			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
-			Robot:                nil,
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestBlow(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,MOV,DSP,MOV,MIX,MOV,BLO]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 5, //the Mix
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"CYCLES": []int{5},
 						"VOLUME": []wunit.Volume{tenUl},
 					},
@@ -130,19 +132,21 @@ func TestBlowMixing(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"POST_MIX":        5,
 						"POST_MIX_VOLUME": 10.0,
 					},
 				},
 			},
-			Instruction:          getTestBlow(getLVConfig(), 8, "Gilson20"),
-			Robot:                nil,
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestBlow(getLVConfig(lab.IDGenerator), 8, "Gilson20")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,MOV,DSP,MOV,MIX,MOV,BLO]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 5, //the Mix
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"CYCLES": []int{5, 5, 5, 5, 5, 5, 5, 5},
 						"VOLUME": []wunit.Volume{tenUl, tenUl, tenUl, tenUl, tenUl, tenUl, tenUl, tenUl},
 					},
@@ -160,20 +164,22 @@ func TestBlowMixing(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"POST_MIX":        5,
 						"POST_MIX_VOLUME": 10.0,
 						"POST_MIX_RATE":   1.5,
 					},
 				},
 			},
-			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
-			Robot:                nil,
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestBlow(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,MOV,DSP,SPS,MOV,MIX,SPS,MOV,BLO]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 0,
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -181,7 +187,7 @@ func TestBlowMixing(t *testing.T) {
 				},
 				{
 					Instruction: 4,
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   1.5,
@@ -189,14 +195,14 @@ func TestBlowMixing(t *testing.T) {
 				},
 				{
 					Instruction: 6, //the Mix
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"CYCLES": []int{5},
 						"VOLUME": []wunit.Volume{tenUl},
 					},
 				},
 				{
 					Instruction: 7,
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -215,15 +221,18 @@ func TestBlowMixing(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"POST_MIX":        5,
 						"POST_MIX_VOLUME": 10.0,
 						"POST_MIX_RATE":   150.,
 					},
 				},
 			},
-			Instruction: getTestBlow(getLVConfig(), 1, "Gilson20"),
-			Error:       "setting post mix pipetting speed: value 150.000000 out of range 0.022500 - 3.750000",
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestBlow(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				return nil
+			},
+			Error: "setting post mix pipetting speed: value 150.000000 out of range 0.022500 - 3.750000",
 		},
 	}
 
@@ -234,7 +243,6 @@ func TestBlowMixing(t *testing.T) {
 
 func TestSuckMixing(t *testing.T) {
 	tenUl := wunit.NewVolume(10.0, "ul")
-
 	tests := []*PolicyTest{
 		{
 			Name: "single channel",
@@ -247,18 +255,21 @@ func TestSuckMixing(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"PRE_MIX":        5,
 						"PRE_MIX_VOLUME": 10.0,
 					},
 				},
 			},
-			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestSuck(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,MOV,MIX,MOV,ASP]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 3, //the Mix
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"CYCLES": []int{5},
 						"VOLUME": []wunit.Volume{tenUl},
 					},
@@ -276,19 +287,21 @@ func TestSuckMixing(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"PRE_MIX":        5,
 						"PRE_MIX_VOLUME": 10.0,
 					},
 				},
 			},
-			Instruction:          getTestSuck(getLVConfig(), 8, "Gilson20"),
-			Robot:                nil,
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestSuck(getLVConfig(lab.IDGenerator), 8, "Gilson20")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,MOV,MIX,MOV,ASP]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 3, //the Mix
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"CYCLES": []int{5, 5, 5, 5, 5, 5, 5, 5},
 						"VOLUME": []wunit.Volume{tenUl, tenUl, tenUl, tenUl, tenUl, tenUl, tenUl, tenUl},
 					},
@@ -306,19 +319,22 @@ func TestSuckMixing(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"PRE_MIX":        5,
 						"PRE_MIX_VOLUME": 10.0,
 						"PRE_MIX_RATE":   1.5,
 					},
 				},
 			},
-			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestSuck(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,SPS,MOV,MIX,SPS,MOV,ASP]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 0,
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -326,7 +342,7 @@ func TestSuckMixing(t *testing.T) {
 				},
 				{
 					Instruction: 2,
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   1.5,
@@ -334,14 +350,14 @@ func TestSuckMixing(t *testing.T) {
 				},
 				{
 					Instruction: 4, //the Mix
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"CYCLES": []int{5},
 						"VOLUME": []wunit.Volume{tenUl},
 					},
 				},
 				{
 					Instruction: 5,
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -360,15 +376,18 @@ func TestSuckMixing(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"PRE_MIX":        5,
 						"PRE_MIX_VOLUME": 10.0,
 						"PRE_MIX_RATE":   150.,
 					},
 				},
 			},
-			Instruction: getTestSuck(getLVConfig(), 1, "Gilson20"),
-			Error:       "setting pre mix pipetting speed: value 150.000000 out of range 0.022500 - 3.750000",
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestSuck(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				return nil
+			},
+			Error: "setting pre mix pipetting speed: value 150.000000 out of range 0.022500 - 3.750000",
 		},
 	}
 
@@ -378,7 +397,6 @@ func TestSuckMixing(t *testing.T) {
 }
 
 func TestZOffset(t *testing.T) {
-
 	tests := []*PolicyTest{
 		{
 			Name: "blow z-offset",
@@ -391,18 +409,20 @@ func TestZOffset(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"DSPZOFFSET": 5.4,
 					},
 				},
 			},
-			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
-			Robot:                nil,
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestBlow(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,MOV,DSP,MOV,BLO]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 2, //the move before the dispense
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"OFFSETZ": []float64{5.4},
 					},
 				},
@@ -419,16 +439,18 @@ func TestZOffset(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{},
+					Policy: map[liquidhandling.InstructionParameter]interface{}{},
 				},
 			},
-			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
-			Robot:                nil,
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestBlow(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,MOV,DSP,MOV,BLO]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 2, //the move before the dispense
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"OFFSETZ": []float64{defaultZOffset},
 					},
 				},
@@ -445,18 +467,20 @@ func TestZOffset(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"ASPZOFFSET": 5.4,
 					},
 				},
 			},
-			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
-			Robot:                nil,
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestSuck(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,MOV,ASP]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 2, //the move before the dispense
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"OFFSETZ": []float64{5.4},
 					},
 				},
@@ -473,16 +497,18 @@ func TestZOffset(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{},
+					Policy: map[liquidhandling.InstructionParameter]interface{}{},
 				},
 			},
-			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
-			Robot:                nil,
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestSuck(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,MOV,ASP]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 2, //the move before the dispense
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"OFFSETZ": []float64{defaultZOffset},
 					},
 				},
@@ -496,7 +522,6 @@ func TestZOffset(t *testing.T) {
 }
 
 func TestEntrySpeed(t *testing.T) {
-
 	tests := []*PolicyTest{
 		{
 			Name: "blow entry speed",
@@ -509,25 +534,27 @@ func TestEntrySpeed(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"DSPENTRYSPEED": 50.0,
 					},
 				},
 			},
-			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
-			Robot:                nil,
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestBlow(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,MOV,SDS,MOV,DSP,SDS,MOV,BLO]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 1,
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"DRIVE": "Z",
 						"SPEED": defaultZSpeed,
 					},
 				},
 				{
 					Instruction: 3,
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"DRIVE": "Z",
 						"SPEED": 50.0,
 					},
@@ -545,32 +572,34 @@ func TestEntrySpeed(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"ASPENTRYSPEED": 50.0,
 					},
 				},
 			},
-			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
-			Robot:                nil,
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestSuck(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,MOV,SDS,MOV,ASP,MOV,SDS]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 1,
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"DRIVE": "Z",
 						"SPEED": defaultZSpeed,
 					},
 				},
 				{
 					Instruction: 3,
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"DRIVE": "Z",
 						"SPEED": 50.0,
 					},
 				},
 				{
 					Instruction: 7,
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"DRIVE": "Z",
 						"SPEED": defaultZSpeed,
 					},
@@ -585,7 +614,6 @@ func TestEntrySpeed(t *testing.T) {
 }
 
 func TestDSPPipetSpeed(t *testing.T) {
-
 	tests := []*PolicyTest{
 		{
 			Name: "blow pipette speed unset",
@@ -598,16 +626,18 @@ func TestDSPPipetSpeed(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{},
+					Policy: map[liquidhandling.InstructionParameter]interface{}{},
 				},
 			},
-			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
-			Robot:                nil,
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestBlow(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,MOV,DSP,MOV,BLO]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 0,
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -626,18 +656,20 @@ func TestDSPPipetSpeed(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"DEFAULTPIPETTESPEED": 1.82,
 					},
 				},
 			},
-			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
-			Robot:                nil,
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestBlow(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,MOV,DSP,MOV,BLO]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 0,
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   1.82,
@@ -656,18 +688,20 @@ func TestDSPPipetSpeed(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"DSPSPEED": 1.5,
 					},
 				},
 			},
-			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
-			Robot:                nil,
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestBlow(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,MOV,SPS,DSP,SPS,MOV,BLO]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 0,
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -675,7 +709,7 @@ func TestDSPPipetSpeed(t *testing.T) {
 				},
 				{
 					Instruction: 3,
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   1.5,
@@ -683,7 +717,7 @@ func TestDSPPipetSpeed(t *testing.T) {
 				},
 				{
 					Instruction: 5,
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -702,19 +736,21 @@ func TestDSPPipetSpeed(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"DSPSPEED":             LVMaxRate + 1.0,
 						"OVERRIDEPIPETTESPEED": true,
 					},
 				},
 			},
-			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
-			Robot:                nil,
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestBlow(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,MOV,SPS,DSP,SPS,MOV,BLO]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 0,
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -722,7 +758,7 @@ func TestDSPPipetSpeed(t *testing.T) {
 				},
 				{
 					Instruction: 3,
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   LVMaxRate,
@@ -730,7 +766,7 @@ func TestDSPPipetSpeed(t *testing.T) {
 				},
 				{
 					Instruction: 5,
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -749,19 +785,21 @@ func TestDSPPipetSpeed(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"DSPSPEED":             LVMinRate * 0.5,
 						"OVERRIDEPIPETTESPEED": true,
 					},
 				},
 			},
-			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
-			Robot:                nil,
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestBlow(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,MOV,SPS,DSP,SPS,MOV,BLO]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 0,
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -769,7 +807,7 @@ func TestDSPPipetSpeed(t *testing.T) {
 				},
 				{
 					Instruction: 3,
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   LVMinRate,
@@ -777,7 +815,7 @@ func TestDSPPipetSpeed(t *testing.T) {
 				},
 				{
 					Instruction: 5,
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -796,14 +834,17 @@ func TestDSPPipetSpeed(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"DSPSPEED":             4.75,
 						"OVERRIDEPIPETTESPEED": false,
 					},
 				},
 			},
-			Instruction: getTestBlow(getLVConfig(), 1, "Gilson20"),
-			Error:       "setting pipette dispense speed: value 4.750000 out of range 0.022500 - 3.750000",
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestBlow(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				return nil
+			},
+			Error: "setting pipette dispense speed: value 4.750000 out of range 0.022500 - 3.750000",
 		},
 		{
 			Name: "blow pipette speed too small, error",
@@ -816,14 +857,17 @@ func TestDSPPipetSpeed(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"DSPSPEED":             0.01,
 						"OVERRIDEPIPETTESPEED": false,
 					},
 				},
 			},
-			Instruction: getTestBlow(getLVConfig(), 1, "Gilson20"),
-			Error:       "setting pipette dispense speed: value 0.010000 out of range 0.022500 - 3.750000",
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestBlow(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				return nil
+			},
+			Error: "setting pipette dispense speed: value 0.010000 out of range 0.022500 - 3.750000",
 		},
 	}
 
@@ -833,7 +877,6 @@ func TestDSPPipetSpeed(t *testing.T) {
 }
 
 func TestASPPipetSpeed(t *testing.T) {
-
 	tests := []*PolicyTest{
 		{
 			Name: "suck pipette speed unset",
@@ -846,16 +889,18 @@ func TestASPPipetSpeed(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{},
+					Policy: map[liquidhandling.InstructionParameter]interface{}{},
 				},
 			},
-			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
-			Robot:                nil,
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestSuck(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,MOV,ASP]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 0,
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -874,18 +919,20 @@ func TestASPPipetSpeed(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"DEFAULTPIPETTESPEED": 1.56,
 					},
 				},
 			},
-			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
-			Robot:                nil,
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestSuck(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,MOV,ASP]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 0,
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   1.56,
@@ -904,18 +951,20 @@ func TestASPPipetSpeed(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"ASPSPEED": 1.5,
 					},
 				},
 			},
-			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
-			Robot:                nil,
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestSuck(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,MOV,SPS,ASP,SPS]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 0,
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -923,7 +972,7 @@ func TestASPPipetSpeed(t *testing.T) {
 				},
 				{
 					Instruction: 3,
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   1.5,
@@ -931,7 +980,7 @@ func TestASPPipetSpeed(t *testing.T) {
 				},
 				{
 					Instruction: 5,
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -950,19 +999,21 @@ func TestASPPipetSpeed(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"ASPSPEED":             LVMaxRate + 1.0,
 						"OVERRIDEPIPETTESPEED": true,
 					},
 				},
 			},
-			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
-			Robot:                nil,
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestSuck(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,MOV,SPS,ASP,SPS]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 0,
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -970,7 +1021,7 @@ func TestASPPipetSpeed(t *testing.T) {
 				},
 				{
 					Instruction: 3,
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   LVMaxRate,
@@ -978,7 +1029,7 @@ func TestASPPipetSpeed(t *testing.T) {
 				},
 				{
 					Instruction: 5,
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -997,19 +1048,21 @@ func TestASPPipetSpeed(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"ASPSPEED":             LVMinRate * 0.5,
 						"OVERRIDEPIPETTESPEED": true,
 					},
 				},
 			},
-			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
-			Robot:                nil,
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestSuck(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,MOV,SPS,ASP,SPS]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 0,
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -1017,7 +1070,7 @@ func TestASPPipetSpeed(t *testing.T) {
 				},
 				{
 					Instruction: 3,
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   LVMinRate,
@@ -1025,7 +1078,7 @@ func TestASPPipetSpeed(t *testing.T) {
 				},
 				{
 					Instruction: 5,
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"HEAD":    1,
 						"CHANNEL": -1,
 						"SPEED":   defaultPipetteSpeed,
@@ -1044,14 +1097,17 @@ func TestASPPipetSpeed(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"ASPSPEED":             4.75,
 						"OVERRIDEPIPETTESPEED": false,
 					},
 				},
 			},
-			Instruction: getTestSuck(getLVConfig(), 1, "Gilson20"),
-			Error:       "setting pipette aspirate speed: value 4.750000 out of range 0.022500 - 3.750000",
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestSuck(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				return nil
+			},
+			Error: "setting pipette aspirate speed: value 4.750000 out of range 0.022500 - 3.750000",
 		},
 		{
 			Name: "suck pipette speed too small, error",
@@ -1064,14 +1120,17 @@ func TestASPPipetSpeed(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"ASPSPEED":             0.01,
 						"OVERRIDEPIPETTESPEED": false,
 					},
 				},
 			},
-			Instruction: getTestSuck(getLVConfig(), 1, "Gilson20"),
-			Error:       "setting pipette aspirate speed: value 0.010000 out of range 0.022500 - 3.750000",
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestSuck(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				return nil
+			},
+			Error: "setting pipette aspirate speed: value 0.010000 out of range 0.022500 - 3.750000",
 		},
 	}
 
@@ -1093,12 +1152,15 @@ func TestTipReuse(t *testing.T) {
 							Value:     "water",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"TIP_REUSE_LIMIT": 0,
 					},
 				},
 			},
-			Instruction:          getTestTransfer(wunit.NewVolume(300.0, "ul")),
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestTransfer(wunit.NewVolume(300.0, "ul"))
+				return nil
+			},
 			ExpectedInstructions: "[MOV,LOD,SPS,SDS,MOV,ASP,SPS,SDS,MOV,DSP,MOV,BLO,MOV,ULD,MOV,LOD,SPS,SDS,MOV,ASP,SPS,SDS,MOV,DSP,MOV,BLO,MOV,ULD]",
 			Assertions: []*InstructionAssertion{
 				{},
@@ -1115,12 +1177,15 @@ func TestTipReuse(t *testing.T) {
 							Value:     "water",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"TIP_REUSE_LIMIT": 100,
 					},
 				},
 			},
-			Instruction:          getTestTransfer(wunit.NewVolume(300.0, "ul")),
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestTransfer(wunit.NewVolume(300.0, "ul"))
+				return nil
+			},
 			ExpectedInstructions: "[MOV,LOD,SPS,SDS,MOV,ASP,SPS,SDS,MOV,DSP,MOV,BLO,SPS,SDS,MOV,ASP,SPS,SDS,MOV,DSP,MOV,BLO,MOV,ULD]",
 			Assertions: []*InstructionAssertion{
 				{},
@@ -1132,6 +1197,7 @@ func TestTipReuse(t *testing.T) {
 		test.Run(t)
 	}
 }
+
 func TestAspWait(t *testing.T) {
 	tests := []*PolicyTest{
 		{
@@ -1145,18 +1211,20 @@ func TestAspWait(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"ASP_WAIT": 3.0,
 					},
 				},
 			},
-			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
-			Robot:                nil,
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestSuck(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,MOV,ASP,WAI]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 4, //Wait
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"TIME": 3.0,
 					},
 				},
@@ -1173,18 +1241,20 @@ func TestAspWait(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"ASP_WAIT": 3.0,
 					},
 				},
 			},
-			Instruction:          getTestSuck(getLVConfig(), 8, "Gilson20"),
-			Robot:                nil,
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestSuck(getLVConfig(lab.IDGenerator), 8, "Gilson20")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,MOV,ASP,WAI]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 4, //Wait
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"TIME": 3.0,
 					},
 				},
@@ -1210,18 +1280,21 @@ func TestAspLLF(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"USE_LLF": true,
 					},
 				},
 			},
-			Instruction:          getLLFTestSuck(getLVConfig(), 1, "Gilson20"),
-			Robot:                MakeGilsonWithPlatesAndTipboxesForTest("pcrplate_skirted_riser18"),
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getLLFTestSuck(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				self.Robot = MakeGilsonWithPlatesAndTipboxesForTest(lab, "pcrplate_skirted_riser18")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,MOV,ASP]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 3, //Asp
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"LLF": []bool{true},
 					},
 				},
@@ -1238,18 +1311,21 @@ func TestAspLLF(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"USE_LLF": true,
 					},
 				},
 			},
-			Instruction:          getLLFTestSuck(getLVConfig(), 8, "Gilson20"),
-			Robot:                MakeGilsonWithPlatesAndTipboxesForTest("pcrplate_skirted_riser18"),
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getLLFTestSuck(getLVConfig(lab.IDGenerator), 8, "Gilson20")
+				self.Robot = MakeGilsonWithPlatesAndTipboxesForTest(lab, "pcrplate_skirted_riser18")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,MOV,ASP]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 3, //Asp
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"LLF": []bool{true, true, true, true, true, true, true, true},
 					},
 				},
@@ -1266,17 +1342,20 @@ func TestAspLLF(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"USE_LLF": true,
 					},
 				},
 			},
-			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestSuck(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,MOV,ASP]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 3, //Asp
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"LLF": []bool{false},
 					},
 				},
@@ -1293,18 +1372,21 @@ func TestAspLLF(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"USE_LLF": true,
 					},
 				},
 			},
-			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
-			Robot:                MakeGilsonWithPlatesAndTipboxesForTest("pcrplate_skirted_riser18"),
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestSuck(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				self.Robot = MakeGilsonWithPlatesAndTipboxesForTest(lab, "pcrplate_skirted_riser18")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,MOV,ASP]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 3, //Asp
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"LLF": []bool{false},
 					},
 				},
@@ -1330,18 +1412,21 @@ func TestDspLLF(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"USE_LLF": true,
 					},
 				},
 			},
-			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
-			Robot:                MakeGilsonWithPlatesAndTipboxesForTest("pcrplate_skirted_riser18"),
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestBlow(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				self.Robot = MakeGilsonWithPlatesAndTipboxesForTest(lab, "pcrplate_skirted_riser18")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,MOV,DSP,MOV,BLO]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 3, //Dispense
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"LLF": []bool{true},
 					},
 				},
@@ -1367,18 +1452,20 @@ func TestDspWait(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"DSP_WAIT": 3.0,
 					},
 				},
 			},
-			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
-			Robot:                nil,
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestBlow(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,MOV,DSP,WAI,MOV,BLO]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 4, //Wait
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"TIME": 3.0,
 					},
 				},
@@ -1395,18 +1482,20 @@ func TestDspWait(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"DSP_WAIT": 3.0,
 					},
 				},
 			},
-			Instruction:          getTestBlow(getLVConfig(), 8, "Gilson20"),
-			Robot:                nil,
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestBlow(getLVConfig(lab.IDGenerator), 8, "Gilson20")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,MOV,DSP,WAI,MOV,BLO]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 4, //Wait
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"TIME": 3.0,
 					},
 				},
@@ -1432,26 +1521,28 @@ func TestTouchoff(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"TOUCHOFF":    true,
 						"TOUCHOFFSET": 2.37,
 					},
 				},
 			},
-			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
-			Robot:                nil,
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestBlow(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,MOV,DSP,MOV,MOV,BLO]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 2, //move prior to dispense
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"REFERENCE": []int{0},
 						"OFFSETZ":   []float64{0.5},
 					},
 				},
 				{
 					Instruction: 4, //touchoff move
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"REFERENCE": []int{0},        // well bottom
 						"OFFSETZ":   []float64{2.37}, // as set
 					},
@@ -1469,28 +1560,30 @@ func TestTouchoff(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"TOUCHOFF":    true,
-						"TOUCHOFFSET": maxTouchOffset + 5.0,
+						"TOUCHOFFSET": liquidhandling.MaxTouchOffset + 5.0,
 					},
 				},
 			},
-			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
-			Robot:                nil,
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestBlow(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,MOV,DSP,MOV,MOV,BLO]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 2, //move prior to dispense
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"REFERENCE": []int{0},
 						"OFFSETZ":   []float64{0.5},
 					},
 				},
 				{
 					Instruction: 4, //touchoff move
-					Values: map[InstructionParameter]interface{}{
-						"REFERENCE": []int{0},                  // well bottom
-						"OFFSETZ":   []float64{maxTouchOffset}, // as set
+					Values: map[liquidhandling.InstructionParameter]interface{}{
+						"REFERENCE": []int{0},                                 // well bottom
+						"OFFSETZ":   []float64{liquidhandling.MaxTouchOffset}, // as set
 					},
 				},
 			},
@@ -1515,18 +1608,20 @@ func TestExtraVolumes(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"EXTRA_ASP_VOLUME": wunit.NewVolume(2.0, "ul"),
 					},
 				},
 			},
-			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
-			Robot:                nil,
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestSuck(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,MOV,ASP]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 3, // ASP
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"VOLUME": []wunit.Volume{wunit.NewVolume(12.0, "ul")},
 					},
 				},
@@ -1543,18 +1638,20 @@ func TestExtraVolumes(t *testing.T) {
 							Value:     "soup",
 						},
 					},
-					Policy: map[InstructionParameter]interface{}{
+					Policy: map[liquidhandling.InstructionParameter]interface{}{
 						"EXTRA_DISP_VOLUME": wunit.NewVolume(2.0, "ul"),
 					},
 				},
 			},
-			Instruction:          getTestBlow(getLVConfig(), 1, "Gilson20"),
-			Robot:                nil,
+			Setup: func(self *PolicyTest, lab *laboratory.Laboratory) error {
+				self.Instruction = getTestBlow(getLVConfig(lab.IDGenerator), 1, "Gilson20")
+				return nil
+			},
 			ExpectedInstructions: "[SPS,SDS,MOV,DSP,MOV,BLO]",
 			Assertions: []*InstructionAssertion{
 				{
 					Instruction: 3, // dispense
-					Values: map[InstructionParameter]interface{}{
+					Values: map[liquidhandling.InstructionParameter]interface{}{
 						"VOLUME": []wunit.Volume{wunit.NewVolume(12.0, "ul")},
 					},
 				},

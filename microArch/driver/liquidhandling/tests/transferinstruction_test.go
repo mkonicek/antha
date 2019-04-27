@@ -1,20 +1,23 @@
-package liquidhandling
+package tests
 
 import (
 	"fmt"
-	"github.com/antha-lang/antha/antha/anthalib/wtype"
-	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/inventory"
 	"reflect"
 	"testing"
+
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/laboratory"
+	"github.com/antha-lang/antha/laboratory/testlab"
+	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
-func getComponentOrder(inss []TerminalRobotInstruction) []string {
+func getComponentOrder(inss []liquidhandling.TerminalRobotInstruction) []string {
 	ret := make([]string, 0, len(inss))
 
 	for _, ins := range inss {
 
-		if ins.Type() != DSP {
+		if ins.Type() != liquidhandling.DSP {
 			continue
 		}
 
@@ -42,77 +45,85 @@ func getComponentOrder(inss []TerminalRobotInstruction) []string {
 // first set would be moved second because all single channel instructions would
 // only occur after all multichannel instructions
 func TestOrdering(t *testing.T) {
-	ctx := GetContextForTest()
-	dstp, _ := inventory.NewPlate(ctx, "DWST12")
-	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
-	pol, err := wtype.GetLHPolicyForTest()
+	testlab.WithTestLab(t, "", &testlab.TestElementCallbacks{
+		Steps: func(lab *laboratory.Laboratory) error {
+			dstp, _ := lab.Inventory.Plates.NewPlate("DWST12")
+			rbt := getTestRobot(lab, dstp, "pcrplate_skirted_riser40")
+			pol, err := wtype.GetLHPolicyForTest()
 
-	if err != nil {
-		t.Errorf(err.Error())
-	}
+			if err != nil {
+				return err
+			}
 
-	ins := getTransferMulti()[0]
+			ins := getTransferMulti()[0]
 
-	iTree := NewITree(ins)
-	if _, err := iTree.Build(ctx, pol, rbt); err != nil {
-		t.Fatal(err)
-	}
+			iTree := liquidhandling.NewITree(ins)
+			if _, err := iTree.Build(lab.LaboratoryEffects, pol, rbt); err != nil {
+				return err
+			}
 
-	inss := iTree.Leaves()
+			inss := iTree.Leaves()
 
-	if len(inss) != 58 {
-		t.Errorf("Expected 58 instructions, got %d", len(inss))
-	}
+			if len(inss) != 58 {
+				return fmt.Errorf("Expected 58 instructions, got %d", len(inss))
+			}
 
-	expectedOrder := []string{"water", "water", "water", "wine", "wine", "wine"}
+			expectedOrder := []string{"water", "water", "water", "wine", "wine", "wine"}
 
-	order := getComponentOrder(inss)
+			order := getComponentOrder(inss)
 
-	if !reflect.DeepEqual(order, expectedOrder) {
-		t.Errorf(fmt.Sprintf("Expected order %v got %v", expectedOrder, order))
-	}
+			if !reflect.DeepEqual(order, expectedOrder) {
+				return fmt.Errorf("Expected order %v got %v", expectedOrder, order)
+			}
+			return nil
+		},
+	})
 }
 
 func TestOrdering2(t *testing.T) {
-	ctx := GetContextForTest()
-	dstp, _ := inventory.NewPlate(ctx, "DSW96")
-	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
-	pol, err := wtype.GetLHPolicyForTest()
+	testlab.WithTestLab(t, "", &testlab.TestElementCallbacks{
+		Steps: func(lab *laboratory.Laboratory) error {
+			dstp, _ := lab.Inventory.Plates.NewPlate("DSW96")
+			rbt := getTestRobot(lab, dstp, "pcrplate_skirted_riser40")
+			pol, err := wtype.GetLHPolicyForTest()
 
-	if err != nil {
-		t.Errorf(err.Error())
-	}
+			if err != nil {
+				return err
+			}
 
-	ins := getTransferMulti()[1]
+			ins := getTransferMulti()[1]
 
-	iTree := NewITree(ins)
+			iTree := liquidhandling.NewITree(ins)
 
-	if _, err := iTree.Build(ctx, pol, rbt); err != nil {
-		t.Fatal(err)
-	}
+			if _, err := iTree.Build(lab.LaboratoryEffects, pol, rbt); err != nil {
+				return err
+			}
 
-	inss := iTree.Leaves()
+			inss := iTree.Leaves()
 
-	if len(inss) != 58 {
-		t.Errorf("Expected 58 instructions, got %d", len(inss))
-	}
-	expectedOrder := []string{"water", "fish", "evil", "wine", "slate", "fish"}
+			if len(inss) != 58 {
+				return fmt.Errorf("Expected 58 instructions, got %d", len(inss))
+			}
+			expectedOrder := []string{"water", "fish", "evil", "wine", "slate", "fish"}
 
-	order := getComponentOrder(inss)
+			order := getComponentOrder(inss)
 
-	if !reflect.DeepEqual(order, expectedOrder) {
-		t.Errorf(fmt.Sprintf("Expected order %v got %v", expectedOrder, order))
-	}
+			if !reflect.DeepEqual(order, expectedOrder) {
+				return fmt.Errorf("Expected order %v got %v", expectedOrder, order)
+			}
+			return nil
+		},
+	})
 }
 
-func getTransferMulti() []RobotInstruction {
+func getTransferMulti() []liquidhandling.RobotInstruction {
 	vol := wunit.NewVolume(100.0, "ul")
 	v2 := wunit.NewVolume(5000.0, "ul")
 	v3 := wunit.NewVolume(0.0, "ul")
 
-	tfrs := []RobotInstruction{}
+	tfrs := []liquidhandling.RobotInstruction{}
 
-	tfr := NewTransferInstruction(
+	tfr := liquidhandling.NewTransferInstruction(
 		[]string{"water", "water", "water"},
 		[]string{"position_4", "position_4", "position_4"},
 		[]string{"position_8", "position_8", "position_8"},
@@ -131,7 +142,7 @@ func getTransferMulti() []RobotInstruction {
 		[]wtype.LHPolicy{nil, nil, nil},
 	)
 
-	tfr.Add(MTPFromArrays(
+	tfr.Add(liquidhandling.MTPFromArrays(
 		[]string{"solvent", "solvent", "solvent"},
 		[]string{"position_4", "position_4", "position_4"},
 		[]string{"position_8", "position_8", "position_8"},
@@ -152,7 +163,7 @@ func getTransferMulti() []RobotInstruction {
 
 	tfrs = append(tfrs, tfr)
 
-	tfr = NewTransferInstruction(
+	tfr = liquidhandling.NewTransferInstruction(
 		[]string{"water", "water", "water"},
 		[]string{"position_4", "position_4", "position_4"},
 		[]string{"position_8", "position_8", "position_8"},
@@ -171,7 +182,7 @@ func getTransferMulti() []RobotInstruction {
 		[]wtype.LHPolicy{nil, nil, nil},
 	)
 
-	tfr.Add(MTPFromArrays(
+	tfr.Add(liquidhandling.MTPFromArrays(
 		[]string{"solvent", "solvent", "solvent"},
 		[]string{"position_4", "position_4", "position_4"},
 		[]string{"position_8", "position_8", "position_8"},
@@ -192,7 +203,7 @@ func getTransferMulti() []RobotInstruction {
 
 	tfrs = append(tfrs, tfr)
 
-	tfr = NewTransferInstruction(
+	tfr = liquidhandling.NewTransferInstruction(
 		[]string{"water", "water", "water"},
 		[]string{"position_4", "position_4", "position_4"},
 		[]string{"position_8", "position_8", "position_8"},
@@ -211,7 +222,7 @@ func getTransferMulti() []RobotInstruction {
 		[]wtype.LHPolicy{nil, nil, nil},
 	)
 
-	tfr.Add(MTPFromArrays(
+	tfr.Add(liquidhandling.MTPFromArrays(
 		[]string{"solvent", "solvent", "solvent"},
 		[]string{"position_4", "position_4", "position_4"},
 		[]string{"position_8", "position_8", "position_8"},
@@ -236,34 +247,38 @@ func getTransferMulti() []RobotInstruction {
 }
 
 func TestOrdering3(t *testing.T) {
-	ctx := GetContextForTest()
-	dstp, _ := inventory.NewPlate(ctx, "DSW96")
-	rbt := getTestRobot(ctx, dstp, "pcrplate_skirted_riser40")
-	pol, err := wtype.GetLHPolicyForTest()
+	testlab.WithTestLab(t, "", &testlab.TestElementCallbacks{
+		Steps: func(lab *laboratory.Laboratory) error {
+			dstp, _ := lab.Inventory.Plates.NewPlate("DSW96")
+			rbt := getTestRobot(lab, dstp, "pcrplate_skirted_riser40")
+			pol, err := wtype.GetLHPolicyForTest()
 
-	if err != nil {
-		t.Errorf(err.Error())
-	}
+			if err != nil {
+				return err
+			}
 
-	ins := getTransferMulti()[2]
+			ins := getTransferMulti()[2]
 
-	iTree := NewITree(ins)
+			iTree := liquidhandling.NewITree(ins)
 
-	if _, err := iTree.Build(ctx, pol, rbt); err != nil {
-		t.Fatal(err)
-	}
+			if _, err := iTree.Build(lab.LaboratoryEffects, pol, rbt); err != nil {
+				return err
+			}
 
-	inss := iTree.Leaves()
+			inss := iTree.Leaves()
 
-	if len(inss) != 58 {
-		t.Errorf("Expected 58 instructions, got %d", len(inss))
-	}
+			if len(inss) != 58 {
+				return fmt.Errorf("Expected 58 instructions, got %d", len(inss))
+			}
 
-	expectedOrder := []string{"water", "fish", "evil", "fish", "slate", "wine"}
+			expectedOrder := []string{"water", "fish", "evil", "fish", "slate", "wine"}
 
-	order := getComponentOrder(inss)
+			order := getComponentOrder(inss)
 
-	if !reflect.DeepEqual(order, expectedOrder) {
-		t.Errorf(fmt.Sprintf("Expected order %v got %v", expectedOrder, order))
-	}
+			if !reflect.DeepEqual(order, expectedOrder) {
+				return fmt.Errorf("Expected order %v got %v", expectedOrder, order)
+			}
+			return nil
+		},
+	})
 }

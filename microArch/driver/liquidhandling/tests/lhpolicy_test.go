@@ -1,4 +1,4 @@
-package liquidhandling
+package tests
 
 import (
 	"fmt"
@@ -6,25 +6,28 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	"github.com/antha-lang/antha/laboratory/effects/id"
+	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
-func getChannelForTest() *wtype.LHChannelParameter {
-	return wtype.NewLHChannelParameter("ch", "gilson", wunit.NewVolume(20.0, "ul"), wunit.NewVolume(200.0, "ul"), wunit.NewFlowRate(0.0, "ml/min"), wunit.NewFlowRate(100.0, "ml/min"), 8, false, wtype.LHVChannel, 1)
+func getChannelForTest(idGen *id.IDGenerator) *wtype.LHChannelParameter {
+	return wtype.NewLHChannelParameter(idGen, "ch", "gilson", wunit.NewVolume(20.0, "ul"), wunit.NewVolume(200.0, "ul"), wunit.NewFlowRate(0.0, "ml/min"), wunit.NewFlowRate(100.0, "ml/min"), 8, false, wtype.LHVChannel, 1)
 }
 
 func TestDNAPolicy(t *testing.T) {
+	idGen := id.NewIDGenerator(t.Name())
 	pft, _ := wtype.GetLHPolicyForTest()
 
-	tp := TransferParams{
+	tp := liquidhandling.TransferParams{
 		What:    "dna",
 		Volume:  wunit.NewVolume(2.0, "ul"),
-		Channel: getChannelForTest(),
+		Channel: getChannelForTest(idGen),
 	}
 
-	ins1 := NewSuckInstruction()
+	ins1 := liquidhandling.NewSuckInstruction()
 	ins1.AddTransferParams(tp)
 
-	p, err := GetPolicyFor(pft, ins1)
+	p, err := liquidhandling.GetPolicyFor(pft, ins1)
 
 	if err != nil {
 		t.Error(err)
@@ -38,9 +41,9 @@ func TestDNAPolicy(t *testing.T) {
 
 	tp.Volume = wunit.NewVolume(1.99, "ul")
 
-	ins2 := NewSuckInstruction()
+	ins2 := liquidhandling.NewSuckInstruction()
 	ins2.AddTransferParams(tp)
-	p, err = GetPolicyFor(pft, ins2)
+	p, err = liquidhandling.GetPolicyFor(pft, ins2)
 
 	if err != nil {
 		t.Error(err)
@@ -54,18 +57,19 @@ func TestDNAPolicy(t *testing.T) {
 }
 
 func TestPEGPolicy(t *testing.T) {
+	idGen := id.NewIDGenerator(t.Name())
 	pft, _ := wtype.GetLHPolicyForTest()
 
-	tp := TransferParams{
+	tp := liquidhandling.TransferParams{
 		What:    "peg",
 		Volume:  wunit.NewVolume(190.0, "ul"),
-		Channel: getChannelForTest(),
+		Channel: getChannelForTest(idGen),
 	}
 
-	ins1 := NewSuckInstruction()
+	ins1 := liquidhandling.NewSuckInstruction()
 	ins1.AddTransferParams(tp)
 
-	p, err := GetPolicyFor(pft, ins1)
+	p, err := liquidhandling.GetPolicyFor(pft, ins1)
 
 	if err != nil {
 		t.Error(err)
@@ -82,7 +86,7 @@ func TestPEGPolicy(t *testing.T) {
 	}
 
 	for i := 0; i < 100; i++ {
-		q, err := GetPolicyFor(pft, ins1)
+		q, err := liquidhandling.GetPolicyFor(pft, ins1)
 
 		if err != nil {
 			t.Error(err)
@@ -95,18 +99,19 @@ func TestPEGPolicy(t *testing.T) {
 }
 
 func TestPPPolicy(t *testing.T) {
+	idGen := id.NewIDGenerator(t.Name())
 	pft, _ := wtype.GetLHPolicyForTest()
 
-	tp := TransferParams{
+	tp := liquidhandling.TransferParams{
 		What:    "protoplasts",
 		Volume:  wunit.NewVolume(10.0, "ul"),
-		Channel: getChannelForTest(),
+		Channel: getChannelForTest(idGen),
 	}
 
-	ins1 := NewBlowInstruction()
+	ins1 := liquidhandling.NewBlowInstruction()
 	ins1.AddTransferParams(tp)
 
-	p, err := GetPolicyFor(pft, ins1)
+	p, err := liquidhandling.GetPolicyFor(pft, ins1)
 
 	if err != nil {
 		t.Error(err)
@@ -118,22 +123,22 @@ func TestPPPolicy(t *testing.T) {
 
 }
 
-func getWaterInstructions() []RobotInstruction {
-	var ret []RobotInstruction
+func getWaterInstructions() []liquidhandling.RobotInstruction {
+	var ret []liquidhandling.RobotInstruction
 	waters := []string{"water", "water", "water", "water", "water", "water", "water", "water"}
 
 	{
 		for _, w := range waters {
-			ins := NewChannelBlockInstruction()
-			tp := NewMultiTransferParams(1)
-			tp.Transfers = append(tp.Transfers, TransferParams{What: w})
+			ins := liquidhandling.NewChannelBlockInstruction()
+			tp := liquidhandling.NewMultiTransferParams(1)
+			tp.Transfers = append(tp.Transfers, liquidhandling.TransferParams{What: w})
 			ins.AddTransferParams(tp)
 			ret = append(ret, ins)
 		}
 	}
 
 	{
-		ins := NewChannelBlockInstruction()
+		ins := liquidhandling.NewChannelBlockInstruction()
 		for i := 0; i < 8; i++ {
 			ins.What = append(ins.What, waters)
 		}
@@ -141,61 +146,61 @@ func getWaterInstructions() []RobotInstruction {
 	}
 
 	{
-		ins := NewChannelTransferInstruction()
+		ins := liquidhandling.NewChannelTransferInstruction()
 		ins.What = append(ins.What, "water")
 		ret = append(ret, ins)
 	}
 
 	{
-		ins := NewChannelTransferInstruction()
+		ins := liquidhandling.NewChannelTransferInstruction()
 		ins.What = waters
 		ret = append(ret, ins)
 	}
 
 	{
-		ins := NewAspirateInstruction()
+		ins := liquidhandling.NewAspirateInstruction()
 		ins.What = waters
 		ret = append(ret, ins)
 	}
 
 	{
-		ins := NewDispenseInstruction()
+		ins := liquidhandling.NewDispenseInstruction()
 		ins.What = waters
 		ret = append(ret, ins)
 	}
 
 	{
-		ins := NewBlowInstruction()
+		ins := liquidhandling.NewBlowInstruction()
 		ins.What = waters
 		ret = append(ret, ins)
 	}
 
 	{
-		ins := NewMoveRawInstruction()
+		ins := liquidhandling.NewMoveRawInstruction()
 		ins.What = waters
 		ret = append(ret, ins)
 	}
 
 	{
-		ins := NewSuckInstruction()
+		ins := liquidhandling.NewSuckInstruction()
 		ins.What = waters
 		ret = append(ret, ins)
 	}
 
 	{
-		ins := NewBlowInstruction()
+		ins := liquidhandling.NewBlowInstruction()
 		ins.What = waters
 		ret = append(ret, ins)
 	}
 
 	{
-		ins := NewResetInstruction()
+		ins := liquidhandling.NewResetInstruction()
 		ins.What = waters
 		ret = append(ret, ins)
 	}
 
 	{
-		ins := NewMixInstruction()
+		ins := liquidhandling.NewMixInstruction()
 		ins.What = waters
 		ret = append(ret, ins)
 	}
@@ -223,31 +228,30 @@ func TestRobotInstructionCheckLiquidClass(t *testing.T) {
 		if !ins.Check(waterRule) {
 			t.Errorf("Instruction \"%s\" didn't match water rule, LIQUIDCLASS=%s",
 				ins.Type().Name,
-				ins.GetParameter(LIQUIDCLASS))
+				ins.GetParameter(liquidhandling.LIQUIDCLASS))
 		}
 	}
 }
 
 func TestSmartMixPolicy(t *testing.T) {
+	idGen := id.NewIDGenerator(t.Name())
 	pft, err := wtype.GetLHPolicyForTest()
 
 	if err != nil {
-		t.Error(
-			err.Error(),
-		)
+		t.Error(err)
 	}
 
-	tp := TransferParams{
+	tp := liquidhandling.TransferParams{
 		What:    "SmartMix",
 		Volume:  wunit.NewVolume(25.0, "ul"),
 		TVolume: wunit.NewVolume(1000.0, "ul"),
-		Channel: getChannelForTest(),
+		Channel: getChannelForTest(idGen),
 	}
 
-	ins1 := NewBlowInstruction()
+	ins1 := liquidhandling.NewBlowInstruction()
 	ins1.AddTransferParams(tp)
 
-	p, err := GetPolicyFor(pft, ins1)
+	p, err := liquidhandling.GetPolicyFor(pft, ins1)
 
 	if err != nil {
 		t.Error(err)
@@ -263,9 +267,9 @@ func TestSmartMixPolicy(t *testing.T) {
 	tp.Volume = wunit.NewVolume(25, "ul")
 	tp.TVolume = wunit.NewVolume(50, "ul")
 
-	ins2 := NewBlowInstruction()
+	ins2 := liquidhandling.NewBlowInstruction()
 	ins2.AddTransferParams(tp)
-	p, err = GetPolicyFor(pft, ins2)
+	p, err = liquidhandling.GetPolicyFor(pft, ins2)
 
 	if err != nil {
 		t.Error(err)

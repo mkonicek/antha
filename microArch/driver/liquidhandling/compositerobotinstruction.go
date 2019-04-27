@@ -41,8 +41,8 @@ import (
 
 // Valid parameter fields for robot instructions
 const (
-	//maxTouchOffset maximum value for TOUCHOFFSET which makes sense - values larger than this are capped to this value
-	maxTouchOffset = 5.0
+	//MaxTouchOffset maximum value for TOUCHOFFSET which makes sense - values larger than this are capped to this value
+	MaxTouchOffset = 5.0
 
 	//added to avoid floating point issues with heights in simulator
 	safetyZHeight = 0.05
@@ -2229,8 +2229,8 @@ func (ins *BlowInstruction) Generate(labEffects *effects.LaboratoryEffects, poli
 
 	if touch_off {
 		touch_offset := SafeGetF64(pol, "TOUCHOFFSET")
-		if touch_offset > maxTouchOffset {
-			touch_offset = maxTouchOffset
+		if touch_offset > MaxTouchOffset {
+			touch_offset = MaxTouchOffset
 		}
 		mov := NewMoveInstruction()
 		mov.Head = ins.Head
@@ -3123,7 +3123,7 @@ func countMulti(sa []string) int {
 	return r
 }
 
-func getFirstDefined(sa []string) int {
+func GetFirstDefined(sa []string) int {
 	x := -1
 
 	for i := 0; i < len(sa); i++ {
@@ -3148,7 +3148,7 @@ func GetTips(labEffects *effects.LaboratoryEffects, tiptypes []string, params *L
 
 	for i := 0; i < len(tipwells); i++ {
 		// all instructions in a block must have a head in common
-		defPos := getFirstDefined(tipwells[i])
+		defPos := GetFirstDefined(tipwells[i])
 
 		if defPos == -1 {
 			return inss, fmt.Errorf("Error: tip get failed for types %v", tiptypes)
@@ -3192,7 +3192,7 @@ func DropTips(tiptypes []string, params *LHProperties, channels []*wtype.LHChann
 		return ins, err
 	}
 
-	defpos := getFirstDefined(tipwells)
+	defpos := GetFirstDefined(tipwells)
 
 	if defpos == -1 {
 		return NewUnloadTipsMoveInstruction(), wtype.LHError(wtype.LH_ERR_NO_TIPS, fmt.Sprint("DROP: type ", tiptypes))

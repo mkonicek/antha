@@ -1,4 +1,4 @@
-package liquidhandling
+package tests
 
 import (
 	"fmt"

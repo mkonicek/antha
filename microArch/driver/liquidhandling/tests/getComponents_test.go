@@ -1,9 +1,11 @@
-package liquidhandling
+package tests
 
 import (
+	"testing"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"testing"
+	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
 type testCase struct {
@@ -15,7 +17,7 @@ type testCase struct {
 
 func (tc testCase) Run(t *testing.T) {
 
-	got := updateDests(tc.Cmps, tc.Match)
+	got := liquidhandling.UpdateDests(tc.Cmps, tc.Match)
 
 	if !got.Equal(tc.Expected) {
 		t.Errorf("%s: Expected %v got %v", tc.Name, tc.Expected, got)

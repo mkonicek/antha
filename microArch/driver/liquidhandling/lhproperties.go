@@ -688,7 +688,7 @@ func (lhp *LHProperties) GetCleanTips(labEffects *effects.LaboratoryEffects, tip
 
 	// these are merged into subsets with tip and channel types in common here
 	// each subset has a mask which is the same size as the number of channels available
-	subsets, err2 := makeChannelSubsets(tiptype, channel)
+	subsets, err2 := MakeChannelSubsets(tiptype, channel)
 
 	if err2 != nil {
 		return [][]string{}, [][]string{}, [][]string{}, err2

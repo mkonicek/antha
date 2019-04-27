@@ -9,7 +9,7 @@ import (
 	"github.com/antha-lang/antha/utils"
 )
 
-func mergeMovs(ris []RobotInstruction) []RobotInstruction {
+func MergeMovs(ris []RobotInstruction) []RobotInstruction {
 	insOut := make([]RobotInstruction, 0, len(ris))
 	for i := 0; i < len(ris); i++ {
 		cur := ris[i]
@@ -37,8 +37,8 @@ func mergeMovs(ris []RobotInstruction) []RobotInstruction {
 // unmatched suffix will cause an error but will not be passed to any
 // comparator.
 func CompareInstructionSets(setA, setB []RobotInstruction, comparators ...RobotInstructionComparatorFunc) utils.ErrorSlice {
-	setAMerged := mergeMovs(setA)
-	setBMerged := mergeMovs(setB)
+	setAMerged := MergeMovs(setA)
+	setBMerged := MergeMovs(setB)
 	return orderedInstructionComparison(setAMerged, setBMerged, comparators)
 }
 

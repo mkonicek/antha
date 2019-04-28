@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -52,11 +53,16 @@ func TestElements(t *testing.T) {
 
 		t.Run("CompileAndTest", func(t *testing.T) {
 			buildDir := filepath.Join(outDir, "compileAllElements")
-			compileElements(t, l, inDir, buildDir, wf)
+			pkgs, err := compileElements(l, inDir, buildDir, wf)
+			if err != nil {
+				t.Fatal(err)
+			}
 			// go test relies on the checkout of the elements so it makes
 			// some sense for that to depend on the
 			// checkout/transpilation/compilation of the elements.
-			goTest(t, l, buildDir, wf)
+			if err := goTest(l, buildDir, wf, pkgs); err != nil {
+				t.Fatal(err)
+			}
 			if keepPtr == nil || !*keepPtr {
 				os.RemoveAll(buildDir)
 			}
@@ -64,7 +70,9 @@ func TestElements(t *testing.T) {
 
 		t.Run("Workflows", func(t *testing.T) {
 			testingDir := filepath.Join(outDir, "testWorkflows")
-			workflows(t, l, inDir, testingDir, wf)
+			if err := workflows(l, inDir, testingDir, wf); err != nil {
+				t.Fatal(err)
+			}
 			if keepPtr == nil || !*keepPtr {
 				os.RemoveAll(testingDir)
 			}
@@ -72,39 +80,51 @@ func TestElements(t *testing.T) {
 	}
 }
 
-func compileElements(t *testing.T, l *logger.Logger, inDir, outDir string, wf *workflow.Workflow) {
+func compileElements(l *logger.Logger, inDir, outDir string, wf *workflow.Workflow) (string, error) {
 	if cb, err := composer.NewComposerBase(l, inDir, outDir); err != nil {
-		t.Fatal(err)
+		return "", err
 	} else {
 		defer cb.CloseLogs()
 		//                             /-- keep is true because we need the source for go test
 		if err := cb.ComposeMainAndRun(true, false, false, wf); err != nil {
-			t.Fatal(err)
+			return "", err
 		}
+		return cb.GoList()
 	}
 }
 
-func goTest(t *testing.T, l *logger.Logger, outDir string, wf *workflow.Workflow) {
+func goTest(l *logger.Logger, outDir string, wf *workflow.Workflow, coverPkgs string) error {
 	for repoName := range wf.Repositories {
-		cmd := exec.Command("go", "test", "-v", path.Join(string(repoName), "..."))
+		cmd := exec.Command("go", "test", "-v")
 		cmd.Dir = filepath.Join(outDir, "workflow")
 
+		if coverPkgs != "" {
+			cmd.Args = append(cmd.Args,
+				"-covermode=atomic",
+				fmt.Sprintf("-coverprofile=%s", filepath.Join(cmd.Dir, "cover.out")),
+				fmt.Sprintf("-coverpkg=%s", coverPkgs),
+			)
+		}
+
+		cmd.Args = append(cmd.Args, path.Join(string(repoName), "..."))
+
 		if err := composer.RunAndLogCommand(cmd, composer.RawLogger); err != nil {
-			t.Fatal(err)
+			return err
 		}
 	}
+	return nil
 }
 
-func workflows(t *testing.T, l *logger.Logger, inDir, outDir string, wf *workflow.Workflow) {
+func workflows(l *logger.Logger, inDir, outDir string, wf *workflow.Workflow) error {
 	if cb, err := composer.NewComposerBase(l, inDir, outDir); err != nil {
-		t.Fatal(err)
+		return err
 	} else {
 		defer cb.CloseLogs()
 		tc := cb.NewTestsComposer(true, true, true) // keep, run, linked
 
 		wfPaths, err := workflow.GatherPaths(nil, inDir)
 		if err != nil {
-			t.Fatal(err)
+			return err
 		}
 		for repoName, repo := range wf.Repositories {
 			err := repo.Walk(func(f *workflow.File) error {
@@ -131,11 +151,9 @@ func workflows(t *testing.T, l *logger.Logger, inDir, outDir string, wf *workflo
 				}
 			})
 			if err != nil {
-				t.Fatal(err)
+				return err
 			}
 		}
-		if err := tc.ComposeTestsAndRun(); err != nil {
-			t.Fatal(err)
-		}
+		return tc.ComposeTestsAndRun()
 	}
 }

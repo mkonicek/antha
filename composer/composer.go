@@ -227,6 +227,7 @@ type testComposer struct {
 	Keep          bool
 	Run           bool
 	LinkedDrivers bool
+	CoverPath     string
 }
 
 type testWorkflow struct {

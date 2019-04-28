@@ -7,8 +7,11 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"runtime"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/antha-lang/antha/workflow"
@@ -54,11 +57,22 @@ func (mc *mainComposer) goBuild() error {
 func (tc *testComposer) goTest() error {
 	// We disable the timeout completely and rely on the wrapper to control any timeouts.
 	cmd := exec.Command("go", "test", "-v", "-timeout", "0") // , "-race")
+	cmd.Dir = filepath.Join(tc.OutDir, "workflow")
+
+	if pkgs, err := tc.GoList(); err != nil {
+		return err
+	} else if pkgs != "" {
+		cmd.Args = append(cmd.Args,
+			"-covermode=atomic",
+			fmt.Sprintf("-coverprofile=%s", filepath.Join(cmd.Dir, "cover.out")),
+			fmt.Sprintf("-coverpkg=%s", pkgs),
+		)
+	}
+
 	if tc.LinkedDrivers {
 		cmd.Args = append(cmd.Args, "-tags", "linkedDrivers")
 	}
 	cmd.Args = append(cmd.Args, "-args", "-outdir", filepath.Join(tc.OutDir, "test"))
-	cmd.Dir = filepath.Join(tc.OutDir, "workflow")
 
 	if err := RunAndLogCommand(cmd, RawLogger); err != nil {
 		return err
@@ -66,6 +80,34 @@ func (tc *testComposer) goTest() error {
 		tc.Logger.Log("testing", "successful")
 		return nil
 	}
+}
+
+// This is used in order to establish which packages should be measured for coverage
+func (cb *ComposerBase) GoList() (string, error) {
+	cmd := exec.Command("go", "list", "github.com/antha-lang/antha/...")
+	for repoName := range cb.clonedRepositories {
+		cmd.Args = append(cmd.Args, path.Join(string(repoName), "..."))
+	}
+	cmd.Dir = filepath.Join(cb.OutDir, "workflow")
+
+	pkgsStrs := []string{}
+	backupLogger := cb.Logger.With("cmd", "list").Log
+	logger := func(vs ...interface{}) error {
+		if len(vs) == 2 && vs[0] == "stdout" {
+			if pkg, ok := vs[1].(string); ok {
+				pkgsStrs = append(pkgsStrs, pkg)
+				return nil
+			}
+		}
+		return backupLogger(vs...)
+	}
+
+	if err := RunAndLogCommand(cmd, logger); err != nil {
+		return "", err
+	}
+
+	sort.Strings(pkgsStrs)
+	return strings.Join(pkgsStrs, ","), nil
 }
 
 func (mc *mainComposer) cleanOutDir() error {

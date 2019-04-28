@@ -84,7 +84,10 @@ func (tc *testComposer) goTest() error {
 
 // This is used in order to establish which packages should be measured for coverage
 func (cb *ComposerBase) GoList() (string, error) {
-	cmd := exec.Command("go", "list", "github.com/antha-lang/antha/...")
+	// We filter out packages that don't contain "normal" go files
+	// (this removes packages that only contain tests) because
+	// otherwise "go test" gets upset with us.
+	cmd := exec.Command("go", "list", "-f", "{{if (len .GoFiles) gt 0}}{{.ImportPath}}{{end}}", "github.com/antha-lang/antha/...")
 	for repoName := range cb.clonedRepositories {
 		cmd.Args = append(cmd.Args, path.Join(string(repoName), "..."))
 	}

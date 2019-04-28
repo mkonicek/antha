@@ -3,6 +3,7 @@ package composer
 import (
 	"fmt"
 	"io"
+	"path/filepath"
 	"strings"
 	"text/template"
 	"unicode"
@@ -64,6 +65,7 @@ func renderMain(w io.Writer, mc *mainComposer) error {
 		"id":           func() string { return "" },
 		"name":         func() string { return "" },
 		"inDir":        func() string { return "" },
+		"outDir":       func() string { return "" },
 	}
 	if t, err := template.New("maintpl").Funcs(funcs).Parse(maintpl); err != nil {
 		return err
@@ -92,13 +94,18 @@ func renderTest(w io.Writer, twf *testWorkflow) error {
 		},
 		testWorkflow: twf,
 	}
+	idStr := fmt.Sprintf("%d", tr.testWorkflow.index)
+	name := strings.Title(tr.testWorkflow.workflow.Meta.NameAsGoIdentifier())
 	funcs := template.FuncMap{
 		"elementTypes": tr.elementTypes,
 		"varName":      tr.varName,
 		"token":        tr.token,
-		"id":           func() string { return fmt.Sprintf("%d", tr.testWorkflow.index) },
-		"name":         func() string { return strings.Title(tr.testWorkflow.workflow.Meta.NameAsGoIdentifier()) },
+		"id":           func() string { return idStr },
+		"name":         func() string { return name },
 		"inDir":        func() string { return tr.testWorkflow.inDir },
+		"outDir": func() string {
+			return filepath.Join(tr.testWorkflow.OutDir, "outputs", fmt.Sprintf("%s-%s", idStr, name))
+		},
 	}
 	if t, err := template.New("maintpl").Funcs(funcs).Parse(maintpl); err != nil {
 		return err
@@ -164,7 +171,7 @@ package main
 
 {{define "test-test"}}func TestWorkflow_{{id}}_{{name}}(t *testing.T) {
 	t.Parallel()
-	labBuild := testlab.NewTestLabBuilder(t, {{printf "%q" inDir}}, ioutil.NopCloser(bytes.NewBuffer(MustAsset("data/workflow{{id}}.json"))))
+	labBuild := testlab.NewTestLabBuilder(t, {{printf "%q" inDir}}, {{printf "%q" outDir}}, ioutil.NopCloser(bytes.NewBuffer(MustAsset("data/workflow{{id}}.json"))))
 	defer labBuild.Decommission()
 	if err := runWorkflow{{id}}(labBuild); err != nil {
 		labBuild.Fatal(err)

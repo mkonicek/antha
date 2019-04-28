@@ -14,7 +14,6 @@ package testlab
 
 import (
 	"bytes"
-	"flag"
 	"io"
 	"io/ioutil"
 	"os"
@@ -25,27 +24,12 @@ import (
 	"github.com/antha-lang/antha/workflow"
 )
 
-var (
-	outDirPtr = flag.String("outdir", "", "Directory to write to (default: a temporary directory will be created)")
-)
-
 // Used by generated code build by the composer machinery when processing element test workflows.
-func NewTestLabBuilder(t *testing.T, inDir string, fh io.ReadCloser) *laboratory.LaboratoryBuilder {
-	outDir := ""
-	if outDirPtr != nil {
-		outDir = *outDirPtr
-	}
+func NewTestLabBuilder(t *testing.T, inDir, outDir string, fh io.ReadCloser) *laboratory.LaboratoryBuilder {
 	if outDir != "" {
 		if err := os.MkdirAll(outDir, 0700); err != nil {
 			t.Fatal(err)
 		}
-	}
-	// outDir will be shared for all the tests, so we need to be
-	// private within this. If outDir is "" then this is still safe.
-	if d, err := ioutil.TempDir(outDir, "antha-test"); err != nil {
-		t.Fatal(err)
-	} else {
-		outDir = d
 	}
 
 	labBuild := laboratory.EmptyLaboratoryBuilder()

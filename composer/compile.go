@@ -72,7 +72,6 @@ func (tc *testComposer) goTest() error {
 	if tc.LinkedDrivers {
 		cmd.Args = append(cmd.Args, "-tags", "linkedDrivers")
 	}
-	cmd.Args = append(cmd.Args, "-args", "-outdir", filepath.Join(tc.OutDir, "test"))
 
 	if err := RunAndLogCommand(cmd, RawLogger); err != nil {
 		return err

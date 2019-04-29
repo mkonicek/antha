@@ -1,9 +1,14 @@
 steps:
 
 - name: 'gcr.io/cloud-builders/gsutil'
+  id: netrc-fetch
+  waitFor: ['-']
   args: ['cp', 'gs://cloud-build-antha-images/read-github-netrc.enc', '.']
 
 - name: 'gcr.io/cloud-builders/gcloud'
+  id: netrc-decrypt
+  waitFor:
+  - netrc-fetch
   args:
   - kms
   - decrypt
@@ -13,16 +18,43 @@ steps:
   - --keyring=continuous-deployment
   - --key=read-github
 
+- name: 'gcr.io/cloud-builders/gsutil'
+  id: coveralls-fetch
+  waitFor: ['-']
+  args: ['cp', 'gs://cloud-build-antha-images/write-coveralls-antha.enc', '.']
+
+- name: 'gcr.io/cloud-builders/gcloud'
+  id: coveralls-decrypt
+  waitFor:
+  - coveralls-fetch
+  args:
+  - kms
+  - decrypt
+  - --ciphertext-file=write-coveralls-antha.enc
+  - --plaintext-file=.coveralls_token
+  - --location=global
+  - --keyring=continuous-deployment
+  - --key=write-coveralls-antha
+
 - name: 'gcr.io/cloud-builders/docker'
+  id: docker-build
+  waitFor:
+  - netrc-decrypt
+  - coveralls-decrypt
   args: ['build', '--force-rm', '-t', 'eu.gcr.io/antha-images/antha-core:$COMMIT_SHA', '--build-arg', 'COMMIT_SHA=$COMMIT_SHA', '.']
 
 - name: 'gcr.io/cloud-builders/gsutil'
+  id: gitlab-fetch
+  waitFor: ['-']
   args: ['cp', 'gs://cloud-build-antha-images/write-gitlab-antha-root-passwd.enc', '/docker-config/.']
   volumes:
   - name: 'docker'
     path: '/docker-config'
 
 - name: 'gcr.io/cloud-builders/gcloud'
+  id: gitlab-decrypt
+  waitFor:
+  - gitlab-fetch
   args:
   - kms
   - decrypt
@@ -36,6 +68,10 @@ steps:
     path: '/docker-config'
 
 - name: 'gcr.io/cloud-builders/docker'
+  id: docker-push
+  waitFor:
+  - gitlab-decrypt
+  - docker-build
   entrypoint: 'bash'
   args:
   - '-c'

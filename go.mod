@@ -1,14 +1,13 @@
 module github.com/antha-lang/antha
 
 require (
-	github.com/Synthace/antha-runner v0.0.0-20190423133811-6b62c9bf3805
+	github.com/Synthace/antha-runner v0.0.0-20190429144710-814d1ae5801f
 	github.com/Synthace/instruction-plugins v0.0.0-20190423134354-cd8eba7cdbdc
 	github.com/Synthace/microservice v0.0.0-20190417123801-c7ca6bc971ec
 	github.com/antha-lang/toolbox v0.0.0-20180417132942-6ea11e22448c
 	github.com/apache/arrow/go/arrow v0.0.0-20190412182029-853742021ce1
 	github.com/biogo/biogo v1.0.1
 	github.com/biogo/ncbi v1.0.2
-	github.com/colinmarc/hdfs v1.1.3 // indirect
 	github.com/disintegration/imaging v1.6.0
 	github.com/dustinkirkland/golang-petname v0.0.0-20170921220637-d3c2ba80e75e
 	github.com/go-kit/kit v0.8.0

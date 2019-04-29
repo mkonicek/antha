@@ -16,8 +16,6 @@ github.com/Synthace/api-defs v0.0.0-20181004101911-07d24b0e32de h1:mSt8dHE65AYjp
 github.com/Synthace/api-defs v0.0.0-20181004101911-07d24b0e32de/go.mod h1:ZWT3DjxHxoL5YEXpnij34G7XFei7yksiv0tgOM/X+2g=
 github.com/Synthace/grpc-gateway v0.0.0-20180917171637-0cd4b6347062 h1:08n99m2IIAOe2JdLkO8UZ5wxLAuFTdXzi8CdL8p0bFA=
 github.com/Synthace/grpc-gateway v0.0.0-20180917171637-0cd4b6347062/go.mod h1:qXz/YWQdr+sSNJUnWDwHJT4FKPOu0hUUnXpCR7FszDY=
-github.com/Synthace/grpc-gateway v0.0.0-20181012160857-76f6639b499d h1:OLDkDNog3Ed/DqFCEr5kerhJlB674FOL7apcmotLcD0=
-github.com/Synthace/grpc-gateway v0.0.0-20181012160857-76f6639b499d/go.mod h1:iL52BB1YkJBYpOQi9RkS00vdTY0zIouUf4IZi1CeUN0=
 github.com/Synthace/instruction-plugins v0.0.0-20190409101917-f2439f6bee7c h1:BUBvZAFHPEbGGYg62lgQz3NCQaqs0ftfAoamYfG+DT4=
 github.com/Synthace/instruction-plugins v0.0.0-20190409101917-f2439f6bee7c/go.mod h1:PeBzUoAoFtTgqmFst9DN7EAJl3xgZyP/CtmKPkZqtL8=
 github.com/Synthace/instruction-plugins v0.0.0-20190423134354-cd8eba7cdbdc h1:2C4grU2d7XfRoDRp09UUAePdoolHLa+xcwsulC9ERVg=
@@ -37,8 +35,8 @@ github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRF
 github.com/anmitsu/go-shlex v0.0.0-20161002113705-648efa622239 h1:kFOfPq6dUM1hTo4JG6LR5AXSUEsOjtdm0kw0FtQtMJA=
 github.com/anmitsu/go-shlex v0.0.0-20161002113705-648efa622239/go.mod h1:2FmKhYUyUczH0OGQWaF5ceTx0UBShxjsH6f8oGKYe2c=
 github.com/antha-lang/antha v0.0.1-alpha.0.20181122124851-ccc2c2488bd6/go.mod h1:MbMl2i2T5KI7Rm+W55ejnUux0H3qIv3eUp73Rkf3qTc=
-github.com/antha-lang/antha v0.0.1-alpha.0.20190417130834-a32ca7a0d533/go.mod h1:3ycIjAtp6ERFVohoxbmXyhhXoYq3/PfDYzNAKcAh+zk=
 github.com/antha-lang/antha v0.0.1-alpha.0.20190423133102-5f491329dca4/go.mod h1:AZkXvaQfjjqYbewhmS/rqARzRq2vqB0KO6w4vuR3W0M=
+github.com/antha-lang/antha v0.0.1-alpha.0.20190428130441-01f760571877/go.mod h1:h/3rvMYD3xzwS21kIzVBEB6cpRciyofcdOwR7CE822s=
 github.com/antha-lang/toolbox v0.0.0-20180417132942-6ea11e22448c h1:HxBhuiqdsUDPfWqpiCU69MsT7ey6dDodUpvt7Xf3a0w=
 github.com/antha-lang/toolbox v0.0.0-20180417132942-6ea11e22448c/go.mod h1:F1QKFMetACEKbbsk7Cdr0BzvlphDjKbpbR0QZLMm87Q=
 github.com/antha-lang/units v0.0.0-20180320221051-16e7df36024b h1:Eyq/SdL9Rd7K4bh8Am0NFiCZlSGztggL2/BCsoZY1cs=
@@ -171,8 +169,6 @@ github.com/llgcode/ps v0.0.0-20150911083025-f1443b32eedb/go.mod h1:1l8ky+Ew27CMX
 github.com/magiconair/properties v1.8.0/go.mod h1:PppfXfuXeibc/6YijjN8zIbojt8czPbwD3XqdrwzmxQ=
 github.com/mattn/go-colorable v0.0.9 h1:UVL0vNpWh04HeJXV0KLcaT7r06gOH2l4OW6ddYRUIY4=
 github.com/mattn/go-colorable v0.0.9/go.mod h1:9vuHe8Xs5qXnSaW/c/ABM9alt+Vo+STaOChaDxuIBZU=
-github.com/mattn/go-colorable v0.1.0 h1:v2XXALHHh6zHfYTJ+cSkwtyffnaOyR1MXaA91mTrb8o=
-github.com/mattn/go-colorable v0.1.0/go.mod h1:9vuHe8Xs5qXnSaW/c/ABM9alt+Vo+STaOChaDxuIBZU=
 github.com/mattn/go-isatty v0.0.4 h1:bnP0vzxcAdeI1zdubAl5PjU6zsERjGZb7raWodagDYs=
 github.com/mattn/go-isatty v0.0.4/go.mod h1:M+lRXTBqGeGNdLjl/ufCoiOlB5xdOkqRJdNxMWT7Zi4=
 github.com/mattn/go-sqlite3 v1.10.0 h1:jbhqpg7tQe4SupckyijYiy0mJJ/pRyHvXf7JdWK860o=
@@ -272,15 +268,12 @@ golang.org/x/exp v0.0.0-20180321215751-8460e604b9de/go.mod h1:CJ0aWSM057203Lf6IL
 golang.org/x/exp v0.0.0-20180807140117-3d87b88a115f/go.mod h1:CJ0aWSM057203Lf6IL+f9T1iT9GByDxfZKAQTCR3kQA=
 golang.org/x/exp v0.0.0-20190121172915-509febef88a4 h1:c2HOrn5iMezYjSlGPncknSEr/8x5LELb/ilJbXi9DEA=
 golang.org/x/exp v0.0.0-20190121172915-509febef88a4/go.mod h1:CJ0aWSM057203Lf6IL+f9T1iT9GByDxfZKAQTCR3kQA=
-golang.org/x/exp v0.0.0-20190125153040-c74c464bbbf2 h1:y102fOLFqhV41b+4GPiJoa0k/x+pJcEi2/HB1Y5T6fU=
-golang.org/x/exp v0.0.0-20190125153040-c74c464bbbf2/go.mod h1:CJ0aWSM057203Lf6IL+f9T1iT9GByDxfZKAQTCR3kQA=
 golang.org/x/image v0.0.0-20180708004352-c73c2afc3b81 h1:00VmoueYNlNz/aHIilyyQz/MHSqGoWJzpFv/HW8xpzI=
 golang.org/x/image v0.0.0-20180708004352-c73c2afc3b81/go.mod h1:ux5Hcp/YLpHSI86hEcLt0YII63i6oz57MZXIpbrjZUs=
 golang.org/x/lint v0.0.0-20180702182130-06c8688daad7/go.mod h1:UVdnD1Gm6xHRNCYTkRU2/jEulfH38KcIWyp/GAMgvoE=
 golang.org/x/lint v0.0.0-20181026193005-c67002cb31c3/go.mod h1:UVdnD1Gm6xHRNCYTkRU2/jEulfH38KcIWyp/GAMgvoE=
 golang.org/x/lint v0.0.0-20190227174305-5b3e6a55c961/go.mod h1:wehouNa3lNwaWXcvxsM5YxQ5yQlVC4a0KAMCusXpPoU=
 golang.org/x/lint v0.0.0-20190301231843-5614ed5bae6f/go.mod h1:UVdnD1Gm6xHRNCYTkRU2/jEulfH38KcIWyp/GAMgvoE=
-golang.org/x/net v0.0.0-20180611182652-db08ff08e862/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
 golang.org/x/net v0.0.0-20180724234803-3673e40ba225/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
 golang.org/x/net v0.0.0-20180826012351-8a410e7b638d/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
 golang.org/x/net v0.0.0-20180906233101-161cd47e91fd/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
@@ -354,7 +347,6 @@ gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8
 gopkg.in/errgo.v2 v2.1.0/go.mod h1:hNsd1EY+bozCKY1Ytp96fpM3vjJbqLJn88ws8XvfDNI=
 gopkg.in/fsnotify.v1 v1.4.7/go.mod h1:Tz8NjZHkW78fSQdbUxIjBTcgA1z1m8ZHf0WmKUhAMys=
 gopkg.in/inf.v0 v0.9.1/go.mod h1:cWUDdTG/fYaXco+Dcufb5Vnc6Gp2YChqWtbxRZE0mXw=
-gopkg.in/resty.v1 v1.9.1/go.mod h1:vo52Hzryw9PnPHcJfPsBiFW62XhNx5OczbV9y+IMpgc=
 gopkg.in/resty.v1 v1.12.0/go.mod h1:mDo4pnntr5jdWRML875a/NmxYqAlA73dVijT2AXvQQo=
 gopkg.in/src-d/go-billy.v4 v4.2.1/go.mod h1:tm33zBoOwxjYHZIE+OV8bxTWFMJLrconzFMd38aARFk=
 gopkg.in/src-d/go-billy.v4 v4.3.0 h1:KtlZ4c1OWbIs4jCv5ZXrTqG8EQocr0g/d4DjNg70aek=

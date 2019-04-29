@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 
 ## This script is run by cloudbuild as part of the CI for antha itself.
 set -o nounset -o errexit -o pipefail -o noclobber

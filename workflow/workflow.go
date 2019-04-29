@@ -254,7 +254,7 @@ type Repository struct {
 }
 
 // ElementInstanceName is the name of an element instance. It cannot start with
-// a '.' character, and it cannot comtain the strings '/' or '..'.
+// a '.' character, and it cannot contain the strings '/' or '..'.
 type ElementInstanceName string
 
 // ElementPath is the relative path to an element type from the root of the

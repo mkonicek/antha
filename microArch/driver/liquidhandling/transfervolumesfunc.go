@@ -7,6 +7,7 @@ import (
 	"math"
 )
 
+// TransferVolumes returns a slice of volumes V such that Min <= v <= Max and sum(V) = Vol
 func TransferVolumes(Vol, Min, Max wunit.Volume) ([]wunit.Volume, error) {
 
 	max, err := Max.InUnit(Vol.Unit())
@@ -45,9 +46,8 @@ func TransferVolumes(Vol, Min, Max wunit.Volume) ([]wunit.Volume, error) {
 	return ret, nil
 }
 
-// multichannel version of above
-// TransferVolumes(Vol, Min, Max wunit.Volume) ([]wunit.Volume, error)
-
+// TransferVolumesMulti given a slice of volumes to transfer and channels to use,
+// return an array of transfers to make such that `ret[i][j]` is the volume of the ith transfer to be made with channel j
 func TransferVolumesMulti(vols VolumeSet, chans []*wtype.LHChannelParameter) ([]VolumeSet, error) {
 	// aggregate vertically
 	mods := make([]VolumeSet, len(vols))

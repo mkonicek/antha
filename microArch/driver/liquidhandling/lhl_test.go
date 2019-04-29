@@ -8,56 +8,60 @@ import (
 )
 
 func getTestBlow(ch *wtype.LHChannelParameter, multi int, tipType string) RobotInstruction {
-	bi := NewBlowInstruction()
-	bi.Multi = multi
-	bi.TipType = tipType
-	for i := 0; i < multi; i++ {
-		bi.What = append(bi.What, "soup")
-		bi.PltTo = append(bi.PltTo, "position_4")
-		bi.WellTo = append(bi.WellTo, "A1")
-		bi.Volume = append(bi.Volume, wunit.NewVolume(10.0, "ul"))
-		bi.TPlateType = append(bi.TPlateType, "pcrplate_skirted_riser40")
-		bi.TVolume = append(bi.TVolume, wunit.NewVolume(5.0, "ul"))
+	cti := &ChannelTransferInstruction{
+		Multi:      multi,
+		What:       make([]string, 0, multi),
+		PltTo:      make([]string, 0, multi),
+		WellTo:     make([]string, 0, multi),
+		Volume:     make([]wunit.Volume, 0, multi),
+		TPlateType: make([]string, 0, multi),
+		TVolume:    make([]wunit.Volume, 0, multi),
+		Prms:       make([]*wtype.LHChannelParameter, 0, multi),
+		TipType:    make([]string, 0, multi),
+		Component:  make([]string, 0, multi),
 	}
-	bi.Prms = ch
-	bi.Head = ch.Head
-	return bi
+
+	for i := 0; i < multi; i++ {
+		cti.What = append(cti.What, "soup")
+		cti.PltTo = append(cti.PltTo, "position_4")
+		cti.WellTo = append(cti.WellTo, "A1")
+		cti.Volume = append(cti.Volume, wunit.NewVolume(10.0, "ul"))
+		cti.TPlateType = append(cti.TPlateType, "DWST12")
+		cti.TVolume = append(cti.TVolume, wunit.NewVolume(20.0, "ul"))
+		cti.TipType = append(cti.TipType, tipType)
+		cti.Prms = append(cti.Prms, ch)
+		cti.Component = append(cti.Component, "minestrone")
+	}
+
+	return NewBlowInstruction(cti)
 }
 
-func getTestSuck(ch *wtype.LHChannelParameter, multi int, tipType string) RobotInstruction {
-	ret := NewSuckInstruction()
-	ret.Multi = multi
-	ret.TipType = tipType
-	for i := 0; i < multi; i++ {
-		ret.What = append(ret.What, "soup")
-		ret.PltFrom = append(ret.PltFrom, "position_4")
-		ret.WellFrom = append(ret.WellFrom, "A1")
-		ret.Volume = append(ret.Volume, wunit.NewVolume(10.0, "ul"))
-		ret.FPlateType = append(ret.FPlateType, "DWST12")
-		ret.FVolume = append(ret.FVolume, wunit.NewVolume(20.0, "ul"))
+func getTestSuck(ch *wtype.LHChannelParameter, multi int, tipType string, plateType string, wellCoords []string) RobotInstruction {
+	cti := &ChannelTransferInstruction{
+		Multi:      multi,
+		What:       make([]string, 0, multi),
+		PltFrom:    make([]string, 0, multi),
+		WellFrom:   wellCoords,
+		Volume:     make([]wunit.Volume, 0, multi),
+		FPlateType: make([]string, 0, multi),
+		FVolume:    make([]wunit.Volume, 0, multi),
+		Prms:       make([]*wtype.LHChannelParameter, 0, multi),
+		TipType:    make([]string, 0, multi),
+		Component:  make([]string, 0, multi),
 	}
-	ret.Prms = ch
-	ret.Head = ch.Head
-	return ret
-}
 
-func getLLFTestSuck(ch *wtype.LHChannelParameter, multi int, tipType string) RobotInstruction {
-	ret := NewSuckInstruction()
-	ret.Multi = multi
-	ret.TipType = tipType
-	wc := wtype.MakeWellCoords("A1")
 	for i := 0; i < multi; i++ {
-		ret.What = append(ret.What, "soup")
-		ret.PltFrom = append(ret.PltFrom, "position_4")
-		wc.Y = i
-		ret.WellFrom = append(ret.WellFrom, wc.FormatA1())
-		ret.Volume = append(ret.Volume, wunit.NewVolume(10.0, "ul"))
-		ret.FPlateType = append(ret.FPlateType, "pcrplate_skirted_riser18")
-		ret.FVolume = append(ret.FVolume, wunit.NewVolume(100.0, "ul"))
+		cti.What = append(cti.What, "soup")
+		cti.PltFrom = append(cti.PltFrom, "position_4")
+		cti.Volume = append(cti.Volume, wunit.NewVolume(10.0, "ul"))
+		cti.FPlateType = append(cti.FPlateType, "plateType")
+		cti.FVolume = append(cti.FVolume, wunit.NewVolume(100.0, "ul"))
+		cti.TipType = append(cti.TipType, tipType)
+		cti.Prms = append(cti.Prms, ch)
+		cti.Component = append(cti.Component, "minestrone")
 	}
-	ret.Prms = ch
-	ret.Head = ch.Head
-	return ret
+
+	return NewSuckInstruction(cti)
 }
 
 // what, pltfrom, pltto, wellfrom, wellto, fplatetype, tplatetype []string, volume, fvolume, tvolume []wunit.Volume, FPlateWX, FPlateWY, TPlateWX, TPlateWY []int, Components []string, policies []wtype.LHPolicy
@@ -253,7 +257,7 @@ func TestSuckMixing(t *testing.T) {
 					},
 				},
 			},
-			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
+			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20", "pcrplate_skirted_riser18", []string{"A1"}),
 			ExpectedInstructions: "[SPS,SDS,MOV,MIX,MOV,ASP]",
 			Assertions: []*InstructionAssertion{
 				{
@@ -282,7 +286,7 @@ func TestSuckMixing(t *testing.T) {
 					},
 				},
 			},
-			Instruction:          getTestSuck(getLVConfig(), 8, "Gilson20"),
+			Instruction:          getTestSuck(getLVConfig(), 8, "Gilson20", "pcrplate_skirted_riser18", []string{"A1"}),
 			Robot:                nil,
 			ExpectedInstructions: "[SPS,SDS,MOV,MIX,MOV,ASP]",
 			Assertions: []*InstructionAssertion{
@@ -313,7 +317,7 @@ func TestSuckMixing(t *testing.T) {
 					},
 				},
 			},
-			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
+			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20", "pcrplate_skirted_riser18", []string{"A1"}),
 			ExpectedInstructions: "[SPS,SDS,SPS,MOV,MIX,SPS,MOV,ASP]",
 			Assertions: []*InstructionAssertion{
 				{
@@ -367,7 +371,7 @@ func TestSuckMixing(t *testing.T) {
 					},
 				},
 			},
-			Instruction: getTestSuck(getLVConfig(), 1, "Gilson20"),
+			Instruction: getTestSuck(getLVConfig(), 1, "Gilson20", "pcrplate_skirted_riser18", []string{"A1"}),
 			Error:       "setting pre mix pipetting speed: value 150.000000 out of range 0.022500 - 3.750000",
 		},
 	}
@@ -450,7 +454,7 @@ func TestZOffset(t *testing.T) {
 					},
 				},
 			},
-			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
+			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20", "pcrplate_skirted_riser18", []string{"A1"}),
 			Robot:                nil,
 			ExpectedInstructions: "[SPS,SDS,MOV,ASP]",
 			Assertions: []*InstructionAssertion{
@@ -476,7 +480,7 @@ func TestZOffset(t *testing.T) {
 					Policy: map[InstructionParameter]interface{}{},
 				},
 			},
-			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
+			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20", "pcrplate_skirted_riser18", []string{"A1"}),
 			Robot:                nil,
 			ExpectedInstructions: "[SPS,SDS,MOV,ASP]",
 			Assertions: []*InstructionAssertion{
@@ -550,7 +554,7 @@ func TestEntrySpeed(t *testing.T) {
 					},
 				},
 			},
-			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
+			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20", "pcrplate_skirted_riser18", []string{"A1"}),
 			Robot:                nil,
 			ExpectedInstructions: "[SPS,SDS,MOV,SDS,MOV,ASP,MOV,SDS]",
 			Assertions: []*InstructionAssertion{
@@ -849,7 +853,7 @@ func TestASPPipetSpeed(t *testing.T) {
 					Policy: map[InstructionParameter]interface{}{},
 				},
 			},
-			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
+			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20", "pcrplate_skirted_riser18", []string{"A1"}),
 			Robot:                nil,
 			ExpectedInstructions: "[SPS,SDS,MOV,ASP]",
 			Assertions: []*InstructionAssertion{
@@ -879,7 +883,7 @@ func TestASPPipetSpeed(t *testing.T) {
 					},
 				},
 			},
-			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
+			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20", "pcrplate_skirted_riser18", []string{"A1"}),
 			Robot:                nil,
 			ExpectedInstructions: "[SPS,SDS,MOV,ASP]",
 			Assertions: []*InstructionAssertion{
@@ -909,7 +913,7 @@ func TestASPPipetSpeed(t *testing.T) {
 					},
 				},
 			},
-			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
+			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20", "pcrplate_skirted_riser18", []string{"A1"}),
 			Robot:                nil,
 			ExpectedInstructions: "[SPS,SDS,MOV,SPS,ASP,SPS]",
 			Assertions: []*InstructionAssertion{
@@ -956,7 +960,7 @@ func TestASPPipetSpeed(t *testing.T) {
 					},
 				},
 			},
-			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
+			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20", "pcrplate_skirted_riser18", []string{"A1"}),
 			Robot:                nil,
 			ExpectedInstructions: "[SPS,SDS,MOV,SPS,ASP,SPS]",
 			Assertions: []*InstructionAssertion{
@@ -1003,7 +1007,7 @@ func TestASPPipetSpeed(t *testing.T) {
 					},
 				},
 			},
-			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
+			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20", "pcrplate_skirted_riser18", []string{"A1"}),
 			Robot:                nil,
 			ExpectedInstructions: "[SPS,SDS,MOV,SPS,ASP,SPS]",
 			Assertions: []*InstructionAssertion{
@@ -1050,7 +1054,7 @@ func TestASPPipetSpeed(t *testing.T) {
 					},
 				},
 			},
-			Instruction: getTestSuck(getLVConfig(), 1, "Gilson20"),
+			Instruction: getTestSuck(getLVConfig(), 1, "Gilson20", "pcrplate_skirted_riser18", []string{"A1"}),
 			Error:       "setting pipette aspirate speed: value 4.750000 out of range 0.022500 - 3.750000",
 		},
 		{
@@ -1070,7 +1074,7 @@ func TestASPPipetSpeed(t *testing.T) {
 					},
 				},
 			},
-			Instruction: getTestSuck(getLVConfig(), 1, "Gilson20"),
+			Instruction: getTestSuck(getLVConfig(), 1, "Gilson20", "pcrplate_skirted_riser18", []string{"A1"}),
 			Error:       "setting pipette aspirate speed: value 0.010000 out of range 0.022500 - 3.750000",
 		},
 	}
@@ -1150,7 +1154,7 @@ func TestAspWait(t *testing.T) {
 					},
 				},
 			},
-			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
+			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20", "pcrplate_skirted_riser18", []string{"A1"}),
 			Robot:                nil,
 			ExpectedInstructions: "[SPS,SDS,MOV,ASP,WAI]",
 			Assertions: []*InstructionAssertion{
@@ -1178,7 +1182,7 @@ func TestAspWait(t *testing.T) {
 					},
 				},
 			},
-			Instruction:          getTestSuck(getLVConfig(), 8, "Gilson20"),
+			Instruction:          getTestSuck(getLVConfig(), 8, "Gilson20", "pcrplate_skirted_riser18", []string{"A1"}),
 			Robot:                nil,
 			ExpectedInstructions: "[SPS,SDS,MOV,ASP,WAI]",
 			Assertions: []*InstructionAssertion{
@@ -1198,6 +1202,7 @@ func TestAspWait(t *testing.T) {
 }
 
 func TestAspLLF(t *testing.T) {
+	firstColumn := []string{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"}
 	tests := []*PolicyTest{
 		{
 			Name: "asp withLLF",
@@ -1215,7 +1220,7 @@ func TestAspLLF(t *testing.T) {
 					},
 				},
 			},
-			Instruction:          getLLFTestSuck(getLVConfig(), 1, "Gilson20"),
+			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20", "pcrplate_skirted_riser18", []string{"A1"}),
 			Robot:                MakeGilsonWithPlatesAndTipboxesForTest("pcrplate_skirted_riser18"),
 			ExpectedInstructions: "[SPS,SDS,MOV,ASP]",
 			Assertions: []*InstructionAssertion{
@@ -1243,7 +1248,7 @@ func TestAspLLF(t *testing.T) {
 					},
 				},
 			},
-			Instruction:          getLLFTestSuck(getLVConfig(), 8, "Gilson20"),
+			Instruction:          getTestSuck(getLVConfig(), 8, "Gilson20", "pcrplate_skirted_riser18", firstColumn),
 			Robot:                MakeGilsonWithPlatesAndTipboxesForTest("pcrplate_skirted_riser18"),
 			ExpectedInstructions: "[SPS,SDS,MOV,ASP]",
 			Assertions: []*InstructionAssertion{
@@ -1271,7 +1276,7 @@ func TestAspLLF(t *testing.T) {
 					},
 				},
 			},
-			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
+			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20", "pcrplate_skirted_riser18", []string{"A1"}),
 			ExpectedInstructions: "[SPS,SDS,MOV,ASP]",
 			Assertions: []*InstructionAssertion{
 				{
@@ -1298,7 +1303,12 @@ func TestAspLLF(t *testing.T) {
 					},
 				},
 			},
-			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
+			Instruction: func() RobotInstruction {
+				s := getTestSuck(getLVConfig(), 1, "Gilson20", "pcrplate_skirted_riser18", []string{"A1"})
+				// set the source volume to be too small for the policy to match
+				s.(*SuckInstruction).FVolume[0] = wunit.NewVolume(5.0, "ul")
+				return s
+			}(),
 			Robot:                MakeGilsonWithPlatesAndTipboxesForTest("pcrplate_skirted_riser18"),
 			ExpectedInstructions: "[SPS,SDS,MOV,ASP]",
 			Assertions: []*InstructionAssertion{
@@ -1520,7 +1530,7 @@ func TestExtraVolumes(t *testing.T) {
 					},
 				},
 			},
-			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20"),
+			Instruction:          getTestSuck(getLVConfig(), 1, "Gilson20", "pcrplate_skirted_riser18", []string{"A1"}),
 			Robot:                nil,
 			ExpectedInstructions: "[SPS,SDS,MOV,ASP]",
 			Assertions: []*InstructionAssertion{

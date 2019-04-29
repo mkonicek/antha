@@ -965,7 +965,7 @@ func (self *VirtualLiquidHandler) Dispense(volume []float64, blowout []bool, hea
 	}
 
 	//for each blowout channel
-	for i := range arg.channels {
+	for _, i := range arg.channels {
 		if !blowout[i] {
 			continue
 		}

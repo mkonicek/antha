@@ -231,11 +231,6 @@ func RandomBasicId(prefix BasicId) (BasicId, error) {
 // `repos.antha.com/antha-ninja/elements-westeros`.
 type RepositoryName string
 
-type ElementInstanceName string
-type ElementPath string
-type ElementTypeName string
-type ElementParameterName string
-
 // Repositories is a map of Repository values, keyed by RepositoryName. The keys
 // should be unique, and no key should be a prefix of another. For example, if
 // the keys in this map are github.com/foo/bar and github.com/foo/bar/baz, that
@@ -258,6 +253,24 @@ type Repository struct {
 	gitRepo *git.Repository
 }
 
+// ElementInstanceName is the name of an element instance. It cannot start with
+// a '.' character, and it cannot comtain the strings '/' or '..'.
+type ElementInstanceName string
+
+// ElementPath is the relative path to an element type from the root of the
+// repository in which it is defined, e.g. `Elements/New-MVL/Aliquot_Liquid`
+type ElementPath string
+
+// ElementTypeName is the name of an element type, defined as the final token in
+// its path, e.g. `Aliquot_Liquid`
+type ElementTypeName string
+
+// ElementParameterName is the name of an element type's parameter, as defined
+// in the element type's source code. e.g. `VolumeToAliquot`
+type ElementParameterName string
+
+// Elements is a collection of all the element-related data in a workflow,
+// including types, instances and connections.
 type Elements struct {
 	Types                ElementTypes                `json:"Types,omitempty"`
 	Instances            ElementInstances            `json:"Instances,omitempty"`
@@ -266,21 +279,42 @@ type Elements struct {
 
 type ElementTypes []*ElementType
 
+// ElementType defines an element type. (Compare this to ElementInstance,
+// which is the realisation of an element type.)
+//
+// RepositoryName must be a name defined in the Repositories section of the
+// workflow, e.g. `repos.antha.com/antha-ninja/elements-westeros`.
+// ElementPath is the path within the repository to the element definition, e.g.
+// `Elements/New-MVL/Aliquot_Liquid`.
 type ElementType struct {
 	RepositoryName RepositoryName `json:"RepositoryName"`
 	ElementPath    ElementPath    `json:"ElementPath"`
 }
 
+// Name returns the nominal name of an ElementType, taken to be the last part of
+// its path.
+//
+// For example, if an ElementType's path is `Elements/New-MVL/Aliquot_Liquid`,
+// Name() returns `Aliquot_Liquid`
 func (et ElementType) Name() ElementTypeName {
 	return ElementTypeName(path.Base(string(et.ElementPath)))
 }
 
+// ImportPath returns the import path for the ElementType, in the format that
+// would be used in a Go import statement.
 func (et ElementType) ImportPath() string {
 	return path.Join(string(et.RepositoryName), string(et.ElementPath))
 }
 
+// ElementInstances is a map of ElementInstance values, keyed by
+// ElementInstanceName.
 type ElementInstances map[ElementInstanceName]*ElementInstance
 
+// ElementInstance is the realistion of an element type.
+//
+// ElementTypeName is the name of the ElementType this instance realises. It
+// must appear as the final token in an ElementPath value within the
+// Elements/Types section of the workflow.
 type ElementInstance struct {
 	ElementTypeName ElementTypeName     `json:"ElementTypeName"`
 	Meta            json.RawMessage     `json:"Meta,omitempty"`
@@ -290,19 +324,31 @@ type ElementInstance struct {
 	hasParameters  bool
 }
 
+// IsUsed is true if the element instance has at least one connection or at
+// least one parameter.
 func (ei ElementInstance) IsUsed() bool {
 	return ei.hasConnections || ei.hasParameters
 }
 
 type ElementParameterSet map[ElementParameterName]json.RawMessage
 
+// ElementInstancesConnections is the collection of all the connections in a
+// workflow. Each connection must specify a valid element instance and parameter
+// name for both the source and target.
 type ElementInstancesConnections []ElementConnection
 
+// ElementConnection is a connection between two element sockets. It must have
+// valid source and target values.
 type ElementConnection struct {
 	Source ElementSocket `json:"Source"`
 	Target ElementSocket `json:"Target"`
 }
 
+// ElementSocket is a connector on either the input or output side of an element.
+//
+// ElementInstance should be a valid element instance name; that is, a key from
+// the Elements/Instances section of the workflow.
+// ParameterName must not be empty.
 type ElementSocket struct {
 	ElementInstance ElementInstanceName  `json:"ElementInstance"`
 	ParameterName   ElementParameterName `json:"ParameterName"`

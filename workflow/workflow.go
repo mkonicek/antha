@@ -226,14 +226,30 @@ func RandomBasicId(prefix BasicId) (BasicId, error) {
 	}
 }
 
+// RepositoryName is the domain-qualified name of a repository, as it would
+// appear in a Go `import` directive. For example,
+// `repos.antha.com/antha-ninja/elements-westeros`.
 type RepositoryName string
+
 type ElementInstanceName string
 type ElementPath string
 type ElementTypeName string
 type ElementParameterName string
 
+// Repositories is a map of Repository values, keyed by RepositoryName. The keys
+// should be unique, and no key should be a prefix of another. For example, if
+// the keys in this map are github.com/foo/bar and github.com/foo/bar/baz, that
+// will trigger a validation error.
 type Repositories map[RepositoryName]*Repository
 
+// Repository is a local, checked-out clone of a Git repository.
+//
+// Directory is the absolute path to the repository clone on the local file
+// system
+// Branch (optional) is the name of the branch to use.
+// Commit (optional) is the SHA1 hash of the commit to use.
+//
+// You can provide Branch or Commit, but not both.
 type Repository struct {
 	Directory string `json:"Directory"`
 	Branch    string `json:"Branch,omitempty"`

@@ -244,7 +244,9 @@ type Repositories map[RepositoryName]*Repository
 // Branch (optional) is the name of the branch to use.
 // Commit (optional) is the SHA1 hash of the commit to use.
 //
-// You can provide Branch or Commit, but not both.
+// You can provide Branch or Commit, but not both. If neither are provided,
+// antha uses the files it finds in the directory as-is, including unstaged
+// changes.
 type Repository struct {
 	Directory string `json:"Directory"`
 	Branch    string `json:"Branch,omitempty"`
@@ -258,11 +260,18 @@ type Repository struct {
 type ElementInstanceName string
 
 // ElementPath is the relative path to an element type from the root of the
-// repository in which it is defined, e.g. `Elements/New-MVL/Aliquot_Liquid`
+// repository in which it is defined, e.g. `Elements/New-MVL/Aliquot_Liquid`.
+//
+// Note that the path separator in ElementPath should always be '/', even if you
+// happen to be using an OS that uses backslashes (e.g. Windows).
 type ElementPath string
 
 // ElementTypeName is the name of an element type, defined as the final token in
 // its path, e.g. `Aliquot_Liquid`
+//
+// Note that all element types inhabit the same namespace, so two element types
+// can't share the same ElementTypeName, even if they come from different
+// repositories.
 type ElementTypeName string
 
 // ElementParameterName is the name of an element type's parameter, as defined

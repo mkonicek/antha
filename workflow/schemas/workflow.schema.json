@@ -17,15 +17,23 @@
             "pattern": "^[a-zA-Z0-9_ -]*$"
         },
         "Meta": {
-            "oneOf": [
-                {"type": "null"},
-                {"type": "object"}
-            ],
-            "$comment": "TODO: implement schema. Haven't seen one of these in the wild yet"
+            "type": "object",
+            "properties": {
+                "Name": {
+                    "type": "string"
+                }
+            }
         },
         "Inventory": {
             "type": "object",
-            "$comment": "TODO: implement schema. Haven't seen one of these in the wild yet"
+            "properties": {
+                "PlateTypes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#definitions/plateType"
+                    }
+                }
+            }
         },
         "SchemaVersion": {
             "type": "string",
@@ -54,7 +62,7 @@
                 "Instances": {
                     "type": "object",
                     "propertyNames": {
-                        "$comment": "TODO: confirm this regex. This is the name of an element instance, e.g. 'my_aliquot'",
+                        "$comment": "This is the name of an element instance, e.g. 'my_aliquot'",
                         "pattern": "^[a-zA-Z0-9_ -]+$"
                     },
                     "patternProperties": {
@@ -76,8 +84,18 @@
         "Config": {
             "type": "object",
             "propertyNames": {
-                "$comment": "TODO: check this regex. This is the name of a device class, e.g. 'GilsonPipetMax'. It may be the case that an enum is preferable.",
-                "pattern": "^[a-zA-Z0-9_-]+$"
+                "$comment": "The name of a device class",
+                "enum": [
+                    "CyBio",
+                    "GilsonPipetMax",
+                    "GlobalMixer",
+                    "Hamilton",
+                    "Labcyte",
+                    "PlateReader",
+                    "QPCR",
+                    "ShakerIncubator",
+                    "Tecan"
+                ]
             },
             "patternProperties": {
                 "^GlobalMixer$": {
@@ -189,8 +207,8 @@
                 "Devices": {
                     "type": "object",
                     "propertyNames": {
-                        "$comment": "TODO: check this regex. This is the name of a device instance, e.g. 'Doris'",
-                        "pattern": "^[a-zA-Z0-9_-]+$"
+                        "$comment": "This is the name of a device instance, e.g. 'Doris'",
+                        "pattern": "^[-a-zA-Z0-9_() ]+$"
                     },
                     "patternProperties": {
                         ".*": {
@@ -206,7 +224,7 @@
         "mixTaskCheck": {
             "type": "object",
             "properties": {
-                "Instructions": { 
+                "Instructions": {
                     "type": "array"
                 },
                 "Outputs" : {
@@ -215,6 +233,33 @@
                 "TimeEstimate": {
                     "type": "array"
                 }
+            }
+        },
+        "plateType": {
+            "type": "object",
+            "properties": {
+                "Name": { "type": "string" },
+                "Manufacturer": { "type": "string" },
+                "WellShape": { "type": "string" },
+                "WellH": { "type": "number" },
+                "WellW": { "type": "number" },
+                "WellD": { "type": "number" },
+                "MaxVol": { "type": "number" },
+                "MinVol": { "type": "number" },
+                "BottomType": { "type": "number" },
+                "BottomH": { "type": "number" },
+                "WellX": { "type": "number" },
+                "WellY": { "type": "number" },
+                "WellZ": { "type": "number" },
+                "ColSize": { "type": "number" },
+                "RowSize": { "type": "number" },
+                "Height": { "type": "number" },
+                "WellXOffset": { "type": "number" },
+                "WellYOffset": { "type": "number" },
+                "WellXStart": { "type": "number" },
+                "WellYStart": { "type": "number" },
+                "WellZStart": { "type": "number" },
+                "Extra": { "type": "object" }
             }
         }
     }

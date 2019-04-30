@@ -144,11 +144,40 @@ func TestConvolve(t *testing.T) {
 	}, "Convolve - empty input")
 }
 
-const eqTolerance = 1e-14
+func TestSavGolFilter(t *testing.T) {
+	// Tests from https://github.com/scipy/scipy/blob/master/scipy/signal/_savitzky_golay.py#L307
+	x := []float64{2, 2, 5, 2, 1, 0, 1, 4, 9}
+	actual := SavGolFilter(x, 5, 2, 0, 1.0)
+	expected := []float64{1.66, 3.17, 3.54, 2.86, 0.66, 0.17, 1., 4., 9.}
+	// edge values are inavitably different because the convolution algorithm we use here is different from the Python one;
+	// so cutting the edge values off
+	truncate := func(vector []float64) []float64 {
+		const edge = 2
+		return vector[edge:(len(vector) - edge)]
+	}
+	assertEqualWithTolerance(t, truncate(expected), truncate(actual), 0.1, "SavGolFilter")
+
+	// error cases
+	// TODO: add more ones
+
+	assert.Panics(t, func() {
+		_ = SavGolFilter(x, 4, 2, 0, 1.0)
+	}, "no error on even window size")
+	assert.Panics(t, func() {
+		_ = SavGolFilter(x, 5, 6, 0, 1.0)
+	}, "no error on polyorder > window_size")
+}
+
+const defaultTolerance = 1e-14
 
 // Compares two float vectors using a hard-coded max discrepancy value.
 func assertEqual(t *testing.T, expected, actual []float64, msg string) {
-	if !floats.EqualApprox(expected, actual, eqTolerance) {
+	assertEqualWithTolerance(t, expected, actual, defaultTolerance, msg)
+}
+
+// Compares two float vectors using a hard-coded max discrepancy value.
+func assertEqualWithTolerance(t *testing.T, expected, actual []float64, tolerance float64, msg string) {
+	if !floats.EqualApprox(expected, actual, tolerance) {
 		t.Errorf(msg+": expected %v, actual %v", expected, actual)
 	}
 }

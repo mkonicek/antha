@@ -21,7 +21,7 @@ func Ones(size int) []float64 {
 	return result
 }
 
-// Linspace splits the interval [start, end] into `num - 1` equal intervals and returns `num` split points.
+// Linspace implements `np.linspace` - i.e. splits the interval [start, end] into `num - 1` equal intervals and returns `num` split points.
 func Linspace(start, end float64, num int) []float64 {
 	if num < 0 {
 		panic(errors.Errorf("number of samples, %d, must be non-negative.", num))
@@ -32,6 +32,11 @@ func Linspace(start, end float64, num int) []float64 {
 		result[i] = start + float64(i)*step
 	}
 	return result
+}
+
+// Arange implements `np.arange` - i.e. returns a list of integers (start, ..., stop - 1) in the form of []float64
+func Arange(start int, stop int) []float64 {
+	return Linspace(float64(start), float64(stop-1), stop-start)
 }
 
 // ConvolutionMode defines convolution output array length.
@@ -94,4 +99,21 @@ func Convolve(a, v []float64, mode ConvolutionMode) []float64 {
 	default:
 		panic(errors.Errorf("invalid convolution mode %v", mode))
 	}
+}
+
+// maximum of two integers
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+// computes `n!`
+func factorial(n int) int {
+	result := 1
+	for i := 1; i <= n; i++ {
+		result *= i
+	}
+	return result
 }

@@ -84,8 +84,18 @@
         "Config": {
             "type": "object",
             "propertyNames": {
-                "$comment": "This is the name of a device class, e.g. 'GilsonPipetMax'.",
-                "pattern": "^[a-zA-Z0-9_-]+$"
+                "$comment": "The name of a device class",
+                "enum": [
+                    "CyBio",
+                    "GilsonPipetMax",
+                    "GlobalMixer",
+                    "Hamilton",
+                    "Labcyte",
+                    "PlateReader",
+                    "QPCR",
+                    "ShakerIncubator",
+                    "Tecan"
+                ]
             },
             "patternProperties": {
                 "^GlobalMixer$": {

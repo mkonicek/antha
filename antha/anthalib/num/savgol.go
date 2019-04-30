@@ -114,7 +114,7 @@ func LstSq(a, b *mat.Dense) *mat.Dense {
 	// solving the equation itself
 	result := gels(make([]float64, lwork), lwork)
 	if !result {
-		panic("gels: computation hasn't converge")
+		panic(errors.Errorf("gels: computation didn't converge: A='%+v', b='%+v'", a, b))
 	}
 
 	// dgels writes a solution into b

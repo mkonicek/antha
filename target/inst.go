@@ -8,6 +8,7 @@ import (
 	"github.com/antha-lang/antha/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	lh "github.com/antha-lang/antha/microArch/scheduler/liquidhandling"
+	"github.com/antha-lang/antha/utils"
 )
 
 // An Initializer is an instruction with initialization instructions
@@ -100,6 +101,7 @@ type Mix struct {
 	Final           map[string]string // Map from ids in Properties to FinalProperties
 	Files           Files
 	Initializers    []ast.Inst
+	Summary         *MixSummary
 }
 
 // Device implements an Inst
@@ -135,24 +137,27 @@ func (a *Mix) GetInitializers() []ast.Inst {
 	return a.Initializers
 }
 
-// SummarizeLayout helper function to get a validated JSON summary of the deck layouts before and after
-// the mix operation takes place, suitable for consumption by the front end.
-// The JSON schema is available at microArch/driver/liquidhandling/schemas/layout.schema.json
-func (a *Mix) SummarizeLayout() ([]byte, error) {
-	// Mix is the first time all of these things are tied together in a coherent way
-	// so a helper here simplifies the API for callers, however the actual implementation of
-	// SummarizeLayout makes more sense down in microArch/scheduler/liquidhandling
-	return lh.SummarizeLayout(a.Properties, a.FinalProperties, a.Final)
+// MixSummary contains all the summary information which describes the mix instruction
+type MixSummary struct {
+	// Layout is a validated JSON summary of the deck layouts before and after
+	// the mix operation takes place, suitable for consumption by the front end.
+	// The JSON schema is available at microArch/driver/liquidhandling/schemas/layout.schema.json
+	Layout []byte
+	// Actions is a validated JSON summary of the steps taken during the liquidhandling
+	// operation, suitable for consumption by the front end.
+	// The JSON schema is available at microArch/driver/liquidhandling/schemas/actions.schema.json
+	Actions []byte
 }
 
-// SummarizeActions helper function get a validated JSON summary of the steps taken during the liquidhandling
-// operation, suitable for consumption by the front end.
-// The JSON schema is available at microArch/driver/liquidhandling/schemas/actions.schema.json
-func (a *Mix) SummarizeActions() ([]byte, error) {
-	// Mix is the first time all of these things are tied together in a coherent way
-	// so a helper here simplifies the API for callers, however the actual implementation of
-	// SummarizeLayout makes more sense down in microArch/scheduler/liquidhandling
-	return lh.SummarizeActions(a.Properties, a.Request.InstructionTree)
+// NewMixSummary construct a new MixSummary object from the instructions and initial and final robot states
+// an error is returned if the parameters are invalid of if either summary object fails JSON-schema validation
+func NewMixSummary(itree *liquidhandling.ITree, initial *liquidhandling.LHProperties, final *liquidhandling.LHProperties, idMap map[string]string) (*MixSummary, error) {
+	layout, layoutErr := lh.SummarizeLayout(initial, final, idMap)
+	actions, actionsErr := lh.SummarizeActions(initial, itree)
+	return &MixSummary{
+		Layout:  layout,
+		Actions: actions,
+	}, utils.ErrorSlice{layoutErr, actionsErr}.Pack()
 }
 
 // A Manual is human-aided interaction

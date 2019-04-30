@@ -30,7 +30,7 @@
                 "PlateTypes": {
                     "type": "array",
                     "items": {
-                        "$ref": "#definitions/plateType"
+                        "$ref": "#/definitions/plateType"
                     }
                 }
             }

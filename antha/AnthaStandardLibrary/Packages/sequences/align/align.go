@@ -148,20 +148,12 @@ func (r Result) Score() int {
 }
 
 // Alignment stores the string result of an alignment of a query sequence against a template
-// The original RawAlignments are also included
 type Alignment struct {
 	TemplateResult    string
 	QueryResult       string
-	Raw               []RawAlignment
 	TemplatePositions []int
 	QueryPositions    []int
 	Score             int
-}
-
-// RawAlignment contains the positions aligned between the template and query sequences
-type RawAlignment struct {
-	TemplateAlignment Position
-	QueryAlignment    Position
 }
 
 // Position contains the start, end and length of an alignment in a specified sequence
@@ -397,25 +389,9 @@ func dnaFWDAlignment(template, query wtype.DNASequence, alignmentMatrix ScoringM
 
 	aln, err := alignmentMatrix.Align(fsa, fsb)
 	if err == nil {
-		var rawAlignments []RawAlignment
 		sumScores := 0
 		for i := range aln {
-
-			rawAlignemnt := RawAlignment{
-				TemplateAlignment: Position{
-					Start:  aln[i].Features()[0].Start(),
-					End:    aln[i].Features()[0].End(),
-					Length: aln[i].Features()[0].Len(),
-				},
-				QueryAlignment: Position{
-					Start:  aln[i].Features()[1].Start(),
-					End:    aln[i].Features()[1].End(),
-					Length: aln[i].Features()[1].Len(),
-				},
-			}
-			rawAlignments = append(rawAlignments, rawAlignemnt)
 			sumScores += aln[i].(scorer).Score()
-
 		}
 		fa, positions := format(fsa, fsb, aln, '-')
 		alignment = Result{
@@ -425,7 +401,6 @@ func dnaFWDAlignment(template, query wtype.DNASequence, alignmentMatrix ScoringM
 			Alignment: formatMisMatches(Alignment{
 				TemplateResult:    fmt.Sprint(fa[0]),
 				QueryResult:       fmt.Sprint(fa[1]),
-				Raw:               rawAlignments,
 				TemplatePositions: positions[0],
 				QueryPositions:    positions[1],
 				Score:             sumScores,
@@ -455,25 +430,9 @@ func dnaFWDAlignment(template, query wtype.DNASequence, alignmentMatrix ScoringM
 		fsb.Alpha = alphabet.DNAgapped
 		aln, err := alignmentMatrix.Align(fsa, fsb)
 		if err == nil {
-			var rawAlignments []RawAlignment
 			sumScores := 0
 			for i := range aln {
-
-				rawAlignemnt := RawAlignment{
-					TemplateAlignment: Position{
-						Start:  aln[i].Features()[0].Start(),
-						End:    aln[i].Features()[0].End(),
-						Length: aln[i].Features()[0].Len(),
-					},
-					QueryAlignment: Position{
-						Start:  aln[i].Features()[1].Start(),
-						End:    aln[i].Features()[1].End(),
-						Length: aln[i].Features()[1].Len(),
-					},
-				}
-				rawAlignments = append(rawAlignments, rawAlignemnt)
 				sumScores += aln[i].(scorer).Score()
-
 			}
 			fa, positions := format(fsa, fsb, aln, '-')
 
@@ -497,7 +456,6 @@ func dnaFWDAlignment(template, query wtype.DNASequence, alignmentMatrix ScoringM
 				Alignment: formatMisMatches(Alignment{
 					TemplateResult:    fmt.Sprint(fa[0]),
 					QueryResult:       fmt.Sprint(fa[1]),
-					Raw:               rawAlignments,
 					TemplatePositions: positions[0],
 					QueryPositions:    positions[1],
 					Score:             sumScores,

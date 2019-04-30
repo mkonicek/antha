@@ -62,7 +62,7 @@
                 "Instances": {
                     "type": "object",
                     "propertyNames": {
-                        "$comment": "TODO: confirm this regex. This is the name of an element instance, e.g. 'my_aliquot'",
+                        "$comment": "This is the name of an element instance, e.g. 'my_aliquot'",
                         "pattern": "^[a-zA-Z0-9_ -]+$"
                     },
                     "patternProperties": {
@@ -84,7 +84,7 @@
         "Config": {
             "type": "object",
             "propertyNames": {
-                "$comment": "TODO: check this regex. This is the name of a device class, e.g. 'GilsonPipetMax'. It may be the case that an enum is preferable.",
+                "$comment": "This is the name of a device class, e.g. 'GilsonPipetMax'.",
                 "pattern": "^[a-zA-Z0-9_-]+$"
             },
             "patternProperties": {
@@ -197,7 +197,7 @@
                 "Devices": {
                     "type": "object",
                     "propertyNames": {
-                        "$comment": "TODO: check this regex. This is the name of a device instance, e.g. 'Doris'",
+                        "$comment": "This is the name of a device instance, e.g. 'Doris'",
                         "pattern": "^[a-zA-Z0-9_-]+$"
                     },
                     "patternProperties": {

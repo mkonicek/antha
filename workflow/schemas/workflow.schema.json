@@ -26,7 +26,14 @@
         },
         "Inventory": {
             "type": "object",
-            "$comment": "TODO: implement schema. Haven't seen one of these in the wild yet"
+            "properties": {
+                "PlateTypes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#definitions/plateType"
+                    }
+                }
+            }
         },
         "SchemaVersion": {
             "type": "string",
@@ -216,6 +223,33 @@
                 "TimeEstimate": {
                     "type": "array"
                 }
+            }
+        },
+        "plateType": {
+            "type": "object",
+            "properties": {
+                "Name": { "type": "string" },
+                "Manufacturer": { "type": "string" },
+                "WellShape": { "type": "string" },
+                "WellH": { "type": "number" },
+                "WellW": { "type": "number" },
+                "WellD": { "type": "number" },
+                "MaxVol": { "type": "number" },
+                "MinVol": { "type": "number" },
+                "BottomType": { "type": "number" },
+                "BottomH": { "type": "number" },
+                "WellX": { "type": "number" },
+                "WellY": { "type": "number" },
+                "WellZ": { "type": "number" },
+                "ColSize": { "type": "number" },
+                "RowSize": { "type": "number" },
+                "Height": { "type": "number" },
+                "WellXOffset": { "type": "number" },
+                "WellYOffset": { "type": "number" },
+                "WellXStart": { "type": "number" },
+                "WellYStart": { "type": "number" },
+                "WellZStart": { "type": "number" },
+                "Extra": { "type": "object" }
             }
         }
     }

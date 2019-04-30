@@ -17,11 +17,12 @@
             "pattern": "^[a-zA-Z0-9_ -]*$"
         },
         "Meta": {
-            "oneOf": [
-                {"type": "null"},
-                {"type": "object"}
-            ],
-            "$comment": "TODO: implement schema. Haven't seen one of these in the wild yet"
+            "type": "object",
+            "properties": {
+                "Name": {
+                    "type": "string"
+                }
+            }
         },
         "Inventory": {
             "type": "object",
@@ -206,7 +207,7 @@
         "mixTaskCheck": {
             "type": "object",
             "properties": {
-                "Instructions": { 
+                "Instructions": {
                     "type": "array"
                 },
                 "Outputs" : {

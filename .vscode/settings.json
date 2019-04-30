@@ -2,9 +2,13 @@
     "json.schemas": [
         {
             "fileMatch": [
-                "/cmd/composer/*.json"
+                "/cmd/composer/*.json",
+                "/cmd/composer/*.json.sample"
             ],
             "url": "/workflow/schemas/workflow.schema.json"
         }
-    ]
+    ],
+    "files.associations": {
+        "*.json.sample": "json"
+    }
 }

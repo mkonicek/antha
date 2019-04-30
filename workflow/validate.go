@@ -44,10 +44,9 @@ func (basicId BasicId) Validate(permitEmpty bool) error {
 }
 
 func (rs Repositories) validate() error {
-	// Until we switch to go modules, we have to enforce that all
-	// repositories are not only unique, but that no one repository
-	// is a prefix of another. To enforce this, we sort the prefixes
-	// (so shortest will come first) and then we need to only test
+	// We have to enforce that all repositories are not only unique, but that no
+	// one repository is a prefix of another. To enforce this, we sort the
+	// prefixes (so shortest will come first) and then we need to only test
 	// against the tail of the list.
 	prefixes := make([]string, 0, len(rs))
 	for prefix := range rs {

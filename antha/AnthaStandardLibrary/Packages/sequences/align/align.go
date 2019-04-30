@@ -334,7 +334,7 @@ func DNA(template, query wtype.DNASequence, alignmentMatrix ScoringMatrix) (alig
 		return fwdResult, fmt.Errorf(fmt.Sprintf("Error with aligning reverse complement of query sequence %s: %s", query.Nm, err.Error()))
 	}
 
-	if revResult.Matches() > fwdResult.Matches() {
+	if revResult.Score() > fwdResult.Score() {
 		return revResult, err
 	}
 

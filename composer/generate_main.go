@@ -141,7 +141,6 @@ package main
 	"io/ioutil"
 
 	"github.com/antha-lang/antha/laboratory"
-	"github.com/antha-lang/antha/utils"
 	"github.com/ugorji/go/codec"
 
 {{range elementTypes}}{{if .IsAnthaElement}}	{{printf "%q" .ImportPath}}
@@ -155,7 +154,6 @@ package main
 
 	"github.com/antha-lang/antha/laboratory"
 	"github.com/antha-lang/antha/laboratory/testlab"
-	"github.com/antha-lang/antha/utils"
 	"github.com/ugorji/go/codec"
 
 {{range elementTypes}}{{if .IsAnthaElement}}	{{printf "%q" .ImportPath}}
@@ -206,12 +204,9 @@ package main
 	}
 {{end}}{{end}}
 	// Run!
-	utils.ErrorFuncs{
-		labBuild.Errors, // this checks to see if setting up params has caused any errors
-		labBuild.RunElements,
-		labBuild.Compile,
-		labBuild.Export,
-	}.Run()
+	labBuild.RunElements()
+	labBuild.Compile()
+	labBuild.Export()
 }
 {{end}}
 

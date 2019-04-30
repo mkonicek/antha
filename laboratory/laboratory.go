@@ -209,7 +209,7 @@ func (labBuild *LaboratoryBuilder) Decommission() error {
 // process. I.e. this is not a reflection of whether there have been
 // errors recorded.
 func (labBuild *LaboratoryBuilder) saveErrors() error {
-	if err := labBuild.Errors(); err != nil {
+	if labBuild.Errors() != nil {
 		// Because we've called Errors() we have gone through a memory
 		// barrier, so direct access to labBuild.errors is now safe,
 		// provided we are the only go-routine doing so, which we should
@@ -228,10 +228,12 @@ func (labBuild *LaboratoryBuilder) RemoveInDir() error {
 	return os.RemoveAll(labBuild.inDir)
 }
 
-func (labBuild *LaboratoryBuilder) Compile() error {
-	if devices, err := labBuild.connectDevices(); err != nil {
+func (labBuild *LaboratoryBuilder) Compile() {
+	if labBuild.Errors() != nil {
+		return
+
+	} else if devices, err := labBuild.connectDevices(); err != nil {
 		labBuild.RecordError(err, true)
-		return labBuild.Errors()
 
 	} else {
 		defer devices.Close()
@@ -252,7 +254,6 @@ func (labBuild *LaboratoryBuilder) Compile() error {
 		} else {
 			labBuild.instrs = instrs
 		}
-		return labBuild.Errors()
 	}
 }
 
@@ -284,11 +285,10 @@ func (labBuild *LaboratoryBuilder) connectDevices() (*target.Target, error) {
 	}
 }
 
-func (labBuild *LaboratoryBuilder) Export() error {
+func (labBuild *LaboratoryBuilder) Export() {
 	if err := export(labBuild.effects.IDGenerator, labBuild.inDir, labBuild.outDir, labBuild.instrs); err != nil {
 		labBuild.RecordError(err, true)
 	}
-	return labBuild.Errors()
 }
 
 // This interface exists just to allow both the lab builder and
@@ -324,15 +324,15 @@ func (labBuild *LaboratoryBuilder) AddConnection(src, dst Element, fun func()) e
 }
 
 // Run all the installed elements.
-func (labBuild *LaboratoryBuilder) RunElements() error {
-	if err := labBuild.Errors(); err != nil {
-		return err
+func (labBuild *LaboratoryBuilder) RunElements() {
+	if labBuild.Errors() != nil {
+		return
 	}
+
 	labBuild.elemLock.Lock()
 	if labBuild.elemsUnrun == 0 {
 		labBuild.elemLock.Unlock()
 		close(labBuild.Completed)
-		return nil
 
 	} else {
 		for _, eb := range labBuild.elements {
@@ -343,8 +343,6 @@ func (labBuild *LaboratoryBuilder) RunElements() error {
 		}
 		labBuild.elemLock.Unlock()
 		<-labBuild.Completed
-
-		return labBuild.Errors()
 	}
 }
 

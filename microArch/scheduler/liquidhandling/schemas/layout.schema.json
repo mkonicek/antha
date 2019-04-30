@@ -7,7 +7,7 @@
 	"properties": {
         "version": {
             "description": "the version of this schema for validation",
-            "const": "1.0"
+            "const": "1.1"
         },
 		"before": {
 			"$ref": "#/definitions/deckSummary"
@@ -265,25 +265,25 @@
 					"description": "The total volume present of the liquid",
 					"$ref": "#/definitions/measurement"
 				},
-				"components": {
-					"description": "The sub-components which make up this liquid",
+				"sources": {
+					"description": "describes the liquids which were combined to form this liquid in arbitrary order",
 					"type": "array",
 					"items": {
-						"description": "A sub component",
+						"description": "A source volume",
 						"type": "object",
-						"required": ["name", "concentration", "unit"],
+						"required": ["name", "volume", "unit"],
 						"properties": {
 							"name": {
-								"description": "the display name of the sub-component",
+								"description": "the name of the source, which should have meaning to the user",
 								"type": "string"
 							},
-							"concentration": {
-								"description": "the concentration of the sub-component",
+							"volume": {
+								"description": "the volume of this source that was added",
 								"type": "number",
 								"minimum": 0.0
 							},
 							"unit": {
-								"description": "the units in which the concentration is expressed",
+								"description": "the units in which the volume is expressed",
 								"type": "string"
 							}
 						},

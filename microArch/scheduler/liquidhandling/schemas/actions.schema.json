@@ -7,7 +7,7 @@
     "properties": {
         "version": {
             "description": "the version of the schema, for validation",
-            "const": "1.0"
+            "const": "1.1"
         },
         "actions": {
             "description": "the actions carried out during the liquidhandling operation",
@@ -36,27 +36,36 @@
 					"description": "The total volume present of the liquid",
 					"$ref": "#/definitions/measurement"
 				},
-				"components": {
-					"description": "The sub-components which make up this liquid",
+				"sources": {
+					"description": "describes the liquids which were combined to form this liquid in arbitrary order",
 					"type": "array",
 					"items": {
-						"description": "A sub component",
+						"description": "A source volume",
 						"type": "object",
-						"required": ["name", "concentration", "unit"],
+						"required": ["name", "volume", "unit", "transfers"],
 						"properties": {
 							"name": {
-								"description": "the display name of the sub-component",
+								"description": "the name of the source, which should have meaning to the user",
 								"type": "string"
 							},
-							"concentration": {
-								"description": "the concentration of the sub-component",
+							"volume": {
+								"description": "the volume of this source that was added",
 								"type": "number",
 								"minimum": 0.0
 							},
 							"unit": {
-								"description": "the units in which the concentration is expressed",
+								"description": "the units in which the volume is expressed",
 								"type": "string"
-							}
+							},
+                            "transfers": {
+                                "description": "the indexes of the single transfer(s) which added this source",
+                                "type": "array",
+                                "items": {
+                                    "type": "number",
+                                    "multipleOf": 1.0,
+                                    "minimum": 0.0
+                                }
+                            }
 						},
 						"additionalProperties": false
 					},
@@ -137,8 +146,14 @@
         "singleTransfer": {
             "description": "Describe a single channel transfer",
             "type": "object",
-            "required": [ "from", "to", "volume", "wasted", "policy", "asp", "dsp", "head" ],
+            "required": [ "index", "from", "to", "volume", "wasted", "policy", "asp", "dsp", "head" ],
             "properties": {
+                "index": {
+                    "description": "the index or ID used to uniquely refer to this transfer",
+                    "type": "number",
+                    "multipleOf": 1.0,
+                    "minimum": 0.0
+                },
                 "from": {
                     "description": "the source location of the transfer",
                     "$ref": "#/definitions/contentUpdate"

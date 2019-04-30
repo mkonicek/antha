@@ -274,7 +274,7 @@ func (labBuild *LaboratoryBuilder) connectDevices() (*target.Target, error) {
 }
 
 func (labBuild *LaboratoryBuilder) Export() {
-	if err := export(labBuild.effects.IDGenerator, labBuild.inDir, labBuild.outDir, labBuild.instrs); err != nil {
+	if err := export(labBuild.effects.IDGenerator, labBuild.inDir, labBuild.outDir, labBuild.instrs, labBuild.Errors()); err != nil {
 		labBuild.Fatal(err)
 	}
 }

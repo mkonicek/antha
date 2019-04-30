@@ -25,6 +25,7 @@ package wtype
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -58,6 +59,7 @@ type Liquid struct {
 	Visc               float64
 	StockConcentration float64
 	SubComponents      ComponentList // List of all sub components in the LHComponent.
+	Sources            LiquidSources // describes the liquids which were combined to make this one
 	Extra              map[string]interface{}
 	Loc                string // refactor to PlateLocation
 	Destination        string
@@ -580,16 +582,27 @@ func (lhc *Liquid) Sample(v wunit.Volume) (*Liquid, error) {
 		return lhc, nil
 	}
 
+	originalVolume := lhc.Volume()
+
 	c := lhc.Dup()
 	c.ID = NewUUID()
-	v2 := lhc.Remove(v)
-	c.Vunit = v2.Unit().PrefixedSymbol()
-	c.Vol = v2.RawValue()
+	v = lhc.Remove(v)
+	c.SetVolume(v)
 	c.AddParentComponent(lhc)
 	lhc.AddDaughterComponent(c)
 	c.Loc = ""
 	c.Destination = ""
 	c.Extra = lhc.GetExtra()
+
+	// scale down the source volumes appropriately
+	volumeFraction, err := wunit.DivideVolumes(c.Volume(), originalVolume)
+	if err != nil {
+		// this should never happen because we already checked lhc.IsZero()
+		return nil, err
+	}
+	for _, src := range c.Sources {
+		src.Volume.MultiplyBy(volumeFraction)
+	}
 
 	return c, nil
 }
@@ -621,6 +634,7 @@ func (lhc *Liquid) Dup() *Liquid {
 		}
 
 		c.SubComponents = lhc.SubComponents.Dup()
+		c.Sources = lhc.Sources.Dup()
 
 		c.Loc = lhc.Loc
 		c.Destination = lhc.Destination
@@ -693,21 +707,12 @@ func (cmp *Liquid) ReplaceDaughterID(ID1, ID2 string) {
 	}
 }
 
-func (cmp *Liquid) MixPreserveTvol(cmp2 *Liquid) {
-	cmp.Mix(cmp2)
-	if cmp2.Vol == 0.00 && cmp2.Tvol > 0.00 {
-		vcmp := wunit.NewVolume(cmp.Vol, cmp.Vunit)
-		vcmp2 := wunit.NewVolume(cmp2.Tvol, cmp2.Vunit)
-		vcmp.SetValue(vcmp2.ConvertToString(cmp.Vunit))
-		cmp.Vol = vcmp.RawValue() // same units
-		cmp.Tvol = vcmp2.ConvertToString(cmp.Vunit)
-	} else if cmp.Tvol > 0.00 {
-		cmp.Vol = cmp.Tvol
-	}
-}
-
 // add cmp2 to cmp
 func (cmp *Liquid) Mix(cmp2 *Liquid) {
+
+	// merge the sources
+	cmp.Sources = mergeLiquidSources(cmp, cmp2)
+
 	wasEmpty := cmp.IsZero()
 	cmp.Smax = mergeSolubilities(cmp, cmp2)
 	// determine type of final
@@ -738,10 +743,7 @@ func (cmp *Liquid) Mix(cmp2 *Liquid) {
 		UpdateComponentDetails(cmp, cmp, cmp2) //nolint
 	}
 
-	vcmp := wunit.NewVolume(cmp.Vol, cmp.Vunit)
-	vcmp2 := wunit.NewVolume(cmp2.Vol, cmp2.Vunit)
-	vcmp.Add(vcmp2)
-	cmp.Vol = vcmp.RawValue() // same units
+	cmp.SetVolume(wunit.AddVolumes(cmp.Volume(), cmp2.Volume()))
 
 	// result should not be a sample
 
@@ -1153,4 +1155,108 @@ func (l1 *Liquid) EqualTypeVolumeID(l2 *Liquid) bool {
 	}
 
 	return l1.ID == l2.ID
+}
+
+// asSource represent a liquid in the liquidsource tree
+func (l *Liquid) asSource() LiquidSources {
+	if name := l.MeaningfulName(); name != "" {
+		// a meaningful name was set, so the tree should refer to this liquid
+		return LiquidSources{
+			name: &LiquidSource{
+				Volume:  l.Volume(),
+				Sources: l.Sources,
+			},
+		}
+	} else {
+		// this liquid was just a temporary liquid without a name, so refer to it's sources only
+		return l.Sources
+	}
+}
+
+// LiquidSource represents a source component of a liquid, that is either a volume of an input liquid or a liquid with a meaningful name
+type LiquidSource struct {
+	Volume  wunit.Volume
+	Sources LiquidSources
+}
+
+// Add returns a liquidsource which combines the two liquid sources togther
+func (ls *LiquidSource) merge(rhs *LiquidSource) *LiquidSource {
+	// if either is nil, return the other; if both are nil return nil
+	if ls == nil {
+		return rhs
+	}
+	if rhs == nil {
+		return ls
+	}
+
+	srcs := ls.Sources.Dup()
+	srcs.merge(rhs.Sources)
+	return &LiquidSource{
+		Volume:  wunit.AddVolumes(ls.Volume, rhs.Volume),
+		Sources: srcs,
+	}
+}
+
+// LiquidSources all the source volumes which make up a liquid
+type LiquidSources map[string]*LiquidSource
+
+// mergeLiquidSources combine the liquid sources of the given liquids
+func mergeLiquidSources(liquids ...*Liquid) LiquidSources {
+	ret := make(LiquidSources)
+
+	for _, l := range liquids {
+		ret.merge(l.asSource())
+	}
+	return ret
+}
+
+func (ls LiquidSources) merge(rhs LiquidSources) {
+	for name, src := range rhs {
+		ls[name] = ls[name].merge(src)
+	}
+}
+
+func (ls LiquidSources) String(prefix, indent string) string {
+	ret := make([]string, 0)
+	for name, src := range ls {
+		ret = append(ret, fmt.Sprintf("%s%s%q: %s", prefix, indent, name, src.Volume))
+		if len(src.Sources) > 0 {
+			ret = append(ret, src.Sources.String(prefix, indent+indent))
+		}
+	}
+	return strings.Join(ret, "\n")
+}
+
+// Names returns an alphabetically sorted list of all the source names in the liquid
+func (ls LiquidSources) Names() []string {
+	ret := make([]string, 0, len(ls))
+	for name := range ls {
+		ret = append(ret, name)
+	}
+	sort.Strings(ret)
+	return ret
+}
+
+// VolumeOf returns the volume of the source with the given name in the liquid
+func (ls LiquidSources) VolumeOf(name string) wunit.Volume {
+	ret := wunit.ZeroVolume()
+
+	for n, src := range ls {
+		if name == n {
+			// we could get this volume with a O(1) lookup
+			ret.IncrBy(src.Volume)
+		}
+		// but we still have to recurse through the tree looking for other matches
+		ret.IncrBy(src.Sources.VolumeOf(name))
+	}
+	return ret
+}
+
+// Dup make a copy of the liquidsources, without duplicating parents
+func (ls LiquidSources) Dup() LiquidSources {
+	ret := make(LiquidSources, len(ls))
+	for name, src := range ls {
+		ret[name] = &(*src)
+	}
+	return ret
 }

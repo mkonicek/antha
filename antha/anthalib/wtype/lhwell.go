@@ -318,11 +318,7 @@ func (w *LHWell) RemoveVolume(v wunit.Volume) (*Liquid, error) {
 			v, w.GetName(), w.CurrentWorkingVolume(), w.CurrentVolume())
 	}
 
-	ret := w.Contents().Dup()
-	ret.Vol = v.ConvertToString("ul")
-
-	w.Contents().Remove(v)
-	return ret, nil
+	return w.Contents().Sample(v)
 }
 
 //RemoveCarry Remove the carry volume

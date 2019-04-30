@@ -13,7 +13,9 @@ func getTestWell(volUL, residualUL float64) *LHWell {
 
 func getTestComponent(volUL float64) *Liquid {
 	cmp := NewLHComponent()
+	cmp.CName = "testComponent"
 	cmp.Vol = volUL
+	cmp.Type = LTWater
 	return cmp
 }
 

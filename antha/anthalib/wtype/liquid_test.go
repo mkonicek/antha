@@ -229,3 +229,68 @@ func TestEqualTypeVolume(t *testing.T) {
 	}
 
 }
+
+func TestLiquidSources(t *testing.T) {
+	// let's make some delicious squash
+
+	// first we have some concentrates
+	appleConc := NewLHComponent()
+	appleConc.Type = LTWater
+	appleConc.SetName("Apple Concentrate")
+	appleConc.SetVolume(wunit.NewVolume(1, "l"))
+
+	berryConc := NewLHComponent()
+	berryConc.Type = LTWater
+	berryConc.SetName("Blackberry Concentrate")
+	berryConc.SetVolume(wunit.NewVolume(1, "l"))
+
+	// let's mix together some of each
+	appleBerryConc, err := appleConc.Sample(wunit.NewVolume(200.0, "ml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if bSample, err := berryConc.Sample(wunit.NewVolume(300.0, "ml")); err != nil {
+		t.Fatal(err)
+	} else {
+		appleBerryConc.Mix(bSample)
+	}
+
+	// this pre-cursor is meaningful, so give it a name we can refer to later
+	appleBerryConc.SetName("Apple and Blackberry Concentrate")
+
+	// now let's get some water
+	water := NewLHComponent()
+	water.Type = LTWater
+	water.SetName("water")
+	water.SetVolume(wunit.NewVolume(450.0, "ml"))
+
+	appleBerry, err := appleBerryConc.Sample(wunit.NewVolume(50.0, "ml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// and use it to dilute the concentrate
+	appleBerry.Mix(water)
+	appleBerry.SetName("Apple and Blackberry Squash")
+
+	// now check that we ended up with delicious squash
+	sourceNames := appleBerry.Sources.Names()
+	expectedNames := []string{"Apple and Blackberry Concentrate", "water"}
+	if !reflect.DeepEqual(sourceNames, expectedNames) {
+		t.Fatalf("source name mismatch:\ne: %q\ng: %q", expectedNames, sourceNames)
+	}
+
+	expectedVolumes := map[string]wunit.Volume{
+		"Apple and Blackberry Concentrate": wunit.NewVolume(50.0, "ml"),
+		"Apple Concentrate":                wunit.NewVolume(20.0, "ml"),
+		"Blackberry Concentrate":           wunit.NewVolume(30.0, "ml"),
+		"water":                            wunit.NewVolume(450.0, "ml"),
+		"Bose-Einstein Condensate":         wunit.NewVolume(0.0, "ml"),
+	}
+	for name, eVol := range expectedVolumes {
+		if gVol := appleBerry.Sources.VolumeOf(name); !eVol.EqualTo(gVol) {
+			t.Errorf("wrong volume for %q: expected %s, got %s", name, eVol, gVol)
+		}
+	}
+}

@@ -12,10 +12,10 @@ import (
 )
 
 // Compare compares output generated with any supplied test data in the workflow
-func (labBuild *LaboratoryBuilder) Compare() error {
+func (labBuild *LaboratoryBuilder) Compare() {
 
 	if len(labBuild.Workflow.Testing.MixTaskChecks) == 0 {
-		return nil
+		return
 	}
 
 	mixIdx := 0
@@ -23,7 +23,7 @@ func (labBuild *LaboratoryBuilder) Compare() error {
 
 	for i, instr := range labBuild.instrs {
 		if t, ok := instr.(*target.Mix); ok {
-			labBuild.Logger.Log("msg", fmt.Sprintf("[%d] Checking mix instruction.", i))
+			labBuild.Logger.Log("msg", "checking mix instruction", "index", i)
 
 			if expected, err := expectedMix(labBuild.Workflow, mixIdx); err != nil {
 				errs = append(errs, err)
@@ -37,12 +37,11 @@ func (labBuild *LaboratoryBuilder) Compare() error {
 
 	filename := filepath.Join(labBuild.outDir, "comparisons.json")
 	if err := errs.WriteToFile(filename); err != nil {
-		return fmt.Errorf("errors writing comparison results to file, %v", err)
+		labBuild.RecordError(fmt.Errorf("errors writing comparison results to file %s: %v", filename, err), true)
 	} else if errs.Pack() != nil {
-		return fmt.Errorf("errors in comparison tests, details in %s", filename)
+		labBuild.RecordError(fmt.Errorf("errors in comparison tests, details in %s", filename), true)
 	} else {
 		labBuild.Logger.Log("msg", "Comparison test data passed.")
-		return nil
 	}
 }
 

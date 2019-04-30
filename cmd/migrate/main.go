@@ -19,34 +19,34 @@ func main() {
 	flag.BoolVar(&validate, "validate", true, "Validate input and output files.")
 	flag.Parse()
 
-	logger := logger.NewLogger()
+	l := logger.NewLogger()
 
-	m, err := v1_2.NewMigrater(logger, flag.Args(), fromFile, outDir, gilsonDevice)
+	m, err := v1_2.NewMigrater(l, flag.Args(), fromFile, outDir, gilsonDevice)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Fatal(l, err)
 	}
 
 	if err := m.ValidateOld(); err != nil {
 		if validate {
-			logger.Fatal(err)
+			logger.Fatal(l, err)
 		} else {
-			logger.Log("OriginalFileValidationError", err)
+			l.Log("OriginalFileValidationError", err)
 		}
 	}
 
 	if err := m.MigrateAll(); err != nil {
-		logger.Fatal(err)
+		logger.Fatal(l, err)
 	}
 
 	if err := m.ValidateCur(); err != nil {
 		if validate {
-			logger.Fatal(err)
+			logger.Fatal(l, err)
 		} else {
-			logger.Log("ValidationError", err)
+			l.Log("ValidationError", err)
 		}
 	}
 
 	if err := m.SaveCur(); err != nil {
-		logger.Fatal(err)
+		logger.Fatal(l, err)
 	}
 }

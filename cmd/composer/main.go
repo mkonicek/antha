@@ -21,25 +21,28 @@ func main() {
 	flag.BoolVar(&linkedDrivers, "linkedDrivers", false, "Compile workflow with linked-in drivers")
 	flag.Parse()
 
-	logger := logger.NewLogger()
+	l := logger.NewLogger()
 
-	if wfPaths, err := workflow.GatherPaths(nil, filepath.Join(inDir, "workflow")); err != nil {
-		logger.Fatal(err)
-	} else if rs, err := workflow.ReadersFromPaths(wfPaths); err != nil {
-		logger.Fatal(err)
-	} else if wf, err := workflow.WorkflowFromReaders(rs...); err != nil {
-		logger.Fatal(err)
-	} else if err := wf.Validate(); err != nil {
-		logger.Fatal(err)
-	} else if cb, err := composer.NewComposerBase(logger, inDir, outDir); err != nil {
-		logger.Fatal(err)
+	if err := compose(l, inDir, outDir, keep, run, linkedDrivers); err != nil {
+		logger.Fatal(l, err)
 	} else {
-		err := cb.ComposeMainAndRun(keep, run, linkedDrivers, wf)
+		l.Log("progress", "complete")
+	}
+}
+
+func compose(l *logger.Logger, inDir, outDir string, keep, run, linkedDrivers bool) error {
+	if wfPaths, err := workflow.GatherPaths(nil, filepath.Join(inDir, "workflow")); err != nil {
+		return err
+	} else if rs, err := workflow.ReadersFromPaths(wfPaths); err != nil {
+		return err
+	} else if wf, err := workflow.WorkflowFromReaders(rs...); err != nil {
+		return err
+	} else if err := wf.Validate(); err != nil {
+		return err
+	} else if cb, err := composer.NewComposerBase(l, inDir, outDir); err != nil {
+		return err
+	} else {
 		defer cb.CloseLogs()
-		if err == nil {
-			logger.Log("progress", "complete")
-		} else {
-			logger.Fatal(err)
-		}
+		return cb.ComposeMainAndRun(keep, run, linkedDrivers, wf)
 	}
 }

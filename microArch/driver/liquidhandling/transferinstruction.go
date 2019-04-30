@@ -412,13 +412,6 @@ func IsIn(i int, a []int) bool {
 	return false
 }
 
-func (ins *TransferInstruction) ChooseChannels(prms *LHProperties) {
-	for i, mtp := range ins.Transfers {
-		// we need to remove leading blanks
-		ins.Transfers[i] = mtp.RemoveInitialBlanks()
-	}
-}
-
 func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	// if the liquid handler is of the high-level type we cut the tree here
 	// after ensuring that the transfers are within limitations of the liquid handler
@@ -433,8 +426,10 @@ func (ins *TransferInstruction) Generate(ctx context.Context, policy *wtype.LHPo
 	}
 
 	//  set the channel choices first by cleaning out initial empties
-
-	ins.ChooseChannels(prms)
+	for i, mtp := range ins.Transfers {
+		// we need to remove leading blanks
+		ins.Transfers[i] = mtp.RemoveInitialBlanks()
+	}
 
 	pol, err := GetPolicyFor(policy, ins)
 

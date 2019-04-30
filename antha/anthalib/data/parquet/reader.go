@@ -136,7 +136,6 @@ func (r *readState) readFromParquet(jsonSchema string, rowType reflect.Type, onR
 
 	// !!! hack !!!
 	patchWhitespaces(r.reader.Footer)
-
 	// parquet schema
 	if err := r.reader.SetSchemaHandlerFromJSON(jsonSchema); err != nil {
 		return errors.Wrap(err, "set Parquet schema")
@@ -207,11 +206,15 @@ func rowValuesFromRowStruct(rowStruct interface{}, schema *parquetSchema) []inte
 	values := make([]interface{}, len(schema.Columns))
 	for i := range schema.Columns {
 		field := rowStructValue.Field(i)
-		// since all fields are optional now, they are stored as pointers
-		if !field.IsNil() {
-			// a workaround for timestamps: parquet-go reads them into int64 field, so converting them from data.TimestampSmth here
-			values[i] = field.Elem().Convert(schema.Columns[i].Type).Interface()
+		// if fields are optional, they are stored as pointers here
+		if schema.nullable(i) {
+			if field.IsNil() {
+				continue
+			}
+			field = field.Elem()
 		}
+		// a workaround for timestamps: parquet-go reads them into int64 field, so converting them from data.TimestampSmth here
+		values[i] = field.Convert(schema.Columns[i].Type).Interface()
 	}
 
 	return values

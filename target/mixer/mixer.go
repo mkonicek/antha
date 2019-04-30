@@ -439,6 +439,8 @@ func (a *Mixer) makeMix(ctx context.Context, mixes []*wtype.LHInstruction) (*tar
 		return nil, err
 	}
 
+	summary, err := target.NewMixSummary(r.LHRequest.InstructionTree, r.LHProperties, r.Liquidhandler.FinalProperties, r.Liquidhandler.PlateIDMap())
+
 	return &target.Mix{
 		Dev:             a,
 		Request:         r.LHRequest,
@@ -449,7 +451,8 @@ func (a *Mixer) makeMix(ctx context.Context, mixes []*wtype.LHInstruction) (*tar
 			Tarball: tarball,
 			Type:    a.FileType(),
 		},
-	}, nil
+		Summary: summary,
+	}, err
 }
 
 // New creates a new Mixer

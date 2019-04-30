@@ -198,7 +198,7 @@
                     "type": "object",
                     "propertyNames": {
                         "$comment": "This is the name of a device instance, e.g. 'Doris'",
-                        "pattern": "^[a-zA-Z0-9_-]+$"
+                        "pattern": "^[-a-zA-Z0-9_() ]+$"
                     },
                     "patternProperties": {
                         ".*": {

@@ -206,6 +206,7 @@ func BasicSetupAgent(ctx context.Context, request *LHRequest, params *liquidhand
 		if err := params.AddPlateTo(position, p); err != nil {
 			return errors.WithMessage(err, "while setting up output plates")
 		}
+		fmt.Println(fmt.Sprintf("Output plate of type %s in position %s", p.Type, position))
 	}
 
 	for _, pid := range input_plate_order {

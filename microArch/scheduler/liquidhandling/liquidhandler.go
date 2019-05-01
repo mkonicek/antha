@@ -343,12 +343,16 @@ func (this *Liquidhandler) shrinkVolumes(rq *LHRequest) error {
 			HandleTransfer: func(ins *liquidhandling.TransferInstruction) {
 				for _, mtf := range ins.Transfers {
 					for _, tf := range mtf.Transfers {
-						if plate, ok := this.Properties.PlateLookup[tf.PltFrom].(*wtype.LHPlate); ok {
-							usedPlates[plate] = true
-							if well := plate.Wellcoords[tf.WellFrom]; well.IsAutoallocated() {
-								useVol(well, tf.Volume, wunit.ZeroVolume())
+						for _, pos := range []string{tf.PltFrom, tf.PltTo} {
+							plateID := this.Properties.PosLookup[pos]
+							if plate, ok := this.Properties.PlateLookup[plateID].(*wtype.LHPlate); ok {
+								usedPlates[plate] = true
+								if well := plate.Wellcoords[tf.WellFrom]; well.IsAutoallocated() {
+									useVol(well, tf.Volume, wunit.ZeroVolume())
+								}
 							}
 						}
+
 					}
 				}
 			},
@@ -448,13 +452,11 @@ func (this *Liquidhandler) shrinkVolumes(rq *LHRequest) error {
 			rq.InputPlateOrder = ipo
 		}
 	}
-
 	return nil
 }
 
 // updateIDs
 func (this *Liquidhandler) updateIDs() error {
-
 	// keep track of object ID changes
 	this.plateIDMap = make(map[string]string, len(this.Properties.PlateLookup))
 	for id := range this.Properties.PlateIDLookup {
@@ -781,7 +783,6 @@ func OutputSetup(robot *liquidhandling.LHProperties) {
 // LHInstruction which generated it, so this function updates the name of each liquid
 // to be equal to that which was set in the Mix instruction which created it
 func (lh *Liquidhandler) updateComponentNames(rq *LHRequest) error {
-
 	// get the instructions in the ordere that they happen
 	orderedInstructions, err := rq.GetOrderedLHInstructions()
 	if err != nil {

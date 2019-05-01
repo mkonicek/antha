@@ -35,7 +35,7 @@ Install it.
 
 ## 3. Build the image
 
-    antha-lang/antha$ docker build --build-arg NETRC="$(cat ~/.netrc)" --build-arg COMMIT_SHA=feature/future_sanity .
+    antha-lang/antha$ docker build -t local-antha --build-arg NETRC="$(cat ~/.netrc)" --build-arg COMMIT_SHA=feature/future_sanity .
 
 This should work. For the `COMMIT_SHA` you can provide a branch name
 or a commit hash. Our CI uses commit hash.
@@ -50,28 +50,23 @@ message like:
      ---> 2ce136c2261c
     Successfully built 2ce136c2261c
 
-That last number is the Id of the image you've just built. If you run
-`docker images` you should see that Id and it should tell you you've
-recently created that image.
+Run `docker images` to confirm.
 
 ## 4. Run the image
 
 With the image built, you can now run it with:
 
-    docker run -it --rm 2ce136c2261c
+    docker run -it --rm local-antha
 
-replacing the image Id with yours. `-i` says interactive, `-t` says
-you want to interact with a terminal, and `--rm` says delete the
-running container once you exit. I.e. once you exit the shell that
-you're given, (either `Ctl-D` or `exit`), the running container will
-be stopped and deleted and any changes lost. So you're always
-restarting from a known good state.
+`-i` says interactive, `-t` says you want to interact with a terminal, and
+`--rm` says delete the running container once you exit. I.e. once you exit the
+shell that you're given, (either `Ctl-D` or `exit`), the running container will
+be stopped and deleted and any changes lost. So you're always restarting from a
+known good state.
 
 You should be presented with a shell from which you can explore. Antha
 and its commands should be installed and available in PATH as normal.
 
-Something to watch out for is that one of the last steps of the
-Dockerfile is to remove the `~/.netrc` file in the Docker image.  This
-is for security in the cloud. However, this may affect you running
-things locally so you may have to recreate this file based on your
-host machine.
+For security the Docker image does not retain netrc.  This may affect you 
+running things locally so you may want to mount this file from your host 
+machine, eg by calling `docker run` with  `-v ~/.netrc:/root/.netrc`.

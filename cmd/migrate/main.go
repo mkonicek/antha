@@ -14,7 +14,7 @@ func main() {
 	var fromFile, outDir, gilsonDevice string
 	var validate bool
 	flag.StringVar(&outDir, "outdir", "", "Directory to write to (default: a temporary directory will be created)")
-	flag.StringVar(&fromFile, "from", "", "File to migrate from (default: will be read from stdin)")
+	flag.StringVar(&fromFile, "from", "-", "File to migrate from (default: will be read from stdin)")
 	flag.StringVar(&gilsonDevice, "gilson-device", "", "A gilson device name to use for migrated config. If not present, device specific configuration will not be migrated.")
 	flag.BoolVar(&validate, "validate", true, "Validate input and output files.")
 	flag.Parse()

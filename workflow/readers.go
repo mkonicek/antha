@@ -18,7 +18,7 @@ func ReadersFromPaths(paths []string) ([]io.ReadCloser, error) {
 	stdinUsed := false
 	rs := make([]io.ReadCloser, len(paths))
 	for idx, wfPath := range paths {
-		if wfPath == "-" || wfPath == "" {
+		if wfPath == "-" {
 			if stdinUsed {
 				return nil, errors.New("Stdin may only be used once")
 			} else {

@@ -32,6 +32,7 @@ func commandStatus(r *pb.CommandReply) driver.CommandStatus {
 }
 
 type LowLevelClient struct {
+	*CommonLHInstructions
 	client pb.LowLevelLiquidhandlingDriverClient
 	driver drv.DriverClient
 }

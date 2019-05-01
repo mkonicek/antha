@@ -17,6 +17,7 @@ import (
 )
 
 type HighLevelClient struct {
+	*CommonLHInstructions
 	client pb.HighLevelLiquidhandlingDriverClient
 	driver drv.DriverClient
 }

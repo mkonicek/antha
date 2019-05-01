@@ -21,6 +21,7 @@ RUN scripts/antha-test.sh
 FROM eu.gcr.io/antha-images/golang:1.12.4-build 
 WORKDIR /antha
 COPY --from=build /antha/. .
+COPY --from=build $HOME/.cache  $HOME/
 COPY --from=build /go/. /go/.
 
 # These are for the gitlab CI for elements:

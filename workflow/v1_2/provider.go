@@ -15,7 +15,11 @@ func NewV1_2WorkflowProvider(wf *workflowv1_2) *V1_2WorkflowProvider {
 }
 
 func (p *V1_2WorkflowProvider) GetMeta() (*workflow.Meta, error) {
-	return nil, nil
+	meta := &workflow.Meta{}
+	if p.owf.Properties.Name != "" {
+		meta.Name = p.owf.Properties.Name
+	}
+	return meta, nil
 }
 
 func (p *V1_2WorkflowProvider) GetRepositories() (*workflow.Repositories, error) {

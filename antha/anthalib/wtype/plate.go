@@ -50,6 +50,7 @@ type Plate struct {
 	PlateName   string             // user-definable plate name
 	Type        PlateTypeName      // plate type
 	Mnfr        string             // manufacturer
+	PartNr      string             // Part Nr
 	WlsX        int                // wells along long axis
 	WlsY        int                // wells along short axis
 	Nwells      int                // total number of wells
@@ -578,13 +579,14 @@ func (lhp *Plate) NextEmptyWell(idGen *id.IDGenerator, it AddressIterator) WellC
 	return ZeroWellCoords()
 }
 
-func NewLHPlate(idGen *id.IDGenerator, platetype PlateTypeName, mfr string, nrows, ncols int, size Coordinates3D, welltype *LHWell, wellXOffset, wellYOffset, wellXStart, wellYStart, wellZStart float64) *Plate {
+func NewLHPlate(idGen *id.IDGenerator, platetype PlateTypeName, mfr string, partnr string, nrows, ncols int, size Coordinates3D, welltype *LHWell, wellXOffset, wellYOffset, wellXStart, wellYStart, wellZStart float64) *Plate {
 	var lhp Plate
 	lhp.Type = platetype
 	//lhp.ID = "plate-" + GetUUID()
 	lhp.ID = idGen.NextID()
 	lhp.PlateName = fmt.Sprintf("%v_%s", platetype, lhp.ID[1:len(lhp.ID)-2])
 	lhp.Mnfr = mfr
+	lhp.PartNr = partnr
 	lhp.WlsX = ncols
 	lhp.WlsY = nrows
 	lhp.Nwells = ncols * nrows
@@ -648,7 +650,7 @@ func LHPlateFromType(idGen *id.IDGenerator, pt *PlateType) *LHPlate {
 
 	newWelltype := NewLHWell(idGen, "ul", pt.MaxVol, pt.MinVol, newWellShape, pt.BottomType, pt.WellX, pt.WellY, pt.WellZ, pt.BottomH, "mm")
 
-	plate := NewLHPlate(idGen, pt.Name, pt.Manufacturer, pt.ColSize, pt.RowSize,
+	plate := NewLHPlate(idGen, pt.Name, pt.Manufacturer, pt.CatalogNumber, pt.ColSize, pt.RowSize,
 		//standard X/Y size for 96 well plates
 		Coordinates3D{X: 127.76, Y: 85.48, Z: pt.Height},
 		newWelltype, pt.WellXOffset, pt.WellYOffset, pt.WellXStart, pt.WellYStart, pt.WellZStart)
@@ -679,7 +681,7 @@ func (lhp *Plate) dup(idGen *id.IDGenerator, keep_ids bool) *Plate {
 		wellType = lhp.Welltype.Dup(idGen)
 	}
 
-	ret := NewLHPlate(idGen, lhp.Type, lhp.Mnfr, lhp.WlsY, lhp.WlsX, lhp.GetSize(), wellType, lhp.WellXOffset, lhp.WellYOffset, lhp.WellXStart, lhp.WellYStart, lhp.WellZStart)
+	ret := NewLHPlate(idGen, lhp.Type, lhp.Mnfr, lhp.PartNr, lhp.WlsY, lhp.WlsX, lhp.GetSize(), wellType, lhp.WellXOffset, lhp.WellYOffset, lhp.WellXStart, lhp.WellYStart, lhp.WellZStart)
 	if keep_ids {
 		ret.ID = lhp.ID
 	}

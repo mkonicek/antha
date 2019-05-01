@@ -1,6 +1,8 @@
 package v1_2
 
 import (
+	"encoding/json"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wtype/liquidtype"
 	"github.com/antha-lang/antha/laboratory/effects"
@@ -214,5 +216,27 @@ func (p *V1_2WorkflowProvider) GetConfig() (*workflow.Config, error) {
 }
 
 func (p *V1_2WorkflowProvider) GetTesting() (*workflow.Testing, error) {
-	return nil, nil
+	if len(p.owf.testOpt.Results.MixTaskResults) == 0 {
+		return nil, nil
+	}
+
+	mixChecks := make([]workflow.MixTaskCheck, 0, len(p.owf.testOpt.Results.MixTaskResults))
+
+	for _, check := range p.owf.testOpt.Results.MixTaskResults {
+
+		instructions, err := json.Marshal(check.Instructions)
+		if err != nil {
+			return nil, err
+		}
+
+		mixChecks = append(mixChecks, workflow.MixTaskCheck{
+			Instructions: json.RawMessage(instructions),
+			Outputs:      check.Outputs,
+			TimeEstimate: check.TimeEstimate,
+		})
+	}
+
+	return &workflow.Testing{
+		MixTaskChecks: mixChecks,
+	}, nil
 }

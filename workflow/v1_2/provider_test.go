@@ -146,3 +146,19 @@ func TestGetConfig(t *testing.T) {
 		t.Fatalf("Expected to find %d Gilson device(s), found %d", 1, len(cfg.GilsonPipetMax.Devices))
 	}
 }
+
+func TestGetTesting(t *testing.T) {
+	p, err := getTestV1_2WorkflowProvider()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tst, err := p.GetTesting()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if tst != nil {
+		t.Fatal("Got non-nil Testing from GetTesting()")
+	}
+}

@@ -32,6 +32,4 @@ require (
 	gopkg.in/src-d/go-git.v4 v4.7.1
 )
 
-replace github.com/Synthace/antha-runner => ../antha-runner
 
-replace github.com/Synthace/instruction-plugions => ../instruction-plugins

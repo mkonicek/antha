@@ -42,7 +42,7 @@
 					"items": {
 						"description": "A source volume",
 						"type": "object",
-						"required": ["name", "volume", "unit", "transfers"],
+						"required": ["name", "volume", "unit"],
 						"properties": {
 							"name": {
 								"description": "the name of the source, which should have meaning to the user",
@@ -58,7 +58,7 @@
 								"type": "string"
 							},
                             "transfers": {
-                                "description": "the indexes of the single transfer(s) which added this source",
+                                "description": "the indexes of the individual transfer(s) which added this source, if any",
                                 "type": "array",
                                 "items": {
                                     "type": "number",

@@ -393,6 +393,29 @@ func newLiquidSummary(l *wtype.Liquid) *liquidSummary {
 	}
 }
 
+// Update update the liquid summary with the new contents set at the new step
+func (ls *liquidSummary) Update(rhs *liquidSummary, transferID int) *liquidSummary {
+	prev := make(map[string]liquidSource, len(ls.Sources))
+	for _, src := range ls.Sources {
+		prev[src.Name] = *src
+	}
+
+	srcs := make([]*liquidSource, 0, len(rhs.Sources))
+	for _, src := range rhs.Sources {
+		// add the transferID if this transfer has added to the volume of this source
+		if src.GetVolume().GreaterThan(prev[src.Name].GetVolume()) {
+			src.Transfers = append(prev[src.Name].Transfers, transferID)
+		}
+		srcs = append(srcs, src)
+	}
+
+	return &liquidSummary{
+		Name:        rhs.Name,
+		TotalVolume: rhs.TotalVolume,
+		Sources:     srcs,
+	}
+}
+
 // liquidSource describes the volumes which make up a liquid in terms of source liquids or
 // liquids with meaningful names
 type liquidSource struct {
@@ -412,6 +435,13 @@ func newLiquidSources(srcs wtype.LiquidSources) []*liquidSource {
 		})
 	}
 	return ret
+}
+
+func (ls liquidSource) GetVolume() wunit.Volume {
+	if ls.Unit == "" {
+		return wunit.ZeroVolume()
+	}
+	return wunit.NewVolume(ls.Volume, ls.Unit)
 }
 
 // action an operation that is carried out by the liquidhandler (or possibly the user) during
@@ -450,14 +480,14 @@ type contentUpdate struct {
 	NewContent *liquidSummary `json:"new_content"`
 }
 
-func newContentUpdate(well *wtype.LHWell) *contentUpdate {
+func newContentUpdate(then, now *wtype.LHWell, transferID int) *contentUpdate {
 	return &contentUpdate{
 		Location: wellLocation{
-			DeckItemID: wtype.IDOf(well.GetParent()),
-			Row:        well.Crds.Y,
-			Column:     well.Crds.X,
+			DeckItemID: wtype.IDOf(now.GetParent()),
+			Row:        now.Crds.Y,
+			Column:     now.Crds.X,
 		},
-		NewContent: newLiquidSummary(well.Contents()),
+		NewContent: newLiquidSummary(then.Contents()).Update(newLiquidSummary(now.Contents()), transferID),
 	}
 }
 
@@ -533,6 +563,11 @@ func (tf *transferFactory) newParallelTransfer(vlh *simulator.VirtualLiquidHandl
 	for _, ch := range channels {
 		sourceWells[ch] = getWell(cti.PltFrom[ch], cti.WellFrom[ch])
 		destWells[ch] = getWell(cti.PltTo[ch], cti.WellTo[ch])
+	}
+
+	originalDests := make([]*wtype.LHWell, len(destWells))
+	for i, w := range destWells {
+		originalDests[i] = w.DupKeepIDs()
 	}
 
 	// map from source well to channel index
@@ -659,8 +694,8 @@ func (tf *transferFactory) newParallelTransfer(vlh *simulator.VirtualLiquidHandl
 
 		tfs := &transferSummary{
 			Index:             tf.transferIndex,
-			From:              newContentUpdate(sourceWells[ch]),
-			To:                []*contentUpdate{newContentUpdate(destWells[ch])}, // multi dispense will require multiple entries here
+			From:              newContentUpdate(sourceWells[ch], sourceWells[ch], tf.transferIndex),
+			To:                []*contentUpdate{newContentUpdate(originalDests[ch], destWells[ch], tf.transferIndex)}, // multi dispense will require multiple entries here
 			Volume:            newMeasurementSummary(wunit.CopyVolume(cti.Volume[ch])),
 			Wasted:            newMeasurementSummary(missing),
 			Policy:            cti.What[ch],

@@ -179,31 +179,31 @@ func makeBasicPlates(idGen *id.IDGenerator) (plates []*wtype.Plate) {
 	// deep square well 96
 	swshp := wtype.NewShape(wtype.BoxShape, "mm", 8.2, 8.2, 41.3)
 	deepsquarewell := wtype.NewLHWell(idGen, "ul", 2000, 420, swshp, wtype.VWellBottom, 8.2, 8.2, 41.3, 4.7, "mm")
-	plate := wtype.NewLHPlate(idGen, "DSW96", "Unknown", 8, 12, makePlateCoords(44.1), deepsquarewell, 9, 9, 0.0, 0.0, valueformaxheadtonotintoDSWplatewithp20tips)
+	plate := wtype.NewLHPlate(idGen, "DSW96", "Unknown", "Unknown", 8, 12, makePlateCoords(44.1), deepsquarewell, 9, 9, 0.0, 0.0, valueformaxheadtonotintoDSWplatewithp20tips)
 	plates = append(plates, plate)
 
 	// Nunc?2.0mL DeepWell? Plates 95040452
 	nunc96deepwellshp := wtype.NewShape(wtype.BoxShape, "mm", 8.5, 8.5, 41.5)
 	nunc96deepwell := wtype.NewLHWell(idGen, "ul", 2000, 420, nunc96deepwellshp, wtype.UWellBottom, 8.2, 8.2, 41.3, 2.5, "mm")
-	plate = wtype.NewLHPlate(idGen, "Nunc96DeepWell", "Unknown", 8, 12, makePlateCoords(43.6), nunc96deepwell, 9, 9, -1.0, 0.0, 6.5)
+	plate = wtype.NewLHPlate(idGen, "Nunc96DeepWell", "Unknown", "Unknown", 8, 12, makePlateCoords(43.6), nunc96deepwell, 9, 9, -1.0, 0.0, 6.5)
 	plates = append(plates, plate)
 
 	// Thermo 96 well conical btm pp pit natural 0.45 ml well Cat Num: 249946. (TWIST DNA Plate)
 	twist96wellshp := wtype.NewShape(wtype.CylinderShape, "mm", 6.7, 6.7, 9.8)
 	twist96well := wtype.NewLHWell(idGen, "ul", 450, 10, twist96wellshp, wtype.VWellBottom, 6.7, 6.7, 9.8, 4.6, "mm")
-	plate = wtype.NewLHPlate(idGen, "TwistDNAPlate", "Unknown", 8, 12, makePlateCoords(14.4), twist96well, 9.0, 9.0, 0.0, 0.0, -1.9)
+	plate = wtype.NewLHPlate(idGen, "TwistDNAPlate", "Unknown", "Unknown", 8, 12, makePlateCoords(14.4), twist96well, 9.0, 9.0, 0.0, 0.0, -1.9)
 	plates = append(plates, plate)
 
 	// IDT/ABgene 1.2 ml storage plate AB0564
 	idtshp := wtype.NewShape(wtype.CylinderShape, "mm", 7, 7, 39.35)
 	idtroundwell96 := wtype.NewLHWell(idGen, "ul", 1200, 100, idtshp, wtype.UWellBottom, 7, 7, 39.35, 3, "mm")
-	plate = wtype.NewLHPlate(idGen, "IDT96", "Unknown", 8, 12, makePlateCoords(42.5), idtroundwell96, 9, 9, 0, 0, 3)
+	plate = wtype.NewLHPlate(idGen, "IDT96", "Unknown", "Unknown", 8, 12, makePlateCoords(42.5), idtroundwell96, 9, 9, 0, 0, 3)
 	plates = append(plates, plate)
 
 	//4 column reservoir plate Phenix Research Products RRI3051; Fisher cat# NC0336913
 	fourcolumnshp := wtype.NewShape(wtype.BoxShape, "mm", 26, 71, 42)
 	fourcolumnwell := wtype.NewLHWell(idGen, "ul", 73000, 3000, fourcolumnshp, wtype.VWellBottom, 26, 71, 42, 2, "mm")
-	plate = wtype.NewLHPlate(idGen, "FourColumnReservoir", "Unknown", 1, 4, makePlateCoords(44), fourcolumnwell, 26, 1, 9.5, 31, 1) //WellYStart is not accurate, but would not visualise correctly unless set to this value, cant diagnose
+	plate = wtype.NewLHPlate(idGen, "FourColumnReservoir", "Unknown", "Unknown", 1, 4, makePlateCoords(44), fourcolumnwell, 26, 1, 9.5, 31, 1) //WellYStart is not accurate, but would not visualise correctly unless set to this value, cant diagnose
 	plates = append(plates, plate)
 
 	// 24 well deep square well plate on riser
@@ -231,7 +231,7 @@ func makeBasicPlates(idGen *id.IDGenerator) (plates []*wtype.Plate) {
 
 	squarewell := wtype.NewShape(wtype.BoxShape, "mm", xdim, ydim, zdim)
 	squarewell24 := wtype.NewLHWell(idGen, welltypeunit, wellcapacityinwelltypeunit, residualvol, squarewell, bottomtype, xdim, ydim, zdim, bottomh, "mm")
-	plate = wtype.NewLHPlate(idGen, "DSW24", "Unknown", wellspercolumn, wellsperrow, makePlateCoords(heightinmm), squarewell24, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate = wtype.NewLHPlate(idGen, "DSW24", "Unknown", "Unknown", wellspercolumn, wellsperrow, makePlateCoords(heightinmm), squarewell24, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
 
 	plates = append(plates, plate)
@@ -239,34 +239,34 @@ func makeBasicPlates(idGen *id.IDGenerator) (plates []*wtype.Plate) {
 	// shallow round well flat bottom 96
 	rwshp := wtype.NewShape(wtype.CylinderShape, "mm", 8.2, 8.2, 11)
 	roundwell96 := wtype.NewLHWell(idGen, "ul", 340, 25, rwshp, 0, 8.2, 8.2, 11, 1.0, "mm")
-	plate = wtype.NewLHPlate(idGen, "SRWFB96", "Unknown", 8, 12, makePlateCoords(15), roundwell96, 9, 9, 0.0, 0.0, 2.2)
+	plate = wtype.NewLHPlate(idGen, "SRWFB96", "Unknown", "Unknown", 8, 12, makePlateCoords(15), roundwell96, 9, 9, 0.0, 0.0, 2.2)
 	plates = append(plates, plate)
 
 	// deep well strip trough 12
 	stshp := wtype.NewShape(wtype.BoxShape, "mm", 8.2, 72, 41.3)
 	trough12 := wtype.NewLHWell(idGen, "ul", 15000, 5000, stshp, wtype.VWellBottom, 8.2, 72, 41.3, 4.7, "mm")
-	plate = wtype.NewLHPlate(idGen, "DWST12", "Unknown", 1, 12, makePlateCoords(44.1), trough12, 9, 9, 0, 30.0, valueformaxheadtonotintoDSWplatewithp20tips)
+	plate = wtype.NewLHPlate(idGen, "DWST12", "Unknown", "Unknown", 1, 12, makePlateCoords(44.1), trough12, 9, 9, 0, 30.0, valueformaxheadtonotintoDSWplatewithp20tips)
 	//	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
 	plates = append(plates, plate)
 
 	// shallow well strip trough 12
 	stshps := wtype.NewShape(wtype.BoxShape, "mm", 8.2, 72, 15)
 	trough12s := wtype.NewLHWell(idGen, "ul", 4000, 1500, stshps, wtype.VWellBottom, 8.2, 72, 15, 4.7, "mm")
-	plate = wtype.NewLHPlate(idGen, "SWST12", "Unknown", 1, 12, makePlateCoords(20), trough12s, 9, 9, 0, 30.0, 1)
+	plate = wtype.NewLHPlate(idGen, "SWST12", "Unknown", "Unknown", 1, 12, makePlateCoords(20), trough12s, 9, 9, 0, 30.0, 1)
 	//	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
 	plates = append(plates, plate)
 
 	// deep well strip trough 8
 	stshp8 := wtype.NewShape(wtype.BoxShape, "mm", 115.0, 8.2, 41.3)
 	trough8 := wtype.NewLHWell(idGen, "ul", 24000, 1000, stshp8, wtype.VWellBottom, 115, 8.2, 41.3, 4.7, "mm")
-	plate = wtype.NewLHPlate(idGen, "DWST8", "Unknown", 8, 1, makePlateCoords(44.1), trough8, 9, 9, 49.5, 0.0, 0.0)
+	plate = wtype.NewLHPlate(idGen, "DWST8", "Unknown", "Unknown", 8, 1, makePlateCoords(44.1), trough8, 9, 9, 49.5, 0.0, 0.0)
 	plate.DeclareSpecial() // Do this for racks, other very unusual plate types... except troughs?!
 	plates = append(plates, plate)
 
 	// 250ml box reservoir
 	reservoirbox := wtype.NewShape(wtype.BoxShape, "mm", 121, 80, 40) // 39?
 	welltypereservoir := wtype.NewLHWell(idGen, "ul", 200000, 40000, reservoirbox, wtype.FlatWellBottom, 121, 80, 40, 3, "mm")
-	plate = wtype.NewLHPlate(idGen, "reservoir", "unknown", 1, 1, makePlateCoords(40), welltypereservoir, 1, 1, 49.5, 31.0, 0.0)
+	plate = wtype.NewLHPlate(idGen, "reservoir", "Unknown", "Unknown", 1, 1, makePlateCoords(40), welltypereservoir, 1, 1, 49.5, 31.0, 0.0)
 	plates = append(plates, plate)
 
 	// falcon 6 well plate with Agar flat bottom with 4ml per well
@@ -290,7 +290,7 @@ func makeBasicPlates(idGen *id.IDGenerator) (plates []*wtype.Plate) {
 	circle := wtype.NewShape(wtype.CylinderShape, "mm", 37, 37, 20)
 	welltype6well := wtype.NewLHWell(idGen, "ul", 4000, 1, circle, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 
-	plate = wtype.NewLHPlate(idGen, "falcon6wellAgar", "Unknown", wellspercolumn, wellsperrow, makePlateCoords(heightinmm), welltype6well, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate = wtype.NewLHPlate(idGen, "falcon6wellAgar", "Unknown", "Unknown", wellspercolumn, wellsperrow, makePlateCoords(heightinmm), welltype6well, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
 	plates = append(plates, plate)
 
@@ -315,7 +315,7 @@ func makeBasicPlates(idGen *id.IDGenerator) (plates []*wtype.Plate) {
 	circle = wtype.NewShape(wtype.CylinderShape, "mm", xdim, ydim, zdim)
 	welltypecostar48 := wtype.NewLHWell(idGen, "ul", 1000, 100, circle, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 
-	plate = wtype.NewLHPlate(idGen, "costar48well", "Unknown", wellspercolumn, wellsperrow, makePlateCoords(heightinmm), welltypecostar48, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate = wtype.NewLHPlate(idGen, "costar48well", "Unknown", "Unknown", wellspercolumn, wellsperrow, makePlateCoords(heightinmm), welltypecostar48, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
 	plates = append(plates, plate)
 
@@ -330,7 +330,7 @@ func makeBasicPlates(idGen *id.IDGenerator) (plates []*wtype.Plate) {
 
 	welltype2mleppy := wtype.NewLHWell(idGen, "ul", 2000, 50, eppy, wtype.VWellBottom, 8.2, 8.2, 45, 4.7, "mm")
 
-	plate = wtype.NewLHPlate(idGen, "Kombi2mlEpp", "Unknown", 4, 2, makePlateCoords(45), welltype2mleppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate = wtype.NewLHPlate(idGen, "Kombi2mlEpp", "Unknown", "Unknown", 4, 2, makePlateCoords(45), welltype2mleppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plates = append(plates, plate)
 
 	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
@@ -343,7 +343,7 @@ func makeBasicPlates(idGen *id.IDGenerator) (plates []*wtype.Plate) {
 	ystart = 5.0       // distance from top left side of plate to first well
 	zstart = 5.0       // offset of bottom of deck to bottom of well
 
-	plate = wtype.NewLHPlate(idGen, "eppendorfrack425_2ml", "Unknown", 4, 6, makePlateCoords(45), welltype2mleppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate = wtype.NewLHPlate(idGen, "eppendorfrack425_2ml", "Unknown", "Unknown", 4, 6, makePlateCoords(45), welltype2mleppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
 	plates = append(plates, plate)
 
@@ -366,7 +366,7 @@ func makeBasicPlates(idGen *id.IDGenerator) (plates []*wtype.Plate) {
 
 	welltypesmallereppy := wtype.NewLHWell(idGen, "ul", 1500, 50, eppy, wtype.VWellBottom, wellRadius, wellRadius, wellHeight, bottomH, "mm")
 
-	plate = wtype.NewLHPlate(idGen, "eppendorfrack425_1.5ml", "Unknown", 4, 6, makePlateCoords(plateHeight), welltypesmallereppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate = wtype.NewLHPlate(idGen, "eppendorfrack425_1.5ml", "Unknown", "Unknown", 4, 6, makePlateCoords(plateHeight), welltypesmallereppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
 	plates = append(plates, plate)
 
@@ -378,7 +378,7 @@ func makeBasicPlates(idGen *id.IDGenerator) (plates []*wtype.Plate) {
 	ystart = 5.0       // distance from top left side of plate to first well
 	zstart = 5.0       // offset of bottom of deck to bottom of well
 
-	plate = wtype.NewLHPlate(idGen, "eppendorfrack424_2ml_lidholder", "Unknown", 4, 3, makePlateCoords(45), welltype2mleppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate = wtype.NewLHPlate(idGen, "eppendorfrack424_2ml_lidholder", "Unknown", "Unknown", 4, 3, makePlateCoords(45), welltype2mleppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
 	plates = append(plates, plate)
 
@@ -390,7 +390,7 @@ func makeBasicPlates(idGen *id.IDGenerator) (plates []*wtype.Plate) {
 	ystart = 5.0       // distance from top left side of plate to first well
 	zstart = 4.5       // offset of bottom of deck to bottom of well
 
-	plate = wtype.NewLHPlate(idGen, "eppendorfrack424_1.5ml_lidholder", "Unknown", 4, 3, makePlateCoords(45), welltypesmallereppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate = wtype.NewLHPlate(idGen, "eppendorfrack424_1.5ml_lidholder", "Unknown", "Unknown", 4, 3, makePlateCoords(45), welltypesmallereppy, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
 	plates = append(plates, plate)
 
@@ -412,7 +412,7 @@ func makeBasicPlates(idGen *id.IDGenerator) (plates []*wtype.Plate) {
 	welltype384 := wtype.NewLHWell(idGen, "ul", 125, 20, square, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 
 	//func NewLHPlate(idGen, platetype, mfr string, nrows, ncols int, height float64, hunit string, welltype *LHWell, wellXOffset, wellYOffset, wellXStart, wellYStart, wellZStart float64) *LHPlate {
-	plate = wtype.NewLHPlate(idGen, "greiner384", "Unknown", 16, 24, makePlateCoords(14), welltype384, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate = wtype.NewLHPlate(idGen, "greiner384", "Unknown", "Unknown", 16, 24, makePlateCoords(14), welltype384, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plates = append(plates, plate)
 
 	// NUNC 1536 well plate flat bottom on riser
@@ -432,7 +432,7 @@ func makeBasicPlates(idGen *id.IDGenerator) (plates []*wtype.Plate) {
 	square1536 := wtype.NewShape(wtype.BoxShape, "mm", xdim, ydim, zdim)
 	welltype1536 := wtype.NewLHWell(idGen, "ul", 13, 2, square1536, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 
-	plate = wtype.NewLHPlate(idGen, "nunc1536", "Unknown", 32, 48, makePlateCoords(7), welltype1536, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate = wtype.NewLHPlate(idGen, "nunc1536", "Unknown", "Unknown", 32, 48, makePlateCoords(7), welltype1536, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plates = append(plates, plate)
 
 	// Onewell SBS format Agarplate with colonies on riser (50ml agar) high res
@@ -444,7 +444,7 @@ func makeBasicPlates(idGen *id.IDGenerator) (plates []*wtype.Plate) {
 	zstart = 3          // offset of bottom of deck to bottom of well
 
 	// greiner one well with 50ml of agar in
-	plate = wtype.NewLHPlate(idGen, "Agarplateforpicking1536", "Unknown", 32, 48, makePlateCoords(7), welltype1536, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate = wtype.NewLHPlate(idGen, "Agarplateforpicking1536", "Unknown", "Unknown", 32, 48, makePlateCoords(7), welltype1536, wellxoffset, wellyoffset, xstart, ystart, zstart)
 
 	plates = append(plates, plate)
 
@@ -457,7 +457,7 @@ func makeBasicPlates(idGen *id.IDGenerator) (plates []*wtype.Plate) {
 	zstart = 3.5      //5.5 // offset of bottom of deck to bottom of well
 
 	// greiner one well with 50ml of agar in
-	plate = wtype.NewLHPlate(idGen, "Agarplateforpicking384", "Unknown", 16, 24, makePlateCoords(14), welltype384, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate = wtype.NewLHPlate(idGen, "Agarplateforpicking384", "Unknown", "Unknown", 16, 24, makePlateCoords(14), welltype384, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plates = append(plates, plate)
 
 	// Onewell SBS format Agarplate with colonies on shallowriser (30ml agar) low res
@@ -468,7 +468,7 @@ func makeBasicPlates(idGen *id.IDGenerator) (plates []*wtype.Plate) {
 	ystart = -2.5     // distance from top left side of plate to first well
 	zstart = 1        // offset of bottom of deck to bottom of well
 
-	plate = wtype.NewLHPlate(idGen, "30mlAgarplateforpicking384", "Unknown", 16, 24, makePlateCoords(14), welltype384, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate = wtype.NewLHPlate(idGen, "30mlAgarplateforpicking384", "Unknown", "Unknown", 16, 24, makePlateCoords(14), welltype384, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plates = append(plates, plate)
 
 	// Onewell SBS format Agarplate with colonies on riser (50ml agar) med res
@@ -489,7 +489,7 @@ func makeBasicPlates(idGen *id.IDGenerator) (plates []*wtype.Plate) {
 	welltype768 := wtype.NewLHWell(idGen, "ul", 31.25, 5, square768, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 
 	// greiner one well with 50ml of agar in
-	plate = wtype.NewLHPlate(idGen, "Agarplateforpicking768", "Unknown", 24, 32, makePlateCoords(14), welltype768, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate = wtype.NewLHPlate(idGen, "Agarplateforpicking768", "Unknown", "Unknown", 24, 32, makePlateCoords(14), welltype768, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plates = append(plates, plate)
 
 	// Onewell SBS format Agarplate with colonies on riser (50ml agar) low res with 96 well map
@@ -510,7 +510,7 @@ func makeBasicPlates(idGen *id.IDGenerator) (plates []*wtype.Plate) {
 
 	pcrplatewellforpicking := wtype.NewLHWell(idGen, "ul", 5, 1, wtype.NewShape(wtype.CylinderShape, "mm", 5.5, 5.5, 15), bottomtype, xdim, ydim, zdim, bottomh, "mm")
 
-	plate = wtype.NewLHPlate(idGen, "Agarplateforpicking96", "Unknown", 8, 12, makePlateCoords(14), pcrplatewellforpicking, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate = wtype.NewLHPlate(idGen, "Agarplateforpicking96", "Unknown", "Unknown", 8, 12, makePlateCoords(14), pcrplatewellforpicking, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plates = append(plates, plate)
 
 	// Onewell SBS format Agarplate with colonies on riser (50ml agar) low res with 48 well map
@@ -531,13 +531,13 @@ func makeBasicPlates(idGen *id.IDGenerator) (plates []*wtype.Plate) {
 
 	welltypecostar48forpicking := wtype.NewLHWell(idGen, "ul", 10, 1, circle, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 
-	plate = wtype.NewLHPlate(idGen, "Agarplateforpicking48", "Unknown", 6, 8, makePlateCoords(14), welltypecostar48forpicking, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate = wtype.NewLHPlate(idGen, "Agarplateforpicking48", "Unknown", "Unknown", 6, 8, makePlateCoords(14), welltypecostar48forpicking, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plate.DeclareSpecial()
 	plates = append(plates, plate)
 
 	/// placeholder for non plate container for testing
 
-	plate = wtype.NewLHPlate(idGen, "1L_DuranBottle", "Unknown", 8, 12, makePlateCoords(25.7), welltypereservoir, 9, 9, 0.0, 0.0, 15.5)
+	plate = wtype.NewLHPlate(idGen, "1L_DuranBottle", "Unknown", "Unknown", 8, 12, makePlateCoords(25.7), welltypereservoir, 9, 9, 0.0, 0.0, 15.5)
 	plates = append(plates, plate)
 
 	////// E gel dimensions
@@ -560,7 +560,7 @@ func makeBasicPlates(idGen *id.IDGenerator) (plates []*wtype.Plate) {
 	ep48g := wtype.NewShape(wtype.TrapezoidShape, "mm", xdim, ydim, zdim)
 	//can't reach all wells; change to 24 wells per row? yes!
 	egelwell := wtype.NewLHWell(idGen, "ul", 20, 0, ep48g, wtype.FlatWellBottom, xdim, ydim, zdim, bottomh, "mm")
-	gelplate := wtype.NewLHPlate(idGen, "EPAGE48", "Invitrogen", 2, 24, makePlateCoords(eplateheight), egelwell, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	gelplate := wtype.NewLHPlate(idGen, "EPAGE48", "Invitrogen", "Unknown", 2, 24, makePlateCoords(eplateheight), egelwell, wellxoffset, wellyoffset, xstart, ystart, zstart)
 
 	gelconsar := []string{"position_9"}
 	gelplate.SetConstrained("Pipetmax", gelconsar)
@@ -569,7 +569,7 @@ func makeBasicPlates(idGen *id.IDGenerator) (plates []*wtype.Plate) {
 	plates = append(plates, gelplate)
 
 	//E-GEL 48 (reverse) position
-	gelplate = wtype.NewLHPlate(idGen, "EGEL48", "Invitrogen", 2, 24, makePlateCoords(eplateheight), egelwell, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	gelplate = wtype.NewLHPlate(idGen, "EGEL48", "Invitrogen", "Unknown", 2, 24, makePlateCoords(eplateheight), egelwell, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	gelplate.SetConstrained("Pipetmax", gelconsar)
 	gelplate.DeclareSpecial() // Do this for racks, other very unusual plate types
 	plates = append(plates, gelplate)
@@ -580,13 +580,13 @@ func makeBasicPlates(idGen *id.IDGenerator) (plates []*wtype.Plate) {
 
 	// 1st type
 	//can't reach all wells; change to 12 wells per row?
-	gelplate = wtype.NewLHPlate(idGen, "EGEL96_1", "Invitrogen", 4, 13, makePlateCoords(48.5), egelwell, 9, 18.0, -9.0, -0.5, riserheightinmm+5.5)
+	gelplate = wtype.NewLHPlate(idGen, "EGEL96_1", "Invitrogen", "Unknown", 4, 13, makePlateCoords(48.5), egelwell, 9, 18.0, -9.0, -0.5, riserheightinmm+5.5)
 	gelplate.SetConstrained("Pipetmax", gelconsar)
 	gelplate.DeclareSpecial() // Do this for racks, other very unusual plate types
 	plates = append(plates, gelplate)
 
 	// 2nd type
-	gelplate = wtype.NewLHPlate(idGen, "EGEL96_2", "Invitrogen", 4, 13, makePlateCoords(48.5), egelwell, 9, 18.0, -5.0, 9, riserheightinmm+5.5)
+	gelplate = wtype.NewLHPlate(idGen, "EGEL96_2", "Invitrogen", "Unknown", 4, 13, makePlateCoords(48.5), egelwell, 9, 18.0, -5.0, 9, riserheightinmm+5.5)
 	gelplate.SetConstrained("Pipetmax", gelconsar)
 	gelplate.DeclareSpecial() // Do this for racks, other very unusual plate types
 	plates = append(plates, gelplate)
@@ -612,13 +612,13 @@ func makeBasicPlates(idGen *id.IDGenerator) (plates []*wtype.Plate) {
 	circle = wtype.NewShape(wtype.CylinderShape, "mm", xdim, ydim, zdim)
 	welltype12well := wtype.NewLHWell(idGen, "ul", 1000, 10, circle, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 
-	plate = wtype.NewLHPlate(idGen, "Nuncon12wellAgar", "Unknown", wellspercolumn, wellsperrow, makePlateCoords(heightinmm), welltype12well, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate = wtype.NewLHPlate(idGen, "Nuncon12wellAgar", "Unknown", "Unknown", wellspercolumn, wellsperrow, makePlateCoords(heightinmm), welltype12well, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
 	plates = append(plates, plate)
 
 	// update z start to remove agar estimate and make new plate type
 	zstart = 4.0 // offset of bottom of deck to bottom of well
-	plate = wtype.NewLHPlate(idGen, "Nuncon12well", "Unknown", wellspercolumn, wellsperrow, makePlateCoords(heightinmm), welltype12well, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate = wtype.NewLHPlate(idGen, "Nuncon12well", "Unknown", "Unknown", wellspercolumn, wellsperrow, makePlateCoords(heightinmm), welltype12well, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
 	plates = append(plates, plate)
 
@@ -643,7 +643,7 @@ func makeBasicPlates(idGen *id.IDGenerator) (plates []*wtype.Plate) {
 	circle = wtype.NewShape(wtype.CylinderShape, "mm", xdim, ydim, zdim)
 	welltypevwr12 := wtype.NewLHWell(idGen, "ul", 100, 10, circle, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 
-	plate = wtype.NewLHPlate(idGen, "VWR12well", "Unknown", wellspercolumn, wellsperrow, makePlateCoords(heightinmm), welltypevwr12, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate = wtype.NewLHPlate(idGen, "VWR12well", "Unknown", "Unknown", wellspercolumn, wellsperrow, makePlateCoords(heightinmm), welltypevwr12, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
 	plates = append(plates, plate)
 
@@ -667,7 +667,7 @@ func makeBasicPlates(idGen *id.IDGenerator) (plates []*wtype.Plate) {
 	nuncsquare := wtype.NewShape(wtype.BoxShape, "mm", 30, 39, 11)
 	welltypenunc8 := wtype.NewLHWell(idGen, "ul", 3000, 10, nuncsquare, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 
-	plate = wtype.NewLHPlate(idGen, "nunc8well", "Unknown", wellspercolumn, wellsperrow, makePlateCoords(heightinmm), welltypenunc8, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate = wtype.NewLHPlate(idGen, "nunc8well", "Unknown", "Unknown", wellspercolumn, wellsperrow, makePlateCoords(heightinmm), welltypenunc8, wellxoffset, wellyoffset, xstart, ystart, zstart)
 	plate.DeclareSpecial() // Do this for racks, other very unusual plate types
 
 	plates = append(plates, plate)
@@ -730,22 +730,22 @@ func makePlateCoords(height float64) wtype.Coordinates3D {
 }
 
 func makePCRPlate(idGen *id.IDGenerator) *wtype.Plate {
-	return wtype.NewLHPlate(idGen, "pcrplate", "Unknown", 8, 12, makePlateCoords(15.5), makePCRPlateWell(idGen), 9, 9, 0.0, 0.0, MinimumZHeightPermissableForLVPipetMax)
+	return wtype.NewLHPlate(idGen, "pcrplate", "Unknown", "Unknown", 8, 12, makePlateCoords(15.5), makePCRPlateWell(idGen), 9, 9, 0.0, 0.0, MinimumZHeightPermissableForLVPipetMax)
 }
 
 // pcr plate semi-skirted
 func makeSemiSkirtedPCRPlate(idGen *id.IDGenerator) *wtype.Plate {
-	return wtype.NewLHPlate(idGen, "pcrplate_semi_skirted", "Unknown", 8, 12, makePlateCoords(15.5), makePCRPlateWell(idGen), 9, 9, 0.0, 0.0, 1.0)
+	return wtype.NewLHPlate(idGen, "pcrplate_semi_skirted", "Unknown", "Unknown", 8, 12, makePlateCoords(15.5), makePCRPlateWell(idGen), 9, 9, 0.0, 0.0, 1.0)
 }
 
 // 0.2ml strip tubes
 func makeStripTube(idGen *id.IDGenerator) *wtype.Plate {
-	return wtype.NewLHPlate(idGen, "strip_tubes_0.2ml", "Unknown", 8, 12, makePlateCoords(15.5), makePCRPlateWell(idGen), 9, 9, 0.0, 0.0, 0.0)
+	return wtype.NewLHPlate(idGen, "strip_tubes_0.2ml", "Unknown", "Unknown", 8, 12, makePlateCoords(15.5), makePCRPlateWell(idGen), 9, 9, 0.0, 0.0, 0.0)
 }
 
 // pcr plate skirted
 func makeSkirtedPCRPlate(idGen *id.IDGenerator) *wtype.Plate {
-	return wtype.NewLHPlate(idGen, "pcrplate_skirted", "Unknown", 8, 12, makePlateCoords(15.5), makePCRPlateWell(idGen), 9, 9, 0.0, 0.0, MinimumZHeightPermissableForLVPipetMax)
+	return wtype.NewLHPlate(idGen, "pcrplate_skirted", "Unknown", "Unknown", 8, 12, makePlateCoords(15.5), makePCRPlateWell(idGen), 9, 9, 0.0, 0.0, MinimumZHeightPermissableForLVPipetMax)
 }
 
 func makeGreinerVBottomPlate(idGen *id.IDGenerator) *wtype.Plate {
@@ -766,7 +766,7 @@ func makeGreinerVBottomPlate(idGen *id.IDGenerator) *wtype.Plate {
 	rwshp := wtype.NewShape(wtype.CylinderShape, "mm", 6.2, 6.2, 10.0)
 	welltype := wtype.NewLHWell(idGen, "ul", 230, 10, rwshp, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 
-	plate := wtype.NewLHPlate(idGen, "GreinerSWVBottom", "Greiner", 8, 12, makePlateCoords(15), welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate := wtype.NewLHPlate(idGen, "GreinerSWVBottom", "Greiner", "Unknown", 8, 12, makePlateCoords(15), welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
 
 	return plate
 }
@@ -781,6 +781,7 @@ func makeNunc96UPlate(idGen *id.IDGenerator) *wtype.Plate {
 
 	plateName := wtype.PlateTypeName("nunc_96_U_PS_Clear")
 	manufacturer := "Nunc"
+	partNr := "Unknown"
 
 	numberOfRows := 8
 	numberOfColumns := 12
@@ -812,7 +813,7 @@ func makeNunc96UPlate(idGen *id.IDGenerator) *wtype.Plate {
 
 	welltype := wtype.NewLHWell(idGen, volUnit, maxVolume, minVolume, nunc96UShape, bottomtype, xdim, ydim, zdim, bottomh, dimensionUnit)
 
-	plate := wtype.NewLHPlate(idGen, plateName, manufacturer, numberOfRows, numberOfColumns, makePlateCoords(overallHeight), welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate := wtype.NewLHPlate(idGen, plateName, manufacturer, partNr, numberOfRows, numberOfColumns, makePlateCoords(overallHeight), welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
 
 	return plate
 }
@@ -853,6 +854,7 @@ func makeFluidX700ulPlate(idGen *id.IDGenerator) *wtype.Plate {
 	plateName := wtype.PlateTypeName("FluidX700ulTubes")
 
 	manufacturer := "FluidX"
+	partNr := "Unkown"
 
 	welltype := makeFluidX700ulTube(idGen)
 
@@ -866,7 +868,7 @@ func makeFluidX700ulPlate(idGen *id.IDGenerator) *wtype.Plate {
 	zstart := MinimumZHeightPermissableForLVPipetMax // F - L: offset of bottom of deck to bottom of well;
 	overallHeight := welltype.ZDim() + zstart        // F: height of plate
 
-	plate := wtype.NewLHPlate(idGen, plateName, manufacturer, numberOfRows, numberOfColumns, makePlateCoords(overallHeight), welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate := wtype.NewLHPlate(idGen, plateName, manufacturer, partNr, numberOfRows, numberOfColumns, makePlateCoords(overallHeight), welltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
 
 	return plate
 }
@@ -875,7 +877,7 @@ func makeGreinerFlatBottomBlackPlate(idGen *id.IDGenerator) *wtype.Plate {
 	// shallow round well flat bottom 96
 	rwshp := wtype.NewShape(wtype.CylinderShape, "mm", 8.2, 8.2, 11)
 	roundwell96 := wtype.NewLHWell(idGen, "ul", 340, 25, rwshp, 0, 8.2, 8.2, 11, 1.0, "mm")
-	plate := wtype.NewLHPlate(idGen, wtype.PlateTypeName("greiner96Black"), "greiner", 8, 12, makePlateCoords(15), roundwell96, 9, 9, 0.0, 0.0, 2.0)
+	plate := wtype.NewLHPlate(idGen, wtype.PlateTypeName("greiner96Black"), "greiner", "Unknown", 8, 12, makePlateCoords(15), roundwell96, 9, 9, 0.0, 0.0, 2.0)
 	return plate
 }
 
@@ -898,7 +900,7 @@ func makeHighResplateforPicking(idGen *id.IDGenerator) *wtype.Plate {
 	welltype3150 := wtype.NewLHWell(idGen, "ul", 5, 0.5, square3150, bottomtype, xdim, ydim, zdim, bottomh, "mm")
 
 	// greiner one well with 50ml of agar in
-	plate := wtype.NewLHPlate(idGen, wtype.PlateTypeName("Agarplateforpicking3150"), "Unknown", 45, 70, makePlateCoords(7), welltype3150, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate := wtype.NewLHPlate(idGen, wtype.PlateTypeName("Agarplateforpicking3150"), "Unknown", "Unknown", 45, 70, makePlateCoords(7), welltype3150, wellxoffset, wellyoffset, xstart, ystart, zstart)
 
 	return plate
 }
@@ -914,6 +916,7 @@ func make96DeepWellLowVolumePlate(idGen *id.IDGenerator) *wtype.Plate {
 
 	plateName := wtype.PlateTypeName("Nunc_96_deepwell_1ml")
 	manufacturer := "Thermo Fisher"
+	partNr := "Unknown"
 
 	numberOfRows := 8
 	numberOfColumns := 12
@@ -945,7 +948,7 @@ func make96DeepWellLowVolumePlate(idGen *id.IDGenerator) *wtype.Plate {
 
 	newWelltype := wtype.NewLHWell(idGen, volUnit, maxVolume, minVolume, newWellShape, bottomtype, xdim, ydim, zdim, bottomh, dimensionUnit)
 
-	plate := wtype.NewLHPlate(idGen, plateName, manufacturer, numberOfRows, numberOfColumns, makePlateCoords(overallHeight), newWelltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate := wtype.NewLHPlate(idGen, plateName, manufacturer, partNr, numberOfRows, numberOfColumns, makePlateCoords(overallHeight), newWelltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
 
 	return plate
 }
@@ -964,6 +967,7 @@ func makeLabcyte384PPStdV(idGen *id.IDGenerator) *wtype.Plate {
 
 	plateName := wtype.PlateTypeName("Labcyte_384PP_StdV")
 	manufacturer := "Labcyte"
+	partNr := "Unknown"
 
 	numberOfRows := 16
 	numberOfColumns := 24
@@ -995,7 +999,7 @@ func makeLabcyte384PPStdV(idGen *id.IDGenerator) *wtype.Plate {
 
 	newWelltype := wtype.NewLHWell(idGen, volUnit, maxVolume, minVolume, newWellShape, bottomtype, xdim, ydim, zdim, bottomh, dimensionUnit)
 
-	plate := wtype.NewLHPlate(idGen, plateName, manufacturer, numberOfRows, numberOfColumns, makePlateCoords(overallHeight), newWelltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate := wtype.NewLHPlate(idGen, plateName, manufacturer, partNr, numberOfRows, numberOfColumns, makePlateCoords(overallHeight), newWelltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
 
 	return plate
 }
@@ -1012,6 +1016,7 @@ func make384wellplateAppliedBiosystems(idGen *id.IDGenerator) *wtype.Plate {
 
 	plateName := wtype.PlateTypeName("AppliedBiosystems_384_MicroAmp_Optical")
 	manufacturer := "Applied Biosystems"
+	partNr := "Unknown"
 
 	numberOfRows := 16
 	numberOfColumns := 24
@@ -1043,7 +1048,7 @@ func make384wellplateAppliedBiosystems(idGen *id.IDGenerator) *wtype.Plate {
 
 	newWelltype := wtype.NewLHWell(idGen, volUnit, maxVolume, minVolume, newWellShape, bottomtype, xdim, ydim, zdim, bottomh, dimensionUnit)
 
-	plate := wtype.NewLHPlate(idGen, plateName, manufacturer, numberOfRows, numberOfColumns, makePlateCoords(overallHeight), newWelltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate := wtype.NewLHPlate(idGen, plateName, manufacturer, partNr, numberOfRows, numberOfColumns, makePlateCoords(overallHeight), newWelltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
 
 	return plate
 }
@@ -1060,6 +1065,7 @@ func makeAcroPrep384NoFilter(idGen *id.IDGenerator) *wtype.Plate {
 
 	plateName := wtype.PlateTypeName("AcroPrep384NoFilter")
 	manufacturer := "Pall"
+	partNr := "Unknown"
 
 	numberOfRows := 16
 	numberOfColumns := 24
@@ -1092,7 +1098,7 @@ func makeAcroPrep384NoFilter(idGen *id.IDGenerator) *wtype.Plate {
 
 	newWelltype := wtype.NewLHWell(idGen, volUnit, maxVolume, minVolume, newWellShape, bottomtype, xdim, ydim, zdim, bottomh, dimensionUnit)
 
-	plate := wtype.NewLHPlate(idGen, plateName, manufacturer, numberOfRows, numberOfColumns, makePlateCoords(overallHeight), newWelltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate := wtype.NewLHPlate(idGen, plateName, manufacturer, partNr, numberOfRows, numberOfColumns, makePlateCoords(overallHeight), newWelltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
 
 	return plate
 }
@@ -1110,6 +1116,7 @@ func makeAcroPrep384WithFilter(idGen *id.IDGenerator) *wtype.Plate {
 
 	plateName := wtype.PlateTypeName("AcroPrep384WithFilter")
 	manufacturer := "Pall"
+	partNr := "Unknown"
 
 	numberOfRows := 16
 	numberOfColumns := 24
@@ -1142,7 +1149,7 @@ func makeAcroPrep384WithFilter(idGen *id.IDGenerator) *wtype.Plate {
 
 	newWelltype := wtype.NewLHWell(idGen, volUnit, maxVolume, minVolume, newWellShape, bottomtype, xdim, ydim, zdim, bottomh, dimensionUnit)
 
-	plate := wtype.NewLHPlate(idGen, plateName, manufacturer, numberOfRows, numberOfColumns, makePlateCoords(overallHeight), newWelltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate := wtype.NewLHPlate(idGen, plateName, manufacturer, partNr, numberOfRows, numberOfColumns, makePlateCoords(overallHeight), newWelltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
 
 	return plate
 }
@@ -1151,6 +1158,7 @@ func makeAcroPrep384WithFilter(idGen *id.IDGenerator) *wtype.Plate {
 func makeGreinerVFromSpec(idGen *id.IDGenerator) *wtype.LHPlate {
 	plateName := wtype.PlateTypeName("GreinerV96FromSpec")
 	manufacturer := "Greiner"
+	partNr := "Unknown"
 
 	numberOfRows := 8
 	numberOfColumns := 12
@@ -1182,7 +1190,7 @@ func makeGreinerVFromSpec(idGen *id.IDGenerator) *wtype.LHPlate {
 
 	newWelltype := wtype.NewLHWell(idGen, volUnit, maxVolume, minVolume, newWellShape, bottomtype, xdim, ydim, zdim, bottomh, dimensionUnit)
 
-	plate := wtype.NewLHPlate(idGen, plateName, manufacturer, numberOfRows, numberOfColumns, makePlateCoords(overallHeight), newWelltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate := wtype.NewLHPlate(idGen, plateName, manufacturer, partNr, numberOfRows, numberOfColumns, makePlateCoords(overallHeight), newWelltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
 
 	return plate
 }
@@ -1191,6 +1199,7 @@ func makeGreinerVFromSpec(idGen *id.IDGenerator) *wtype.LHPlate {
 func make4TitudePcrPlateFromSpec(idGen *id.IDGenerator) *wtype.LHPlate {
 	plateName := wtype.PlateTypeName("pcrplate_skirted_FromSpec")
 	manufacturer := "4titude"
+	partNr := "Unknown"
 
 	numberOfRows := 8
 	numberOfColumns := 12
@@ -1222,7 +1231,7 @@ func make4TitudePcrPlateFromSpec(idGen *id.IDGenerator) *wtype.LHPlate {
 
 	newWelltype := wtype.NewLHWell(idGen, volUnit, maxVolume, minVolume, newWellShape, bottomtype, xdim, ydim, zdim, bottomh, dimensionUnit)
 
-	plate := wtype.NewLHPlate(idGen, plateName, manufacturer, numberOfRows, numberOfColumns, makePlateCoords(overallHeight), newWelltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
+	plate := wtype.NewLHPlate(idGen, plateName, manufacturer, partNr, numberOfRows, numberOfColumns, makePlateCoords(overallHeight), newWelltype, wellxoffset, wellyoffset, xstart, ystart, zstart)
 
 	return plate
 }

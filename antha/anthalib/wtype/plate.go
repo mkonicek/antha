@@ -1120,11 +1120,8 @@ func (self *Plate) WellCoordsToCoords(wc WellCoords, r WellReference) (Coordinat
 	} else if r == TopReference {
 		z = child.GetPosition().Z + child.GetSize().Z
 	} else if r == LiquidReference {
-		if volInUl, err := child.CurrentVolume().InStringUnit("ul"); err != nil {
-			panic(err) // this really shouldn't happen as all volume units are compatible with "ul"
-		} else {
-			z = child.GetPosition().Z + child.Bottomh + self.Welltype.GetLiquidLevel(wunit.Volume{ConcreteMeasurement: volInUl.(*wunit.ConcreteMeasurement)})
-		}
+		// we don't know exactly where the liquid level is, so return the middle
+		z = child.GetPosition().Z + 0.5*(child.Bottomh+child.GetSize().Z)
 	}
 
 	center := child.GetPosition().Add(child.GetSize().Multiply(0.5))

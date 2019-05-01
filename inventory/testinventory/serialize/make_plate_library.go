@@ -663,8 +663,8 @@ func makePCRPlateWell() *wtype.LHWell {
 	pcrplatewell.SetAfVFunc(afs)
 
 	//LiquidLevel model for LL Following: vol_f estimates volume given height
-	vol_f := wutil.Quadratic{A: 0.402, B: 7.069, C: 0.0}
-	pcrplatewell.SetLiquidLevelModel(vol_f)
+	// vol_f := wutil.Quadratic{A: 0.402, B: 7.069, C: 0.0}
+	// pcrplatewell.SetLiquidLevelModel(vol_f)
 
 	return pcrplatewell
 }

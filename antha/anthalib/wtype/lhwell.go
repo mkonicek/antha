@@ -23,9 +23,7 @@
 package wtype
 
 import (
-	"encoding/json"
 	"fmt"
-	"math"
 	"strings"
 
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -426,7 +424,7 @@ func (w *LHWell) Clean() {
 	// some keys must be retained
 
 	for k, v := range w.Extra {
-		if isConstraintKey(k) || k == wellTargetKey || k == "IMSPECIAL" || k == "afvfunc" || k == "ll_model" {
+		if isConstraintKey(k) || k == wellTargetKey || k == "IMSPECIAL" || k == "afvfunc" {
 			newExtra[k] = v
 		}
 	}
@@ -517,60 +515,6 @@ func (lhw *LHWell) GetAfVFunc() wutil.Func1Prm {
 		panic(fmt.Sprintf("Can't unmarshal function, error: %s", err))
 	}
 	return x
-}
-
-//SetLiquidLevelModel sets the function which models the volume of liquid (uL) in
-//the well given it's height (mm)
-func (lhw *LHWell) SetLiquidLevelModel(m wutil.Func1Prm) {
-	if lhw == nil || m == nil {
-		return
-	}
-	mb, _ := json.Marshal(m)
-	ms := string(mb)
-	lhw.Extra["ll_model"] = ms
-}
-
-//GetLiquidLevelModel unmarshals and returns the volume model
-func (lhw *LHWell) GetLiquidLevelModel() wutil.Func1Prm {
-	if lhw == nil {
-		return nil
-	}
-
-	if ms, ok := lhw.Extra["ll_model"]; ok {
-		if f, err := wutil.UnmarshalFunc([]byte(ms.(string))); err == nil {
-			return f
-		} else {
-			panic(fmt.Sprintf("Can't unmarshal function, error: %s", err))
-		}
-	}
-	return nil
-}
-
-//GetLiquidLevel estimate the height of the liquid in mm from the bottom of the
-//well based on the volume in the well. Returns zero if no liquidlevel model is
-//set
-func (lhw *LHWell) GetLiquidLevel(volume wunit.Volume) float64 {
-	//the only form of liquid level model we currently support is:
-	//  volume[ul] = A * (height[mm])^2 + B * (height[mm]) + C
-	vol := volume.ConvertToString("ul")
-	if f := lhw.GetLiquidLevelModel(); f == nil {
-		return 0.0
-	} else if quad, ok := f.(*wutil.Quadratic); !ok {
-		return 0.0
-	} else if quad.C > vol { //no negative or imaginary heights
-		return 0.0
-	} else if quad.A == 0 { //linear model
-		return (vol - quad.C) / quad.B
-	} else {
-		return (-quad.B + math.Sqrt(quad.B*quad.B-4.0*quad.A*(quad.C-vol))) / (2.0 * quad.A)
-	}
-}
-
-//HasLiquidLevelModel returns whether the well has a model for use with
-//liquid level following
-func (lhw *LHWell) HasLiquidLevelModel() bool {
-	_, ret := lhw.Extra["ll_model"]
-	return ret
 }
 
 func (lhw *LHWell) CalculateMaxVolume() (vol wunit.Volume, err error) {
@@ -818,7 +762,7 @@ func (w *LHWell) UpdateContentID(IDBefore string, after *Liquid) bool {
 
 // CheckExtraKey checks if the key is a reserved name
 func (w LHWell) CheckExtraKey(s string) error {
-	reserved := []string{"afvfunc", "temporary", "autoallocated", "UserAllocated", "ll_model"}
+	reserved := []string{"afvfunc", "temporary", "autoallocated", "UserAllocated"}
 
 	if wutil.StrInStrArray(s, reserved) {
 		return fmt.Errorf("%s is a system key used by plates", s)

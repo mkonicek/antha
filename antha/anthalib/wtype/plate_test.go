@@ -3,7 +3,6 @@ package wtype
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"reflect"
 	"strings"
 	"testing"
@@ -506,7 +505,6 @@ func TestWellCoordsToCoords(t *testing.T) {
 	if err := plate.GetChildByAddress(MakeWellCoords("A1")).(*LHWell).AddComponent(c); err != nil {
 		t.Fatal(err)
 	}
-	plate.Welltype.SetLiquidLevelModel(wutil.Quadratic{A: 0.402, B: 7.069, C: 0.0})
 
 	type TestCase struct {
 		Address          string
@@ -529,7 +527,7 @@ func TestWellCoordsToCoords(t *testing.T) {
 		{
 			Address:          "A1",
 			Reference:        LiquidReference,
-			ExpectedPosition: Coordinates3D{X: plate.WellXStart, Y: plate.WellYStart, Z: plate.WellZStart + plate.Welltype.Bottomh + 9.264858420611434},
+			ExpectedPosition: Coordinates3D{X: plate.WellXStart, Y: plate.WellYStart, Z: plate.WellZStart + 0.5*(plate.Welltype.Bottomh+plate.Welltype.GetSize().Z)},
 		},
 		{
 			Address:        "Z1",

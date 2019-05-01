@@ -29,7 +29,6 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/simulator"
 )
@@ -165,18 +164,17 @@ func makeLHProperties(p *LHPropertiesParams) *liquidhandling.LHProperties {
 }
 
 type LHWellParams struct {
-	crds             wtype.WellCoords
-	vunit            string
-	vol              float64
-	rvol             float64
-	shape            *wtype.Shape
-	bott             wtype.WellBottomType
-	xdim             float64
-	ydim             float64
-	zdim             float64
-	bottomh          float64
-	dunit            string
-	liquidLevelModel *wutil.Quadratic
+	crds    wtype.WellCoords
+	vunit   string
+	vol     float64
+	rvol    float64
+	shape   *wtype.Shape
+	bott    wtype.WellBottomType
+	xdim    float64
+	ydim    float64
+	zdim    float64
+	bottomh float64
+	dunit   string
 }
 
 func makeLHWell(p *LHWellParams) *wtype.LHWell {
@@ -192,7 +190,6 @@ func makeLHWell(p *LHWellParams) *wtype.LHWell {
 		p.bottomh,
 		p.dunit)
 	w.Crds = p.crds
-	w.SetLiquidLevelModel(p.liquidLevelModel)
 	return w
 }
 
@@ -376,12 +373,6 @@ func defaultLHPlateProps() *LHPlateParams {
 
 func defaultLHPlate(name string) *wtype.Plate {
 	params := defaultLHPlateProps()
-	return makeLHPlate(params, name)
-}
-
-func llfLHPlate(name string) *wtype.Plate {
-	params := defaultLHPlateProps()
-	params.welltype.liquidLevelModel = &wutil.Quadratic{A: 0.402, B: 7.069, C: 0.0}
 	return makeLHPlate(params, name)
 }
 

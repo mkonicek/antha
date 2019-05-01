@@ -261,20 +261,6 @@ func testLayout() *SetupFn {
 	return &ret
 }
 
-func testLayoutLLF() *SetupFn {
-	var ret SetupFn = func(vlh *VirtualLiquidHandler) {
-		vlh.Initialize()
-		vlh.AddPlateTo("tipbox_1", defaultLHTipbox("tipbox1"), "tipbox1")
-		vlh.AddPlateTo("tipbox_2", defaultLHTipbox("tipbox2"), "tipbox2")
-		vlh.AddPlateTo("input_1", llfLHPlate("plate1"), "plate1")
-		vlh.AddPlateTo("input_2", llfLHPlate("plate2"), "plate2")
-		vlh.AddPlateTo("output_1", llfLHPlate("plate3"), "plate3")
-		vlh.AddPlateTo("waste", llfLHPlate("wasteplate"), "wasteplate")
-		vlh.AddPlateTo("tipwaste", defaultLHTipwaste("tipwaste"), "tipwaste")
-	}
-	return &ret
-}
-
 func testLayoutTransposed() *SetupFn {
 	var ret SetupFn = func(vlh *VirtualLiquidHandler) {
 		vlh.Initialize()
@@ -3272,7 +3258,7 @@ func Test_LiquidLevelFollow(t *testing.T) {
 		{
 			Name: "OK - single channel",
 			Setup: []*SetupFn{
-				testLayoutLLF(),
+				testLayout(),
 				prefillWells("input_1", []string{"A1"}, "water", 200.),
 				preloadAdaptorTips(0, "tipbox_1", []int{0}),
 			},

@@ -25,7 +25,6 @@ package liquidhandling
 import (
 	"context"
 	"fmt"
-	"math"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -34,7 +33,6 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/antha/anthalib/wutil/text"
 	"github.com/antha-lang/antha/inventory"
 	anthadriver "github.com/antha-lang/antha/microArch/driver"
@@ -1459,44 +1457,6 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		return nil, err
 	}
 
-	//LLF
-	use_llf, any_llf := get_use_llf(pol, len(ins.What), ins.PltFrom, prms)
-	if any_llf {
-		below_surface := SafeGetF64(pol, "LLFBELOWSURFACE")
-		//Is the liquid height in each well higher than below_surface
-		for i := 0; i < len(ins.What); i++ {
-			plate := prms.Plates[ins.PltFrom[i]]
-			if plate.Welltype.HasLiquidLevelModel() {
-				ll_model, quad := plate.Welltype.GetLiquidLevelModel().(*wutil.Quadratic)
-				if !quad {
-					return ret, fmt.Errorf("Non-quadratic LL model is unsupported")
-				}
-				vol := ins.FVolume[i].ConvertToString("ul") - ins.Volume[i].ConvertToString("ul")
-				//C == 0 by definition for quad models
-				h := (-ll_model.B + math.Sqrt(ll_model.B*ll_model.B+4.*ll_model.A*vol)) / (2. * ll_model.A)
-
-				if h <= below_surface {
-					//we're going to hit the bottom if we LLF all the way
-					//TODO: we should generate two asp commands
-					//one with LLF until we reach close to the bottom
-					//and another without LLF so we don't smack into the bottom
-					//For Now: just diable LLF and continue as before
-					any_llf = false
-					for j := 0; j < len(ins.What); j++ {
-						use_llf[j] = false
-					}
-				}
-			}
-		}
-	}
-
-	if any_llf {
-		//override reference
-		final_asp_ref = 2 //liquid level
-		//override ofz
-		ofz = -SafeGetF64(pol, "LLFBELOWSURFACE")
-	}
-
 	// do we need to enter slowly?
 	entryspeed, gentlynow := pol["ASPENTRYSPEED"]
 	if gentlynow {
@@ -1687,7 +1647,8 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	aspins.Component = ins.Component
 
 	for i := 0; i < len(aspins.What); i++ {
-		aspins.LLF = append(aspins.LLF, use_llf[i])
+		// follow the liquidlevel if we moved to it earlier
+		aspins.LLF = append(aspins.LLF, final_asp_ref == wtype.LiquidReference.AsInt())
 	}
 
 	ret = append(ret, aspins)
@@ -1931,20 +1892,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	entryspeed := SafeGetF64(pol, "DSPENTRYSPEED")
 	defaultspeed := SafeGetF64(pol, "DEFAULTZSPEED")
 
-	//LLF
-	use_llf, any_llf := get_use_llf(pol, len(ins.What), ins.PltTo, prms)
-	if any_llf {
-		//override reference
-		ref = 2 //liquid level
-		//override ofz
-		ofz = +SafeGetF64(pol, "LLFABOVESURFACE")
-	}
-
-	var gentlydoesit bool
-
-	if entryspeed > 0.0 && entryspeed != defaultspeed {
-		gentlydoesit = true
-	}
+	gentlydoesit := entryspeed > 0.0 && entryspeed != defaultspeed
 
 	if gentlydoesit {
 		// go to the well top
@@ -2054,7 +2002,8 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		boins.What = ins.What
 
 		for i := 0; i < len(ins.What); i++ {
-			boins.LLF = append(boins.LLF, use_llf[i])
+			// follow the liquid-level if we moved to it earlier
+			boins.LLF = append(boins.LLF, ref == wtype.LiquidReference.AsInt())
 		}
 
 		ret = append(ret, boins)
@@ -2076,7 +2025,8 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		dspins.Component = ins.Component
 
 		for i := 0; i < len(ins.What); i++ {
-			dspins.LLF = append(dspins.LLF, use_llf[i])
+			// follow the liquid-level if we moved to it earlier
+			dspins.LLF = append(dspins.LLF, ref == wtype.LiquidReference.AsInt())
 		}
 
 		ret = append(ret, dspins)
@@ -3231,29 +3181,6 @@ func getMulti(w []string) int {
 	}
 
 	return c
-}
-
-func get_use_llf(pol wtype.LHPolicy, multi int, plates []string, prms *LHProperties) ([]bool, bool) {
-	use_llf := make([]bool, multi)
-	any_llf := false
-	enable_llf := SafeGetBool(pol, "USE_LLF")
-
-	//save a few ms
-	if !enable_llf {
-		return use_llf, enable_llf
-	}
-
-	for i := 0; i < multi; i++ {
-		//probably just fetching the same plate each time
-		plate := prms.Plates[plates[i]]
-
-		//do LLF if the well has a volumemodel
-		use_llf[i] = enable_llf && plate.Welltype.HasLiquidLevelModel()
-
-		any_llf = any_llf || use_llf[i]
-	}
-
-	return use_llf, any_llf
 }
 
 // compare proposed value to minimum and maximum tolerated

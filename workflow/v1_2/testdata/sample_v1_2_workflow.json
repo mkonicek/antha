@@ -1,0 +1,160 @@
+{
+    "Processes": {
+        "Aliquot Liquid 1": {
+            "component": "Aliquot_Liquid",
+            "metadata": {
+                "x": 321,
+                "y": 178
+            }
+        },
+        "AccuracyTest 1": {
+            "component": "AccuracyTest",
+            "metadata": {
+                "x": 540,
+                "y": 119
+            }
+        }
+    },
+    "Properties": {
+        "id": null,
+        "name": "My Test Workflow",
+        "description": "Sample v1.2 workflow for use in unit tests"
+    },
+    "connections": [
+        {
+            "source": {
+                "process": "Aliquot Liquid 1",
+                "port": "FirstOutputLiquid"
+            },
+            "target": {
+                "process": "AccuracyTest 1",
+                "port": "Diluent"
+            }
+        }
+    ],
+    "Parameters": {
+        "Aliquot Liquid 1": {
+            "ByRow": false,
+            "LiquidToAliquot": "water",
+            "OutPlate": "SRWFB96_riser18",
+            "Replicates": 8,
+            "VolumePerAliquot": "50ul",
+            "NewPlateName": "Test"
+        },
+        "AccuracyTest 1": {
+            "ImageFile": {},
+            "MinVolume": "1ul",
+            "NumberofReplicates": 16,
+            "OutPlate": "greiner384_riser18",
+            "OverrideLHPolicyForTestSolutions": "SmartMix",
+            "OverrideLHPolicyforDiluent": "multiwater",
+            "OverrideStockConcentrations": {
+                "tartrazine": "1mM"
+            },
+            "PipetteOnebyOne": false,
+            "Printasimage": false,
+            "SpecifyDilutionFactor": 10,
+            "TestSolConcs": [
+                "0uM",
+                "1uM",
+                "2uM",
+                "4uM",
+                "8uM",
+                "16uM",
+                "32uM",
+                "64uM",
+                "128uM",
+                "256uM"
+            ],
+            "TestSols": [
+                "tartrazine"
+            ],
+            "TotalVolume": "100ul",
+            "WellsUsed": []
+        }
+    },
+    "Config": {
+        "deviceIds": [
+            "00000000000000000000000000",
+            "023QQWWWR8GDCW5TQWJ2096TJ2",
+            "03ZDVR8J7E75ESHDGYAF8ST5VA",
+            "0AGFHSRGB2Q33Y0VV44VDE98A4",
+            "0CVVH8W6KMASQMBG09CDR526CX",
+            "2EX2B1MKR10K6JD32TBMRBSGV8",
+            "34HH06JFHWKW63KZPGTW6DH216",
+            "398FDJGDAAP0C8GWTPEYWP5ENE",
+            "3CW875VJG6Y3GMAF5W22XG14K9",
+            "3GD1H1NG85DBGW4RA12Y430Z7W",
+            "41XZHQ0VFMDSPD79H2ZTWW379Q",
+            "447PB8P9SE5FYKD64XXD32XPQS",
+            "44AWMBZ96HNXA6XXTYPNJA956E",
+            "48X7WJJ75KVMC127DM3A8T7837",
+            "4PB3QK5A5JDFBV4SJA37P3C0BZ",
+            "4Q22K2J6731MAVQFYB9FAQWEW9",
+            "4WECWVP7JAFPVAK7V9SEZZD232",
+            "4WRQWYE1V74SHFSDP32T2PYDPJ",
+            "53Y8575Y5PER7HZN42QNT89HG1",
+            "574WDQ6D8YSZ36Y7H9CGRHTNZS",
+            "59XT59YFKP0MDAQM9FYWCH0MCJ",
+            "59XWB7XENW1N1Q8GAYNFBVB21E",
+            "59ZY2273CMVDTQVDJHGM8NEX12",
+            "5D4RPA3RPXZVG9GZGQ4CSX4JTG",
+            "5F44PR91HA0X7G752YA5A0137S",
+            "5GYMA9GN8WKW0WESRTS366VAQG",
+            "5H7V36MHK1FP8PN81Y6RB3EPQ2",
+            "5K73M701VT4WXWDCDCNP8XEM4G",
+            "7CSX8AHFPZHHA9XVPZ0AWGWZFY",
+            "7YSQCYTJP0BTMC4WEK5CWDCE4E"
+        ],
+        "plateIds": [],
+        "driverSpecificInputPreferences": [
+            "position_4",
+            "position_5",
+            "position_7",
+            "position_8",
+            "position_9",
+            "position_6",
+            "position_1",
+            "position_3"
+        ],
+        "driverSpecificOutputPreferences": [
+            "position_6",
+            "position_5",
+            "position_9",
+            "position_8",
+            "position_7",
+            "position_4",
+            "position_1"
+        ],
+        "driverSpecificTipPreferences": [
+            "position_3",
+            "position_2",
+            "position_4",
+            "position_5",
+            "position_6",
+            "position_7",
+            "position_8",
+            "position_9"
+        ],
+        "driverSpecificWashPreferences": [],
+        "driverSpecificTipWastePreferences": [
+            "position_1",
+            "position_7"
+        ],
+        "inputPlateTypes": [
+            "Agarplateforpicking1536"
+        ],
+        "outputPlateTypes": [],
+        "useDriverTipTracking": true,
+        "ignorePhysicalSimulation": false,
+        "tipTypes": [],
+        "modelEvaporation": false,
+        "executionPlannerVersion": "ep2",
+        "outputSort": false,
+        "liquidHandlingPolicyXlsxJmpFile": null,
+        "maxPlates": 4.5,
+        "maxWells": 278,
+        "residualVolumeWeight": 1
+    },
+    "version": "1.2.0"
+}

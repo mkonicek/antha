@@ -116,3 +116,19 @@ func TestGetElements(t *testing.T) {
 		t.Fatalf("Expected %d element type(s), got %d", 2, len(els.Types))
 	}
 }
+
+func TestGetConfig(t *testing.T) {
+	p, err := getTestV1_2WorkflowProvider()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := p.GetConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if cfg == nil {
+		t.Fatal("Got nil Config from GetConfig()")
+	}
+}

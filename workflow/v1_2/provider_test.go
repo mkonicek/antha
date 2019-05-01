@@ -53,7 +53,9 @@ func getTestV1_2WorkflowProvider() (provider.WorkflowProvider, error) {
 	repoMap := workflow.ElementTypesByRepository{}
 	repoMap[repo] = elementTypeMap
 
-	p := NewV1_2WorkflowProvider(wf, fm, repoMap)
+	gilsonDeviceName := "testie"
+
+	p := NewV1_2WorkflowProvider(wf, fm, repoMap, gilsonDeviceName)
 
 	return p, nil
 }
@@ -130,5 +132,17 @@ func TestGetConfig(t *testing.T) {
 
 	if cfg == nil {
 		t.Fatal("Got nil Config from GetConfig()")
+	}
+
+	if !cfg.GlobalMixer.UseDriverTipTracking {
+		t.Fatal("Expected Config.GlobalMixer.UseDriverTipTracking to be true")
+	}
+
+	if !cfg.GlobalMixer.IgnorePhysicalSimulation {
+		t.Fatal("Expected Config.GlobalMixer.IgnorePhysicalSimulation to be true")
+	}
+
+	if len(cfg.GilsonPipetMax.Devices) != 1 {
+		t.Fatalf("Expected to find %d Gilson device(s), found %d", 1, len(cfg.GilsonPipetMax.Devices))
 	}
 }

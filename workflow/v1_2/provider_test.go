@@ -45,3 +45,27 @@ func TestGetMeta(t *testing.T) {
 		t.Errorf("Expected name '%v', got '%v'", expectedName, m.Name)
 	}
 }
+
+func TestGetElements(t *testing.T) {
+	p, err := getTestV1_2WorkflowProvider()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	els, err := p.GetElements()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if els == nil {
+		t.Fatal("Got nil Elements from GetElements()")
+	}
+
+	if len(els.Instances) != 2 {
+		t.Fatalf("Expected %d element instance(s), got %d", 2, len(els.Instances))
+	}
+
+	if len(els.InstancesConnections) != 1 {
+		t.Fatalf("Expected %d element instance connection(s), got %d", 1, len(els.InstancesConnections))
+	}
+}

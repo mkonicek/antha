@@ -3,6 +3,13 @@
 The Dockerfile in this repo is build as part of our CI in
 Cloudbuild. However, it can also be build locally.
 
+## 0. gcloud
+
+The Dockerfile depends, during build, on a base image that is stored
+in our Google Cloud image repositories. So, you need the `gcloud`
+command installed (https://cloud.google.com/sdk/install), and then you
+need to do a `gcloud init` and `gcloud auth configure-docker`
+
 ## 1. Netrc
 
 During build, docker will download, using Go, various sources that we

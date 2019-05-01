@@ -14,7 +14,11 @@ steps:
   - --key=read-github
 
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '--force-rm', '-t', 'eu.gcr.io/antha-images/antha-core:$COMMIT_SHA', '--build-arg', 'COMMIT_SHA=$COMMIT_SHA', '.']
+  entrypoint: '/bin/bash'
+  args:
+  - '-c'
+  - |
+    docker build --force-rm -t 'eu.gcr.io/antha-images/antha-core:$COMMIT_SHA' --build-arg COMMIT_SHA=$COMMIT_SHA --build-arg NETRC="$(cat .netrc)" .
 
 - name: 'gcr.io/cloud-builders/gsutil'
   args: ['cp', 'gs://cloud-build-antha-images/write-gitlab-antha-root-passwd.enc', '/docker-config/.']

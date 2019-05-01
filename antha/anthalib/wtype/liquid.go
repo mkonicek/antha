@@ -594,14 +594,20 @@ func (lhc *Liquid) Sample(v wunit.Volume) (*Liquid, error) {
 	c.Destination = ""
 	c.Extra = lhc.GetExtra()
 
-	// scale down the source volumes appropriately
-	volumeFraction, err := wunit.DivideVolumes(c.Volume(), originalVolume)
-	if err != nil {
-		// this should never happen because we already checked lhc.IsZero()
-		return nil, err
-	}
-	for _, src := range c.Sources {
-		src.Volume.MultiplyBy(volumeFraction)
+	if len(c.Sources) > 0 {
+		// scale down the source volumes appropriately
+		volumeFraction, err := wunit.DivideVolumes(c.Volume(), originalVolume)
+		if err != nil {
+			// this should never happen because we already checked lhc.IsZero()
+			return nil, err
+		}
+		for _, src := range c.Sources {
+			src.Volume.MultiplyBy(volumeFraction)
+		}
+	} else {
+		// we sampled from a pure source (it's got a name, but no Sources)
+		// add it as a source
+		c.Sources = c.asSource()
 	}
 
 	return c, nil
@@ -709,6 +715,9 @@ func (cmp *Liquid) ReplaceDaughterID(ID1, ID2 string) {
 
 // add cmp2 to cmp
 func (cmp *Liquid) Mix(cmp2 *Liquid) {
+	if cmp2.IsZero() {
+		return
+	}
 
 	// merge the sources
 	cmp.Sources = mergeLiquidSources(cmp, cmp2)
@@ -1202,8 +1211,21 @@ type LiquidSources map[string]*LiquidSource
 
 // mergeLiquidSources combine the liquid sources of the given liquids
 func mergeLiquidSources(liquids ...*Liquid) LiquidSources {
-	ret := make(LiquidSources)
 
+	// ignore all liquids which have no volume
+	nonZero := make([]*Liquid, 0, len(liquids))
+	for _, l := range liquids {
+		if !l.IsZero() {
+			nonZero = append(nonZero, l)
+		}
+	}
+	liquids = nonZero
+
+	if len(liquids) == 1 {
+		return liquids[0].Sources
+	}
+
+	ret := make(LiquidSources)
 	for _, l := range liquids {
 		ret.merge(l.asSource())
 	}

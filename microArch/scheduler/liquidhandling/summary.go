@@ -3,6 +3,7 @@ package liquidhandling
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/pkg/errors"
@@ -103,8 +104,8 @@ func SummarizeActions(initialState *driver.LHProperties, itree *driver.ITree) ([
 		return nil, err
 	}
 
-	// keep track of how many transfers we make
-	tf := &transferFactory{}
+	// keep track of the transfers as they are made
+	tf := newTransferFactory()
 
 	// we care about recording transfer block and message instructions
 	acts := itree.Refine(driver.TFB, driver.MSG)
@@ -381,7 +382,7 @@ func (h height) MarshalJSON() ([]byte, error) {
 type liquidSummary struct {
 	Name        string              `json:"name"`
 	TotalVolume *measurementSummary `json:"total_volume"`
-	Sources     []*liquidSource     `json:"sources,omitempty"` // what other liquids make up this liquid
+	Sources     liquidSources       `json:"sources,omitempty"` // what other liquids make up this liquid
 }
 
 // newLiquidSummary create a liquid summary
@@ -395,16 +396,20 @@ func newLiquidSummary(l *wtype.Liquid) *liquidSummary {
 
 // Update update the liquid summary with the new contents set at the new step
 func (ls *liquidSummary) Update(rhs *liquidSummary, transferID int) *liquidSummary {
-	prev := make(map[string]liquidSource, len(ls.Sources))
-	for _, src := range ls.Sources {
-		prev[src.Name] = *src
+	var prev map[string]liquidSource
+	if ls != nil {
+		prev = make(map[string]liquidSource, len(ls.Sources))
+		for _, src := range ls.Sources {
+			prev[src.Name] = *src
+		}
 	}
 
-	srcs := make([]*liquidSource, 0, len(rhs.Sources))
+	srcs := make(liquidSources, 0, len(rhs.Sources))
 	for _, src := range rhs.Sources {
-		// add the transferID if this transfer has added to the volume of this source
+		src.Transfers = prev[src.Name].Transfers
+		// add this transferID if this transfer has added to the volume of this source
 		if src.GetVolume().GreaterThan(prev[src.Name].GetVolume()) {
-			src.Transfers = append(prev[src.Name].Transfers, transferID)
+			src.Transfers = append(src.Transfers, transferID)
 		}
 		srcs = append(srcs, src)
 	}
@@ -425,8 +430,29 @@ type liquidSource struct {
 	Transfers []int   `json:"transfers,omitempty"`
 }
 
-func newLiquidSources(srcs wtype.LiquidSources) []*liquidSource {
-	ret := make([]*liquidSource, 0, len(srcs))
+type liquidSources []*liquidSource
+
+func (ls liquidSources) Len() int {
+	return len(ls)
+}
+
+func (ls liquidSources) Less(i, j int) bool {
+	return ls[i].Name < ls[j].Name
+}
+
+func (ls liquidSources) Swap(i, j int) {
+	ls[i], ls[j] = ls[j], ls[i]
+}
+
+func (ls liquidSources) MarshalJSON() ([]byte, error) {
+	// sort the sources so that the generated JSON is consistent
+	sort.Sort(ls)
+	type LiquidSourcesAlias liquidSources
+	return json.Marshal(LiquidSourcesAlias(ls))
+}
+
+func newLiquidSources(srcs wtype.LiquidSources) liquidSources {
+	ret := make(liquidSources, 0, len(srcs))
 	for name, src := range srcs {
 		ret = append(ret, &liquidSource{
 			Name:   name,
@@ -480,15 +506,21 @@ type contentUpdate struct {
 	NewContent *liquidSummary `json:"new_content"`
 }
 
-func newContentUpdate(then, now *wtype.LHWell, transferID int) *contentUpdate {
+func (tf *transferFactory) newContentUpdate(well *wtype.LHWell) *contentUpdate {
 	return &contentUpdate{
 		Location: wellLocation{
-			DeckItemID: wtype.IDOf(now.GetParent()),
-			Row:        now.Crds.Y,
-			Column:     now.Crds.X,
+			DeckItemID: wtype.IDOf(well.GetParent()),
+			Row:        well.Crds.Y,
+			Column:     well.Crds.X,
 		},
-		NewContent: newLiquidSummary(then.Contents()).Update(newLiquidSummary(now.Contents()), transferID),
+		NewContent: tf.updateLiquidSummary(well),
 	}
+}
+
+func (tf *transferFactory) updateLiquidSummary(well *wtype.LHWell) *liquidSummary {
+	prev := tf.lastContents[wellID(well.ID)]
+	tf.lastContents[wellID(well.ID)] = prev.Update(newLiquidSummary(well.Contents()), tf.transferIndex)
+	return tf.lastContents[wellID(well.ID)]
 }
 
 type mixSummary struct {
@@ -694,8 +726,8 @@ func (tf *transferFactory) newParallelTransfer(vlh *simulator.VirtualLiquidHandl
 
 		tfs := &transferSummary{
 			Index:             tf.transferIndex,
-			From:              newContentUpdate(sourceWells[ch], sourceWells[ch], tf.transferIndex),
-			To:                []*contentUpdate{newContentUpdate(originalDests[ch], destWells[ch], tf.transferIndex)}, // multi dispense will require multiple entries here
+			From:              tf.newContentUpdate(sourceWells[ch]),
+			To:                []*contentUpdate{tf.newContentUpdate(destWells[ch])}, // multi dispense will require multiple entries here
 			Volume:            newMeasurementSummary(wunit.CopyVolume(cti.Volume[ch])),
 			Wasted:            newMeasurementSummary(missing),
 			Policy:            cti.What[ch],
@@ -742,8 +774,17 @@ type transferAction struct {
 	CumulativeTimeEstimate float64         `json:"cumulative_time_estimate"`
 }
 
+type wellID string
+
 type transferFactory struct {
 	transferIndex int
+	lastContents  map[wellID]*liquidSummary
+}
+
+func newTransferFactory() *transferFactory {
+	return &transferFactory{
+		lastContents: make(map[wellID]*liquidSummary),
+	}
 }
 
 // newTransferAction create a new transfer action from the act, which is assumed to have generated ChannelTransferInstructions

@@ -404,6 +404,7 @@ func LayoutSummaryAssertion(path string) Assertion { //nolint
 		if got, err := SummarizeLayout(lh.Properties, lh.FinalProperties, lh.PlateIDMap()); err != nil {
 			t.Fatal(err)
 		} else if err := AssertLayoutsEquivalent(got, expected); err != nil {
+			ioutil.WriteFile("layout.json", got, 0644)
 			t.Error(errors.WithMessage(err, "layout summary mismatch"))
 		}
 	}
@@ -421,6 +422,7 @@ func ActionsSummaryAssertion(path string) Assertion { //nolint
 		if got, err := SummarizeActions(lh.Properties, rq.InstructionTree); err != nil {
 			t.Fatal(err)
 		} else if err := AssertActionsEquivalent(got, expected); err != nil {
+			ioutil.WriteFile("actions.json", got, 0644)
 			t.Error(errors.WithMessage(err, "actions summary mismatch"))
 		}
 	}

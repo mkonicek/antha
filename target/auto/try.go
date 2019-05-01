@@ -59,12 +59,12 @@ func (a *tryer) Try(ctx context.Context, conn *grpc.ClientConn, arg interface{})
 }
 
 var mixerMap = map[string]func(*tryer, context.Context, *grpc.ClientConn, interface{}) error{
-	"GilsonPipetmax": (*tryer).addLowLevelMixer,
-	"CyBio":          (*tryer).addLowLevelMixer,
-	"TecanEvo":       (*tryer).addLowLevelMixer,
-	"LabCyteEcho":    (*tryer).addHighLevelMixer,
-	"Hamilton":       (*tryer).addLowLevelMixer,
-	"TTPLabtech":     (*tryer).addHighLevelMixer,
+	"GilsonPipetmax":      (*tryer).addLowLevelMixer,
+	"CyBio":               (*tryer).addLowLevelMixer,
+	"TecanEvo":            (*tryer).addLowLevelMixer,
+	"LabCyteEcho":         (*tryer).addHighLevelMixer,
+	"Hamilton":            (*tryer).addLowLevelMixer,
+	"TTPLabtechDragonfly": (*tryer).addHighLevelMixer,
 }
 
 // AddMixer queries a mixer driver and adds the corresponding device to the target

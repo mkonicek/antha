@@ -9,9 +9,11 @@ import (
 	"testing"
 
 	"github.com/antha-lang/antha/laboratory/effects"
+	"github.com/antha-lang/antha/workflow"
+	"github.com/antha-lang/antha/workflow/migrate/provider"
 )
 
-func getTestV1_2WorkflowProvider() (*V1_2WorkflowProvider, error) {
+func getTestV1_2WorkflowProvider() (provider.WorkflowProvider, error) {
 	fixture := filepath.Join("testdata", "sample_v1_2_workflow.json")
 	bytes, err := ioutil.ReadFile(fixture)
 	if err != nil {
@@ -33,7 +35,25 @@ func getTestV1_2WorkflowProvider() (*V1_2WorkflowProvider, error) {
 		return nil, err
 	}
 
-	p := NewV1_2WorkflowProvider(wf, fm)
+	repo := &workflow.Repository{
+		Directory: "/tmp",
+	}
+
+	elementNames := []string{"AccuracyTest", "Aliquot_Liquid"}
+
+	elementTypeMap := workflow.ElementTypeMap{}
+	for _, name := range elementNames {
+		etn := workflow.ElementTypeName(name)
+		ep := workflow.ElementPath("Elements/Test/" + name)
+		elementTypeMap[etn] = workflow.ElementType{
+			RepositoryName: "repos.antha.com/antha-test/elements-test",
+			ElementPath:    ep,
+		}
+	}
+	repoMap := workflow.ElementTypesByRepository{}
+	repoMap[repo] = elementTypeMap
+
+	p := NewV1_2WorkflowProvider(wf, fm, repoMap)
 
 	return p, nil
 }
@@ -90,5 +110,9 @@ func TestGetElements(t *testing.T) {
 
 	if len(els.InstancesConnections) != 1 {
 		t.Fatalf("Expected %d element instance connection(s), got %d", 1, len(els.InstancesConnections))
+	}
+
+	if len(els.Types) != 2 {
+		t.Fatalf("Expected %d element type(s), got %d", 2, len(els.Types))
 	}
 }

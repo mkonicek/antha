@@ -2,7 +2,6 @@ package utils
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -64,20 +63,17 @@ func (es ErrorSlice) MarshalJSON() ([]byte, error) {
 
 // WriteToFile writes the contents of an error slice to file as json.
 func (es ErrorSlice) WriteToFile(filename string) error {
-	if f, err := os.OpenFile(filename, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0400); err != nil {
+	if fh, err := os.OpenFile(filename, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0400); err != nil {
 		return err
 	} else {
-		defer f.Close()
-		return es.Write(f)
+		defer fh.Close()
+		return es.ToWriter(fh)
 	}
 }
 
 // Write writes the contents of an error slice as json.
-func (es ErrorSlice) Write(w io.Writer) error {
-	if js, err := json.MarshalIndent(es, "", "\t"); err != nil {
-		return err
-	} else {
-		_, err := fmt.Fprintf(w, "%v\n", string(js))
-		return err
-	}
+func (es ErrorSlice) ToWriter(w io.Writer) error {
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "\t")
+	return enc.Encode(es)
 }

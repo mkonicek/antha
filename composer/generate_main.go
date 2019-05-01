@@ -137,6 +137,7 @@ package main
 
 {{define "main-imports"}}import (
 	"bytes"
+	"os"
 	"io/ioutil"
 
 	"github.com/antha-lang/antha/laboratory"
@@ -162,9 +163,9 @@ package main
 
 {{define "main-main"}}func main() {
 	labBuild := laboratory.NewLaboratoryBuilder(ioutil.NopCloser(bytes.NewBuffer(MustAsset("data/workflow.json"))))
-	defer labBuild.Decommission()
-	if err := runWorkflow(labBuild); err != nil {
-		labBuild.Fatal(err)
+	runWorkflow(labBuild)
+	if err := labBuild.Decommission(); err != nil {
+		os.Exit(1)
 	}
 }
 {{end}}
@@ -172,20 +173,19 @@ package main
 {{define "test-test"}}func TestWorkflow_{{id}}_{{name}}(t *testing.T) {
 	t.Parallel()
 	labBuild := testlab.NewTestLabBuilder(t, {{printf "%q" inDir}}, {{printf "%q" outDir}}, ioutil.NopCloser(bytes.NewBuffer(MustAsset("data/workflow{{id}}.json"))))
-	defer labBuild.Decommission()
-	if err := runWorkflow{{id}}(labBuild); err != nil {
-		labBuild.Fatal(err)
-	}
-
-	if err := labBuild.Compare(); err != nil {
-		labBuild.Fatal(err)
+	runWorkflow{{id}}(labBuild)
+	labBuild.Compare()
+	if err := labBuild.Decommission(); err != nil {
+		t.Fatal(err)
 	}
 }
 {{end}}
 
-{{define "run-workflow"}}func runWorkflow{{id}}(labBuild *laboratory.LaboratoryBuilder) error {
+{{define "run-workflow"}}func runWorkflow{{id}}(labBuild *laboratory.LaboratoryBuilder) {
 	jh := &codec.JsonHandle{}
-	labBuild.RegisterJsonExtensions(jh)
+	if err := labBuild.RegisterJsonExtensions(jh); err != nil {
+		return
+	}
 
 	// Register line maps for the elements we're using
 {{range elementTypes}}{{if .IsAnthaElement}}	{{.Name}}.RegisterLineMap(labBuild)
@@ -198,21 +198,15 @@ package main
 {{end}}
 	// Set parameters
 {{range $name, $inst := .Elements.Instances}}{{range $param, $value := $inst.Parameters}}	if err := codec.NewDecoderBytes([]byte({{printf "%q" $value}}), jh).Decode(&{{varName $name}}.{{token $name $param}}.{{$param}}); err != nil {
-		return err
+		// This will catch things like invalid json where we error before we hit any of our own code.
+		labBuild.RecordError(err, true)
+		return
 	}
 {{end}}{{end}}
 	// Run!
-	errRun := labBuild.RunElements()
-	errSave := labBuild.SaveErrors()
-	if errRun != nil {
-		return errRun
-	}
-	if errSave != nil {
-		return errSave
-	}
+	labBuild.RunElements()
 	labBuild.Compile()
 	labBuild.Export()
-	return nil
 }
 {{end}}
 

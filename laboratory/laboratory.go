@@ -55,8 +55,6 @@ type LaboratoryBuilder struct {
 
 	Completed chan struct{}
 
-	Fatal func(error) // Fatal is a field and not a method so that we can dynamically change it
-
 	*lineMapManager
 	Logger *logger.Logger
 	logFH  *os.File
@@ -75,10 +73,6 @@ func EmptyLaboratoryBuilder() *LaboratoryBuilder {
 		lineMapManager: NewLineMapManager(),
 		Logger:         logger.NewLogger(),
 	}
-	// we wrap in a func here because we may change the value of
-	// Logger (see SetupWorkflow) and so don't want to capture an
-	// old value here.
-	labBuild.Fatal = func(err error) { labBuild.Logger.Fatal(err) }
 	return labBuild
 }
 
@@ -92,19 +86,22 @@ func parseFlags() (inDir, outDir string) {
 func NewLaboratoryBuilder(fh io.ReadCloser) *LaboratoryBuilder {
 	labBuild := EmptyLaboratoryBuilder()
 	inDir, outDir := parseFlags()
-	if err := labBuild.Setup(fh, inDir, outDir); err != nil {
-		labBuild.Fatal(err)
-	}
+	labBuild.Setup(fh, inDir, outDir)
 	return labBuild
 }
 
-func (labBuild *LaboratoryBuilder) Setup(fh io.ReadCloser, inDir, outDir string) error {
-	return utils.ErrorFuncs{
-		func() error { return labBuild.SetupWorkflow(fh) },
+func (labBuild *LaboratoryBuilder) Setup(fh io.ReadCloser, inDir, outDir string) {
+	err := utils.ErrorFuncs{
+		// We sort out the paths first so that we have somewhere to
+		// write out errors to if the workflow is invalid.
 		func() error { return labBuild.SetupPaths(inDir, outDir) },
+		func() error { return labBuild.SetupWorkflow(fh) },
 		func() error { return labBuild.SetupEffects() },
 		func() error { return labBuild.SaveWorkflow() },
 	}.Run()
+	if err != nil {
+		labBuild.RecordError(err, true)
+	}
 }
 
 func (labBuild *LaboratoryBuilder) SetupWorkflow(fh io.ReadCloser) error {
@@ -190,15 +187,8 @@ func (labBuild *LaboratoryBuilder) SaveWorkflow() error {
 	return labBuild.Workflow.WriteToFile(filepath.Join(labBuild.outDir, "workflow", "workflow.json"), false)
 }
 
-func (labBuild *LaboratoryBuilder) SaveErrors() error {
-	if err := labBuild.Errors(); err != nil {
-		return ioutil.WriteFile(filepath.Join(labBuild.outDir, "errors.txt"), []byte(err.Error()), 0400)
-	} else {
-		return nil
-	}
-}
-
-func (labBuild *LaboratoryBuilder) Decommission() {
+// Returns all the errors that were encountered and recorded in this lab's existence
+func (labBuild *LaboratoryBuilder) Decommission() error {
 	if labBuild.logFH != nil {
 		labBuild.Logger.SwapWriters(os.Stderr)
 		if err := labBuild.logFH.Sync(); err != nil {
@@ -208,6 +198,25 @@ func (labBuild *LaboratoryBuilder) Decommission() {
 			labBuild.Logger.Log("msg", "Error when closing log file handle", "error", err)
 		}
 		labBuild.logFH = nil
+	}
+	if err := labBuild.saveErrors(); err != nil {
+		labBuild.RecordError(err, true)
+	}
+	return labBuild.Errors()
+}
+
+// returns non-nil error iff there is an error during the *saving*
+// process. I.e. this is not a reflection of whether there have been
+// errors recorded.
+func (labBuild *LaboratoryBuilder) saveErrors() error {
+	if labBuild.Errors() != nil {
+		// Because we've called Errors() we have gone through a memory
+		// barrier, so direct access to labBuild.errors is now safe,
+		// provided we are the only go-routine doing so, which we should
+		// be.
+		return labBuild.errors.WriteToFile(filepath.Join(labBuild.outDir, "errors.json"))
+	} else {
+		return nil
 	}
 }
 
@@ -220,8 +229,11 @@ func (labBuild *LaboratoryBuilder) RemoveInDir() error {
 }
 
 func (labBuild *LaboratoryBuilder) Compile() {
-	if devices, err := labBuild.connectDevices(); err != nil {
-		labBuild.Fatal(err)
+	if labBuild.Errors() != nil {
+		return
+
+	} else if devices, err := labBuild.connectDevices(); err != nil {
+		labBuild.RecordError(err, true)
 
 	} else {
 		defer devices.Close()
@@ -234,10 +246,10 @@ func (labBuild *LaboratoryBuilder) Compile() {
 		devDir := filepath.Join(labBuild.outDir, "devices")
 
 		if nodes, err := labBuild.effects.Maker.MakeNodes(labBuild.effects.Trace.Instructions()); err != nil {
-			labBuild.Fatal(err)
+			labBuild.RecordError(err, true)
 
 		} else if instrs, err := codegen.Compile(labBuild.effects, devDir, devices, nodes); err != nil {
-			labBuild.Fatal(err)
+			labBuild.RecordError(err, true)
 
 		} else {
 			labBuild.instrs = instrs
@@ -275,7 +287,7 @@ func (labBuild *LaboratoryBuilder) connectDevices() (*target.Target, error) {
 
 func (labBuild *LaboratoryBuilder) Export() {
 	if err := export(labBuild.effects.IDGenerator, labBuild.inDir, labBuild.outDir, labBuild.instrs, labBuild.Errors()); err != nil {
-		labBuild.Fatal(err)
+		labBuild.RecordError(err, true)
 	}
 }
 
@@ -312,12 +324,15 @@ func (labBuild *LaboratoryBuilder) AddConnection(src, dst Element, fun func()) e
 }
 
 // Run all the installed elements.
-func (labBuild *LaboratoryBuilder) RunElements() error {
+func (labBuild *LaboratoryBuilder) RunElements() {
+	if labBuild.Errors() != nil {
+		return
+	}
+
 	labBuild.elemLock.Lock()
 	if labBuild.elemsUnrun == 0 {
 		labBuild.elemLock.Unlock()
 		close(labBuild.Completed)
-		return nil
 
 	} else {
 		for _, eb := range labBuild.elements {
@@ -328,8 +343,6 @@ func (labBuild *LaboratoryBuilder) RunElements() error {
 		}
 		labBuild.elemLock.Unlock()
 		<-labBuild.Completed
-
-		return labBuild.Errors()
 	}
 }
 
@@ -342,7 +355,12 @@ func (labBuild *LaboratoryBuilder) elementCompleted() {
 	}
 }
 
-func (labBuild *LaboratoryBuilder) recordError(err error) {
+// record that an error has happened, and optionally log it out of the
+// standard logger. Safe for concurrent use.
+func (labBuild *LaboratoryBuilder) RecordError(err error, log bool) {
+	if log {
+		labBuild.Logger.Log("error", err)
+	}
 	labBuild.errLock.Lock()
 	defer labBuild.errLock.Unlock()
 	labBuild.errors = append(labBuild.errors, err)
@@ -353,6 +371,8 @@ func (labBuild *LaboratoryBuilder) recordError(err error) {
 	}
 }
 
+// Returns any errors that have been encountered and recorded so far -
+// does not block. Safe for concurrent use.
 func (labBuild *LaboratoryBuilder) Errors() error {
 	select {
 	case <-labBuild.Errored:
@@ -410,16 +430,11 @@ func (lab *Laboratory) CallSteps(e Element) error {
 	go eb.Run(lab.labBuild.makeLab(eb, logger), eb.element.Steps)
 	<-finished
 
-	select {
-	case <-lab.labBuild.Errored:
-		return lab.labBuild.errors
-	default:
-		return nil
-	}
+	return lab.labBuild.Errors()
 }
 
 func (lab *Laboratory) error(err error) {
-	lab.labBuild.recordError(err)
+	lab.labBuild.RecordError(err, false)
 	lab.Logger.Log("error", err.Error())
 }
 

@@ -61,11 +61,6 @@ func (l *Logger) With(keyvals ...interface{}) *Logger {
 	}
 }
 
-func (l *Logger) Fatal(err error) {
-	l.Log("fatal", err.Error())
-	os.Exit(1)
-}
-
 // Replace the underlying writers of not only this logger, but the
 // entire tree of loggers created by any calls to With from the root
 // downwards.
@@ -77,4 +72,14 @@ func (l *Logger) SwapWriters(ws ...io.Writer) {
 	logger := kitlog.NewLogfmtLogger(kitlog.NewSyncWriter(w))
 	logger = kitlog.With(logger, "ts", kitlog.DefaultTimestampUTC)
 	l.swappable.Swap(logger)
+}
+
+// Fatal uses the logger to log the error and then calls
+// os.Exit(1). Deferred functions are not called, and it is quite
+// unlikely you want this function: you certainly should never use
+// this function from within an element. It is deliberately not a
+// method on Logger to make it less likely to be accidentally used.
+func Fatal(l *Logger, err error) {
+	l.Log("fatal", err)
+	os.Exit(1)
 }

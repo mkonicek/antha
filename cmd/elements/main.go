@@ -20,15 +20,15 @@ func main() {
 
 	args := os.Args
 	if len(args) < 2 {
-		l.Fatal(fmt.Errorf("Subcommand needed. One of: %v", subCmds.List()))
+		logger.Fatal(l, fmt.Errorf("Subcommand needed. One of: %v", subCmds.List()))
 	}
 
 	if cmd, found := subCmds[strings.ToLower(args[1])]; found {
 		if err := cmd(l, args[2:]); err != nil {
-			l.Fatal(err)
+			logger.Fatal(l, err)
 		}
 	} else {
-		l.Fatal(fmt.Errorf("Unknown subcommand: %s. Available: %v", args[1], subCmds.List()))
+		logger.Fatal(l, fmt.Errorf("Unknown subcommand: %s. Available: %v", args[1], subCmds.List()))
 	}
 }
 

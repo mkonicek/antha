@@ -1,14 +1,20 @@
 FROM eu.gcr.io/antha-images/golang:1.12.4-build AS build
 
-ARG COMMIT_SHA
 ARG NETRC
 RUN printf "%s\n" "$NETRC" > $HOME/.netrc
 WORKDIR /antha
-RUN set -ex && go mod init antha && go mod edit "-require=github.com/antha-lang/antha@$COMMIT_SHA" && go mod download
-RUN set -ex && go install github.com/antha-lang/antha/cmd/...
-RUN set -ex && go test -c github.com/antha-lang/antha/cmd/elements
-COPY scripts/. /antha/.
-RUN ./antha-test.sh
+# layer for caching build dependencies
+COPY go.mod go.sum ./
+RUN go mod edit -dropreplace=github.com/Synthace/antha-runner -dropreplace=github.com/Synthace/instruction-plugins
+RUN go mod download
+
+# Now build antha commands
+COPY . .
+# repeat since we copied these again
+RUN go mod edit -dropreplace=github.com/Synthace/antha-runner -dropreplace=github.com/Synthace/instruction-plugins
+RUN go install ./cmd/...  && \
+    go test -c ./cmd/elements
+RUN scripts/antha-test.sh
 
 # Final stage: drop the layers with the netrc credentials. we still need the go
 # compiler, etc, so use the same base image.

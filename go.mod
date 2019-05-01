@@ -34,4 +34,4 @@ require (
 
 replace github.com/Synthace/antha-runner => ../antha-runner
 
-replace github.com/Synthace/instruction-plugions => ../instruction-plugins
+replace github.com/Synthace/instruction-plugins => ../instruction-plugins

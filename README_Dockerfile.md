@@ -42,10 +42,7 @@ Install it.
 
 ## 3. Build the image
 
-    antha-lang/antha$ docker build -t local-antha --build-arg NETRC="$(cat ~/.netrc)" --build-arg COMMIT_SHA=feature/future_sanity .
-
-This should work. For the `COMMIT_SHA` you can provide a branch name
-or a commit hash. Our CI uses commit hash.
+    antha-lang/antha$ docker build -t local-antha --build-arg NETRC="$(cat ~/.netrc)" .
 
 All the sources necessary should be downloaded and compiled, and the
 antha-lang/antha tests will be run. At the end, you should have a
@@ -56,8 +53,6 @@ message like:
     Removing intermediate container cfccbe95a60c
      ---> 2ce136c2261c
     Successfully built 2ce136c2261c
-
-Run `docker images` to confirm.
 
 ## 4. Run the image
 

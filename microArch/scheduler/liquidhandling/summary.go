@@ -818,13 +818,11 @@ type tipAction struct {
 
 func newTipAction(vlh *simulator.VirtualLiquidHandler, kind tipActionType, multi, head int, positions, wellcoords []string, timeEstimate, cumulativeTimeEstimate time.Duration) *tipAction {
 	tipSources := make(map[int]*wellLocation, multi)
-	for i := 0; i < multi; i++ {
-		wc := wtype.MakeWellCoords(wellcoords[i])
-
+	for ch := 0; ch < len(positions); ch++ {
 		// ignore channels where no tip is loaded/unloaded
-		if positions[i] != "" && !wc.IsZero() {
-			tipSources[i] = &wellLocation{
-				DeckItemID: wtype.IDOf(vlh.GetObjectAt(positions[i])),
+		if wc := wtype.MakeWellCoords(wellcoords[ch]); positions[ch] != "" && !wc.IsZero() {
+			tipSources[ch] = &wellLocation{
+				DeckItemID: wtype.IDOf(vlh.GetObjectAt(positions[ch])),
 				Row:        wc.Y,
 				Column:     wc.X,
 			}

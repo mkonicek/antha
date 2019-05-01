@@ -1464,7 +1464,7 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 	if any_llf {
 		below_surface := SafeGetF64(pol, "LLFBELOWSURFACE")
 		//Is the liquid height in each well higher than below_surface
-		for i := 0; i < ins.Multi; i++ {
+		for i := 0; i < len(ins.What); i++ {
 			plate := prms.Plates[ins.PltFrom[i]]
 			if plate.Welltype.HasLiquidLevelModel() {
 				ll_model, quad := plate.Welltype.GetLiquidLevelModel().(*wutil.Quadratic)
@@ -1482,7 +1482,7 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 					//and another without LLF so we don't smack into the bottom
 					//For Now: just diable LLF and continue as before
 					any_llf = false
-					for j := 0; j < ins.Multi; j++ {
+					for j := 0; j < len(ins.What); j++ {
 						use_llf[j] = false
 					}
 				}
@@ -1508,7 +1508,7 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		mov.Plt = ins.FPlateType
 		mov.Well = ins.WellFrom
 		mov.WVolume = ins.FVolume
-		for i := 0; i < ins.Multi; i++ {
+		for i := 0; i < len(ins.What); i++ {
 			mov.Reference = append(mov.Reference, 1)
 			mov.OffsetX = append(mov.OffsetX, ofx)
 			mov.OffsetY = append(mov.OffsetY, ofy)
@@ -1567,30 +1567,23 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		}
 
 		if ok {
-			v := make([]wunit.Volume, ins.Multi)
-			for i := 0; i < ins.Multi; i++ {
-				vl := wunit.NewVolume(mixvol, "ul")
-				v[i] = vl
+			v := make([]wunit.Volume, len(ins.What))
+			for i, what := range ins.What {
+				if what == "" {
+					v[i] = wunit.ZeroVolume()
+				} else {
+					v[i] = wunit.NewVolume(mixvol, "ul")
+				}
 			}
 			mix.Volume = v
 		}
 		// offsets
 
-		for k := 0; k < ins.Multi; k++ {
+		for k := 0; k < len(ins.What); k++ {
 			mix.OffsetX = append(mix.OffsetX, mixofx)
-		}
-
-		for k := 0; k < ins.Multi; k++ {
 			mix.OffsetY = append(mix.OffsetY, mixofy)
-		}
-		for k := 0; k < ins.Multi; k++ {
 			mix.OffsetZ = append(mix.OffsetZ, mixofz)
-		}
-
-		c := make([]int, ins.Multi)
-
-		for i := 0; i < ins.Multi; i++ {
-			c[i] = cycles
+			mix.Cycles = append(mix.Cycles, cycles)
 		}
 
 		// set speed
@@ -1614,7 +1607,6 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 			ret = append(ret, setspd)
 		}
 
-		mix.Cycles = c
 		ret = append(ret, mix)
 
 		if changepipspeed {
@@ -1731,7 +1723,7 @@ func (ins *SuckInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		mov.Plt = ins.FPlateType
 		mov.Well = ins.WellFrom
 		mov.WVolume = ins.FVolume
-		for i := 0; i < ins.Multi; i++ {
+		for i := 0; i < len(ins.What); i++ {
 			mov.Reference = append(mov.Reference, 1)
 			mov.OffsetX = append(mov.OffsetX, ofx)
 			mov.OffsetY = append(mov.OffsetY, ofy)
@@ -1963,7 +1955,7 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 		mov.Plt = ins.TPlateType
 		mov.Well = ins.WellTo
 		mov.WVolume = ins.TVolume
-		for i := 0; i < ins.Multi; i++ {
+		for i := 0; i < len(ins.What); i++ {
 			mov.Reference = append(mov.Reference, 1)
 			mov.OffsetX = append(mov.OffsetX, ofx)
 			mov.OffsetY = append(mov.OffsetY, ofy)
@@ -2187,9 +2179,12 @@ func (ins *BlowInstruction) Generate(ctx context.Context, policy *wtype.LHPolicy
 
 		if ok {
 			v := make([]wunit.Volume, len(ins.What))
-			for i := 0; i < len(ins.What); i++ {
-				vl := wunit.NewVolume(mixvol, "ul")
-				v[i] = vl
+			for i, what := range ins.What {
+				if what == "" {
+					v[i] = wunit.ZeroVolume()
+				} else {
+					v[i] = wunit.NewVolume(mixvol, "ul")
+				}
 			}
 			mix.Volume = v
 		}

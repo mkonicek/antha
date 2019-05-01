@@ -192,9 +192,7 @@ func (a *runOpt) Run() error {
 				outFile = fmt.Sprintf("%s.%d", a.LayoutSummaryFile, i)
 			}
 
-			if bs, err := mix.SummarizeLayout(); err != nil {
-				return err
-			} else if err := ioutil.WriteFile(outFile, bs, 0644); err != nil {
+			if err := ioutil.WriteFile(outFile, mix.Summary.Layout, 0644); err != nil {
 				return err
 			}
 		}
@@ -207,9 +205,7 @@ func (a *runOpt) Run() error {
 				outFile = fmt.Sprintf("%s.%d", a.MixSummaryFile, i)
 			}
 
-			if bs, err := mix.SummarizeActions(); err != nil {
-				return err
-			} else if err := ioutil.WriteFile(outFile, bs, 0644); err != nil {
+			if err := ioutil.WriteFile(outFile, mix.Summary.Actions, 0644); err != nil {
 				return err
 			}
 		}

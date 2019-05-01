@@ -67,8 +67,6 @@ func MakePolicies() map[string]LHPolicy {
 	add(MakeWaterPolicy(), "water")
 	add(MakeSingleChannelPolicy(), "SingleChannel")
 	add(MakeSmartMixSingleChannelPolicy(), "SmartMixSingleChannel")
-	add(MakeLLFPolicy(), "LiquidLevel")
-	add(MakeSmartMixLLFPolicy(), "SmartMixLiquidLevel")
 	add(MakeMultiWaterPolicy(), "multiwater")
 	add(MakeCulturePolicy(), "culture")
 	add(MakeCultureReusePolicy(), "culturereuse")
@@ -311,20 +309,6 @@ func MakeSingleChannelPolicy() LHPolicy {
 	pol := MakeWaterPolicy()
 	pol["CAN_MULTI"] = false
 	pol["DESCRIPTION"] = "Default policy designed for pipetting water but prohibiting multi-channel use. Includes a blowout step for added accuracy and no post-mixing."
-	return pol
-}
-
-func MakeLLFPolicy() LHPolicy {
-	pol := MakeWaterPolicy()
-	pol["USE_LLF"] = true
-	pol["DESCRIPTION"] = "Default policy designed for pipetting water, permitting multi-channel use and aspirating and dispensing at the liquid level. Includes a blowout step for added accuracy and no post-mixing."
-	return pol
-}
-
-func MakeSmartMixLLFPolicy() LHPolicy {
-	pol := SmartMixPolicy()
-	pol["USE_LLF"] = true
-	pol["DESCRIPTION"] = "3 post-mixes of the sample being transferred. Aspirate and dispense at liquid height. Volume is adjusted based upon the volume of liquid in the destination well.  No tip reuse permitted."
 	return pol
 }
 
@@ -668,10 +652,7 @@ func MakeDefaultPolicy() LHPolicy {
 	defaultpolicy["DONT_BE_DIRTY"] = true
 	defaultpolicy["POST_MIX_Z"] = 0.5
 	defaultpolicy["PRE_MIX_Z"] = 0.5
-	defaultpolicy["LLFABOVESURFACE"] = 3.0 //distance above liquid level for dispensing with LiqudLevelFollowing
-	defaultpolicy["LLFBELOWSURFACE"] = 3.0 //distance below liquid level for aspirating with LLF
 	defaultpolicy["DESCRIPTION"] = "Default mix Policy. Blowout performed, no touch off, no mixing, tip reuse permitted for the same solution."
-	defaultpolicy["USE_LLF"] = false
 
 	return defaultpolicy
 }

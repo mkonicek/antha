@@ -129,10 +129,7 @@ func MakePolicyItems() AParamSet {
 		"NO_AIR_DISPENSE":             AParam{Name: "NO_AIR_DISPENSE", Type: typemap[Bool], Desc: "Prevent dispensing anywhere other than under liquid?"},
 		"CAN_MSA":                     AParam{Name: "CAN_MSA", Type: typemap[Bool], Desc: "Permissible to aspirate from multiple sources? -- currently non functional"},
 		"DESCRIPTION":                 AParam{Name: "DESCRIPTION", Type: typemap[String], Desc: "Summary of LHPolicy to present to the user"},
-		"LLFBELOWSURFACE":             AParam{Name: "LLFBELOWSURFACE", Type: typemap[Float64], Desc: "Distance below surface for Liquid Level Following (LLF) when aspirating"},
-		"LLFABOVESURFACE":             AParam{Name: "LLFABOVESURFACE", Type: typemap[Float64], Desc: "Distance below surface for Liquid Level Following (LLF) when dispensing"},
 		PolicyNameField:               AParam{Name: PolicyNameField, Type: typemap[String], Desc: "Name of the Liquid Policy"},
-		"USE_LLF":                     AParam{Name: "USE_LLF", Type: typemap[Bool], Desc: "Use Liquid-level following if plate has a model for liquid height-volume relations and the driver can use it."},
 	}
 }
 

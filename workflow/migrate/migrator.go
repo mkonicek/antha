@@ -1,0 +1,69 @@
+package migrate
+
+import (
+	"github.com/antha-lang/antha/logger"
+	"github.com/antha-lang/antha/workflow"
+	"github.com/antha-lang/antha/workflow/migrate/provider"
+)
+
+// Migrator migrates data from a previous format to the v2.0 format
+type Migrator struct {
+	logger   *logger.Logger
+	provider provider.WorkflowProvider
+}
+
+// NewMigrator creates and returns a migrator
+func NewMigrator(logger *logger.Logger, provider provider.WorkflowProvider) *Migrator {
+	return &Migrator{
+		logger:   logger,
+		provider: provider,
+	}
+}
+
+// Workflow returns the workflow resulting from exercising this migrator
+func (m *Migrator) Workflow() (*workflow.Workflow, error) {
+
+	wf := &workflow.Workflow{
+		SchemaVersion: "2.0",
+		// WorkflowId: ?,
+		// SimulationId: ?,
+	}
+
+	meta, err := m.provider.GetMeta()
+	if err != nil {
+		return nil, err
+	}
+	wf.Meta = meta
+
+	repos, err := m.provider.GetRepositories()
+	if err != nil {
+		return nil, err
+	}
+	wf.Repositories = repos
+
+	elements, err := m.provider.GetElements()
+	if err != nil {
+		return nil, err
+	}
+	wf.Elements = elements
+
+	inventory, err := m.provider.GetInventory()
+	if err != nil {
+		return nil, err
+	}
+	wf.Inventory = inventory
+
+	config, err := m.provider.GetConfig()
+	if err != nil {
+		return nil, err
+	}
+	wf.Config = config
+
+	testing, err := m.provider.GetTesting()
+	if err != nil {
+		return nil, err
+	}
+	wf.Testing = testing
+
+	return wf, nil
+}

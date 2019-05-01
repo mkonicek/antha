@@ -1,11 +1,11 @@
 FROM eu.gcr.io/antha-images/golang:1.12.4-build
 
 ARG COMMIT_SHA
-ADD .netrc /
-RUN mv /.netrc $HOME/.netrc || true
+ARG NETRC
+RUN printf "%s\n" "$NETRC" > $HOME/.netrc
 RUN mkdir /antha
 WORKDIR /antha
-RUN set -ex && go mod init antha && go get github.com/antha-lang/antha@$COMMIT_SHA && go mod download
+RUN set -ex && go mod init antha && go mod edit "-require=github.com/antha-lang/antha@$COMMIT_SHA" && go mod download
 RUN set -ex && go install github.com/antha-lang/antha/cmd/...
 RUN set -ex && go test -c github.com/antha-lang/antha/cmd/elements
 COPY scripts/. /antha/.

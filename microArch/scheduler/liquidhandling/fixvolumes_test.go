@@ -228,7 +228,8 @@ func TestFixVolumes4(t *testing.T) {
 
 	c4 := c3.Cp()
 
-	ins.PassThrough[c3.ID] = c4
+	ins.AddInput(c3)
+	ins.AddOutput(c4)
 
 	ic.Child = &wtype.IChain{
 		Parent: ic,

@@ -177,30 +177,17 @@ func aggregatePromptsWithSameMessage(inss []*wtype.LHInstruction, topolGraph gra
 	// TODO --> user control of scope of this aggregation
 	//          i.e. break every plate, some other subset
 
-	// this is just plain weird
-	// what I think is happening is:
-	// we have hashed out promps by message
-	// then we have taken steps to ensure that those at different
-	// levels of the chain are not merged
-	// now we are making (effectively) dummy instructions to
-	// replace them, using PassThrough
-	// thing is that this really isn't necessary once Prompts
-	// are N-N anyway
-	// which they are now.
-	// so I think PassThrough can DIAF
-
+	// in case we see sequential identical prompts / waits
+	// we aggregate them here
 	for prompter, iar := range prMessage {
 		// single message may appear multiply in the chain
 		for _, ar := range iar {
 			ins := wtype.NewLHPromptInstruction()
 			ins.Message = prompter.Message
 			ins.WaitTime = prompter.WaitTime
-			ins.AddOutput(wtype.NewLHComponent())
 			for _, ins2 := range ar {
-				for i, cmp := range ins2.Inputs {
-					ins.Inputs = append(ins.Inputs, cmp)
-					ins.PassThrough[cmp.ID] = ins2.Outputs[i]
-				}
+				ins.Inputs = append(ins.Inputs, ins2.Inputs...)
+				ins.Outputs = append(ins.Outputs, ins2.Outputs...)
 			}
 			insOut = append(insOut, graph.Node(ins))
 		}

@@ -62,8 +62,7 @@ func resultCmpMap(inss []*LHInstruction) map[string]*LHInstruction {
 		if ins.Type == LHIMIX {
 			res[ins.Outputs[0].ID] = ins
 		} else if ins.Type == LHIPRM {
-			// we use passthrough instead
-			for _, cmp := range ins.PassThrough {
+			for _, cmp := range ins.Outputs {
 				res[cmp.ID] = ins
 			}
 		} else if ins.Type == LHISPL {
@@ -82,11 +81,6 @@ func cmpInsMap(inss []*LHInstruction) map[string]*LHInstruction {
 		if ins.Type == LHIMIX {
 			for _, c := range ins.Inputs {
 				res[c.ID] = ins
-			}
-		} else if ins.Type == LHIPRM {
-			// we use passthrough instead
-			for ID := range ins.PassThrough {
-				res[ID] = ins
 			}
 		}
 	}

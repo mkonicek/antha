@@ -220,13 +220,13 @@ func LayoutStage(ctx context.Context, request *LHRequest, params *liquidhandling
 		// pass ID through chain if not a mix
 		if v.Type == wtype.LHIPRM {
 			// the current contract on prompt instructions is to pass through a set of components
-			// on which basis we need only make sure the result has the same location
-			// as the input
-			// set pass throughs
+			// on which basis we need only make sure that each result has the same location
+			// as its corresponding input
 
-			for i := 0; i < len(v.Inputs); i++ {
-				v.PassThrough[v.Inputs[i].ID].Loc = v.Inputs[i].Loc
+			for i := range v.Inputs {
+				v.Outputs[i].Loc = v.Inputs[i].Loc
 			}
+
 			continue
 		} else if v.Type == wtype.LHISPL {
 			// similar to the above, just ensure the results both have the right location set

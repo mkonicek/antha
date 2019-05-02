@@ -177,7 +177,6 @@ func mixerPrompt(ctx context.Context, opts mixerPromptOpts) *commandInst {
 	for i := 0; i < len(opts.Components); i++ {
 		inst.AddOutput(opts.Components[i])
 		inst.AddInput(opts.ComponentsIn[i])
-		inst.PassThrough[opts.ComponentsIn[i].ID] = opts.Components[i]
 	}
 
 	return &commandInst{

@@ -60,7 +60,9 @@ func passThrough(values []*wtype.LHInstruction, wanted map[string]wunit.Volume) 
 
 func passThroughMap(ins *wtype.LHInstruction, wanted, updated map[string]wunit.Volume) map[string]wunit.Volume {
 	if ins.Type == wtype.LHIPRM {
-		for IDin, out := range ins.PassThrough {
+		for i := range ins.Inputs {
+			IDin := ins.Inputs[i].ID
+			out := ins.Outputs[i]
 			IDout := out.ID
 
 			vol, ok := getWantVol(wanted, out.FullyQualifiedName())

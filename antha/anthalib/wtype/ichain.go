@@ -114,8 +114,8 @@ func (it *IChain) Print() {
 				fmt.Printf("-- ")
 			} else if it.Values[j].Type == LHIPRM {
 				fmt.Println("PROMPT ", it.Values[j].Message, "-- ")
-				for in, out := range it.Values[j].PassThrough {
-					fmt.Println(in, ":::", out.ID, " --")
+				for i := range it.Values[j].Inputs {
+					fmt.Println(it.Values[j].Inputs[i].ID, ":::", it.Values[j].Outputs[i].ID, " --")
 				}
 			} else if it.Values[j].Type == LHISPL {
 				fmt.Printf("SPLIT %2d: %s ", j, it.Values[j].ID)

@@ -1,7 +1,6 @@
-package v1_2
+package v1_2_test
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -14,20 +13,11 @@ import (
 	"github.com/antha-lang/antha/workflow"
 	"github.com/antha-lang/antha/workflow/migrate"
 	"github.com/antha-lang/antha/workflow/migrate/provider"
+	"github.com/antha-lang/antha/workflow/v1_2"
 )
 
 func getTestV1_2WorkflowProvider() (provider.WorkflowProvider, error) {
-	fixture := filepath.Join("testdata", "sample_v1_2_workflow.json")
-	bytes, err := ioutil.ReadFile(fixture)
-	if err != nil {
-		return nil, err
-	}
-
-	wf := &workflowv1_2{}
-	err = json.Unmarshal(bytes, wf)
-	if err != nil {
-		return nil, err
-	}
+	oldWorkflowPath := filepath.Join("testdata", "sample_v1_2_workflow.json")
 
 	tmpDir, err := ioutil.TempDir("", "tests")
 	if err != nil {
@@ -58,9 +48,9 @@ func getTestV1_2WorkflowProvider() (provider.WorkflowProvider, error) {
 
 	gilsonDeviceName := "testie"
 
-	p := NewV1_2WorkflowProvider(wf, fm, repoMap, gilsonDeviceName)
+	logger := logger.NewLogger()
 
-	return p, nil
+	return v1_2.NewV1_2WorkflowProvider(oldWorkflowPath, fm, repoMap, gilsonDeviceName, logger)
 }
 
 func TestGetMeta(t *testing.T) {

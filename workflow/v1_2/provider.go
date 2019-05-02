@@ -3,6 +3,7 @@ package v1_2
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wtype/liquidtype"
@@ -20,19 +21,31 @@ type V1_2WorkflowProvider struct {
 }
 
 func NewV1_2WorkflowProvider(
-	wf *workflowv1_2,
+	oldWorkflowPath string,
 	fm *effects.FileManager,
 	repoMap workflow.ElementTypesByRepository,
 	gilsonDeviceName string,
-) *V1_2WorkflowProvider {
 	logger *logger.Logger,
+) (*V1_2WorkflowProvider, error) {
+
+	bytes, err := ioutil.ReadFile(oldWorkflowPath)
+	if err != nil {
+		return nil, err
+	}
+
+	wf := &workflowv1_2{}
+	err = json.Unmarshal(bytes, wf)
+	if err != nil {
+		return nil, err
+	}
+
 	return &V1_2WorkflowProvider{
 		owf:              wf,
 		fm:               fm,
 		repoMap:          repoMap,
 		gilsonDeviceName: gilsonDeviceName,
 		logger:           logger,
-	}
+	}, nil
 }
 
 func (p *V1_2WorkflowProvider) GetWorkflowID() (workflow.BasicId, error) {

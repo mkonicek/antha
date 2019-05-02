@@ -837,6 +837,12 @@ func (self *VirtualLiquidHandler) Aspirate(volume []float64, overstroke []bool, 
 			} else if c, err := wells[i].RemoveVolume(aspVol); err != nil {
 				self.AddErrorf("%s: unexpected well error \"%s\"", describe(), err.Error())
 			} else {
+				if c.Volume().LessThan(aspVol.MinusEpsilon()) {
+					// the volume removed from the well was less than the volume requested, probably due to ANTHA-2704, see above
+					// scale up the volume
+					c.SetVolume(aspVol)
+				}
+
 				err := tip.AddComponent(c)
 				if tipVol.LessThan(tip.MinVol.MinusEpsilon()) {
 					// ignore the error returned from AddComponent and add a warning instead

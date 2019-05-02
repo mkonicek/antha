@@ -71,7 +71,8 @@ func NewLiquid(name string, lType LiquidType, volume wunit.Volume) *Liquid {
 	r := NewLHComponent()
 	r.Type = lType
 	r.SetName(name)
-	r.SetVolume(volume)
+	r.Vol = volume.RawValue()
+	r.Vunit = volume.Unit().PrefixedSymbol()
 
 	return r
 }
@@ -481,10 +482,11 @@ func (lhc *Liquid) DNASequences() ([]DNASequence, error) {
 	return lhc.getDNASequences()
 }
 
-// SetVolume adds a volume to the component
+// SetVolume sets the volume to the component, inflating or deflating source volumes to match
 func (lhc *Liquid) SetVolume(v wunit.Volume) {
 	lhc.Vol = v.RawValue()
 	lhc.Vunit = v.Unit().PrefixedSymbol()
+	lhc.Sources.scaleToVolume(v)
 }
 
 func (lhc *Liquid) HasParent(s string) bool {
@@ -592,8 +594,6 @@ func (lhc *Liquid) Sample(v wunit.Volume) (*Liquid, error) {
 		return lhc, nil
 	}
 
-	originalVolume := lhc.Volume()
-
 	c := lhc.Dup()
 	c.ID = NewUUID()
 	v = lhc.Remove(v)
@@ -604,17 +604,7 @@ func (lhc *Liquid) Sample(v wunit.Volume) (*Liquid, error) {
 	c.Destination = ""
 	c.Extra = lhc.GetExtra()
 
-	if len(c.Sources) > 0 {
-		// scale down the source volumes appropriately
-		volumeFraction, err := wunit.DivideVolumes(c.Volume(), originalVolume)
-		if err != nil {
-			// this should never happen because we already checked lhc.IsZero()
-			return nil, err
-		}
-		for _, src := range c.Sources {
-			src.Volume.MultiplyBy(volumeFraction)
-		}
-	} else {
+	if len(c.Sources) == 0 {
 		// we sampled from a pure source (it's got a name, but no Sources)
 		// add it as a source
 		c.Sources = c.asSource()
@@ -1257,6 +1247,29 @@ func (ls LiquidSources) String(prefix, indent string) string {
 		}
 	}
 	return strings.Join(ret, "\n")
+}
+
+// scaleToVolume scale the volume of the sources so that the total volume is equal to vol
+// has no effect if there are no sources or the initial volume is zero
+func (ls LiquidSources) scaleToVolume(vol wunit.Volume) {
+	initialVol := wunit.ZeroVolume()
+	for _, src := range ls {
+		initialVol.IncrBy(src.Volume)
+	}
+
+	if initialVol.IsZero() {
+		return
+	}
+
+	volumeFraction, err := wunit.DivideVolumes(vol, initialVol)
+	if err != nil {
+		// we already checked that the denominator isn't zero, so panic
+		panic(err)
+	}
+
+	for _, src := range ls {
+		src.Volume.MultiplyBy(volumeFraction)
+	}
 }
 
 // Names returns an alphabetically sorted list of all the source names in the liquid

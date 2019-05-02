@@ -30,16 +30,16 @@ func NewV1_2WorkflowProvider(
 	}
 }
 
-func (p *V1_2WorkflowProvider) GetMeta() (*workflow.Meta, error) {
-	meta := &workflow.Meta{}
+func (p *V1_2WorkflowProvider) GetMeta() (workflow.Meta, error) {
+	meta := workflow.Meta{}
 	if p.owf.Properties.Name != "" {
 		meta.Name = p.owf.Properties.Name
 	}
 	return meta, nil
 }
 
-func (p *V1_2WorkflowProvider) GetRepositories() (*workflow.Repositories, error) {
-	return nil, nil
+func (p *V1_2WorkflowProvider) GetRepositories() (workflow.Repositories, error) {
+	return workflow.Repositories{}, nil
 }
 
 func (p *V1_2WorkflowProvider) getElementInstances() (workflow.ElementInstances, error) {
@@ -91,31 +91,31 @@ func (p *V1_2WorkflowProvider) getElementConnections() (workflow.ElementInstance
 	return connections, nil
 }
 
-func (p *V1_2WorkflowProvider) GetElements() (*workflow.Elements, error) {
+func (p *V1_2WorkflowProvider) GetElements() (workflow.Elements, error) {
 	instances, err := p.getElementInstances()
 	if err != nil {
-		return nil, err
+		return workflow.Elements{}, err
 	}
 
 	types, err := p.getElementTypes()
 	if err != nil {
-		return nil, err
+		return workflow.Elements{}, err
 	}
 
 	connections, err := p.getElementConnections()
 	if err != nil {
-		return nil, err
+		return workflow.Elements{}, err
 	}
 
-	return &workflow.Elements{
+	return workflow.Elements{
 		Instances:            instances,
 		Types:                types,
 		InstancesConnections: connections,
 	}, nil
 }
 
-func (p *V1_2WorkflowProvider) GetInventory() (*workflow.Inventory, error) {
-	return nil, nil
+func (p *V1_2WorkflowProvider) GetInventory() (workflow.Inventory, error) {
+	return workflow.Inventory{}, nil
 }
 
 func (p *V1_2WorkflowProvider) getGlobalMixerConfig() (workflow.GlobalMixerConfig, error) {
@@ -198,26 +198,26 @@ func (p *V1_2WorkflowProvider) getGilsonPipetMaxConfig() (workflow.GilsonPipetMa
 	}, nil
 }
 
-func (p *V1_2WorkflowProvider) GetConfig() (*workflow.Config, error) {
+func (p *V1_2WorkflowProvider) GetConfig() (workflow.Config, error) {
 	gmc, err := p.getGlobalMixerConfig()
 	if err != nil {
-		return nil, err
+		return workflow.Config{}, err
 	}
 
 	gpmc, err := p.getGilsonPipetMaxConfig()
 	if err != nil {
-		return nil, err
+		return workflow.Config{}, err
 	}
 
-	return &workflow.Config{
+	return workflow.Config{
 		GlobalMixer:    gmc,
 		GilsonPipetMax: gpmc,
 	}, nil
 }
 
-func (p *V1_2WorkflowProvider) GetTesting() (*workflow.Testing, error) {
+func (p *V1_2WorkflowProvider) GetTesting() (workflow.Testing, error) {
 	if len(p.owf.testOpt.Results.MixTaskResults) == 0 {
-		return nil, nil
+		return workflow.Testing{}, nil
 	}
 
 	mixChecks := make([]workflow.MixTaskCheck, 0, len(p.owf.testOpt.Results.MixTaskResults))
@@ -226,7 +226,7 @@ func (p *V1_2WorkflowProvider) GetTesting() (*workflow.Testing, error) {
 
 		instructions, err := json.Marshal(check.Instructions)
 		if err != nil {
-			return nil, err
+			return workflow.Testing{}, err
 		}
 
 		mixChecks = append(mixChecks, workflow.MixTaskCheck{
@@ -236,7 +236,7 @@ func (p *V1_2WorkflowProvider) GetTesting() (*workflow.Testing, error) {
 		})
 	}
 
-	return &workflow.Testing{
+	return workflow.Testing{
 		MixTaskChecks: mixChecks,
 	}, nil
 }

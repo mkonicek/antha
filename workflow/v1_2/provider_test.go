@@ -71,10 +71,6 @@ func TestGetMeta(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if m == nil {
-		t.Fatal("Got nil Meta from GetMeta()")
-	}
-
 	expectedName := "My Test Workflow"
 	if m.Name != expectedName {
 		t.Errorf("Expected name '%v', got '%v'", expectedName, m.Name)
@@ -90,10 +86,6 @@ func TestGetElements(t *testing.T) {
 	els, err := p.GetElements()
 	if err != nil {
 		t.Fatal(err)
-	}
-
-	if els == nil {
-		t.Fatal("Got nil Elements from GetElements()")
 	}
 
 	if len(els.Instances) != 2 {
@@ -130,10 +122,6 @@ func TestGetConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if cfg == nil {
-		t.Fatal("Got nil Config from GetConfig()")
-	}
-
 	if !cfg.GlobalMixer.UseDriverTipTracking {
 		t.Fatal("Expected Config.GlobalMixer.UseDriverTipTracking to be true")
 	}
@@ -158,7 +146,7 @@ func TestGetTesting(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if tst != nil {
-		t.Fatal("Got non-nil Testing from GetTesting()")
+	if len(tst.MixTaskChecks) != 0 {
+		t.Fatal("Got non-empty Testing from GetTesting()")
 	}
 }

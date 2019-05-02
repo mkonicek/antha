@@ -14,6 +14,7 @@ import (
 	"github.com/antha-lang/antha/workflow"
 	"github.com/antha-lang/antha/workflow/migrate"
 	"github.com/antha-lang/antha/workflow/migrate/provider"
+	"github.com/antha-lang/antha/workflow/simulaterequestpb"
 	"github.com/antha-lang/antha/workflow/v1_2"
 )
 
@@ -99,14 +100,17 @@ func main() {
 	switch fromFormat {
 	case fromFormatJSON:
 		{
-			provider, err = v1_2.NewV1_2WorkflowProvider(fromReader, fm, repoMap, gilsonDevice, l)
+			provider, err = v1_2.NewProvider(fromReader, fm, repoMap, gilsonDevice, l)
 			if err != nil {
 				logger.Fatal(l, err)
 			}
 		}
 	case fromFormatProtobuf:
 		{
-			logger.Fatal(l, fmt.Errorf("Format not implemented"))
+			provider, err = simulaterequestpb.NewProvider(fromReader, fm, repoMap, gilsonDevice, l)
+			if err != nil {
+				logger.Fatal(l, err)
+			}
 		}
 	default:
 		{

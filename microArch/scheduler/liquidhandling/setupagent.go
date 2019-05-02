@@ -36,6 +36,32 @@ import (
 // v2.0 should be another linear program - basically just want to optimize
 // positioning in the face of constraints
 
+// method is very similar for input/output plates, pass in string identifying whether it's input or output to distinguish in error messagning
+func getLocation(p *wtype.Plate, pid string, inout string, params *liquidhandling.LHProperties, prefs []string, setup map[string]interface{}) (string, error) {
+	if p == nil {
+		err := wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("Plate with id ", pid, " in ", inout, "_plate_order does not exist in ", inout, "_plates"))
+		return "", err
+	}
+
+	allowed, isConstrained := p.IsConstrainedOn(params.Model)
+	if !isConstrained {
+		allowed = make([]string, 0, 1)
+	}
+	position := get_first_available_preference(prefs, setup, allowed)
+
+	if position == "" {
+		//RaiseError("No positions left for input")
+		err := wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprint("No position left for ", inout, " ", p.GetName(), " Type: ", p.Type, " Constrained: ", isConstrained, " allowed positions: ", allowed))
+		return "", err
+	}
+
+	if err := params.AddPlateTo(position, p); err != nil {
+		return "", errors.WithMessage(err, "while setting up input plates")
+	}
+	fmt.Println(fmt.Sprintf("%s plate of type %s in position %s", inout, p.Type, position))
+	return position, nil
+}
+
 // default setup agent
 func BasicSetupAgent(labEffects *effects.LaboratoryEffects, request *LHRequest, params *liquidhandling.LHProperties) error {
 	// this is quite tricky and requires extensive interaction with the liquid handling
@@ -188,70 +214,24 @@ func BasicSetupAgent(labEffects *effects.LaboratoryEffects, request *LHRequest, 
 
 	for _, pid := range output_plate_order {
 		p := output_plates[pid]
-		allowed, isConstrained := p.IsConstrainedOn(params.Model)
-		if !isConstrained {
-			allowed = make([]string, 0, 1)
-		}
-		// it seems that when allowed is an empty string it is going to be ignored
-		// we need to differentiate between allowedLocations beting empty
-		allowedLocations, ok := params.Driver.GetAllowedLocations(p)
-		if !(ok.Ok()) {
-			return errors.New(fmt.Sprintf("Can't determine allowed locations for  Plate %s", p.GetName()))
-		}
-		// if allowedLocations is empty throw error
-		if allowedLocations != nil {
-			if len(allowedLocations) == 0 {
-				//FIXME it could be nice to have a SN here -- can be returned from plugin.
-				return errors.New(fmt.Sprintf("Could not find any allowed location for Plate %s (Type: %s, Mfr: %s, Part: %s), on LiquidHandler %s %s", p.PlateName, params.Driver.DriverType, p.Mnfr, p.PartNr, params.Mnfr, params.Model))
-			} else {
-				// not sure what "allowed" is supposed to represent hence I keep it here.
-				allowed = append(allowed, allowedLocations...)
-			}
-			// else: append allowedLocations to allowed
-		}
-		position := get_first_available_preference(output_preferences, setup, allowed)
-
-		if position == "" {
-			//RaiseError("No positions left for output")
-			err := wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprint("No position left for output ", p.GetName(), " Type: ", p.Type, " Constrained: ", isConstrained, " allowed positions: ", allowed))
+		position, err := getLocation(p, pid, "output", params, output_preferences, setup)
+		if err != nil {
 			return err
 		}
-
 		setup[position] = p
 		plate_lookup[p.ID] = position
 
-		if err := params.AddPlateTo(position, p); err != nil {
-			return errors.WithMessage(err, "while setting up output plates")
-		}
-		fmt.Println(fmt.Sprintf("Output plate of type %s in position %s", p.Type, position))
 	}
 
 	for _, pid := range input_plate_order {
 		p := input_plates[pid]
-
-		if p == nil {
-			err := wtype.LHError(wtype.LH_ERR_DIRE, fmt.Sprint("Plate with id ", pid, " in input_plate_order does not exist in input_plates"))
+		position, err := getLocation(p, pid, "input", params, input_preferences, setup)
+		if err != nil {
 			return err
 		}
-
-		allowed, isConstrained := p.IsConstrainedOn(params.Model)
-		if !isConstrained {
-			allowed = make([]string, 0, 1)
-		}
-		position := get_first_available_preference(input_preferences, setup, allowed)
-
-		if position == "" {
-			//RaiseError("No positions left for input")
-			err := wtype.LHError(wtype.LH_ERR_NO_DECK_SPACE, fmt.Sprint("No position left for input ", p.GetName(), " Type: ", p.Type, " Constrained: ", isConstrained, " allowed positions: ", allowed))
-			return err
-		}
-
 		setup[position] = p
 		plate_lookup[p.ID] = position
-		if err := params.AddPlateTo(position, p); err != nil {
-			return errors.WithMessage(err, "while setting up input plates")
-		}
-		fmt.Println(fmt.Sprintf("Input plate of type %s in position %s", p.Type, position))
+
 	}
 
 	// add the waste if required...

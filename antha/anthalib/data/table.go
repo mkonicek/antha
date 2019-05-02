@@ -446,7 +446,7 @@ func (t *Table) Append(other *Table) (*Table, error) {
 	return AppendMany(t, other)
 }
 
-// Foreach iterates over a subset of columns of a table using a user-defined function.
+// Foreach eagerly iterates over a table using a user-defined function.
 // May be useful for:
 //
 // - reading table contents into some user-defined data struct (e.g. a map)
@@ -456,4 +456,17 @@ func (t *Table) Append(other *Table) (*Table, error) {
 // Use the returned object to specify the columns and the function.
 func (t *Table) Foreach() *ForeachSelection {
 	return &ForeachSelection{t: t}
+}
+
+// ForeachKey eagerly iterates over a table grouping it by a given key: for every single key value, Foreach().By()
+// calls the callback and supplies it with the key value and the "partition" table (the table containing other values
+// from corresponding rows of the source table).
+//
+// For the time being, it is implemented on the top of Sort() - therefore only orderable keys are supported (currently
+// only supported types are considered orderable).
+func (t *Table) ForeachKey(key ...ColumnName) *ForeachKeySelection {
+	return &ForeachKeySelection{
+		t:   t,
+		key: key,
+	}
 }

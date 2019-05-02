@@ -69,7 +69,7 @@ func newNativeCompareFuncFloat64(nativeMeta *nativeSeriesMeta, asc bool) compare
 	notNull := nativeMeta.notNull
 
 	return func(i, j int) int {
-		return compareFloat64(data[i], notNull.Test(i), data[j], notNull.Test(j), asc)
+		return compareFloat64(data[i], notNull[i], data[j], notNull[j], asc)
 	}
 }
 
@@ -97,7 +97,7 @@ func newNativeSwapFuncFloat64(nativeMeta *nativeSeriesMeta) swapFunc {
 	notNull := nativeMeta.notNull
 	return func(i, j int) {
 		data[i], data[j] = data[j], data[i]
-		notNull.Swap(i, j)
+		notNull[i], notNull[j] = notNull[j], notNull[i]
 	}
 }
 
@@ -108,7 +108,7 @@ func newNativeCompareFuncInt64(nativeMeta *nativeSeriesMeta, asc bool) compareFu
 	notNull := nativeMeta.notNull
 
 	return func(i, j int) int {
-		return compareInt64(data[i], notNull.Test(i), data[j], notNull.Test(j), asc)
+		return compareInt64(data[i], notNull[i], data[j], notNull[j], asc)
 	}
 }
 
@@ -136,7 +136,7 @@ func newNativeSwapFuncInt64(nativeMeta *nativeSeriesMeta) swapFunc {
 	notNull := nativeMeta.notNull
 	return func(i, j int) {
 		data[i], data[j] = data[j], data[i]
-		notNull.Swap(i, j)
+		notNull[i], notNull[j] = notNull[j], notNull[i]
 	}
 }
 
@@ -147,7 +147,7 @@ func newNativeCompareFuncInt(nativeMeta *nativeSeriesMeta, asc bool) compareFunc
 	notNull := nativeMeta.notNull
 
 	return func(i, j int) int {
-		return compareInt(data[i], notNull.Test(i), data[j], notNull.Test(j), asc)
+		return compareInt(data[i], notNull[i], data[j], notNull[j], asc)
 	}
 }
 
@@ -175,7 +175,7 @@ func newNativeSwapFuncInt(nativeMeta *nativeSeriesMeta) swapFunc {
 	notNull := nativeMeta.notNull
 	return func(i, j int) {
 		data[i], data[j] = data[j], data[i]
-		notNull.Swap(i, j)
+		notNull[i], notNull[j] = notNull[j], notNull[i]
 	}
 }
 
@@ -186,7 +186,7 @@ func newNativeCompareFuncString(nativeMeta *nativeSeriesMeta, asc bool) compareF
 	notNull := nativeMeta.notNull
 
 	return func(i, j int) int {
-		return compareString(data[i], notNull.Test(i), data[j], notNull.Test(j), asc)
+		return compareString(data[i], notNull[i], data[j], notNull[j], asc)
 	}
 }
 
@@ -203,7 +203,7 @@ func newNativeSwapFuncString(nativeMeta *nativeSeriesMeta) swapFunc {
 	notNull := nativeMeta.notNull
 	return func(i, j int) {
 		data[i], data[j] = data[j], data[i]
-		notNull.Swap(i, j)
+		notNull[i], notNull[j] = notNull[j], notNull[i]
 	}
 }
 
@@ -214,7 +214,7 @@ func newNativeCompareFuncBool(nativeMeta *nativeSeriesMeta, asc bool) compareFun
 	notNull := nativeMeta.notNull
 
 	return func(i, j int) int {
-		return compareBool(data[i], notNull.Test(i), data[j], notNull.Test(j), asc)
+		return compareBool(data[i], notNull[i], data[j], notNull[j], asc)
 	}
 }
 
@@ -231,7 +231,7 @@ func newNativeSwapFuncBool(nativeMeta *nativeSeriesMeta) swapFunc {
 	notNull := nativeMeta.notNull
 	return func(i, j int) {
 		data[i], data[j] = data[j], data[i]
-		notNull.Swap(i, j)
+		notNull[i], notNull[j] = notNull[j], notNull[i]
 	}
 }
 
@@ -242,7 +242,7 @@ func newNativeCompareFuncTimestampMillis(nativeMeta *nativeSeriesMeta, asc bool)
 	notNull := nativeMeta.notNull
 
 	return func(i, j int) int {
-		return compareTimestampMillis(data[i], notNull.Test(i), data[j], notNull.Test(j), asc)
+		return compareTimestampMillis(data[i], notNull[i], data[j], notNull[j], asc)
 	}
 }
 
@@ -270,7 +270,7 @@ func newNativeSwapFuncTimestampMillis(nativeMeta *nativeSeriesMeta) swapFunc {
 	notNull := nativeMeta.notNull
 	return func(i, j int) {
 		data[i], data[j] = data[j], data[i]
-		notNull.Swap(i, j)
+		notNull[i], notNull[j] = notNull[j], notNull[i]
 	}
 }
 
@@ -281,7 +281,7 @@ func newNativeCompareFuncTimestampMicros(nativeMeta *nativeSeriesMeta, asc bool)
 	notNull := nativeMeta.notNull
 
 	return func(i, j int) int {
-		return compareTimestampMicros(data[i], notNull.Test(i), data[j], notNull.Test(j), asc)
+		return compareTimestampMicros(data[i], notNull[i], data[j], notNull[j], asc)
 	}
 }
 
@@ -309,6 +309,6 @@ func newNativeSwapFuncTimestampMicros(nativeMeta *nativeSeriesMeta) swapFunc {
 	notNull := nativeMeta.notNull
 	return func(i, j int) {
 		data[i], data[j] = data[j], data[i]
-		notNull.Swap(i, j)
+		notNull[i], notNull[j] = notNull[j], notNull[i]
 	}
 }

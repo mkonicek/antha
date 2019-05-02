@@ -97,7 +97,7 @@ func (m *nativeSeriesMeta) readFloat64(_ *seriesIterCache) iterator {
 
 type nativeSeriesIterFloat64 struct {
 	data    []float64
-	notNull notNullMask
+	notNull []bool
 	pos     int
 }
 
@@ -107,7 +107,7 @@ func (i *nativeSeriesIterFloat64) Next() bool {
 }
 
 func (i *nativeSeriesIterFloat64) Float64() (float64, bool) {
-	return i.data[i.pos], i.notNull.Test(i.pos)
+	return i.data[i.pos], i.notNull[i.pos]
 }
 
 func (i *nativeSeriesIterFloat64) Value() interface{} {
@@ -194,7 +194,7 @@ func (m *nativeSeriesMeta) readInt64(_ *seriesIterCache) iterator {
 
 type nativeSeriesIterInt64 struct {
 	data    []int64
-	notNull notNullMask
+	notNull []bool
 	pos     int
 }
 
@@ -204,7 +204,7 @@ func (i *nativeSeriesIterInt64) Next() bool {
 }
 
 func (i *nativeSeriesIterInt64) Int64() (int64, bool) {
-	return i.data[i.pos], i.notNull.Test(i.pos)
+	return i.data[i.pos], i.notNull[i.pos]
 }
 
 func (i *nativeSeriesIterInt64) Value() interface{} {
@@ -291,7 +291,7 @@ func (m *nativeSeriesMeta) readInt(_ *seriesIterCache) iterator {
 
 type nativeSeriesIterInt struct {
 	data    []int
-	notNull notNullMask
+	notNull []bool
 	pos     int
 }
 
@@ -301,7 +301,7 @@ func (i *nativeSeriesIterInt) Next() bool {
 }
 
 func (i *nativeSeriesIterInt) Int() (int, bool) {
-	return i.data[i.pos], i.notNull.Test(i.pos)
+	return i.data[i.pos], i.notNull[i.pos]
 }
 
 func (i *nativeSeriesIterInt) Value() interface{} {
@@ -388,7 +388,7 @@ func (m *nativeSeriesMeta) readString(_ *seriesIterCache) iterator {
 
 type nativeSeriesIterString struct {
 	data    []string
-	notNull notNullMask
+	notNull []bool
 	pos     int
 }
 
@@ -398,7 +398,7 @@ func (i *nativeSeriesIterString) Next() bool {
 }
 
 func (i *nativeSeriesIterString) String() (string, bool) {
-	return i.data[i.pos], i.notNull.Test(i.pos)
+	return i.data[i.pos], i.notNull[i.pos]
 }
 
 func (i *nativeSeriesIterString) Value() interface{} {
@@ -485,7 +485,7 @@ func (m *nativeSeriesMeta) readBool(_ *seriesIterCache) iterator {
 
 type nativeSeriesIterBool struct {
 	data    []bool
-	notNull notNullMask
+	notNull []bool
 	pos     int
 }
 
@@ -495,7 +495,7 @@ func (i *nativeSeriesIterBool) Next() bool {
 }
 
 func (i *nativeSeriesIterBool) Bool() (bool, bool) {
-	return i.data[i.pos], i.notNull.Test(i.pos)
+	return i.data[i.pos], i.notNull[i.pos]
 }
 
 func (i *nativeSeriesIterBool) Value() interface{} {
@@ -582,7 +582,7 @@ func (m *nativeSeriesMeta) readTimestampMillis(_ *seriesIterCache) iterator {
 
 type nativeSeriesIterTimestampMillis struct {
 	data    []TimestampMillis
-	notNull notNullMask
+	notNull []bool
 	pos     int
 }
 
@@ -592,7 +592,7 @@ func (i *nativeSeriesIterTimestampMillis) Next() bool {
 }
 
 func (i *nativeSeriesIterTimestampMillis) TimestampMillis() (TimestampMillis, bool) {
-	return i.data[i.pos], i.notNull.Test(i.pos)
+	return i.data[i.pos], i.notNull[i.pos]
 }
 
 func (i *nativeSeriesIterTimestampMillis) Value() interface{} {
@@ -679,7 +679,7 @@ func (m *nativeSeriesMeta) readTimestampMicros(_ *seriesIterCache) iterator {
 
 type nativeSeriesIterTimestampMicros struct {
 	data    []TimestampMicros
-	notNull notNullMask
+	notNull []bool
 	pos     int
 }
 
@@ -689,7 +689,7 @@ func (i *nativeSeriesIterTimestampMicros) Next() bool {
 }
 
 func (i *nativeSeriesIterTimestampMicros) TimestampMicros() (TimestampMicros, bool) {
-	return i.data[i.pos], i.notNull.Test(i.pos)
+	return i.data[i.pos], i.notNull[i.pos]
 }
 
 func (i *nativeSeriesIterTimestampMicros) Value() interface{} {

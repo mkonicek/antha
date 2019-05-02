@@ -342,3 +342,21 @@ func (on *MustForeachOn) Interface(fn func(v ...interface{}), assertions ...Sche
 	err := on.on.Interface(fn, assertions...)
 	handle(err)
 }
+
+// ForeachKey
+
+// ForeachKey returns a proxy for *Table.ForeachKey.
+func (m MustTable) ForeachKey(key ...ColumnName) *MustForeachKeySelection {
+	return &MustForeachKeySelection{m.Table.ForeachKey(key...)}
+}
+
+// MustForeachKeySelection is a proxy for ForeachKeySelection.
+type MustForeachKeySelection struct {
+	fks *ForeachKeySelection
+}
+
+// By performs ForeachKey on the whole table rows.
+// For wide tables this might be inefficient, consider using Project before By.
+func (fks *MustForeachKeySelection) By(fn func(key Row, data *Table)) {
+	handle(fks.fks.By(fn))
+}

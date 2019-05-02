@@ -12,17 +12,28 @@ func getChannelForTest() *wtype.LHChannelParameter {
 	return wtype.NewLHChannelParameter("ch", "gilson", wunit.NewVolume(20.0, "ul"), wunit.NewVolume(200.0, "ul"), wunit.NewFlowRate(0.0, "ml/min"), wunit.NewFlowRate(100.0, "ml/min"), 8, false, wtype.LHVChannel, 1)
 }
 
+func getSingleChannelSuck(what string, volume wunit.Volume) *SuckInstruction {
+	return NewSuckInstruction(&ChannelTransferInstruction{
+		What:   []string{what},
+		Volume: []wunit.Volume{volume},
+		Prms:   []*wtype.LHChannelParameter{getChannelForTest()},
+		Multi:  1,
+	})
+}
+
+func getSingleChannelBlow(what string, volume wunit.Volume) *BlowInstruction {
+	return NewBlowInstruction(&ChannelTransferInstruction{
+		What:   []string{what},
+		Volume: []wunit.Volume{volume},
+		Prms:   []*wtype.LHChannelParameter{getChannelForTest()},
+		Multi:  1,
+	})
+}
+
 func TestDNAPolicy(t *testing.T) {
 	pft, _ := wtype.GetLHPolicyForTest()
 
-	tp := TransferParams{
-		What:    "dna",
-		Volume:  wunit.NewVolume(2.0, "ul"),
-		Channel: getChannelForTest(),
-	}
-
-	ins1 := NewSuckInstruction()
-	ins1.AddTransferParams(tp)
+	ins1 := getSingleChannelSuck("dna", wunit.NewVolume(2.0, "ul"))
 
 	p, err := GetPolicyFor(pft, ins1)
 
@@ -36,10 +47,8 @@ func TestDNAPolicy(t *testing.T) {
 		t.Fatal("DNA must not post mix at volumes > 2 ul")
 	}
 
-	tp.Volume = wunit.NewVolume(1.99, "ul")
+	ins2 := getSingleChannelSuck("dna", wunit.NewVolume(1.99, "ul"))
 
-	ins2 := NewSuckInstruction()
-	ins2.AddTransferParams(tp)
 	p, err = GetPolicyFor(pft, ins2)
 
 	if err != nil {
@@ -56,29 +65,21 @@ func TestDNAPolicy(t *testing.T) {
 func TestPEGPolicy(t *testing.T) {
 	pft, _ := wtype.GetLHPolicyForTest()
 
-	tp := TransferParams{
-		What:    "peg",
-		Volume:  wunit.NewVolume(190.0, "ul"),
-		Channel: getChannelForTest(),
-	}
-
-	ins1 := NewSuckInstruction()
-	ins1.AddTransferParams(tp)
+	ins1 := getSingleChannelSuck("peg", wunit.NewVolume(190.0, "ul"))
 
 	p, err := GetPolicyFor(pft, ins1)
-
 	if err != nil {
 		t.Error(err)
 	}
 
 	if p["ASPZOFFSET"].(float64) != 1.0 {
-		t.Fatal("ASPZOFFSET for PEG must be 1.0")
+		t.Error("ASPZOFFSET for PEG must be 1.0")
 	}
 	if p["DSPZOFFSET"].(float64) != 1.0 {
-		t.Fatal("DSPZOFFSET for PEG must be 1.0")
+		t.Error("DSPZOFFSET for PEG must be 1.0")
 	}
 	if p["POST_MIX_Z"].(float64) != 1.0 {
-		t.Fatal("POST_MIX_Z for PEG must be 1.0")
+		t.Error("POST_MIX_Z for PEG must be 1.0")
 	}
 
 	for i := 0; i < 100; i++ {
@@ -97,17 +98,9 @@ func TestPEGPolicy(t *testing.T) {
 func TestPPPolicy(t *testing.T) {
 	pft, _ := wtype.GetLHPolicyForTest()
 
-	tp := TransferParams{
-		What:    "protoplasts",
-		Volume:  wunit.NewVolume(10.0, "ul"),
-		Channel: getChannelForTest(),
-	}
-
-	ins1 := NewBlowInstruction()
-	ins1.AddTransferParams(tp)
+	ins1 := getSingleChannelBlow("protoplasts", wunit.NewVolume(10.0, "ul"))
 
 	p, err := GetPolicyFor(pft, ins1)
-
 	if err != nil {
 		t.Error(err)
 	}
@@ -164,9 +157,13 @@ func getWaterInstructions() []RobotInstruction {
 		ret = append(ret, ins)
 	}
 
+	cti := &ChannelTransferInstruction{
+		What: waters,
+		Prms: []*wtype.LHChannelParameter{getChannelForTest()},
+	}
+
 	{
-		ins := NewBlowInstruction()
-		ins.What = waters
+		ins := NewBlowInstruction(cti)
 		ret = append(ret, ins)
 	}
 
@@ -177,14 +174,12 @@ func getWaterInstructions() []RobotInstruction {
 	}
 
 	{
-		ins := NewSuckInstruction()
-		ins.What = waters
+		ins := NewSuckInstruction(cti)
 		ret = append(ret, ins)
 	}
 
 	{
-		ins := NewBlowInstruction()
-		ins.What = waters
+		ins := NewBlowInstruction(cti)
 		ret = append(ret, ins)
 	}
 
@@ -237,18 +232,16 @@ func TestSmartMixPolicy(t *testing.T) {
 		)
 	}
 
-	tp := TransferParams{
-		What:    "SmartMix",
-		Volume:  wunit.NewVolume(25.0, "ul"),
-		TVolume: wunit.NewVolume(1000.0, "ul"),
-		Channel: getChannelForTest(),
+	cti := &ChannelTransferInstruction{
+		What:    []string{"SmartMix"},
+		Volume:  []wunit.Volume{wunit.NewVolume(25.0, "ul")},
+		TVolume: []wunit.Volume{wunit.NewVolume(1000.0, "ul")},
+		Prms:    []*wtype.LHChannelParameter{getChannelForTest()},
 	}
 
-	ins1 := NewBlowInstruction()
-	ins1.AddTransferParams(tp)
+	ins1 := NewBlowInstruction(cti)
 
 	p, err := GetPolicyFor(pft, ins1)
-
 	if err != nil {
 		t.Error(err)
 	}
@@ -260,13 +253,12 @@ func TestSmartMixPolicy(t *testing.T) {
 			"found ", m, " ul \n")
 	}
 
-	tp.Volume = wunit.NewVolume(25, "ul")
-	tp.TVolume = wunit.NewVolume(50, "ul")
+	cti.Volume[0] = wunit.NewVolume(25, "ul")
+	cti.TVolume[0] = wunit.NewVolume(50, "ul")
 
-	ins2 := NewBlowInstruction()
-	ins2.AddTransferParams(tp)
+	ins2 := NewBlowInstruction(cti)
+
 	p, err = GetPolicyFor(pft, ins2)
-
 	if err != nil {
 		t.Error(err)
 	}

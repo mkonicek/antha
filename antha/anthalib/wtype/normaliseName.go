@@ -94,7 +94,7 @@ func NormaliseComponentName(component *Liquid) error {
 
 	newName := ReturnNormalisedComponentName(component)
 
-	component.SetName(newName)
+	component.CName = trimString(newName)
 
 	return nil
 }

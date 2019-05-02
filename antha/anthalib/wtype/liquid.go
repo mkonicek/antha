@@ -59,7 +59,7 @@ type Liquid struct {
 	Visc               float64
 	StockConcentration float64
 	SubComponents      ComponentList // List of all sub components in the LHComponent.
-	Sources            LiquidSources // describes the liquids which were combined to make this one
+	Sources            LiquidSources // describes the named liquids which were combined to make this one
 	Extra              map[string]interface{}
 	Loc                string // refactor to PlateLocation
 	Destination        string
@@ -70,7 +70,7 @@ type Liquid struct {
 func NewLiquid(name string, lType LiquidType, volume wunit.Volume) *Liquid {
 	r := NewLHComponent()
 	r.Type = lType
-	r.SetName(name)
+	r.CName = name
 	r.Vol = volume.RawValue()
 	r.Vunit = volume.Unit().PrefixedSymbol()
 
@@ -164,24 +164,35 @@ func (lhc *Liquid) GetName() string {
 	return fmt.Sprintf("%v of %s", lhc.Volume(), lhc.CName)
 }
 
-//Summarize describe the component in a user friendly manner
+//Summarize describe the liquid in a user friendly manner
 func (lhc *Liquid) Summarize() string {
 	if lhc == nil {
 		return "nil"
 	}
 
+	nameVol := "unknown volume of unknown component"
 	if lhc.Vol != 0.0 {
-		return fmt.Sprintf("%v of %s", lhc.Volume(), lhc.CName)
+		nameVol = fmt.Sprintf("%v of %s", lhc.Volume(), lhc.CName)
 	} else if lhc.Tvol != 0.0 {
-		return fmt.Sprintf("%s to %v", lhc.CName, lhc.TotalVolume())
+		nameVol = fmt.Sprintf("%s to %v", lhc.CName, lhc.TotalVolume())
 	} else if lhc.Conc != 0.0 {
-		return fmt.Sprintf("%s to %v", lhc.CName, lhc.Concentration())
+		nameVol = fmt.Sprintf("%s to %v", lhc.CName, lhc.Concentration())
+	} else if lhc.CName != "" {
+		nameVol = fmt.Sprintf("unknown amount of %s", lhc.CName)
 	}
 
-	if lhc.CName != "" {
-		return fmt.Sprintf("unknown amount of %s", lhc.CName)
+	loc := ""
+	if lhc.Loc != "" {
+		loc = "at " + lhc.Loc
 	}
-	return "unknown volume of unknown component"
+
+	sources := ""
+	if len(lhc.Sources) > 0 {
+		sources = fmt.Sprintf(" containing:\n%s", lhc.Sources.String(" >", "  "))
+	}
+
+	return fmt.Sprintf("%s %s[id=%s]%s", nameVol, loc, lhc.ID, sources)
+
 }
 
 // PlateID returns the id of a plate or the empty string
@@ -505,7 +516,16 @@ func (lhc *Liquid) Name() string {
 
 // SetName adds the specified component name to the component.
 func (lhc *Liquid) SetName(name string) {
-	lhc.CName = trimString(name)
+	name = trimString(name)
+	lhc.CName = name
+	if len(lhc.Sources) > 0 && !lhc.Volume().IsZero() {
+		lhc.Sources = LiquidSources{
+			name: &LiquidSource{
+				Volume:  lhc.Volume(),
+				Sources: lhc.Sources,
+			},
+		}
+	}
 }
 
 // MeaningfulName returns the name of the liquid if one has been explicitly set (e.g. with SetName)
@@ -603,12 +623,6 @@ func (lhc *Liquid) Sample(v wunit.Volume) (*Liquid, error) {
 	c.Loc = ""
 	c.Destination = ""
 	c.Extra = lhc.GetExtra()
-
-	if len(c.Sources) == 0 {
-		// we sampled from a pure source (it's got a name, but no Sources)
-		// add it as a source
-		c.Sources = c.asSource()
-	}
 
 	return c, nil
 }
@@ -747,7 +761,7 @@ func (cmp *Liquid) Mix(cmp2 *Liquid) {
 		if len(cmp.SubComponents.Components) == 0 && len(cmp2.SubComponents.Components) > 0 {
 			updateSubComponentsOnly(cmp, cmp2) //nolint
 		}
-		cmp.SetName(cmp2.Name())
+		cmp.CName = trimString(cmp2.Name())
 	} else {
 		UpdateComponentDetails(cmp, cmp, cmp2) //nolint
 	}
@@ -1166,22 +1180,6 @@ func (l1 *Liquid) EqualTypeVolumeID(l2 *Liquid) bool {
 	return l1.ID == l2.ID
 }
 
-// asSource represent a liquid in the liquidsource tree
-func (l *Liquid) asSource() LiquidSources {
-	if name := l.MeaningfulName(); name != "" {
-		// a meaningful name was set, so the tree should refer to this liquid
-		return LiquidSources{
-			name: &LiquidSource{
-				Volume:  l.Volume(),
-				Sources: l.Sources,
-			},
-		}
-	} else {
-		// this liquid was just a temporary liquid without a name, so refer to it's sources only
-		return l.Sources
-	}
-}
-
 // LiquidSource represents a source component of a liquid, that is either a volume of an input liquid or a liquid with a meaningful name
 type LiquidSource struct {
 	Volume  wunit.Volume
@@ -1215,19 +1213,21 @@ func mergeLiquidSources(liquids ...*Liquid) LiquidSources {
 	// ignore all liquids which have no volume
 	nonZero := make([]*Liquid, 0, len(liquids))
 	for _, l := range liquids {
-		if !l.IsZero() {
+		if !l.Volume().IsZero() {
 			nonZero = append(nonZero, l)
 		}
 	}
 	liquids = nonZero
 
-	if len(liquids) == 1 {
-		return liquids[0].Sources
-	}
-
 	ret := make(LiquidSources)
 	for _, l := range liquids {
-		ret.merge(l.asSource())
+		if len(l.Sources) == 0 {
+			ret.merge(LiquidSources{
+				l.MeaningfulName(): &LiquidSource{Volume: l.Volume()},
+			})
+		} else {
+			ret.merge(l.Sources)
+		}
 	}
 	return ret
 }
@@ -1238,25 +1238,45 @@ func (ls LiquidSources) merge(rhs LiquidSources) {
 	}
 }
 
+func (ls LiquidSources) Summarize() string {
+	return ls.String("", "  ")
+}
+
 func (ls LiquidSources) String(prefix, indent string) string {
+	return ls.string(ls.Volume(), "", prefix, indent)
+}
+
+func (ls LiquidSources) string(sampledVol wunit.Volume, prefix, currIndent, indent string) string {
 	ret := make([]string, 0)
-	for name, src := range ls {
-		ret = append(ret, fmt.Sprintf("%s%s%q: %s", prefix, indent, name, src.Volume))
+	fraction, err := wunit.DivideVolumes(sampledVol, ls.Volume())
+	if err != nil {
+		return ""
+	}
+
+	for _, name := range ls.Names() {
+		src := ls[name]
+		srcVolume := src.Volume.Dup()
+		srcVolume.MultiplyBy(fraction)
+		ret = append(ret, fmt.Sprintf("%s%s%q: %s", prefix, currIndent, name, srcVolume.ToString()))
 		if len(src.Sources) > 0 {
-			ret = append(ret, src.Sources.String(prefix, indent+indent))
+			ret = append(ret, src.Sources.string(src.Volume, prefix, currIndent+indent, indent))
 		}
 	}
 	return strings.Join(ret, "\n")
 }
 
+func (ls LiquidSources) Volume() wunit.Volume {
+	ret := wunit.ZeroVolume()
+	for _, src := range ls {
+		ret.IncrBy(src.Volume)
+	}
+	return ret
+}
+
 // scaleToVolume scale the volume of the sources so that the total volume is equal to vol
 // has no effect if there are no sources or the initial volume is zero
 func (ls LiquidSources) scaleToVolume(vol wunit.Volume) {
-	initialVol := wunit.ZeroVolume()
-	for _, src := range ls {
-		initialVol.IncrBy(src.Volume)
-	}
-
+	initialVol := ls.Volume()
 	if initialVol.IsZero() {
 		return
 	}
@@ -1285,6 +1305,7 @@ func (ls LiquidSources) Names() []string {
 // VolumeOf returns the volume of the source with the given name in the liquid
 func (ls LiquidSources) VolumeOf(name string) wunit.Volume {
 	ret := wunit.ZeroVolume()
+	totalVolume := ls.Volume()
 
 	for n, src := range ls {
 		if name == n {
@@ -1292,12 +1313,17 @@ func (ls LiquidSources) VolumeOf(name string) wunit.Volume {
 			ret.IncrBy(src.Volume)
 		}
 		// but we still have to recurse through the tree looking for other matches
-		ret.IncrBy(src.Sources.VolumeOf(name))
+		sourceFraction, err := wunit.DivideVolumes(src.Volume, totalVolume)
+		if err == nil {
+			volumeInSource := src.Sources.VolumeOf(name)
+			volumeInSource.MultiplyBy(sourceFraction)
+			ret.IncrBy(volumeInSource)
+		}
 	}
 	return ret
 }
 
-// Dup make a copy of the liquidsources, without duplicating parents
+// Dup make a copy of the liquidsources
 func (ls LiquidSources) Dup() LiquidSources {
 	ret := make(LiquidSources, len(ls))
 	for name, src := range ls {

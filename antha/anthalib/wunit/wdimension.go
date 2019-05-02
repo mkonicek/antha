@@ -93,19 +93,23 @@ func CopyVolume(v Volume) Volume {
 }
 
 // AddVolumes adds a set of volumes.
-func AddVolumes(vols ...Volume) (newvolume Volume) {
-	tempvol := NewVolume(0.0, "ul")
-	for _, vol := range vols {
-		if tempvol.Unit().PrefixedSymbol() == vol.Unit().PrefixedSymbol() {
-			tempvol = NewVolume(tempvol.RawValue()+vol.RawValue(), tempvol.Unit().PrefixedSymbol())
-			newvolume = tempvol
-		} else {
-			tempvol = NewVolume(tempvol.SIValue()+vol.SIValue(), tempvol.Unit().BaseSISymbol())
-			newvolume = tempvol
-		}
+func AddVolumes(vols ...Volume) Volume {
+	// find the largest unit
+	var unit PrefixedUnit
+	unit, err := GetGlobalUnitRegistry().GetUnit("yl")
+	if err != nil {
+		panic(err)
 	}
-	return
 
+	ret := ZeroVolume()
+	for _, v := range vols {
+		if u := v.Unit(); u.Prefix().Value > unit.Prefix().Value {
+			unit = u
+		}
+		ret.IncrBy(v)
+	}
+
+	return NewVolume(ret.MustInUnit(unit).RawValue(), unit.PrefixedSymbol())
 }
 
 // SubtractVolumes substracts a variable number of volumes from an original volume.

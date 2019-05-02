@@ -2,6 +2,7 @@ package wtype
 
 import (
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -230,15 +231,8 @@ func TestLiquidSources(t *testing.T) {
 	// let's make some delicious squash
 
 	// first we have some concentrates
-	appleConc := NewLHComponent()
-	appleConc.Type = LTWater
-	appleConc.SetName("Apple Concentrate")
-	appleConc.SetVolume(wunit.NewVolume(1, "l"))
-
-	berryConc := NewLHComponent()
-	berryConc.Type = LTWater
-	berryConc.SetName("Blackberry Concentrate")
-	berryConc.SetVolume(wunit.NewVolume(1, "l"))
+	appleConc := NewLiquid("Apple Concentrate", LTWater, wunit.NewVolume(1, "l"))
+	berryConc := NewLiquid("Blackberry Concentrate", LTWater, wunit.NewVolume(1, "l"))
 
 	// let's mix together some of each
 	appleBerryConc, err := appleConc.Sample(wunit.NewVolume(200.0, "ml"))
@@ -268,7 +262,6 @@ func TestLiquidSources(t *testing.T) {
 
 	// and use it to dilute the concentrate
 	appleBerry.Mix(water)
-	appleBerry.SetName("Apple and Blackberry Squash")
 
 	// now check that we ended up with delicious squash
 	sourceNames := appleBerry.Sources.Names()
@@ -276,6 +269,9 @@ func TestLiquidSources(t *testing.T) {
 	if !reflect.DeepEqual(sourceNames, expectedNames) {
 		t.Fatalf("source name mismatch:\ne: %q\ng: %q", expectedNames, sourceNames)
 	}
+
+	// name the squash itself
+	appleBerry.SetName("Apple and Blackberry Squash")
 
 	expectedVolumes := map[string]wunit.Volume{
 		"Apple and Blackberry Concentrate": wunit.NewVolume(50.0, "ml"),
@@ -289,4 +285,136 @@ func TestLiquidSources(t *testing.T) {
 			t.Errorf("wrong volume for %q: expected %s, got %s", name, eVol, gVol)
 		}
 	}
+}
+
+// Mix helper to make the examples look more like element code
+func Mix(liquids ...*Liquid) *Liquid {
+	ret := NewLHComponent()
+	for _, l := range liquids {
+		ret.Mix(l)
+	}
+	return ret
+}
+
+// Sample helper to make the examples look more like element code
+func Sample(liquid *Liquid, volume wunit.Volume) *Liquid {
+	ret, err := liquid.Sample(volume)
+	if err != nil {
+		panic(err)
+	}
+	return ret
+}
+
+func ExampleLiquid_Sources() {
+	// make two liquids
+	apple := NewLiquid("Apple Juice", LTWater, wunit.NewVolume(1, "l"))
+	berry := NewLiquid("Blackberry Juice", LTWater, wunit.NewVolume(1, "l"))
+
+	// now combine them
+	mixture := Mix(apple, berry)
+
+	// sources contains a description of what went in
+	fmt.Println(mixture.Sources.Summarize())
+
+	// we can also give the output a specific name
+	mixture.SetName("Apple & Blackberry Juice")
+
+	// which will then exist in sources later on
+	mixture = Mix(mixture, NewLiquid("Lemonade", LTWater, wunit.NewVolume(0.5, "l")))
+	fmt.Println("")
+	fmt.Println(mixture.Sources.Summarize())
+
+	// Output:
+	// "Apple Juice": 1 l
+	// "Blackberry Juice": 1 l
+	//
+	// "Apple & Blackberry Juice": 2 l
+	//   "Apple Juice": 1 l
+	//   "Blackberry Juice": 1 l
+	// "Lemonade": 0.5 l
+
+}
+
+func ExampleLiquid_Sources_sampling() {
+
+	// make two liquids
+	apple := NewLiquid("Apple Juice", LTWater, wunit.NewVolume(1000.0, "ml"))
+	berry := NewLiquid("Blackberry Juice", LTWater, wunit.NewVolume(1000.0, "ml"))
+
+	// you can also sample liquids before mixing them
+	aSample := Sample(apple, wunit.NewVolume(50.0, "ml"))
+	bSample := Sample(berry, wunit.NewVolume(45.0, "ml"))
+
+	// combine as before
+	mixture := Mix(aSample, bSample)
+	mixture.SetName("Apple & Blackberry Juice")
+	mixture = Mix(mixture, NewLiquid("Water", LTWater, wunit.NewVolume(100, "ml")))
+	fmt.Println(mixture.Sources.Summarize())
+
+	// Output:
+	// "Apple & Blackberry Juice": 95 ml
+	//   "Apple Juice": 50 ml
+	//   "Blackberry Juice": 45 ml
+	// "Water": 100 ml
+
+}
+
+func ExampleLiquid_Sources_transfers() {
+	// multiple mixes of the same thing are combined unless a new name is set
+	apple := NewLiquid("Apple Juice", LTWater, wunit.NewVolume(1, "l"))
+	berry := NewLiquid("Blackberry Juice", LTWater, wunit.NewVolume(1, "l"))
+
+	samples := []*Liquid{Sample(apple, wunit.NewVolume(10, "ml"))}
+	for i := 0; i < 10; i++ {
+		samples = append(samples, Sample(berry, wunit.NewVolume(1, "ml")))
+	}
+
+	mixture := Mix(samples...)
+	fmt.Println(mixture.Sources.Summarize())
+
+	// Output:
+	// "Apple Juice": 10 ml
+	// "Blackberry Juice": 10 ml
+}
+
+func ExampleLiquid_Sources_transfers2() {
+	// multiple mixes of the same thing are ignored unless a new name is set
+	apple := NewLiquid("Apple Juice", LTWater, wunit.NewVolume(1, "l"))
+	berry := NewLiquid("Blackberry Juice", LTWater, wunit.NewVolume(1, "l"))
+
+	mixture := Sample(apple, wunit.NewVolume(10, "ml"))
+	for i := 0; i < 10; i++ {
+		mixture = Mix(mixture, Sample(berry, wunit.NewVolume(1, "ml")))
+	}
+
+	fmt.Println(mixture.Sources.Summarize())
+
+	// Output:
+	// "Apple Juice": 10 ml
+	// "Blackberry Juice": 10 ml
+}
+
+func ExampleLiquid_Sources_naming() {
+	// Liquids with the same name are assumed to be the same for the purposes of tracking history.
+	//
+	// For example if we make two liquids containing different things:
+	mixture1 := Mix(NewLiquid("Apple Juice", LTWater, wunit.NewVolume(10.0, "ml")), NewLiquid("Blackberry Juice", LTWater, wunit.NewVolume(10.0, "ml")))
+	mixture2 := Mix(NewLiquid("Pear Juice", LTWater, wunit.NewVolume(10.0, "ml")), NewLiquid("Guava Juice", LTWater, wunit.NewVolume(10.0, "ml")))
+
+	// but give them the same name
+	mixture1.SetName("Fruit Juice")
+	mixture2.SetName("Fruit Juice")
+
+	// then combining them combines their sources
+	juice := Mix(mixture1, mixture2)
+
+	fmt.Println(juice.Sources.Summarize())
+
+	// Output:
+	// "Fruit Juice": 40 ml
+	//   "Apple Juice": 10 ml
+	//   "Blackberry Juice": 10 ml
+	//   "Guava Juice": 10 ml
+	//   "Pear Juice": 10 ml
+
 }

@@ -74,3 +74,25 @@ func TestGetConfig(t *testing.T) {
 		t.Error("Expected a custom policy rule set, got nil")
 	}
 }
+
+func TestGetElements(t *testing.T) {
+	p, err := getTestProvider()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	els, err := p.GetElements()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(els.Types) == 0 {
+		t.Error("Didn't find any element types")
+	}
+	if len(els.Instances) == 0 {
+		t.Error("Didn't find any element instances")
+	}
+	if len(els.InstancesConnections) == 0 {
+		t.Error("Didn't find any element connections")
+	}
+}

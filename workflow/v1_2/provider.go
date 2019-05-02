@@ -94,7 +94,7 @@ func (p *Provider) getElementTypes() (workflow.ElementTypes, error) {
 		}
 
 		seen[v.Component] = struct{}{}
-		et, err := uniqueElementType(p.repoMap, workflow.ElementTypeName(v.Component))
+		et, err := migrate.UniqueElementType(p.repoMap, workflow.ElementTypeName(v.Component))
 		if err != nil {
 			return nil, err
 		}
@@ -264,21 +264,4 @@ func (p *Provider) GetTesting() (workflow.Testing, error) {
 	return workflow.Testing{
 		MixTaskChecks: mixChecks,
 	}, nil
-}
-
-func uniqueElementType(types workflow.ElementTypesByRepository, name workflow.ElementTypeName) (*workflow.ElementType, error) {
-	var et *workflow.ElementType
-	for _, rmap := range types {
-		if v, found := rmap[name]; found {
-			if et != nil {
-				return nil, fmt.Errorf("element type %v is found in multiple repositories", name)
-			}
-			et = &v
-		}
-	}
-
-	if et == nil {
-		return nil, fmt.Errorf("element type %v could not be found in the supplied repositories", name)
-	}
-	return et, nil
 }

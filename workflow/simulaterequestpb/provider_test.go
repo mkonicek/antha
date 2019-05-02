@@ -28,7 +28,13 @@ func getTestProvider() (migrate.WorkflowProvider, error) {
 		Directory: "/tmp",
 	}
 
-	elementNames := []string{"AccuracyTest", "Aliquot_Liquid"}
+	elementNames := []string{
+		"Define_Liquid_Set",
+		"Define_Plate_Layout",
+		"Setup_QPCR_Plate",
+		"Upload_Plate_Layout_File_Single",
+		"Upload_QPCR_Design_File",
+	}
 
 	elementTypeMap := workflow.ElementTypeMap{}
 	for _, name := range elementNames {

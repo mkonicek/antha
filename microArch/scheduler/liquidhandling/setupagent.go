@@ -142,6 +142,7 @@ func BasicSetupAgent(labEffects *effects.LaboratoryEffects, request *LHRequest, 
 
 	if params.GetTipType() == liquidhandling.DisposableTips || params.GetTipType() == liquidhandling.MixedDisposableAndFixedTips {
 		// at least two positions are needed
+		// FIXME why 2 positions needed for tips ?
 		nPos += 2
 		needsTips = true
 	}
@@ -191,6 +192,23 @@ func BasicSetupAgent(labEffects *effects.LaboratoryEffects, request *LHRequest, 
 		if !isConstrained {
 			allowed = make([]string, 0, 1)
 		}
+		// it seems that when allowed is an empty string it is going to be ignored
+		// we need to differentiate between allowedLocations beting empty
+		allowedLocations, ok := params.Driver.GetAllowedLocations(p)
+		if !(ok.Ok()) {
+			return errors.New(fmt.Sprintf("Can't determine allowed locations for  Plate %s", p.GetName()))
+		}
+		// if allowedLocations is empty throw error
+		if allowedLocations != nil {
+			if len(allowedLocations) == 0 {
+				//FIXME it could be nice to have a SN here -- can be returned from plugin.
+				return errors.New(fmt.Sprintf("Could not find any allowed location for Plate %s (Type: %s, Mfr: %s, Part: %s), on LiquidHandler %s %s", p.PlateName, params.Driver.DriverType, p.Mnfr, p.PartNr, params.Mnfr, params.Model))
+			} else {
+				// not sure what "allowed" is supposed to represent hence I keep it here.
+				allowed = append(allowed, allowedLocations...)
+			}
+			// else: append allowedLocations to allowed
+		}
 		position := get_first_available_preference(output_preferences, setup, allowed)
 
 		if position == "" {
@@ -205,6 +223,7 @@ func BasicSetupAgent(labEffects *effects.LaboratoryEffects, request *LHRequest, 
 		if err := params.AddPlateTo(position, p); err != nil {
 			return errors.WithMessage(err, "while setting up output plates")
 		}
+		fmt.Println(fmt.Sprintf("Output plate of type %s in position %s", p.Type, position))
 	}
 
 	for _, pid := range input_plate_order {

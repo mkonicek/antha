@@ -46,7 +46,7 @@ type LiquidhandlingDriver interface {
 	GetOutputFile() ([]byte, driver.CommandStatus)
 	Configure(workflow.JobId, string /* Job Name */, workflow.DeviceInstanceID, []byte /* opaque */) (*LHProperties, driver.CommandStatus)
 	// FIXME there's got to be a better way than having to define this prototype here
-	GetAllowedLocations(plate *wtype.Plate, allowed []string) ([]string, driver.CommandStatus)
+	GetAllowedLocations(plate *wtype.Plate) ([]string, driver.CommandStatus)
 }
 
 type LowLevelLiquidhandlingDriver interface {

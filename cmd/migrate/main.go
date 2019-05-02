@@ -11,6 +11,7 @@ import (
 	"github.com/antha-lang/antha/logger"
 	"github.com/antha-lang/antha/workflow"
 	"github.com/antha-lang/antha/workflow/migrate"
+	"github.com/antha-lang/antha/workflow/simulaterequestpb"
 	"github.com/antha-lang/antha/workflow/v1_2"
 )
 
@@ -83,7 +84,10 @@ func main() {
 		}
 	case fromFormatProtobuf:
 		{
-			logger.Fatal(l, fmt.Errorf("Format not implemented"))
+			provider, err = simulaterequestpb.NewProvider(fromReader, fm, repoMap, gilsonDevice, l)
+			if err != nil {
+				logger.Fatal(l, err)
+			}
 		}
 	default:
 		{

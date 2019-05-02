@@ -12,7 +12,7 @@ import (
 	"github.com/antha-lang/antha/workflow"
 )
 
-type V1_2WorkflowProvider struct {
+type Provider struct {
 	owf              *workflowv1_2 // the old, v1.2 workflow to migrate
 	fm               *effects.FileManager
 	repoMap          workflow.ElementTypesByRepository
@@ -20,13 +20,13 @@ type V1_2WorkflowProvider struct {
 	logger           *logger.Logger
 }
 
-func NewV1_2WorkflowProvider(
+func NewProvider(
 	oldWorkflowReader io.Reader,
 	fm *effects.FileManager,
 	repoMap workflow.ElementTypesByRepository,
 	gilsonDeviceName string,
 	logger *logger.Logger,
-) (*V1_2WorkflowProvider, error) {
+) (*Provider, error) {
 	d := json.NewDecoder(oldWorkflowReader)
 	wf := &workflowv1_2{}
 	err := d.Decode(wf)
@@ -39,7 +39,7 @@ func NewV1_2WorkflowProvider(
 		return nil, fmt.Errorf("Invalid version in old workflow: expected %v, got %v", expectedVersion, wf.Version)
 	}
 
-	return &V1_2WorkflowProvider{
+	return &Provider{
 		owf:              wf,
 		fm:               fm,
 		repoMap:          repoMap,
@@ -48,7 +48,7 @@ func NewV1_2WorkflowProvider(
 	}, nil
 }
 
-func (p *V1_2WorkflowProvider) GetWorkflowID() (workflow.BasicId, error) {
+func (p *Provider) GetWorkflowID() (workflow.BasicId, error) {
 	if id, err := workflow.RandomBasicId(""); err != nil {
 		return "", err
 	} else {
@@ -56,7 +56,7 @@ func (p *V1_2WorkflowProvider) GetWorkflowID() (workflow.BasicId, error) {
 	}
 }
 
-func (p *V1_2WorkflowProvider) GetMeta() (workflow.Meta, error) {
+func (p *Provider) GetMeta() (workflow.Meta, error) {
 	meta := workflow.Meta{}
 	if p.owf.Properties.Name != "" {
 		meta.Name = p.owf.Properties.Name
@@ -67,11 +67,11 @@ func (p *V1_2WorkflowProvider) GetMeta() (workflow.Meta, error) {
 	return meta, nil
 }
 
-func (p *V1_2WorkflowProvider) GetRepositories() (workflow.Repositories, error) {
+func (p *Provider) GetRepositories() (workflow.Repositories, error) {
 	return workflow.Repositories{}, nil
 }
 
-func (p *V1_2WorkflowProvider) getElementInstances() (workflow.ElementInstances, error) {
+func (p *Provider) getElementInstances() (workflow.ElementInstances, error) {
 	instances := workflow.ElementInstances{}
 	for k := range p.owf.Processes {
 		name := workflow.ElementInstanceName(k)
@@ -84,7 +84,7 @@ func (p *V1_2WorkflowProvider) getElementInstances() (workflow.ElementInstances,
 	return instances, nil
 }
 
-func (p *V1_2WorkflowProvider) getElementTypes() (workflow.ElementTypes, error) {
+func (p *Provider) getElementTypes() (workflow.ElementTypes, error) {
 	seen := make(map[string]struct{}, len(p.owf.Processes))
 	types := make(workflow.ElementTypes, 0, len(p.owf.Processes))
 	for _, v := range p.owf.Processes {
@@ -103,7 +103,7 @@ func (p *V1_2WorkflowProvider) getElementTypes() (workflow.ElementTypes, error) 
 	return types, nil
 }
 
-func (p *V1_2WorkflowProvider) getElementConnections() (workflow.ElementInstancesConnections, error) {
+func (p *Provider) getElementConnections() (workflow.ElementInstancesConnections, error) {
 	connections := make(workflow.ElementInstancesConnections, 0, len(p.owf.Connections))
 	for _, c := range p.owf.Connections {
 		connections = append(connections, workflow.ElementConnection{
@@ -120,7 +120,7 @@ func (p *V1_2WorkflowProvider) getElementConnections() (workflow.ElementInstance
 	return connections, nil
 }
 
-func (p *V1_2WorkflowProvider) GetElements() (workflow.Elements, error) {
+func (p *Provider) GetElements() (workflow.Elements, error) {
 	instances, err := p.getElementInstances()
 	if err != nil {
 		return workflow.Elements{}, err
@@ -143,11 +143,11 @@ func (p *V1_2WorkflowProvider) GetElements() (workflow.Elements, error) {
 	}, nil
 }
 
-func (p *V1_2WorkflowProvider) GetInventory() (workflow.Inventory, error) {
+func (p *Provider) GetInventory() (workflow.Inventory, error) {
 	return workflow.Inventory{}, nil
 }
 
-func (p *V1_2WorkflowProvider) getGlobalMixerConfig() (workflow.GlobalMixerConfig, error) {
+func (p *Provider) getGlobalMixerConfig() (workflow.GlobalMixerConfig, error) {
 	customPolicyRuleSet := p.owf.Config.CustomPolicyRuleSet
 	if p.owf.Config.LiquidHandlingPolicyXlsxJmpFile != nil {
 		policyMap, err := liquidtype.PolicyMakerFromBytes(p.owf.Config.LiquidHandlingPolicyXlsxJmpFile, wtype.PolicyName(liquidtype.BASEPolicy))
@@ -175,7 +175,7 @@ func (p *V1_2WorkflowProvider) getGlobalMixerConfig() (workflow.GlobalMixerConfi
 	}, nil
 }
 
-func (p *V1_2WorkflowProvider) getLayoutPreferences() *workflow.LayoutOpt {
+func (p *Provider) getLayoutPreferences() *workflow.LayoutOpt {
 	if p.owf.Config == nil {
 		return nil
 	}
@@ -188,7 +188,7 @@ func (p *V1_2WorkflowProvider) getLayoutPreferences() *workflow.LayoutOpt {
 	}
 }
 
-func (p *V1_2WorkflowProvider) getGilsonPipetMaxInstanceConfig() (*workflow.GilsonPipetMaxInstanceConfig, error) {
+func (p *Provider) getGilsonPipetMaxInstanceConfig() (*workflow.GilsonPipetMaxInstanceConfig, error) {
 	config := workflow.GilsonPipetMaxInstanceConfig{}
 	if p.owf.Config != nil {
 		config.InputPlateTypes = updatePlateTypes(p.owf.Config.InputPlateTypes)
@@ -202,7 +202,7 @@ func (p *V1_2WorkflowProvider) getGilsonPipetMaxInstanceConfig() (*workflow.Gils
 	return &config, nil
 }
 
-func (p *V1_2WorkflowProvider) getGilsonPipetMaxConfig() (workflow.GilsonPipetMaxConfig, error) {
+func (p *Provider) getGilsonPipetMaxConfig() (workflow.GilsonPipetMaxConfig, error) {
 	if p.gilsonDeviceName == "" {
 		return workflow.GilsonPipetMaxConfig{}, nil
 	}
@@ -226,7 +226,7 @@ func (p *V1_2WorkflowProvider) getGilsonPipetMaxConfig() (workflow.GilsonPipetMa
 	}, nil
 }
 
-func (p *V1_2WorkflowProvider) GetConfig() (workflow.Config, error) {
+func (p *Provider) GetConfig() (workflow.Config, error) {
 	gmc, err := p.getGlobalMixerConfig()
 	if err != nil {
 		return workflow.Config{}, err
@@ -243,7 +243,7 @@ func (p *V1_2WorkflowProvider) GetConfig() (workflow.Config, error) {
 	}, nil
 }
 
-func (p *V1_2WorkflowProvider) GetTesting() (workflow.Testing, error) {
+func (p *Provider) GetTesting() (workflow.Testing, error) {
 	if len(p.owf.testOpt.Results.MixTaskResults) == 0 {
 		return workflow.Testing{}, nil
 	}

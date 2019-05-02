@@ -99,7 +99,7 @@ func main() {
 	switch fromFormat {
 	case fromFormatJSON:
 		{
-			provider, err = v1_2.NewV1_2WorkflowProvider(fromReader, fm, repoMap, gilsonDevice, l)
+			provider, err = v1_2.NewProvider(fromReader, fm, repoMap, gilsonDevice, l)
 			if err != nil {
 				logger.Fatal(l, err)
 			}

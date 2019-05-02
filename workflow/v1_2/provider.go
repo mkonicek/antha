@@ -65,6 +65,9 @@ func (p *V1_2WorkflowProvider) GetMeta() (workflow.Meta, error) {
 	if p.owf.Properties.Name != "" {
 		meta.Name = p.owf.Properties.Name
 	}
+	if p.owf.Properties.Description != "" {
+		meta.Set("Description", p.owf.Properties.Description)
+	}
 	return meta, nil
 }
 

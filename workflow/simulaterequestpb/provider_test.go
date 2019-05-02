@@ -55,19 +55,22 @@ func getTestProvider() (migrate.WorkflowProvider, error) {
 	return simulaterequestpb.NewProvider(r, fm, repoMap, gilsonDeviceName, logger)
 }
 
-func TestGetMeta(t *testing.T) {
+func TestGetConfig(t *testing.T) {
 	p, err := getTestProvider()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	m, err := p.GetMeta()
+	c, err := p.GetConfig()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	expectedName := "My Test Workflow"
-	if m.Name != expectedName {
-		t.Errorf("Expected name '%v', got '%v'", expectedName, m.Name)
+	if !c.GlobalMixer.UseDriverTipTracking {
+		t.Error("Expected UseDriverTipTracking to be true, got false")
+	}
+
+	if !c.GlobalMixer.IgnorePhysicalSimulation {
+		t.Error("Expected IgnorePhysicalSimulation to be true, got false")
 	}
 }

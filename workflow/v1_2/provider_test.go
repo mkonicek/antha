@@ -3,13 +3,16 @@ package v1_2
 import (
 	"encoding/json"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"reflect"
 	"sort"
 	"testing"
 
 	"github.com/antha-lang/antha/laboratory/effects"
+	"github.com/antha-lang/antha/logger"
 	"github.com/antha-lang/antha/workflow"
+	"github.com/antha-lang/antha/workflow/migrate"
 	"github.com/antha-lang/antha/workflow/migrate/provider"
 )
 
@@ -164,5 +167,28 @@ func TestGetWorkflowID(t *testing.T) {
 
 	if string(id) == "" {
 		t.Error("Got empty workflow ID")
+	}
+}
+
+// TODO: DELETE THIS. Simple snippet to help sanity-check where we're up to
+func TestMigrator(t *testing.T) {
+	p, err := getTestV1_2WorkflowProvider()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	l := logger.NewLogger()
+	m := migrate.NewMigrator(l, p)
+	w, err := m.Workflow()
+
+	output := "testdata/sample_v1_2_migrated.json"
+	err = os.Remove(output)
+	if err != nil {
+		t.Log(err)
+	}
+
+	err = w.WriteToFile(output, true)
+	if err != nil {
+		t.Fatal(err)
 	}
 }

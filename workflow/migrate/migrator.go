@@ -25,9 +25,13 @@ func (m *Migrator) Workflow() (*workflow.Workflow, error) {
 
 	wf := &workflow.Workflow{
 		SchemaVersion: "2.0",
-		// WorkflowId: ?,
-		// SimulationId: ?,
 	}
+
+	id, err := m.provider.GetWorkflowID()
+	if err != nil {
+		return nil, err
+	}
+	wf.WorkflowId = id
 
 	meta, err := m.provider.GetMeta()
 	if err != nil {

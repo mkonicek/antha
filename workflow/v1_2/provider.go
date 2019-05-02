@@ -30,6 +30,14 @@ func NewV1_2WorkflowProvider(
 	}
 }
 
+func (p *V1_2WorkflowProvider) GetWorkflowID() (workflow.BasicId, error) {
+	if id, err := workflow.RandomBasicId(""); err != nil {
+		return "", err
+	} else {
+		return id, nil
+	}
+}
+
 func (p *V1_2WorkflowProvider) GetMeta() (workflow.Meta, error) {
 	meta := workflow.Meta{}
 	if p.owf.Properties.Name != "" {

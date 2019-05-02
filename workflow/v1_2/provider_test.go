@@ -150,3 +150,19 @@ func TestGetTesting(t *testing.T) {
 		t.Fatal("Got non-empty Testing from GetTesting()")
 	}
 }
+
+func TestGetWorkflowID(t *testing.T) {
+	p, err := getTestV1_2WorkflowProvider()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	id, err := p.GetWorkflowID()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if string(id) == "" {
+		t.Error("Got empty workflow ID")
+	}
+}

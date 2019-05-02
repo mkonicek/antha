@@ -68,9 +68,32 @@ func (p *SimulateRequestProtobufProvider) GetRepositories() (workflow.Repositori
 	return workflow.Repositories{}, nil
 }
 
+func (p *SimulateRequestProtobufProvider) getElementConnections() (workflow.ElementInstancesConnections, error) {
+	connections := make(workflow.ElementInstancesConnections, 0, len(p.pb.Connections))
+	for _, c := range p.pb.Connections {
+		connections = append(connections, workflow.ElementConnection{
+			Source: workflow.ElementSocket{
+				ElementInstance: workflow.ElementInstanceName(c.Source.Process),
+				ParameterName:   workflow.ElementParameterName(c.Source.Port),
+			},
+			Target: workflow.ElementSocket{
+				ElementInstance: workflow.ElementInstanceName(c.Target.Process),
+				ParameterName:   workflow.ElementParameterName(c.Target.Port),
+			},
+		})
+	}
+	return connections, nil
+}
+
 func (p *SimulateRequestProtobufProvider) GetElements() (workflow.Elements, error) {
-	// TODO: implement
-	return workflow.Elements{}, nil
+	connections, err := p.getElementConnections()
+	if err != nil {
+		return workflow.Elements{}, err
+	}
+
+	return workflow.Elements{
+		InstancesConnections: connections,
+	}, nil
 }
 
 func (p *SimulateRequestProtobufProvider) GetInventory() (workflow.Inventory, error) {

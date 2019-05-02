@@ -41,7 +41,7 @@ func main() {
 	// Read in the workflow snippets
 	rs, err := workflow.ReadersFromPaths(flag.Args())
 	if err != nil {
-		logger.Fatal(err)
+		logger.Fatal(l, err)
 	}
 
 	cwf, err := workflow.WorkflowFromReaders(rs...)
@@ -52,27 +52,26 @@ func main() {
 	// Get the repo map
 	repoMap, err := cwf.Repositories.FindAllElementTypes()
 	if err != nil {
-		logger.Fatal(err)
+		logger.Fatal(l, err)
 	}
 
 	// Prepare the output directory
 	if outDir == "" {
 		if outDir, err = ioutil.TempDir("", "antha-migrater"); err != nil {
-			logger.Fatal(err)
+			logger.Fatal(l, err)
 		}
 	}
 	for _, leaf := range []string{"workflow", "data"} {
 		if err := os.MkdirAll(filepath.Join(outDir, leaf), 0700); err != nil {
-			logger.Fatal(err)
+			logger.Fatal(l, err)
 		}
 	}
 
 	dataDir := filepath.Join(outDir, "data")
 	fm, err := effects.NewFileManager(dataDir, dataDir)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Fatal(l, err)
 	}
-	logger.Log("outdir", outDir)
 
 	// Sanity check: we can only read from STDIN once
 	inputPaths := append(flag.Args(), fromFile)
@@ -83,7 +82,7 @@ func main() {
 		}
 	}
 	if stdinCount > 1 {
-		logger.Fatal(errors.New("Input '-' specified more than once: can only read from STDIN once"))
+		logger.Fatal(l, errors.New("Input '-' specified more than once: can only read from STDIN once"))
 	}
 
 	var fromReader io.ReadCloser
@@ -91,7 +90,7 @@ func main() {
 		fromReader = os.Stdin
 	} else {
 		if fromReader, err = os.Open(fromFile); err != nil {
-			logger.Fatal(err)
+			logger.Fatal(l, err)
 		}
 	}
 	defer fromReader.Close()
@@ -100,40 +99,40 @@ func main() {
 	switch fromFormat {
 	case fromFormatJSON:
 		{
-			provider, err = v1_2.NewV1_2WorkflowProvider(fromReader, fm, repoMap, gilsonDevice, logger)
+			provider, err = v1_2.NewV1_2WorkflowProvider(fromReader, fm, repoMap, gilsonDevice, l)
 			if err != nil {
-				logger.Fatal(err)
+				logger.Fatal(l, err)
 			}
 		}
 	case fromFormatProtobuf:
 		{
-			logger.Fatal(fmt.Errorf("Format not implemented"))
+			logger.Fatal(l, fmt.Errorf("Format not implemented"))
 		}
 	default:
 		{
-			logger.Fatal(fmt.Errorf("Unknown format '%v', valid formats are: %v", fromFormat, validFromFormats))
+			logger.Fatal(l, fmt.Errorf("Unknown format '%v', valid formats are: %v", fromFormat, validFromFormats))
 		}
 	}
 
-	m := migrate.NewMigrator(logger, provider)
+	m := migrate.NewMigrator(l, provider)
 	wf, err := m.Workflow()
 	if err != nil {
-		logger.Fatal(err)
+		logger.Fatal(l, err)
 	}
 
 	// Merge the generated v2.0 workflow into the stuff we got from the snippets
 	if err = cwf.Merge(wf); err != nil {
-		logger.Fatal(err)
+		logger.Fatal(l, err)
 	}
 
 	// validate the resulting workflow
 	if err = cwf.Validate(); err != nil {
-		logger.Fatal(err)
+		logger.Fatal(l, err)
 	}
 
 	// Save to disk
 	p := filepath.Join(outDir, "workflow", "workflow.json")
 	if err = cwf.WriteToFile(p, true); err != nil {
-		logger.Fatal(err)
+		logger.Fatal(l, err)
 	}
 }

@@ -50,7 +50,13 @@ func getTestV1_2WorkflowProvider() (provider.WorkflowProvider, error) {
 
 	logger := logger.NewLogger()
 
-	return v1_2.NewV1_2WorkflowProvider(oldWorkflowPath, fm, repoMap, gilsonDeviceName, logger)
+	r, err := os.Open(oldWorkflowPath)
+	if err != nil {
+		return nil, err
+	}
+	defer r.Close()
+
+	return v1_2.NewV1_2WorkflowProvider(r, fm, repoMap, gilsonDeviceName, logger)
 }
 
 func TestGetMeta(t *testing.T) {

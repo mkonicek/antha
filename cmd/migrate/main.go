@@ -1,8 +1,10 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -70,14 +72,35 @@ func main() {
 	if err != nil {
 		logger.Fatal(err)
 	}
-
 	logger.Log("outdir", outDir)
+
+	// Sanity check: we can only read from STDIN once
+	inputPaths := append(flag.Args(), fromFile)
+	stdinCount := 0
+	for _, path := range inputPaths {
+		if path == "-" {
+			stdinCount++
+		}
+	}
+	if stdinCount > 1 {
+		logger.Fatal(errors.New("Input '-' specified more than once: can only read from STDIN once"))
+	}
+
+	var fromReader io.ReadCloser
+	if fromFile == "-" {
+		fromReader = os.Stdin
+	} else {
+		if fromReader, err = os.Open(fromFile); err != nil {
+			logger.Fatal(err)
+		}
+	}
+	defer fromReader.Close()
 
 	var provider provider.WorkflowProvider
 	switch fromFormat {
 	case fromFormatJSON:
 		{
-			provider, err = v1_2.NewV1_2WorkflowProvider(fromFile, fm, repoMap, gilsonDevice, logger)
+			provider, err = v1_2.NewV1_2WorkflowProvider(fromReader, fm, repoMap, gilsonDevice, logger)
 			if err != nil {
 				logger.Fatal(err)
 			}

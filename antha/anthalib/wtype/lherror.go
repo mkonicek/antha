@@ -22,6 +22,7 @@ const (
 	LH_ERR_DIRE
 	LH_ERR_OTHER
 	LH_ERR_TIP_WASTE
+	LH_ERR_NO_ALLOWED_LOCATIONS
 )
 
 func ErrorName(code int) string {

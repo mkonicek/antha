@@ -10,6 +10,7 @@ import (
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/logger"
 	"github.com/antha-lang/antha/workflow"
+	"github.com/antha-lang/antha/workflow/migrate"
 )
 
 type Provider struct {
@@ -191,10 +192,10 @@ func (p *Provider) getLayoutPreferences() *workflow.LayoutOpt {
 func (p *Provider) getGilsonPipetMaxInstanceConfig() (*workflow.GilsonPipetMaxInstanceConfig, error) {
 	config := workflow.GilsonPipetMaxInstanceConfig{}
 	if p.owf.Config != nil {
-		config.InputPlateTypes = updatePlateTypes(p.owf.Config.InputPlateTypes)
+		config.InputPlateTypes = migrate.UpdatePlateTypes(p.owf.Config.InputPlateTypes)
 		config.MaxPlates = p.owf.Config.MaxPlates
 		config.MaxWells = p.owf.Config.MaxWells
-		config.OutputPlateTypes = updatePlateTypes(p.owf.Config.OutputPlateTypes)
+		config.OutputPlateTypes = migrate.UpdatePlateTypes(p.owf.Config.OutputPlateTypes)
 		config.ResidualVolumeWeight = p.owf.Config.ResidualVolumeWeight
 		config.TipTypes = p.owf.Config.TipTypes
 		config.LayoutPreferences = p.getLayoutPreferences()
@@ -280,12 +281,4 @@ func uniqueElementType(types workflow.ElementTypesByRepository, name workflow.El
 		return nil, fmt.Errorf("element type %v could not be found in the supplied repositories", name)
 	}
 	return et, nil
-}
-
-func updatePlateTypes(names []string) []wtype.PlateTypeName {
-	ptnames := make([]wtype.PlateTypeName, len(names))
-	for i, v := range names {
-		ptnames[i] = wtype.PlateTypeName(v)
-	}
-	return ptnames
 }

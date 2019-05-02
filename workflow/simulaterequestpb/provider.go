@@ -48,8 +48,6 @@ func NewProvider(
 		gilsonDeviceName: gilsonDeviceName,
 		logger:           logger,
 	}, nil
-
-	return nil, nil
 }
 
 func (p *SimulateRequestProtobufProvider) GetWorkflowID() (workflow.BasicId, error) {
@@ -76,7 +74,7 @@ func (p *SimulateRequestProtobufProvider) GetElements() (workflow.Elements, erro
 }
 
 func (p *SimulateRequestProtobufProvider) GetInventory() (workflow.Inventory, error) {
-	// TODO: implement? (Not sure if it's used in the SimulateRequest format or not)
+	// TODO: implement
 	return workflow.Inventory{}, nil
 }
 
@@ -183,5 +181,6 @@ func (p *SimulateRequestProtobufProvider) GetConfig() (workflow.Config, error) {
 }
 
 func (p *SimulateRequestProtobufProvider) GetTesting() (workflow.Testing, error) {
+	// TODO: implement
 	return workflow.Testing{}, nil
 }

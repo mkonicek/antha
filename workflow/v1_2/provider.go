@@ -2,10 +2,12 @@ package v1_2
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wtype/liquidtype"
 	"github.com/antha-lang/antha/laboratory/effects"
+	"github.com/antha-lang/antha/logger"
 	"github.com/antha-lang/antha/workflow"
 )
 
@@ -14,6 +16,7 @@ type V1_2WorkflowProvider struct {
 	fm               *effects.FileManager
 	repoMap          workflow.ElementTypesByRepository
 	gilsonDeviceName string
+	logger           *logger.Logger
 }
 
 func NewV1_2WorkflowProvider(
@@ -22,11 +25,13 @@ func NewV1_2WorkflowProvider(
 	repoMap workflow.ElementTypesByRepository,
 	gilsonDeviceName string,
 ) *V1_2WorkflowProvider {
+	logger *logger.Logger,
 	return &V1_2WorkflowProvider{
 		owf:              wf,
 		fm:               fm,
 		repoMap:          repoMap,
 		gilsonDeviceName: gilsonDeviceName,
+		logger:           logger,
 	}
 }
 
@@ -190,8 +195,7 @@ func (p *V1_2WorkflowProvider) getGilsonPipetMaxConfig() (workflow.GilsonPipetMa
 	devID := workflow.DeviceInstanceID(p.gilsonDeviceName)
 
 	if _, found := devices[devID]; found {
-		// TODO: add a logger
-		// p.logger.Log("warning", fmt.Sprintf("Gilson device %s already exists, and will have configuration replaced with migrated configuration.", p.gilsonDeviceName))
+		p.logger.Log("warning", fmt.Sprintf("Gilson device %s already exists, and will have configuration replaced with migrated configuration.", p.gilsonDeviceName))
 	}
 
 	devConfig, err := p.getGilsonPipetMaxInstanceConfig()

@@ -21,17 +21,12 @@ type Table struct {
 // NewTable constructs a Table from the given Series.  If at least one of the
 // given Series is bounded, then the returned Table is bounded at that size.
 // If multiple different-sized bounded series are provided, we panic.
-func NewTable(series []*Series) *Table {
+func NewTable(series ...*Series) *Table {
 	exact, _, sizeErr := seriesSize(series)
 	if sizeErr != nil {
 		panic(errors.Wrapf(sizeErr, "cannot construct a table from different-sized series (should all have size %d or be unbounded)", exact))
 	}
 	return newFromSeries(series)
-}
-
-// EmptyTable returns a Table with no columns, of zero size.
-func EmptyTable() *Table {
-	return newFromSeries([]*Series{})
 }
 
 // newFromTable creates a new table pointing to the same series and read fn, and sets the
@@ -49,7 +44,7 @@ func newFromTable(t *Table, key ...ColumnKey) *Table {
 func newFromSeries(series []*Series, key ...ColumnKey) *Table {
 	return &Table{
 		series:  series,
-		schema:  newSchema(series),
+		schema:  *newSchema(series),
 		sortKey: key,
 		read:    newTableIterator,
 	}
@@ -80,7 +75,7 @@ func newFromRows(rows Rows, key ...ColumnKey) (*Table, error) {
 		return nil, err
 	}
 	for _, row := range rows.Data {
-		builder.Append(row.raw())
+		builder.Append(row.Interface())
 	}
 	t := builder.Build()
 	return newFromSeries(t.series, key...), nil
@@ -191,7 +186,7 @@ func (t *Table) Equal(other *Table) bool {
 	for {
 		r1, more1 := <-iter1
 		r2, more2 := <-iter2
-		if more1 != more2 || !reflect.DeepEqual(r1.Values, r2.Values) {
+		if more1 != more2 || !reflect.DeepEqual(r1.Values(), r2.Values()) {
 			return false
 		}
 		if !more1 {
@@ -303,7 +298,7 @@ func (t *Table) Project(columns ...ColumnName) (*Table, error) {
 		s[i] = series
 	}
 	// TODO rearrange key
-	return NewTable(s), nil
+	return NewTable(s...), nil
 }
 
 // ProjectAllBut discards the named columns, which may not exist in the schema.
@@ -318,7 +313,7 @@ func (t *Table) ProjectAllBut(columns ...ColumnName) *Table {
 			s = append(s, ser)
 		}
 	}
-	return NewTable(s) // TODO set key to subkey
+	return NewTable(s...) // TODO set key to subkey
 }
 
 // Rename updates all columns of the old name to the new name.
@@ -337,7 +332,7 @@ func (t *Table) Rename(old, new ColumnName) *Table {
 		s[i] = ser
 	}
 	// TODO rename key column
-	return NewTable(s)
+	return NewTable(s...)
 }
 
 // Convert lazily converts all columns of the given name to the assigned type.
@@ -361,7 +356,7 @@ func (t *Table) Convert(col ColumnName, typ reflect.Type) (*Table, error) {
 		return t, nil
 	}
 	// types but not sort key are different.  TODO: unless natural order is different for the converted type?
-	newT.schema = newSchema(newT.series)
+	newT.schema = *newSchema(newT.series)
 	return newT, nil
 }
 
@@ -445,7 +440,13 @@ func (t *Table) Join() *JoinSelection {
 	return &JoinSelection{t: t}
 }
 
-// Foreach iterates over a subset of columns of a table using a user-defined function.
+// Append concatenates two tables vertically.
+// The tables schemas must be identical (except columns names; the output table inherits columns names from the first input table).
+func (t *Table) Append(other *Table) (*Table, error) {
+	return AppendMany(t, other)
+}
+
+// Foreach eagerly iterates over a table using a user-defined function.
 // May be useful for:
 //
 // - reading table contents into some user-defined data struct (e.g. a map)
@@ -455,4 +456,17 @@ func (t *Table) Join() *JoinSelection {
 // Use the returned object to specify the columns and the function.
 func (t *Table) Foreach() *ForeachSelection {
 	return &ForeachSelection{t: t}
+}
+
+// ForeachKey eagerly iterates over a table grouping it by a given key: for every single key value, Foreach().By()
+// calls the callback and supplies it with the key value and the "partition" table (the table containing other values
+// from corresponding rows of the source table).
+//
+// For the time being, it is implemented on the top of Sort() - therefore only orderable keys are supported (currently
+// only supported types are considered orderable).
+func (t *Table) ForeachKey(key ...ColumnName) *ForeachKeySelection {
+	return &ForeachKeySelection{
+		t:   t,
+		key: key,
+	}
 }

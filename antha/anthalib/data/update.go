@@ -79,7 +79,7 @@ func (us *UpdateSelection) updateByExtend(extend func(t *Table, colName ColumnNa
 	for _, keyCol := range us.t.sortKey {
 		if keyCol.Column == us.col {
 			// key column is updated => impossible to transfer the key
-			return NewTable(series), nil
+			return NewTable(series...), nil
 		}
 	}
 	return newFromSeries(series, us.t.sortKey...), nil

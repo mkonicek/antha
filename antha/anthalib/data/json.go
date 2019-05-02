@@ -73,16 +73,16 @@ func (t *Table) MarshalJSON() ([]byte, error) {
 			b.WriteString(",\n")
 		}
 		b.WriteString(`[`)
-		for i, o := range row.Values {
+		for i, v := range row.Values() {
 			if i > 0 {
 				b.WriteString(",")
 			}
-			if o.IsNull() {
+			if v.IsNull() {
 				b.WriteString(`null`)
 			} else {
-				rowBytes, err := json.Marshal(o.value)
+				rowBytes, err := json.Marshal(v.Interface())
 				if err != nil {
-					return nil, errors.Wrapf(err, "unable to emit value of %q at index %d", o.ColumnName(), row.Index)
+					return nil, errors.Wrapf(err, "unable to emit value of %q at index %d", v.Column().Name, row.Index())
 				}
 				b.Write(rowBytes)
 			}

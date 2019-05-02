@@ -23,6 +23,8 @@
 package liquidhandling
 
 import (
+	"time"
+
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/graph"
 )
@@ -145,12 +147,19 @@ func aggregatePromptsWithSameMessage(inss []*wtype.LHInstruction, topolGraph gra
 	reachability := graph.NewReachability(topolGraph)
 
 	// merge dependencies of any prompts which have a message in common
-	prMessage := make(map[string][][]*wtype.LHInstruction, len(inss))
+
+	type prompter struct {
+		Message  string
+		WaitTime time.Duration
+	}
+
+	prMessage := make(map[prompter][][]*wtype.LHInstruction, len(inss))
 	insOut := make([]graph.Node, 0, len(inss))
 
 	for _, ins := range inss {
 		if ins.Type == wtype.LHIPRM {
-			iar, ok := prMessage[ins.Message]
+
+			iar, ok := prMessage[prompter{Message: ins.Message, WaitTime: ins.WaitTime}]
 
 			if !ok {
 				iar = make([][]*wtype.LHInstruction, 0, len(inss)/2)
@@ -158,7 +167,7 @@ func aggregatePromptsWithSameMessage(inss []*wtype.LHInstruction, topolGraph gra
 
 			iar = appendSensitively(iar, ins, reachability)
 
-			prMessage[ins.Message] = iar
+			prMessage[prompter{Message: ins.Message, WaitTime: ins.WaitTime}] = iar
 		} else {
 			insOut = append(insOut, graph.Node(ins))
 		}
@@ -180,10 +189,12 @@ func aggregatePromptsWithSameMessage(inss []*wtype.LHInstruction, topolGraph gra
 	// which they are now.
 	// so I think PassThrough can DIAF
 
-	for msg, iar := range prMessage {
+	for prompter, iar := range prMessage {
+		// single message may appear multiply in the chain
 		for _, ar := range iar {
 			ins := wtype.NewLHPromptInstruction()
-			ins.Message = msg
+			ins.Message = prompter.Message
+			ins.WaitTime = prompter.WaitTime
 			ins.AddOutput(wtype.NewLHComponent())
 			for _, ins2 := range ar {
 				for i, cmp := range ins2.Inputs {

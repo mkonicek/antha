@@ -389,7 +389,7 @@ func (m *nativeSeriesMeta) read{{ t['Type'] }}(_ *seriesIterCache) iterator {
 
 type nativeSeriesIter{{ t['Type'] }} struct {
 	data    []{{ t['Raw'] }}
-	notNull notNullMask
+	notNull []bool
 	pos     int
 }
 
@@ -399,7 +399,7 @@ func (i *nativeSeriesIter{{ t['Type'] }}) Next() bool {
 }
 
 func (i *nativeSeriesIter{{ t['Type'] }}) {{ t['Type'] }}() ({{ t['Raw'] }}, bool) {
-	return i.data[i.pos], i.notNull.Test(i.pos)
+	return i.data[i.pos], i.notNull[i.pos]
 }
 
 func (i *nativeSeriesIter{{ t['Type'] }}) Value() interface{} {
@@ -563,17 +563,17 @@ package data
 
 // {{ t['Raw'] }}
 
-// Must{{ t['Type'] }} extracts a value of type {{ t['Raw'] }} from an observation. Panics on error.
-func (o Observation) Must{{ t['Type'] }}() {{ t['Raw'] }} {
-	return o.value.({{ t['Raw'] }})
+// Must{{ t['Type'] }} extracts a value of type {{ t['Raw'] }} from a Value. Panics if the value is null or the types mismatch.
+func (v Value) Must{{ t['Type'] }}() {{ t['Raw'] }} {
+	return v.value.({{ t['Raw'] }})
 }
 
-// {{ t['Type'] }} extracts a value of type {{ t['Raw'] }} from an observation. Returns false on error.
-func (o Observation) {{ t['Type'] }}() ({{ t['Raw'] }}, bool) {
-	if o.IsNull() {
+// {{ t['Type'] }} extracts a value of type {{ t['Raw'] }} from a Value. Returns false if the value is null. Panics if the types mismatch.
+func (v Value) {{ t['Type'] }}() ({{ t['Raw'] }}, bool) {
+	if v.IsNull() {
 		return {{ t['Zero'] }}, false
 	} else {
-		return o.Must{{ t['Type'] }}(), true
+		return v.Must{{ t['Type'] }}(), true
 	}
 }
 
@@ -657,7 +657,7 @@ func newNativeCompareFunc{{ t['Type'] }}(nativeMeta *nativeSeriesMeta, asc bool)
 	notNull := nativeMeta.notNull
 
 	return func(i, j int) int {
-		return compare{{ t['Type'] }}(data[i], notNull.Test(i), data[j], notNull.Test(j), asc)
+		return compare{{ t['Type'] }}(data[i], notNull[i], data[j], notNull[j], asc)
 	}
 }
 
@@ -688,7 +688,7 @@ func newNativeSwapFunc{{ t['Type'] }}(nativeMeta *nativeSeriesMeta) swapFunc {
 	notNull := nativeMeta.notNull
 	return func(i, j int) {
 		data[i], data[j] = data[j], data[i]
-		notNull.Swap(i, j)
+		notNull[i], notNull[j] = notNull[j], notNull[i]
 	}
 }
 {% endfor %}

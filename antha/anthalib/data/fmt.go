@@ -36,9 +36,9 @@ func (r Rows) String() string {
 	}
 
 	for rownum, rr := range r.Data {
-		add(rownum+hdrSize, 0, rr.Index)
-		for c, o := range rr.Values {
-			add(rownum+hdrSize, c+1, o.value)
+		add(rownum+hdrSize, 0, rr.Index())
+		for c, v := range rr.Values() {
+			add(rownum+hdrSize, c+1, v.Interface())
 		}
 	}
 	fmtStrBuilder := strings.Builder{}
@@ -60,6 +60,14 @@ func (r Rows) String() string {
 		}
 	}
 	return fmt.Sprintf("%d Row(s):\n%s", len(cellVals)-hdrSize, builder.String())
+}
+
+// String formats the Row as the Rows containing a single row
+func (r Row) String() string {
+	return Rows{
+		Data:   []Row{r},
+		Schema: r.Schema(),
+	}.String()
 }
 
 // String formats the schema as a list of columns names and types (each from a new line).

@@ -1,0 +1,216 @@
+package data
+
+import (
+	"github.com/pkg/errors"
+)
+
+// AppendMany concatenates multiple tables vertically.
+// The tables schemas must be identical (except columns names; the output table inherits columns names from the first input table).
+// Empty input tables list is considered as an error.
+func AppendMany(tables ...*Table) (*Table, error) {
+	// checking inputs
+	if err := checkInputTablesForAppend(tables); err != nil {
+		return nil, err
+	}
+
+	// optimization: if some of the input tables are themselves produced by `Append`, then replacing them
+	// with their source tables - in order to simplify iteration over the resulting table
+	tables = flattenAppendSources(tables)
+
+	// common part of all output series metadata
+	tableMeta := newAppendTableMeta(tables)
+
+	// creating the output table series: they inherit the schema from the first input table
+	newSeries := make([]*Series, len(tables[0].series))
+	for i, series := range tables[0].series {
+		// new metadata
+		m := &appendSeriesMeta{
+			appendTableMeta: tableMeta,
+			colIndex:        i,
+		}
+		// new series
+		newSeries[i] = &Series{
+			col:  series.col,
+			typ:  series.typ,
+			read: m.read,
+			meta: m,
+		}
+	}
+
+	return NewTable(newSeries...), nil
+}
+
+// Checks that source tables schemas are equal.
+func checkInputTablesForAppend(tables []*Table) error {
+	// at least one input table must be supplied
+	if len(tables) == 0 {
+		return errors.New("append: an empty list of tables is not supported.")
+	}
+	// tables schemas must be identical (except column names)
+	for i := 1; i < len(tables); i++ {
+		if err := compareSchemasForAppend(tables[0].schema, tables[i].schema); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Compares schemas of two tables for Append, returns an error if they are different.
+// Schemas are compared by types only: columns names are not compared (Append uses columns names from the frst table in the list).
+func compareSchemasForAppend(schema1 Schema, schema2 Schema) error {
+	numColumns1, numColumns2 := schema1.NumColumns(), schema2.NumColumns()
+	if numColumns1 != numColumns2 {
+		return errors.Errorf("append: tables having different numbers of columns encontered (%d and %d)", numColumns1, numColumns2)
+	}
+	for i := range schema1.Columns {
+		type1, type2 := schema1.Columns[i].Type, schema2.Columns[i].Type
+		if type1 != type2 {
+			return errors.Errorf("append: tables columns #%d having different types (%v and %v)", i, type1, type2)
+		}
+	}
+	return nil
+}
+
+// If some of the Append source tables are themselves produced by `Append`, then removing intermediate tables
+// - in order to simplify iteration.
+func flattenAppendSources(sourceTables []*Table) []*Table {
+	flattened := make([]*Table, 0, len(sourceTables))
+	for _, t := range sourceTables {
+		if flattenedT, ok := extractAppendSources(t); ok {
+			flattened = append(flattened, flattenedT...)
+		} else {
+			flattened = append(flattened, t)
+		}
+	}
+	return flattened
+}
+
+// If the table is itself a result of Append, then extracts source tables. Otherwise, returns false.
+func extractAppendSources(table *Table) ([]*Table, bool) {
+	for _, series := range table.series {
+		// if some series is not Append series, the table is not the result of a single Append
+		meta, ok := series.meta.(*appendSeriesMeta)
+		if !ok {
+			return nil, false
+		}
+		// if some of Append series do not share the same appendTableMeta, the table is not the result of a single Append
+		if meta.appendTableMeta != table.series[0].meta.(*appendSeriesMeta).appendTableMeta {
+			return nil, false
+		}
+	}
+	return table.series[0].meta.(*appendSeriesMeta).sourceTables, true
+}
+
+// The common part of metadatas of all the series produced by a single Append.
+type appendTableMeta struct {
+	sourceTables []*Table
+	group        *iterGroup
+	exactSize    int
+	maxSize      int
+}
+
+func newAppendTableMeta(sourceTables []*Table) *appendTableMeta {
+	// common part of all series metadata
+	tableMeta := &appendTableMeta{
+		sourceTables: sourceTables,
+		group: &iterGroup{func() interface{} {
+			return &appendState{
+				sources:     sourceTables,
+				sourceIndex: -1,
+				iterPos:     -1,
+			}
+		}},
+		exactSize: 0,
+		maxSize:   0,
+	}
+
+	// counting series sizes
+	for _, t := range sourceTables {
+		exactSize, maxSize, err := seriesSize(t.series)
+		if err != nil {
+			panic(errors.Wrap(err, "SHOULD NOT HAPPEN"))
+		}
+		tableMeta.exactSize = addSizes(tableMeta.exactSize, exactSize)
+		tableMeta.maxSize = addSizes(tableMeta.maxSize, maxSize)
+	}
+
+	return tableMeta
+}
+
+// adds two sizes; if one of them is undefined, the sum is undefined too
+func addSizes(size1 int, size2 int) int {
+	const undefinedSize = -1
+	if size1 == undefinedSize || size2 == undefinedSize {
+		return undefinedSize
+	}
+	return size1 + size2
+}
+
+// appendTables resulting series metadata
+type appendSeriesMeta struct {
+	*appendTableMeta
+	colIndex int
+}
+
+func (m *appendSeriesMeta) IsMaterialized() bool { return false }
+func (m *appendSeriesMeta) ExactSize() int       { return m.exactSize }
+func (m *appendSeriesMeta) MaxSize() int         { return m.maxSize }
+
+func (m *appendSeriesMeta) read(cache *seriesIterCache) iterator {
+	return &appendIter{
+		commonState: cache.EnsureGroup(m.group).(*appendState),
+		pos:         -1,
+		colIndex:    m.colIndex,
+	}
+}
+
+// Common state of several Append series. They share the source table iterator (including series iterators cache).
+type appendState struct {
+	sources     []*Table       // source tables
+	sourceIndex int            // current source table
+	sourceIter  *tableIterator // current source table iterator
+
+	iterPos  Index // current iteration pos (global)
+	iterNext bool  // result of the latest advance() call
+}
+
+func (st *appendState) advance() {
+	for {
+		// first trying to advance the current table iterator
+		if st.sourceIndex != -1 && st.sourceIter.Next() {
+			st.iterNext = true
+			st.iterPos++
+			return
+		}
+		// moving to the next table if possible
+		if st.sourceIndex+1 == len(st.sources) {
+			st.iterNext = false
+			return
+		}
+		st.sourceIndex++
+		st.sourceIter = newTableIterator(st.sources[st.sourceIndex].series)
+	}
+}
+
+// Append series iterator.
+type appendIter struct {
+	commonState *appendState
+	pos         Index
+	colIndex    int
+}
+
+// Next advances the common state provided that iter.pos is already up to date.
+func (iter *appendIter) Next() bool {
+	// see if we need to discard the current shared state
+	retain := iter.pos != iter.commonState.iterPos
+	if !retain {
+		iter.commonState.advance()
+		iter.pos = iter.commonState.iterPos
+	}
+	return iter.commonState.iterNext
+}
+
+// Value reads the column value.
+func (iter *appendIter) Value() interface{} {
+	return iter.commonState.sourceIter.colReader[iter.colIndex].Value()
+}

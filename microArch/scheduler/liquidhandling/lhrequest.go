@@ -64,7 +64,7 @@ type LHRequest struct {
 	OutputOrder           []string
 	OutputIteratorFactory func(wtype.Addressable) wtype.AddressIterator `json:"-"`
 	InstructionChain      *wtype.IChain
-	TimeEstimate          float64
+	TimeEstimate          float64 // in seconds
 	InstructionSets       [][]*wtype.LHInstruction
 	Options               LHOptions
 	NUserPlates           int

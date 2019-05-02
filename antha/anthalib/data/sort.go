@@ -152,7 +152,7 @@ func newNativeSwapFuncGeneric(nativeMeta *nativeSeriesMeta) swapFunc {
 		data.Index(i).Set(data.Index(j))
 		data.Index(j).Set(tmpVal)
 		// swapping null mask bits
-		notNull.Swap(i, j)
+		notNull[i], notNull[j] = notNull[j], notNull[i]
 	}
 }
 

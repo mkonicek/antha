@@ -14,30 +14,30 @@ func handle(err error) {
 	}
 }
 
-// MustCreate panics on any error when creating tables/series.
-type MustCreate struct{}
+// MustGlobal panics on any error when calling global functions.
+type MustGlobal struct{}
 
 // Must returns a proxy object that asserts errors are nil.
-func Must() MustCreate {
-	return MustCreate{}
+func Must() MustGlobal {
+	return MustGlobal{}
 }
 
 // NewSeriesFromSlice is a errors handling wrapper for NewSeriesFromSlice.
-func (m MustCreate) NewSeriesFromSlice(col ColumnName, values interface{}, notNull []bool) *Series {
+func (m MustGlobal) NewSeriesFromSlice(col ColumnName, values interface{}, notNull []bool) *Series {
 	ser, err := NewSeriesFromSlice(col, values, notNull)
 	handle(err)
 	return ser
 }
 
 // NewTableFromStructs is a errors handling wrapper for NewTableFromStructs.
-func (m MustCreate) NewTableFromStructs(structs interface{}) *Table {
+func (m MustGlobal) NewTableFromStructs(structs interface{}) *Table {
 	t, err := NewTableFromStructs(structs)
 	handle(err)
 	return t
 }
 
 // NewTableBuilder is a errors handling wrapper for NewTableBuilder.
-func (m MustCreate) NewTableBuilder(columns []Column) *TableBuilder {
+func (m MustGlobal) NewTableBuilder(columns []Column) *TableBuilder {
 	b, err := NewTableBuilder(columns)
 	handle(err)
 	return b
@@ -292,6 +292,22 @@ func (jo *MustJoinOn) LeftOuter(t *Table, cols ...ColumnName) *Table {
 	return table
 }
 
+// Append
+
+// Append panics unless Table.Append.
+func (m MustTable) Append(other *Table) *Table {
+	t, err := m.Table.Append(other)
+	handle(err)
+	return t
+}
+
+// AppendMany panics unless (global) AppendMany.
+func (m MustGlobal) AppendMany(tables ...*Table) *Table {
+	t, err := AppendMany(tables...)
+	handle(err)
+	return t
+}
+
 // Foreach
 
 // Foreach returns a proxy for *Table.Foreach.
@@ -325,4 +341,22 @@ func (fs *MustForeachSelection) On(cols ...ColumnName) *MustForeachOn {
 func (on *MustForeachOn) Interface(fn func(v ...interface{}), assertions ...SchemaAssertion) {
 	err := on.on.Interface(fn, assertions...)
 	handle(err)
+}
+
+// ForeachKey
+
+// ForeachKey returns a proxy for *Table.ForeachKey.
+func (m MustTable) ForeachKey(key ...ColumnName) *MustForeachKeySelection {
+	return &MustForeachKeySelection{m.Table.ForeachKey(key...)}
+}
+
+// MustForeachKeySelection is a proxy for ForeachKeySelection.
+type MustForeachKeySelection struct {
+	fks *ForeachKeySelection
+}
+
+// By performs ForeachKey on the whole table rows.
+// For wide tables this might be inefficient, consider using Project before By.
+func (fks *MustForeachKeySelection) By(fn func(key Row, data *Table)) {
+	handle(fks.fks.By(fn))
 }

@@ -51,7 +51,7 @@ func (b *TableBuilder) Build() *Table {
 	}
 
 	// constructing a Table
-	return NewTable(series)
+	return NewTable(series...)
 }
 
 // materializedType denotes types of materialized series
@@ -148,12 +148,12 @@ func cacheTable(t *Table, mode materializedType, forceMode bool, forceCopy bool)
 	seriesToCopy := []*Series{}
 	indexesToCopy := []int{}
 	for i, ser := range t.series {
-		if forceCopy || !ser.meta.IsMaterialized() {
+		if doCacheSeries(ser, mode, forceMode, forceCopy) {
 			seriesToCopy = append(seriesToCopy, ser)
 			indexesToCopy = append(indexesToCopy, i)
 		}
 	}
-	tableToCopy := NewTable(seriesToCopy)
+	tableToCopy := NewTable(seriesToCopy...)
 
 	// copying selected series
 	copiedTable, err := copyTable(tableToCopy, mode, forceMode)
@@ -168,6 +168,29 @@ func cacheTable(t *Table, mode materializedType, forceMode bool, forceCopy bool)
 	}
 
 	return newTable, nil
+}
+
+func doCacheSeries(series *Series, mode materializedType, forceMode bool, forceCopy bool) bool {
+	// - `forceCopy` means forcing copying all the series regardless their types
+	// - if the series is not materialized, it should be copied anyway as well
+	if forceCopy || !series.meta.IsMaterialized() {
+		return true
+	}
+
+	// if we don't care about the resulting materialized series type, there is no need to copy materialized series
+	if !forceMode {
+		return false
+	}
+
+	// if we care about the resulting materialized series type, then materializing series of other types
+	switch series.meta.(type) {
+	case *nativeSeriesMeta:
+		return mode != nativeSeries
+	case *arrowSeriesMeta:
+		return mode != arrowSeries
+	default:
+		return true
+	}
 }
 
 // caches all the columns of t into either native or arrow series

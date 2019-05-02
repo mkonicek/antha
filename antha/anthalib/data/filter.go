@@ -21,7 +21,7 @@ type FilterSelection struct {
 func (fs *FilterSelection) By(fn MatchRow) *Table {
 	matchGen := func() rawMatch {
 		return func(r raw) bool {
-			return fn(r.row(-1, fs.t.schema))
+			return fn(r.row(-1, &fs.t.schema))
 		}
 	}
 

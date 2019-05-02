@@ -11,11 +11,11 @@ var pirateBooty *Table
 
 func ExampleTable() {
 	// create a table
-	pirateBooty = NewTable([]*Series{
+	pirateBooty = NewTable(
 		Must().NewSeriesFromSlice("Name", []string{"doubloon", "grog", "cutlass", "chest"}, nil),
 		Must().NewSeriesFromSlice("Price", []float64{1.0, 0, 5.5, 600.0}, []bool{true, false, true, true}),
 		Must().NewSeriesFromSlice("Quantity", []int64{1200, 44, 30, 2}, []bool{true, true, true, true}),
-	})
+	)
 
 	fmt.Println(pirateBooty.ToRows())
 	// Output: 4 Row(s):
@@ -30,11 +30,11 @@ func ExampleTable() {
 
 func ExampleNewTable() {
 	// create a table
-	pirateBooty = NewTable([]*Series{
+	pirateBooty = NewTable(
 		Must().NewSeriesFromSlice("Name", []string{"doubloon", "grog", "cutlass", "chest"}, nil),
 		Must().NewSeriesFromSlice("Price", []float64{1.0, 0, 5.5, 600.0}, []bool{true, false, true, true}),
 		Must().NewSeriesFromSlice("Quantity", []int64{1200, 44, 30, 2}, []bool{true, true, true, true}),
-	})
+	)
 
 	fmt.Println(pirateBooty.ToRows())
 	// Output: 4 Row(s):
@@ -90,7 +90,7 @@ func ExampleTable_Sort() {
 func ExampleTable_SortByFunc() {
 	// in ascending order of length of Name.
 	byNameLenAsc, _ := pirateBooty.SortByFunc(func(r1 Row, r2 Row) bool {
-		return len(r1.Values[0].MustString()) < len(r2.Values[0].MustString())
+		return len(r1.ValueAt(0).MustString()) < len(r2.ValueAt(0).MustString())
 	})
 	fmt.Println(byNameLenAsc.ToRows())
 	// Output: 4 Row(s):
@@ -189,7 +189,7 @@ func ExampleTable_Filter_dynamicType() {
 	// any column value can be filtered on.
 	startsWithC := pirateBooty.Filter().
 		By(func(r Row) bool {
-			name := r.Values[0]
+			name := r.ValueAt(0)
 			return !name.IsNull() && strings.HasPrefix(name.MustString(), "c")
 		})
 	fmt.Println(startsWithC.ToRows())
@@ -260,8 +260,8 @@ func ExampleTable_Extend_dynamicTypes() {
 	// calculate new column value on the whole row using dynamic types.
 	totals := pirateBooty.Extend("Total").
 		By(func(r Row) interface{} {
-			q, _ := r.Observation("Quantity")
-			p, _ := r.Observation("Price")
+			q, _ := r.Value("Quantity")
+			p, _ := r.Value("Price")
 			if p.IsNull() {
 				return nil
 			}
@@ -357,8 +357,8 @@ func ExampleTable_Update_dynamicTypes() {
 	// calculate updated column value on the whole row using dynamic types.
 	totals, _ := pirateBooty.Update("Quantity").
 		By(func(r Row) interface{} {
-			q, _ := r.Observation("Quantity")
-			p, _ := r.Observation("Price")
+			q, _ := r.Value("Quantity")
+			p, _ := r.Value("Price")
 			if p.IsNull() {
 				return 0
 			}
@@ -437,11 +437,11 @@ func ExampleTable_Update_onSelectedColsStaticType() {
 
 func ExampleTable_Pivot() {
 	// create a table
-	pirateBootyNarrow := NewTable([]*Series{
+	pirateBootyNarrow := NewTable(
 		Must().NewSeriesFromSlice("Name", []string{"doubloon", "doubloon", "grog", "cutlass", "cutlass", "chest", "chest"}, nil),
 		Must().NewSeriesFromSlice("PropertyName", []string{"Price", "Quantity", "Quantity", "Price", "Quantity", "Price", "Quantity"}, nil),
 		Must().NewSeriesFromSlice("PropertyValue", []float64{1.0, 1200, 44, 5.5, 30, 600.0, 2}, nil),
-	})
+	)
 
 	// make a wide table from pirateBootyNarrow.
 	pirateBootyWide, _ := pirateBootyNarrow.Pivot().Key("Name").Columns("PropertyName", "PropertyValue")
@@ -458,10 +458,10 @@ func ExampleTable_Pivot() {
 
 func ExampleTable_Join_naturalInner() {
 	// create another table to join
-	currency := NewTable([]*Series{
+	currency := NewTable(
 		Must().NewSeriesFromSlice("Name", []string{"doubloon", "piastre"}, nil),
 		Must().NewSeriesFromSlice("ExchangeRate", []float64{0.5, 2.3}, nil),
-	})
+	)
 
 	// natural inner join
 	currencyBooty, _ := pirateBooty.Join().NaturalInner(currency)
@@ -475,10 +475,10 @@ func ExampleTable_Join_naturalInner() {
 
 func ExampleTable_Join_inner() {
 	// create another table to join
-	currency := NewTable([]*Series{
+	currency := NewTable(
 		Must().NewSeriesFromSlice("CurrencyName", []string{"doubloon", "piastre"}, nil),
 		Must().NewSeriesFromSlice("CurrencyExchangeRate", []float64{0.5, 2.3}, nil),
-	})
+	)
 
 	// inner join
 	currencyBooty, _ := pirateBooty.Join().On("Name").Inner(currency, "CurrencyName")
@@ -490,10 +490,51 @@ func ExampleTable_Join_inner() {
 	// |0|doubloon|      1|    1200|    doubloon|                 0.5|
 }
 
+func ExampleTable_Append() {
+	morePirateBooty, _ := pirateBooty.Append(NewTable(
+		Must().NewSeriesFromSlice("Name", []string{"piastre"}, nil),
+		Must().NewSeriesFromSlice("Price", []float64{1.5}, nil),
+		Must().NewSeriesFromSlice("Quantity", []int64{1000}, nil),
+	))
+	fmt.Println(morePirateBooty.ToRows())
+	// Output: 5 Row(s):
+	// | |    Name|  Price|Quantity|
+	// | |  string|float64|   int64|
+	// -----------------------------
+	// |0|doubloon|      1|    1200|
+	// |1|    grog|  <nil>|      44|
+	// |2| cutlass|    5.5|      30|
+	// |3|   chest|    600|       2|
+	// |4| piastre|    1.5|    1000|
+}
+
+func ExampleAppendMany() {
+	morePirateBooty, _ := AppendMany(pirateBooty, NewTable(
+		Must().NewSeriesFromSlice("Name", []string{"piastre"}, nil),
+		Must().NewSeriesFromSlice("Price", []float64{1.5}, nil),
+		Must().NewSeriesFromSlice("Quantity", []int64{1000}, nil),
+	), NewTable(
+		Must().NewSeriesFromSlice("Name", []string{"guinea"}, nil),
+		Must().NewSeriesFromSlice("Price", []float64{0.5}, nil),
+		Must().NewSeriesFromSlice("Quantity", []int64{100}, nil),
+	))
+	fmt.Println(morePirateBooty.ToRows())
+	// Output: 6 Row(s):
+	// | |    Name|  Price|Quantity|
+	// | |  string|float64|   int64|
+	// -----------------------------
+	// |0|doubloon|      1|    1200|
+	// |1|    grog|  <nil>|      44|
+	// |2| cutlass|    5.5|      30|
+	// |3|   chest|    600|       2|
+	// |4| piastre|    1.5|    1000|
+	// |5|  guinea|    0.5|     100|
+}
+
 func ExampleTable_Foreach_wholerow() {
 	nonNullCount := 0
 	pirateBooty.Foreach().By(func(r Row) {
-		for _, v := range r.Values {
+		for _, v := range r.Values() {
 			if !v.IsNull() {
 				nonNullCount++
 			}
@@ -522,6 +563,60 @@ func ExampleTable_Foreach_specialized() {
 	})
 	fmt.Printf("Total quantity: %d\n", quantity)
 	// Output: Total quantity: 1276
+}
+
+func ExampleTable_ForeachKey() {
+	_ = pirateBooty.ForeachKey("Name").By(func(key Row, partition *Table) {
+		fmt.Printf("Key: %v\n", key)
+		fmt.Printf("Partition: %v\n", partition.ToRows())
+	})
+	// Output: Key: 1 Row(s):
+	// | |  Name|
+	// | |string|
+	// ----------
+	// |0|  grog|
+	//
+	// Partition: 1 Row(s):
+	// | |  Price|Quantity|
+	// | |float64|   int64|
+	// --------------------
+	// |0|  <nil>|      44|
+	//
+	// Key: 1 Row(s):
+	// | |    Name|
+	// | |  string|
+	// ------------
+	// |1|doubloon|
+	//
+	// Partition: 1 Row(s):
+	// | |  Price|Quantity|
+	// | |float64|   int64|
+	// --------------------
+	// |0|      1|    1200|
+	//
+	// Key: 1 Row(s):
+	// | |   Name|
+	// | | string|
+	// -----------
+	// |2|cutlass|
+	//
+	// Partition: 1 Row(s):
+	// | |  Price|Quantity|
+	// | |float64|   int64|
+	// --------------------
+	// |0|    5.5|      30|
+	//
+	// Key: 1 Row(s):
+	// | |  Name|
+	// | |string|
+	// ----------
+	// |3| chest|
+	//
+	// Partition: 1 Row(s):
+	// | |  Price|Quantity|
+	// | |float64|   int64|
+	// --------------------
+	// |0|    600|       2|
 }
 
 func ExampleTable_ToStructs() {

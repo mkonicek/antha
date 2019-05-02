@@ -68,13 +68,13 @@ func writeRow(f *fieldMap, r Row, m []colMapping) reflect.Value {
 
 	destValue := reflect.New(f.destType).Elem()
 	for _, m := range m {
-		newVal := r.Values[m.colIdx].value
+		newVal := r.ValueAt(m.colIdx).Interface()
 		if newVal != nil {
 			destValue.FieldByIndex(m.fieldIdx).Set(reflect.ValueOf(newVal))
 		}
 	}
 	for _, fieldIdx := range f.indexFields {
-		destValue.FieldByIndex(fieldIdx).Set(reflect.ValueOf(int(r.Index)))
+		destValue.FieldByIndex(fieldIdx).Set(reflect.ValueOf(int(r.Index())))
 	}
 
 	for i := 0; i < f.level; i++ {
@@ -191,7 +191,7 @@ row:
 		}
 		series[i] = serResult[0].Interface().(*Series)
 	}
-	return NewTable(series), nil
+	return NewTable(series...), nil
 }
 
 // ToStruct copies to the exported struct fields by name, ignoring unmapped
@@ -214,14 +214,16 @@ func (r Row) ToStruct(structPtr interface{}) error {
 	// build a pseudo schema using the inferred column types
 	columnFieldMapping := []colMapping{}
 	for _, binding := range f.columnFields {
-		idx, o, err := r.get(binding.ColumnName)
+		idx, err := r.schema.ColIndex(binding.ColumnName)
 		if err != nil {
 			return errors.Wrapf(err, "when mapping to struct type %+v", f.destType)
 		}
+		value := r.ValueAt(idx).Interface()
+
 		field := f.destType.FieldByIndex(binding.fieldIdx)
 		// type check
-		if o.value != nil && !reflect.ValueOf(o.value).Type().AssignableTo(field.Type) {
-			return errors.Errorf("can't map value %+v to struct field %v of type %+v", o.value, field.Name, field.Type)
+		if value != nil && !reflect.ValueOf(value).Type().AssignableTo(field.Type) {
+			return errors.Errorf("can't map value %+v to struct field %v of type %+v", value, field.Name, field.Type)
 		}
 		columnFieldMapping = append(columnFieldMapping, colMapping{idx, field.Index})
 	}

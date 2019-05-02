@@ -12,17 +12,24 @@ import (
 	"github.com/xitongsys/parquet-go/parquet"
 )
 
+// WriteOpt sets an optional behavior when creating parquet files.
+type WriteOpt func(*writeState) error
+
+type writeState struct {
+	table  *data.Table
+	writer *ParquetWriter.ParquetWriter
+}
+
 // TableToWriter writes a data.Table to io.Writer
-func TableToWriter(table *data.Table, writer io.Writer) error {
+func TableToWriter(table *data.Table, writer io.Writer, opts ...WriteOpt) error {
 	// wrapping io.Writer in a ParquetFile.ParquetFile
 	file := ParquetFile.NewWriterFile(writer)
 
-	// writing the table
-	return writeTable(table, file)
+	return writeTable(write(file, table, opts))
 }
 
 // TableToBytes writes a data.Table to a memory buffer
-func TableToBytes(table *data.Table) ([]byte, error) {
+func TableToBytes(table *data.Table, opts ...WriteOpt) ([]byte, error) {
 	// a memory buffer writer
 	buffer := bytes.NewBuffer(nil)
 
@@ -30,14 +37,14 @@ func TableToBytes(table *data.Table) ([]byte, error) {
 	file := ParquetFile.NewWriterFile(buffer)
 
 	// writing the table
-	if err := TableToWriter(table, file); err != nil {
+	if err := TableToWriter(table, file, opts...); err != nil {
 		return nil, err
 	}
 	return buffer.Bytes(), nil
 }
 
 // TableToFile writes a data.Table to a file on disk
-func TableToFile(table *data.Table, filePath string) error {
+func TableToFile(table *data.Table, filePath string, opts ...WriteOpt) error {
 	// opening the file
 	file, err := ParquetFile.NewLocalFileWriter(filePath)
 	if err != nil {
@@ -45,17 +52,39 @@ func TableToFile(table *data.Table, filePath string) error {
 	}
 	defer file.Close() //nolint
 
-	// writing a table
-	return writeTable(table, file)
+	return writeTable(write(file, table, opts))
+}
+
+func write(file ParquetFile.ParquetFile, table *data.Table, opts []WriteOpt) (*writeState, error) {
+	// Parquet writer and its settings
+	writer, err := ParquetWriter.NewParquetWriter(file, nil, 1)
+	if err != nil {
+		return nil, errors.Wrap(err, "creating Parquet writer")
+	}
+	writer.RowGroupSize = 128 * 1024 * 1024 //128M
+	writer.CompressionType = parquet.CompressionCodec_SNAPPY
+
+	w := &writeState{writer: writer, table: table}
+	for _, o := range opts {
+		err := o(w)
+		if err != nil {
+			return nil, errors.Wrapf(err, "WriteOpt %v generated an error state when writing %v", o, file)
+		}
+	}
+	return w, nil
 }
 
 // writes a data.Table to ParquetFile.ParquetFile
-func writeTable(table *data.Table, file ParquetFile.ParquetFile) error {
+func writeTable(w *writeState, err error) error {
+	if err != nil {
+		return err
+	}
+
 	// parquet schema
-	tableSchema := table.Schema()
+	tableSchema := w.table.Schema()
 	schema := newParquetSchema(&tableSchema)
 
-	// converting parquetSchame to json understandable by parquet-go
+	// converting parquetSchema to json understandable by parquet-go
 	jsonSchema, err := schema.toJSON()
 	if err != nil {
 		return err
@@ -65,11 +94,11 @@ func writeTable(table *data.Table, file ParquetFile.ParquetFile) error {
 	rowType := rowStructFromSchema(schema)
 
 	// starting iterating through the table
-	iter, done := table.Iter()
+	iter, done := w.table.Iter()
 	defer done()
 
 	// writing to Parquet
-	return writeToParquet(file, jsonSchema, rowType, func() (interface{}, error) {
+	return w.writeToParquet(jsonSchema, rowType, func() (interface{}, error) {
 		row, ok := <-iter
 		if !ok {
 			return nil, nil
@@ -79,17 +108,10 @@ func writeTable(table *data.Table, file ParquetFile.ParquetFile) error {
 }
 
 // Writes rows to Parquet file
-func writeToParquet(file ParquetFile.ParquetFile, jsonSchema string, rowType reflect.Type, rowIter func() (interface{}, error)) error {
-	// Parquet writer and its settings
-	writer, err := ParquetWriter.NewParquetWriter(file, nil, 1)
-	if err != nil {
-		return errors.Wrap(err, "creating Parquet writer")
-	}
-	writer.RowGroupSize = 128 * 1024 * 1024 //128M
-	writer.CompressionType = parquet.CompressionCodec_SNAPPY
+func (w *writeState) writeToParquet(jsonSchema string, rowType reflect.Type, rowIter func() (interface{}, error)) error {
 
 	// parquet schema
-	if err := writer.SetSchemaHandlerFromJSON(jsonSchema); err != nil {
+	if err := w.writer.SetSchemaHandlerFromJSON(jsonSchema); err != nil {
 		return errors.Wrap(err, "set Parquet schema")
 	}
 
@@ -102,20 +124,20 @@ func writeToParquet(file ParquetFile.ParquetFile, jsonSchema string, rowType ref
 		if row == nil {
 			break
 		}
-		if err = writer.Write(row); err != nil {
+		if err = w.writer.Write(row); err != nil {
 			return err
 		}
 	}
 
 	// Flush
-	return writer.WriteStop()
+	return w.writer.WriteStop()
 }
 
 // copies data.Row content into a dynamic data struct suitable for Parquet writer
 func makeRowValue(row data.Row, rowType reflect.Type) interface{} {
 	rowValue := reflect.New(rowType)
 	// filling fields
-	for i, obs := range row.Values {
+	for i, obs := range row.Values() {
 		field := rowValue.Elem().Field(i)
 		if obs.Interface() != nil {
 			// creating a pointer (all values are optional, so they are stored in pointer felds)

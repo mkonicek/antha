@@ -6,10 +6,10 @@ import (
 )
 
 func TestFmt(t *testing.T) {
-	tab := NewTable([]*Series{
+	tab := NewTable(
 		Must().NewSeriesFromSlice("measure", []int64{1, 1000}, nil),
 		Must().NewSeriesFromSlice("label", []string{"abcdef", "abcd"}, nil),
-	})
+	)
 	formatted := tab.ToRows().String()
 	if formatted != `2 Row(s):
 | |measure| label|
@@ -23,9 +23,9 @@ func TestFmt(t *testing.T) {
 }
 
 func TestFmtEmpty(t *testing.T) {
-	tab := NewTable([]*Series{
+	tab := NewTable(
 		Must().NewSeriesFromSlice("A", []float64{}, nil),
-	})
+	)
 	formatted := tab.ToRows().String()
 	expected := `0 Row(s):
 ||      A|

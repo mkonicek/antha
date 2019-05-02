@@ -43,6 +43,9 @@ func (t *OldLHTimer) TimeFor(r RobotInstruction) time.Duration {
 			nano := 1e9
 			d = time.Duration(int64(wait.Time * nano))
 		},
+		HandleMessage: func(msg *MessageInstruction) {
+			d = msg.WaitTime
+		},
 	})
 
 	return d

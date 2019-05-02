@@ -13,35 +13,49 @@ import (
 	"github.com/xitongsys/parquet-go/parquet"
 )
 
+type readState struct {
+	reader      *ParquetReader.ParquetReader
+	columnNames []data.ColumnName
+}
+
+// ReadOpt sets an optional behavior when reading parquet files.
+type ReadOpt func(*readState) error
+
+// Columns returns a ReadOpt that selects a subset of columns to read from the
+// source. If no column names are specified, reads all the columns. This is an
+// optimization for projections, that should not be needed in future (when lazy
+// access patterns are possible).
+func Columns(columnNames ...data.ColumnName) ReadOpt {
+	return func(r *readState) error {
+		r.columnNames = columnNames
+		return nil
+	}
+}
+
 // TableFromReader reads a data.Table eagerly from io.Reader.
-// If at least one column name is specified, reads a subset of the columns from the source. Otherwise, reads all the columns.
-func TableFromReader(reader io.Reader, columnNames ...data.ColumnName) (*data.Table, error) {
+func TableFromReader(reader io.Reader, opts ...ReadOpt) (*data.Table, error) {
 	// reading into a memory buffer
 	buffer, err := ioutil.ReadAll(reader)
 	if err != nil {
 		return nil, errors.Wrap(err, "read Parquet file bytes")
 	}
 
-	// reading the table
-	return TableFromBytes(buffer, columnNames...)
+	return TableFromBytes(buffer, opts...)
 }
 
 // TableFromBytes reads a data.Table eagerly from a memory buffer
-// If at least one column name is specified, reads a subset of the columns from the source. Otherwise, reads all the columns.
-func TableFromBytes(buffer []byte, columnNames ...data.ColumnName) (*data.Table, error) {
+func TableFromBytes(buffer []byte, opts ...ReadOpt) (*data.Table, error) {
 	// wrap a byte buffer into a ParquetFile object
 	file, err := ParquetFile.NewBufferFile(buffer)
 	if err != nil {
 		panic(errors.Wrap(err, "SHOULD NOT HAPPEN: creating in-memory ParquetFile"))
 	}
 
-	// reading the table
-	return readTable(file, columnNames)
+	return readTable(read(file, opts))
 }
 
 // TableFromFile reads a data.Table eagerly from a Parquet file
-// If at least one column name is specified, reads a subset of the columns from the source. Otherwise, reads all the columns.
-func TableFromFile(filePath string, columnNames ...data.ColumnName) (*data.Table, error) {
+func TableFromFile(filePath string, opts ...ReadOpt) (*data.Table, error) {
 	// opening the file on disk via ParquetFile object
 	file, err := ParquetFile.NewLocalFileReader(filePath)
 	if err != nil {
@@ -49,20 +63,39 @@ func TableFromFile(filePath string, columnNames ...data.ColumnName) (*data.Table
 	}
 	defer file.Close() //nolint
 
-	// reading the table
-	return readTable(file, columnNames)
+	return readTable(read(file, opts))
+}
+
+func read(file ParquetFile.ParquetFile, opts []ReadOpt) (*readState, error) {
+	// for now, reading Parquet file in 1 thread, 100 rows at once
+	// TODO: which parameters to use for really large datasets?
+	np := 1
+
+	// parquet reader
+	parquetReader, err := ParquetReader.NewParquetReader(file, nil, int64(np))
+	if err != nil {
+		return nil, errors.Wrapf(err, "create Parquet reader")
+	}
+	r := &readState{reader: parquetReader}
+	for _, o := range opts {
+		if err = o(r); err != nil {
+			return nil, errors.Wrapf(err, "option %v generated an error state when reading %v", o, file)
+		}
+	}
+	return r, nil
 }
 
 // reads a table from an arbitrary source (in the form of ParquetFile)
-func readTable(file ParquetFile.ParquetFile, columnNames []data.ColumnName) (*data.Table, error) {
-	// reading Parquet file metadata
-	metadata, err := readMetadata(file)
+func readTable(r *readState, err error) (*data.Table, error) {
 	if err != nil {
 		return nil, err
 	}
 
+	// reading Parquet file metadata
+	metadata := r.reader.Footer
+
 	// transforming Parquet file metadata into parquetSchema
-	schema, err := schemaFromParquetMetadata(metadata, columnNames)
+	schema, err := schemaFromParquetMetadata(metadata, r.columnNames)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +116,7 @@ func readTable(file ParquetFile.ParquetFile, columnNames []data.ColumnName) (*da
 	}
 
 	// reading from Parquet
-	err = readFromParquet(file, jsonSchema, rowType, func(rowStruct interface{}) {
+	err = r.readFromParquet(jsonSchema, rowType, func(rowStruct interface{}) {
 		// populating row values from a dynamic row struct
 		row := rowValuesFromRowStruct(rowStruct, schema)
 		// appending the row to the table builder
@@ -97,47 +130,20 @@ func readTable(file ParquetFile.ParquetFile, columnNames []data.ColumnName) (*da
 	return builder.Build(), nil
 }
 
-// reads Parquet file metadata
-func readMetadata(file ParquetFile.ParquetFile) (*parquet.FileMetaData, error) {
-	// reading parquet file footer
-	parquetReader, err := ParquetReader.NewParquetReader(file, nil, 1)
-	if err != nil {
-		return nil, errors.Wrap(err, "create Parquet reader")
-	}
-
-	// seeking to the beginning of the file again
-	_, err = file.Seek(0, io.SeekStart)
-	if err != nil {
-		return nil, errors.Wrap(err, "ParquetFile.Seek")
-	}
-
-	return parquetReader.Footer, nil
-}
-
 // Reads rows from Parquet file
-func readFromParquet(file ParquetFile.ParquetFile, jsonSchema string, rowType reflect.Type, onRow func(interface{})) error {
-	// for now, reading Parquet file in 1 thread, 100 rows at once
-	// TODO: which parameters to use for really large datasets?
-	np := 1
-	batchSize := 100
-
-	// parquet reader
-	parquetReader, err := ParquetReader.NewParquetReader(file, nil, int64(np))
-	if err != nil {
-		return errors.Wrapf(err, "create Parquet reader")
-	}
-	defer parquetReader.ReadStop()
+func (r *readState) readFromParquet(jsonSchema string, rowType reflect.Type, onRow func(interface{})) error {
+	defer r.reader.ReadStop()
 
 	// !!! hack !!!
-	patchWhitespaces(parquetReader.Footer)
-
+	patchWhitespaces(r.reader.Footer)
 	// parquet schema
-	if err := parquetReader.SetSchemaHandlerFromJSON(jsonSchema); err != nil {
+	if err := r.reader.SetSchemaHandlerFromJSON(jsonSchema); err != nil {
 		return errors.Wrap(err, "set Parquet schema")
 	}
+	batchSize := 100
 
 	// total number of rows
-	numRows := int(parquetReader.GetNumRows())
+	numRows := int(r.reader.GetNumRows())
 
 	// type []rowType
 	sliceType := reflect.SliceOf(rowType)
@@ -152,7 +158,7 @@ func readFromParquet(file ParquetFile.ParquetFile, jsonSchema string, rowType re
 		slicePtr.Elem().Set(reflect.MakeSlice(sliceType, rowCount, rowCount))
 
 		// reading
-		if err := parquetReader.Read(slicePtr.Interface()); err != nil {
+		if err := r.reader.Read(slicePtr.Interface()); err != nil {
 			return errors.Wrap(err, "reading data from Parquet")
 		}
 
@@ -200,11 +206,15 @@ func rowValuesFromRowStruct(rowStruct interface{}, schema *parquetSchema) []inte
 	values := make([]interface{}, len(schema.Columns))
 	for i := range schema.Columns {
 		field := rowStructValue.Field(i)
-		// since all fields are optional now, they are stored as pointers
-		if !field.IsNil() {
-			// a workaround for timestamps: parquet-go reads them into int64 field, so converting them from data.TimestampSmth here
-			values[i] = field.Elem().Convert(schema.Columns[i].Type).Interface()
+		// if fields are optional, they are stored as pointers here
+		if schema.nullable(i) {
+			if field.IsNil() {
+				continue
+			}
+			field = field.Elem()
 		}
+		// a workaround for timestamps: parquet-go reads them into int64 field, so converting them from data.TimestampSmth here
+		values[i] = field.Convert(schema.Columns[i].Type).Interface()
 	}
 
 	return values

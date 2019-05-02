@@ -13,27 +13,27 @@ func assertEqual(t *testing.T, expected, actual *Table, msg string) {
 	}
 }
 func TestEqualsComplexType(t *testing.T) {
-	assertEqual(t, NewTable([]*Series{
+	assertEqual(t, NewTable(
 		makeNativeSeries("y", []int32{}, nil),
 		makeNativeSeries("x", [][]string{}, nil),
-	}), NewTable([]*Series{
+	), NewTable(
 		makeNativeSeries("y", []int32{}, nil),
 		makeNativeSeries("x", [][]string{}, nil),
-	}), "not equal")
+	), "not equal")
 
 }
 
 func TestEquals(t *testing.T) {
 	runSubTests(t, func(t *testing.T, makeSeries makeSeriesType) {
-		tab := NewTable([]*Series{
+		tab := NewTable(
 			makeSeries("measure", []int64{1, 1000}, nil),
 			makeSeries("label", []string{"abcdef", "abcd"}, nil),
-		})
+		)
 		assertEqual(t, tab, tab, "not self equal")
 
-		tab2 := NewTable([]*Series{
+		tab2 := NewTable(
 			makeSeries("measure", []int64{1, 1000}, nil),
-		})
+		)
 		assertEqual(t, tab2, tab.Must().Project("measure"), "not equal by value")
 
 		if tab2.Equal(tab.Must().Project("label")) {
@@ -48,45 +48,45 @@ func TestEquals(t *testing.T) {
 
 func TestSlice(t *testing.T) {
 	runSubTests(t, func(t *testing.T, makeSeries makeSeriesType) {
-		a := NewTable([]*Series{
+		a := NewTable(
 			makeSeries("a", []int64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}, nil),
-		})
+		)
 		assertEqual(t, a, a.Slice(0, 100), "slice all")
 
 		slice00 := a.Slice(1, 1)
-		assertEqual(t, NewTable([]*Series{
+		assertEqual(t, NewTable(
 			makeSeries("a", []int64{}, nil),
-		}), slice00, "slice00")
+		), slice00, "slice00")
 
 		slice04 := a.Head(4)
-		assertEqual(t, NewTable([]*Series{
+		assertEqual(t, NewTable(
 			makeSeries("a", []int64{1, 2, 3, 4}, nil),
-		}), slice04, "slice04")
+		), slice04, "slice04")
 
 		slice910 := a.Slice(9, 10)
-		assertEqual(t, NewTable([]*Series{
+		assertEqual(t, NewTable(
 			makeSeries("a", []int64{10}, nil),
-		}), slice910, "slice910")
+		), slice910, "slice910")
 	})
 }
 
 func TestExtend(t *testing.T) {
 	runSubTests(t, func(t *testing.T, makeSeries makeSeriesType) {
-		a := NewTable([]*Series{
+		a := NewTable(
 			makeSeries("a", []int64{1, 2, 3}, nil),
-		})
+		)
 		extended := a.Must().Extend("e").By(func(r Row) interface{} {
-			a, _ := r.Observation("a")
+			a, _ := r.Value("a")
 			return float64(a.MustInt64()) / 2.0
 		},
 			reflect.TypeOf(float64(0)))
-		assertEqual(t, NewTable([]*Series{
+		assertEqual(t, NewTable(
 			makeSeries("e", []float64{0.5, 1.0, 1.5}, nil),
-		}), extended.Must().Project("e"), "extend")
+		), extended.Must().Project("e"), "extend")
 
-		floats := NewTable([]*Series{
+		floats := NewTable(
 			makeSeries("floats", []float64{1, 2, 3}, nil),
-		})
+		)
 		extendedStatic := floats.
 			Must().Extend("e_static").
 			On("floats").
@@ -94,9 +94,9 @@ func TestExtend(t *testing.T) {
 				return v[0] * 2.0, true
 			})
 
-		assertEqual(t, NewTable([]*Series{
+		assertEqual(t, NewTable(
 			makeSeries("e_static", []float64{2, 4, 6}, nil),
-		}), extendedStatic.Must().Project("e_static"), "extend static")
+		), extendedStatic.Must().Project("e_static"), "extend static")
 
 		extendedInterface := floats.
 			Must().Extend("e_interface").
@@ -104,9 +104,9 @@ func TestExtend(t *testing.T) {
 			Interface(func(v ...interface{}) interface{} {
 				return v[0].(float64) * 2.0
 			}, reflect.TypeOf(float64(0)))
-		assertEqual(t, NewTable([]*Series{
+		assertEqual(t, NewTable(
 			makeSeries("e_interface", []float64{2, 4, 6}, nil),
-		}), extendedInterface.Must().Project("e_interface"), "extend interface")
+		), extendedInterface.Must().Project("e_interface"), "extend interface")
 
 		extendedInterfaceStatic := floats.
 			Must().Extend("e_static").
@@ -114,14 +114,14 @@ func TestExtend(t *testing.T) {
 			InterfaceFloat64(func(v ...interface{}) (float64, bool) {
 				return v[0].(float64) * 2.0, true
 			})
-		assertEqual(t, NewTable([]*Series{
+		assertEqual(t, NewTable(
 			makeSeries("e_static", []float64{2, 4, 6}, nil),
-		}), extendedInterfaceStatic.Must().Project("e_static"), "extend interface static")
+		), extendedInterfaceStatic.Must().Project("e_static"), "extend interface static")
 
 		// you don't actually need to set any inputs!
 		// note that an impure extension is bad practice in general.
 		i := int64(0)
-		extendedStaticNullary := EmptyTable().
+		extendedStaticNullary := NewTable().
 			Must().Extend("generator").
 			On().
 			Int64(func(_ ...int64) (int64, bool) {
@@ -130,23 +130,23 @@ func TestExtend(t *testing.T) {
 			}).
 			Head(3)
 
-		assertEqual(t, NewTable([]*Series{
+		assertEqual(t, NewTable(
 			makeSeries("generator", []int64{10, 20, 30}, nil),
-		}), extendedStaticNullary, "generator")
+		), extendedStaticNullary, "generator")
 
 		extendedConst := floats.
 			Must().Extend("constant").
 			Constant(float64(8))
-		assertEqual(t, NewTable([]*Series{
+		assertEqual(t, NewTable(
 			makeSeries("constant", []float64{8, 8, 8}, nil),
-		}), extendedConst.Must().Project("constant"), "extend const")
+		), extendedConst.Must().Project("constant"), "extend const")
 		extendedAllNil := floats.
 			Must().Extend("nil").
 			ConstantType(nil, reflect.TypeOf(int64(0)))
 
-		assertEqual(t, NewTable([]*Series{
+		assertEqual(t, NewTable(
 			makeSeries("nil", []int64{0, 0, 0}, []bool{false, false, false}),
-		}), extendedAllNil.Must().Project("nil"), "extend const nil")
+		), extendedAllNil.Must().Project("nil"), "extend const nil")
 
 		// error cases
 		_, err := floats.Extend("another").
@@ -171,22 +171,22 @@ func TestExtend(t *testing.T) {
 func TestUpdate(t *testing.T) {
 	runSubTests(t, func(t *testing.T, makeSeries makeSeriesType) {
 		// update on the whole rows
-		table := NewTable([]*Series{
+		table := NewTable(
 			makeSeries("a", []float64{1, 2, 3}, nil),
 			makeSeries("b", []float64{4, -1, 6}, []bool{true, false, true}),
-		})
+		)
 
 		updated := table.Must().Update("a").By(func(r Row) interface{} {
-			a, _ := r.Observation("a")
-			b, _ := r.Observation("b")
+			a, _ := r.Value("a")
+			b, _ := r.Value("b")
 			if a.IsNull() || b.IsNull() {
 				return nil
 			}
 			return a.MustFloat64() + b.MustFloat64()
 		})
-		assertEqual(t, NewTable([]*Series{
+		assertEqual(t, NewTable(
 			makeSeries("a", []float64{5, -1, 9}, []bool{true, false, true}),
-		}), updated.Must().Project("a"), "update on the whole rows")
+		), updated.Must().Project("a"), "update on the whole rows")
 
 		// update on selected columns (not specialized)
 		updated = table.
@@ -198,9 +198,9 @@ func TestUpdate(t *testing.T) {
 				}
 				return v[0].(float64) * 2.0
 			})
-		assertEqual(t, NewTable([]*Series{
+		assertEqual(t, NewTable(
 			makeSeries("a", []float64{8, -1, 12}, []bool{true, false, true}),
-		}), updated.Must().Project("a"), "update on selected columns (not specialized)")
+		), updated.Must().Project("a"), "update on selected columns (not specialized)")
 
 		// update on selected columns (specialized by output column type)
 		updated = table.
@@ -212,9 +212,9 @@ func TestUpdate(t *testing.T) {
 				}
 				return v[0].(float64) * 2.0, true
 			})
-		assertEqual(t, NewTable([]*Series{
+		assertEqual(t, NewTable(
 			makeSeries("a", []float64{8, -1, 12}, []bool{true, false, true}),
-		}), updated.Must().Project("a"), "update on selected columns (specialized by output column type)")
+		), updated.Must().Project("a"), "update on selected columns (specialized by output column type)")
 
 		// update on selected columns (fully specialized)
 		updated = table.
@@ -223,28 +223,28 @@ func TestUpdate(t *testing.T) {
 			Float64(func(v ...float64) (float64, bool) {
 				return v[0] * 2.0, true
 			})
-		assertEqual(t, NewTable([]*Series{
+		assertEqual(t, NewTable(
 			// contains null because the corresponding input value is null (in spite of the fact that our predicate never returns null explicitly)
 			makeSeries("a", []float64{8, -1, 12}, []bool{true, false, true}),
-		}), updated.Must().Project("a"), "update on selected columns (fully specialized)")
+		), updated.Must().Project("a"), "update on selected columns (fully specialized)")
 
 		// update by const column
 		updated = table.
 			Must().Update("a").
 			Constant(float64(8)).
 			Head(3)
-		assertEqual(t, NewTable([]*Series{
+		assertEqual(t, NewTable(
 			makeSeries("a", []float64{8, 8, 8}, nil),
-		}), updated.Must().Project("a"), "update by const column")
+		), updated.Must().Project("a"), "update by const column")
 
 		// update by nil
 		updated = table.
 			Must().Update("a").
 			Constant(nil).
 			Head(3)
-		assertEqual(t, NewTable([]*Series{
+		assertEqual(t, NewTable(
 			makeSeries("a", []float64{-1, -1, -1}, []bool{false, false, false}),
-		}), updated.Must().Project("a"), "update by nil")
+		), updated.Must().Project("a"), "update by nil")
 
 		// error cases
 		_, err := table.Update("another").
@@ -275,7 +275,7 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestEmpty(t *testing.T) {
-	empty := EmptyTable()
+	empty := NewTable()
 	if empty.Size() != 0 {
 		t.Errorf("size")
 	}
@@ -287,13 +287,15 @@ func TestEmpty(t *testing.T) {
 
 func TestConstructorPreconditions(t *testing.T) {
 	runSubTests(t, func(t *testing.T, makeSeries makeSeriesType) {
+		tabJaggedConst := NewTable(
+			makeSeries("a", []float64{0, 1}, nil),
+			NewConstantSeries("b", "const"),
+		)
 
-		tabJaggedConst := NewTable([]*Series{makeSeries("a", []float64{0, 1}, nil), NewConstantSeries("b", "const")})
-
-		assertEqual(t, NewTable([]*Series{
+		assertEqual(t, NewTable(
 			makeSeries("a", []float64{0, 1}, nil),
 			makeSeries("b", []string{"const", "const"}, nil),
-		}), tabJaggedConst, "with const")
+		), tabJaggedConst, "with const")
 
 		// If we try to used 2 differently sized bounded series we get a panic
 		defer func() {
@@ -301,48 +303,48 @@ func TestConstructorPreconditions(t *testing.T) {
 				t.Fatal("no panic on jagged bounded series in table constructor")
 			}
 		}()
-		NewTable([]*Series{
+		NewTable(
 			makeSeries("a", []float64{0}, nil),
 			makeSeries("b", []string{"", ""}, nil),
-		})
+		)
 	})
 }
 
 func TestConstantColumn(t *testing.T) {
-	tab := NewTable([]*Series{NewConstantSeries("a", 1)}).
+	tab := NewTable(NewConstantSeries("a", 1)).
 		Head(2)
-	assertEqual(t, NewTable([]*Series{
+	assertEqual(t, NewTable(
 		makeNativeSeries("a", []int{1, 1}, nil),
-	}), tab, "const")
-	assertEqual(t, EmptyTable().Extend("a").Constant(1).Head(2), tab, "const extend")
+	), tab, "const")
+	assertEqual(t, NewTable().Extend("a").Constant(1).Head(2), tab, "const extend")
 
 }
 
 func TestRename(t *testing.T) {
-	tab := NewTable([]*Series{NewConstantSeries("a", 1)}).
+	tab := NewTable(NewConstantSeries("a", 1)).
 		Rename("a", "x").
 		Head(2)
-	assertEqual(t, NewTable([]*Series{
+	assertEqual(t, NewTable(
 		makeNativeSeries("x", []int{1, 1}, nil),
-	}), tab, "renamed")
+	), tab, "renamed")
 }
 
 func TestConvert(t *testing.T) {
 	runSubTests(t, func(t *testing.T, makeSeries makeSeriesType) {
-		tab := NewTable([]*Series{NewConstantSeries("a", 1)}).
+		tab := NewTable(NewConstantSeries("a", 1)).
 			Must().
 			Convert("a", reflect.TypeOf(float64(0))).
 			Head(2)
-		assertEqual(t, NewTable([]*Series{
+		assertEqual(t, NewTable(
 			makeSeries("a", []float64{1, 1}, nil),
-		}), tab, "convert")
+		), tab, "convert")
 
 		assertEqual(t, tab, tab.Must().Convert("X", reflect.TypeOf(float64(0))), "no such col")
 
-		tabN := NewTable([]*Series{makeSeries("nullable", []float64{0, 1}, []bool{false, true})}).
+		tabN := NewTable(makeSeries("nullable", []float64{0, 1}, []bool{false, true})).
 			Must().
 			Convert("nullable", reflect.TypeOf(int64(0)))
-		expectNull := NewTable([]*Series{makeSeries("nullable", []int64{0, 1}, []bool{false, true})})
+		expectNull := NewTable(makeSeries("nullable", []int64{0, 1}, []bool{false, true}))
 		assertEqual(t, expectNull, tabN, "convert nullable")
 
 		if _, err := tab.Convert("a", reflect.TypeOf("")); err == nil {
@@ -353,10 +355,10 @@ func TestConvert(t *testing.T) {
 
 func TestFilter(t *testing.T) {
 	runSubTests(t, func(t *testing.T, makeSeries makeSeriesType) {
-		a := NewTable([]*Series{
+		a := NewTable(
 			makeSeries("a", []int64{1, 2, 3}, nil),
 			makeSeries("b", []float64{2, 2, 2}, nil),
-		})
+		)
 		_, err := a.Filter().On("XYZ").Interface(Eq(2))
 		if err == nil {
 			t.Error("no err, eq no such column")
@@ -391,7 +393,7 @@ func TestFilter(t *testing.T) {
 		assertEqual(t, a.Slice(2, 3), filtered2Col, "filter multi")
 
 		filteredRow := a.Must().Filter().By(func(r Row) bool {
-			a, _ := r.Observation("a")
+			a, _ := r.Value("a")
 			return a.MustInt64() == 1
 		})
 		assertEqual(t, a.Head(1), filteredRow, "filter by")
@@ -402,9 +404,9 @@ func TestFilter(t *testing.T) {
 		assertEqual(t, filteredStatic, a.Slice(1, 3), "filter static")
 
 		// nulls
-		withNull := NewTable([]*Series{
+		withNull := NewTable(
 			makeSeries("col1", []int64{0, 3}, []bool{false, true}),
-		})
+		)
 		filteredEq = withNull.Must().Filter().On("col1").Interface(Eq(3))
 		assertEqual(t, withNull.Slice(1, 2), filteredEq, "filter eq")
 
@@ -425,10 +427,10 @@ func TestFilter(t *testing.T) {
 
 func TestDistinct(t *testing.T) {
 	runSubTests(t, func(t *testing.T, makeSeries makeSeriesType) {
-		a := NewTable([]*Series{
+		a := NewTable(
 			makeSeries("a", []int64{1, 2, 1, 2}, nil),
 			makeSeries("b", []float64{1, 1, 2, 1}, nil),
-		})
+		)
 
 		_, err := a.Distinct().On("XYZ")
 		if err == nil {
@@ -448,13 +450,13 @@ func TestDistinct(t *testing.T) {
 }
 func TestSize(t *testing.T) {
 	runSubTests(t, func(t *testing.T, makeSeries makeSeriesType) {
-		empty := NewTable([]*Series{})
+		empty := NewTable()
 		if empty.Size() != 0 {
 			t.Errorf("should be empty. %d", empty.Size())
 		}
-		a := NewTable([]*Series{
+		a := NewTable(
 			makeSeries("a", []int64{1, 2, 3}, nil),
-		})
+		)
 		if a.Size() != 3 {
 			t.Errorf("size? %d", a.Size())
 		}
@@ -480,7 +482,7 @@ func TestSize(t *testing.T) {
 func TestCache_nativeArbitraryType(t *testing.T) {
 	// make a column of arbitrary type
 	type colType struct{ val int }
-	tab := NewTable([]*Series{makeNativeSeries("col", []colType{{5}}, nil)})
+	tab := NewTable(makeNativeSeries("col", []colType{{5}}, nil))
 	// this works trivially because the column is materialized
 	assertEqual(t, tab, tab.Must().Cache(), "cache on arbitrary type")
 	extended := tab.Must().Extend("n").By(func(_ Row) interface{} {
@@ -492,10 +494,10 @@ func TestCache_nativeArbitraryType(t *testing.T) {
 func TestCache(t *testing.T) {
 	runSubTests(t, func(t *testing.T, makeSeries makeSeriesType) {
 		// a materialized table of 3 elements
-		a := NewTable([]*Series{
+		a := NewTable(
 			makeSeries("a", []int64{1, 2, 3}, nil),
 			makeSeries("b", []int64{3, 2, 1}, nil),
-		})
+		)
 
 		// a lazy table - after filtration
 		filtered := a.Must().Filter().On("a").Interface(Eq(1))
@@ -517,11 +519,11 @@ func TestCache(t *testing.T) {
 func TestSort(t *testing.T) {
 	runSubTests(t, func(t *testing.T, makeSeries makeSeriesType) {
 		// an input table - sorted by id
-		table := NewTable([]*Series{
+		table := NewTable(
 			makeSeries("id", []int64{1, 2, 3, 4, 5}, nil),
 			makeSeries("int64_measure", []int64{50, 20, 20, 20, 10}, nil),
 			makeSeries("float64_nullable_measure", []float64{1., -1., 2., 2., 5.}, []bool{true, false, true, true, true}),
-		})
+		)
 
 		// sorting the table by two other columns
 		sorted := table.Must().Sort(Key{
@@ -530,11 +532,11 @@ func TestSort(t *testing.T) {
 		})
 
 		// reference sorted table
-		sortedReference := NewTable([]*Series{
+		sortedReference := NewTable(
 			makeSeries("id", []int64{5, 3, 4, 2, 1}, nil), // 1 and 5 should swap; 3 and 4 should remain in the same order (since sorting is stable)
 			makeSeries("int64_measure", []int64{10, 20, 20, 20, 50}, nil),
 			makeSeries("float64_nullable_measure", []float64{5., 2., 2., -1., 1.}, []bool{true, true, true, false, true}),
-		})
+		)
 
 		assertEqual(t, sortedReference, sorted, "sort")
 	})
@@ -542,21 +544,21 @@ func TestSort(t *testing.T) {
 func TestSortByFunc(t *testing.T) {
 	runSubTests(t, func(t *testing.T, makeSeries makeSeriesType) {
 		// an unsorted table
-		table := NewTable([]*Series{
+		table := NewTable(
 			makeSeries("id", []int64{2, 1, 3}, nil),
 			makeSeries("str", []string{"2", "1", "3"}, nil),
-		})
+		)
 
 		// a table sorted by id
 		sorted := table.Must().SortByFunc(func(r1 Row, r2 Row) bool {
-			return r1.Values[0].MustInt64() < r2.Values[0].MustInt64()
+			return r1.ValueAt(0).MustInt64() < r2.ValueAt(0).MustInt64()
 		})
 
 		// sorted table reference value
-		sortedReference := NewTable([]*Series{
+		sortedReference := NewTable(
 			makeSeries("id", []int64{1, 2, 3}, nil),
 			makeSeries("str", []string{"1", "2", "3"}, nil),
-		})
+		)
 
 		// check the sorted table is equal to the reference table
 		assertEqual(t, sortedReference, sorted, "sort by func")
@@ -564,11 +566,11 @@ func TestSortByFunc(t *testing.T) {
 }
 func TestPivot(t *testing.T) {
 	runSubTests(t, func(t *testing.T, makeSeries makeSeriesType) {
-		a := NewTable([]*Series{
+		a := NewTable(
 			makeSeries("key", []int64{1, 1, 2, 3, 3}, nil),
 			makeSeries("pivot", []string{"column1", "column2", "column2", "column1", "column2"}, nil),
 			makeSeries("value", []string{"1-1", "1-2", "2-2", "3-1", "3-2"}, nil),
-		})
+		)
 		_, err := a.Pivot().Key("XYZ").Columns("pivot", "value")
 		if err == nil {
 			t.Error("no err, no such key column")
@@ -589,41 +591,41 @@ func TestPivot(t *testing.T) {
 		// a general pivot test
 		pivoted := a.Must().Pivot().Key("key").Columns("pivot", "value")
 
-		pivotedReference := NewTable([]*Series{
+		pivotedReference := NewTable(
 			makeSeries("key", []int64{1, 2, 3}, nil),
 			makeSeries("column1", []string{"1-1", "", "3-1"}, []bool{true, false, true}),
 			makeSeries("column2", []string{"1-2", "2-2", "3-2"}, nil),
-		})
+		)
 
 		assertEqual(t, pivotedReference, pivoted, "pivot")
 
 		// an exotic (but nevertheless possible) edge case: an empty key
-		noKey := NewTable([]*Series{
+		noKey := NewTable(
 			makeSeries("pivot", []string{"column1", "column2"}, nil),
 			makeSeries("value", []string{"1", "2"}, nil),
-		})
+		)
 
 		noKeyPivoted := noKey.Must().Pivot().Key().Columns("pivot", "value")
 
-		noKeyPivotedReference := NewTable([]*Series{
+		noKeyPivotedReference := NewTable(
 			makeSeries("column1", []string{"1"}, nil),
 			makeSeries("column2", []string{"2"}, nil),
-		})
+		)
 
 		assertEqual(t, noKeyPivotedReference, noKeyPivoted, "pivot no key")
 	})
 }
 func TestJoin(t *testing.T) {
 	runSubTests(t, func(t *testing.T, makeSeries makeSeriesType) {
-		a := NewTable([]*Series{
+		a := NewTable(
 			makeSeries("user", []string{"Alice", "Bob", "John"}, nil),
 			makeSeries("password", []string{"123", "password", "qwerty"}, nil),
-		})
+		)
 
-		b := NewTable([]*Series{
+		b := NewTable(
 			makeSeries("username", []string{"Alice", "John", "Peter"}, nil),
 			makeSeries("password", []string{"123456", "qwerty", "password"}, nil),
-		})
+		)
 
 		_, err := a.Join().On("XYZ").Inner(b, "username")
 		if err == nil {
@@ -639,9 +641,9 @@ func TestJoin(t *testing.T) {
 			t.Error("no err, different number of columns to join")
 		}
 
-		_, err = a.Join().On("user").Inner(NewTable([]*Series{
+		_, err = a.Join().On("user").Inner(NewTable(
 			makeSeries("id", []int64{1, 2, 3}, nil),
-		}), "id")
+		), "id")
 		if err == nil {
 			t.Error("no err, join on columns of different types")
 		}
@@ -649,68 +651,143 @@ func TestJoin(t *testing.T) {
 		// a natural inner join test
 		joint := a.Must().Join().NaturalInner(b)
 
-		jointReference := NewTable([]*Series{
+		jointReference := NewTable(
 			makeSeries("user", []string{"Bob", "John"}, nil),
 			makeSeries("password", []string{"password", "qwerty"}, nil),
 			makeSeries("username", []string{"Peter", "John"}, nil),
 			makeSeries("password", []string{"password", "qwerty"}, nil),
-		})
+		)
 
 		assertEqual(t, jointReference, joint, "natural inner join")
 
 		// a natural left outer join test
 		joint = a.Must().Join().NaturalLeftOuter(b)
 
-		jointReference = NewTable([]*Series{
+		jointReference = NewTable(
 			makeSeries("user", []string{"Alice", "Bob", "John"}, nil),
 			makeSeries("password", []string{"123", "password", "qwerty"}, nil),
 			makeSeries("username", []string{"", "Peter", "John"}, []bool{false, true, true}),
 			makeSeries("password", []string{"", "password", "qwerty"}, []bool{false, true, true}),
-		})
+		)
 
 		assertEqual(t, jointReference, joint, "natural left outer join")
 
 		// a single column inner join test
 		joint = a.Must().Join().On("user").Inner(b, "username")
 
-		jointReference = NewTable([]*Series{
+		jointReference = NewTable(
 			makeSeries("user", []string{"Alice", "John"}, nil),
 			makeSeries("password", []string{"123", "qwerty"}, nil),
 			makeSeries("username", []string{"Alice", "John"}, nil),
 			makeSeries("password", []string{"123456", "qwerty"}, nil),
-		})
+		)
 
 		assertEqual(t, jointReference, joint, "single column inner join")
 
 		// multiple columns inner join test
 		joint = a.Must().Join().On("user", "password").Inner(b, "username", "password")
 
-		jointReference = NewTable([]*Series{
+		jointReference = NewTable(
 			makeSeries("user", []string{"John"}, nil),
 			makeSeries("password", []string{"qwerty"}, nil),
 			makeSeries("username", []string{"John"}, nil),
 			makeSeries("password", []string{"qwerty"}, nil),
-		})
+		)
 
 		assertEqual(t, jointReference, joint, "multiple columns inner join")
 
 		// multiple columns left outer join test
 		joint = a.Must().Join().On("user", "password").LeftOuter(b, "username", "password")
 
-		jointReference = NewTable([]*Series{
+		jointReference = NewTable(
 			makeSeries("user", []string{"Alice", "Bob", "John"}, nil),
 			makeSeries("password", []string{"123", "password", "qwerty"}, nil),
 			makeSeries("username", []string{"", "", "John"}, []bool{false, false, true}),
 			makeSeries("password", []string{"", "", "qwerty"}, []bool{false, false, true}),
-		})
+		)
 
 		assertEqual(t, jointReference, joint, "multiple columns left outer join")
 	})
 }
 
+func TestAppend(t *testing.T) {
+	runSubTests(t, func(t *testing.T, makeSeries makeSeriesType) {
+		// Append
+		t1 := NewTable(
+			makeSeries("a", []int64{1, 2}, nil),
+			makeSeries("b", []float64{3, 4}, nil),
+		)
+		t2 := NewTable(
+			makeSeries("c", []int64{10}, nil),
+			makeSeries("d", []float64{20}, nil),
+		)
+		appended := t1.Must().Append(t2)
+		appendedRef := NewTable(
+			makeSeries("a", []int64{1, 2, 10}, nil),
+			makeSeries("b", []float64{3, 4, 20}, nil),
+		)
+		assertEqual(t, appendedRef, appended, "Append")
+
+		// AppendMany
+		t3 := NewTable(
+			makeSeries("e", []int64{100}, nil),
+			makeSeries("f", []float64{200}, nil),
+		)
+		appended = t1.Must().Append(t2).Must().Append(t3)
+		appendedRef = NewTable(
+			makeSeries("a", []int64{1, 2, 10, 100}, nil),
+			makeSeries("b", []float64{3, 4, 20, 200}, nil),
+		)
+		assertEqual(t, appendedRef, appended, "AppendMany")
+
+		// t1.Append(t2).Append(t3) == AppendMany(t1, t2, t3)
+		appended = t1.Must().Append(t2).Must().Append(t3)
+		assertEqual(t, appendedRef, appended, "Append*Append differs from AppendMany internally")
+
+		// the result of t1.Append(t2).Append(t3) should be similar to AppendMany(t1, t2, t3) internally as well
+		// (i.e. it should create a single node instead of multiple ones)
+		if len(appended.series[0].meta.(*appendSeriesMeta).appendTableMeta.sourceTables) != 3 {
+			t.Error("t1.Append(t2).Append(t3) optimization doesn't work")
+		}
+
+		// append an empty table
+		appended = t1.Must().Append(NewTable(
+			makeSeries("a", []int64{}, nil),
+			makeSeries("b", []float64{}, nil),
+		))
+		assertEqual(t, t1, appended, "Append an empty table")
+
+		// error cases
+
+		_, err := AppendMany()
+		if err == nil {
+			t.Error("no err, AppendMany empty tables list")
+		}
+
+		_, err = NewTable(
+			makeSeries("a", []float64{1}, nil),
+		).Append(NewTable(
+			makeSeries("a", []int64{1}, nil),
+		))
+		if err == nil {
+			t.Error("no err, Append tables with different columns types")
+		}
+
+		_, err = NewTable(
+			makeSeries("a", []float64{1}, nil),
+		).Append(NewTable(
+			makeSeries("a", []float64{1}, nil),
+			makeSeries("b", []int64{1}, nil),
+		))
+		if err == nil {
+			t.Error("no err, Append tables with different number of columns")
+		}
+	})
+}
+
 func TestForeach(t *testing.T) {
 	runSubTests(t, func(t *testing.T, makeSeries makeSeriesType) {
-		table := NewTable([]*Series{
+		table := NewTable(
 			makeSeries("bool", []bool{true, true, false, false, true}, nil),
 			makeSeries("int64", []int64{10, 10, 30, -1, 5}, []bool{true, true, true, false, true}),
 			makeSeries("int", []int{10, 10, 30, -1, 5}, []bool{true, true, true, false, true}),
@@ -718,7 +795,7 @@ func TestForeach(t *testing.T) {
 			makeSeries("string", []string{"aa", "bb", "xx", "aa", "cc"}, nil),
 			makeSeries("timestamp_millis", []TimestampMillis{1, 2, 3, 4, 5}, nil),
 			makeSeries("timestamp_micros", []TimestampMicros{1000, 2000, 3000, 4000, 5000}, nil),
-		})
+		)
 
 		int64TableWithNulls := table.Must().Project("int64")
 
@@ -757,11 +834,48 @@ func TestForeach(t *testing.T) {
 		// whole row Foreach
 		copyBuilder = Must().NewTableBuilder(table.Schema().Columns)
 		table.Must().Foreach().By(func(r Row) {
-			copyBuilder.Append(r.raw())
+			copyBuilder.Append(r.Interface())
 		})
 
 		assertEqual(t, table, copyBuilder.Build(), "whole row Foreach")
 	})
+}
+
+func TestForeachKey(t *testing.T) {
+	runSubTests(t, func(t *testing.T, makeSeries makeSeriesType) {
+		testForeachKey(t, "ForeachKey", NewTable(
+			makeSeries("key1", []int64{1, 1, 2, 3, 3}, nil),
+			makeSeries("key2", []string{"aa", "aa", "aa", "xx", ""}, []bool{true, true, true, true, false}),
+			makeSeries("value", []float64{1.5, 2.5, 3.5, math.NaN(), 5.5}, []bool{true, true, true, false, true}),
+		), "key1", "key2")
+
+		testForeachKey(t, "ForeachKey empty table", NewTable(
+			makeSeries("key", []int64{}, nil),
+			makeSeries("value", []float64{}, nil),
+		), "key")
+	})
+}
+
+func testForeachKey(t *testing.T, message string, table *Table, key ...ColumnName) {
+	// populating a restored table with ForeachKey results
+	// TODO: simplify the code below using table.Append when it's available
+	restoredTableBuilder := Must().NewTableBuilder(table.Schema().Columns)
+	table.Must().ForeachKey(key...).By(func(key Row, values *Table) {
+		for value := range values.IterAll() {
+			restoredTableRow := make([]interface{}, len(table.Schema().Columns))
+			copy(restoredTableRow[:len(key.values)], key.values)
+			copy(restoredTableRow[len(key.values):], value.values)
+			restoredTableBuilder.Append(restoredTableRow)
+		}
+	})
+	restoredTable := restoredTableBuilder.Build()
+
+	// sorting the tables by the same sort key (since their rows may be in different order) and comparing them
+	sortKey := make(Key, len(table.Schema().Columns))
+	for i, col := range table.Schema().Columns {
+		sortKey[i] = ColumnKey{col.Name, true}
+	}
+	assertEqual(t, table.Must().Sort(sortKey), restoredTable.Must().Sort(sortKey), message)
 }
 
 func TestComposition(t *testing.T) {
@@ -770,9 +884,9 @@ func TestComposition(t *testing.T) {
 
 		// Extend + Project + Head: checking that an extension output column can be used in further operations
 		// even without extension source columns.
-		table := NewTable([]*Series{
+		table := NewTable(
 			makeSeries("a", []int64{1, 2, 3}, nil),
-		})
+		)
 		extendedProjectedTop := table.Must().Extend("e").On("a").Int64(func(v ...int64) (int64, bool) {
 			return v[0], true
 		}).Must().Project("e").Head(3)

@@ -12,7 +12,7 @@ import (
 
 func TestCSV(t *testing.T) {
 	// create a Table
-	table := data.NewTable([]*data.Series{
+	table := data.NewTable(
 		data.Must().NewSeriesFromSlice("bool_column", []bool{true, true, false, false, true}, nil),
 		data.Must().NewSeriesFromSlice("int64_column", []int64{10, 10, 30, -1, 5}, []bool{true, true, true, false, true}),
 		data.Must().NewSeriesFromSlice("int_column", []int{10, 10, 30, -1, 5}, []bool{true, true, true, false, true}),
@@ -20,7 +20,7 @@ func TestCSV(t *testing.T) {
 		data.Must().NewSeriesFromSlice("string_column", []string{"aa", "bb", "xx", "aa", "cc"}, nil),
 		data.Must().NewSeriesFromSlice("timestamp_millis_column", []data.TimestampMillis{1, 2, 3, 4, 5}, nil),
 		data.Must().NewSeriesFromSlice("timestamp_micros_column", []data.TimestampMicros{1000, 2000, 3000, 4000, 5000}, nil),
-	})
+	)
 
 	// file: read + write
 	fileName := csvFileName(t)

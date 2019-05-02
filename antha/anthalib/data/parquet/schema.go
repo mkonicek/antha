@@ -11,10 +11,11 @@ import (
 	"github.com/xitongsys/parquet-go/parquet"
 )
 
-// an internally used representation of Parquet data schema: consists of a data.Schema and a Parquet root element name
+// an internally used representation of Parquet data schema
 type parquetSchema struct {
 	*data.Schema
 	rootElementName string
+	isNullable      []bool // false -> the column should *not* be boxed as pointer when deserializing
 }
 
 // standard parquet-go schema root element name
@@ -27,6 +28,26 @@ func newParquetSchema(tableSchema *data.Schema) *parquetSchema {
 	}
 }
 
+func (ps *parquetSchema) nullable(columnIndex int) bool {
+	// if we never set the isNullable field (eg on write) then we will treat as a nullable series
+	return columnIndex >= len(ps.isNullable) || ps.isNullable[columnIndex]
+}
+
+// determines a field type for a dynamic data structure based on a column type
+func (ps *parquetSchema) rowFieldType(columnIndex int) reflect.Type {
+	column := ps.Columns[columnIndex]
+	columnType := column.Type
+	// a workaround for timestamp types: parquet-go is unable to read them directly, so reading then as int64
+	if columnType.Kind() == reflect.Int64 {
+		columnType = reflect.TypeOf(int64(0))
+	}
+	if ps.nullable(columnIndex) {
+		//  parquet-go needs a pointer type here
+		columnType = reflect.PtrTo(columnType)
+	}
+	return columnType
+}
+
 // converts parquetSchema to a JSON representation understandable by parquet-go
 func (ps *parquetSchema) toJSON() (string, error) {
 	root := make(map[string]interface{})
@@ -36,8 +57,8 @@ func (ps *parquetSchema) toJSON() (string, error) {
 
 	// fields
 	fields := make([]interface{}, len(ps.Columns))
-	for i, column := range ps.Columns {
-		tag, err := fieldTag(i, column)
+	for i := range ps.Columns {
+		tag, err := ps.fieldTag(i)
 		if err != nil {
 			return "", err
 		}
@@ -56,7 +77,8 @@ func (ps *parquetSchema) toJSON() (string, error) {
 }
 
 // creates parquet tag for a dynamic struct field
-func fieldTag(columnIndex int, column data.Column) (string, error) {
+func (ps *parquetSchema) fieldTag(columnIndex int) (string, error) {
+	column := ps.Columns[columnIndex]
 	// parquet tag builder
 	var tagBuilder parquetTagBuilder
 	// name parquet tag (Parquet column name)
@@ -87,8 +109,8 @@ func fieldTag(columnIndex int, column data.Column) (string, error) {
 		return "", errors.Errorf("data type %v is not supported", column.Type)
 	}
 
-	// repetition type: for now, all fields are considered as optional
-	tagBuilder.addRequired(false)
+	// In future this can be adjusted/optimized for series that eg. do not have a nullability mask
+	tagBuilder.addRequired(!ps.nullable(columnIndex))
 
 	// finishing field parquet tag
 	return tagBuilder.String(), nil
@@ -146,25 +168,15 @@ func (b *parquetTagBuilder) addParam(name string, value string) *parquetTagBuild
 func rowStructFromSchema(schema *parquetSchema) reflect.Type {
 	// creating fields
 	fields := make([]reflect.StructField, len(schema.Columns))
-	for i, column := range schema.Columns {
+	for i := range schema.Columns {
 		fields[i] = reflect.StructField{
-			Name: fieldName(i),              // for now, using just generated field names (in order to avoid clashes)
-			Type: rowFieldType(column.Type), // field type: using .PtrTo(), because currently all types are considered nullable
+			Name: fieldName(i), // for now, using just generated field names (in order to avoid clashes)
+			Type: schema.rowFieldType(i),
 		}
 	}
 
 	// creating a dynamic struct type
 	return reflect.StructOf(fields)
-}
-
-// determines a field type for a dynamic data structure based on a column type
-func rowFieldType(columnType reflect.Type) reflect.Type {
-	// a workaround for timestamp types: parquet-go is unable to read them directly, so reading then as int64
-	if columnType.Kind() == reflect.Int64 {
-		columnType = reflect.TypeOf(int64(0))
-	}
-	// using .PtrTo() because currently all the types are considered nullable, and so parquet-go needs a pointer type
-	return reflect.PtrTo(columnType)
 }
 
 // transforming Parquet file metadata into schema
@@ -183,7 +195,8 @@ func schemaFromParquetMetadata(metadata *parquet.FileMetaData, columnNames []dat
 	}
 
 	// 2) list of other elements, each of them corresponds to one column
-	columns := []data.Column{}
+	columns := make([]data.Column, 0)
+	isNullable := make([]bool, 0)
 	for i := 0; i < columnsCount; i++ {
 		element := schema[i+1]
 		name := data.ColumnName(element.Name)
@@ -192,18 +205,18 @@ func schemaFromParquetMetadata(metadata *parquet.FileMetaData, columnNames []dat
 			continue
 		}
 
-		columnType, err := columnTypeFromSchemaElement(element)
+		columnType, repetitionType, err := columnTypeFromSchemaElement(element)
 		if err != nil {
 			return nil, err
 		}
-
+		isNullable = append(isNullable, repetitionType == parquet.FieldRepetitionType_OPTIONAL)
 		columns = append(columns, data.Column{
 			Name: name,
 			Type: columnType,
 		})
 	}
 
-	return &parquetSchema{data.NewSchema(columns), schema[0].Name}, nil
+	return &parquetSchema{data.NewSchema(columns), schema[0].Name, isNullable}, nil
 }
 
 // determines whether to read the column from Parquet
@@ -223,58 +236,61 @@ func doAddColumn(name data.ColumnName, columnNames []data.ColumnName) bool {
 
 // nolint
 // determines Go type to store values from Parquet column defined by schema element
-func columnTypeFromSchemaElement(schemaElement *parquet.SchemaElement) (reflect.Type, error) {
-	// supporting:
-	// 1) optional fields only (=> all generated struct fields will be pointers)
-	if schemaElement.GetRepetitionType() != parquet.FieldRepetitionType_OPTIONAL {
-		return nil, errors.Errorf("Unsupported: schema element '%s' has repitition type '%s'", schemaElement.Name, schemaElement.GetRepetitionType().String())
+func columnTypeFromSchemaElement(schemaElement *parquet.SchemaElement) (reflect.Type, parquet.FieldRepetitionType, error) {
+	// 1) repeated (slice) fields aren't currently supported
+	repetitionType := schemaElement.GetRepetitionType()
+	switch repetitionType {
+	case parquet.FieldRepetitionType_OPTIONAL, parquet.FieldRepetitionType_REQUIRED:
+	//ok
+	default:
+		return nil, repetitionType, errors.Errorf("Unsupported: schema element '%s' has repetition type '%s'", schemaElement.Name, schemaElement.GetRepetitionType().String())
 	}
 	// 2) plain types only
 	if schemaElement.NumChildren != nil {
-		return nil, errors.Errorf("Unsupported: schema element '%s' has children", schemaElement.Name)
+		return nil, repetitionType, errors.Errorf("Unsupported: schema element '%s' has children", schemaElement.Name)
 	}
 
 	switch schemaElement.GetType() {
 	case parquet.Type_BOOLEAN:
 		// boolean
-		return reflect.TypeOf(false), nil
+		return reflect.TypeOf(false), repetitionType, nil
 	case parquet.Type_INT32:
 		// int32
 		if schemaElement.ConvertedType == nil {
-			return reflect.TypeOf(int32(0)), nil
+			return reflect.TypeOf(int32(0)), repetitionType, nil
 		}
-		return nil, errors.Errorf("Unsupported: int32 schema element '%s' has converted type '%v'", schemaElement.Name, schemaElement.ConvertedType)
+		return nil, repetitionType, errors.Errorf("Unsupported: int32 schema element '%s' has converted type '%v'", schemaElement.Name, schemaElement.ConvertedType)
 	case parquet.Type_INT64:
 		// int64, time64 or timestamp32/64
 		if schemaElement.ConvertedType == nil {
-			return reflect.TypeOf(int64(0)), nil
+			return reflect.TypeOf(int64(0)), repetitionType, nil
 		}
 		switch *schemaElement.ConvertedType {
 		case parquet.ConvertedType_TIMESTAMP_MILLIS:
-			return reflect.TypeOf(data.TimestampMillis(0)), nil
+			return reflect.TypeOf(data.TimestampMillis(0)), repetitionType, nil
 		case parquet.ConvertedType_TIMESTAMP_MICROS:
-			return reflect.TypeOf(data.TimestampMicros(0)), nil
+			return reflect.TypeOf(data.TimestampMicros(0)), repetitionType, nil
 		default:
-			return nil, errors.Errorf("Unsupported: int64 schema element '%s' has converted type '%s'", schemaElement.Name, schemaElement.ConvertedType.String())
+			return nil, repetitionType, errors.Errorf("Unsupported: int64 schema element '%s' has converted type '%s'", schemaElement.Name, schemaElement.ConvertedType.String())
 		}
 	case parquet.Type_FLOAT:
 		// float32
-		return reflect.TypeOf(float32(0)), nil
+		return reflect.TypeOf(float32(0)), repetitionType, nil
 	case parquet.Type_DOUBLE:
 		// float64
-		return reflect.TypeOf(float64(0)), nil
+		return reflect.TypeOf(float64(0)), repetitionType, nil
 	case parquet.Type_BYTE_ARRAY:
 		// string
 		if schemaElement.ConvertedType == nil {
-			return nil, errors.Errorf("Unsupported: byte array schema element '%s' has converted type 'nil'", schemaElement.Name)
+			return nil, repetitionType, errors.Errorf("Unsupported: byte array schema element '%s' has converted type 'nil'", schemaElement.Name)
 		}
 		switch *schemaElement.ConvertedType {
 		case parquet.ConvertedType_UTF8:
-			return reflect.TypeOf(""), nil
+			return reflect.TypeOf(""), repetitionType, nil
 		default:
-			return nil, errors.Errorf("Unsupported: byte array schema element '%s' has converted type '%s'", schemaElement.Name, schemaElement.ConvertedType.String())
+			return nil, repetitionType, errors.Errorf("Unsupported: byte array schema element '%s' has converted type '%s'", schemaElement.Name, schemaElement.ConvertedType.String())
 		}
 	default:
-		return nil, errors.Errorf("Unsupported: schema element '%s' has type '%s'", schemaElement.Name, schemaElement.GetType().String())
+		return nil, repetitionType, errors.Errorf("Unsupported: schema element '%s' has type '%s'", schemaElement.Name, schemaElement.GetType().String())
 	}
 }

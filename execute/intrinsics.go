@@ -2,7 +2,6 @@ package execute
 
 import (
 	"context"
-	"fmt"
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
@@ -10,6 +9,7 @@ import (
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/microArch/sampletracker"
 	"github.com/antha-lang/antha/target"
+	"time"
 )
 
 // a commandInst is a generic intrinsic instruction
@@ -99,6 +99,7 @@ type mixerPromptOpts struct {
 	Components   []*wtype.Liquid
 	ComponentsIn []*wtype.Liquid
 	Message      string
+	WaitTime     wunit.Time
 }
 
 func newCompsFromComps(ctx context.Context, in []*wtype.Liquid) []*wtype.Liquid {
@@ -109,6 +110,7 @@ func newCompsFromComps(ctx context.Context, in []*wtype.Liquid) []*wtype.Liquid 
 	}
 
 	return r
+
 }
 
 // MixerPrompt prompts user with a message during mixer execution
@@ -120,6 +122,21 @@ func MixerPrompt(ctx context.Context, message string, in ...*wtype.Liquid) []*wt
 			Message:      message,
 		},
 	)
+	Issue(ctx, inst)
+	return inst.result
+}
+
+// MixerWait prompts user with a message during mixer execution and waits for the specifed time before resuming.
+func MixerWait(ctx context.Context, time wunit.Time, message string, in ...*wtype.Liquid) []*wtype.Liquid {
+	inst := mixerPrompt(ctx,
+		mixerPromptOpts{
+			Components:   newCompsFromComps(ctx, in),
+			ComponentsIn: in,
+			Message:      message,
+			WaitTime:     time,
+		},
+	)
+
 	Issue(ctx, inst)
 	return inst.result
 }
@@ -155,12 +172,12 @@ func mixerPrompt(ctx context.Context, opts mixerPromptOpts) *commandInst {
 	inst := wtype.NewLHPromptInstruction()
 	inst.SetGeneration(opts.ComponentsIn[0].Generation())
 	inst.Message = opts.Message
+	// precision will be cut to the nearest second
+	inst.WaitTime = opts.WaitTime.AsDuration().Round(time.Second)
 	for i := 0; i < len(opts.Components); i++ {
 		inst.AddOutput(opts.Components[i])
 		inst.AddInput(opts.ComponentsIn[i])
 		inst.PassThrough[opts.ComponentsIn[i].ID] = opts.Components[i]
-
-		fmt.Println("IN: ", opts.ComponentsIn[i], " OUT: ", opts.Components[i], " SAME? ", opts.ComponentsIn[i].ID == opts.Components[i].ID)
 	}
 
 	return &commandInst{

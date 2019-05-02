@@ -12,29 +12,29 @@ func TestFromStructs(t *testing.T) {
 		unexported float64 //nolint
 	}
 	tab := Must().NewTableFromStructs([]foo{})
-	assertEqual(t, NewTable([]*Series{
+	assertEqual(t, NewTable(
 		makeNativeSeries("Bar", []int64{}, nil),
 		makeNativeSeries("Baz", [][]string{}, nil),
-	}), tab, "empty")
+	), tab, "empty")
 
 	tab2 := Must().NewTableFromStructs([]struct{ A, B int64 }{{11, 2}, {33, 4}})
-	assertEqual(t, NewTable([]*Series{
+	assertEqual(t, NewTable(
 		makeNativeSeries("A", []int64{11, 33}, nil),
 		makeNativeSeries("B", []int64{2, 4}, nil),
-	}), tab2, "anonymous struct type, filled")
+	), tab2, "anonymous struct type, filled")
 
 	s := &foo{Bar: 1}
 	tab3 := Must().NewTableFromStructs([]*foo{s})
-	assertEqual(t, NewTable([]*Series{
+	assertEqual(t, NewTable(
 		makeNativeSeries("Bar", []int64{1}, nil),
 		makeNativeSeries("Baz", [][]string{nil}, nil),
-	}), tab3, "ptr struct type")
+	), tab3, "ptr struct type")
 
 	tab4 := Must().NewTableFromStructs([]*foo{nil, {Bar: 1}}).
 		Must().Project("Bar")
-	assertEqual(t, NewTable([]*Series{
+	assertEqual(t, NewTable(
 		makeNativeSeries("Bar", []int64{0, 1}, nil),
-	}), tab4, "nil struct -> zeros")
+	), tab4, "nil struct -> zeros")
 
 	_, err := NewTableFromStructs(1)
 	if err == nil {
@@ -46,13 +46,13 @@ func TestFromStructs(t *testing.T) {
 	}
 }
 func TestToStructs(t *testing.T) {
-	tab := NewTable([]*Series{
+	tab := NewTable(
 		makeNativeSeries("A", []int64{1, 1000}, nil),
 		makeNativeSeries("B", []string{"abcdef", "abcd"}, nil),
 		makeNativeSeries("unexported", []string{"xx", "xx"}, nil),
 		makeNativeSeries("Unmapped", []string{"xx", "xx"}, nil),
 		makeNativeSeries("C", []float64{0, 0}, nil),
-	})
+	)
 	type destT struct {
 		B          string
 		A          int64
@@ -113,17 +113,17 @@ func TestToStructs(t *testing.T) {
 	}
 }
 func TestRow_ToStruct(t *testing.T) {
-	tab := NewTable([]*Series{
+	tab := NewTable(
 		makeNativeSeries("A", []int64{1, 1000}, nil),
 		makeNativeSeries("ignored", []int64{2, 2}, nil),
-	})
+	)
 	for row := range tab.IterAll() {
 		s := &struct{ A int64 }{}
 		err := row.ToStruct(s)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if s.A != row.Values[0].MustInt64() {
+		if s.A != row.ValueAt(0).MustInt64() {
 			t.Errorf("at row %+v, %+v", row, s)
 		}
 	}

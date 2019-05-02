@@ -61,7 +61,7 @@ func TableToWriter(table *data.Table, writer io.Writer) error {
 		}
 
 		// making a CSV record
-		record := rowToCsvRecord(row, &schema)
+		record := rowToCsvRecord(row)
 
 		// writing to buffer
 		if err := csvWriter.Write(record); err != nil {
@@ -87,17 +87,13 @@ func writeHeader(schema *data.Schema, writer *csv.Writer) error {
 	return writer.Write(header)
 }
 
-func rowToCsvRecord(row data.Row, schema *data.Schema) []string {
-	if len(row.Values) != len(schema.Columns) {
-		panic("wrong number of columns")
-	}
-
-	record := make([]string, len(row.Values))
-	for i := range record {
-		if value := row.Values[i].Interface(); value != nil {
+func rowToCsvRecord(row data.Row) []string {
+	record := make([]string, len(row.Schema().Columns))
+	for i, value := range row.Values() {
+		if !value.IsNull() {
 			// for now, using just %v to print values: this suits all our types including timestamps
 			// in case we need to store more complex types we should instead extend csvType with a print func
-			record[i] = fmt.Sprintf("%v", value)
+			record[i] = fmt.Sprintf("%v", value.Interface())
 		}
 	}
 

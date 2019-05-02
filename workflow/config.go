@@ -97,15 +97,10 @@ type TecanInstanceConfig struct {
 }
 
 func (cfg *TecanInstanceConfig) MarshalJSON() ([]byte, error) {
-	//return MergeToMapAndMarshal(&cfg.commonMixerInstanceConfig, &cfg.ModelOnly, &cfg.tipsOnly)
 	return MergeToMapAndMarshal(&cfg.GeneralConfig, &cfg.commonMixerInstanceConfig, &cfg.ModelOnly, &cfg.tipsOnly)
 }
 
 func (cfg *TecanInstanceConfig) UnmarshalJSON(bs []byte) error {
-	//	err := UnmarshalMapsMerged(bs, &cfg.commonMixerInstanceConfig, &cfg.ModelOnly, &cfg.tipsOnly)
-	//fmt.Println(string(bs))
-	//err := UnmarshalMapsMerged(bs, &cfg.ModelOnly)
-	//return err
 	return UnmarshalMapsMerged(bs, &cfg.GeneralConfig, &cfg.commonMixerInstanceConfig, &cfg.ModelOnly, &cfg.tipsOnly)
 }
 

@@ -68,6 +68,25 @@ func (p *SimulateRequestProtobufProvider) GetRepositories() (workflow.Repositori
 	return workflow.Repositories{}, nil
 }
 
+func (p *SimulateRequestProtobufProvider) getElementTypes() (workflow.ElementTypes, error) {
+	seen := make(map[string]struct{}, len(p.pb.Processes))
+	types := make(workflow.ElementTypes, 0, len(p.pb.Processes))
+	for _, v := range p.pb.Processes {
+		if _, found := seen[v.Component]; found {
+			continue
+		}
+
+		seen[v.Component] = struct{}{}
+		et, err := migrate.UniqueElementType(p.repoMap, workflow.ElementTypeName(v.Component))
+		if err != nil {
+			return nil, err
+		}
+		types = append(types, et)
+	}
+
+	return types, nil
+}
+
 func (p *SimulateRequestProtobufProvider) getElementConnections() (workflow.ElementInstancesConnections, error) {
 	connections := make(workflow.ElementInstancesConnections, 0, len(p.pb.Connections))
 	for _, c := range p.pb.Connections {
@@ -86,12 +105,18 @@ func (p *SimulateRequestProtobufProvider) getElementConnections() (workflow.Elem
 }
 
 func (p *SimulateRequestProtobufProvider) GetElements() (workflow.Elements, error) {
+	types, err := p.getElementTypes()
+	if err != nil {
+		return workflow.Elements{}, err
+	}
+
 	connections, err := p.getElementConnections()
 	if err != nil {
 		return workflow.Elements{}, err
 	}
 
 	return workflow.Elements{
+		Types:                types,
 		InstancesConnections: connections,
 	}, nil
 }

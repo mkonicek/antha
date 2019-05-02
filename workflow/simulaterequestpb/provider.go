@@ -68,6 +68,48 @@ func (p *SimulateRequestProtobufProvider) GetRepositories() (workflow.Repositori
 	return workflow.Repositories{}, nil
 }
 
+func (p *SimulateRequestProtobufProvider) migrateElementParameters(fm *effects.FileManager, process *protobuf.Process) (workflow.ElementParameterSet, error) {
+	pset := make(workflow.ElementParameterSet)
+
+	// TODO: fix this stuff. Maybe we can re-use maybeMigrateFileParam from
+	// for pname, pval := range process.Parameters {
+	// 	v1_2/workflow.go?
+
+	// 	if param, err := maybeMigrateFileParam(fm, pval); err != nil {
+	// 		return nil, err
+	// 	} else {
+	// 		pset[workflow.ElementParameterName(pname)] = param
+	// 	}
+	// }
+	return pset, nil
+}
+
+func (p *SimulateRequestProtobufProvider) migrateElement(fm *effects.FileManager, process *protobuf.Process) (*workflow.ElementInstance, error) {
+	ei := &workflow.ElementInstance{}
+
+	ei.ElementTypeName = workflow.ElementTypeName(process.Component)
+
+	params, err := p.migrateElementParameters(fm, process)
+	if err != nil {
+		return nil, err
+	}
+	ei.Parameters = params
+	return ei, nil
+}
+
+func (p *SimulateRequestProtobufProvider) getElementInstances() (workflow.ElementInstances, error) {
+	instances := workflow.ElementInstances{}
+	for _, process := range p.pb.Processes {
+		name := workflow.ElementInstanceName(process.Id)
+		ei, err := p.migrateElement(p.fm, process)
+		if err != nil {
+			return nil, err
+		}
+		instances[name] = ei
+	}
+	return instances, nil
+}
+
 func (p *SimulateRequestProtobufProvider) getElementTypes() (workflow.ElementTypes, error) {
 	seen := make(map[string]struct{}, len(p.pb.Processes))
 	types := make(workflow.ElementTypes, 0, len(p.pb.Processes))
@@ -105,6 +147,11 @@ func (p *SimulateRequestProtobufProvider) getElementConnections() (workflow.Elem
 }
 
 func (p *SimulateRequestProtobufProvider) GetElements() (workflow.Elements, error) {
+	instances, err := p.getElementInstances()
+	if err != nil {
+		return workflow.Elements{}, err
+	}
+
 	types, err := p.getElementTypes()
 	if err != nil {
 		return workflow.Elements{}, err
@@ -116,6 +163,7 @@ func (p *SimulateRequestProtobufProvider) GetElements() (workflow.Elements, erro
 	}
 
 	return workflow.Elements{
+		Instances:            instances,
 		Types:                types,
 		InstancesConnections: connections,
 	}, nil

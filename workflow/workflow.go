@@ -208,6 +208,9 @@ func (m *Meta) Set(key string, val interface{}) error {
 	if bs, err := json.Marshal(val); err != nil {
 		return err
 	} else {
+		if m.Rest == nil {
+			m.Rest = make(map[string]json.RawMessage)
+		}
 		m.Rest[key] = json.RawMessage(bs)
 		return nil
 	}

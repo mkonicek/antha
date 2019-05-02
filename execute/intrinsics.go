@@ -48,7 +48,7 @@ type IncubateOpt struct {
 	PreShakeRadius wunit.Length
 }
 
-func newCompFromComp(ctx context.Context, in *wtype.Liquid) *wtype.Liquid {
+func updateLiquidID(ctx context.Context, in *wtype.Liquid) *wtype.Liquid {
 	comp := in.Dup()
 	comp.ID = wtype.GetUUID()
 	comp.BlockID = wtype.NewBlockID(getID(ctx))
@@ -76,7 +76,7 @@ func Incubate(ctx context.Context, in *wtype.Liquid, opt IncubateOpt) *wtype.Liq
 
 	inst := &commandInst{
 		Args:   []*wtype.Liquid{in},
-		result: []*wtype.Liquid{newCompFromComp(ctx, in)},
+		result: []*wtype.Liquid{updateLiquidID(ctx, in)},
 		Command: &ast.Command{
 			Inst: innerInst,
 			Request: ast.Request{
@@ -102,11 +102,11 @@ type mixerPromptOpts struct {
 	WaitTime     wunit.Time
 }
 
-func newCompsFromComps(ctx context.Context, in []*wtype.Liquid) []*wtype.Liquid {
+func updateLiquidIds(ctx context.Context, in []*wtype.Liquid) []*wtype.Liquid {
 	r := []*wtype.Liquid{}
 
 	for _, c := range in {
-		r = append(r, newCompFromComp(ctx, c))
+		r = append(r, updateLiquidID(ctx, c))
 	}
 
 	return r
@@ -117,7 +117,7 @@ func newCompsFromComps(ctx context.Context, in []*wtype.Liquid) []*wtype.Liquid 
 func MixerPrompt(ctx context.Context, message string, in ...*wtype.Liquid) []*wtype.Liquid {
 	inst := mixerPrompt(ctx,
 		mixerPromptOpts{
-			Components:   newCompsFromComps(ctx, in),
+			Components:   updateLiquidIds(ctx, in),
 			ComponentsIn: in,
 			Message:      message,
 		},
@@ -130,7 +130,7 @@ func MixerPrompt(ctx context.Context, message string, in ...*wtype.Liquid) []*wt
 func MixerWait(ctx context.Context, time wunit.Time, message string, in ...*wtype.Liquid) []*wtype.Liquid {
 	inst := mixerPrompt(ctx,
 		mixerPromptOpts{
-			Components:   newCompsFromComps(ctx, in),
+			Components:   updateLiquidIds(ctx, in),
 			ComponentsIn: in,
 			Message:      message,
 			WaitTime:     time,
@@ -151,7 +151,7 @@ func ExecuteMixes(ctx context.Context, liquids ...*wtype.LHComponent) []*wtype.L
 func Prompt(ctx context.Context, in *wtype.Liquid, message string) *wtype.Liquid {
 	inst := &commandInst{
 		Args:   []*wtype.Liquid{in},
-		result: []*wtype.Liquid{newCompFromComp(ctx, in)},
+		result: []*wtype.Liquid{updateLiquidID(ctx, in)},
 		Command: &ast.Command{
 			Inst: &ast.PromptInst{
 				Message: message,
@@ -204,7 +204,7 @@ func readPlate(ctx context.Context, opts PlateReadOpts) *commandInst {
 	inst.ComponentIn = opts.Sample
 
 	// Clone the component to represent the result of the AbsorbanceRead
-	inst.ComponentOut = newCompFromComp(ctx, opts.Sample)
+	inst.ComponentOut = updateLiquidID(ctx, opts.Sample)
 	inst.Options = opts.Options
 
 	return &commandInst{
@@ -246,7 +246,7 @@ func runQPCR(ctx context.Context, opts QPCROptions, command string) *commandInst
 	inst.ComponentOut = []*wtype.Liquid{}
 
 	for _, r := range inst.ComponentIn {
-		inst.ComponentOut = append(inst.ComponentOut, newCompFromComp(ctx, r))
+		inst.ComponentOut = append(inst.ComponentOut, updateLiquidID(ctx, r))
 	}
 
 	return &commandInst{

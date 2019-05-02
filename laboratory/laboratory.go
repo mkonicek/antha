@@ -145,7 +145,7 @@ func (labBuild *LaboratoryBuilder) SetupPaths(inDir, outDir string) error {
 	labBuild.Logger.Log("outdir", labBuild.outDir)
 
 	// Create subdirs within it:
-	for _, leaf := range []string{"elements", "data", "devices", "workflow"} {
+	for _, leaf := range []string{"elements", "data", "tasks", "workflow"} {
 		if err := os.MkdirAll(filepath.Join(labBuild.outDir, leaf), 0700); err != nil {
 			return err
 		}
@@ -243,12 +243,12 @@ func (labBuild *LaboratoryBuilder) Compile() {
 		// supports prompting.
 		human.New(labBuild.effects.IDGenerator).DetermineRole(devices)
 
-		devDir := filepath.Join(labBuild.outDir, "devices")
+		tasksDir := filepath.Join(labBuild.outDir, "tasks")
 
 		if nodes, err := labBuild.effects.Maker.MakeNodes(labBuild.effects.Trace.Instructions()); err != nil {
 			labBuild.RecordError(err, true)
 
-		} else if instrs, err := codegen.Compile(labBuild.effects, devDir, devices, nodes); err != nil {
+		} else if instrs, err := codegen.Compile(labBuild.effects, tasksDir, devices, nodes); err != nil {
 			labBuild.RecordError(err, true)
 
 		} else {

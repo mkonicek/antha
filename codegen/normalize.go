@@ -44,7 +44,7 @@ func makeRoot(nodes []ast.Node) (ast.Node, error) {
 	if len(seen) != g.NumNodes() {
 		n := someNode(g, seen)
 
-		return nil, fmt.Errorf("cycle containing %T - %v", n, n)
+		return nil, fmt.Errorf("Instruction graph cannot be cyclic: found a cycle containing node of type %T, details: %v", n, n)
 	}
 
 	ret := &ast.Bundle{}

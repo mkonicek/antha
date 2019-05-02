@@ -593,15 +593,16 @@ func (lhc *Liquid) TotalVolume() wunit.Volume {
 	return wunit.NewVolume(lhc.Tvol, lhc.Vunit)
 }
 
+// Remove reduce the volume by min(v, lhc.Volume()), and return the reduction
 func (lhc *Liquid) Remove(v wunit.Volume) wunit.Volume {
 	v2 := lhc.Volume()
 
 	if v2.LessThan(v) {
-		lhc.Vol = (0.0)
+		lhc.SetVolume(wunit.ZeroVolume())
 		return v2
 	}
 
-	lhc.Vol -= v.ConvertToString(lhc.Vunit)
+	lhc.SetVolume(wunit.SubtractVolumes(v2, v))
 
 	return v
 }
@@ -614,6 +615,9 @@ func (lhc *Liquid) Sample(v wunit.Volume) (*Liquid, error) {
 		return lhc, nil
 	}
 
+	fmt.Printf("\nSample %s:\n", v)
+	fmt.Println(lhc.Summarize())
+
 	c := lhc.Dup()
 	c.ID = NewUUID()
 	v = lhc.Remove(v)
@@ -624,6 +628,8 @@ func (lhc *Liquid) Sample(v wunit.Volume) (*Liquid, error) {
 	c.Destination = ""
 	c.Extra = lhc.GetExtra()
 
+	fmt.Println("remaining: " + lhc.Summarize())
+	fmt.Println("sample:" + c.Summarize())
 	return c, nil
 }
 
@@ -733,6 +739,8 @@ func (cmp *Liquid) Mix(cmp2 *Liquid) {
 		return
 	}
 
+	fmt.Printf("\nMix\nLHS: %s\nRHS %s\n", cmp.Summarize(), cmp2.Summarize())
+
 	// merge the sources
 	cmp.Sources = mergeLiquidSources(cmp, cmp2)
 
@@ -772,6 +780,7 @@ func (cmp *Liquid) Mix(cmp2 *Liquid) {
 
 	cmp.SetSample(false)
 
+	fmt.Printf("mixed: %s\n", cmp.Summarize())
 }
 
 // @implement Liquid

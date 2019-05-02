@@ -56,16 +56,7 @@
 							"unit": {
 								"description": "the units in which the volume is expressed",
 								"type": "string"
-							},
-                            "transfers": {
-                                "description": "the indexes of the individual transfer(s) which added this source, if any",
-                                "type": "array",
-                                "items": {
-                                    "type": "number",
-                                    "multipleOf": 1.0,
-                                    "minimum": 0.0
-                                }
-                            }
+							}
 						},
 						"additionalProperties": false
 					},
@@ -146,14 +137,8 @@
         "singleTransfer": {
             "description": "Describe a single channel transfer",
             "type": "object",
-            "required": [ "index", "from", "to", "volume", "wasted", "policy", "asp", "dsp", "head" ],
+            "required": [ "from", "to", "volume", "wasted", "policy", "asp", "dsp", "head" ],
             "properties": {
-                "index": {
-                    "description": "the index or ID used to uniquely refer to this transfer",
-                    "type": "number",
-                    "multipleOf": 1.0,
-                    "minimum": 0.0
-                },
                 "from": {
                     "description": "the source location of the transfer",
                     "$ref": "#/definitions/contentUpdate"

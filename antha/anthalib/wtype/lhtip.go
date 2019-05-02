@@ -292,10 +292,7 @@ func (self *LHTip) RemoveVolume(v wunit.Volume) (*Liquid, error) {
 	if v.GreaterThan(self.CurrentWorkingVolume()) {
 		return nil, fmt.Errorf("Requested removal of %v from tip %s which only has %v working volume", v, self.GetName(), self.CurrentWorkingVolume())
 	}
-	ret := self.contents.Dup()
-	ret.Vol = v.ConvertToString("ul")
-	self.contents.Remove(v)
-	return ret, nil
+	return self.contents.Sample(v)
 }
 
 func (self *LHTip) MarshalJSON() ([]byte, error) {

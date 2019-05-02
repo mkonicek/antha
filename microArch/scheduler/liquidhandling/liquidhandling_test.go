@@ -782,6 +782,25 @@ func TestExecutionPlanning(t *testing.T) {
 	ctx := GetContextForTest()
 	PlanningTests{
 		{
+			Name: "very simple planning",
+			Instructions: Mixes("pcrplate_skirted_riser", TestMixComponents{
+				{
+					LiquidName:    "water",
+					VolumesByWell: ColumnWise(8, []float64{8.0}),
+					LiquidType:    wtype.LTSingleChannel,
+					Sampler:       mixer.Sample,
+				},
+			}),
+			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
+			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
+			Assertions: Assertions{
+				NumberOfAssertion(liquidhandling.ASP, 1),
+				NumberOfAssertion(liquidhandling.DSP, 1),
+				LayoutSummaryAssertion("test/simple.layout.json"),
+				ActionsSummaryAssertion("test/simple.actions.json"),
+			},
+		},
+		{
 			Name: "simple planning",
 			Instructions: Mixes("pcrplate_skirted_riser", TestMixComponents{
 				{

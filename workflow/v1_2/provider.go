@@ -272,3 +272,28 @@ func (p *V1_2WorkflowProvider) GetTesting() (workflow.Testing, error) {
 		MixTaskChecks: mixChecks,
 	}, nil
 }
+
+func uniqueElementType(types workflow.ElementTypesByRepository, name workflow.ElementTypeName) (*workflow.ElementType, error) {
+	var et *workflow.ElementType
+	for _, rmap := range types {
+		if v, found := rmap[name]; found {
+			if et != nil {
+				return nil, fmt.Errorf("element type %v is found in multiple repositories", name)
+			}
+			et = &v
+		}
+	}
+
+	if et == nil {
+		return nil, fmt.Errorf("element type %v could not be found in the supplied repositories", name)
+	}
+	return et, nil
+}
+
+func updatePlateTypes(names []string) []wtype.PlateTypeName {
+	ptnames := make([]wtype.PlateTypeName, len(names))
+	for i, v := range names {
+		ptnames[i] = wtype.PlateTypeName(v)
+	}
+	return ptnames
+}

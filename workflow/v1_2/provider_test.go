@@ -15,7 +15,7 @@ import (
 	"github.com/antha-lang/antha/workflow/v1_2"
 )
 
-func getTestV1_2WorkflowProvider() (provider.WorkflowProvider, error) {
+func getTestProvider() (provider.WorkflowProvider, error) {
 	oldWorkflowPath := filepath.Join("testdata", "sample_v1_2_workflow.json")
 
 	tmpDir, err := ioutil.TempDir("", "tests")
@@ -55,11 +55,11 @@ func getTestV1_2WorkflowProvider() (provider.WorkflowProvider, error) {
 	}
 	defer r.Close()
 
-	return v1_2.NewV1_2WorkflowProvider(r, fm, repoMap, gilsonDeviceName, logger)
+	return v1_2.NewProvider(r, fm, repoMap, gilsonDeviceName, logger)
 }
 
 func TestGetMeta(t *testing.T) {
-	p, err := getTestV1_2WorkflowProvider()
+	p, err := getTestProvider()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -76,7 +76,7 @@ func TestGetMeta(t *testing.T) {
 }
 
 func TestGetElements(t *testing.T) {
-	p, err := getTestV1_2WorkflowProvider()
+	p, err := getTestProvider()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -110,7 +110,7 @@ func TestGetElements(t *testing.T) {
 }
 
 func TestGetConfig(t *testing.T) {
-	p, err := getTestV1_2WorkflowProvider()
+	p, err := getTestProvider()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -134,7 +134,7 @@ func TestGetConfig(t *testing.T) {
 }
 
 func TestGetTesting(t *testing.T) {
-	p, err := getTestV1_2WorkflowProvider()
+	p, err := getTestProvider()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -150,7 +150,7 @@ func TestGetTesting(t *testing.T) {
 }
 
 func TestGetWorkflowID(t *testing.T) {
-	p, err := getTestV1_2WorkflowProvider()
+	p, err := getTestProvider()
 	if err != nil {
 		t.Fatal(err)
 	}

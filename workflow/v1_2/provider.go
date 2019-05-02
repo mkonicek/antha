@@ -20,7 +20,7 @@ type V1_2WorkflowProvider struct {
 	logger           *logger.Logger
 }
 
-func NewV1_2WorkflowProvider(
+func NewProvider(
 	oldWorkflowReader io.Reader,
 	fm *effects.FileManager,
 	repoMap workflow.ElementTypesByRepository,

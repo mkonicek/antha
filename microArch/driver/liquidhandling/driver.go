@@ -23,6 +23,7 @@
 package liquidhandling
 
 import (
+	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/workflow"
 )
@@ -44,6 +45,8 @@ type LiquidhandlingDriver interface {
 	Message(level int, title, text string, showcancel bool) driver.CommandStatus
 	GetOutputFile() ([]byte, driver.CommandStatus)
 	Configure(workflow.JobId, string /* Job Name */, workflow.DeviceInstanceID, []byte /* opaque */) (*LHProperties, driver.CommandStatus)
+	// FIXME there's got to be a better way than having to define this prototype here
+	GetAllowedLocations(plate *wtype.Plate, allowed []string) ([]string, driver.CommandStatus)
 }
 
 type LowLevelLiquidhandlingDriver interface {

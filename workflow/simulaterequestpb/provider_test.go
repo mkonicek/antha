@@ -70,7 +70,7 @@ func TestGetConfig(t *testing.T) {
 		t.Error("Expected UseDriverTipTracking to be true, got false")
 	}
 
-	if !c.GlobalMixer.IgnorePhysicalSimulation {
-		t.Error("Expected IgnorePhysicalSimulation to be true, got false")
+	if c.GlobalMixer.CustomPolicyRuleSet == nil {
+		t.Error("Expected a custom policy rule set, got nil")
 	}
 }

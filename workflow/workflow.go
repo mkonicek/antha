@@ -21,7 +21,9 @@ type Workflow struct {
 	Repositories Repositories `json:"Repositories"`
 	Elements     Elements     `json:"Elements"`
 
-	Inventory Inventory `json:"Inventory,omitempty"`
+	Inventory Inventory `json:"AnthaInventory"`
+
+	TmpInventory Inventory2 `json:"Inventory,omitempty"`
 
 	Config Config `json:"Config"`
 
@@ -41,7 +43,19 @@ func WorkflowFromReaders(rs ...io.ReadCloser) (*Workflow, error) {
 		dec := json.NewDecoder(r)
 		if err := dec.Decode(wf); err != nil {
 			return nil, err
-		} else if err := acc.Merge(wf); err != nil {
+		}
+		// convert tmpInventory
+		// loop over array or PlateTypes2, make new one, append to map[PlateTypeName]
+		// set acc.Inventory.PlateTypes = max[plateTypes]
+		wf.Inventory.PlateTypes = make(wtype.PlateTypes)
+		for _, p2 := range wf.TmpInventory.PlateTypes2 {
+			thisPlateType := p2.ConvertToPlateType()
+			wf.Inventory.PlateTypes[thisPlateType.Name] = &thisPlateType
+		}
+
+		// make sure we don't use the original anywhere
+		wf.TmpInventory.PlateTypes2 = nil
+		if err := acc.Merge(wf); err != nil {
 			return nil, err
 		}
 	}
@@ -62,6 +76,13 @@ func EmptyWorkflow() *Workflow {
 			Instances: make(ElementInstances),
 		},
 		Config: EmptyConfig(),
+
+		Inventory: Inventory{
+			PlateTypes: make(wtype.PlateTypes),
+		},
+		TmpInventory: Inventory2{
+			PlateTypes2: wtype.PlateTypes2{},
+		},
 	}
 }
 
@@ -201,8 +222,12 @@ func (wf *Workflow) TypeNames() map[ElementTypeName]*ElementType {
 	return wf.typeNames
 }
 
+type Inventory2 struct {
+	PlateTypes2 wtype.PlateTypes2 `json:"PlateTypes,omitempty"`
+}
+
 type Inventory struct {
-	PlateTypes wtype.PlateTypes `json:"PlateTypes,omitempty"`
+	PlateTypes wtype.PlateTypes
 	/* Currently only PlateTypes can be set but it's clear how to extend this:
 	Components Components `json:"Components"`
 	TipBoxes   TipBoxes   `json:"TipBoxes"`

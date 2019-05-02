@@ -27,7 +27,6 @@ func NewV1_2WorkflowProvider(
 	gilsonDeviceName string,
 	logger *logger.Logger,
 ) (*V1_2WorkflowProvider, error) {
-
 	bytes, err := ioutil.ReadFile(oldWorkflowPath)
 	if err != nil {
 		return nil, err
@@ -37,6 +36,11 @@ func NewV1_2WorkflowProvider(
 	err = json.Unmarshal(bytes, wf)
 	if err != nil {
 		return nil, err
+	}
+
+	expectedVersion := "1.2.0"
+	if wf.Version != expectedVersion {
+		return nil, fmt.Errorf("Invalid version in %v: expected %v, got %v", oldWorkflowPath, expectedVersion, wf.Version)
 	}
 
 	return &V1_2WorkflowProvider{

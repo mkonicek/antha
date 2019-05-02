@@ -8,15 +8,14 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
-	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/testinventory"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
-func configure_request_quitebig(ctx context.Context, rq *LHRequest) {
-	water := GetComponentForTest(ctx, "water", wunit.NewVolume(5000.0, "ul"))
-	mmx := GetComponentForTest(ctx, "mastermix_sapI", wunit.NewVolume(5000.0, "ul"))
-	part := GetComponentForTest(ctx, "dna", wunit.NewVolume(5000.0, "ul"))
+func configure_request_quitebig(rq *LHRequest) {
+	water := wtype.NewLiquid("water", wtype.LTWater, wunit.NewVolume(5000.0, "ul"))
+	mmx := wtype.NewLiquid("mastermix_sapI", wtype.LTWater, wunit.NewVolume(5000.0, "ul"))
+	part := wtype.NewLiquid("dna", wtype.LTWater, wunit.NewVolume(5000.0, "ul"))
 
 	for k := 0; k < 130; k++ {
 		ins := wtype.NewLHMixInstruction()
@@ -27,27 +26,17 @@ func configure_request_quitebig(ctx context.Context, rq *LHRequest) {
 		ins.AddInput(ws)
 		ins.AddInput(mmxs)
 		ins.AddInput(ps)
-		ins.AddOutput(GetComponentForTest(ctx, "water", wunit.NewVolume(43.0, "ul")))
+		ins.AddOutput(wtype.NewLiquid("water", wtype.LTWater, wunit.NewVolume(43.0, "ul")))
 		ins.Outputs[0].CName = fmt.Sprintf("DANGER_MIX_%d", k)
 		ins.SetGeneration(k + 1)
 		rq.Add_instruction(ins)
 	}
 }
 
-func GetComponentForTest(ctx context.Context, name string, vol wunit.Volume) *wtype.Liquid {
-	c, err := inventory.NewComponent(ctx, name)
-	if err != nil {
-		panic(err)
-	}
-	c.ID = wtype.GetUUID()
-	c.SetVolume(vol)
-	return c
-}
-
 func GetItHere(ctx context.Context) (*Liquidhandler, *LHRequest, error) {
 	lh := GetLiquidHandlerForTest(ctx)
 	rq := GetLHRequestForTest()
-	configure_request_quitebig(ctx, rq)
+	configure_request_quitebig(rq)
 	rq.InputPlatetypes = append(rq.InputPlatetypes, GetPlateForTest())
 	rq.OutputPlatetypes = append(rq.OutputPlatetypes, GetPlateForTest())
 

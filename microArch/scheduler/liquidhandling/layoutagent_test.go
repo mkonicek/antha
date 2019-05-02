@@ -2,6 +2,7 @@ package liquidhandling
 
 import (
 	"context"
+	"reflect"
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
@@ -242,39 +243,27 @@ func TestLayoutAgent7(t *testing.T) {
 }
 
 func testReq(t *testing.T, req *LHRequest) {
-	plateIDs := make([]string, 0, 1)
-	wells := make([]string, 0, 9)
-	for _, ins := range req.LHInstructions {
-		// we expect them all to end up on one plate, in 9 distinct wells going down a column
-		plateIDs = append(plateIDs, ins.PlateID)
-		wells = append(wells, ins.Welladdress)
-	}
 
-	if len(wutil.SADistinct(plateIDs)) != 1 {
-		t.Errorf("Expected 1 plate ID but got %d", len(wutil.SADistinct(plateIDs)))
-	}
-
-	if len(wutil.SADistinct(wells)) != 9 {
-		t.Errorf("Expected 9 distinct wells but got %d", len(wutil.SADistinct(wells)))
-	}
-
-	expectedWells := make(map[string]bool, 9)
-
+	expectedWells := make(map[string]int, 9)
 	for x := 0; x < 9; x++ {
 		wc := wtype.WellCoords{X: x / 8, Y: x % 8}
-		expectedWells[wc.FormatA1()] = true
+		expectedWells[wc.FormatA1()] = 1
 	}
 
-	for _, w := range wells {
-		if !expectedWells[w] {
-			t.Errorf("Error: Unexpected well %s", w)
-		}
-
-		delete(expectedWells, w)
+	plateIDs := make(map[string]bool)
+	wells := make(map[string]int)
+	for _, ins := range req.LHInstructions {
+		// we expect them all to end up on one plate, in 9 distinct wells going down a column
+		plateIDs[ins.PlateID] = true
+		wells[ins.Welladdress] += 1
 	}
 
-	if len(expectedWells) != 0 {
-		t.Errorf("Error: Expecting more wells: %v", expectedWells)
+	if len(plateIDs) != 1 {
+		t.Errorf("Expected 1 plate ID but got %d", len(plateIDs))
+	}
+
+	if !reflect.DeepEqual(expectedWells, wells) {
+		t.Errorf("wells are wrong:\ne: %v\ng: %v", expectedWells, wells)
 	}
 }
 

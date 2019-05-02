@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/inventory"
 	"github.com/antha-lang/antha/inventory/testinventory"
 
@@ -22,16 +23,13 @@ func TestSavePlates(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	c := wtype.NewLHComponent()
-	v := 100.0
+
+	c := wtype.NewLiquid("mushroom soup", wtype.LTWater, wunit.NewVolume(100.0, "ul"))
 	pos := "position_1"
-	c.CName = "mushroom soup"
-	c.Vol = v
-	c.Vunit = "ul"
-	err = p.Wellcoords["A1"].AddComponent(c)
-	if err != nil {
+	if err := p.Wellcoords["A1"].AddComponent(c); err != nil {
 		t.Fatal(err)
 	}
+
 	p.Wellcoords["A1"].SetUserAllocated()
 	if err := lhp.AddPlateTo(pos, p); err != nil {
 		t.Fatal(err)

@@ -66,6 +66,16 @@ type Liquid struct {
 	Policy             LHPolicy // Policy is where a custom liquid policy is stored
 }
 
+// NewLiquid constructor to build a liquid for which iszero is false
+func NewLiquid(name string, lType LiquidType, volume wunit.Volume) *Liquid {
+	r := NewLHComponent()
+	r.Type = lType
+	r.SetName(name)
+	r.SetVolume(volume)
+
+	return r
+}
+
 // AddSubComponent adds a subcomponent with concentration to a component.
 // An error is returned if subcomponent is already found.
 func (cmp *Liquid) AddSubComponent(subcomponent *Liquid, conc wunit.Concentration) error {

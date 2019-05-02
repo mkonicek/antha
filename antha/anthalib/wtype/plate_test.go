@@ -3,6 +3,7 @@ package wtype
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"reflect"
 	"strings"
@@ -205,21 +206,15 @@ func TestMergeWith(t *testing.T) {
 	p1 := makeplatefortest()
 	p2 := makeplatefortest()
 
-	c := NewLHComponent()
+	c := NewLiquid("Water1", LTWater, wunit.NewVolume(50.0, "ul"))
 
-	c.CName = "Water1"
-	c.Vol = 50.0
-	c.Vunit = "ul"
 	err := p1.Wellcoords["A1"].AddComponent(c)
 	if err != nil {
 		t.Fatal(err)
 	}
 	p1.Wellcoords["A1"].SetUserAllocated()
 
-	c = NewLHComponent()
-	c.CName = "Butter"
-	c.Vol = 80.0
-	c.Vunit = "ul"
+	c = NewLiquid("Butter", LTWater, wunit.NewVolume(80.0, "ul"))
 	err = p2.Wellcoords["A2"].AddComponent(c)
 	if err != nil {
 		t.Fatal(err)
@@ -238,10 +233,7 @@ func TestMergeWith(t *testing.T) {
 
 func TestLHPlateSerialize(t *testing.T) {
 	p := makeplatefortest()
-	c := NewLHComponent()
-	c.CName = "Cthulhu"
-	c.Type = LTWater
-	c.Vol = 100.0
+	c := NewLiquid("Cthulhu", LTWater, wunit.NewVolume(100.0, "ul"))
 
 	_, err := p.AddComponent(c, false)
 	if err != nil {
@@ -397,10 +389,7 @@ func TestGetAllComponents(t *testing.T) {
 
 func TestLHPlateValidateVolumesOK(t *testing.T) {
 	p := makeplatefortest()
-	c := NewLHComponent()
-	c.CName = "Cthulhu"
-	c.Type = LTWater
-	c.Vol = 100.0
+	c := NewLiquid("Cthulhu", LTWater, wunit.NewVolume(100.0, "ul"))
 
 	if _, err := p.AddComponent(c, false); err != nil {
 		t.Errorf(err.Error())
@@ -413,10 +402,7 @@ func TestLHPlateValidateVolumesOK(t *testing.T) {
 
 func TestLHPlateValidateVolumesOneOverfilled(t *testing.T) {
 	p := makeplatefortest()
-	c := NewLHComponent()
-	c.CName = "Cthulhu"
-	c.Type = LTWater
-	c.Vol = 100.0
+	c := NewLiquid("Cthulhu", LTWater, wunit.NewVolume(100.0, "ul"))
 
 	if _, err := p.AddComponent(c, false); err != nil {
 		t.Errorf(err.Error())
@@ -434,10 +420,7 @@ func TestLHPlateValidateVolumesOneOverfilled(t *testing.T) {
 
 func TestLHPlateValidateVolumesSeveralOverfilled(t *testing.T) {
 	p := makeplatefortest()
-	c := NewLHComponent()
-	c.CName = "Cthulhu"
-	c.Type = LTWater
-	c.Vol = 100.0
+	c := NewLiquid("Cthulhu", LTWater, wunit.NewVolume(100.0, "ul"))
 
 	if _, err := p.AddComponent(c, false); err != nil {
 		t.Errorf(err.Error())
@@ -500,9 +483,7 @@ func TestSpecialRetention(t *testing.T) {
 func TestWellCoordsToCoords(t *testing.T) {
 
 	plate := makeplatefortest()
-	c := NewLHComponent()
-	c.Vol = 100.0
-	c.Vunit = "ul"
+	c := NewLiquid("Cthulhu", LTWater, wunit.NewVolume(100.0, "ul"))
 	if err := plate.GetChildByAddress(MakeWellCoords("A1")).(*LHWell).AddComponent(c); err != nil {
 		t.Fatal(err)
 	}

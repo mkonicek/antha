@@ -9,14 +9,10 @@ import (
 )
 
 func TestSampleBehaviour(t *testing.T) {
-	c := NewLHComponent()
-	c.CName = "water"
-
-	c2 := NewLHComponent()
-	c.CName = "cider"
+	c := NewLiquid("water", LTWater, wunit.NewVolume(20.0, "ul"))
+	c2 := NewLiquid("cider", LTWater, wunit.NewVolume(20.0, "ul"))
 
 	c.SetSample(true)
-
 	if !c.IsSample() {
 		t.Errorf("SetSample(true) must cause components to return true to IsSample()")
 	}

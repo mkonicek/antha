@@ -60,9 +60,9 @@ func GetPlateForTest() *wtype.Plate {
 	return plate
 }
 
-func PrefillPlateForTest(ctx context.Context, plate *wtype.LHPlate, liquidType string, volumes map[string]float64) *wtype.LHPlate {
+func PrefillPlateForTest(ctx context.Context, plate *wtype.LHPlate, liquidName string, volumes map[string]float64) *wtype.LHPlate {
 	for address, volume := range volumes {
-		cmp := GetComponentForTest(ctx, liquidType, wunit.NewVolume(volume, "ul"))
+		cmp := wtype.NewLiquid(liquidName, wtype.LTWater, wunit.NewVolume(volume, "ul"))
 		if err := plate.Wellcoords[address].SetContents(cmp); err != nil {
 			panic(err)
 		}
@@ -86,12 +86,9 @@ func GetTroughForTest() *wtype.Plate {
 }
 
 func configure_request_simple(ctx context.Context, rq *LHRequest) {
-	water := GetComponentForTest(ctx, "water", wunit.NewVolume(100.0, "ul"))
-	water.Type = wtype.LTSingleChannel
-	mmx := GetComponentForTest(ctx, "mastermix_sapI", wunit.NewVolume(100.0, "ul"))
-	mmx.Type = wtype.LTSingleChannel
-	part := GetComponentForTest(ctx, "dna", wunit.NewVolume(50.0, "ul"))
-	part.Type = wtype.LTSingleChannel
+	water := wtype.NewLiquid("water", wtype.LTSingleChannel, wunit.NewVolume(100.0, "ul"))
+	mmx := wtype.NewLiquid("mastermix_sapI", wtype.LTSingleChannel, wunit.NewVolume(100.0, "ul"))
+	part := wtype.NewLiquid("dna", wtype.LTSingleChannel, wunit.NewVolume(50.0, "ul"))
 
 	for k := 0; k < 9; k++ {
 		ins := wtype.NewLHMixInstruction()
@@ -102,16 +99,16 @@ func configure_request_simple(ctx context.Context, rq *LHRequest) {
 		ins.AddInput(ws)
 		ins.AddInput(mmxs)
 		ins.AddInput(ps)
-		ins.AddOutput(GetComponentForTest(ctx, "water", wunit.NewVolume(17.0, "ul")))
+		ins.AddOutput(wtype.NewLiquid("water", wtype.LTWater, wunit.NewVolume(17.0, "ul")))
 		rq.Add_instruction(ins)
 	}
 
 }
 
 func configure_request_bigger(ctx context.Context, rq *LHRequest) {
-	water := GetComponentForTest(ctx, "water", wunit.NewVolume(2000.0, "ul"))
-	mmx := GetComponentForTest(ctx, "mastermix_sapI", wunit.NewVolume(2000.0, "ul"))
-	part := GetComponentForTest(ctx, "dna", wunit.NewVolume(1000.0, "ul"))
+	water := wtype.NewLiquid("water", wtype.LTWater, wunit.NewVolume(2000.0, "ul"))
+	mmx := wtype.NewLiquid("mastermix_sapI", wtype.LTWater, wunit.NewVolume(2000.0, "ul"))
+	part := wtype.NewLiquid("dna", wtype.LTWater, wunit.NewVolume(1000.0, "ul"))
 
 	for k := 0; k < 99; k++ {
 		ins := wtype.NewLHMixInstruction()
@@ -122,14 +119,14 @@ func configure_request_bigger(ctx context.Context, rq *LHRequest) {
 		ins.AddInput(ws)
 		ins.AddInput(mmxs)
 		ins.AddInput(ps)
-		ins.AddOutput(GetComponentForTest(ctx, "water", wunit.NewVolume(17.0, "ul")))
+		ins.AddOutput(wtype.NewLiquid("water", wtype.LTWater, wunit.NewVolume(17.0, "ul")))
 		rq.Add_instruction(ins)
 	}
 
 }
 
 func configurePlanningTestRequest(ctx context.Context, rq *LHRequest) {
-	water := GetComponentForTest(ctx, "multiwater", wunit.NewVolume(2000.0, "ul"))
+	water := wtype.NewLiquid("multiwater", wtype.LTWater, wunit.NewVolume(2000.0, "ul"))
 
 	for k := 0; k < 9; k++ {
 		ins := wtype.NewLHMixInstruction()
@@ -137,7 +134,7 @@ func configurePlanningTestRequest(ctx context.Context, rq *LHRequest) {
 
 		ins.AddInput(ws)
 
-		ins.AddOutput(GetComponentForTest(ctx, "water", wunit.NewVolume(50, "ul")))
+		ins.AddOutput(wtype.NewLiquid("water", wtype.LTWater, wunit.NewVolume(50, "ul")))
 		rq.Add_instruction(ins)
 	}
 
@@ -166,7 +163,7 @@ func configureTransferRequestForZTest(policyName string, transferVol wunit.Volum
 	//initialise request
 	rq = GetLHRequestForTest()
 
-	liq := GetComponentForTest(ctx, "water", wunit.NewVolume(2000.0, "ul"))
+	liq := wtype.NewLiquid("water", wtype.LTWater, wunit.NewVolume(2000.0, "ul"))
 
 	err = liq.SetPolicyName(wtype.PolicyName(policyName))
 	if err != nil {
@@ -180,7 +177,7 @@ func configureTransferRequestForZTest(policyName string, transferVol wunit.Volum
 
 		ins.AddInput(ws)
 
-		expectedProduct := GetComponentForTest(ctx, "water", transferVol)
+		expectedProduct := wtype.NewLiquid("water", wtype.LTWater, transferVol)
 
 		err = expectedProduct.SetPolicyName(wtype.PolicyName(policyName))
 		if err != nil {
@@ -206,7 +203,7 @@ func configureTransferRequestForZTest(policyName string, transferVol wunit.Volum
 }
 
 func configureSingleChannelTestRequest(ctx context.Context, rq *LHRequest) {
-	water := GetComponentForTest(ctx, "multiwater", wunit.NewVolume(2000.0, "ul"))
+	water := wtype.NewLiquid("multiwater", wtype.LTWater, wunit.NewVolume(2000.0, "ul"))
 
 	for k := 0; k < 1; k++ {
 		ins := wtype.NewLHMixInstruction()
@@ -214,7 +211,7 @@ func configureSingleChannelTestRequest(ctx context.Context, rq *LHRequest) {
 
 		ins.AddInput(ws)
 
-		ins.AddOutput(GetComponentForTest(ctx, "water", wunit.NewVolume(50, "ul")))
+		ins.AddOutput(wtype.NewLiquid("water", wtype.LTWater, wunit.NewVolume(50, "ul")))
 		rq.Add_instruction(ins)
 	}
 
@@ -259,7 +256,7 @@ func configureTransferRequestMutliSamplesTest(policyName string, samples ...*wty
 		}
 
 		ins.AddInput(sample)
-		ins.AddOutput(GetComponentForTest(ctx, "water", sample.Volume()))
+		ins.AddOutput(wtype.NewLiquid("water", wtype.LTWater, sample.Volume()))
 
 		if !it.Valid() {
 			return nil, errors.New("out of space on input plate")
@@ -279,10 +276,9 @@ func configureTransferRequestMutliSamplesTest(policyName string, samples ...*wty
 
 func TestToWellVolume(t *testing.T) {
 	// set up ctx
-	ctx := GetContextForTest()
-	water := GetComponentForTest(ctx, "water", wunit.NewVolume(2000.0, "ul"))
-	mmx := GetComponentForTest(ctx, "mastermix_sapI", wunit.NewVolume(2000.0, "ul"))
-	part := GetComponentForTest(ctx, "dna", wunit.NewVolume(1000.0, "ul"))
+	water := wtype.NewLiquid("water", wtype.LTWater, wunit.NewVolume(2000.0, "ul"))
+	mmx := wtype.NewLiquid("mastermix_sapI", wtype.LTWater, wunit.NewVolume(2000.0, "ul"))
+	part := wtype.NewLiquid("dna", wtype.LTWater, wunit.NewVolume(1000.0, "ul"))
 
 	ws := mixer.Sample(water, wunit.NewVolume(150.0, "ul"))
 	mmxs := mixer.Sample(mmx, wunit.NewVolume(49.0, "ul"))
@@ -1095,8 +1091,8 @@ func TestExecutionPlanning(t *testing.T) {
 
 				var instructions []*wtype.LHInstruction
 
-				diluent := GetComponentForTest(ctx, "multiwater", wunit.NewVolume(1000.0, "ul"))
-				stock := GetComponentForTest(ctx, "dna", wunit.NewVolume(1000, "ul"))
+				diluent := wtype.NewLiquid("multiwater", wtype.LTWater, wunit.NewVolume(1000.0, "ul"))
+				stock := wtype.NewLiquid("dna", wtype.LTWater, wunit.NewVolume(1000, "ul"))
 				stock.Type = wtype.LTMultiWater
 
 				for y := 0; y < 8; y++ {
@@ -1169,7 +1165,7 @@ func TestExecutionPlanning(t *testing.T) {
 			Name: "dependent non-contiguous single channel",
 			Instructions: func(ctx context.Context) []*wtype.LHInstruction {
 				// mix onto alternate rows of an output plate leaving gaps
-				source := GetComponentForTest(ctx, "water", wunit.NewVolume(1000, "ul"))
+				source := wtype.NewLiquid("water", wtype.LTWater, wunit.NewVolume(1000, "ul"))
 				source.Type = wtype.LTMultiWater
 
 				return []*wtype.LHInstruction{
@@ -1192,7 +1188,7 @@ func TestExecutionPlanning(t *testing.T) {
 			Liquidhandler: GetIndependentLiquidHandlerForTest(ctx),
 			Instructions: func(ctx context.Context) []*wtype.LHInstruction {
 				// mix onto alternate rows of an output plate leaving gaps
-				source := GetComponentForTest(ctx, "water", wunit.NewVolume(1000, "ul"))
+				source := wtype.NewLiquid("water", wtype.LTWater, wunit.NewVolume(1000, "ul"))
 				source.Type = wtype.LTMultiWater
 
 				return []*wtype.LHInstruction{
@@ -1382,7 +1378,7 @@ func (test *ShrinkVolumesTest) run(t *testing.T) {
 	for addr, plate := range test.PlateLocations {
 		// fill each and every well
 		for _, well := range plate.Wellcoords {
-			contents := GetComponentForTest(ctx, "water", well.MaxVolume())
+			contents := wtype.NewLiquid("water", wtype.LTWater, well.MaxVolume())
 			if err := well.SetContents(contents); err != nil {
 				t.Fatal(err)
 			}

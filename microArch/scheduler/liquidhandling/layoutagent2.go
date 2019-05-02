@@ -743,10 +743,7 @@ func make_layouts(ctx context.Context, request *LHRequest, pc []PlateChoice) err
 func markWellUsed(well *wtype.LHWell) error {
 	//avoid adding a dummy component if one's already been added
 	if well.IsEmpty() {
-		dummycmp := wtype.NewLHComponent()
-		dummycmp.SetVolume(well.MaxVolume())
-		err := well.AddComponent(dummycmp)
-		if err != nil {
+		if err := well.AddComponent(wtype.NewLiquid("dummy", wtype.LTWater, well.MaxVolume())); err != nil {
 			return wtype.LHError(wtype.LH_ERR_VOL, fmt.Sprintf("Layout Agent : %s", err.Error()))
 		}
 	}

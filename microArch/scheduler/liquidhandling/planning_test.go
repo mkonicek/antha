@@ -441,10 +441,7 @@ func (self TestMixComponent) AddSamples(ctx context.Context, samples map[string]
 		totalVolume += v
 	}
 
-	source := GetComponentForTest(ctx, self.LiquidName, wunit.NewVolume(totalVolume, "ul"))
-	if self.LiquidType != "" {
-		source.Type = self.LiquidType
-	}
+	source := wtype.NewLiquid(self.LiquidName, self.liquidType(), wunit.NewVolume(totalVolume, "ul"))
 
 	for well, vol := range self.VolumesByWell {
 		samples[well] = append(samples[well], self.Sampler(source, wunit.NewVolume(vol, "ul")))
@@ -454,15 +451,19 @@ func (self TestMixComponent) AddSamples(ctx context.Context, samples map[string]
 func (self TestMixComponent) AddToPlate(ctx context.Context, plate *wtype.LHPlate) {
 
 	for well, vol := range self.VolumesByWell {
-		cmp := GetComponentForTest(ctx, self.LiquidName, wunit.NewVolume(vol, "ul"))
-		if self.LiquidType != "" {
-			cmp.Type = self.LiquidType
-		}
+		cmp := wtype.NewLiquid(self.LiquidName, self.liquidType(), wunit.NewVolume(vol, "ul"))
 
 		if err := plate.Wellcoords[well].SetContents(cmp); err != nil {
 			panic(err)
 		}
 	}
+}
+
+func (self TestMixComponent) liquidType() wtype.LiquidType {
+	if self.LiquidType != "" {
+		return self.LiquidType
+	}
+	return wtype.LTWater
 }
 
 type TestMixComponents []TestMixComponent

@@ -44,5 +44,5 @@ func (lhs *HighLevelServer) Listen(port int) error {
 }
 
 func (hls *HighLevelServer) Transfer(_ context.Context, req *pb.TransferRequest) (*pb.CommandReply, error) {
-	return makeCommandReply(hls.driver.Transfer(req.What, req.Platefrom, req.Wellfrom, req.Plateto, req.Wellto, req.Volume)), nil
+	return makeCommandReply(hls.driver.Transfer(req.What, req.Component, req.Platefrom, req.Wellfrom, req.Plateto, req.Wellto, req.Volume)), nil
 }

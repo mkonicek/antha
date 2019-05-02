@@ -147,6 +147,7 @@ message WaitRequest {
 
 message TransferRequest {
     repeated string what = 1;
+    repeated string component = 7;
     repeated string platefrom = 2;
     repeated string wellfrom = 3;
     repeated string plateto = 4;

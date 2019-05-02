@@ -127,9 +127,10 @@ func (hlc *HighLevelClient) GetCapabilities() (liquidhandling.LHProperties, driv
 	}
 }
 
-func (hlc *HighLevelClient) Transfer(what, platefrom, wellfrom, plateto, wellto []string, volume []float64) driver.CommandStatus {
+func (hlc *HighLevelClient) Transfer(what, component, platefrom, wellfrom, plateto, wellto []string, volume []float64) driver.CommandStatus {
 	if r, err := hlc.client.Transfer(context.Background(), &pb.TransferRequest{
 		What:      what,
+		Component: component,
 		Platefrom: platefrom,
 		Wellfrom:  wellfrom,
 		Plateto:   plateto,

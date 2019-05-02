@@ -132,5 +132,5 @@ type ExtendedLiquidhandlingDriver interface {
 
 type HighLevelLiquidhandlingDriver interface {
 	LiquidhandlingDriver
-	Transfer(what, platefrom, wellfrom, plateto, wellto []string, volume []float64) driver.CommandStatus
+	Transfer(what, component, platefrom, wellfrom, plateto, wellto []string, volume []float64) driver.CommandStatus
 }

@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/antha-lang/antha/codegen"
 	"github.com/antha-lang/antha/composer"
@@ -97,7 +98,6 @@ func (labBuild *LaboratoryBuilder) Setup(fh io.ReadCloser, inDir, outDir string)
 		func() error { return labBuild.SetupPaths(inDir, outDir) },
 		func() error { return labBuild.SetupWorkflow(fh) },
 		func() error { return labBuild.SetupEffects() },
-		func() error { return labBuild.SaveWorkflow() },
 	}.Run()
 	if err != nil {
 		labBuild.RecordError(err, true)
@@ -125,6 +125,7 @@ func (labBuild *LaboratoryBuilder) SetupWorkflow(fh io.ReadCloser) error {
 			}
 			labBuild.Logger.Log("simulatorVersion", "unknown")
 		}
+		wf.Meta.Set("SimulationStart", time.Now().Format(time.RFC3339Nano))
 
 		labBuild.Workflow = wf
 		return nil
@@ -145,7 +146,7 @@ func (labBuild *LaboratoryBuilder) SetupPaths(inDir, outDir string) error {
 	labBuild.Logger.Log("outdir", labBuild.outDir)
 
 	// Create subdirs within it:
-	for _, leaf := range []string{"elements", "data", "devices", "workflow"} {
+	for _, leaf := range []string{"elements", "data", "tasks", "workflow"} {
 		if err := os.MkdirAll(filepath.Join(labBuild.outDir, leaf), 0700); err != nil {
 			return err
 		}
@@ -183,12 +184,17 @@ func (labBuild *LaboratoryBuilder) SetupEffects() error {
 	}
 }
 
-func (labBuild *LaboratoryBuilder) SaveWorkflow() error {
-	return labBuild.Workflow.WriteToFile(filepath.Join(labBuild.outDir, "workflow", "workflow.json"), false)
-}
-
 // Returns all the errors that were encountered and recorded in this lab's existence
 func (labBuild *LaboratoryBuilder) Decommission() error {
+	labBuild.Workflow.Meta.Set("SimulationEnd", time.Now().Format(time.RFC3339Nano))
+	if err := labBuild.saveWorkflow(); err != nil {
+		labBuild.RecordError(err, true)
+	}
+
+	if err := labBuild.saveErrors(); err != nil {
+		labBuild.RecordError(err, true)
+	}
+
 	if labBuild.logFH != nil {
 		labBuild.Logger.SwapWriters(os.Stderr)
 		if err := labBuild.logFH.Sync(); err != nil {
@@ -199,10 +205,12 @@ func (labBuild *LaboratoryBuilder) Decommission() error {
 		}
 		labBuild.logFH = nil
 	}
-	if err := labBuild.saveErrors(); err != nil {
-		labBuild.RecordError(err, true)
-	}
+
 	return labBuild.Errors()
+}
+
+func (labBuild *LaboratoryBuilder) saveWorkflow() error {
+	return labBuild.Workflow.WriteToFile(filepath.Join(labBuild.outDir, "workflow", "workflow.json"), false)
 }
 
 // returns non-nil error iff there is an error during the *saving*
@@ -243,12 +251,12 @@ func (labBuild *LaboratoryBuilder) Compile() {
 		// supports prompting.
 		human.New(labBuild.effects.IDGenerator).DetermineRole(devices)
 
-		devDir := filepath.Join(labBuild.outDir, "devices")
+		tasksDir := filepath.Join(labBuild.outDir, "tasks")
 
 		if nodes, err := labBuild.effects.Maker.MakeNodes(labBuild.effects.Trace.Instructions()); err != nil {
 			labBuild.RecordError(err, true)
 
-		} else if instrs, err := codegen.Compile(labBuild.effects, devDir, devices, nodes); err != nil {
+		} else if instrs, err := codegen.Compile(labBuild.effects, tasksDir, devices, nodes); err != nil {
 			labBuild.RecordError(err, true)
 
 		} else {

@@ -225,13 +225,13 @@
             "type": "object",
             "properties": {
                 "Instructions": {
-                    "type": "array"
+                    "type": "object"
                 },
                 "Outputs" : {
-                    "type": "array"
+                    "type": "object"
                 },
                 "TimeEstimate": {
-                    "type": "array"
+                    "type": "number"
                 }
             }
         },

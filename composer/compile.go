@@ -40,7 +40,7 @@ func (cb *ComposerBase) goGenerate() error {
 
 func (mc *mainComposer) goBuild() error {
 	outBin := filepath.Join(mc.OutDir, "bin", "workflow")
-	cmd := exec.Command("go", "build", "-o", outBin)
+	cmd := exec.Command("go", "build", "-mod", "readonly", "-o", outBin)
 	if mc.LinkedDrivers {
 		cmd.Args = append(cmd.Args, "-tags", "linkedDrivers protobuf")
 	}
@@ -177,7 +177,7 @@ func (cb *ComposerBase) prepareDrivers(cfg *workflow.Config) error {
 
 		} else if cfg.CompileAndRun != "" {
 			cb.Logger.Log("instructionPlugin", string(id), "building", cfg.CompileAndRun)
-			cmd := exec.Command("go", "build", "-o", outBin, cfg.CompileAndRun)
+			cmd := exec.Command("go", "build", "-mod", "readonly", "-o", outBin, cfg.CompileAndRun)
 			cmd.Dir = filepath.Join(cb.OutDir, "workflow") // we need to rely on the go.mod file being there
 			if err := RunAndLogCommand(cmd, cb.Logger.With("cmd", "build", "instructionPlugin", string(id)).Log); err != nil {
 				return err

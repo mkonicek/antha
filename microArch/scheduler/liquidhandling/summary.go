@@ -266,9 +266,6 @@ func newItemSummary(obj wtype.LHObject) *itemSummary {
 			for j, well := range col {
 				if !well.IsEmpty() {
 					c[j] = newLiquidSummary(well.Contents())
-
-					bs, _ := json.Marshal(c[j])
-					fmt.Printf("\n## Liquid ##\n%s\n%s\n", well.Contents().Summarize(), string(bs))
 				}
 			}
 			if len(c) > 0 {
@@ -390,7 +387,7 @@ func newLiquidSummary(l *wtype.Liquid) *liquidSummary {
 	return &liquidSummary{
 		Name:        l.MeaningfulName(),
 		TotalVolume: &measurementSummary{Value: l.Vol, Unit: l.Vunit},
-		Sources:     newLiquidSources(l.Sources),
+		Sources:     newLiquidSources(l.Sources()),
 	}
 }
 

@@ -80,22 +80,18 @@ type filterState struct {
 	// TODO  we don't always need to read the whole Row. colVals do not need to
 	// be updated for lazy columns when we already know we matched false
 	// (assuming we are using column matchers and not row matchers).
-	matcher  rawMatch
-	source   *tableIterator
-	iterNext bool
-	curr     raw
-	index    Index
+	matcher rawMatch
+	source  *tableIterator
+	curr    raw
 }
 
-func (st *filterState) advance() {
+func (st *filterState) Next() bool {
 	for st.source.Next() {
-		st.index++
 		if st.isMatch() {
-			st.iterNext = true
-			return
+			return true
 		}
 	}
-	st.iterNext = false
+	return false
 }
 
 func (st *filterState) isMatch() bool {
@@ -104,53 +100,25 @@ func (st *filterState) isMatch() bool {
 	return st.matcher(st.curr)
 }
 
-type filterIter struct {
-	commonState *filterState
-	pos         Index
-	colIndex    int
-}
-
-// Next must not return until the source has been advanced to
-// a true filter state, or has been exhausted.
-func (iter *filterIter) Next() bool {
-	// see if we need to discard the current shared state
-	retain := iter.pos != iter.commonState.index
-	if !retain {
-		iter.commonState.advance()
-		iter.pos = iter.commonState.index
-	}
-	return iter.commonState.iterNext
-}
-
-// Value reads the cached column value
-func (iter *filterIter) Value() interface{} {
-	colVals := iter.commonState.curr
-	return colVals[iter.colIndex]
+func (st *filterState) Value(colIndex int) interface{} {
+	return st.curr[colIndex]
 }
 
 // compose the matchRow filter into all the series
 // matchRow is 'func() rawMatch' (not just 'rawMatch') in order to allow stateful filters
 func filterTable(matchGen func() rawMatch, table *Table) *Table {
 	newTable := newFromTable(table, table.sortKey...)
-	group := &iterGroup{func() interface{} {
+	group := newSeriesGroup(func() seriesGroupStateImpl {
 		return &filterState{
-			index:   -1,
 			matcher: matchGen(),
 			source:  newTableIterator(table.series),
 		}
-	}}
-	wrap := func(colIndex int, wrappedSeries *Series) func(cache *seriesIterCache) iterator {
-		return func(cache *seriesIterCache) iterator {
-			f := &filterIter{colIndex: colIndex, commonState: cache.EnsureGroup(group).(*filterState)}
-			f.pos = f.commonState.index
-			return f
-		}
-	}
+	})
 	for i, wrappedSeries := range table.series {
 		newTable.series[i] = &Series{
 			typ:  wrappedSeries.typ,
 			col:  wrappedSeries.col,
-			read: wrap(i, wrappedSeries),
+			read: group.read(i),
 			meta: &filteredSeriesMeta{wrapped: wrappedSeries.meta},
 		}
 	}

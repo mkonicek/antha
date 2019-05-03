@@ -12,7 +12,7 @@ DATA_DIR=${DATA_DIR:-/data}
 # (See https://github.com/Synthace/microservice/tree/master/cmd/ambassador )
 { while ! [[ -r $DATA_DIR/inputReady ]]; do sleep 0.1; done; }
 < $DATA_DIR/inputReady
-trap "{ > $DATA_DIR/outputReady; exit 0; }" EXIT
+trap "{ echo > $DATA_DIR/outputReady; }" EXIT
 
 echo input
 find ${DATA_DIR}/input -type f

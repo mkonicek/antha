@@ -77,6 +77,31 @@ func NewLiquid(name string, lType LiquidType, volume wunit.Volume) *Liquid {
 	return r
 }
 
+func (cmp *Liquid) MarshalJSON() ([]byte, error) {
+	type LiquidAlias Liquid
+	return json.Marshal(struct {
+		*LiquidAlias
+		Sources LiquidSources
+	}{
+		LiquidAlias: (*LiquidAlias)(cmp),
+		Sources:     cmp.sources,
+	})
+}
+
+func (cmp *Liquid) UnmarshalJSON(data []byte) error {
+	type LiquidAlias Liquid
+	var l struct {
+		LiquidAlias
+		Sources LiquidSources
+	}
+	if err := json.Unmarshal(data, &l); err != nil {
+		return err
+	}
+	*cmp = Liquid(l.LiquidAlias)
+	cmp.sources = l.Sources
+	return nil
+}
+
 // AddSubComponent adds a subcomponent with concentration to a component.
 // An error is returned if subcomponent is already found.
 func (cmp *Liquid) AddSubComponent(subcomponent *Liquid, conc wunit.Concentration) error {

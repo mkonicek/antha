@@ -796,8 +796,8 @@ func TestExecutionPlanning(t *testing.T) {
 			Assertions: Assertions{
 				NumberOfAssertion(liquidhandling.ASP, 1),
 				NumberOfAssertion(liquidhandling.DSP, 1),
-				LayoutSummaryAssertion("test/simple.layout.json"),
-				ActionsSummaryAssertion("test/simple.actions.json"),
+				LayoutSummaryAssertion("test/verysimple.layout.json"),
+				ActionsSummaryAssertion("test/verysimple.actions.json"),
 			},
 		},
 		{
@@ -1102,6 +1102,40 @@ func TestExecutionPlanning(t *testing.T) {
 			Assertions: Assertions{
 				NumberOfAssertion(liquidhandling.ASP, 1), //full multichanneling
 				NumberOfAssertion(liquidhandling.DSP, 1), //full multichanneling
+			},
+		},
+		{
+			Name: "single channel split-sample",
+			Instructions: func(ctx context.Context) []*wtype.LHInstruction {
+
+				var instructions []*wtype.LHInstruction
+
+				diluent := wtype.NewLiquid("multiwater", wtype.LTWater, wunit.NewVolume(1000.0, "ul"))
+				stock := wtype.NewLiquid("dna", wtype.LTWater, wunit.NewVolume(1000, "ul"))
+				stock.Type = wtype.LTMultiWater
+
+				for x := 0; x < 12; x++ {
+					diluentSample := mixer.Sample(diluent, wunit.NewVolume(20.0, "ul"))
+
+					split := getTestSplitSample(ctx, stock, 20.0)
+
+					wc := wtype.WellCoords{X: x, Y: 0}
+					mix := getTestMix([]*wtype.Liquid{split.Outputs[0], diluentSample}, wc.FormatA1())
+
+					mix.Outputs[0].SetName(fmt.Sprintf("theDilutionAt%s", wc.FormatA1()))
+					stock = mix.Outputs[0]
+
+					instructions = append(instructions, mix, split)
+				}
+				return instructions
+			},
+			InputPlates:  []*wtype.LHPlate{GetTroughForTest()},
+			OutputPlates: []*wtype.LHPlate{GetPlateForTest()},
+			Assertions: Assertions{
+				NumberOfAssertion(liquidhandling.ASP, 24),
+				NumberOfAssertion(liquidhandling.DSP, 24),
+				LayoutSummaryAssertion("test/single.dilution.layout.json"),
+				ActionsSummaryAssertion("test/single.dilution.actions.json"),
 			},
 		},
 		{

@@ -315,6 +315,7 @@ func makeTransfers(parallelTransfer ParallelTransfer, cmps []*wtype.Liquid, robo
 		// make sure the wellTo gets the right ID (ultimately)
 		cmpFrom.ReplaceDaughterID(wellTo.WContents.ID, inssIn[ci].Outputs[0].ID)
 		wellTo.WContents.ID = inssIn[ci].Outputs[0].ID
+		wellTo.Contents().SetName(inssIn[ci].Outputs[0].CName)
 		wellTo.WContents.DeclareInstance()
 		//fmt.Println("ADDED :", cmpFrom.CName, " ", cmpFrom.Vol, " TO ", dstPlate.ID, " ", wt[ci])
 	}

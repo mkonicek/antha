@@ -1336,7 +1336,6 @@ func (ls LiquidSources) Names() []string {
 // VolumeOf returns the volume of the source with the given name in the liquid
 func (ls LiquidSources) VolumeOf(name string) wunit.Volume {
 	ret := wunit.ZeroVolume()
-	totalVolume := ls.Volume()
 
 	for n, src := range ls {
 		if name == n {
@@ -1344,12 +1343,7 @@ func (ls LiquidSources) VolumeOf(name string) wunit.Volume {
 			ret.IncrBy(src.Volume)
 		}
 		// but we still have to recurse through the tree looking for other matches
-		sourceFraction, err := wunit.DivideVolumes(src.Volume, totalVolume)
-		if err == nil {
-			volumeInSource := src.Sources.VolumeOf(name)
-			volumeInSource.MultiplyBy(sourceFraction)
-			ret.IncrBy(volumeInSource)
-		}
+		ret.IncrBy(src.Sources.VolumeOf(name))
 	}
 	return ret
 }

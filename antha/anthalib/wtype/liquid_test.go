@@ -264,7 +264,7 @@ func TestLiquidSources(t *testing.T) {
 	appleBerry.Mix(water)
 
 	// now check that we ended up with delicious squash
-	sourceNames := appleBerry.Sources.Names()
+	sourceNames := appleBerry.Sources().Names()
 	expectedNames := []string{"Apple and Blackberry Concentrate", "water"}
 	if !reflect.DeepEqual(sourceNames, expectedNames) {
 		t.Fatalf("source name mismatch:\ne: %q\ng: %q", expectedNames, sourceNames)
@@ -280,8 +280,9 @@ func TestLiquidSources(t *testing.T) {
 		"water":                            wunit.NewVolume(450.0, "ml"),
 		"Bose-Einstein Condensate":         wunit.NewVolume(0.0, "ml"),
 	}
+	sources := appleBerry.Sources()
 	for name, eVol := range expectedVolumes {
-		if gVol := appleBerry.Sources.VolumeOf(name); !eVol.EqualTo(gVol) {
+		if gVol := sources.VolumeOf(name); !eVol.EqualTo(gVol) {
 			t.Errorf("wrong volume for %q: expected %s, got %s", name, eVol, gVol)
 		}
 	}
@@ -314,7 +315,7 @@ func ExampleLiquid_Sources() {
 	mixture := Mix(apple, berry)
 
 	// sources contains a description of what went in
-	fmt.Println(mixture.Sources.Summarize())
+	fmt.Println(mixture.Sources().Summarize())
 
 	// we can also give the output a specific name
 	mixture.SetName("Apple & Blackberry Juice")
@@ -322,7 +323,7 @@ func ExampleLiquid_Sources() {
 	// which will then exist in sources later on
 	mixture = Mix(mixture, NewLiquid("Lemonade", LTWater, wunit.NewVolume(0.5, "l")))
 	fmt.Println("")
-	fmt.Println(mixture.Sources.Summarize())
+	fmt.Println(mixture.Sources().Summarize())
 
 	// Output:
 	// "Apple Juice": 1 l
@@ -349,7 +350,7 @@ func ExampleLiquid_Sources_sampling() {
 	mixture := Mix(aSample, bSample)
 	mixture.SetName("Apple & Blackberry Juice")
 	mixture = Mix(mixture, NewLiquid("Water", LTWater, wunit.NewVolume(100, "ml")))
-	fmt.Println(mixture.Sources.Summarize())
+	fmt.Println(mixture.Sources().Summarize())
 
 	// Output:
 	// "Apple & Blackberry Juice": 95 ml
@@ -370,7 +371,7 @@ func ExampleLiquid_Sources_transfers() {
 	}
 
 	mixture := Mix(samples...)
-	fmt.Println(mixture.Sources.Summarize())
+	fmt.Println(mixture.Sources().Summarize())
 
 	// Output:
 	// "Apple Juice": 10 ml
@@ -387,7 +388,7 @@ func ExampleLiquid_Sources_transfers2() {
 		mixture = Mix(mixture, Sample(berry, wunit.NewVolume(1, "ml")))
 	}
 
-	fmt.Println(mixture.Sources.Summarize())
+	fmt.Println(mixture.Sources().Summarize())
 
 	// Output:
 	// "Apple Juice": 10 ml
@@ -408,7 +409,7 @@ func ExampleLiquid_Sources_naming() {
 	// then combining them combines their sources
 	juice := Mix(mixture1, mixture2)
 
-	fmt.Println(juice.Sources.Summarize())
+	fmt.Println(juice.Sources().Summarize())
 
 	// Output:
 	// "Fruit Juice": 40 ml

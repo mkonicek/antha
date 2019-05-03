@@ -14,6 +14,17 @@ DATA_DIR=${DATA_DIR:-/data}
 < $DATA_DIR/inputReady
 trap "{ > $DATA_DIR/outputReady; }" EXIT
 
-$MIGRATE -from=${DATA_DIR}/input/request.pb -outdir=${DATA_DIR}/scratch -gilson-device=gillian -format=protobuf - <<<$WF_JSON
+echo input
+find -type f ${DATA_DIR}/input
+$MIGRATE -from=${DATA_DIR}/input/workflow/request.pb -outdir=${DATA_DIR}/scratch -gilson-device=gillian -format=protobuf - <<<$WF_JSON
 
+echo scratch
+find -type f ${DATA_DIR}/scratch
+cp -a ${DATA_DIR}/scratch/* ${DATA_DIR}/input
+
+echo input
+find -type f ${DATA_DIR}/input
 $COMPOSER -indir=${DATA_DIR}/scratch -outdir=${DATA_DIR}/output -linkedDrivers
+
+echo output
+find -type f ${DATA_DIR}/output

@@ -18,4 +18,4 @@ $MIGRATE -from=${DATA_DIR}/input/workflow/request.pb -outdir=${DATA_DIR}/scratch
 
 cp -a ${DATA_DIR}/scratch/* ${DATA_DIR}/input
 
-$COMPOSER -indir=${DATA_DIR}/scratch -outdir=${DATA_DIR}/output -linkedDrivers
+$COMPOSER -indir=${DATA_DIR}/input -outdir=${DATA_DIR}/output -linkedDrivers

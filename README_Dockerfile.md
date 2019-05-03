@@ -42,13 +42,22 @@ Install it.
 
 ## 3. Build the image
 
-    antha-lang/antha$ docker build --build-arg NETRC="$(cat ~/.netrc)" --build-arg COMMIT_SHA=feature/future_sanity .
+    antha-lang/antha$ docker build --target=build -t antha-local --build-arg NETRC="$(cat ~/.netrc)" --build-arg COMMIT_SHA=feature/future_sanity .
 
-This should work. For the `COMMIT_SHA` you can provide a branch name
-or a commit hash. Our CI uses commit hash.
+For the `COMMIT_SHA` you can provide a branch name or a commit
+hash. Our CI uses commit hash. Because you may well have modified
+sources spread out across your machine, and because it is very
+difficult to transfer all those into docker, and because the antha
+commands are highly coupled to the sources, we do not currently
+support building a Docker image based on un-committed and un-pushed
+code.
 
-All the sources necessary should be downloaded and compiled, and the
-antha-lang/antha tests will be run. At the end, you should have a
+The Dockerfile defines several targets. Here we target the first:
+"build" which merely fetches all the sources and builds all the antha
+commands. It does not run any tests. Inspect the Dockerfile to see the
+other targets.
+
+At the end, you should have a
 message like:
 
     Step 13/13 : ONBUILD ADD . /elements
@@ -59,26 +68,19 @@ message like:
 
 That last number is the Id of the image you've just built. If you run
 `docker images` you should see that Id and it should tell you you've
-recently created that image.
+recently created that image, and that the image has a tag of antha-local.
 
 ## 4. Run the image
 
 With the image built, you can now run it with:
 
-    docker run -it --rm 2ce136c2261c
+    docker run -it --rm antha-local
 
-replacing the image Id with yours. `-i` says interactive, `-t` says
-you want to interact with a terminal, and `--rm` says delete the
-running container once you exit. I.e. once you exit the shell that
-you're given, (either `Ctl-D` or `exit`), the running container will
-be stopped and deleted and any changes lost. So you're always
-restarting from a known good state.
+`-i` says interactive, `-t` says you want to interact with a terminal,
+and `--rm` says delete the running container once you exit. I.e. once
+you exit the shell that you're given, (either `Ctl-D` or `exit`), the
+running container will be stopped and deleted and any changes lost. So
+you're always restarting from a known good state.
 
 You should be presented with a shell from which you can explore. Antha
 and its commands should be installed and available in PATH as normal.
-
-Something to watch out for is that one of the last steps of the
-Dockerfile is to remove the `~/.netrc` file in the Docker image.  This
-is for security in the cloud. However, this may affect you running
-things locally so you may have to recreate this file based on your
-host machine.

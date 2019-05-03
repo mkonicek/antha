@@ -4,10 +4,48 @@ import (
 	"github.com/pkg/errors"
 )
 
+type AppendSelection struct {
+	tables []*Table
+}
+
+func (s *AppendSelection) Inner() *Table {
+	t, err := s.append(appendInner)
+	if err != nil {
+		panic(errors.Wrap(err, "SHOULD NOT HAPPEN: error while inner Append"))
+	}
+	return t
+}
+
+func (s *AppendSelection) Outer() *Table {
+	t, err := s.append(appendInner)
+	if err != nil {
+		panic(errors.Wrap(err, "SHOULD NOT HAPPEN: error while outer Append"))
+	}
+	return t
+}
+
+func (s *AppendSelection) Exact() *Table {
+	return s.append(appendExact)
+}
+
+type appendMode int
+
+const (
+	appendInner appendMode = iota
+	appendOuter
+	appendExact
+)
+
 // AppendMany concatenates multiple tables vertically.
 // The tables schemas must be identical (except columns names; the output table inherits columns names from the first input table).
 // Empty input tables list is considered as an error.
-func AppendMany(tables ...*Table) (*Table, error) {
+
+func (s *AppendSelection) append(mode appendMode) (*Table, error) {
+	schema, sources, err := s.combineSchemas(mode)
+	if err != nil {
+		return nil, err
+	}
+
 	// checking inputs
 	if err := checkInputTablesForAppend(tables); err != nil {
 		return nil, err
@@ -47,6 +85,55 @@ func AppendMany(tables ...*Table) (*Table, error) {
 	return NewTable(newSeries...), nil
 }
 
+type columnKey struct {
+	name ColumnName
+	index int // index among the columns with the same name
+}
+
+// makes the output table schema + projections of each input table to it
+func (s *AppendSelection) combineSchemas(mode appendMode) (*Schema, []projection, error) {
+	
+
+	for _, t := range s.tables {
+		cols := s.indexColumns(t)
+		
+
+
+		
+	}
+	
+	
+	// creating or extracting append sources
+	sources := s.extractOrCreateSources()
+
+	columns := make([]Column, 0)
+
+}
+
+type columnKey struct {
+	name ColumnName
+	index int // index among the columns with the same name
+}
+
+func (s *AppendSelection) indexColumns(t* Table) []columnKey {
+	columnKeys := make([]columnKey, 0)
+	indexByName := make(map[ColumnName]int)
+	for _, col := range t.schema.Columns {
+		index := indexByName[col.Name]
+		columnKeys := append(columnKeys, columnKey{
+			name: col.Name,
+			index: index,
+		})
+		indexByName[col.Name] = index + 1
+	}
+	return columnKeys
+}
+
+type appendSource struct {
+	table *Table
+	proj  projection
+}
+
 // Checks that source tables schemas are equal.
 func checkInputTablesForAppend(tables []*Table) error {
 	// at least one input table must be supplied
@@ -80,20 +167,23 @@ func compareSchemasForAppend(schema1 Schema, schema2 Schema) error {
 
 // If some of the Append source tables are themselves produced by `Append`, then removing intermediate tables
 // - in order to simplify iteration.
-func flattenAppendSources(sourceTables []*Table) []*Table {
-	flattened := make([]*Table, 0, len(sourceTables))
-	for _, t := range sourceTables {
-		if flattenedT, ok := extractAppendSources(t); ok {
-			flattened = append(flattened, flattenedT...)
+func (s *AppendSelection) extractOrCreateSources() []appendSource {
+	sources := make([]appendSource, 0, len(s.tables))
+	for _, t := range s.tables {
+		if tSources, ok := s.extractSources(t); ok {
+			sources = append(sources, tSources...)
 		} else {
-			flattened = append(flattened, t)
+			sources = append(sources, appendSource{
+				table: t,
+				projection: newIdentityProjection(t.schema.NumColumns())
+			})
 		}
 	}
-	return flattened
+	return sources
 }
 
 // If the table is itself a result of Append, then extracts source tables. Otherwise, returns false.
-func extractAppendSources(table *Table) ([]*Table, bool) {
+func (s *AppendSelection) extractSources(table *Table) ([]appendSource, bool) {
 	for _, series := range table.series {
 		// if some series is not Append series, the table is not the result of a single Append
 		meta, ok := series.meta.(*appendSeriesMeta)
@@ -135,7 +225,7 @@ type appendSeriesMeta struct {
 	maxSize   int
 	// needed for optimization purposes only (extractAppendSources)
 	group   *seriesGroup
-	sources []*Table
+	sources []appendSource
 }
 
 func (m *appendSeriesMeta) IsMaterialized() bool { return false }

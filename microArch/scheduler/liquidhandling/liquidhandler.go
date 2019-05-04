@@ -36,6 +36,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/laboratory/effects/id"
+	"github.com/antha-lang/antha/logger/levlog"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/simulator"
 	simulator_lh "github.com/antha-lang/antha/microArch/simulator/liquidhandling"
@@ -96,23 +97,25 @@ func (this *Liquidhandler) PlateIDMap() map[string]string {
 // high-level function which requests planning and execution for an incoming set of
 // solutions
 func (this *Liquidhandler) MakeSolutions(labEffects *effects.LaboratoryEffects, request *LHRequest) error {
+	levlog.Debug("len(instructions) :: ", len(request.Instructions))
 	if err := request.Validate(); err != nil {
 		return err
 	}
-
+	levlog.Debug("len(instructions) :: ", len(request.Instructions))
 	if err := this.Plan(labEffects, request); err != nil {
 		return err
 	}
-
+	levlog.Debug("len(instructions) :: ", len(request.Instructions))
 	if err := this.AddSetupInstructions(request); err != nil {
 		return err
 	}
-
+	levlog.Debug("len(instructions) :: ", len(request.Instructions))
 	fmt.Println("Tip Usage Summary:")
 	for _, tipEstimate := range request.TipsUsed {
 		fmt.Printf("  %v\n", tipEstimate)
 	}
 
+	levlog.Debug("len(instructions) :: ", len(request.Instructions))
 	if err := this.Simulate(labEffects.IDGenerator, request); err != nil && !request.Options.IgnorePhysicalSimulation {
 		return errors.WithMessage(err, "during physical simulation")
 	}
@@ -181,6 +184,7 @@ func (this *Liquidhandler) Simulate(idGen *id.IDGenerator, request *LHRequest) e
 		if !ok {
 			return fmt.Errorf("instruction %d not terminal", i)
 		}
+		levlog.Debug("%d: %s\n", i, ins)
 		triS = append(triS, tri)
 
 	}
@@ -189,7 +193,7 @@ func (this *Liquidhandler) Simulate(idGen *id.IDGenerator, request *LHRequest) e
 		fmt.Printf("Simulating %d instructions\n", len(instructions))
 		for i, ins := range instructions {
 			if request.Options.PrintInstructions {
-				fmt.Printf("%d: %s\n", i, liquidhandling.InsToString(ins))
+				levlog.Debug(i, liquidhandling.InsToString(ins))
 			}
 		}
 	}
@@ -212,13 +216,17 @@ func (this *Liquidhandler) Simulate(idGen *id.IDGenerator, request *LHRequest) e
 		return "messages"
 	}
 	logLines := make([]string, 0, numErrors+1)
-	logLines = append(logLines, fmt.Sprintf("showing %d %s from physical simulation:", numErrors, pMessage(numErrors)))
+	mess := fmt.Sprintf("showing %d %s from physical simulation:", numErrors, pMessage(numErrors))
+	levlog.Info(mess)
+	logLines = append(logLines, mess)
 	//Format numbers at consistent width so messages line up
 	fmtString := fmt.Sprintf("  %%%dd: simulator: %%s", 1+int(math.Floor(math.Log10(float64(numErrors)))))
 	for i, err := range vlh.GetErrors() {
+		mess := fmt.Sprintf(fmtString, i+1, err.Error())
+		levlog.Info(mess)
 		logLines = append(logLines, fmt.Sprintf(fmtString, i+1, err.Error()))
 	}
-	fmt.Println(strings.Join(logLines, "\n"))
+	//	fmt.Println(strings.Join(logLines, "\n"))
 
 	//return the worst error if it's actually an error
 	if simErr := vlh.GetFirstError(simulator.SeverityError); simErr != nil {
@@ -253,7 +261,8 @@ func (this *Liquidhandler) Execute(request *LHRequest) error {
 	for _, ins := range instructions {
 
 		if request.Options.PrintInstructions {
-			fmt.Println(liquidhandling.InsToString(ins))
+			//info here since tied to options request
+			levlog.Info(liquidhandling.InsToString(ins))
 
 		}
 		_, ok := ins.(liquidhandling.TerminalRobotInstruction)
@@ -515,7 +524,11 @@ func (this *Liquidhandler) update_metadata() error {
 
 func (this *Liquidhandler) Plan(labEffects *effects.LaboratoryEffects, request *LHRequest) error {
 	// figure out the ordering for the high level instructions
-	if ichain, err := buildInstructionChain(labEffects.IDGenerator, request.LHInstructions); err != nil {
+	levlog.Debug("len(instructions) ::", len(request.Instructions))
+	ichain, err := buildInstructionChain(labEffects.IDGenerator, request.LHInstructions)
+	levlog.Debug(" === Planner --- InstructionChain ===== ")
+	ichain.Print()
+	if err != nil {
 		return err
 	} else {
 		//sort the instructions within each link of the instruction chain
@@ -524,16 +537,18 @@ func (this *Liquidhandler) Plan(labEffects *effects.LaboratoryEffects, request *
 		request.updateWithNewLHInstructions(ichain.GetOrderedLHInstructions())
 		request.OutputOrder = ichain.FlattenInstructionIDs()
 	}
+	levlog.Debug("len(instructions) :: ", len(request.Instructions))
 
 	if request.Options.PrintInstructions {
-		fmt.Println("")
-		fmt.Printf("Ordered Instructions:")
-		for _, insID := range request.OutputOrder {
-			fmt.Println(request.LHInstructions[insID])
+		levlog.Instr("")
+		levlog.Instr("Ordered Instructions:")
+		for ii, insID := range request.OutputOrder {
+			levlog.Instr("Instr ", ii, ":: ", request.LHInstructions[insID])
 		}
 		request.InstructionChain.Print()
 	}
 
+	levlog.Debug("len(instructions) ::", len(request.Instructions))
 	// assert we should have some instruction ordering
 	if len(request.OutputOrder) == 0 {
 		return fmt.Errorf("Error with instruction sorting: Have %d want %d instructions", len(request.OutputOrder), len(request.LHInstructions))
@@ -546,7 +561,6 @@ func (this *Liquidhandler) Plan(labEffects *effects.LaboratoryEffects, request *
 
 	// make sure instructions don't share pointers to inputs or outputs
 	request.LHInstructions.DupLiquids(labEffects.IDGenerator)
-
 	if err := request.LHInstructions.AssertVolumesNonNegative(); err != nil {
 		return err
 	} else if err := request.LHInstructions.AssertTotalVolumesMatch(); err != nil {
@@ -589,9 +603,9 @@ func (this *Liquidhandler) Plan(labEffects *effects.LaboratoryEffects, request *
 		return err
 	} else {
 		if request.Options.PrintInstructions {
-			fmt.Println("\nInstructions Post Volume Fix")
+			levlog.Instr("\nInstructions Post Volume Fix")
 			for _, insID := range request.OutputOrder {
-				fmt.Println(request.LHInstructions[insID])
+				levlog.Instr(request.LHInstructions[insID])
 			}
 		}
 	}
@@ -640,16 +654,21 @@ func (this *Liquidhandler) Plan(labEffects *effects.LaboratoryEffects, request *
 	}
 
 	// make the instructions for executing this request by first building the ITree root, then generating the lower level instructions
-	if root, err := liquidhandling.NewITreeRoot(request.InstructionChain); err != nil {
+	root, err := liquidhandling.NewITreeRoot(request.InstructionChain)
+	if err != nil {
 		return err
-	} else if final, err := root.Build(labEffects, request.Policies(), this.Properties); err != nil {
+	}
+	levlog.Debug(" --- len(root.Leaves()) :: ", len(root.Leaves()))
+	if final, err := root.Build(labEffects, request.Policies(), this.Properties); err != nil {
 		return err
 	} else {
+		levlog.Debug(" --- len(instructions) :: ", len(request.Instructions))
 		request.InstructionTree = root
 		request.Instructions = root.Leaves()
+		levlog.Debug("len(instructions) :: ", len(request.Instructions))
 		this.FinalProperties = final
 	}
-
+	levlog.Debug("len(instructions) :: ", len(request.Instructions))
 	// tipboxes are added during the tree building, so only exist in the final state
 	// copy them accross to the initial properties
 	for pos, tb := range this.FinalProperties.Tipboxes {

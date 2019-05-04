@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	levlog "github.com/antha-lang/antha/logger/levlog"
 )
 
 type Maker struct {
@@ -13,7 +14,7 @@ type Maker struct {
 	afterInst map[string][]string
 	// Map from old LHComponent id to new id after sample
 	afterSample map[string][]string
-	// Map from from wtype world to ast world
+	// Map from froms wtype world to ast world
 	byComp map[*wtype.Liquid]*UseComp
 	byID   map[string][]*UseComp
 }
@@ -132,6 +133,8 @@ func (a *Maker) UpdateAfterInst(oldID, newID string) {
 func (a *Maker) MakeNodes(insts []*CommandInst) ([]Node, error) {
 	var nodes []Node
 	for _, inst := range insts {
+		levlog.Debug("Instruction ", *inst.Command)
+		levlog.Debug("\t-- liquid ", inst.Args)
 		nodes = append(nodes, a.makeCommand(inst))
 	}
 

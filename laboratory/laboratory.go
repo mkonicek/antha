@@ -14,6 +14,7 @@ import (
 	"github.com/antha-lang/antha/codegen"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/logger"
+	"github.com/antha-lang/antha/logger/levlog"
 	"github.com/antha-lang/antha/target"
 	"github.com/antha-lang/antha/target/human"
 	"github.com/antha-lang/antha/target/mixer"
@@ -168,6 +169,9 @@ func (labBuild *LaboratoryBuilder) SetupEffects() error {
 	} else {
 		labBuild.effects = effects.NewLaboratoryEffects(string(labBuild.workflow.JobId), fm)
 		labBuild.effects.Inventory.LoadForWorkflow(labBuild.workflow)
+		for _, pp := range labBuild.workflow.Inventory.PlateTypes {
+			levlog.Debug("Setup - PlateType:: ", string(pp.Name))
+		}
 		return nil
 	}
 }

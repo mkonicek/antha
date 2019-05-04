@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+
+	"github.com/antha-lang/antha/logger/levlog"
 )
 
 type IChain struct {
@@ -101,28 +103,31 @@ func (it *IChain) ValueIDs() []string {
 }
 
 func (it *IChain) Print() {
-	fmt.Println("****")
-	fmt.Println("\tPARENT NIL: ", it.Parent == nil)
+	levlog.Debug("****")
+	levlog.Debug("\tPARENT NIL: ", it.Parent == nil)
 	if len(it.Values) > 0 {
 		for j := 0; j < len(it.Values); j++ {
 			if it.Values[j].Type == LHIMIX {
-				fmt.Printf("MIX    %2d: %s \n", j, it.Values[j].ID)
+				levlog.Debug("MIX    ", j, ": ", j, it.Values[j].ID)
+				levlog.Debug(" Inputs:: ")
 				for i := 0; i < len(it.Values[j].Inputs); i++ {
-					fmt.Print(" ", it.Values[j].Inputs[i].ID, ":", it.Values[j].Inputs[i].FullyQualifiedName(), "@", it.Values[j].Inputs[i].Volume().ToString(), " \n")
+					levlog.Debug("\t", it.Values[j].Inputs[i].ID, ": ", it.Values[j].Inputs[i].FullyQualifiedName(), "@", it.Values[j].Inputs[i].Volume().ToString(), " \n")
 				}
-				fmt.Println(":", it.Values[j].Outputs[0].ID, ":", it.Values[j].Platetype, " ", it.Values[j].PlateName, " ", it.Values[j].Welladdress)
-				fmt.Printf("-- ")
+				levlog.Debug(" Outputs:: ")
+				for i := 0; i < len(it.Values[j].Outputs); i++ {
+					levlog.Debug("\t", it.Values[j].Outputs[i].ID, ": ", it.Values[j].Outputs[i].FullyQualifiedName(), "@", it.Values[j].Inputs[i].Volume().ToString(), " \n")
+				}
 			} else if it.Values[j].Type == LHIPRM {
-				fmt.Println("PROMPT ", it.Values[j].Message, "-- ")
+				levlog.Debug("PROMPT ", it.Values[j].Message)
 				for in, out := range it.Values[j].PassThrough {
-					fmt.Println(in, ":::", out.ID, " --")
+					levlog.Debug(in, ":::", out.ID, " --")
 				}
 			} else if it.Values[j].Type == LHISPL {
-				fmt.Printf("SPLIT %2d: %s ", j, it.Values[j].ID)
-				fmt.Println(" ", it.Values[j].Inputs[0].ID, ":", it.Values[j].Inputs[0].FullyQualifiedName(), " : ", it.Values[j].PlateName, " ", it.Values[j].Welladdress)
-				fmt.Println(" MOVE:", it.Values[j].Outputs[0].ID, ":", it.Values[j].Outputs[0].FullyQualifiedName(), "@", it.Values[j].Outputs[0].Volume().ToString())
-				fmt.Println(" STAY:", it.Values[j].Outputs[1].ID, ":", it.Values[j].Outputs[1].FullyQualifiedName(), "@", it.Values[j].Outputs[1].Volume().ToString())
-				fmt.Printf("-- \n")
+				levlog.Debug("SPLIT ", j, ": ", it.Values[j].ID)
+				levlog.Debug(" ", it.Values[j].Inputs[0].ID, ": ", it.Values[j].Inputs[0].FullyQualifiedName(), " : ", it.Values[j].PlateName, " ", it.Values[j].Welladdress)
+				levlog.Debug(" MOVE: ", it.Values[j].Outputs[0].ID, ":", it.Values[j].Outputs[0].FullyQualifiedName(), "@", it.Values[j].Outputs[0].Volume().ToString())
+				levlog.Debug(" STAY: ", it.Values[j].Outputs[1].ID, ":", it.Values[j].Outputs[1].FullyQualifiedName(), "@", it.Values[j].Outputs[1].Volume().ToString())
+				levlog.Debug("-- ")
 			} else {
 				fmt.Println("WTF?   ", InsType(it.Values[j].Type), "-- ")
 			}

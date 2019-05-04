@@ -28,6 +28,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/antha/anthalib/wutil/text"
+	"github.com/antha-lang/antha/logger/levlog"
 )
 
 // solutionSetup determines how to fulfil the requirements for making instructions to specifications
@@ -52,8 +53,10 @@ func (rq *LHRequest) solutionSetup() (wtype.LHInstructions, map[string]wunit.Con
 	// find the minimum and maximum required concentrations
 	// across all the instructions
 
+	levlog.Debug(" There are ", len(instructions),  " Instructions")
 	// -- migrate this to chains of dependent instructions
-	for _, instruction := range instructions {
+	for i, instruction := range instructions {
+		levlog.Debug("Instruction ", i, " has ", len(instruction.Inputs), " Components")
 		components := instruction.Inputs
 
 		// we need to identify the concentration components
@@ -206,7 +209,7 @@ func (rq *LHRequest) solutionSetup() (wtype.LHInstructions, map[string]wunit.Con
 	// make an array for the new instructions
 
 	newInstructions := make(wtype.LHInstructions, len(instructions))
-
+	levlog.Debug(" Let's loop again over the ", len(instructions), " instructions ")
 	for _, instruction := range instructions {
 		components := instruction.Inputs
 		arrCncs := make([]*wtype.Liquid, 0, len(components))

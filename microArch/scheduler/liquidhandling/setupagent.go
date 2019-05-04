@@ -30,6 +30,7 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/laboratory/effects"
+	"github.com/antha-lang/antha/logger/levlog"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 )
 
@@ -58,7 +59,7 @@ func getLocation(p *wtype.Plate, pid string, inout string, params *liquidhandlin
 	if err := params.AddPlateTo(position, p); err != nil {
 		return "", errors.WithMessage(err, "while setting up input plates")
 	}
-	fmt.Println(fmt.Sprintf("%s plate of type %s in position %s", inout, p.Type, position))
+	levlog.Info(fmt.Sprintf("%s plate of type %s in position %s", inout, p.Type, position))
 	return position, nil
 }
 

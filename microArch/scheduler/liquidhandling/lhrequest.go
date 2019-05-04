@@ -33,6 +33,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/laboratory/effects/id"
+	"github.com/antha-lang/antha/logger/levlog"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/utils"
 )
@@ -203,6 +204,9 @@ func (lhr *LHRequest) AddUserPolicies(userPolicies *wtype.LHPolicyRuleSet) {
 
 func (lhr *LHRequest) Add_instruction(ins *wtype.LHInstruction) {
 	lhr.LHInstructions[ins.ID] = ins
+	levlog.Debug(" Adding LHInstruction ", ins.ID, " :: ")
+	levlog.Debug("\tMessage: ", ins.Message)
+	levlog.Debug("\tOutput: ", ins.Outputs)
 }
 
 //NewComponentsAdded run this after Plan to determine if anything

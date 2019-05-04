@@ -7,6 +7,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/laboratory/effects/id"
+	"github.com/antha-lang/antha/logger/levlog"
 )
 
 type TransferBlockInstruction struct {
@@ -54,24 +55,27 @@ func (ti TransferBlockInstruction) Generate(labEffects *effects.LaboratoryEffect
 	if err != nil {
 		return inss, err
 	}
-
-	for _, set := range parallel_sets {
+	levlog.Debug(" # parallel_sets: %d\n", len(parallel_sets))
+	for ii, set := range parallel_sets {
 		// compile the instructions and pass them through
 		insset := make([]*wtype.LHInstruction, len(set))
-
+		levlog.Debug(" loop ", ii, " len(set) : %d", len(set))
 		for i, id := range set {
 			// parallel sets are arranged in accordance with destination layout
 			// hence can include gaps
 			if id == "" {
+				levlog.Debug("Skipping instruction ", i, "  because id == ''")
 				continue
 			}
 			seen[id] = true
 			insset[i] = insm[id]
+			levlog.Debug(" innsset[", i, "] : ", insset[i])
 		}
 
 		// aggregates across components
 		//TODO --> allow setting legacy volume if necessary
-
+		levlog.Debug("We have ", len(insset), " instructions -- ")
+		levlog.Debug(" Here's instruction 0: insset[", 0, "]:", insset[0])
 		tfr, err = ConvertInstructions(labEffects, insset, robot, prm, prm.Multi, false, policy)
 		if err != nil {
 			return inss, err
@@ -79,9 +83,11 @@ func (ti TransferBlockInstruction) Generate(labEffects *effects.LaboratoryEffect
 
 		// we merge instructions which are compatible
 		//tfr = mergeTransfers(tfr)
-
-		for _, tf := range tfr {
-			inss = append(inss, RobotInstruction(tf))
+		levlog.Debug("We have ", len(tfr), " converted instructions")
+		for ii, tf := range tfr {
+			ri := RobotInstruction(tf)
+			levlog.Debug("Robot instruction ", ii, ":: %s", ii, InsToString(ri))
+			inss = append(inss, ri)
 		}
 	}
 
@@ -131,8 +137,9 @@ func (ti TransferBlockInstruction) Generate(labEffects *effects.LaboratoryEffect
 	}
 
 	//inss = append(inss, tfr...)
+	levlog.Debug(" Right before mergeTransfers:: ", len(inss), " transfers")
 	inss = fromTransfers(mergeTransfers(labEffects.IDGenerator, toTransfers(inss), policy))
-
+	levlog.Debug(" We deterimined ", len(inss), " children after TransferBlock")
 	return inss, nil
 }
 
@@ -501,22 +508,26 @@ func (ti TransferBlockInstruction) GetParameter(name InstructionParameter) inter
 func mergeTransfers(idGen *id.IDGenerator, tfrs []*TransferInstruction, policy *wtype.LHPolicyRuleSet) []*TransferInstruction {
 	ret := make([]*TransferInstruction, 0, len(tfrs))
 
-	for _, tf := range tfrs {
+	for i, tf := range tfrs {
 		forMerge := findTransferForMerge(idGen, tf, ret, policy)
 
 		// true if ret is empty or nothing mergeable within
 		if forMerge == nil {
+			levlog.Debug(fmt.Sprintf(" === Adding new TFR, iteration %d/%d\n", i, len(tfrs)))
 			ret = append(ret, tf)
 		} else {
 			// forMerge is already in ret
+			levlog.Debug(fmt.Sprintf(" ==== Merging to existing TFR, iteration %d/%d\n", i, len(tfrs)))
 			forMerge.MergeWith(idGen, tf)
 		}
+		levlog.Debug("\t Transfer:: %s", tf.ToString())
 	}
 
 	return ret
 }
 
 func findTransferForMerge(idGen *id.IDGenerator, ins *TransferInstruction, arr []*TransferInstruction, policy *wtype.LHPolicyRuleSet) *TransferInstruction {
+	levlog.Debug(fmt.Sprintf(" == findTransferForMerge -- #TFR :: %d\n", len(arr)))
 	for _, ins2 := range arr {
 		if canMerge(idGen, ins, ins2, policy) {
 			return ins2
@@ -539,7 +550,7 @@ func canMerge(idGen *id.IDGenerator, ins, ins2 *TransferInstruction, policy *wty
 	pol1, _ := GetPolicyFor(policy, ins)
 	pol2, _ := GetPolicyFor(policy, ins2)
 	pol3, _ := GetPolicyFor(policy, ins3)
-
+	levlog.Debug(fmt.Sprintf("pol1 = %s - %t \npol2 = %s - %t \npol3 = %s - %t\n", pol1.Name(), canMulti(pol1), pol2.Name(), canMulti(pol2), pol3.Name(), canMulti(pol3)))
 	if canMulti(pol1) == canMulti(pol2) {
 		return canMulti(pol1) == canMulti(pol3)
 	}

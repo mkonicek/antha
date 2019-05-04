@@ -32,6 +32,7 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
+	comLH "github.com/antha-lang/antha/driver/liquidhandling/client"
 	"github.com/antha-lang/antha/laboratory/effects/id"
 	"github.com/antha-lang/antha/microArch/driver"
 	"github.com/antha-lang/antha/microArch/driver/liquidhandling"
@@ -44,6 +45,7 @@ const arbitraryZOffset = 4.0
 
 // Simulate a liquid handler Driver
 type VirtualLiquidHandler struct {
+	*comLH.CommonLHInstructions
 	idGen              *id.IDGenerator
 	errorHistory       [][]LiquidhandlingError
 	instructionHistory []liquidhandling.TerminalRobotInstruction

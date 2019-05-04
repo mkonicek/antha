@@ -35,5 +35,10 @@ func (inv *Inventory) LoadForWorkflow(wf *workflow.Workflow) {
 		inv.PlateTypes.SetPlateTypes(wf.Inventory.PlateTypes)
 	}
 
+	// generate all possible tipboxes for all instruments
+	// this is different thatn for plates as for plates we potentially only setup the ones specified in the workflow
+	// AVDB - As of 05/2019 with upcoming changes to tip / plate model we keep generating all tips but can select a subset
+	// based on the workflow  JSON input parameter tipTypes -- there is already functionality to lookup tipbox configuration
+	// based on the tiptype ( see /Users/arne/go/src/github.com/antha-lang/antha/inventory/tipboxes/tipboxes.go -- FetchTipBox )
 	inv.TipBoxes.LoadLibrary()
 }

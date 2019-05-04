@@ -2161,6 +2161,11 @@ func (ins *BlowInstruction) Generate(labEffects *effects.LaboratoryEffects, poli
 			}
 
 			//filter tips always override max volume
+			//FIXME:::::
+			if prms.Model == "Evo" {
+				levlog.Info("Setting mixvolume to maximum volume supported by tip since this is the only mode supported for model ", prms.Model)
+				override = true
+			}
 			if override || tb.Tiptype.Filtered {
 				mixvol = ins.Prms.Maxvol.ConvertToString("ul")
 			} else {

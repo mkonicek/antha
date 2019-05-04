@@ -116,6 +116,11 @@ func (this *Liquidhandler) MakeSolutions(labEffects *effects.LaboratoryEffects, 
 	}
 
 	levlog.Debug("len(instructions) :: ", len(request.Instructions))
+	if request.Options.IgnorePhysicalSimulation == false {
+		if this.Properties.Model == "Evo" {
+			return wtype.LHError(wtype.LH_ERR_NOT_IMPLEMENTED, fmt.Sprintf("IgnorePhysicalSimulation set to FALSE, not supported for device %s", this.Properties.Model))
+		}
+	}
 	if err := this.Simulate(labEffects.IDGenerator, request); err != nil && !request.Options.IgnorePhysicalSimulation {
 		return errors.WithMessage(err, "during physical simulation")
 	}

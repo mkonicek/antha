@@ -36,6 +36,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wutil/text"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/laboratory/effects/id"
+	"github.com/antha-lang/antha/logger/levlog"
 	anthadriver "github.com/antha-lang/antha/microArch/driver"
 )
 
@@ -257,8 +258,8 @@ func (ins *ChannelBlockInstruction) Generate(labEffects *effects.LaboratoryEffec
 		if err != nil {
 			return ret, err
 		}
-
-		for _, vols := range tvs {
+		levlog.Debug("CBI::Generate -- Number of TransferVolumes: ", len(tvs))
+		for ii, vols := range tvs {
 			// determine whether to change tips
 			// INMC: DO THIS PER CHANNEL
 			change_tips := n_tip_uses > pol["TIP_REUSE_LIMIT"].(int)
@@ -282,6 +283,7 @@ func (ins *ChannelBlockInstruction) Generate(labEffects *effects.LaboratoryEffec
 			if change_tips {
 				// maybe wrap this as a ChangeTips function call
 				// these need parameters
+				levlog.Debug(" Change Tip Instruction !! -- iteration ", ii, "/", len(tvs))
 				tipdrp, err := DropTips(tiptypes, prms, channels)
 
 				if err != nil {
@@ -1403,8 +1405,9 @@ func (ins *SuckInstruction) GetParameter(name InstructionParameter) interface{} 
 
 func (ins *SuckInstruction) Generate(labEffects *effects.LaboratoryEffects, policy *wtype.LHPolicyRuleSet, prms *LHProperties) ([]RobotInstruction, error) {
 	// MIS XXX -- separate out channel-level parameters from head-level ones
+	levlog.Debug(" ==== Welcome to Generate ===== \n \t ins == %s\n", ins)
 	ret := make([]RobotInstruction, 0, 1)
-
+	levlog.Debug(" length(ret) = ", len(ret))
 	// this is where the policies come into effect
 
 	pol, err := GetPolicyFor(policy, ins)
@@ -1422,6 +1425,7 @@ func (ins *SuckInstruction) Generate(labEffects *effects.LaboratoryEffects, poli
 
 	// set the defaults
 	ret = append(ret, setDefaults(ins.Head, pol)...)
+	levlog.Debug(" after setting defaults:: length(ret) = %d", len(ret))
 	defaultpspeed := SafeGetF64(pol, "DEFAULTPIPETTESPEED")
 
 	allowOutOfRangePipetteSpeeds := SafeGetBool(pol, "OVERRIDEPIPETTESPEED")
@@ -1497,6 +1501,7 @@ func (ins *SuckInstruction) Generate(labEffects *effects.LaboratoryEffects, poli
 	entryspeed, gentlynow := pol["ASPENTRYSPEED"]
 	if gentlynow {
 		// go to the well top
+		levlog.Debug("\t\t Creating Move Instrution\n")
 		mov := NewMoveInstruction()
 
 		mov.Head = ins.Head
@@ -1513,19 +1518,21 @@ func (ins *SuckInstruction) Generate(labEffects *effects.LaboratoryEffects, poli
 		ret = append(ret, mov)
 
 		// set the speed
+		levlog.Debug("\t\t Setting the speed  \n")
 		spd := NewSetDriveSpeedInstruction()
 		spd.Drive = "Z"
 		spd.Speed = entryspeed.(float64)
 		ret = append(ret, spd)
 
 	}
-
+	levlog.Debug(" length(ret) = %d", len(ret))
 	// do we pre-mix?
 	_, premix := pol["PRE_MIX"]
 	cycles := SafeGetInt(pol, "PRE_MIX")
 
 	if premix && cycles > 0 {
 		// add the premix step
+		levlog.Debug("\t\t Adding PreMix  \n")
 		mix := NewMoveMixInstruction()
 		mix.Head = ins.Head
 		mix.Plt = ins.PltFrom
@@ -1612,7 +1619,7 @@ func (ins *SuckInstruction) Generate(labEffects *effects.LaboratoryEffects, poli
 
 		mix.Cycles = c
 		ret = append(ret, mix)
-
+		levlog.Debug(" length(ret) = %d", len(ret))
 		if changepipspeed {
 			sps := NewSetPipetteSpeedInstruction()
 			sps.Head = ins.Head
@@ -1635,6 +1642,7 @@ func (ins *SuckInstruction) Generate(labEffects *effects.LaboratoryEffects, poli
 		}
 	*/
 	//nb moves are mandatory
+	levlog.Debug("\t\t Moving again   \n")
 	mov := NewMoveInstruction()
 	mov.Head = ins.Head
 
@@ -1650,7 +1658,7 @@ func (ins *SuckInstruction) Generate(labEffects *effects.LaboratoryEffects, poli
 		mov.OffsetZ = append(mov.OffsetZ, ofz)
 	}
 	ret = append(ret, mov)
-
+	levlog.Debug(" length(ret) = %d", len(ret))
 	// Set the pipette speed if needed
 
 	apspeed := SafeGetF64(pol, "ASPSPEED")
@@ -1671,7 +1679,7 @@ func (ins *SuckInstruction) Generate(labEffects *effects.LaboratoryEffects, poli
 	}
 
 	// now we aspirate
-
+	levlog.Debug(" Aspirate Command ! \n")
 	aspins := NewAspirateInstruction()
 	aspins.Head = ins.Head
 	aspins.Volume = ins.Volume
@@ -1695,7 +1703,7 @@ func (ins *SuckInstruction) Generate(labEffects *effects.LaboratoryEffects, poli
 	}
 
 	ret = append(ret, aspins)
-
+	levlog.Debug(" length(ret) = %d", len(ret))
 	// do we reset the pipette speed?
 
 	if changepspeed {
@@ -1741,7 +1749,7 @@ func (ins *SuckInstruction) Generate(labEffects *effects.LaboratoryEffects, poli
 		spd.Speed = pol["DEFAULTZSPEED"].(float64)
 		ret = append(ret, spd)
 	}
-
+	levlog.Debug(" Finally we have length(ret) = %d", len(ret))
 	return ret, nil
 
 }
@@ -3128,7 +3136,7 @@ func getFirstDefined(sa []string) int {
 func GetTips(labEffects *effects.LaboratoryEffects, tiptypes []string, params *LHProperties, channel []*wtype.LHChannelParameter, usetiptracking bool) ([]RobotInstruction, error) {
 	// GetCleanTips returns enough sets of tip boxes to get all distinct tip types
 	tipwells, tipboxpositions, tipboxtypes, terr := params.GetCleanTips(labEffects, tiptypes, channel, usetiptracking)
-
+	levlog.Debug(fmt.Sprintf("\ttipboxposition: %s, tipboxtypes: %s, tipwells: %s\n", tipboxpositions[0], tipboxtypes[0], tipwells[0]))
 	if tipwells == nil || terr != nil {
 		err := wtype.LHError(wtype.LH_ERR_NO_TIPS, fmt.Sprintf("PICKUP: types: %v On Deck: %v", tiptypes, params.GetLayout(labEffects.IDGenerator)))
 		return []RobotInstruction{NewLoadTipsMoveInstruction()}, err

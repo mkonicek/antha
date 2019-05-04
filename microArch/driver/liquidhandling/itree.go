@@ -27,6 +27,7 @@ import (
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/laboratory/effects"
+	"github.com/antha-lang/antha/logger/levlog"
 )
 
 // ITree the Instruction Tree - takes a high level liquid handling instruction
@@ -79,15 +80,18 @@ func NewITreeRoot(ch *wtype.IChain) (*ITree, error) {
 
 	// first thing is always to initialize the liquidhandler
 	root.AddChild(NewInitializeInstruction())
-
+	counter := 0
 	for {
 		if ch == nil {
+			levlog.Debug(" ---- Breaking out after ", counter, " iterations")
 			break
 		}
 
 		if ch.Values[0].Type == wtype.LHIPRM {
+			levlog.Debug(" --> Adding PROMPT ", ch.Values[0].Message, " Counter : ", counter)
 			root.AddChild(NewMessageInstruction(ch.Values[0]))
 		} else if hasSplit(ch.Values) {
+			levlog.Debug(" --> Adding Split ", ch.Values[0].Message, "  Counter : ", counter)
 			if !allSplits(ch.Values) {
 				insTypes := func(inss []*wtype.LHInstruction) string {
 					s := ""
@@ -106,10 +110,11 @@ func NewITreeRoot(ch *wtype.IChain) (*ITree, error) {
 			// make a transfer block instruction out of the incoming instructions
 			// -- essentially each node of the topological graph is passed wholesale
 			// into the instruction generator to be teased apart as appropriate
-
+			levlog.Debug(" Adding TransferBlockInstruction -- len(ch.Values) = ", len(ch.Values), " counter= ", counter)
 			root.AddChild(NewTransferBlockInstruction(ch.Values))
 		}
 		ch = ch.Child
+		counter += 1
 	}
 
 	// last thing is always to finalize the liquidhandler
@@ -120,6 +125,7 @@ func NewITreeRoot(ch *wtype.IChain) (*ITree, error) {
 
 // AddChild add a child to this node of the ITree
 func (tree *ITree) AddChild(ins RobotInstruction) {
+	levlog.Debug("  --  -- appending NewITree ", ins, " to tree ")
 	tree.children = append(tree.children, NewITree(ins))
 }
 
@@ -127,19 +133,21 @@ func (tree *ITree) AddChild(ins RobotInstruction) {
 // returns the final state and does not alter the initial state
 func (tree *ITree) Build(labEffects *effects.LaboratoryEffects, lhpr *wtype.LHPolicyRuleSet, initial *LHProperties) (*LHProperties, error) {
 	final := initial.DupKeepIDs(labEffects.IDGenerator)
-	err := tree.addChildren(labEffects, lhpr, final)
+	err := tree.addChildren(labEffects, lhpr, final, 0)
 	return final, err
 }
 
 // addChildren recursively Generate() the children of this instruction, adding them to the tree.
 // the effects of the generated instructions are applied to lhpm
-func (tree *ITree) addChildren(labEffects *effects.LaboratoryEffects, lhpr *wtype.LHPolicyRuleSet, lhpm *LHProperties) error {
+func (tree *ITree) addChildren(labEffects *effects.LaboratoryEffects, lhpr *wtype.LHPolicyRuleSet, lhpm *LHProperties, depth int) error {
 
 	// the root node (instruction == nil) already has children set
 	if tree.instruction != nil {
+		levlog.Debug("===== Generating instruction ====== ")
 		if children, err := tree.instruction.Generate(labEffects, lhpr, lhpm); err != nil {
 			return err
 		} else {
+			levlog.Debug(" ---- adding ", len(children), " children to tree ---- ", len(children))
 			for _, child := range children {
 				tree.AddChild(child)
 			}
@@ -147,12 +155,15 @@ func (tree *ITree) addChildren(labEffects *effects.LaboratoryEffects, lhpr *wtyp
 	}
 
 	// call generate on the children recursively
-	for _, child := range tree.children {
-		if err := child.addChildren(labEffects, lhpr, lhpm); err != nil {
+	levlog.Debug(" # Children: ", len(tree.children))
+	for ii, child := range tree.children {
+		levlog.Debug(" Depth ", depth, " -- Loop ", ii)
+		if err := child.addChildren(labEffects, lhpr, lhpm, depth+1); err != nil {
 			return err
 		}
 	}
 
+	levlog.Debug(" ")
 	return nil
 }
 

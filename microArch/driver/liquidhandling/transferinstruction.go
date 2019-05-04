@@ -33,6 +33,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wutil"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/laboratory/effects/id"
+	"github.com/antha-lang/antha/logger/levlog"
 )
 
 type TransferInstruction struct {
@@ -475,7 +476,8 @@ func (ins *TransferInstruction) Generate(labEffects *effects.LaboratoryEffects, 
 	}
 
 	flushBuffers := func(mB, sB []MultiTransferParams, ins *ChannelBlockInstruction) ([]MultiTransferParams, []MultiTransferParams) {
-		for _, b := range [][]MultiTransferParams{mB, sB} {
+		for i, b := range [][]MultiTransferParams{mB, sB} {
+			levlog.Debug(" loop ", i, " - Adding ", len(b), " TransferParams ")
 			for _, mtp := range b {
 				mci.AddTransferParams(mtp)
 			}
@@ -485,10 +487,10 @@ func (ins *TransferInstruction) Generate(labEffects *effects.LaboratoryEffects, 
 	}
 
 	multis, channels := ins.GetParallelSetsFor(labEffects, prms, pol)
-
+	levlog.Debug(" Number of multis: ", len(multis))
 	for set, multi := range multis {
 		newSet := ins.Transfers[set].Component()
-
+		levlog.Debug("\t Working with ", set, "/", len(multis), " : ", newSet)
 		// this check is essentially on component identity (i.e. CNAME, not liquid type)
 		// - if we are not moving the same thing as last time we stop aggregating and
 		// flush both buffers

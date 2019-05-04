@@ -26,6 +26,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/laboratory/effects"
+	"github.com/antha-lang/antha/logger/levlog"
 )
 
 //
@@ -46,11 +47,17 @@ func ConvertInstructions(labEffects *effects.LaboratoryEffects, inssIn LHIVector
 	//    undesirable source volume selection, see tests "TestExecutionPlanning/single_channel_well_use", and
 	//    "TestExecutionPlanning/single_channel_auto_allocation"
 	// 2) convertInstructions makes changes to robot, meaning that it must be called exactly once with the the copy of robot passed to the function
-	if transfers, err := convertInstructions(labEffects, inssIn, robot.DupKeepIDs(labEffects.IDGenerator), channelprms, multi, legacyVolume); err != nil {
+	transfers, err := convertInstructions(labEffects, inssIn, robot.DupKeepIDs(labEffects.IDGenerator), channelprms, multi, legacyVolume)
+	if err != nil {
 		return nil, err
-	} else if hasMCB, err := hasMultiChannelBlock(labEffects, transfers, robot, policy); err != nil {
+	}
+
+	hasMCB, err := hasMultiChannelBlock(labEffects, transfers, robot, policy)
+	if err != nil {
 		return nil, err
-	} else if hasMCB {
+	}
+	levlog.Debug(" Number of transfers: ", len(transfers), " -- Value of hasMCB : ", hasMCB)
+	if hasMCB {
 		return convertInstructions(labEffects, inssIn, robot, channelprms, multi, legacyVolume)
 	} else {
 		return convertInstructions(labEffects, inssIn, robot, channelprms, 1, legacyVolume)
@@ -161,22 +168,25 @@ func convertInstructions(labEffects *effects.LaboratoryEffects, inssIn LHIVector
 	}
 
 	ret := make([]*TransferInstruction, 0)
+	tottransfers := 0
+	levlog.Debug(" Adding ", len(componentsToMove), " transfers ")
 	for i := 0; i < len(componentsToMove); i++ {
 		parallelTransfers, err := robot.GetComponents(labEffects, componentsToMove[i], orientation, multi, independent, legacyVolume)
 		if err != nil {
 			return nil, err
 		}
-
+		levlog.Debug("Moving component ", i, "/", len(componentsToMove), " with ", len(parallelTransfers))
 		for _, t := range parallelTransfers {
 			if transfers, err := makeTransfers(labEffects, t, componentsToMove[i], robot, instructionsToUse[i]); err != nil {
 				return nil, err
 			} else {
 				ret = append(ret, transfers...)
+				tottransfers += 1
 			}
 		}
 
 	}
-
+	levlog.Debug("\t--- added ", tottransfers, " transfers\n")
 	return ret, nil
 }
 
@@ -316,12 +326,13 @@ func makeTransfers(labEffects *effects.LaboratoryEffects, parallelTransfer Paral
 		cmpFrom.ReplaceDaughterID(wellTo.WContents.ID, inssIn[ci].Outputs[0].ID)
 		wellTo.WContents.ID = inssIn[ci].Outputs[0].ID
 		wellTo.WContents.DeclareInstance()
-		//fmt.Println("ADDED :", cmpFrom.CName, " ", cmpFrom.Vol, " TO ", dstPlate.ID, " ", wt[ci])
+		levlog.Debug("ADDED :", cmpFrom.CName, " ", cmpFrom.Vol, " TO ", dstPlate.ID, " ", wt[ci])
 	}
 
 	//}
 
 	tfr := NewTransferInstruction(wh, pf, pt, wf, wt, ptf, ptt, va, vf, vt, pfwx, pfwy, ptwx, ptwy, cnames, policies)
+	levlog.Debug("---- NewTransferInstruction: %s", tfr.ToString())
 	insOut = append(insOut, tfr)
 
 	return insOut, nil

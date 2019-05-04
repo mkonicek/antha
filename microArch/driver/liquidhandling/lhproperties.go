@@ -31,6 +31,7 @@ import (
 	"github.com/antha-lang/antha/antha/anthalib/wunit"
 	"github.com/antha-lang/antha/laboratory/effects"
 	"github.com/antha-lang/antha/laboratory/effects/id"
+	"github.com/antha-lang/antha/logger/levlog"
 	"github.com/antha-lang/antha/workflow"
 )
 
@@ -200,12 +201,14 @@ func (lhp *LHProperties) dup(idGen *id.IDGenerator, keepIDs bool) *LHProperties 
 			ad = a.Dup(idGen)
 		}
 		r.Adaptors = append(r.Adaptors, ad)
+		levlog.Debug(" Adaptor:: Name  = ", a.Name, " ID = ", a.ID, " Manufacturer = ", a.Manufacturer)
 		adaptorMap[a] = ad
 	}
 
 	headMap := make(map[*wtype.LHHead]*wtype.LHHead, len(lhp.Heads))
 	for _, h := range lhp.Heads {
 		var hd *wtype.LHHead
+		levlog.Debug(" head.Adaptor: Name ", h.Adaptor.Name, " ID = ", h.Adaptor.ID, " Manufacturer = ", h.Adaptor.Manufacturer)
 		adaptor := adaptorMap[h.Adaptor]
 		if keepIDs {
 			hd = h.DupKeepIDs(idGen)

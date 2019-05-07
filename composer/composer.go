@@ -44,11 +44,11 @@ func NewComposerBase(logger *logger.Logger, inDir, outDir string) (*ComposerBase
 		return nil, err
 	}
 	// always need to do this:
-	if err := os.MkdirAll(filepath.Join(outDir, "workflow", "data"), 0700); err != nil {
+	if err := utils.MkdirAll(filepath.Join(outDir, "workflow", "data")); err != nil {
 		return nil, err
 	}
 
-	logFH, err := os.OpenFile(filepath.Join(outDir, "logs.txt"), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0400)
+	logFH, err := utils.CreateFile(filepath.Join(outDir, "logs.txt"), utils.ReadWrite)
 	if err != nil {
 		return nil, err
 	} else {
@@ -97,7 +97,7 @@ func (cb *ComposerBase) cloneRepositories(wf *workflow.Workflow) error {
 func (cb *ComposerBase) generateRepositoryGoMods() error {
 	for repoName := range cb.clonedRepositories {
 		path := filepath.Join(cb.OutDir, "src", filepath.FromSlash(string(repoName)), "go.mod")
-		if fh, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0400); err != nil {
+		if fh, err := utils.CreateFile(path, utils.ReadWrite); err != nil {
 			return err
 		} else {
 			defer fh.Close()
@@ -111,7 +111,7 @@ func (cb *ComposerBase) generateRepositoryGoMods() error {
 
 func (cb *ComposerBase) generateWorkflowGoMod() error {
 	path := filepath.Join(cb.OutDir, "workflow", "go.mod")
-	if fh, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0400); err != nil {
+	if fh, err := utils.CreateFile(path, utils.ReadWrite); err != nil {
 		return err
 	} else {
 		defer fh.Close()
@@ -121,7 +121,7 @@ func (cb *ComposerBase) generateWorkflowGoMod() error {
 
 func (cb *ComposerBase) generateGoGenerate() error {
 	path := filepath.Join(cb.OutDir, "workflow", "generate_assets.go")
-	if fh, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0400); err != nil {
+	if fh, err := utils.CreateFile(path, utils.ReadWrite); err != nil {
 		return err
 	} else {
 		defer fh.Close()
@@ -207,7 +207,7 @@ func (mc *mainComposer) generateMain() error {
 		return err
 	} else if err := mc.generateWorkflowGoMod(); err != nil {
 		return err
-	} else if fh, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0400); err != nil {
+	} else if fh, err := utils.CreateFile(path, utils.ReadWrite); err != nil {
 		return err
 	} else {
 		defer fh.Close()
@@ -308,7 +308,7 @@ func (tc *testComposer) ComposeTestsAndRun() error {
 func (twf *testWorkflow) generateTest() error {
 	path := filepath.Join(twf.OutDir, "workflow", fmt.Sprintf("workflow%d_test.go", twf.index))
 	twf.Logger.Log("progress", "generating workflow test", "path", path)
-	if fh, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0400); err != nil {
+	if fh, err := utils.CreateFile(path, utils.ReadWrite); err != nil {
 		return err
 	} else {
 		defer fh.Close()

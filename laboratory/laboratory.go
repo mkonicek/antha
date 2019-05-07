@@ -147,13 +147,13 @@ func (labBuild *LaboratoryBuilder) SetupPaths(inDir, outDir string) error {
 
 	// Create subdirs within it:
 	for _, leaf := range []string{"elements", "data", "tasks", "workflow"} {
-		if err := os.MkdirAll(filepath.Join(labBuild.outDir, leaf), 0700); err != nil {
+		if err := utils.MkdirAll(filepath.Join(labBuild.outDir, leaf)); err != nil {
 			return err
 		}
 	}
 
 	// Switch the logger over to write to disk too:
-	if logFH, err := os.OpenFile(filepath.Join(labBuild.outDir, "logs.txt"), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0400); err != nil {
+	if logFH, err := utils.CreateFile(filepath.Join(labBuild.outDir, "logs.txt"), utils.ReadWrite); err != nil {
 		return err
 	} else {
 		labBuild.logFH = logFH
@@ -529,7 +529,7 @@ func (eb *ElementBase) Exited() {
 func (eb *ElementBase) Save(lab *Laboratory) {
 	lab.Logger.Log("progress", "completed")
 	p := filepath.Join(lab.labBuild.outDir, "elements", fmt.Sprintf("%d_%s.json", eb.id, eb.element.Name()))
-	if fh, err := os.OpenFile(p, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0400); err != nil {
+	if fh, err := utils.CreateFile(p, utils.ReadWrite); err != nil {
 		lab.error(err)
 	} else {
 		defer fh.Close()

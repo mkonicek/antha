@@ -128,7 +128,7 @@ func (wf *Workflow) EnsureWorkflowId() error {
 func (wf *Workflow) WriteToFile(p string, pretty bool) error {
 	if p == "" || p == "-" {
 		return wf.ToWriter(os.Stdout, pretty)
-	} else if fh, err := os.OpenFile(p, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0400); err != nil {
+	} else if fh, err := utils.CreateFile(p, utils.ReadWrite); err != nil {
 		return err
 	} else {
 		defer fh.Close()

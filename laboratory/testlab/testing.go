@@ -16,18 +16,18 @@ import (
 	"bytes"
 	"io"
 	"io/ioutil"
-	"os"
 	"testing"
 
 	"github.com/antha-lang/antha/laboratory"
 	"github.com/antha-lang/antha/laboratory/effects"
+	"github.com/antha-lang/antha/utils"
 	"github.com/antha-lang/antha/workflow"
 )
 
 // Used by generated code build by the composer machinery when processing element test workflows.
 func NewTestLabBuilder(t *testing.T, inDir, outDir string, fh io.ReadCloser) *laboratory.LaboratoryBuilder {
 	if outDir != "" {
-		if err := os.MkdirAll(outDir, 0700); err != nil {
+		if err := utils.MkdirAll(outDir); err != nil {
 			t.Fatal(err)
 		}
 	}

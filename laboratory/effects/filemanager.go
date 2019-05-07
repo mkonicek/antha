@@ -14,6 +14,7 @@ import (
 	"sync"
 
 	"github.com/antha-lang/antha/antha/anthalib/wtype"
+	"github.com/antha-lang/antha/utils"
 )
 
 type FileManager struct {
@@ -119,7 +120,7 @@ func (fm *FileManager) WithWriter(fun func(io.Writer) error, fileName string) (*
 	fm.writtenCount++
 	leaf := fmt.Sprintf("%d", fm.writtenCount)
 	pLocal := filepath.Join(fm.outDir, leaf)
-	if fh, err := os.OpenFile(pLocal, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0400); err != nil {
+	if fh, err := utils.CreateFile(pLocal, utils.ReadWrite); err != nil {
 		return nil, err
 	} else {
 		buf := new(bytes.Buffer)
@@ -146,7 +147,7 @@ func (fm *FileManager) WriteAll(bs []byte, fileName string) (*wtype.File, error)
 	fm.writtenCount++
 	leaf := fmt.Sprintf("%d", fm.writtenCount)
 	pLocal := filepath.Join(fm.outDir, leaf)
-	if err := ioutil.WriteFile(pLocal, bs, 0400); err != nil {
+	if err := utils.CreateAndWriteFile(pLocal, bs, utils.ReadWrite); err != nil {
 		return nil, err
 	} else {
 		fm.outCache[leaf] = copyBytes(bs)

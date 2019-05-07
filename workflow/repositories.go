@@ -53,7 +53,7 @@ func (r *Repository) Clone(dir string) error {
 	} else if err != nil && !os.IsNotExist(err) {
 		return err
 	}
-	if err := os.MkdirAll(dir, 0700); err != nil {
+	if err := utils.MkdirAll(dir); err != nil {
 		return err
 	}
 	return r.Walk(copier(dir))
@@ -65,7 +65,7 @@ func copier(dir string) func(f *File) error {
 			return nil
 		}
 		dst := filepath.Join(dir, f.Name)
-		if err := os.MkdirAll(filepath.Dir(dst), 0700); err != nil {
+		if err := utils.MkdirAll(filepath.Dir(dst)); err != nil {
 			return err
 		}
 		srcFh, err := f.Contents()
@@ -73,7 +73,7 @@ func copier(dir string) func(f *File) error {
 			return err
 		}
 		defer srcFh.Close()
-		dstFh, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0400)
+		dstFh, err := utils.CreateFile(dst, utils.ReadWrite)
 		if err != nil {
 			return err
 		}

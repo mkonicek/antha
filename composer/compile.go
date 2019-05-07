@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/antha-lang/antha/utils"
 	"github.com/antha-lang/antha/workflow"
 )
 
@@ -172,7 +173,7 @@ func (cb *ComposerBase) prepareDrivers(cfg *workflow.Config) error {
 
 	for id, cfg := range conns {
 		outBin := filepath.Join(cb.OutDir, "bin", "drivers", string(id))
-		if err := os.MkdirAll(filepath.Dir(outBin), 0700); err != nil {
+		if err := utils.MkdirAll(filepath.Dir(outBin)); err != nil {
 			return err
 
 		} else if cfg.CompileAndRun != "" {
@@ -191,7 +192,7 @@ func (cb *ComposerBase) prepareDrivers(cfg *workflow.Config) error {
 				return err
 			}
 			defer src.Close()
-			dst, err := os.OpenFile(outBin, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0700)
+			dst, err := utils.CreateFile(outBin, utils.ReadWriteExec)
 			if err != nil {
 				return err
 			}

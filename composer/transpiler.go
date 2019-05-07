@@ -11,6 +11,7 @@ import (
 	"github.com/antha-lang/antha/antha/compile"
 	"github.com/antha-lang/antha/antha/parser"
 	"github.com/antha-lang/antha/antha/token"
+	"github.com/antha-lang/antha/utils"
 	"github.com/antha-lang/antha/workflow"
 )
 
@@ -124,7 +125,7 @@ func writeAnthaFiles(files *compile.AnthaFiles, baseDir string) error {
 }
 
 func writeAnthaFile(outFile string, file *compile.AnthaFile) error {
-	dst, err := os.OpenFile(outFile, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0400)
+	dst, err := utils.CreateFile(outFile, utils.ReadWrite)
 	if err != nil {
 		return err
 	}

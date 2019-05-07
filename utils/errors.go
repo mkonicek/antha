@@ -3,7 +3,6 @@ package utils
 import (
 	"encoding/json"
 	"io"
-	"os"
 	"strings"
 )
 
@@ -63,7 +62,7 @@ func (es ErrorSlice) MarshalJSON() ([]byte, error) {
 
 // WriteToFile writes the contents of an error slice to file as json.
 func (es ErrorSlice) WriteToFile(filename string) error {
-	if fh, err := os.OpenFile(filename, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0400); err != nil {
+	if fh, err := CreateFile(filename, ReadWrite); err != nil {
 		return err
 	} else {
 		defer fh.Close()

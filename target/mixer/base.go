@@ -7,9 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"math/rand"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
@@ -28,6 +26,7 @@ import (
 	lhdriver "github.com/antha-lang/antha/microArch/driver/liquidhandling"
 	"github.com/antha-lang/antha/microArch/scheduler/liquidhandling"
 	"github.com/antha-lang/antha/target"
+	"github.com/antha-lang/antha/utils"
 	"github.com/antha-lang/antha/workflow"
 	"google.golang.org/grpc"
 )
@@ -372,17 +371,17 @@ func (mo mixOpts) mix() (*target.Mix, error) {
 		mix.SetId(idGen)
 
 		dir := filepath.Join(mo.OutDir, mix.Id(), string(mo.Device.Id()))
-		if err := os.MkdirAll(dir, 0700); err != nil {
+		if err := utils.MkdirAll(dir); err != nil {
 			return nil, err
 		} else if layoutBs, err := mix.SummarizeLayout(idGen); err != nil {
 			return nil, err
 		} else if actionsBs, err := mix.SummarizeActions(idGen); err != nil {
 			return nil, err
-		} else if err := ioutil.WriteFile(filepath.Join(dir, "layout.json"), layoutBs, 0400); err != nil {
+		} else if err := utils.CreateAndWriteFile(filepath.Join(dir, "layout.json"), layoutBs, utils.ReadWrite); err != nil {
 			return nil, err
-		} else if err := ioutil.WriteFile(filepath.Join(dir, "actions.json"), actionsBs, 0400); err != nil {
+		} else if err := utils.CreateAndWriteFile(filepath.Join(dir, "actions.json"), actionsBs, utils.ReadWrite); err != nil {
 			return nil, err
-		} else if err := ioutil.WriteFile(filepath.Join(dir, mo.ContentName), rawBs, 0400); err != nil {
+		} else if err := utils.CreateAndWriteFile(filepath.Join(dir, mo.ContentName), rawBs, utils.ReadWrite); err != nil {
 			return nil, err
 		}
 

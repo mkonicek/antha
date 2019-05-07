@@ -1,6 +1,7 @@
 package simulaterequestpb
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -71,16 +72,31 @@ func (p *Provider) GetRepositories() (workflow.Repositories, error) {
 func (p *Provider) migrateElementParameters(fm *effects.FileManager, process *protobuf.Process) (workflow.ElementParameterSet, error) {
 	pset := make(workflow.ElementParameterSet)
 
-	// TODO: fix this stuff. Maybe we can re-use maybeMigrateFileParam from
-	// for pname, pval := range process.Parameters {
-	// 	v1_2/workflow.go?
+	for _, param := range process.Parameters {
+		// Could be a raw param (JSON) or a reference (opaque string)
+		data := param.GetRaw()
+		if len(data) > 0 {
+			// It's a raw param
+			var rawJSON json.RawMessage
+			err := json.Unmarshal(data, &rawJSON)
+			if err != nil {
+				return pset, err
+			}
+			pval, err := migrate.MaybeMigrateFileParam(fm, rawJSON)
+			if err != nil {
+				return pset, err
+			}
+			pset[workflow.ElementParameterName(param.GetName())] = pval
+		} else {
+			// It's a reference
+			ref := param.GetReference()
+			if len(ref) == 0 {
+				return pset, fmt.Errorf("Param %v has no data and no reference", param.GetName())
+			}
+			// TODO: do something with ref. But what??
+		}
+	}
 
-	// 	if param, err := maybeMigrateFileParam(fm, pval); err != nil {
-	// 		return nil, err
-	// 	} else {
-	// 		pset[workflow.ElementParameterName(pname)] = param
-	// 	}
-	// }
 	return pset, nil
 }
 

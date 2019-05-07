@@ -86,22 +86,13 @@ func hashJoin(left *Table, leftCols []ColumnName, right *Table, rightCols []Colu
 	outputTable := jq.newJointTable()
 
 	// joint table series iterators common state generator
-	group := &iterGroup{func() interface{} {
+	group := newSeriesGroup(func() seriesGroupStateImpl {
 		return jq.newJoinState(indexKeyType)
-	}}
-
-	// an iterator creation function (cannot place this code directly into the loop below because then it will capture loop variable 'i' by reference)
-	wrap := func(colIndex int, wrappedSeries *Series) func(cache *seriesIterCache) iterator {
-		return func(cache *seriesIterCache) iterator {
-			iter := &joinIter{colIndex: colIndex, commonState: cache.EnsureGroup(group).(*joinState)}
-			iter.pos = iter.commonState.index
-			return iter
-		}
-	}
+	})
 
 	// creating an iterator generator and metadata for each series
 	for i, series := range outputTable.series {
-		series.read = wrap(i, series)
+		series.read = group.read(i)
 		series.meta = jq.newJointSeriesMeta()
 	}
 
@@ -208,8 +199,6 @@ type joinState struct {
 	rightIndex Index
 
 	currRow raw // current row of the output table: |leftCol1|...|leftColN|rightCol1|...|rightColM|
-	next    bool
-	index   Index // current index of the output table
 }
 
 func (jq *joinQuery) newJoinState(indexKeyType reflect.Type) *joinState {
@@ -229,7 +218,6 @@ func (jq *joinQuery) newJoinState(indexKeyType reflect.Type) *joinState {
 		right:          rightIndex,
 		rightIndex:     -1,
 		currRow:        newRaw(leftColsNum + rightColsNum),
-		index:          -1,
 	}
 }
 
@@ -257,19 +245,18 @@ func indexTable(t *Table, keyCols []ColumnName, indexKeyType reflect.Type) index
 	return index
 }
 
-func (js *joinState) advance() {
+func (js *joinState) Next() bool {
 	for {
 		// advance rightRows if possible
 		if js.rightIndex+1 < Index(len(js.rightRows)) {
 			js.rightIndex++
 			js.setRightRow(js.rightRows[js.rightIndex])
-			return
+			return true
 		}
 
 		// rightRows is exhausted => advance left table if possible
 		if !js.left.Next() {
-			js.next = false
-			return
+			return false
 		}
 
 		// fetch left row
@@ -289,7 +276,7 @@ func (js *joinState) advance() {
 		// in case of left join, return empty rightRow if rightRows is empty
 		if js.jq.typ == leftOuter && len(js.rightRows) == 0 {
 			js.setRightRow(newRaw(js.rightColsNum))
-			return
+			return true
 		}
 	}
 }
@@ -297,32 +284,10 @@ func (js *joinState) advance() {
 // setRightRow sets the right row data and indicates that the next value is fetched
 func (js *joinState) setRightRow(rightRow raw) {
 	copy(js.currRow[js.leftColsNum:], rightRow)
-	js.next = true
-	js.index++
 }
 
-// joinIter is an iterator over a single column of a joint table
-type joinIter struct {
-	commonState *joinState
-	pos         Index
-	colIndex    int
-}
-
-// Next must not return until the source has been advanced to
-// a true filter state, or has been exhausted.
-func (iter *joinIter) Next() bool {
-	// see if we need to discard the current shared state
-	retain := iter.pos != iter.commonState.index
-	if !retain {
-		iter.commonState.advance()
-		iter.pos = iter.commonState.index
-	}
-	return iter.commonState.next
-}
-
-// Value reads the cached column value
-func (iter *joinIter) Value() interface{} {
-	return iter.commonState.currRow[iter.colIndex]
+func (js *joinState) Value(colIndex int) interface{} {
+	return js.currRow[colIndex]
 }
 
 // jointSeriesMeta is a metadata type for joint table series

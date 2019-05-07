@@ -53,26 +53,17 @@ func pivotTable(table *Table, key []ColumnName, pivot ColumnName, value ColumnNa
 	// the output table max size: in worst case, equals to the source table max size
 	_, maxSize, _ := seriesSize(table.series)
 
-	group := &iterGroup{func() interface{} {
+	group := newSeriesGroup(func() seriesGroupStateImpl {
 		// an intermediate table: contains projection of columns of the source table
 		// we are interested in (key columns, pivot column, value column), sorted by key columns
 		intermediate := table.Must().Project(allInputColumns(key, pivot, value)...).Must().Sort(outputTable.sortKey)
 		// creating common state
 		return newPivotState(intermediate, wideColumns)
-	}}
-
-	// an iterator creation function (cannot place this code directly into the loop below because then it will capture loop variable 'i' by reference)
-	wrap := func(colIndex int, wrappedSeries *Series) func(cache *seriesIterCache) iterator {
-		return func(cache *seriesIterCache) iterator {
-			iter := &pivotIter{colIndex: colIndex, commonState: cache.EnsureGroup(group).(*pivotState)}
-			iter.pos = iter.commonState.index
-			return iter
-		}
-	}
+	})
 
 	// creating an iterator generator and metadata for each series
 	for i, series := range outputTable.series {
-		series.read = wrap(i, series)
+		series.read = group.read(i)
 		series.meta = &pivotedSeriesMeta{maxSize: maxSize}
 	}
 
@@ -141,7 +132,6 @@ type pivotState struct {
 	wideColByName map[ColumnName]int // wide column name -> wide column index in the output table
 
 	intermediate *tableIterator // iterator over the intermediate sorted table
-	index        Index          // iterator index
 
 	currRow []interface{} // current row of the output table: |key1|...|keyN|value1|...|valueM|
 	nextRow []interface{} // next row of the output table
@@ -159,11 +149,10 @@ func newPivotState(intermediate *Table, wideColumns []ColumnName) *pivotState {
 		numKeys:       numKeys,
 		wideColByName: wideColByName,
 		intermediate:  newTableIterator(intermediate.series),
-		index:         -1,
 	}
 }
 
-func (ps *pivotState) advance() {
+func (ps *pivotState) Next() bool {
 	// cleaning the current row
 	ps.currRow = nil
 	// if previous iteration has started filling the next row, then moving it to the current row
@@ -192,10 +181,7 @@ func (ps *pivotState) advance() {
 		}
 	}
 
-	// incrementing index, provided that we have managed to read something
-	if ps.currRow != nil {
-		ps.index++
-	}
+	return ps.currRow != nil
 }
 
 // parseRow extracts keys, column name and column value from a row from an intermediate table
@@ -223,27 +209,9 @@ func (ps *pivotState) keysEqual(keys1 []interface{}, keys2 []interface{}) bool {
 	return reflect.DeepEqual(keys1, keys2)
 }
 
-type pivotIter struct {
-	commonState *pivotState
-	pos         Index
-	colIndex    int // column index in the sorted table
-}
-
-// Next must not return until the source has been advanced to
-// a true filter state, or has been exhausted.
-func (iter *pivotIter) Next() bool {
-	// see if we need to discard the current shared state
-	retain := iter.pos != iter.commonState.index
-	if !retain {
-		iter.commonState.advance()
-		iter.pos = iter.commonState.index
-	}
-	return iter.commonState.currRow != nil
-}
-
 // Value reads the cached column value
-func (iter *pivotIter) Value() interface{} {
-	return iter.commonState.currRow[iter.colIndex]
+func (ps *pivotState) Value(colIndex int) interface{} {
+	return ps.currRow[colIndex]
 }
 
 // metadata for pivoted table series (both key columns and wide columns)

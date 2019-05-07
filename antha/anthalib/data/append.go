@@ -17,23 +17,30 @@ func AppendMany(tables ...*Table) (*Table, error) {
 	// with their source tables - in order to simplify iteration over the resulting table
 	tables = flattenAppendSources(tables)
 
-	// common part of all output series metadata
-	tableMeta := newAppendTableMeta(tables)
+	// append series sizes
+	exactSize, maxSize := calcAppendSizes(tables)
+
+	// series group
+	group := newSeriesGroup(func() seriesGroupStateImpl {
+		return &appendState{
+			sources:     tables,
+			sourceIndex: -1,
+		}
+	})
 
 	// creating the output table series: they inherit the schema from the first input table
 	newSeries := make([]*Series, len(tables[0].series))
 	for i, series := range tables[0].series {
-		// new metadata
-		m := &appendSeriesMeta{
-			appendTableMeta: tableMeta,
-			colIndex:        i,
-		}
-		// new series
 		newSeries[i] = &Series{
 			col:  series.col,
 			typ:  series.typ,
-			read: m.read,
-			meta: m,
+			read: group.read(i),
+			meta: &appendSeriesMeta{
+				exactSize: exactSize,
+				maxSize:   maxSize,
+				group:     group,
+				sources:   tables,
+			},
 		}
 	}
 
@@ -94,47 +101,23 @@ func extractAppendSources(table *Table) ([]*Table, bool) {
 			return nil, false
 		}
 		// if some of Append series do not share the same appendTableMeta, the table is not the result of a single Append
-		if meta.appendTableMeta != table.series[0].meta.(*appendSeriesMeta).appendTableMeta {
+		if meta.group != table.series[0].meta.(*appendSeriesMeta).group {
 			return nil, false
 		}
 	}
-	return table.series[0].meta.(*appendSeriesMeta).sourceTables, true
+	return table.series[0].meta.(*appendSeriesMeta).sources, true
 }
 
-// The common part of metadatas of all the series produced by a single Append.
-type appendTableMeta struct {
-	sourceTables []*Table
-	group        *iterGroup
-	exactSize    int
-	maxSize      int
-}
-
-func newAppendTableMeta(sourceTables []*Table) *appendTableMeta {
-	// common part of all series metadata
-	tableMeta := &appendTableMeta{
-		sourceTables: sourceTables,
-		group: &iterGroup{func() interface{} {
-			return &appendState{
-				sources:     sourceTables,
-				sourceIndex: -1,
-				iterPos:     -1,
-			}
-		}},
-		exactSize: 0,
-		maxSize:   0,
-	}
-
-	// counting series sizes
+func calcAppendSizes(sourceTables []*Table) (exactSize int, maxSize int) {
 	for _, t := range sourceTables {
-		exactSize, maxSize, err := seriesSize(t.series)
+		exactSizeT, maxSizeT, err := seriesSize(t.series)
 		if err != nil {
 			panic(errors.Wrap(err, "SHOULD NOT HAPPEN"))
 		}
-		tableMeta.exactSize = addSizes(tableMeta.exactSize, exactSize)
-		tableMeta.maxSize = addSizes(tableMeta.maxSize, maxSize)
+		exactSize = addSizes(exactSize, exactSizeT)
+		maxSize = addSizes(maxSize, maxSizeT)
 	}
-
-	return tableMeta
+	return
 }
 
 // adds two sizes; if one of them is undefined, the sum is undefined too
@@ -148,69 +131,39 @@ func addSizes(size1 int, size2 int) int {
 
 // appendTables resulting series metadata
 type appendSeriesMeta struct {
-	*appendTableMeta
-	colIndex int
+	exactSize int
+	maxSize   int
+	// needed for optimization purposes only (extractAppendSources)
+	group   *seriesGroup
+	sources []*Table
 }
 
 func (m *appendSeriesMeta) IsMaterialized() bool { return false }
 func (m *appendSeriesMeta) ExactSize() int       { return m.exactSize }
 func (m *appendSeriesMeta) MaxSize() int         { return m.maxSize }
 
-func (m *appendSeriesMeta) read(cache *seriesIterCache) iterator {
-	return &appendIter{
-		commonState: cache.EnsureGroup(m.group).(*appendState),
-		pos:         -1,
-		colIndex:    m.colIndex,
-	}
-}
-
 // Common state of several Append series. They share the source table iterator (including series iterators cache).
 type appendState struct {
 	sources     []*Table       // source tables
 	sourceIndex int            // current source table
 	sourceIter  *tableIterator // current source table iterator
-
-	iterPos  Index // current iteration pos (global)
-	iterNext bool  // result of the latest advance() call
 }
 
-func (st *appendState) advance() {
+func (st *appendState) Next() bool {
 	for {
 		// first trying to advance the current table iterator
 		if st.sourceIndex != -1 && st.sourceIter.Next() {
-			st.iterNext = true
-			st.iterPos++
-			return
+			return true
 		}
 		// moving to the next table if possible
 		if st.sourceIndex+1 == len(st.sources) {
-			st.iterNext = false
-			return
+			return false
 		}
 		st.sourceIndex++
 		st.sourceIter = newTableIterator(st.sources[st.sourceIndex].series)
 	}
 }
 
-// Append series iterator.
-type appendIter struct {
-	commonState *appendState
-	pos         Index
-	colIndex    int
-}
-
-// Next advances the common state provided that iter.pos is already up to date.
-func (iter *appendIter) Next() bool {
-	// see if we need to discard the current shared state
-	retain := iter.pos != iter.commonState.iterPos
-	if !retain {
-		iter.commonState.advance()
-		iter.pos = iter.commonState.iterPos
-	}
-	return iter.commonState.iterNext
-}
-
-// Value reads the column value.
-func (iter *appendIter) Value() interface{} {
-	return iter.commonState.sourceIter.colReader[iter.colIndex].Value()
+func (st *appendState) Value(colIndex int) interface{} {
+	return st.sourceIter.colReader[colIndex].Value()
 }

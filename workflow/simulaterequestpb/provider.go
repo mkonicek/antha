@@ -16,7 +16,7 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-type SimulateRequestProtobufProvider struct {
+type Provider struct {
 	pb               *protobuf.SimulateRequest
 	fm               *effects.FileManager
 	repoMap          workflow.ElementTypesByRepository
@@ -30,7 +30,7 @@ func NewProvider(
 	repoMap workflow.ElementTypesByRepository,
 	gilsonDeviceName string,
 	logger *logger.Logger,
-) (*SimulateRequestProtobufProvider, error) {
+) (*Provider, error) {
 	bytes, err := ioutil.ReadAll(inputReader)
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func NewProvider(
 		return nil, err
 	}
 
-	return &SimulateRequestProtobufProvider{
+	return &Provider{
 		pb:               pb,
 		fm:               fm,
 		repoMap:          repoMap,
@@ -50,7 +50,7 @@ func NewProvider(
 	}, nil
 }
 
-func (p *SimulateRequestProtobufProvider) GetWorkflowID() (workflow.BasicId, error) {
+func (p *Provider) GetWorkflowID() (workflow.BasicId, error) {
 	id, err := workflow.RandomBasicId("")
 	if err != nil {
 		return "", err
@@ -58,17 +58,17 @@ func (p *SimulateRequestProtobufProvider) GetWorkflowID() (workflow.BasicId, err
 	return id, nil
 }
 
-func (p *SimulateRequestProtobufProvider) GetMeta() (workflow.Meta, error) {
+func (p *Provider) GetMeta() (workflow.Meta, error) {
 	// No-op for this provider type, it doesn't model metadata
 	return workflow.Meta{}, nil
 }
 
-func (p *SimulateRequestProtobufProvider) GetRepositories() (workflow.Repositories, error) {
+func (p *Provider) GetRepositories() (workflow.Repositories, error) {
 	// No-op for this provider type, it doesn't model repositories
 	return workflow.Repositories{}, nil
 }
 
-func (p *SimulateRequestProtobufProvider) migrateElementParameters(fm *effects.FileManager, process *protobuf.Process) (workflow.ElementParameterSet, error) {
+func (p *Provider) migrateElementParameters(fm *effects.FileManager, process *protobuf.Process) (workflow.ElementParameterSet, error) {
 	pset := make(workflow.ElementParameterSet)
 
 	// TODO: fix this stuff. Maybe we can re-use maybeMigrateFileParam from
@@ -84,7 +84,7 @@ func (p *SimulateRequestProtobufProvider) migrateElementParameters(fm *effects.F
 	return pset, nil
 }
 
-func (p *SimulateRequestProtobufProvider) migrateElement(fm *effects.FileManager, process *protobuf.Process) (*workflow.ElementInstance, error) {
+func (p *Provider) migrateElement(fm *effects.FileManager, process *protobuf.Process) (*workflow.ElementInstance, error) {
 	ei := &workflow.ElementInstance{}
 
 	ei.ElementTypeName = workflow.ElementTypeName(process.Component)
@@ -97,7 +97,7 @@ func (p *SimulateRequestProtobufProvider) migrateElement(fm *effects.FileManager
 	return ei, nil
 }
 
-func (p *SimulateRequestProtobufProvider) getElementInstances() (workflow.ElementInstances, error) {
+func (p *Provider) getElementInstances() (workflow.ElementInstances, error) {
 	instances := workflow.ElementInstances{}
 	for _, process := range p.pb.Processes {
 		name := workflow.ElementInstanceName(process.Id)
@@ -110,7 +110,7 @@ func (p *SimulateRequestProtobufProvider) getElementInstances() (workflow.Elemen
 	return instances, nil
 }
 
-func (p *SimulateRequestProtobufProvider) getElementTypes() (workflow.ElementTypes, error) {
+func (p *Provider) getElementTypes() (workflow.ElementTypes, error) {
 	seen := make(map[string]struct{}, len(p.pb.Processes))
 	types := make(workflow.ElementTypes, 0, len(p.pb.Processes))
 	for _, v := range p.pb.Processes {
@@ -129,7 +129,7 @@ func (p *SimulateRequestProtobufProvider) getElementTypes() (workflow.ElementTyp
 	return types, nil
 }
 
-func (p *SimulateRequestProtobufProvider) getElementConnections() (workflow.ElementInstancesConnections, error) {
+func (p *Provider) getElementConnections() (workflow.ElementInstancesConnections, error) {
 	connections := make(workflow.ElementInstancesConnections, 0, len(p.pb.Connections))
 	for _, c := range p.pb.Connections {
 		connections = append(connections, workflow.ElementConnection{
@@ -146,7 +146,7 @@ func (p *SimulateRequestProtobufProvider) getElementConnections() (workflow.Elem
 	return connections, nil
 }
 
-func (p *SimulateRequestProtobufProvider) GetElements() (workflow.Elements, error) {
+func (p *Provider) GetElements() (workflow.Elements, error) {
 	instances, err := p.getElementInstances()
 	if err != nil {
 		return workflow.Elements{}, err
@@ -169,7 +169,7 @@ func (p *SimulateRequestProtobufProvider) GetElements() (workflow.Elements, erro
 	}, nil
 }
 
-func (p *SimulateRequestProtobufProvider) GetInventory() (workflow.Inventory, error) {
+func (p *Provider) GetInventory() (workflow.Inventory, error) {
 	// TODO: implement
 	return workflow.Inventory{}, nil
 }
@@ -191,7 +191,7 @@ func translatePlates(plates []*inventorypb.Plate) []*wtype.Plate {
 	return result
 }
 
-func (p *SimulateRequestProtobufProvider) getGlobalMixerConfig() (workflow.GlobalMixerConfig, error) {
+func (p *Provider) getGlobalMixerConfig() (workflow.GlobalMixerConfig, error) {
 	config := workflow.GlobalMixerConfig{}
 	mc := p.pb.GetMixerConfig()
 	if mc != nil {
@@ -214,7 +214,7 @@ func (p *SimulateRequestProtobufProvider) getGlobalMixerConfig() (workflow.Globa
 	return config, nil
 }
 
-func (p *SimulateRequestProtobufProvider) getGilsonPipetMaxInstanceConfig() (*workflow.GilsonPipetMaxInstanceConfig, error) {
+func (p *Provider) getGilsonPipetMaxInstanceConfig() (*workflow.GilsonPipetMaxInstanceConfig, error) {
 	config := workflow.GilsonPipetMaxInstanceConfig{}
 	mc := p.pb.GetMixerConfig()
 	if mc != nil {
@@ -235,7 +235,7 @@ func (p *SimulateRequestProtobufProvider) getGilsonPipetMaxInstanceConfig() (*wo
 	return &config, nil
 }
 
-func (p *SimulateRequestProtobufProvider) getGilsonPipetMaxConfig() (workflow.GilsonPipetMaxConfig, error) {
+func (p *Provider) getGilsonPipetMaxConfig() (workflow.GilsonPipetMaxConfig, error) {
 	if p.gilsonDeviceName == "" {
 		return workflow.GilsonPipetMaxConfig{}, nil
 	}
@@ -259,7 +259,7 @@ func (p *SimulateRequestProtobufProvider) getGilsonPipetMaxConfig() (workflow.Gi
 	}, nil
 }
 
-func (p *SimulateRequestProtobufProvider) GetConfig() (workflow.Config, error) {
+func (p *Provider) GetConfig() (workflow.Config, error) {
 	gmc, err := p.getGlobalMixerConfig()
 	if err != nil {
 		return workflow.Config{}, err
@@ -276,7 +276,7 @@ func (p *SimulateRequestProtobufProvider) GetConfig() (workflow.Config, error) {
 	}, nil
 }
 
-func (p *SimulateRequestProtobufProvider) GetTesting() (workflow.Testing, error) {
+func (p *Provider) GetTesting() (workflow.Testing, error) {
 	// TODO: implement
 	return workflow.Testing{}, nil
 }

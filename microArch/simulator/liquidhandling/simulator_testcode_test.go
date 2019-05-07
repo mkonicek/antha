@@ -913,7 +913,6 @@ func (self *Aspirate) Convert() liquidhandling.TerminalRobotInstruction {
 //Dispense
 type Dispense struct {
 	volume    []float64
-	blowout   []bool
 	head      int
 	multi     int
 	platetype []string
@@ -923,6 +922,31 @@ type Dispense struct {
 
 func (self *Dispense) Convert() liquidhandling.TerminalRobotInstruction {
 	ret := liquidhandling.NewDispenseInstruction()
+	volume := make([]wunit.Volume, 0, len(self.volume))
+	for _, v := range self.volume {
+		volume = append(volume, wunit.NewVolume(v, "ul"))
+	}
+	ret.Head = self.head
+	ret.Volume = volume
+	ret.Multi = self.multi
+	ret.Plt = self.platetype
+	ret.What = self.what
+	ret.LLF = self.llf
+	return ret
+}
+
+// Blowout
+type Blowout struct {
+	volume    []float64
+	head      int
+	multi     int
+	platetype []string
+	what      []string
+	llf       []bool
+}
+
+func (self *Blowout) Convert() liquidhandling.TerminalRobotInstruction {
+	ret := liquidhandling.NewBlowoutInstruction()
 	volume := make([]wunit.Volume, 0, len(self.volume))
 	for _, v := range self.volume {
 		volume = append(volume, wunit.NewVolume(v, "ul"))

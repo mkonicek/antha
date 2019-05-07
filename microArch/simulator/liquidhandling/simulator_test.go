@@ -2709,7 +2709,6 @@ func Test_Dispense(t *testing.T) {
 				},
 				&Dispense{
 					volume:    []float64{50., 0., 0., 0., 0., 0., 0., 0.},
-					blowout:   []bool{false, false, false, false, false, false, false, false},
 					head:      0,
 					multi:     1,
 					platetype: []string{"plate", "", "", "", "", "", "", ""},
@@ -2722,6 +2721,48 @@ func Test_Dispense(t *testing.T) {
 				tipboxAssertion("tipbox_2", []string{}),
 				plateAssertion("input_1", []wellDesc{{"A1", "water", 50.}}),
 				adaptorAssertion(0, []tipDesc{{0, "water", 50.}}),
+				tipwasteAssertion("tipwaste", 0),
+			},
+		},
+		{
+			Name: "OK - single channel blowout",
+			Setup: []*SetupFn{
+				testLayout(),
+				preloadFilledTips(0, "tipbox_1", []int{0}, "water", 50.),
+			},
+			Instructions: []TestRobotInstruction{
+				&Move{
+					deckposition: []string{"input_1", "", "", "", "", "", "", ""},
+					wellcoords:   []string{"A1", "", "", "", "", "", "", ""},
+					reference:    []int{0, 0, 0, 0, 0, 0, 0, 0},
+					offsetX:      []float64{0., 0., 0., 0., 0., 0., 0., 0.},
+					offsetY:      []float64{0., 0., 0., 0., 0., 0., 0., 0.},
+					offsetZ:      []float64{1., 1., 1., 1., 1., 1., 1., 1.},
+					plate_type:   []string{"plate", "", "", "", "", "", "", ""},
+					head:         0,
+				},
+				&Dispense{
+					volume:    []float64{50., 0., 0., 0., 0., 0., 0., 0.},
+					head:      0,
+					multi:     1,
+					platetype: []string{"plate", "", "", "", "", "", "", ""},
+					what:      []string{"water", "", "", "", "", "", "", ""},
+					llf:       []bool{false, false, false, false, false, false, false, false},
+				},
+				&Blowout{
+					volume:    []float64{30., 0., 0., 0., 0., 0., 0., 0.},
+					head:      0,
+					multi:     1,
+					platetype: []string{"plate", "", "", "", "", "", "", ""},
+					what:      []string{"water", "", "", "", "", "", "", ""},
+					llf:       []bool{false, false, false, false, false, false, false, false},
+				},
+			},
+			Assertions: []*AssertionFn{
+				tipboxAssertion("tipbox_1", []string{}),
+				tipboxAssertion("tipbox_2", []string{}),
+				plateAssertion("input_1", []wellDesc{{"A1", "water", 50.}}),
+				adaptorAssertion(0, []tipDesc{{0, "water", 0.}}),
 				tipwasteAssertion("tipwaste", 0),
 			},
 		},
@@ -2745,7 +2786,6 @@ func Test_Dispense(t *testing.T) {
 				},
 				&Dispense{
 					volume:    []float64{50., 0., 0., 0., 0., 0., 0., 0.},
-					blowout:   []bool{false, false, false, false, false, false, false, false},
 					head:      0,
 					multi:     1,
 					platetype: []string{"plate", "", "", "", "", "", "", ""},
@@ -2780,7 +2820,6 @@ func Test_Dispense(t *testing.T) {
 				},
 				&Dispense{
 					volume:    []float64{50., 0., 0., 0., 0., 0., 0., 0.},
-					blowout:   []bool{false, false, false, false, false, false, false, false},
 					head:      0,
 					multi:     1,
 					platetype: []string{"plate", "", "", "", "", "", "", ""},
@@ -2815,7 +2854,6 @@ func Test_Dispense(t *testing.T) {
 				},
 				&Dispense{
 					volume:    []float64{50., 50., 50., 50., 50., 50., 50., 50.},
-					blowout:   []bool{false, false, false, false, false, false, false, false},
 					head:      0,
 					multi:     8,
 					platetype: []string{"plate", "plate", "plate", "plate", "plate", "plate", "plate", "plate"},
@@ -2868,7 +2906,6 @@ func Test_Dispense(t *testing.T) {
 				},
 				&Dispense{
 					volume:    []float64{50., 0., 0., 0., 0., 0., 0., 0.},
-					blowout:   []bool{false, false, false, false, false, false, false, false},
 					head:      0,
 					multi:     1,
 					platetype: []string{"plate", "", "", "", "", "", "", ""},
@@ -2899,7 +2936,6 @@ func Test_Dispense(t *testing.T) {
 				},
 				&Dispense{
 					volume:    []float64{150., 0., 0., 0., 0., 0., 0., 0.},
-					blowout:   []bool{false, false, false, false, false, false, false, false},
 					head:      0,
 					multi:     1,
 					platetype: []string{"plate", "", "", "", "", "", "", ""},
@@ -2930,7 +2966,6 @@ func Test_Dispense(t *testing.T) {
 				},
 				&Dispense{
 					volume:    []float64{500., 0., 0., 0., 0., 0., 0., 0.},
-					blowout:   []bool{false, false, false, false, false, false, false, false},
 					head:      0,
 					multi:     1,
 					platetype: []string{"plate", "", "", "", "", "", "", ""},
@@ -2961,7 +2996,6 @@ func Test_Dispense(t *testing.T) {
 				},
 				&Dispense{
 					volume:    []float64{50., 0., 0., 0., 0., 0., 0., 0.},
-					blowout:   []bool{false, false, false, false, false, false, false, false},
 					head:      0,
 					multi:     1,
 					platetype: []string{"plate", "", "", "", "", "", "", ""},
@@ -2992,7 +3026,6 @@ func Test_Dispense(t *testing.T) {
 				},
 				&Dispense{
 					volume:    []float64{50., 0., 0., 0., 0., 0., 0., 0.},
-					blowout:   []bool{false, false, false, false, false, false, false, false},
 					head:      0,
 					multi:     1,
 					platetype: []string{"tipwaste", "", "", "", "", "", "", ""},
@@ -3023,7 +3056,6 @@ func Test_Dispense(t *testing.T) {
 				},
 				&Dispense{
 					volume:    []float64{50., 0, 0, 0, 0, 0, 0, 0},
-					blowout:   []bool{false, false, false, false, false, false, false, false},
 					head:      0,
 					multi:     1,
 					platetype: []string{"plate", "", "", "", "", "", "", ""},
@@ -3054,7 +3086,6 @@ func Test_Dispense(t *testing.T) {
 				},
 				&Dispense{
 					volume:    []float64{50., 0, 0, 0, 0, 0, 0, 0},
-					blowout:   []bool{false, false, false, false, false, false, false, false},
 					head:      0,
 					multi:     1,
 					platetype: []string{"plate", "", "", "", "", "", "", ""},
@@ -3085,7 +3116,6 @@ func Test_Dispense(t *testing.T) {
 				},
 				&Dispense{
 					volume:    []float64{50., 60., 50., 50., 50., 50., 50., 50.},
-					blowout:   []bool{false, false, false, false, false, false, false, false},
 					head:      0,
 					multi:     8,
 					platetype: []string{"plate", "plate", "plate", "plate", "plate", "plate", "plate", "plate"},
@@ -3127,7 +3157,6 @@ func Test_Mix(t *testing.T) {
 					cycles:    []int{5, 0, 0, 0, 0, 0, 0, 0},
 					multi:     1,
 					what:      []string{"water", "", "", "", "", "", "", ""},
-					blowout:   []bool{false, false, false, false, false, false, false, false},
 				},
 			},
 			Assertions: []*AssertionFn{
@@ -3163,7 +3192,6 @@ func Test_Mix(t *testing.T) {
 					cycles:    []int{5, 5, 5, 5, 5, 5, 5, 5},
 					multi:     8,
 					what:      []string{"water", "water", "water", "water", "water", "water", "water", "water"},
-					blowout:   []bool{false, false, false, false, false, false, false, false},
 				},
 			},
 			Assertions: []*AssertionFn{
@@ -3217,7 +3245,6 @@ func Test_Mix(t *testing.T) {
 					cycles:    []int{5, 5, 5, 5, 5, 2, 2, 2},
 					multi:     8,
 					what:      []string{"water", "water", "water", "water", "water", "water", "water", "water"},
-					blowout:   []bool{false, false, false, false, false, false, false, false},
 				},
 			},
 			ExpectedErrors: []string{
@@ -3250,7 +3277,6 @@ func Test_Mix(t *testing.T) {
 					cycles:    []int{5, 0, 0, 0, 0, 0, 0, 0},
 					multi:     1,
 					what:      []string{"water", "", "", "", "", "", "", ""},
-					blowout:   []bool{false, false, false, false, false, false, false, false},
 				},
 			},
 			ExpectedErrors: []string{
@@ -3308,7 +3334,6 @@ func Test_LiquidLevelFollow(t *testing.T) {
 				},
 				&Dispense{
 					volume:    []float64{100., 0., 0., 0., 0., 0., 0., 0.},
-					blowout:   []bool{false, false, false, false, false, false, false, false},
 					head:      0,
 					multi:     1,
 					platetype: []string{"plate", "", "", "", "", "", "", ""},
@@ -3470,23 +3495,22 @@ func Test_Workflow(t *testing.T) {
 		}
 		return []TestRobotInstruction{
 			&Move{
-				pl,
-				wells,
-				[]int{1, 1, 1, 1, 1, 1, 1, 1},
-				[]float64{0, 0, 0, 0, 0, 0, 0, 0},
-				[]float64{0, 0, 0, 0, 0, 0, 0, 0},
-				[]float64{1, 1, 1, 1, 1, 1, 1, 1},
-				pt,
-				0,
+				deckposition: pl,
+				wellcoords:   wells,
+				reference:    []int{1, 1, 1, 1, 1, 1, 1, 1},
+				offsetX:      []float64{0, 0, 0, 0, 0, 0, 0, 0},
+				offsetY:      []float64{0, 0, 0, 0, 0, 0, 0, 0},
+				offsetZ:      []float64{1, 1, 1, 1, 1, 1, 1, 1},
+				plate_type:   pt,
+				head:         0,
 			},
 			&Dispense{
-				v,
-				[]bool{false, false, false, false, false, false, false, false},
-				0,
-				multi,
-				pt,
-				what,
-				[]bool{false, false, false, false, false, false, false, false},
+				volume:    v,
+				head:      0,
+				multi:     multi,
+				platetype: pt,
+				what:      what,
+				llf:       []bool{false, false, false, false, false, false, false, false},
 			},
 		}
 	}

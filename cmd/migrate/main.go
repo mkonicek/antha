@@ -13,7 +13,6 @@ import (
 	"github.com/antha-lang/antha/logger"
 	"github.com/antha-lang/antha/workflow"
 	"github.com/antha-lang/antha/workflow/migrate"
-	"github.com/antha-lang/antha/workflow/migrate/provider"
 	"github.com/antha-lang/antha/workflow/v1_2"
 )
 
@@ -95,7 +94,7 @@ func main() {
 	}
 	defer fromReader.Close()
 
-	var provider provider.WorkflowProvider
+	var provider migrate.WorkflowProvider
 	switch fromFormat {
 	case fromFormatJSON:
 		{

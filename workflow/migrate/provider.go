@@ -1,4 +1,4 @@
-package provider
+package migrate
 
 import (
 	"github.com/antha-lang/antha/workflow"

@@ -1,7 +1,5 @@
 package wtype
 
-import "github.com/antha-lang/antha/antha/anthalib/wunit"
-
 // PolicyName represents the name of a liquid handling policy
 // used to look up the details of that policy.
 type PolicyName string
@@ -106,9 +104,9 @@ func mergeTypes(c1, c2 *Liquid) LiquidType {
 
 	// nil type is overridden
 
-	if c1.Type == LTNIL {
+	if c1.Type == LTNIL || c1.Type == "" {
 		return c2.Type
-	} else if c2.Type == LTNIL {
+	} else if c2.Type == LTNIL || c2.Type == "" {
 		return c1.Type
 	}
 
@@ -121,10 +119,8 @@ func mergeTypes(c1, c2 *Liquid) LiquidType {
 	} else if c1.Type == LTProtein || c2.Type == LTProtein {
 		return LTProtein
 	}
-	v1 := wunit.NewVolume(c1.Vol, c1.Vunit)
-	v2 := wunit.NewVolume(c2.Vol, c2.Vunit)
 
-	if v1.LessThan(&v2) {
+	if c1.Volume().LessThan(c2.Volume()) {
 		return c2.Type
 	}
 

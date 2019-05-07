@@ -258,7 +258,7 @@ func (lhc *Liquid) SetGeneration(i int) {
 }
 
 func (lhc *Liquid) IsZero() bool {
-	if lhc == nil || lhc.Type == "" || lhc.CName == "" || lhc.Vol < 0.0000001 {
+	if lhc == nil || lhc.Type == "" || lhc.CName == "" || (lhc.Vol < 0.0000001 && lhc.Tvol < 0.0000001) {
 		return true
 	}
 	return false

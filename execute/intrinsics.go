@@ -2,6 +2,7 @@ package execute
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/antha-lang/antha/antha/anthalib/mixer"
@@ -294,7 +295,7 @@ func mix(ctx context.Context, inst *wtype.LHInstruction) *commandInst {
 	// from the protocol POV components need to be passed by value
 	for i, c := range wtype.CopyComponentArray(inst.Inputs) {
 		if c.CName == "" {
-			panic("Nameless Component used in Mix - this is not permitted")
+			panic(fmt.Errorf("Mix: component %d is nameless - this is not permitted", i))
 		}
 		c.Order = i
 

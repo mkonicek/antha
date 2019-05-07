@@ -114,7 +114,7 @@ func main() {
 		}
 	}
 
-	m := migrate.NewMigrator(l, provider)
+	m := migrate.NewMigrator(provider)
 	wf, err := m.Workflow()
 	if err != nil {
 		logger.Fatal(l, err)

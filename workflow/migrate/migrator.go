@@ -1,21 +1,18 @@
 package migrate
 
 import (
-	"github.com/antha-lang/antha/logger"
 	"github.com/antha-lang/antha/workflow"
 	"github.com/antha-lang/antha/workflow/migrate/provider"
 )
 
 // Migrator migrates data from a previous format to the v2.0 format
 type Migrator struct {
-	logger   *logger.Logger
 	provider provider.WorkflowProvider
 }
 
 // NewMigrator creates and returns a migrator
-func NewMigrator(logger *logger.Logger, provider provider.WorkflowProvider) *Migrator {
+func NewMigrator(provider provider.WorkflowProvider) *Migrator {
 	return &Migrator{
-		logger:   logger,
 		provider: provider,
 	}
 }

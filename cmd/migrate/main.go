@@ -1,10 +1,8 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -37,11 +35,13 @@ func main() {
 
 	l := logger.NewLogger()
 
-	// Read in the workflow snippets
-	rs, err := workflow.ReadersFromPaths(flag.Args())
+	args := flag.Args()
+	rs, err := workflow.ReadersFromPaths(append(args, fromFile))
 	if err != nil {
 		logger.Fatal(l, err)
 	}
+	fromReader := rs[len(args)]
+	rs = rs[:len(args)]
 
 	cwf, err := workflow.WorkflowFromReaders(rs...)
 	if err != nil {
@@ -71,28 +71,6 @@ func main() {
 	if err != nil {
 		logger.Fatal(l, err)
 	}
-
-	// Sanity check: we can only read from STDIN once
-	inputPaths := append(flag.Args(), fromFile)
-	stdinCount := 0
-	for _, path := range inputPaths {
-		if path == "-" {
-			stdinCount++
-		}
-	}
-	if stdinCount > 1 {
-		logger.Fatal(l, errors.New("Input '-' specified more than once: can only read from STDIN once"))
-	}
-
-	var fromReader io.ReadCloser
-	if fromFile == "-" {
-		fromReader = os.Stdin
-	} else {
-		if fromReader, err = os.Open(fromFile); err != nil {
-			logger.Fatal(l, err)
-		}
-	}
-	defer fromReader.Close()
 
 	var provider migrate.WorkflowProvider
 	switch fromFormat {

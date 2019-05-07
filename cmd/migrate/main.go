@@ -76,23 +76,14 @@ func main() {
 	var provider migrate.WorkflowProvider
 	switch fromFormat {
 	case fromFormatJSON:
-		{
-			provider, err = v1_2.NewProvider(fromReader, fm, repoMap, gilsonDevice, l)
-			if err != nil {
-				logger.Fatal(l, err)
-			}
-		}
+		provider, err = v1_2.NewProvider(fromReader, fm, repoMap, gilsonDevice, l)
 	case fromFormatProtobuf:
-		{
-			provider, err = simulaterequestpb.NewProvider(fromReader, fm, repoMap, gilsonDevice, l)
-			if err != nil {
-				logger.Fatal(l, err)
-			}
-		}
+		provider, err = simulaterequestpb.NewProvider(fromReader, fm, repoMap, gilsonDevice, l)
 	default:
-		{
-			logger.Fatal(l, fmt.Errorf("Unknown format '%v', valid formats are: %v", fromFormat, validFromFormats))
-		}
+		logger.Fatal(l, fmt.Errorf("Unknown format '%v', valid formats are: %v", fromFormat, validFromFormats))
+	}
+	if err != nil {
+		logger.Fatal(l, err)
 	}
 
 	m := migrate.NewMigrator(provider)

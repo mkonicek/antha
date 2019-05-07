@@ -98,7 +98,7 @@ func (dev *QPCRDevice) makePrompt(inst *ast.QPCRInstruction) ast.Inst {
 		bc = " (" + bc + ")" // deliberate leading space
 	}
 	return &target.Prompt{
-		Message: fmt.Sprintf("Ensure that the experiment file %s is configured, then put the plate%s into qPCR device. Check that the driver software is running. Once ready, accept to start the qPCR analysis.",
+		Message: fmt.Sprintf("Ensure that the experiment file %s is configured, then put the plate%s into the qPCR device. Check that the AnthaHub software is running on the computer connected to the qPCR machine. Then, click the button below to schedule the qPCR run.",
 			inst.Definition, bc),
 	}
 }

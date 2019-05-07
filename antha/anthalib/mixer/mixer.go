@@ -175,16 +175,6 @@ func GenericMix(opt MixOptions) *wtype.LHInstruction {
 	}
 	r.Inputs = opt.Inputs
 
-	for i, input := range r.Inputs {
-		if input.IsZero() {
-			summary := ""
-			for j, ip := range r.Inputs {
-				summary += fmt.Sprintf("\n  %d: %s", j+1, ip.String())
-			}
-			panic(fmt.Sprintf("GenericMix: input %d of %d is zero: %s\n", i+1, len(r.Inputs), summary))
-		}
-	}
-
 	if opt.Output != nil {
 		r.AddOutput(opt.Output)
 	} else {

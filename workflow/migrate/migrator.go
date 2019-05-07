@@ -23,9 +23,7 @@ func NewMigrator(logger *logger.Logger, provider provider.WorkflowProvider) *Mig
 // Workflow returns the workflow resulting from exercising this migrator
 func (m *Migrator) Workflow() (*workflow.Workflow, error) {
 
-	wf := &workflow.Workflow{
-		SchemaVersion: "2.0",
-	}
+	wf := workflow.EmptyWorkflow()
 
 	id, err := m.provider.GetWorkflowID()
 	if err != nil {

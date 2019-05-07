@@ -11,7 +11,7 @@ import (
 // (i.e. wrapped in CommandInst (see trace.go)), and are sometimes
 // called "high-level" instructions. These are ultimately the inputs
 // to calls to Device.Compile. Do confuse these with the Inst
-// interface in device.go - those are for the results of
+// interface in lowlevel.go - those are for the results of
 // Compilation... Yes, this is a dreadful situation and needs to be
 // addressed.
 

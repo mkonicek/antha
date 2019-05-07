@@ -1294,7 +1294,7 @@ func (ls LiquidSources) string(prefix, currIndent, indent string) string {
 func (ls LiquidSources) Volume() wunit.Volume {
 	ret := wunit.ZeroVolume()
 	for _, src := range ls {
-		ret.IncrBy(src.Volume)
+		ret.MustIncrBy(src.Volume)
 	}
 	return ret
 }
@@ -1340,10 +1340,10 @@ func (ls LiquidSources) VolumeOf(name string) wunit.Volume {
 	for n, src := range ls {
 		if name == n {
 			// we could get this volume with a O(1) lookup
-			ret.IncrBy(src.Volume)
+			ret.MustIncrBy(src.Volume)
 		}
 		// but we still have to recurse through the tree looking for other matches
-		ret.IncrBy(src.Sources.VolumeOf(name))
+		ret.MustIncrBy(src.Sources.VolumeOf(name))
 	}
 	return ret
 }

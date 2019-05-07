@@ -734,8 +734,6 @@ type transferAction struct {
 	CumulativeTimeEstimate float64         `json:"cumulative_time_estimate"`
 }
 
-type wellID string
-
 // newTransferAction create a new transfer action from the act, which is assumed to have generated ChannelTransferInstructions
 // and outputs all leaves of the act to the simulator
 func newTransferAction(vlh *simulator.VirtualLiquidHandler, act *driver.ITree, timer driver.LHTimer, cumulativeTimeEstimate time.Duration) (*transferAction, error) {

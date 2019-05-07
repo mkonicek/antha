@@ -231,6 +231,20 @@ func (cm *ConcreteMeasurement) DecrBy(m Measurement) error {
 	return nil
 }
 
+// IncrBy add the measurement m to the receiver
+func (cm *ConcreteMeasurement) MustIncrBy(m Measurement) {
+	if err := cm.IncrBy(m); err != nil {
+		panic(err)
+	}
+}
+
+// DecrBy subtract m from the receiver
+func (cm *ConcreteMeasurement) MustDecrBy(m Measurement) {
+	if err := cm.DecrBy(m); err != nil {
+		panic(err)
+	}
+}
+
 // Add deprecated, please use IncrBy
 func (cm *ConcreteMeasurement) Add(m Measurement) {
 	if err := cm.IncrBy(m); err != nil {

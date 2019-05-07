@@ -106,7 +106,8 @@ func AddVolumes(vols ...Volume) Volume {
 		if u := v.Unit(); u.Prefix().Value > unit.Prefix().Value {
 			unit = u
 		}
-		ret.IncrBy(v)
+		// volumes are always compatible so there should never be an error here
+		ret.MustIncrBy(v)
 	}
 
 	return NewVolume(ret.MustInUnit(unit).RawValue(), unit.PrefixedSymbol())

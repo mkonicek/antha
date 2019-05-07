@@ -103,10 +103,8 @@ func WorkflowFromReaders(rs ...io.ReadCloser) (*Workflow, error) {
 func EmptyWorkflow() *Workflow {
 	return &Workflow{
 		SchemaVersion: CurrentSchemaVersion,
-		Meta: Meta{
-			Rest: make(map[string]json.RawMessage),
-		},
-		Repositories: make(Repositories),
+		Meta:          EmptyMeta(),
+		Repositories:  make(Repositories),
 		Elements: Elements{
 			Instances: make(ElementInstances),
 		},
@@ -147,6 +145,14 @@ func (wf *Workflow) ToWriter(w io.Writer, pretty bool) error {
 type Meta struct {
 	Name string                     `json:"Name,omitempty"`
 	Rest map[string]json.RawMessage `json:"-"`
+}
+
+// EmptyMeta returns a fresh but fully initialised Meta. In particular, all
+// directly accessible empty maps are non-nil.
+func EmptyMeta() Meta {
+	return Meta{
+		Rest: make(map[string]json.RawMessage),
+	}
 }
 
 // See https://golang.org/ref/spec#identifier However, we allow the
@@ -208,9 +214,6 @@ func (m *Meta) Set(key string, val interface{}) error {
 	if bs, err := json.Marshal(val); err != nil {
 		return err
 	} else {
-		if m.Rest == nil {
-			m.Rest = make(map[string]json.RawMessage)
-		}
 		m.Rest[key] = json.RawMessage(bs)
 		return nil
 	}

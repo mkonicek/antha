@@ -57,7 +57,7 @@ func (p *Provider) GetWorkflowID() (workflow.BasicId, error) {
 }
 
 func (p *Provider) GetMeta() (workflow.Meta, error) {
-	meta := workflow.Meta{}
+	meta := workflow.EmptyMeta()
 	if p.owf.Properties.Name != "" {
 		meta.Name = p.owf.Properties.Name
 	}

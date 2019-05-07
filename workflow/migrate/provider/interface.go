@@ -4,8 +4,8 @@ import (
 	"github.com/antha-lang/antha/workflow"
 )
 
-// WorkflowProvider is an entity capable of providing the necessary information
-// to generate a workflow, e.g. a v1.2 workflow JSON file
+// WorkflowProvider defines the interface for types capable of supplying the
+// information necessary to generate a workflow, e.g. a v1.2 workflow JSON file
 type WorkflowProvider interface {
 	GetWorkflowID() (workflow.BasicId, error)
 	GetMeta() (workflow.Meta, error)

@@ -38,6 +38,7 @@ type LHTipbox struct {
 	Boxname    string
 	Type       string
 	Mnfr       string
+	PartNr     string
 	Nrows      int
 	Ncols      int
 	Height     float64
@@ -55,12 +56,13 @@ type LHTipbox struct {
 	parent LHObject `gotopb:"-"`
 }
 
-func NewLHTipbox(idGen *id.IDGenerator, nrows, ncols int, size Coordinates3D, manufacturer, boxtype string, tiptype *LHTip, well *LHWell, tipxoffset, tipyoffset, tipxstart, tipystart, tipzstart float64) *LHTipbox {
+func NewLHTipbox(idGen *id.IDGenerator, nrows, ncols int, size Coordinates3D, manufacturer, partnr string, boxtype string, tiptype *LHTip, well *LHWell, tipxoffset, tipyoffset, tipxstart, tipystart, tipzstart float64) *LHTipbox {
 	var tipbox LHTipbox
 	tipbox.ID = idGen.NextID()
 	tipbox.Type = boxtype
 	tipbox.Boxname = fmt.Sprintf("%s_%s", boxtype, tipbox.ID[1:len(tipbox.ID)-2])
 	tipbox.Mnfr = manufacturer
+	tipbox.PartNr = partnr
 	tipbox.Nrows = nrows
 	tipbox.Ncols = ncols
 	tipbox.Tips = make([][]*LHTip, ncols)
@@ -153,7 +155,7 @@ func (tb *LHTipbox) DupKeepIDs(idGen *id.IDGenerator) *LHTipbox {
 }
 
 func (tb *LHTipbox) dup(idGen *id.IDGenerator, keepIDs bool) *LHTipbox {
-	tb2 := NewLHTipbox(idGen, tb.Nrows, tb.Ncols, tb.Bounds.GetSize(), tb.Mnfr, tb.Type, tb.Tiptype, tb.AsWell, tb.TipXOffset, tb.TipYOffset, tb.TipXStart, tb.TipYStart, tb.TipZStart)
+	tb2 := NewLHTipbox(idGen, tb.Nrows, tb.Ncols, tb.Bounds.GetSize(), tb.Mnfr, tb.PartNr, tb.Type, tb.Tiptype, tb.AsWell, tb.TipXOffset, tb.TipYOffset, tb.TipXStart, tb.TipYStart, tb.TipZStart)
 	tb2.Bounds.Position = tb.Bounds.GetPosition()
 
 	if keepIDs {

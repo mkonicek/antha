@@ -633,7 +633,14 @@ func (lhc *Liquid) Remove(v wunit.Volume) wunit.Volume {
 
 func (lhc *Liquid) Sample(v wunit.Volume) (*Liquid, error) {
 	if lhc.IsZero() {
-		return nil, fmt.Errorf("Cannot sample empty component")
+		if !v.IsZero() {
+			return nil, fmt.Errorf("Cannot sample empty component")
+		} else {
+			// we can sample zero volume from anything
+			ret := lhc.Dup()
+			ret.SetVolume(wunit.ZeroVolume())
+			return ret, nil
+		}
 	} else if lhc.Volume().EqualTo(v) {
 		// not setting sample?!
 		ret := lhc.Dup()

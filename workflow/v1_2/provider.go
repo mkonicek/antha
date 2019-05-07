@@ -210,10 +210,6 @@ func (p *Provider) getGilsonPipetMaxConfig() (workflow.GilsonPipetMaxConfig, err
 	devices := map[workflow.DeviceInstanceID]*workflow.GilsonPipetMaxInstanceConfig{}
 	devID := workflow.DeviceInstanceID(p.gilsonDeviceName)
 
-	if _, found := devices[devID]; found {
-		p.logger.Log("warning", fmt.Sprintf("Gilson device %s already exists, and will have configuration replaced with migrated configuration.", p.gilsonDeviceName))
-	}
-
 	devConfig, err := p.getGilsonPipetMaxInstanceConfig()
 	if err != nil {
 		return workflow.GilsonPipetMaxConfig{}, err

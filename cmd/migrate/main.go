@@ -125,9 +125,11 @@ func main() {
 		logger.Fatal(l, err)
 	}
 
-	// validate the resulting workflow
-	if err = cwf.Validate(); err != nil {
-		logger.Fatal(l, err)
+	// validate the resulting workflow if the -validate flag was set
+	if validate {
+		if err = cwf.Validate(); err != nil {
+			logger.Fatal(l, err)
+		}
 	}
 
 	// Save to disk

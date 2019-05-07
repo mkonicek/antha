@@ -92,7 +92,7 @@ func CopyVolume(v Volume) Volume {
 	return ret
 }
 
-// AddVolumes adds a set of volumes.
+// AddVolumes returns a new volume which is the sum of the arguments, expressed in the largest unit found in the arguments
 func AddVolumes(vols ...Volume) Volume {
 	// find the largest unit
 	var unit PrefixedUnit

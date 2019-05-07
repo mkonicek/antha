@@ -94,6 +94,7 @@ func NormaliseComponentName(component *Liquid) error {
 
 	newName := ReturnNormalisedComponentName(component)
 
+	// using setName here would cause this to be treated as a Source, which we don't want
 	component.CName = trimString(newName)
 
 	return nil
